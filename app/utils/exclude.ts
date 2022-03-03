@@ -1,0 +1,10 @@
+// Exclude keys from user
+export function exclude<
+  Object extends Record<string, unknown>,
+  Key extends keyof Object
+>(object: Object, ...keys: Key[]): Omit<Object, Key> {
+  for (let key of keys) {
+    delete object[key]
+  }
+  return object
+}
