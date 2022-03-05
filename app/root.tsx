@@ -1,5 +1,6 @@
 import {
   Links,
+  LinksFunction,
   LiveReload,
   Meta,
   Outlet,
@@ -7,6 +8,12 @@ import {
   ScrollRestoration,
 } from 'remix'
 import type { MetaFunction } from 'remix'
+
+import tailwindStyles from './tailwind.css'
+
+export let links: LinksFunction = () => {
+  return [{ rel: 'stylesheet', href: tailwindStyles }]
+}
 
 export const meta: MetaFunction = () => {
   return { title: 'qseat' }
