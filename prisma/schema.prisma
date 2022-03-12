@@ -10,11 +10,9 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
-
 model User {
   PK        Int       @id @default(autoincrement())
-  id        String    @unique @default(uuid()) @db.VarChar(36)
-  email String  @unique
-  name  String?
+  id        String @unique
+  email String @unique
+  displayName  String?
 }
