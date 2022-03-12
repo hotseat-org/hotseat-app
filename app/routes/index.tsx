@@ -1,4 +1,4 @@
-import { LoaderFunction, useLoaderData } from 'remix'
+import { Form, LoaderFunction, useLoaderData } from 'remix'
 
 import { authenticator } from '../services/auth.server.js'
 
@@ -26,6 +26,9 @@ const Dashboard = () => {
   return (
     <div style={CONTAINER_STYLES}>
       <h1>You are LoggedIn {user.displayName}</h1>
+      <Form method="post" action={`/logout`} style={CONTAINER_STYLES}>
+        <button>Logout</button>
+      </Form>
     </div>
   )
 }
