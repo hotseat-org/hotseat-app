@@ -7,10 +7,10 @@
   "scripts": {
     "build": "npmx run prisma:generate && npm run build:css && remix build",
     "build:css": "tailwindcss -o ./app/tailwind.css",
-    "dev": "concurrently \"npm run dev:css\" \"remix dev\"",
+    "dev": "concurrently \"npm run dev:css\" \"node -r dotenv/config ./node_modules/.bin/remix dev\"",
     "dev:css": "tailwindcss -o ./app/tailwind.css --watch",
     "postinstall": "remix setup node",
-    "start": "cross-env NODE_ENV=production remix-serve build",
+    "start": "cross-env NODE_ENV=production node -r dotenv/config ./node_modules/.bin/remix-serve build",
     "prisma:generate": "npx prisma generate",
     "db:migrate": "npx prisma migrate dev",
     "db:init": "docker run -p 3306:3306 --name qseat-db -e MYSQL_ROOT_PASSWORD=qseat -e MYSQL_DATABASE=qseat -d mysql:8.0.28-oracle",
@@ -23,11 +23,14 @@
     "@remix-run/serve": "^1.2.3",
     "chalk": "^5.0.0",
     "cross-env": "^7.0.3",
+    "dotenv": "^16.0.0",
     "nanoid": "^3.3.1",
     "prisma": "^3.10.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
-    "remix": "^1.2.3"
+    "remix": "^1.2.3",
+    "remix-auth": "^3.2.1",
+    "remix-auth-socials": "^1.0.1"
   },
   "devDependencies": {
     "@remix-run/dev": "^1.2.3",
