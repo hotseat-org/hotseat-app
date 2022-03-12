@@ -4,7 +4,7 @@ import { ActionFunction } from 'remix'
 
 export const action: ActionFunction = ({ request }) => {
   return authenticator.authenticate(SocialsProvider.GOOGLE, request, {
-    successRedirect: '/',
+    successRedirect: '/office',
     failureRedirect: '/login',
   })
 }
