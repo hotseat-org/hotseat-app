@@ -17,6 +17,13 @@ model User {
   displayName  String?
   reservations Reservation[]
   seats        Seat[]
+  photos       Photo[]
+}
+
+model Photo {
+  url String @id @unique
+  user User @relation(fields: [userPK], references: [PK])
+  userPK Int
 }
 
 model Seat {
@@ -25,8 +32,8 @@ model Seat {
   reservations Reservation[]
   owner        User          @relation(fields: [ownerPK], references: [PK])
   ownerPK      Int
-  x Int
-  y Int
+  x            Int
+  y            Int
 }
 
 model Reservation {

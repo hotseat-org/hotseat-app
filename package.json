@@ -12,6 +12,7 @@
     "postinstall": "remix setup node",
     "start": "cross-env NODE_ENV=production node -r dotenv/config ./node_modules/.bin/remix-serve build",
     "prisma:generate": "npx prisma generate",
+    "db:reset": "npx prisma migrate reset",
     "db:migrate": "npx prisma migrate dev",
     "db:init": "docker run -p 3306:3306 --name qseat-db -e MYSQL_ROOT_PASSWORD=qseat -e MYSQL_DATABASE=qseat -d mysql:8.0.28-oracle",
     "db:start": "docker start qseat-db",

@@ -1,7 +1,7 @@
 import { Authenticator } from 'remix-auth'
 import { sessionStorage } from '~/services/session.server'
 import { GoogleStrategy, SocialsProvider } from 'remix-auth-socials'
-import prisma from '~/prisma/client.server'
+import prisma from '~/services/prisma.server'
 
 // Create an instance of the authenticator
 // It will take session storage as an input parameter and creates the user session on successful authentication
@@ -17,17 +17,29 @@ authenticator.use(
       callbackURL: `http://localhost:3000/auth/${SocialsProvider.GOOGLE}/callback`,
     },
     async ({ profile }) => {
-      return prisma.user.upsert({
-        where: { id: profile.id },
-        update: {
-          displayName: profile.displayName,
-          email: profile.emails[0]?.value,
-        },
-        create: {
+      const user = await prisma.user
+        .findUnique({
+          where: { id: profile.id },
+          include: { photos: true, reservations: true, seats: true },
+        })
+        .catch(console.log)
+
+      if (user) {
+        return user
+      }
+
+      return prisma.user.create({
+        data: {
           displayName: profile.displayName,
           email: profile.emails[0]?.value,
           id: profile.id,
+          photos: {
+            createMany: {
+              data: profile.photos.map(({ value }) => ({ url: value })),
+            },
+          },
         },
+        select: { photos: true, seats: true, reservations: true },
       })
     }
   )
