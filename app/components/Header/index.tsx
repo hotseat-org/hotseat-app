@@ -3,14 +3,6 @@ import ArrowRight from "../icons/ArrowRight";
 import ArrowLeft from "../icons/ArrowLeft";
 import dayjs from "dayjs";
 
-const CONTAINER_STYLES = {
-  width: '100%',
-  height: '10px',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-}
-
 const Date = () => {
   const date = dayjs()
   const [showedDate, setShowedDate] = useState(date)
