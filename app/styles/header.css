@@ -1,0 +1,19 @@
+svg {
+  height: 20px;
+  width: 20px;
+  color: white;
+}
+
+.date {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 250px;
+  color: white;
+}
+
+.arrow {
+  color: white;
+  cursor: pointer;
+}
+
