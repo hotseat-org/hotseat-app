@@ -1,13 +1,16 @@
 import { LinksFunction, LoaderFunction, redirect } from 'remix'
-
+import Index from './login.js'
 import { authenticator } from '../services/auth.server.js'
 import headerStyle from '../styles/header.css'
-import Index from './login.js'
+import calendarStyle from '../styles/calendar.css'
 
 export let links: LinksFunction = () => {
-  return [{ rel: 'stylesheet', href: headerStyle }]
-}
+  return [
+    { rel: 'stylesheet', href: headerStyle },
+    { rel: 'stylesheet', href: calendarStyle }]}
+
 export const loader: LoaderFunction = async ({ request }) => {
+  console.log(authenticator)
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   })
