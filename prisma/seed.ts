@@ -2,14 +2,7 @@ import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
-const seed = async () => {
-  await prisma.user.create({
-    data: {
-      email: 'vidlec@gmail.com',
-      name: 'Pepa Vidlák',
-    },
-  })
-}
+const seed = async () => {}
 
 seed()
   .catch((e) => {

@@ -11,8 +11,31 @@ datasource db {
 }
 
 model User {
-  PK        Int       @id @default(autoincrement())
-  id        String @unique
-  email String @unique
+  PK           Int           @id @default(autoincrement())
+  id           String        @unique
+  email        String        @unique
   displayName  String?
+  reservations Reservation[]
+  seats        Seat[]
+}
+
+model Seat {
+  PK           Int           @id @default(autoincrement())
+  id           String        @unique @default(uuid()) @db.VarChar(36)
+  reservations Reservation[]
+  owner        User          @relation(fields: [ownerPK], references: [PK])
+  ownerPK      Int
+  x Int
+  y Int
+}
+
+model Reservation {
+  PK     Int      @id @default(autoincrement())
+  id     String   @unique @default(uuid()) @db.VarChar(36)
+  from   DateTime
+  to     DateTime
+  by     User     @relation(fields: [byPK], references: [PK])
+  byPK   Int
+  seat   Seat     @relation(fields: [seatPK], references: [PK])
+  seatPK Int
 }
