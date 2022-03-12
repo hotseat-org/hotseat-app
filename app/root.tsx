@@ -10,9 +10,12 @@ import {
 import type { MetaFunction } from 'remix'
 
 import tailwindStyles from './tailwind.css'
+import datePickerStyle from 'react-day-picker/lib/style.css'
 
 export let links: LinksFunction = () => {
-  return [{ rel: 'stylesheet', href: tailwindStyles }]
+  return [{ rel: 'stylesheet', href: tailwindStyles },
+  { rel: 'stylesheet', href: datePickerStyle }
+]
 }
 
 export const meta: MetaFunction = () => {

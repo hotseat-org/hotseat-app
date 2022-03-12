@@ -6,6 +6,7 @@ import {
   useLoaderData,
 } from 'remix'
 import Header from '~/components/Header/index.js'
+import SidePanel from '~/components/SidePanel/index.js'
 import { authenticator } from '../services/auth.server.js'
 import headerStyle from '../styles/header.css'
 
@@ -36,7 +37,7 @@ const Index = () => {
           </button>
         </Form>
       </div>
-
+      <SidePanel />
       <Outlet />
     </>
   )
