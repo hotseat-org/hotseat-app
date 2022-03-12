@@ -17,12 +17,10 @@ authenticator.use(
       callbackURL: `http://localhost:3000/auth/${SocialsProvider.GOOGLE}/callback`,
     },
     async ({ profile }) => {
-      const user = await prisma.user
-        .findUnique({
-          where: { id: profile.id },
-          include: { photos: true, reservations: true, seats: true },
-        })
-        .catch(console.log)
+      const user = await prisma.user.findUnique({
+        where: { id: profile.id },
+        include: { photos: true, reservations: true, seats: true },
+      })
 
       if (user) {
         return user
@@ -39,7 +37,7 @@ authenticator.use(
             },
           },
         },
-        select: { photos: true, seats: true, reservations: true },
+        include: { photos: true, seats: true, reservations: true },
       })
     }
   )

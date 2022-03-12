@@ -15,8 +15,6 @@ export const loader: LoaderFunction = async ({ request }) => {
 const Dashboard = () => {
   const { user } = useLoaderData()
 
-  console.log(user)
-
   return (
     <div className="w-full flex p-4 bg-red-500 items-center justify-end gap-8">
       <h1>{user.displayName}</h1>
