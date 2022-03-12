@@ -1,39 +1,26 @@
-import React, { useState } from "react"
-import ArrowRight from "../icons/ArrowRight";
-import ArrowLeft from "../icons/ArrowLeft";
-import dayjs from "dayjs";
-
-const CONTAINER_STYLES = {
-  width: '100%',
-  height: '10px',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-}
+import ArrowRight from '../icons/ArrowRight'
+import ArrowLeft from '../icons/ArrowLeft'
+import dayjs from 'dayjs'
+import { Link, useSearchParams } from 'remix'
 
 const Date = () => {
-  const date = dayjs()
-  const [showedDate, setShowedDate] = useState(date)
-  
-
-  const getPrevDay = () => {
-    const newDate = dayjs(showedDate).subtract(1, 'day')
-    setShowedDate(newDate)
-  }
-
-  const getNextDay= () => {
-    const newDate = dayjs(showedDate).add(1, 'day')
-    setShowedDate(newDate)
-  }
+  const [searchParams] = useSearchParams()
+  const date = searchParams.get('date') ?? dayjs()
 
   return (
     <div className="date">
-      <div className="arrow" onClick={getPrevDay} >
-        <ArrowLeft  />
+      <div className="arrow">
+        <Link
+          to={`/seats/?date=${dayjs(date).subtract(1, 'day').toISOString()}`}
+        >
+          <ArrowLeft />
+        </Link>
       </div>
-        {showedDate.format('dddd DD/MM/YYYY')}
-      <div className="arrow" onClick={getNextDay} >
-        <ArrowRight />  
+      {dayjs(date).format('dddd DD/MM/YYYY')}
+      <div className="arrow">
+        <Link to={`/seats/?date=${dayjs(date).add(1, 'day').toISOString()}`}>
+          <ArrowRight />
+        </Link>
       </div>
     </div>
   )

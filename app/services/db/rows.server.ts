@@ -4,9 +4,14 @@ import prisma from '../prisma.server'
 
 type Seat = Omit<PrismaSeat, 'PK' | 'row' | 'ownerPK'>
 
-export const getRows = async () => {
+interface Props {
+  from: Date
+  to: Date
+}
+
+export const getRows = async ({ from, to }: Props) => {
   const seats = await prisma.seat.findMany({
-    include: { owner: true, reservations: true },
+    include: { owner: true, reservations: { where: { from, to } } },
   })
 
   const rows = seats.reduce((acc, seat) => {

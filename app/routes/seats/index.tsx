@@ -3,7 +3,7 @@ import { LoaderFunction, useLoaderData } from 'remix'
 import { getRows } from '~/services/db/rows.server.js'
 
 export const loader: LoaderFunction = async () => {
-  const rows = await getRows()
+  const rows = await getRows({ from: new Date(), to: new Date() })
 
   return {
     rows,

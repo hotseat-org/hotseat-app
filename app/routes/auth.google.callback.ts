@@ -4,7 +4,7 @@ import { LoaderFunction } from 'remix'
 
 export const loader: LoaderFunction = ({ request }) => {
   return authenticator.authenticate(SocialsProvider.GOOGLE, request, {
-    successRedirect: '/office',
+    successRedirect: '/',
     failureRedirect: '/login',
   })
 }
