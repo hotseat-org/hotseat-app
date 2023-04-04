@@ -10,7 +10,6 @@ export let links: LinksFunction = () => {
     { rel: 'stylesheet', href: calendarStyle }]}
 
 export const loader: LoaderFunction = async ({ request }) => {
-  console.log(authenticator)
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
   })

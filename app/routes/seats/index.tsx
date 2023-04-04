@@ -121,8 +121,6 @@ const getLogo = (item: any, logo: any, stopLogo: any) => {
 const Office = () => {
   const { rows } = useLoaderData()
 
-  console.log(rows)
-
   const data = Object.entries(rows).map((item) => {
     item.push({
       props: {
@@ -170,11 +168,9 @@ const Office = () => {
         },
       },
     })
-    console.log(item)
     return item
   })
 
-  console.log(data)
 
   return (
     <div className=" flex p-16 w-128 items-center justify-center">

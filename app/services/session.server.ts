@@ -2,6 +2,7 @@ import { createCookieSessionStorage } from 'remix'
 
 export const sessionStorage = createCookieSessionStorage({
   cookie: {
+    maxAge: 3600,
     name: 'google_session', // use any name you want here
     sameSite: 'lax', // this helps with CSRF
     path: '/', // remember to add this so the cookie will work in all routes

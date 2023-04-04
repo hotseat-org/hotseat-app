@@ -37,8 +37,10 @@ const Index = () => {
           </button>
         </Form>
       </div>
-      <SidePanel />
-      <Outlet />
+      <div className='flex'>
+        <SidePanel />
+        <Outlet />
+      </div>
     </>
   )
 }
