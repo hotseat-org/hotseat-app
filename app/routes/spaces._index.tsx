@@ -27,7 +27,7 @@ const Index = () => {
     <>
       <div className="mx-auto max-w-screen-2xl pt-36 flex gap-5 flex-wrap basis-full">
         <Card className="bg-white rounded-2xl bg-opacity-80 w-96 h-[482px]">
-          <Link to="/spaces/foo">
+          <Link to="/spaces/f438671f-9979-42c6-8338-05c0015abb2d">
             <CardHeader color="gray" className="rounded-lg">
               <SpaceViewer isPreview />
             </CardHeader>
@@ -70,7 +70,7 @@ const Index = () => {
         </Card>
 
         <Card className="bg-white rounded-2xl bg-opacity-80 w-96 h-[482px]">
-          <Link to="/spaces/foo">
+          <Link to="/spaces/5c14e4e9-f25a-4834-bfb2-e1e0eba54396">
             <CardHeader color="gray" className="rounded-lg">
               <SpaceViewer
                 isPreview

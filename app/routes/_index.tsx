@@ -1,19 +1,10 @@
 import type { LoaderArgs } from '@remix-run/node'
-import { SpaceViewer } from '~/components/SpaceView'
+import { redirect } from '@remix-run/node'
+
 import { requireUser } from '~/services/session.server'
 
 export const loader = async ({ request }: LoaderArgs) => {
   await requireUser(request)
 
-  return null
+  return redirect('/spaces')
 }
-
-const Index = () => {
-  return (
-    <>
-      <SpaceViewer />
-    </>
-  )
-}
-
-export default Index
