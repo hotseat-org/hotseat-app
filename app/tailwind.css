@@ -879,6 +879,42 @@ video {
   height: 6rem;
 }
 
+.h-\[28px\] {
+  height: 28px;
+}
+
+.h-96 {
+  height: 24rem;
+}
+
+.h-\[126\] {
+  height: 126;
+}
+
+.h-\[126px\] {
+  height: 126px;
+}
+
+.h-\[600px\] {
+  height: 600px;
+}
+
+.h-\[500px\] {
+  height: 500px;
+}
+
+.h-\[450px\] {
+  height: 450px;
+}
+
+.h-\[482px\] {
+  height: 482px;
+}
+
+.h-\[64px\] {
+  height: 64px;
+}
+
 .max-h-96 {
   max-height: 24rem;
 }
@@ -1002,6 +1038,14 @@ video {
 
 .w-96 {
   width: 24rem;
+}
+
+.w-\[28px\] {
+  width: 28px;
+}
+
+.w-\[64px\] {
+  width: 64px;
 }
 
 .min-w-\[100vw\] {
@@ -1692,6 +1736,11 @@ video {
 .bg-yellow-800 {
   --tw-bg-opacity: 1;
   background-color: rgb(249 168 37 / var(--tw-bg-opacity));
+}
+
+.bg-blue-gray-200 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(176 190 197 / var(--tw-bg-opacity));
 }
 
 .bg-opacity-60 {
@@ -2452,6 +2501,18 @@ video {
 
 .opacity-50 {
   opacity: 0.5;
+}
+
+.opacity-30 {
+  opacity: 0.3;
+}
+
+.opacity-60 {
+  opacity: 0.6;
+}
+
+.opacity-80 {
+  opacity: 0.8;
 }
 
 .shadow {
@@ -3921,6 +3982,10 @@ video {
 
 .hover\:opacity-75:hover {
   opacity: 0.75;
+}
+
+.hover\:opacity-100:hover {
+  opacity: 1;
 }
 
 .hover\:shadow-lg:hover {

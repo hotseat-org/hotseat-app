@@ -25,18 +25,6 @@ export const Navbar = () => (
           Qseat
         </Typography>
         <ul className="mb-4 mt-2 flex flex-col gap-2 lg:mb-0 lg:mt-0 lg:flex-row lg:items-center">
-          <Typography
-            as="a"
-            href="/editor"
-            variant="small"
-            color="blue-gray"
-            className="font-normal"
-          >
-            <MenuItem className="flex items-center gap-2 lg:rounded-full">
-              <PaintBrushIcon className="h-[18px] w-[18px]" />
-              Editor
-            </MenuItem>
-          </Typography>
           <Link to="/spaces">
             <Typography
               variant="small"
