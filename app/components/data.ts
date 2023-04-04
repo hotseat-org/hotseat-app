@@ -519,6 +519,7 @@ export const desks = [
     name: 'Desk 54',
     furnitureId: '23d3d412-1026-4603-871a-3868a47d4c5c',
     available: false,
+    residentId: '5cfbc2d6-927e-4940-b1e6-585ef0c00225',
   },
   {
     name: 'Desk 55',
