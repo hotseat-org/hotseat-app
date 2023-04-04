@@ -20,8 +20,10 @@ authenticator.use(
     async ({ profile }) => {
       const user = await prisma.user.findUnique({
         where: { id: profile.id },
-        include: { photos: true, reservations: true, seats: true },
+        include: { photos: true, reservations: true, seatsResident: true },
       })
+
+      console.log(user)
 
       if (user) {
         return user
@@ -38,7 +40,7 @@ authenticator.use(
             },
           },
         },
-        include: { photos: true, seats: true, reservations: true },
+        include: { photos: true, seatsResident: true, reservations: true },
       })
     }
   )

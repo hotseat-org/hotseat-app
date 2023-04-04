@@ -1,4 +1,10 @@
 import { hydrate } from 'react-dom'
-import { RemixBrowser } from 'remix'
+import { ThemeProvider } from '@material-tailwind/react'
+import { RemixBrowser } from '@remix-run/react'
 
-hydrate(<RemixBrowser />, document)
+hydrate(
+  <ThemeProvider>
+    <RemixBrowser />
+  </ThemeProvider>,
+  document
+)

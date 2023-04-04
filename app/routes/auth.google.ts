@@ -1,6 +1,6 @@
 import { authenticator } from '../services/auth.server.js'
 import { SocialsProvider } from 'remix-auth-socials'
-import { ActionFunction } from 'remix'
+import { ActionFunction } from '@remix-run/node'
 
 export const action: ActionFunction = ({ request }) => {
   return authenticator.authenticate(SocialsProvider.GOOGLE, request, {

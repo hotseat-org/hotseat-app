@@ -32,6 +32,9 @@ export const SpaceViewer = () => {
     if (space) {
       space.startViewer({
         compass: false,
+        renderOptions: {
+          backgroundColor: '#cfd8dc',
+        },
         onReady: () => {
           space.addDataLayer({
             id: 'rooms',

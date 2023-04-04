@@ -1,5 +1,5 @@
 import { authenticator } from '../services/auth.server.js'
-import { ActionFunction, LoaderFunction } from 'remix'
+import type { ActionFunction, LoaderFunction } from '@remix-run/node'
 
 export const action: ActionFunction = ({ request }) => {
   return authenticator.logout(request, {

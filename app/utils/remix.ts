@@ -1,4 +1,4 @@
-import { useLoaderData } from 'remix'
+import { useLoaderData } from '@remix-run/react'
 
 export const dataLoader = <Data extends unknown>(
   loader: () => Promise<Data>
