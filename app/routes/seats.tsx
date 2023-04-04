@@ -37,8 +37,7 @@ const Index = () => {
           </button>
         </Form>
       </div>
-      <div className='flex'>
-        <SidePanel />
+      <div className="flex">
         <Outlet />
       </div>
     </>
