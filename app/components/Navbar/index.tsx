@@ -11,14 +11,15 @@ import {
   Typography,
 } from '@material-tailwind/react'
 import { ProfileMenu } from './ProfileMenu'
+import { Link } from '@remix-run/react'
 
 export const Navbar = () => (
   <MaterialNavbar className="fixed p-2 lg:rounded-full z-10 mt-5 left-1/2 transform -translate-x-1/2">
-    <div className="relative mx-auto flex text-blue-gray-900 justify-between">
+    <div className="mx-auto flex text-blue-gray-900 justify-between">
       <div className="flex gap-10">
         <Typography
           as="a"
-          href="#"
+          href="/"
           className="mr-4 ml-2 cursor-pointer py-1.5 font-bold"
         >
           Qseat
@@ -36,18 +37,18 @@ export const Navbar = () => (
               Editor
             </MenuItem>
           </Typography>
-          <Typography
-            as="a"
-            href="#"
-            variant="small"
-            color="blue-gray"
-            className="font-normal"
-          >
-            <MenuItem className="flex items-center gap-2 lg:rounded-full">
-              <HomeIcon className="h-[18px] w-[18px]" />
-              Spaces
-            </MenuItem>
-          </Typography>
+          <Link to="/spaces">
+            <Typography
+              variant="small"
+              color="blue-gray"
+              className="font-normal"
+            >
+              <MenuItem className="flex items-center gap-2 lg:rounded-full">
+                <HomeIcon className="h-[18px] w-[18px]" />
+                Spaces
+              </MenuItem>
+            </Typography>
+          </Link>
           <Typography
             as="a"
             href="#"

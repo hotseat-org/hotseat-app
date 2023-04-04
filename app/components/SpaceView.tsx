@@ -1,14 +1,18 @@
 import { useEffect, useState } from 'react'
 
-import { loadSmplrJs } from '@smplrspace/smplr-loader'
 import { desks, rooms } from './data'
 import type { Space } from '@smplrspace/smplr-loader/dist/generated/smplr'
+import { loadSmplr } from '~/utils/smplr'
 
 type Furniture = {
   furnitureId: string
 }
 
-export const SpaceViewer = () => {
+interface Props {
+  isPreview?: boolean
+}
+
+export const SpaceViewer = ({ isPreview }: Props) => {
   const [selectedFurniture, setSelectedFurniture] = useState<
     Furniture | undefined
   >()
@@ -31,6 +35,7 @@ export const SpaceViewer = () => {
   useEffect(() => {
     if (space) {
       space.startViewer({
+        preview: isPreview,
         loadingMessage: ' ',
         renderOptions: {
           backgroundColor: '#cfd8dc',
@@ -74,10 +79,10 @@ export const SpaceViewer = () => {
         onError: (error) => console.error('Could not start viewer', error),
       })
     }
-  }, [space])
+  }, [space, isPreview])
 
   useEffect(() => {
-    loadSmplrJs('umd')
+    loadSmplr()
       .then((smplr) => {
         setSpace(
           new smplr.Space({
@@ -91,8 +96,11 @@ export const SpaceViewer = () => {
   }, [])
 
   return (
-    <div className="smplr-wrapper">
-      <div id="test" className="smplr-embed"></div>
+    <div className={`smplr-wrapper ${isPreview ? `h-56` : `min-h-screen`}`}>
+      <div
+        id="test"
+        className={`smplr-embed ${isPreview ? `h-56` : `min-h-screen`}`}
+      ></div>
     </div>
   )
 }

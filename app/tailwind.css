@@ -762,6 +762,10 @@ video {
   margin-top: 1px;
 }
 
+.mt-3 {
+  margin-top: 0.75rem;
+}
+
 .block {
   display: block;
 }
@@ -863,6 +867,18 @@ video {
   height: 100vh;
 }
 
+.h-56 {
+  height: 14rem;
+}
+
+.h-36 {
+  height: 9rem;
+}
+
+.h-24 {
+  height: 6rem;
+}
+
 .max-h-96 {
   max-height: 24rem;
 }
@@ -888,6 +904,10 @@ video {
 }
 
 .min-h-\[100vh\] {
+  min-height: 100vh;
+}
+
+.min-h-screen {
   min-height: 100vh;
 }
 
@@ -980,6 +1000,10 @@ video {
   width: 100vw;
 }
 
+.w-96 {
+  width: 24rem;
+}
+
 .min-w-\[100vw\] {
   min-width: 100vw;
 }
@@ -1054,6 +1078,10 @@ video {
 
 .max-w-screen-2xl {
   max-width: 1320px;
+}
+
+.max-w-screen-xl {
+  max-width: 1140px;
 }
 
 .shrink {
@@ -1203,6 +1231,12 @@ video {
 
 .gap-5 {
   gap: 1.25rem;
+}
+
+.-space-x-3 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 0;
+  margin-right: calc(-0.75rem * var(--tw-space-x-reverse));
+  margin-left: calc(-0.75rem * calc(1 - var(--tw-space-x-reverse)));
 }
 
 .overflow-auto {
@@ -2094,6 +2128,10 @@ video {
   padding-top: 0.125rem;
 }
 
+.pt-24 {
+  padding-top: 6rem;
+}
+
 .pt-3 {
   padding-top: 0.75rem;
 }
@@ -2112,6 +2150,10 @@ video {
 
 .pt-px {
   padding-top: 1px;
+}
+
+.pt-36 {
+  padding-top: 9rem;
 }
 
 .text-left {
@@ -3659,6 +3701,10 @@ video {
 .placeholder-shown\:border-t-red-500:placeholder-shown {
   --tw-border-opacity: 1;
   border-top-color: rgb(244 67 54 / var(--tw-border-opacity));
+}
+
+.hover\:z-10:hover {
+  z-index: 10;
 }
 
 .hover\:bg-amber-500\/10:hover {
