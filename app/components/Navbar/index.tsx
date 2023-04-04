@@ -11,13 +11,8 @@ import {
   Typography,
 } from '@material-tailwind/react'
 import { ProfileMenu } from './ProfileMenu'
-import type { User } from '~/core/types'
 
-interface Props {
-  user: User
-}
-
-export const Navbar = ({ user }: Props) => (
+export const Navbar = () => (
   <MaterialNavbar className="fixed p-2 lg:rounded-full z-10 mt-5 left-1/2 transform -translate-x-1/2">
     <div className="relative mx-auto flex text-blue-gray-900 justify-between">
       <div className="flex gap-10">
@@ -71,7 +66,7 @@ export const Navbar = ({ user }: Props) => (
         <div className="w-72">
           <Input label="Search" icon={<MagnifyingGlassIcon />} />
         </div>
-        <ProfileMenu user={user} />
+        <ProfileMenu />
       </div>
     </div>
   </MaterialNavbar>

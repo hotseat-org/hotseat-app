@@ -33,7 +33,7 @@ export const loader = async ({ request }: LoaderArgs) => {
 }
 
 export default function App() {
-  const { user } = useLoaderData<typeof loader>() // TODO: Validate with zod or find other way
+  const { user } = useLoaderData<typeof loader>()
 
   return (
     <html lang="en">
@@ -44,7 +44,7 @@ export default function App() {
         <Links />
       </head>
       <body className="bg-blue-gray-100">
-        {user && <Navbar user={user} />}
+        {user && <Navbar />}
         <Outlet />
         <ScrollRestoration />
         <Scripts />

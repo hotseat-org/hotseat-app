@@ -10,13 +10,10 @@ import {
 } from '@material-tailwind/react'
 import { Form } from '@remix-run/react'
 import { useState } from 'react'
-import type { User } from '~/core/types'
+import { useUser } from '~/utils/remix'
 
-interface Props {
-  user: User
-}
-
-export const ProfileMenu = ({ user }: Props) => {
+export const ProfileMenu = () => {
+  const user = useUser()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const closeMenu = () => setIsMenuOpen(false)
 
