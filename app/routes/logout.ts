@@ -8,7 +8,11 @@ export const action: ActionFunction = ({ request }) => {
 }
 
 export const loader: LoaderFunction = ({ request }) => {
-  return authenticator.isAuthenticated(request, {
+  authenticator.isAuthenticated(request, {
     failureRedirect: '/login',
+  })
+
+  return authenticator.logout(request, {
+    redirectTo: '/login',
   })
 }
