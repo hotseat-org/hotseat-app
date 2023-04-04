@@ -2,10 +2,12 @@ import { Authenticator } from 'remix-auth'
 import { sessionStorage } from '~/services/session.server'
 import { GoogleStrategy, SocialsProvider } from 'remix-auth-socials'
 import prisma from '~/services/prisma.server'
+import type { User } from '~/core/types'
+import { nth } from 'ramda'
 
 // Create an instance of the authenticator
 // It will take session storage as an input parameter and creates the user session on successful authentication
-export const authenticator = new Authenticator(sessionStorage)
+export const authenticator = new Authenticator<User>(sessionStorage)
 
 // Configuring Google Strategy
 authenticator.use(
@@ -23,13 +25,15 @@ authenticator.use(
         include: { photos: true, reservations: true, seatsResident: true },
       })
 
-      console.log(user)
-
       if (user) {
-        return user
+        return {
+          id: user.id,
+          photo: nth(0, user.photos)?.url,
+          displayName: user.displayName ?? user.email,
+        }
       }
 
-      return prisma.user.create({
+      const prismaUser = await prisma.user.create({
         data: {
           displayName: profile.displayName,
           email: profile.emails[0]?.value,
@@ -42,6 +46,12 @@ authenticator.use(
         },
         include: { photos: true, seatsResident: true, reservations: true },
       })
+
+      return {
+        id: prismaUser.id,
+        photo: nth(0, prismaUser.photos)?.url,
+        displayName: prismaUser.displayName ?? prismaUser.email,
+      }
     }
   )
 )

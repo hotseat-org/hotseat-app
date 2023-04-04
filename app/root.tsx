@@ -1,3 +1,4 @@
+import type { LoaderArgs } from '@remix-run/node'
 import tailwindStyles from './tailwind.css'
 import {
   Meta,
@@ -6,8 +7,14 @@ import {
   ScrollRestoration,
   Scripts,
   LiveReload,
+  useLoaderData,
 } from '@remix-run/react'
-import { LinksFunction, MetaFunction } from '@remix-run/react/dist/routeModules'
+import type {
+  LinksFunction,
+  MetaFunction,
+} from '@remix-run/react/dist/routeModules'
+import { authenticator } from './services/auth.server'
+import { Navbar } from './components/Navbar'
 
 export let links: LinksFunction = () => {
   return [{ rel: 'stylesheet', href: tailwindStyles }]
@@ -17,7 +24,17 @@ export const meta: MetaFunction = () => {
   return { title: 'qseat' }
 }
 
+export const loader = async ({ request }: LoaderArgs) => {
+  const user = await authenticator.isAuthenticated(request)
+
+  return {
+    user,
+  }
+}
+
 export default function App() {
+  const { user } = useLoaderData<typeof loader>() // TODO: Validate with zod or find other way
+
   return (
     <html lang="en">
       <head>
@@ -27,6 +44,7 @@ export default function App() {
         <Links />
       </head>
       <body className="bg-blue-gray-100">
+        {user && <Navbar user={user} />}
         <Outlet />
         <ScrollRestoration />
         <Scripts />

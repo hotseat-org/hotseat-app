@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 
 import { loadSmplrJs } from '@smplrspace/smplr-loader'
 import { desks, rooms } from './data'
-import { Space } from '@smplrspace/smplr-loader/dist/generated/smplr'
+import type { Space } from '@smplrspace/smplr-loader/dist/generated/smplr'
 
 type Furniture = {
   furnitureId: string
@@ -31,7 +31,7 @@ export const SpaceViewer = () => {
   useEffect(() => {
     if (space) {
       space.startViewer({
-        compass: false,
+        loadingMessage: ' ',
         renderOptions: {
           backgroundColor: '#cfd8dc',
         },

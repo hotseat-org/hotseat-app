@@ -1,4 +1,5 @@
-import { createCookieSessionStorage } from '@remix-run/node'
+import { createCookieSessionStorage, redirect } from '@remix-run/node'
+import { authenticator } from './auth.server'
 
 export const sessionStorage = createCookieSessionStorage({
   cookie: {
@@ -11,5 +12,13 @@ export const sessionStorage = createCookieSessionStorage({
     secure: process.env.NODE_ENV === 'production', // enable this in prod only
   },
 })
+
+export async function requireUser(request: Request) {
+  const user = await authenticator.isAuthenticated(request)
+  if (!user) {
+    throw redirect('/login')
+  }
+  return user
+}
 
 export const { getSession, commitSession, destroySession } = sessionStorage

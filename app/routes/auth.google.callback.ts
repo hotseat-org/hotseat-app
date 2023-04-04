@@ -1,6 +1,6 @@
 import { authenticator } from '../services/auth.server'
 import { SocialsProvider } from 'remix-auth-socials'
-import { LoaderFunction } from '@remix-run/node'
+import type { LoaderFunction } from '@remix-run/node'
 
 export const loader: LoaderFunction = ({ request }) => {
   return authenticator.authenticate(SocialsProvider.GOOGLE, request, {

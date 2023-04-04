@@ -1,7 +1,7 @@
 import { renderToString } from 'react-dom/server'
 import { ThemeProvider } from '@material-tailwind/react'
 import { RemixServer } from '@remix-run/react'
-import { EntryContext } from '@remix-run/react/dist/entry'
+import type { EntryContext } from '@remix-run/react/dist/entry'
 
 export default function handleRequest(
   request: Request,
