@@ -11,16 +11,17 @@
     "dev:css": "tailwindcss -o ./app/tailwind.css --watch",
     "postinstall": "remix setup node",
     "start": "cross-env NODE_ENV=production node -r dotenv/config ./node_modules/.bin/remix-serve build",
-    "prisma:generate": "npx prisma generate",
-    "prisma:reset": "npx prisma migrate reset",
-    "prisma:migrate": "npx prisma migrate dev",
+    "prisma:generate": "npx prisma generate --schema=./app/repository/prisma/schema.prisma",
+    "prisma:reset": "npx prisma migrate reset --schema=./app/repository/prisma/schema.prisma",
+    "prisma:migrate": "npx prisma migrate dev --schema=./app/repository/prisma/schema.prisma",
     "db:init": "docker run -p 3306:3306 --name qseat-db -e MYSQL_ROOT_PASSWORD=qseat -e MYSQL_DATABASE=qseat -d mysql:8.0.32",
-    "db:start": "docker start qseat-db"
+    "db:start": "docker start qseat-db",
+    "typecheck": "tsc --project ./tsconfig.json"
   },
   "dependencies": {
     "@heroicons/react": "^2.0.17",
     "@material-tailwind/react": "^1.4.2",
-    "@prisma/client": "^3.10.0",
+    "@prisma/client": "^4.12.0",
     "@remix-run/react": "^1.15.0",
     "@remix-run/serve": "^1.15.0",
     "@smplrspace/smplr-loader": "^2.6.0",
@@ -30,13 +31,14 @@
     "dotenv": "^16.0.0",
     "nanoid": "^3.3.1",
     "prettier": "^2.8.7",
-    "prisma": "^3.10.0",
+    "prisma": "^4.12.0",
     "ramda": "^0.29.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "remix": "^1.15.0",
     "remix-auth": "^3.4.0",
-    "remix-auth-socials": "^2.0.5"
+    "remix-auth-socials": "^2.0.5",
+    "zod": "^3.21.4"
   },
   "devDependencies": {
     "@remix-run/dev": "^1.15.0",
@@ -54,8 +56,5 @@
   },
   "engines": {
     "node": ">=18"
-  },
-  "prisma": {
-    "seed": "ts-node prisma/seed.ts"
   }
 }

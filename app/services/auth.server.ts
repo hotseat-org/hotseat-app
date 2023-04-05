@@ -2,8 +2,8 @@ import { Authenticator } from 'remix-auth'
 import { sessionStorage } from '~/services/session.server'
 import { GoogleStrategy, SocialsProvider } from 'remix-auth-socials'
 import prisma from '~/services/prisma.server'
-import type { User } from '~/core/types'
 import { nth } from 'ramda'
+import type { User } from '~/core/user/types'
 
 // Create an instance of the authenticator
 // It will take session storage as an input parameter and creates the user session on successful authentication

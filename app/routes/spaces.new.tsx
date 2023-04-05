@@ -8,32 +8,46 @@ import {
   Card,
   Textarea,
 } from '@material-tailwind/react'
-import type { LoaderArgs } from '@remix-run/node'
+import type { ActionFunction } from '@remix-run/node'
+import { redirect } from '@remix-run/node'
 import { Form, Link } from '@remix-run/react'
-import { requireUser } from '~/services/session.server'
+import { getCore } from '~/core/get-core'
+import * as z from 'zod'
 
-export const loader = async ({ request }: LoaderArgs) => {
-  await requireUser(request)
+const CreateSpaceSchema = z.object({
+  name: z.string(),
+  spaceId: z.string(),
+  description: z.string().optional(),
+})
 
-  return null
+export const action: ActionFunction = async ({ request }) => {
+  const formData = await request.formData()
+  const data = await CreateSpaceSchema.parseAsync(
+    Object.fromEntries(formData.entries())
+  )
+
+  const core = getCore()
+  await core.space.create(data)
+
+  return redirect('/spaces')
 }
 
-const Space = () => {
+export const Space = () => {
   return (
     <Dialog size="xs" open handler={() => {}}>
-      <Card>
-        <CardHeader className="h-56">
-          <img
-            src="https://images.pexels.com/photos/4125267/pexels-photo-4125267.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
-            alt="img-blur-shadow"
-            className="h-full w-full"
-          />
-        </CardHeader>
-        <CardBody>
-          <Form>
+      <Form method="post">
+        <Card>
+          <CardHeader className="h-56">
+            <img
+              src="https://images.pexels.com/photos/4125267/pexels-photo-4125267.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
+              alt="img-blur-shadow"
+              className="h-full w-full"
+            />
+          </CardHeader>
+          <CardBody>
             <div className="flex gap-5 flex-col">
-              <Input size="lg" required label="name" />
-              <Textarea size="lg" label="description" />
+              <Input size="lg" required label="name" name="name" />
+              <Textarea size="lg" label="description" name="description" />
               <div className="mt-10">
                 <img
                   className="w-32"
@@ -42,21 +56,21 @@ const Space = () => {
                 />
                 <span>Copy and paste spaceId from smplrspace</span>
               </div>
-              <Input size="lg" required label="spaceId" />
+              <Input size="lg" required label="spaceId" name="spaceId" />
             </div>
-          </Form>
-        </CardBody>
-        <CardFooter className="flex justify-end">
-          <Link to="/spaces">
-            <Button variant="text" color="red" className="mr-1">
-              <span>Cancel</span>
+          </CardBody>
+          <CardFooter className="flex justify-end">
+            <Link to="/spaces">
+              <Button variant="text" color="red" className="mr-1">
+                <span>Cancel</span>
+              </Button>
+            </Link>
+            <Button type="submit" variant="gradient">
+              <span>Create</span>
             </Button>
-          </Link>
-          <Button variant="gradient">
-            <span>Create</span>
-          </Button>
-        </CardFooter>
-      </Card>
+          </CardFooter>
+        </Card>
+      </Form>
     </Dialog>
   )
 }

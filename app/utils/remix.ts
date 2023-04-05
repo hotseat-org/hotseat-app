@@ -1,6 +1,6 @@
 import { useLoaderData, useMatches } from '@remix-run/react'
 import { useMemo } from 'react'
-import type { User } from '~/core/types'
+import type { User } from '~/core/user/types'
 
 export const dataLoader = <Data extends unknown>(
   loader: () => Promise<Data>

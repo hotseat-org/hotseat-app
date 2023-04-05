@@ -18,6 +18,9 @@ model User {
   reservations  Reservation[]
   seatsResident Seat[]
   photos        Photo[]
+
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
 }
 
 model Photo {
@@ -29,13 +32,15 @@ model Photo {
 model Seat {
   PK              Int           @id @default(autoincrement())
   id              String        @unique @default(uuid()) @db.VarChar(36)
+  furnitureId     String        @unique
   reservations    Reservation[]
   resident        User?         @relation(fields: [residentPK], references: [PK])
   residentPK      Int?
-  room            Room?         @relation(fields: [roomPK], references: [PK])
-  roomPK          Int?
-  x               Int
-  y               Int
+  space           Space         @relation(fields: [spacePK], references: [PK])
+  spacePK         Int
+
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
 }
 
 model Reservation {
@@ -47,11 +52,30 @@ model Reservation {
   byPK   Int
   seat   Seat     @relation(fields: [seatPK], references: [PK])
   seatPK Int
+
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
 }
 
 model Room {
-  PK     Int      @id @default(autoincrement())
-  id     String   @unique @default(uuid()) @db.VarChar(36)
-  name   String
-  seats  Seat[]
+  PK      Int      @id @default(autoincrement())
+  id      String   @unique @default(uuid()) @db.VarChar(36)
+  name    String
+  space   Space    @relation(fields: [spacePK], references: [PK])
+  spacePK Int
+
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+}
+
+model Space {
+  PK        Int       @id @default(autoincrement())
+  id        String    @unique @default(uuid()) @db.VarChar(36)
+  name      String    @unique
+  spaceId   String
+  rooms     Room[]
+  seats     Seat[]
+
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
 }

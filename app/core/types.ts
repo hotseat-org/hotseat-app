@@ -1,5 +1,5 @@
-export interface User {
-  id: string
-  photo?: string
-  displayName: string
+import type { Repository } from '~/repository/types'
+
+export interface CoreContext {
+  repository: Repository
 }
