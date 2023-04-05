@@ -12,7 +12,7 @@ import {
   Typography,
 } from '@material-tailwind/react'
 import type { LoaderArgs } from '@remix-run/node'
-import { Link } from '@remix-run/react'
+import { Link, Outlet } from '@remix-run/react'
 import { SpaceViewer } from '~/components/SpaceView'
 import { requireUser } from '~/services/session.server'
 
@@ -27,7 +27,7 @@ const Index = () => {
     <>
       <div className="mx-auto max-w-screen-2xl pt-36 flex gap-5 flex-wrap basis-full">
         <Card className="bg-white rounded-2xl bg-opacity-80 w-96 h-[482px]">
-          <Link to="/spaces/f438671f-9979-42c6-8338-05c0015abb2d">
+          <Link to="/space/f438671f-9979-42c6-8338-05c0015abb2d">
             <CardHeader color="gray" className="rounded-lg">
               <SpaceViewer isPreview />
             </CardHeader>
@@ -70,7 +70,7 @@ const Index = () => {
         </Card>
 
         <Card className="bg-white rounded-2xl bg-opacity-80 w-96 h-[482px]">
-          <Link to="/spaces/5c14e4e9-f25a-4834-bfb2-e1e0eba54396">
+          <Link to="/space/5c14e4e9-f25a-4834-bfb2-e1e0eba54396">
             <CardHeader color="gray" className="rounded-lg">
               <SpaceViewer
                 isPreview
@@ -103,15 +103,18 @@ const Index = () => {
             <Typography className="font-normal">January 10</Typography>
           </CardFooter>
         </Card>
-        <Card className="bg-blue-gray-200 opacity-80 hover:opacity-100 rounded-2xl bg-opacity-80 w-96 h-[482px] flex items-center justify-center">
-          <div className="flex items-center gap-5 flex-col">
-            <PlusIcon strokeWidth={2} className="h-[64px] w-[64px]" />
-            <Typography variant="h4" color="blue-grey">
-              Add new space
-            </Typography>
-          </div>
-        </Card>
+        <Link to="/spaces/new">
+          <Card className="bg-blue-gray-200 opacity-80 hover:opacity-100 rounded-2xl bg-opacity-80 w-96 h-[482px] flex items-center justify-center">
+            <div className="flex items-center gap-5 flex-col">
+              <PlusIcon strokeWidth={2} className="h-[64px] w-[64px]" />
+              <Typography variant="h4" color="blue-grey">
+                Add new space
+              </Typography>
+            </div>
+          </Card>
+        </Link>
       </div>
+      <Outlet />
     </>
   )
 }
