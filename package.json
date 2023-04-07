@@ -5,8 +5,10 @@
   "license": "",
   "sideEffects": false,
   "scripts": {
-    "build": "npmx run prisma:generate && npm run build:css && remix build",
+    "build": "npm run prisma:generate && npm run build:css && remix build && npm run build:handler",
     "build:css": "tailwindcss -o ./app/tailwind.css",
+    "build:handler": "esbuild lambda/handler.ts --platform=node --target=node16 --format=cjs --outfile=\"build/handler.js\"",
+    "build:lambda": "npm run build && cp package.json package-lock.json app/repository/prisma/schema.prisma build/ && cd build && npm i --production && npx prisma generate --schema=./schema.prisma",
     "dev": "concurrently \"npm run dev:css\" \"node -r dotenv/config ./node_modules/.bin/remix dev\"",
     "dev:css": "tailwindcss -o ./app/tailwind.css --watch",
     "postinstall": "remix setup node",
@@ -16,12 +18,14 @@
     "prisma:migrate": "npx prisma migrate dev --schema=./app/repository/prisma/schema.prisma",
     "db:init": "docker run -p 3306:3306 --name qseat-db -e MYSQL_ROOT_PASSWORD=qseat -e MYSQL_DATABASE=qseat -d mysql:8.0.32",
     "db:start": "docker start qseat-db",
-    "typecheck": "tsc --project ./tsconfig.json"
+    "typecheck": "tsc --project ./tsconfig.json",
+    "deploy": "npx cdk --app \"npx ts-node ./aws/bin/deploy.ts\" deploy --all --require-approval never --ci"
   },
   "dependencies": {
     "@heroicons/react": "^2.0.17",
     "@material-tailwind/react": "^1.4.2",
     "@prisma/client": "^4.12.0",
+    "@remix-run/architect": "^1.15.0",
     "@remix-run/react": "^1.15.0",
     "@remix-run/serve": "^1.15.0",
     "@smplrspace/smplr-loader": "^2.6.0",
@@ -41,6 +45,10 @@
     "zod": "^3.21.4"
   },
   "devDependencies": {
+    "@aws-cdk/aws-lambda": "^1.198.1",
+    "@aws-cdk/aws-s3": "^1.198.1",
+    "@aws-cdk/aws-s3-deployment": "^1.198.1",
+    "@aws-cdk/core": "^1.198.1",
     "@remix-run/dev": "^1.15.0",
     "@remix-run/eslint-config": "^1.15.0",
     "@remix-run/node": "^1.15.0",
@@ -48,6 +56,7 @@
     "@types/react": "^18.0.33",
     "@types/react-dom": "^18.0.11",
     "concurrently": "^8.0.1",
+    "esbuild": "^0.17.15",
     "eslint": "^8.9.0",
     "eslint-config-prettier": "^8.5.0",
     "tailwindcss": "^3.3.1",
