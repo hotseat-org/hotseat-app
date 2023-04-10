@@ -606,6 +606,10 @@ video {
   left: 50%;
 }
 
+.left-24 {
+  left: 6rem;
+}
+
 .left-3 {
   left: 0.75rem;
 }
@@ -752,6 +756,10 @@ video {
 
 .mt-2 {
   margin-top: 0.5rem;
+}
+
+.mt-24 {
+  margin-top: 6rem;
 }
 
 .mt-3 {

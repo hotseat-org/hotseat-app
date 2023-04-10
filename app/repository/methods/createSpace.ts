@@ -11,5 +11,8 @@ export const createSpace =
       },
     })
 
-    return result
+    return {
+      ...result,
+      description: result.description ?? undefined,
+    }
   }

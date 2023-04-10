@@ -6,5 +6,8 @@ export const getSpaces =
   async () => {
     const result = await prisma.space.findMany()
 
-    return result
+    return result.map((result) => ({
+      ...result,
+      description: result.description ?? undefined,
+    }))
   }

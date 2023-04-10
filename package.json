@@ -16,6 +16,7 @@
     "prisma:generate": "npx prisma generate --schema=./app/repository/prisma/schema.prisma",
     "prisma:reset": "npx prisma migrate reset --schema=./app/repository/prisma/schema.prisma",
     "prisma:migrate": "npx prisma migrate dev --schema=./app/repository/prisma/schema.prisma",
+    "prisma:studio": "npx prisma studio --schema=./app/repository/prisma/schema.prisma",
     "db:init": "docker run -p 3306:3306 --name qseat-db -e MYSQL_ROOT_PASSWORD=qseat -e MYSQL_DATABASE=qseat -d mysql:8.0.32",
     "db:start": "docker start qseat-db",
     "typecheck": "tsc --project ./tsconfig.json",
