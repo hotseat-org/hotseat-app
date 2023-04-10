@@ -1,8 +1,7 @@
-import { RemixAppLambda } from '../stacks/remixAppLambdaStack'
 import type { Environment } from '@aws-cdk/core'
 import { App } from '@aws-cdk/core'
-import { RemixAppAssetsBucket } from '../stacks/remixAppAssetsBucketStack'
 import * as process from 'process'
+import { RemixApp } from '../stacks/remixAppStack'
 
 require('dotenv').config()
 
@@ -13,7 +12,7 @@ const env: Environment = {
 
 const app = new App()
 
-new RemixAppLambda(app, 'RemixAppLambda', {
+new RemixApp(app, 'QseatRemixApp', {
   env,
   environment: {
     BASE_URL: process.env.BASE_URL as string,
@@ -21,9 +20,7 @@ new RemixAppLambda(app, 'RemixAppLambda', {
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID as string,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET as string,
   },
-})
-
-new RemixAppAssetsBucket(app, 'RemixAppAssetsBucket', {
-  env,
-  bucketName: process.env.ASSETS_BUCKET_NAME as string,
+  bucket: {
+    name: process.env.ASSETS_BUCKET_NAME as string,
+  },
 })
