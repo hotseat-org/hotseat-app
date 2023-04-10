@@ -36,7 +36,7 @@ const Index = () => {
               key={space.id}
               className="bg-white rounded-2xl bg-opacity-80 w-96 h-[482px]"
             >
-              <Link to={`/space/${space.spaceId}`}>
+              <Link to={`/space/${space.id}/view`}>
                 <CardHeader color="gray" className="rounded-lg">
                   <SpaceViewer isPreview spaceId={space.spaceId} />
                 </CardHeader>
@@ -56,13 +56,15 @@ const Index = () => {
               </Link>
               <CardFooter className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Button size="sm" className="flex gap-2 items-center">
-                    <WrenchScrewdriverIcon
-                      strokeWidth={2}
-                      className="h-[18px] w-[18px]"
-                    />
-                    Edit
-                  </Button>
+                  <Link to={`/space/${space.id}/edit`}>
+                    <Button size="sm" className="flex gap-2 items-center">
+                      <WrenchScrewdriverIcon
+                        strokeWidth={2}
+                        className="h-[18px] w-[18px]"
+                      />
+                      Edit
+                    </Button>
+                  </Link>
                   <Button
                     variant="filled"
                     color="red"

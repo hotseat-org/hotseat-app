@@ -69,13 +69,14 @@ model Room {
 }
 
 model Space {
-  PK        Int       @id @default(autoincrement())
-  id        String    @unique @default(uuid()) @db.VarChar(36)
-  name      String    @unique
-  spaceId   String
-  rooms     Room[]
-  seats     Seat[]
+  PK          Int       @id @default(autoincrement())
+  id          String    @unique @default(uuid()) @db.VarChar(36)
+  name        String    @unique
+  spaceId     String
+  description String?
+  rooms       Room[]
+  seats       Seat[]
 
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
 }

@@ -17,7 +17,7 @@ authenticator.use(
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
       scope: ['email', 'openid', 'profile'],
       prompt: 'select_account',
-      callbackURL: `${process.env.HOST}/auth/${SocialsProvider.GOOGLE}/callback`,
+      callbackURL: `${process.env.BASE_URL}/auth/${SocialsProvider.GOOGLE}/callback`,
     },
     async ({ profile }) => {
       const user = await prisma.user.findUnique({
