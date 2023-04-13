@@ -1,3 +1,6 @@
+import type { CreateReservationArgs } from './methods/createReservation'
+import type { FindReservationArgs } from './methods/findReservation'
+
 export interface Space {
   id: string
   name: string
@@ -48,7 +51,8 @@ export interface Repository {
     create: (options: CreateSpaceOptions) => Promise<Space>
   }
   seat: {
-    find: (furnitureId: string) => Promise<Seat | null>
+    findByFurniture: (furnitureId: string) => Promise<Seat | null>
+    find: (id: string) => Promise<Seat | null>
     findMany: (spaceId: string) => Promise<Seat[]>
     create: (furnitureId: string, spaceId: string) => Promise<Seat>
     update: (id: string, residentId: string | null) => Promise<Seat>
@@ -58,5 +62,10 @@ export interface Repository {
     find: (id: string) => Promise<User | null>
     findMany: () => Promise<User[]>
     create: (options: CreateUserOptions) => Promise<User>
+  }
+  reservation: {
+    create: (args: CreateReservationArgs) => Promise<Reservation>
+    delete: (id: string) => Promise<void>
+    find: (args: FindReservationArgs) => Promise<Reservation | null>
   }
 }

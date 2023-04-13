@@ -11,6 +11,10 @@ import { findUser } from './methods/findUser'
 import { createUser } from './methods/createUser'
 import { findUsers } from './methods/findUsers'
 import { updateSeat } from './methods/updateSeat'
+import { findSeatByFurniture } from './methods/findSeatByFurniture'
+import { createReservation } from './methods/createReservation'
+import { findReservation } from './methods/findReservation'
+import { deleteReservation } from './methods/deleteReservation'
 
 export const createMysqlRepository = (prisma: PrismaClient): Repository => {
   return {
@@ -23,6 +27,7 @@ export const createMysqlRepository = (prisma: PrismaClient): Repository => {
       create: createSeat(prisma),
       update: updateSeat(prisma),
       find: findSeat(prisma),
+      findByFurniture: findSeatByFurniture(prisma),
       findMany: findSeats(prisma),
       delete: deleteSeat(prisma),
     },
@@ -30,6 +35,11 @@ export const createMysqlRepository = (prisma: PrismaClient): Repository => {
       find: findUser(prisma),
       findMany: findUsers(prisma),
       create: createUser(prisma),
+    },
+    reservation: {
+      create: createReservation(prisma),
+      delete: deleteReservation(prisma),
+      find: findReservation(prisma),
     },
   }
 }
