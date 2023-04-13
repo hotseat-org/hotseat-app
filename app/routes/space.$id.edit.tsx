@@ -1,4 +1,4 @@
-import { Card, CardBody } from '@material-tailwind/react'
+import { Typography } from '@material-tailwind/react'
 import type { LoaderArgs } from '@remix-run/node'
 import { Outlet, useLoaderData, useNavigate, useParams } from '@remix-run/react'
 import type { Space } from '@smplrspace/smplr-loader/dist/generated/smplr'
@@ -69,9 +69,15 @@ const EditSpace = () => {
   return (
     <>
       <div className="fixed w-96 z-10 left-24 mt-24">
-        <Card>
-          <CardBody>{space.name}</CardBody>
-        </Card>
+        <Typography variant="h4">{space.name}</Typography>
+        <div className="flex gap-2 items-center">
+          <div className="w-3 h-3 rounded-full bg-purple-300" />
+          <Typography variant="small">Currently selected seat</Typography>
+        </div>
+        <div className="flex gap-2 items-center">
+          <div className="w-3 h-3 rounded-full bg-gray-800" />
+          <Typography variant="small">Seat</Typography>
+        </div>
         <Outlet />
       </div>
       <SpaceViewer spaceId={space.spaceId} onSpaceReady={onSpaceReady} />

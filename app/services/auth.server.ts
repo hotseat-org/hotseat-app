@@ -1,9 +1,8 @@
 import { Authenticator } from 'remix-auth'
 import { sessionStorage } from '~/services/session.server'
 import { GoogleStrategy, SocialsProvider } from 'remix-auth-socials'
-import prisma from '~/services/prisma.server'
-import { nth } from 'ramda'
 import type { User } from '~/core/user/types'
+import { getCore } from '~/core/get-core'
 
 // Create an instance of the authenticator
 // It will take session storage as an input parameter and creates the user session on successful authentication
@@ -20,38 +19,20 @@ authenticator.use(
       callbackURL: `${process.env.BASE_URL}/auth/${SocialsProvider.GOOGLE}/callback`,
     },
     async ({ profile }) => {
-      const user = await prisma.user.findUnique({
-        where: { id: profile.id },
-        include: { photos: true, reservations: true, seatsResident: true },
+      const core = getCore()
+
+      const user = await core.user.get(profile.id)
+
+      if (user) return user
+
+      if (!profile.emails[0]) throw new Error('User is missing email')
+
+      return core.user.create({
+        displayName: profile.displayName,
+        id: profile.id,
+        email: profile.emails[0].value,
+        photos: profile.photos.map((photo) => photo.value),
       })
-
-      if (user) {
-        return {
-          id: user.id,
-          photo: nth(0, user.photos)?.url,
-          displayName: user.displayName ?? user.email,
-        }
-      }
-
-      const prismaUser = await prisma.user.create({
-        data: {
-          displayName: profile.displayName,
-          email: profile.emails[0]?.value,
-          id: profile.id,
-          photos: {
-            createMany: {
-              data: profile.photos.map(({ value }) => ({ url: value })),
-            },
-          },
-        },
-        include: { photos: true, seatsResident: true, reservations: true },
-      })
-
-      return {
-        id: prismaUser.id,
-        photo: nth(0, prismaUser.photos)?.url,
-        displayName: prismaUser.displayName ?? prismaUser.email,
-      }
     }
   )
 )

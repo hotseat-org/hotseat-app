@@ -1,4 +1,5 @@
 import type { CoreContext } from '../types'
+import { spaceMapper } from './mapper'
 import type { Space } from './types'
 
 interface CreateSpaceOptions {
@@ -9,6 +10,8 @@ interface CreateSpaceOptions {
 
 export const createNewSpace =
   ({ repository }: CoreContext) =>
-  (options: CreateSpaceOptions): Promise<Space> => {
-    return repository.createSpace(options)
+  async (options: CreateSpaceOptions): Promise<Space> => {
+    const space = await repository.space.create(options)
+
+    return spaceMapper.fromRepository(space)
   }

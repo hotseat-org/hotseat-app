@@ -1,31 +1,59 @@
-export interface RepositorySpace {
+export interface Space {
   id: string
   name: string
   spaceId: string
   description?: string
+  seats: Seat[]
 
   createdAt: Date
   updatedAt: Date
 }
 
-export interface RepositorySeat {
+export interface Seat {
   id: string
   furnitureId: string
+  resident?: User | null
+  reservations: Reservation[]
 
   createdAt: Date
   updatedAt: Date
 }
 
-export type CreateSpaceOptions = Pick<
-  RepositorySpace,
-  'name' | 'spaceId' | 'description'
->
+export interface User {
+  id: string
+  email: string
+  photos: {
+    url: string
+  }[]
+  displayName: string | null
+}
+
+export interface Reservation {
+  id: string
+  by: User
+}
+
+export type CreateSpaceOptions = Pick<Space, 'name' | 'spaceId' | 'description'>
+export type CreateUserOptions = Pick<User, 'id' | 'email' | 'displayName'> & {
+  photos: string[]
+}
 
 export interface Repository {
-  getSpace: (id: string) => Promise<RepositorySpace>
-  getSpaces: () => Promise<RepositorySpace[]>
-  createSpace: (options: CreateSpaceOptions) => Promise<RepositorySpace>
-  getSeat: (furnitureId: string) => Promise<RepositorySeat | null>
-  getSeats: (spaceId: string) => Promise<RepositorySeat[]>
-  createSeat: (furnitureId: string, spaceId: string) => Promise<RepositorySeat>
+  space: {
+    find: (id: string) => Promise<Space | null>
+    findMany: () => Promise<Space[]>
+    create: (options: CreateSpaceOptions) => Promise<Space>
+  }
+  seat: {
+    find: (furnitureId: string) => Promise<Seat | null>
+    findMany: (spaceId: string) => Promise<Seat[]>
+    create: (furnitureId: string, spaceId: string) => Promise<Seat>
+    update: (id: string, residentId: string | null) => Promise<Seat>
+    delete: (id: string) => Promise<void>
+  }
+  user: {
+    find: (id: string) => Promise<User | null>
+    findMany: () => Promise<User[]>
+    create: (options: CreateUserOptions) => Promise<User>
+  }
 }
