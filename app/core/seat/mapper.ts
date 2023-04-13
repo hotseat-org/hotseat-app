@@ -7,7 +7,8 @@ export const seatMapper = {
   fromRepository: (seat: RepositorySeat): Seat => ({
     id: seat.id,
     furnitureId: seat.furnitureId,
-    reservations: seat.reservations.map(reservationMapper.fromRepository),
+    reservations:
+      seat.reservations?.map(reservationMapper.fromRepository) ?? [],
     resident: seat.resident
       ? userMapper.fromRepository(seat.resident)
       : undefined,

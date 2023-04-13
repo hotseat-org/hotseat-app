@@ -14,7 +14,9 @@ export const updateSeat =
       data: { resident: residentUpdate },
       include: {
         resident: { include: { photos: true } },
-        reservations: { include: { by: { include: { photos: true } } } },
+        reservations: {
+          include: { by: { include: { photos: true } }, seat: true },
+        },
       },
     })
 

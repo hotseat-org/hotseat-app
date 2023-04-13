@@ -8,7 +8,9 @@ export const findSeat =
       where: { furnitureId },
       include: {
         resident: { include: { photos: true } },
-        reservations: { include: { by: { include: { photos: true } } } },
+        reservations: {
+          include: { by: { include: { photos: true } }, seat: true },
+        },
       },
     })
 

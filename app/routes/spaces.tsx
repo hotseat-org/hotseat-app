@@ -34,7 +34,7 @@ const Index = () => {
           return (
             <Card
               key={space.id}
-              className="bg-white rounded-2xl bg-opacity-80 w-96 h-[482px]"
+              className="bg-white rounded-2xl bg-opacity-80 w-96 h-[382px]"
             >
               <Link to={`/space/${space.id}/view`}>
                 <CardHeader color="gray" className="rounded-lg">
@@ -82,7 +82,7 @@ const Index = () => {
         })}
 
         <Link to="/spaces/new">
-          <Card className="bg-blue-gray-200 opacity-80 hover:opacity-100 rounded-2xl bg-opacity-80 w-96 h-[482px] flex items-center justify-center">
+          <Card className="bg-blue-gray-200 opacity-80 hover:opacity-100 rounded-2xl bg-opacity-80 w-96 h-[382px] flex items-center justify-center">
             <div className="flex items-center gap-5 flex-col">
               <PlusIcon strokeWidth={2} className="h-[64px] w-[64px]" />
               <Typography variant="h4" color="blue-grey">

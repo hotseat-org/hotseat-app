@@ -11,7 +11,9 @@ export const createSeat =
     const result = await prisma.seat.create({
       data: { furnitureId, spacePK: space?.PK },
       include: {
-        reservations: { include: { by: { include: { photos: true } } } },
+        reservations: {
+          include: { by: { include: { photos: true } }, seat: true },
+        },
       },
     })
 

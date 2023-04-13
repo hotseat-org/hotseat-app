@@ -13,7 +13,7 @@ export interface Seat {
   id: string
   furnitureId: string
   resident?: User | null
-  reservations: Reservation[]
+  reservations?: Reservation[]
 
   createdAt: Date
   updatedAt: Date
@@ -22,15 +22,18 @@ export interface Seat {
 export interface User {
   id: string
   email: string
-  photos: {
+  photos?: {
     url: string
   }[]
   displayName: string | null
+  reservations?: Reservation[]
+  seatsResident?: Seat[]
 }
 
 export interface Reservation {
   id: string
   by: User
+  seat: Seat
 }
 
 export type CreateSpaceOptions = Pick<Space, 'name' | 'spaceId' | 'description'>

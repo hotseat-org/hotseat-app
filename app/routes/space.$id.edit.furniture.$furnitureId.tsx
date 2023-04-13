@@ -156,24 +156,26 @@ const FurnitureEditor = () => {
                       </option>
                     ))}
                   </select>
-                  <Button
-                    name="intent"
-                    value={ActionIntent.AssignResident}
-                    fullWidth
-                    type="submit"
-                  >
-                    Change resident
-                  </Button>
-                  <Button
-                    color="red"
-                    name="intent"
-                    variant="text"
-                    value={ActionIntent.RemoveResident}
-                    fullWidth
-                    type="submit"
-                  >
-                    Remove resident
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      color="red"
+                      name="intent"
+                      variant="text"
+                      value={ActionIntent.RemoveResident}
+                      fullWidth
+                      type="submit"
+                    >
+                      Remove
+                    </Button>
+                    <Button
+                      name="intent"
+                      value={ActionIntent.AssignResident}
+                      fullWidth
+                      type="submit"
+                    >
+                      Change
+                    </Button>
+                  </div>
                 </div>
               </CardBody>
             </Card>

@@ -12,7 +12,9 @@ export const findSeats =
       where: { spacePK: space.PK },
       include: {
         resident: { include: { photos: true } },
-        reservations: { include: { by: { include: { photos: true } } } },
+        reservations: {
+          include: { by: { include: { photos: true } }, seat: true },
+        },
       },
     })
 

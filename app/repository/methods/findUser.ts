@@ -8,6 +8,8 @@ export const findUser =
       where: { id },
       include: {
         photos: true,
+        reservations: { include: { seat: true, by: true } },
+        seatsResident: true,
       },
     })
 
