@@ -14,7 +14,7 @@ export const loader = async ({ request, params }: LoaderArgs) => {
   const core = getCore()
   if (!params.id) throw new Error('Missing ID in params')
 
-  const space = await core.space.get(params.id)
+  const space = await core.space.get({ id: params.id })
   const seats = await core.seat.getManySpaces(space.id)
 
   return { space, seats }

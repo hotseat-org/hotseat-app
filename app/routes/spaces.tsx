@@ -16,6 +16,7 @@ import { Link, Outlet, useLoaderData } from '@remix-run/react'
 import { SpaceViewer } from '~/components/SpaceView'
 import { getCore } from '~/core/get-core'
 import { requireUser } from '~/services/session.server'
+import { DateTime } from 'luxon'
 
 export const loader = async ({ request }: LoaderArgs) => {
   await requireUser(request)
@@ -27,6 +28,12 @@ export const loader = async ({ request }: LoaderArgs) => {
 
 const Index = () => {
   const spaces = useLoaderData<typeof loader>()
+
+  const today = DateTime.now()
+  const year = today.get('year')
+  const month = today.get('month')
+  const day = today.get('day')
+
   return (
     <>
       <div className="mx-auto max-w-screen-2xl pt-36 flex gap-5 flex-wrap basis-full">
@@ -36,7 +43,9 @@ const Index = () => {
               key={space.id}
               className="bg-white rounded-2xl bg-opacity-80 w-96 h-[382px]"
             >
-              <Link to={`/space/${space.id}/view`}>
+              <Link
+                to={`/space/${space.id}/view?year=${year}&month=${month}&day=${day}`}
+              >
                 <CardHeader color="gray" className="rounded-lg">
                   <SpaceViewer isPreview spaceId={space.spaceId} />
                 </CardHeader>
@@ -50,7 +59,7 @@ const Index = () => {
                     color="gray"
                     className="mt-3 font-normal"
                   >
-                    {space.description}
+                    <span>{space.description}</span>
                   </Typography>
                 </CardBody>
               </Link>
@@ -85,7 +94,7 @@ const Index = () => {
           <Card className="bg-blue-gray-200 opacity-80 hover:opacity-100 rounded-2xl bg-opacity-80 w-96 h-[382px] flex items-center justify-center">
             <div className="flex items-center gap-5 flex-col">
               <PlusIcon strokeWidth={2} className="h-[64px] w-[64px]" />
-              <Typography variant="h4" color="blue-grey">
+              <Typography variant="h4" color="black">
                 Add new space
               </Typography>
             </div>

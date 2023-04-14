@@ -2,10 +2,20 @@ import type { CoreContext } from '../types'
 import { spaceMapper } from './mapper'
 import type { Space } from './types'
 
+interface Options {
+  id: string
+  filter?: {
+    reservations?: {
+      from: Date
+      to: Date
+    }
+  }
+}
+
 export const getSpace =
   ({ repository }: CoreContext) =>
-  async (id: string): Promise<Space> => {
-    const space = await repository.space.find(id)
+  async ({ id, filter }: Options): Promise<Space> => {
+    const space = await repository.space.find({ id, filter })
 
     if (!space) {
       throw new Error('Space not found')

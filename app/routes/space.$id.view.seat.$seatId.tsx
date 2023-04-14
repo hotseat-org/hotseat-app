@@ -7,6 +7,7 @@ import {
 } from '@material-tailwind/react'
 import type { ActionArgs, LoaderArgs } from '@remix-run/node'
 import { Form, useLoaderData } from '@remix-run/react'
+import { DateTime } from 'luxon'
 
 import { getCore } from '~/core/get-core'
 import { requireUser } from '~/services/session.server'
@@ -17,16 +18,35 @@ enum ActionIntent {
   CancelReservation = 'CancelReservation',
 }
 
-export const loader = async ({ params }: LoaderArgs) => {
+export const loader = async ({ params, request }: LoaderArgs) => {
   const core = getCore()
   if (!params.seatId) throw new Error('Missing ID in params')
 
-  const seat = await core.seat.get(params.seatId)
+  const url = new URL(request.url)
+  const year = Number(url.searchParams.get('year'))
+  const month = Number(url.searchParams.get('month'))
+  const day = Number(url.searchParams.get('day'))
+
+  const from = DateTime.utc(year, month, day).startOf('day')
+  const to = from.endOf('day')
+
+  const seat = await core.seat.get({
+    id: params.seatId,
+    filter: { reservations: { from: from.toJSDate(), to: to.toJSDate() } },
+  })
   return { seat }
 }
 
 export const action = async ({ request, params }: ActionArgs) => {
   if (!params.seatId) throw new Error('Missing ID in params')
+
+  const url = new URL(request.url)
+  const year = Number(url.searchParams.get('year'))
+  const month = Number(url.searchParams.get('month'))
+  const day = Number(url.searchParams.get('day'))
+
+  const from = DateTime.utc(year, month, day).startOf('day')
+  const to = from.endOf('day')
 
   const formData = await request.formData()
   const intent = formData.get('intent')
@@ -36,16 +56,11 @@ export const action = async ({ request, params }: ActionArgs) => {
   const user = await requireUser(request)
 
   if (intent === ActionIntent.CreateReservation) {
-    const startOfTheDay = new Date(new Date().setUTCHours(0, 0, 0, 0))
-    const endOfTheDay = new Date(new Date().setUTCHours(23, 59, 59, 999))
-
-    console.log({ startOfTheDay, endOfTheDay })
-
     await core.reservation.create({
       userId: user.id,
       seatId: params.seatId,
-      from: startOfTheDay,
-      to: endOfTheDay,
+      from: from.toJSDate(),
+      to: to.toJSDate(),
     })
   }
 
@@ -81,6 +96,7 @@ const SeatDetail = () => {
           </CardBody>
         </Card>
       )}
+
       {seat?.reservations.map((reservation) => (
         <Card key={reservation.id}>
           <CardBody className="flex flex-col gap-4">
