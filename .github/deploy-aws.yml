@@ -12,6 +12,8 @@ env:
   BASE_URL: 'https://bxuenliqpkhnohnmcexrkxnqdm0tajxt.lambda-url.eu-west-1.on.aws'
   ASSETS_BUCKET_NAME: 'qseatassets'
   ASSETS_PATH: 'https://qseatassets.s3.eu-west-1.amazonaws.com/build/'
+  GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
 jobs:
   remix_app:
