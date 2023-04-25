@@ -12,26 +12,27 @@ interface Params {
 export const createReservation =
   ({ repository }: CoreContext) =>
   async ({ userId, seatId, from, to }: Params): Promise<Reservation> => {
-    const user = await repository.user.find(userId)
+    const user = await repository.user.find({
+      id: userId,
+      filter: { reservations: { from, to } },
+    })
 
     if (user?.seatsResident && user.seatsResident.length > 0)
       throw new Error("Permanent resident can't reserve a seat.")
 
-    const seat = await repository.seat.find({ id: seatId })
+    if (user?.reservations && user.reservations?.length > 0)
+      throw new Error('You already have a reservation for this day.')
+
+    const seat = await repository.seat.find({
+      id: seatId,
+      filter: { reservations: { from, to } },
+    })
 
     if (seat?.resident)
       throw new Error("Can't reserve a seat with permanent resident.")
 
-    const existingReservation = await repository.reservation.find({
-      seatId,
-      userId,
-      filter: { from, to },
-    })
-
-    if (existingReservation && existingReservation.seat.id !== seatId)
-      throw new Error('You already have a reservation for this day.')
-
-    if (existingReservation) throw new Error('This seat is already reserved.')
+    if (seat?.reservations && seat.reservations.length > 0)
+      throw new Error('This seat is already reserved.')
 
     const reservation = await repository.reservation.create({
       userId,

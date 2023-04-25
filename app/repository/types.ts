@@ -2,6 +2,7 @@ import type { CreateReservationArgs } from './methods/createReservation'
 import type { FindReservationArgs } from './methods/findReservation'
 import type { FindSeatArgs } from './methods/findSeat'
 import type { FindSpaceArgs } from './methods/findSpace'
+import type { FindUserArgs } from './methods/findUser'
 
 export interface Space {
   id: string
@@ -61,7 +62,7 @@ export interface Repository {
     delete: (id: string) => Promise<void>
   }
   user: {
-    find: (id: string) => Promise<User | null>
+    find: (args: FindUserArgs) => Promise<User | null>
     findMany: () => Promise<User[]>
     create: (options: CreateUserOptions) => Promise<User>
   }
