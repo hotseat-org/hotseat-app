@@ -17,7 +17,7 @@ export const createReservation =
     if (user?.seatsResident && user.seatsResident.length > 0)
       throw new Error("Permanent resident can't reserve a seat.")
 
-    const seat = await repository.seat.find(seatId)
+    const seat = await repository.seat.find({ id: seatId })
 
     if (seat?.resident)
       throw new Error("Can't reserve a seat with permanent resident.")

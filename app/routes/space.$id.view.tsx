@@ -141,7 +141,7 @@ const Space = () => {
               Previous day
             </Button>
           </Link>
-          <Typography variant="sm">
+          <Typography variant="small">
             {today.toLocaleString({ dateStyle: 'full' })}
           </Typography>
           <Link
