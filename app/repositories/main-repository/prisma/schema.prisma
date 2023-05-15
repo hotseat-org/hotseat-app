@@ -1,0 +1,62 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-1.0.x"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Seat {
+  PK           Int           @id @default(autoincrement())
+  id           String        @unique @default(uuid()) @db.VarChar(36)
+  furnitureId  String        @unique
+  reservations Reservation[]
+  residentId   String?
+  space        Space         @relation(fields: [spacePK], references: [PK])
+  spacePK      Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Reservation {
+  PK     Int      @id @default(autoincrement())
+  id     String   @unique @default(uuid()) @db.VarChar(36)
+  from   DateTime
+  to     DateTime
+  userId String
+  seat   Seat     @relation(fields: [seatPK], references: [PK])
+  seatPK Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Room {
+  PK      Int    @id @default(autoincrement())
+  id      String @unique @default(uuid()) @db.VarChar(36)
+  name    String
+  space   Space  @relation(fields: [spacePK], references: [PK])
+  spacePK Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Space {
+  PK          Int     @id @default(autoincrement())
+  id          String  @unique @default(uuid()) @db.VarChar(36)
+  name        String  @unique
+  spaceId     String
+  description String?
+  rooms       Room[]
+  seats       Seat[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

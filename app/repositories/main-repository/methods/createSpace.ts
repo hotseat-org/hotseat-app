@@ -1,8 +1,8 @@
 import type { PrismaClient } from '@prisma/client'
-import type { Repository } from '../types'
+import type { MainRepository } from '../types'
 
 export const createSpace =
-  (prisma: PrismaClient): Repository['space']['create'] =>
+  (prisma: PrismaClient): MainRepository['space']['create'] =>
   async ({ name, spaceId }) => {
     const result = await prisma.space.create({
       data: {
@@ -12,8 +12,11 @@ export const createSpace =
       include: {
         seats: {
           include: {
+            space: { select: { id: true } },
             reservations: {
-              include: { by: { include: { photos: true } }, seat: true },
+              include: {
+                seat: { include: { space: { select: { id: true } } } },
+              },
             },
           },
         },

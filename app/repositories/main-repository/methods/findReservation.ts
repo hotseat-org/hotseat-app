@@ -1,5 +1,5 @@
 import type { PrismaClient } from '@prisma/client'
-import type { Repository } from '../types'
+import type { MainRepository } from '../types'
 
 export interface FindReservationArgs {
   seatId?: string
@@ -11,17 +11,16 @@ export interface FindReservationArgs {
 }
 
 export const findReservation =
-  (prisma: PrismaClient): Repository['reservation']['find'] =>
+  (prisma: PrismaClient): MainRepository['reservation']['find'] =>
   async ({ seatId, userId, filter }: FindReservationArgs) => {
     const result = await prisma.reservation.findFirst({
       where: {
-        OR: [{ seat: { id: seatId } }, { by: { id: userId } }],
+        OR: [{ seat: { id: seatId } }, { userId }],
         from: filter ? { gte: filter.from } : undefined,
         to: filter ? { lte: filter.to } : undefined,
       },
       include: {
-        by: true,
-        seat: true,
+        seat: { include: { space: { select: { id: true } } } },
       },
     })
 

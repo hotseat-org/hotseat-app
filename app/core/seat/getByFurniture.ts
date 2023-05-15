@@ -3,9 +3,9 @@ import { seatMapper } from './mapper'
 import type { Seat } from './types'
 
 export const getSeatByFurniture =
-  ({ repository }: CoreContext) =>
+  ({ mainRepository }: CoreContext) =>
   async (id: string): Promise<Seat | null> => {
-    const seat = await repository.seat.findByFurniture(id)
+    const seat = await mainRepository.seat.findByFurniture(id)
 
     return seat && seatMapper.fromRepository(seat)
   }

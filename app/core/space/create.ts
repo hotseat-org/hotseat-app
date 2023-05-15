@@ -9,9 +9,9 @@ interface CreateSpaceOptions {
 }
 
 export const createNewSpace =
-  ({ repository }: CoreContext) =>
+  ({ mainRepository }: CoreContext) =>
   async (options: CreateSpaceOptions): Promise<Space> => {
-    const space = await repository.space.create(options)
+    const space = await mainRepository.space.create(options)
 
     return spaceMapper.fromRepository(space)
   }

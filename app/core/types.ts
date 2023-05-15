@@ -1,5 +1,7 @@
-import type { Repository } from '~/repository/types'
+import type { MainRepository } from '~/repositories/main-repository/types'
+import type { UserRepository } from '~/repositories/user/common'
 
 export interface CoreContext {
-  repository: Repository
+  userRepository: UserRepository
+  mainRepository: MainRepository
 }

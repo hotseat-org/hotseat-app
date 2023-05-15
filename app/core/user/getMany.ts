@@ -3,9 +3,9 @@ import { userMapper } from './mapper'
 import type { User } from './types'
 
 export const getManyUsers =
-  ({ repository }: CoreContext) =>
+  ({ userRepository }: CoreContext) =>
   async (): Promise<User[]> => {
-    const users = await repository.user.findMany()
+    const users = await userRepository.findMany()
 
     return users.map(userMapper.fromRepository)
   }

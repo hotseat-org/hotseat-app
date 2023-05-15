@@ -1,5 +1,5 @@
 import type { PrismaClient } from '@prisma/client'
-import type { Repository } from '../types'
+import type { MainRepository } from '../types'
 
 export interface CreateReservationArgs {
   userId: string
@@ -9,18 +9,17 @@ export interface CreateReservationArgs {
 }
 
 export const createReservation =
-  (prisma: PrismaClient): Repository['reservation']['create'] =>
+  (prisma: PrismaClient): MainRepository['reservation']['create'] =>
   async ({ userId, seatId, from, to }: CreateReservationArgs) => {
     const reservation = prisma.reservation.create({
       data: {
         from,
         to,
         seat: { connect: { id: seatId } },
-        by: { connect: { id: userId } },
+        userId,
       },
       include: {
-        seat: true,
-        by: true,
+        seat: { include: { space: { select: { id: true } } } },
       },
     })
 

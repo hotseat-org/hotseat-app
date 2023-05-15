@@ -1,5 +1,5 @@
 import type { PrismaClient } from '@prisma/client'
-import type { Repository } from '../types'
+import type { MainRepository } from '../types'
 
 export interface FindSeatArgs {
   id: string
@@ -12,18 +12,18 @@ export interface FindSeatArgs {
 }
 
 export const findSeat =
-  (prisma: PrismaClient): Repository['seat']['find'] =>
+  (prisma: PrismaClient): MainRepository['seat']['find'] =>
   async ({ id, filter }: FindSeatArgs) => {
     const result = await prisma.seat.findUnique({
       where: { id },
       include: {
-        resident: { include: { photos: true } },
+        space: { select: { id: true } },
         reservations: {
           where: {
             from: { gte: filter?.reservations?.from },
             to: { lte: filter?.reservations?.to },
           },
-          include: { by: { include: { photos: true } }, seat: true },
+          include: { seat: { include: { space: { select: { id: true } } } } },
         },
       },
     })

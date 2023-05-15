@@ -13,9 +13,9 @@ interface Options {
 }
 
 export const getSeat =
-  ({ repository }: CoreContext) =>
+  ({ mainRepository }: CoreContext) =>
   async ({ id, filter }: Options): Promise<Seat | null> => {
-    const seat = await repository.seat.find({ id, filter })
+    const seat = await mainRepository.seat.find({ id, filter })
 
     return seat && seatMapper.fromRepository(seat)
   }
