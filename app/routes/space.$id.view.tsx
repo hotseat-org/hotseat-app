@@ -6,7 +6,6 @@ import {
   useLoaderData,
   useLocation,
   useNavigate,
-  useSearchParams,
 } from '@remix-run/react'
 import type { Space as SpaceView } from '@smplrspace/smplr-loader/dist/generated/smplr'
 import { DateTime } from 'luxon'
@@ -37,26 +36,28 @@ export const loader = async ({ request, params }: LoaderArgs) => {
     filter: { reservations: { from: from.toJSDate(), to: to.toJSDate() } },
   })
 
-  return { space, me }
+  const [userSeats, userReservations] = await Promise.all([
+    core.seat.getManyByUser(user.id, space.id),
+    core.reservation.getManyByUser(user.id),
+  ])
+
+  const allUserSeats = [
+    ...userSeats,
+    ...userReservations.map((reservation) => reservation.seat).flat(),
+  ]
+
+  return { space, me, allUserSeats }
 }
 
 const Space = () => {
-  const { space, me } = useLoaderData<typeof loader>()
+  const { space, allUserSeats } = useLoaderData<typeof loader>()
   const [spaceView, setSpaceView] = useState<SpaceView | undefined>(undefined)
   const navigate = useNavigate()
 
-  // TODO: Yo, this should be computed on the BE
-  const mySeatsSet = useMemo(() => {
-    if (me) {
-      const allSeats = [
-        ...me.reservations.map((reservation) => reservation.seat).flat(),
-        ...me.seatsResident,
-      ]
-      return new Set<string>(allSeats.map((seat) => seat.id))
-    }
-
-    return new Set<string>()
-  }, [me])
+  const mySeatsSet = useMemo(
+    () => new Set<string>(allUserSeats.map((seat) => seat.id)),
+    [allUserSeats]
+  )
 
   useEffect(() => {
     if (spaceView && space) {
@@ -66,7 +67,7 @@ const Space = () => {
         data: space.seats.map((seat) => ({
           furnitureId: seat.furnitureId,
           isAvailable: seat.reservations.length === 0,
-          hasResident: !!seat.resident,
+          hasResident: !!seat.residentId,
           isMySeat: mySeatsSet.has(seat.id),
         })),
         tooltip: (d) => {

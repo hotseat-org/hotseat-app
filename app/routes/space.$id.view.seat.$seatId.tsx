@@ -79,19 +79,20 @@ const SeatDetail = () => {
   const user = useUser()
 
   const canBeReserved =
-    !seat?.resident && (!seat?.reservations || seat.reservations.length === 0)
+    !seat?.residentId && (!seat?.reservations || seat.reservations.length === 0)
 
   return (
     <Form method="post" className="flex flex-col gap-2 mt-4">
-      {seat?.resident && (
+      {seat?.residentId && (
         <Card>
           <CardBody className="flex flex-col gap-4">
             <Typography>
               This seat has a permanent resident and can't be reserved
             </Typography>
             <div className="flex gap-2 items-center">
-              <Avatar variant="circular" src={seat.resident.photo} />
-              <Typography>{seat.resident.displayName}</Typography>
+              {/* TODO implement */}
+              {/*<Avatar variant="circular" src={seat.resident.photo} />*/}
+              {/*<Typography>{seat.resident.displayName}</Typography>*/}
             </div>
           </CardBody>
         </Card>
@@ -102,10 +103,11 @@ const SeatDetail = () => {
           <CardBody className="flex flex-col gap-4">
             <Typography>This seat is reserved</Typography>
             <div className="flex gap-2 items-center">
-              <Avatar variant="circular" src={reservation.by.photo} />
-              <Typography>{reservation.by.displayName}</Typography>
+              {/* TODO implement */}
+              {/*<Avatar variant="circular" src={reservation.by.photo} />*/}
+              {/*<Typography>{reservation.by.displayName}</Typography>*/}
             </div>
-            {user.id === reservation.by.id && (
+            {user.id === reservation.userId && (
               <>
                 <input
                   readOnly

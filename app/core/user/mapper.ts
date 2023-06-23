@@ -1,15 +1,11 @@
-import type { User as RepositoryUser } from '~/repository/types'
+import type { User as RepositoryUser } from '~/repositories/user/common'
 import type { User } from './types'
-import { reservationMapper } from '../reservation/mapper'
-import { seatMapper } from '../seat/mapper'
 
 export const userMapper = {
   fromRepository: (user: RepositoryUser): User => ({
     id: user.id,
-    displayName: user.displayName ?? undefined,
-    photo: user.photos?.[0]?.url,
-    reservations:
-      user.reservations?.map(reservationMapper.fromRepository) ?? [],
-    seatsResident: user.seatsResident?.map(seatMapper.fromRepository) ?? [],
+    displayName: `${user.firstname} ${user.lastname}`,
+    // TODO https://developers.google.com/admin-sdk/directory/v1/guides/manage-users#get_photo
+    // photo: user.photos?.[0]?.url,
   }),
 }

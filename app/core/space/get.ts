@@ -13,9 +13,9 @@ interface Options {
 }
 
 export const getSpace =
-  ({ repository }: CoreContext) =>
+  ({ mainRepository }: CoreContext) =>
   async ({ id, filter }: Options): Promise<Space> => {
-    const space = await repository.space.find({ id, filter })
+    const space = await mainRepository.space.find({ id, filter })
 
     if (!space) {
       throw new Error('Space not found')

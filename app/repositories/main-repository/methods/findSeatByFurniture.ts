@@ -1,15 +1,15 @@
 import type { PrismaClient } from '@prisma/client'
-import type { Repository } from '../types'
+import type { MainRepository } from '../types'
 
 export const findSeatByFurniture =
-  (prisma: PrismaClient): Repository['seat']['findByFurniture'] =>
+  (prisma: PrismaClient): MainRepository['seat']['findByFurniture'] =>
   async (furnitureId) => {
     const result = await prisma.seat.findUnique({
       where: { furnitureId },
       include: {
-        resident: { include: { photos: true } },
+        space: { select: { id: true } },
         reservations: {
-          include: { by: { include: { photos: true } }, seat: true },
+          include: { seat: { include: { space: { select: { id: true } } } } },
         },
       },
     })

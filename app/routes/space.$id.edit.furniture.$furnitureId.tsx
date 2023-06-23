@@ -103,7 +103,7 @@ const FurnitureEditor = () => {
             </CardBody>
           </Card>
 
-          {!seat.resident && (
+          {!seat.residentId && (
             <Card className="mt-4">
               <CardBody>
                 <div className="flex flex-col gap-4">
@@ -135,14 +135,15 @@ const FurnitureEditor = () => {
             </Card>
           )}
 
-          {seat.resident && (
+          {seat.residentId && (
             <Card className="mt-4">
               <CardBody>
                 <div className="flex flex-col gap-4">
                   <Typography>This seat has a permanent resident</Typography>
                   <div className="flex gap-2 items-center">
-                    <Avatar variant="circular" src={seat.resident.photo} />
-                    {seat.resident.displayName}
+                    {/* TODO implement */}
+                    {/*<Avatar variant="circular" src={seat.resident.photo} />*/}
+                    {/*{seat.resident.displayName}*/}
                   </div>
                   <select name="userId">
                     {users.map((user) => (

@@ -1,4 +1,4 @@
-import type { Space as RepositorySpace } from '~/repository/types'
+import type { Space as RepositorySpace } from '~/repositories/main-repository/types'
 import type { Space } from './types'
 import { seatMapper } from '../seat/mapper'
 

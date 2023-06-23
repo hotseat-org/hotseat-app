@@ -3,9 +3,9 @@ import { spaceMapper } from './mapper'
 import type { Space } from './types'
 
 export const getManySpaces =
-  ({ repository }: CoreContext) =>
+  ({ mainRepository }: CoreContext) =>
   async (): Promise<Space[]> => {
-    const spaces = await repository.space.findMany()
+    const spaces = await mainRepository.space.findMany()
 
     return spaces.map(spaceMapper.fromRepository)
   }

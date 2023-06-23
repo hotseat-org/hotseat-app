@@ -3,13 +3,13 @@ import { seatMapper } from './mapper'
 import type { Seat } from './types'
 
 export const assignResident =
-  ({ repository }: CoreContext) =>
+  ({ mainRepository, userRepository }: CoreContext) =>
   async (id: string, residentId: string): Promise<Seat> => {
-    const resident = repository.user.find(residentId)
+    const resident = userRepository.find({ id: residentId })
 
     if (!resident) throw new Error('User not found')
 
-    const seat = await repository.seat.update(id, residentId)
+    const seat = await mainRepository.seat.update(id, residentId)
 
     return seatMapper.fromRepository(seat)
   }

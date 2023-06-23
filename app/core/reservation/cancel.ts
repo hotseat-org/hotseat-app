@@ -6,12 +6,12 @@ interface Params {
 }
 
 export const cancelReservation =
-  ({ repository }: CoreContext) =>
+  ({ mainRepository }: CoreContext) =>
   async ({ userId }: Params): Promise<void> => {
-    const reservation = await repository.reservation.find({ userId })
+    const reservation = await mainRepository.reservation.find({ userId })
 
     if (!reservation)
       throw new Error('You can cancel only your own reservation')
 
-    await repository.reservation.delete(reservation.id)
+    await mainRepository.reservation.delete(reservation.id)
   }

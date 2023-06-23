@@ -1,8 +1,8 @@
 import type { PrismaClient } from '@prisma/client'
-import type { Repository } from '../types'
+import type { MainRepository } from '../types'
 
 export const createSeat =
-  (prisma: PrismaClient): Repository['seat']['create'] =>
+  (prisma: PrismaClient): MainRepository['seat']['create'] =>
   async (furnitureId, spaceId) => {
     const space = await prisma.space.findUnique({ where: { id: spaceId } })
 
@@ -11,8 +11,9 @@ export const createSeat =
     const result = await prisma.seat.create({
       data: { furnitureId, spacePK: space?.PK },
       include: {
+        space: { select: { id: true } },
         reservations: {
-          include: { by: { include: { photos: true } }, seat: true },
+          include: { seat: { include: { space: { select: { id: true } } } } },
         },
       },
     })

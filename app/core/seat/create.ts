@@ -3,9 +3,9 @@ import { seatMapper } from './mapper'
 import type { Seat } from './types'
 
 export const createSeat =
-  ({ repository }: CoreContext) =>
+  ({ mainRepository }: CoreContext) =>
   async (id: string, spaceId: string): Promise<Seat> => {
-    const seat = await repository.seat.create(id, spaceId)
+    const seat = await mainRepository.seat.create(id, spaceId)
 
     return seatMapper.fromRepository(seat)
   }

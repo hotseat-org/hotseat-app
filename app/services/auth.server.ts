@@ -23,16 +23,11 @@ authenticator.use(
 
       const user = await core.user.get(profile.id)
 
-      if (user) return user
+      if (!user) throw new Error('User does not exists in organization')
 
       if (!profile.emails[0]) throw new Error('User is missing email')
 
-      return core.user.create({
-        displayName: profile.displayName,
-        id: profile.id,
-        email: profile.emails[0].value,
-        photos: profile.photos.map((photo) => photo.value),
-      })
+      return user
     }
   )
 )
