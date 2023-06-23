@@ -1,15 +1,13 @@
 import type { UserRepository } from '~/repositories/user/common'
-import { mockedGoogleUsers } from '~/repositories/user/mock-google/dataset'
+import {
+  mockedGoogleUsers,
+  mockedUsers,
+} from '~/repositories/user/mock-google/dataset'
 import { toUser } from '~/repositories/user/mock-google/transforms'
 import type { FindUserArgs } from '~/repositories/user/common'
 
-const find = ({ id, email }: FindUserArgs) => {
-  const result = mockedGoogleUsers.find((user) => {
-    const matchId = id ? user.id === id : null
-    const matchEmail = email ? user.primaryEmail === email : null
-
-    return [matchId, matchEmail].some((item) => item === true)
-  })
+const find = ({ email }: FindUserArgs) => {
+  const result = mockedUsers.get(email)
 
   return result ? toUser(result) : null
 }

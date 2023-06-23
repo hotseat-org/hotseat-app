@@ -21,12 +21,13 @@ authenticator.use(
     async ({ profile }) => {
       const core = getCore()
 
-      const user = await core.user.get(profile.id)
+      const primaryEmail = profile.emails[0]
+
+      if (!primaryEmail) throw new Error('User is missing email')
+
+      const user = await core.user.get(primaryEmail.value)
 
       if (!user) throw new Error('User does not exists in organization')
-
-      if (!profile.emails[0]) throw new Error('User is missing email')
-
       return user
     }
   )

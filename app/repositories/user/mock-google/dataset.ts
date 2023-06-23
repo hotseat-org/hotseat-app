@@ -23,3 +23,7 @@ export const mockedGoogleUsers: MockGoogleUser[] = [
     },
   },
 ]
+
+export const mockedUsers = new Map(
+  mockedGoogleUsers.map((user) => [user.primaryEmail, user])
+)

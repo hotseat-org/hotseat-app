@@ -9,8 +9,7 @@ export interface User {
 }
 
 export interface FindUserArgs {
-  id?: string
-  email?: string
+  email: string
 }
 
 export interface UserRepository {
