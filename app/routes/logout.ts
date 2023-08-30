@@ -1,5 +1,5 @@
 import { authenticator } from '../services/auth.server.js'
-import type { ActionFunction, LoaderFunction } from '@remix-run/node'
+import type { ActionFunction, LoaderFunction } from '@vercel/remix'
 
 export const action: ActionFunction = ({ request }) => {
   return authenticator.logout(request, {

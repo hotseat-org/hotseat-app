@@ -13,6 +13,8 @@ import { createReservation } from './methods/createReservation'
 import { findReservation } from './methods/findReservation'
 import { findReservations } from './methods/findReservations'
 import { deleteReservation } from './methods/deleteReservation'
+import { createUser } from './methods/user/create'
+import { findUserByEmail } from './methods/findUserByEmail'
 
 export const createMainMysqlRepository = (
   prisma: PrismaClient
@@ -36,6 +38,10 @@ export const createMainMysqlRepository = (
       delete: deleteReservation(prisma),
       find: findReservation(prisma),
       findMany: findReservations(prisma),
+    },
+    user: {
+      create: createUser(prisma),
+      findByEmail: findUserByEmail(prisma),
     },
   }
 }

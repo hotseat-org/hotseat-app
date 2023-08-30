@@ -1,63 +1,74 @@
+import { FireIcon, MoonIcon, SunIcon } from '@heroicons/react/24/solid'
 import {
-  ChartBarIcon,
-  HomeIcon,
-  MagnifyingGlassIcon,
-  PaintBrushIcon,
-} from '@heroicons/react/24/outline'
-import {
-  Input,
-  Navbar as MaterialNavbar,
-  MenuItem,
-  Typography,
-} from '@material-tailwind/react'
-import { ProfileMenu } from './ProfileMenu'
-import { Link } from '@remix-run/react'
+  Button,
+  NavbarBrand,
+  NavbarContent,
+  Navbar,
+  NavbarItem,
+  Avatar,
+  Link as NextUiLink,
+} from '@nextui-org/react'
+import { Link, useLocation } from '@remix-run/react'
+import { Theme, useTheme } from 'remix-themes'
+import { useUser } from '~/utils/remix'
 
-export const Navbar = () => (
-  <MaterialNavbar className="fixed p-2 lg:rounded-full z-10 mt-5 left-1/2 transform -translate-x-1/2">
-    <div className="mx-auto flex text-blue-gray-900 justify-between">
-      <div className="flex gap-10">
-        <Typography
-          as="a"
-          variant="h3"
-          href="/"
-          className="mr-4 ml-2 cursor-pointer py-1.5 font-bold"
-        >
-          Qseat
-        </Typography>
-        <ul className="mb-4 mt-2 flex flex-col gap-2 lg:mb-0 lg:mt-0 lg:flex-row lg:items-center">
-          <Link to="/spaces">
-            <Typography
-              variant="small"
-              color="blue-gray"
-              className="font-normal"
-            >
-              <MenuItem className="flex items-center gap-2 lg:rounded-full">
-                <HomeIcon className="h-[18px] w-[18px]" />
-                Spaces
-              </MenuItem>
-            </Typography>
-          </Link>
-          <Typography
-            as="a"
-            href="#"
-            variant="small"
-            color="blue-gray"
-            className="font-normal"
+export const Header = () => {
+  const user = useUser()
+  const { pathname } = useLocation()
+  const [theme, setTheme] = useTheme()
+
+  console.log({ theme })
+
+  return (
+    <Navbar isBordered>
+      <NavbarBrand className="flex gap-1">
+        <h1 className="font-extrabold text-xl">Hot Seat</h1>
+        <FireIcon className="text-red-500 dark:text-red-300" width={32} />
+      </NavbarBrand>
+      <NavbarContent>
+        <NavbarItem>
+          <NextUiLink
+            isBlock
+            color={pathname === '/app/organizations' ? 'primary' : 'foreground'}
+            as={Link}
+            to="/app/organizations"
           >
-            <MenuItem className="flex items-center gap-2 lg:rounded-full">
-              <ChartBarIcon className="h-[18px] w-[18px]" />
-              Statistics
-            </MenuItem>
-          </Typography>
-        </ul>
-      </div>
-      <div className="flex gap-10">
-        <div className="w-72">
-          <Input label="Search" icon={<MagnifyingGlassIcon />} />
-        </div>
-        <ProfileMenu />
-      </div>
-    </div>
-  </MaterialNavbar>
-)
+            Organizations
+          </NextUiLink>
+        </NavbarItem>
+        <NavbarItem>
+          <NextUiLink
+            isBlock
+            color={pathname === '/app/reservations' ? 'primary' : 'foreground'}
+            as={Link}
+            to="/app/reservations"
+          >
+            Reservations
+          </NextUiLink>
+        </NavbarItem>
+      </NavbarContent>
+      <NavbarContent justify="end">
+        <p>{user.displayName}</p>
+        <Avatar src={user.photo} name={user.displayName} />
+        <NavbarItem className="flex items-center gap-1">
+          <Button
+            isIconOnly
+            variant="flat"
+            onClick={() =>
+              setTheme(theme === Theme.DARK ? Theme.LIGHT : Theme.DARK)
+            }
+          >
+            {theme === Theme.LIGHT ? (
+              <MoonIcon height={24} />
+            ) : (
+              <SunIcon height={24} />
+            )}
+          </Button>
+          <Button variant="flat" color="primary" href="/logout" as="a">
+            Logout
+          </Button>
+        </NavbarItem>
+      </NavbarContent>
+    </Navbar>
+  )
+}

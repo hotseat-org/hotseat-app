@@ -11,7 +11,7 @@ import {
   CardHeader,
   Typography,
 } from '@material-tailwind/react'
-import type { LoaderArgs } from '@remix-run/node'
+import type { LoaderArgs } from '@vercel/remix'
 import { Link, Outlet, useLoaderData } from '@remix-run/react'
 import { SpaceViewer } from '~/components/SpaceView'
 import { getCore } from '~/core/get-core'
@@ -90,7 +90,7 @@ const Index = () => {
           )
         })}
 
-        <Link to="/spaces/new">
+        <Link to="new-space">
           <Card className="bg-blue-gray-200 opacity-80 hover:opacity-100 rounded-2xl bg-opacity-80 w-96 h-[382px] flex items-center justify-center">
             <div className="flex items-center gap-5 flex-col">
               <PlusIcon strokeWidth={2} className="h-[64px] w-[64px]" />

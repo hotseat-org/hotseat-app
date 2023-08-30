@@ -1,5 +1,5 @@
 import { Typography } from '@material-tailwind/react'
-import type { LoaderArgs } from '@remix-run/node'
+import type { LoaderArgs } from '@vercel/remix'
 import { Outlet, useLoaderData, useNavigate, useParams } from '@remix-run/react'
 import type { Space } from '@smplrspace/smplr-loader/dist/generated/smplr'
 import { useCallback, useEffect, useMemo, useState } from 'react'

@@ -6,7 +6,7 @@ import {
   CardHeader,
   Typography,
 } from '@material-tailwind/react'
-import type { ActionArgs, LoaderArgs } from '@remix-run/node'
+import type { ActionArgs, LoaderArgs } from '@vercel/remix'
 import { Form, useLoaderData } from '@remix-run/react'
 
 import { getCore } from '~/core/get-core'

@@ -1,5 +1,5 @@
 import { Button, Typography } from '@material-tailwind/react'
-import type { LoaderArgs } from '@remix-run/node'
+import type { LoaderArgs } from '@vercel/remix'
 import {
   Link,
   Outlet,

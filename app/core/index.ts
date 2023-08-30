@@ -8,13 +8,13 @@ import { getManySeatsBySpace } from './seat/getManyBySpace'
 import { getManySeatsByUser } from './seat/getManyByUser'
 import { deleteSeat } from './seat/delete'
 import { getUser } from './user/get'
-import { getManyUsers } from './user/getMany'
 import { assignResident } from './seat/assignResident'
 import { removeResident } from './seat/removeResident'
 import { getSeat } from './seat/get'
 import { createReservation } from './reservation/create'
 import { cancelReservation } from './reservation/cancel'
 import { getManyReservationsByUser } from './reservation/getManyByUser'
+import { createUser } from './user/create'
 
 export const createCore = (context: CoreContext) => ({
   space: {
@@ -34,7 +34,7 @@ export const createCore = (context: CoreContext) => ({
   },
   user: {
     get: getUser(context),
-    getMany: getManyUsers(context),
+    create: createUser(context),
   },
   reservation: {
     create: createReservation(context),

@@ -1,6 +1,10 @@
 import { Authenticator } from 'remix-auth'
 import { sessionStorage } from '~/services/session.server'
-import { GoogleStrategy, SocialsProvider } from 'remix-auth-socials'
+import {
+  GitHubStrategy,
+  GoogleStrategy,
+  SocialsProvider,
+} from 'remix-auth-socials'
 import type { User } from '~/core/user/types'
 import { getCore } from '~/core/get-core'
 
@@ -27,7 +31,44 @@ authenticator.use(
 
       const user = await core.user.get(primaryEmail.value)
 
-      if (!user) throw new Error('User does not exists in organization')
+      if (!user) {
+        return await core.user.create({
+          email: primaryEmail.value,
+          displayName: profile.displayName,
+          avatarUrl: profile.photos?.[0]?.value,
+        })
+      }
+
+      return user
+    }
+  )
+)
+
+authenticator.use(
+  new GitHubStrategy(
+    {
+      clientID: process.env.GITHUB_CLIENT_ID as string,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
+      scope: ['user:email', 'user'],
+      callbackURL: `${process.env.BASE_URL}/auth/${SocialsProvider.GITHUB}/callback`,
+    },
+    async ({ profile }) => {
+      const core = getCore()
+
+      const primaryEmail = profile.emails[0]
+
+      if (!primaryEmail) throw new Error('User is missing email')
+
+      const user = await core.user.get(primaryEmail.value)
+
+      if (!user) {
+        return await core.user.create({
+          email: primaryEmail.value,
+          displayName: profile.displayName,
+          avatarUrl: profile.photos?.[0]?.value,
+        })
+      }
+
       return user
     }
   )

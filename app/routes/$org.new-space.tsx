@@ -8,8 +8,8 @@ import {
   Card,
   Textarea,
 } from '@material-tailwind/react'
-import type { ActionFunction } from '@remix-run/node'
-import { redirect } from '@remix-run/node'
+import type { ActionFunction } from '@vercel/remix'
+import { redirect } from '@vercel/remix'
 import { Form, Link } from '@remix-run/react'
 import { getCore } from '~/core/get-core'
 import * as z from 'zod'
@@ -60,7 +60,7 @@ export const Space = () => {
             </div>
           </CardBody>
           <CardFooter className="flex justify-end">
-            <Link to="/spaces">
+            <Link to="..">
               <Button variant="text" color="red" className="mr-1">
                 <span>Cancel</span>
               </Button>

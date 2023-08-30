@@ -1,5 +1,4 @@
-import type { LoaderArgs } from '@remix-run/node'
-import tailwindStyles from './tailwind.css'
+import type { LinksFunction, LoaderArgs } from '@vercel/remix'
 import {
   Meta,
   Links,
@@ -9,43 +8,56 @@ import {
   LiveReload,
   useLoaderData,
 } from '@remix-run/react'
-import type {
-  LinksFunction,
-  MetaFunction,
-} from '@remix-run/react/dist/routeModules'
+import type { V2_MetaFunction } from '@remix-run/react/dist/routeModules'
 import { authenticator } from './services/auth.server'
-import { Navbar } from './components/Navbar'
+import { NextUIProvider } from '@nextui-org/react'
+import { themeSessionResolver } from './services/theme.server'
 
-export let links: LinksFunction = () => {
-  return [{ rel: 'stylesheet', href: tailwindStyles }]
-}
+import stylesheet from '~/styles/tailwind.css'
+import { PreventFlashOnWrongTheme, ThemeProvider, useTheme } from 'remix-themes'
 
-export const meta: MetaFunction = () => {
-  return { title: 'qseat' }
+export const links: LinksFunction = () => [
+  { rel: 'stylesheet', href: stylesheet },
+]
+
+export const meta: V2_MetaFunction = () => {
+  return [{ title: 'Hot Seat' }]
 }
 
 export const loader = async ({ request }: LoaderArgs) => {
   const user = await authenticator.isAuthenticated(request)
+  const { getTheme } = await themeSessionResolver(request)
 
-  return {
-    user,
-  }
+  return { user, theme: getTheme() }
 }
 
 export default function App() {
-  const { user } = useLoaderData<typeof loader>()
+  const data = useLoaderData<typeof loader>()
 
   return (
-    <html lang="en">
+    <ThemeProvider specifiedTheme={data.theme} themeAction="/action/set-theme">
+      <Foo />
+    </ThemeProvider>
+  )
+}
+
+const Foo = () => {
+  const [theme] = useTheme()
+  const data = useLoaderData<typeof loader>()
+
+  return (
+    <html lang="en" className={theme ?? ''}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
         <Meta />
+        <PreventFlashOnWrongTheme ssrTheme={Boolean(data.theme)} />
         <Links />
       </head>
-      <body className="bg-blue-gray-100">
-        {user && <Navbar />}
-        <Outlet />
+      <body>
+        <NextUIProvider>
+          <Outlet />
+        </NextUIProvider>
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
