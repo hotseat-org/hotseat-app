@@ -31,17 +31,17 @@ export const loader = async ({ request }: LoaderArgs) => {
   return { user, theme: getTheme() }
 }
 
-export default function App() {
+export default function AppWithProvider() {
   const data = useLoaderData<typeof loader>()
 
   return (
     <ThemeProvider specifiedTheme={data.theme} themeAction="/action/set-theme">
-      <Foo />
+      <App />
     </ThemeProvider>
   )
 }
 
-const Foo = () => {
+const App = () => {
   const [theme] = useTheme()
   const data = useLoaderData<typeof loader>()
 
