@@ -13,9 +13,8 @@
     "prisma:reset": "npx prisma migrate reset --schema=./app/repositories/main-repository/prisma/schema.prisma",
     "prisma:migrate": "npx prisma migrate dev --schema=./app/repositories/main-repository/prisma/schema.prisma",
     "prisma:studio": "npx prisma studio --schema=./app/repositories/main-repository/prisma/schema.prisma",
-    "db:init": "npm run db:stop ; docker run -p 5432:5432 --name qseat-db -e POSTGRESQL_PASSWORD=qseat -e POSTGRESQL_DATABASE=qseat -d bitnami/postgresql:15.4.0",
-    "db:stop": "docker stop qseat-db ; docker rm qseat-db",
-    "db:start": "docker start qseat-db",
+    "db:start": "docker compose up -d postgres",
+    "db:stop": "docker compose stop postgres",
     "typecheck": "tsc --project ./tsconfig.json"
   },
   "dependencies": {

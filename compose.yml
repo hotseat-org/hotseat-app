@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  postgres:
+    image: bitnami/postgresql:15.4.0
+    volumes:
+      - postgresql-data:/bitnami/postgresql
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRESQL_PASSWORD=qseat
+      - POSTGRESQL_DATABASE=qseat
+
+volumes:
+  postgresql-data:
