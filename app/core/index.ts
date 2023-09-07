@@ -1,20 +1,23 @@
+import { createOrganization } from './organization/create'
+import { isAvailable } from './organization/isAvailable'
+import { cancelReservation } from './reservation/cancel'
+import { createReservation } from './reservation/create'
+import { getManyReservationsByUser } from './reservation/getManyByUser'
+import { assignResident } from './seat/assignResident'
+import { createSeat } from './seat/create'
+import { deleteSeat } from './seat/delete'
+import { getSeat } from './seat/get'
+import { getSeatByFurniture } from './seat/getByFurniture'
+import { getManySeatsBySpace } from './seat/getManyBySpace'
+import { getManySeatsByUser } from './seat/getManyByUser'
+import { removeResident } from './seat/removeResident'
 import { createNewSpace } from './space/create'
 import { getSpace } from './space/get'
 import { getManySpaces } from './space/getMany'
 import type { CoreContext } from './types'
-import { getSeatByFurniture } from './seat/getByFurniture'
-import { createSeat } from './seat/create'
-import { getManySeatsBySpace } from './seat/getManyBySpace'
-import { getManySeatsByUser } from './seat/getManyByUser'
-import { deleteSeat } from './seat/delete'
-import { getUser } from './user/get'
-import { assignResident } from './seat/assignResident'
-import { removeResident } from './seat/removeResident'
-import { getSeat } from './seat/get'
-import { createReservation } from './reservation/create'
-import { cancelReservation } from './reservation/cancel'
-import { getManyReservationsByUser } from './reservation/getManyByUser'
 import { createUser } from './user/create'
+import { getUser } from './user/get'
+import { getUserOrganizations } from './user/getOrganizations'
 
 export const createCore = (context: CoreContext) => ({
   space: {
@@ -35,11 +38,16 @@ export const createCore = (context: CoreContext) => ({
   user: {
     get: getUser(context),
     create: createUser(context),
+    getOrganizations: getUserOrganizations(context),
   },
   reservation: {
     create: createReservation(context),
     cancel: cancelReservation(context),
     getManyByUser: getManyReservationsByUser(context),
+  },
+  organization: {
+    isAvailable: isAvailable(context),
+    create: createOrganization(context),
   },
 })
 

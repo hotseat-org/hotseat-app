@@ -1,10 +1,7 @@
-import type { CreateReservationArgs } from './methods/createReservation'
-import type { FindReservationArgs } from './methods/findReservation'
-import type { FindReservationsArgs } from './methods/findReservations'
-import type { FindSeatArgs } from './methods/findSeat'
-import type { FindSeatsArgs } from './methods/findSeats'
-import type { FindSpaceArgs } from './methods/findSpace'
-import type { FindUserArgs } from './methods/findUserByEmail'
+import type { CreateOrganizationArgs } from './methods/organization/create'
+import type { FindOrganizationArgs } from './methods/organization/find'
+import type { FindOrganizationsArgs } from './methods/organization/findMany'
+import type { FindUserArgs } from './methods/user/find'
 
 export interface Space {
   id: string
@@ -47,31 +44,22 @@ export interface User {
   updatedAt: Date
 }
 
+export interface Organization {
+  name: string
+  slug: string
+}
+
 export type CreateSpaceOptions = Pick<Space, 'name' | 'spaceId' | 'description'>
 export type CreateUserArgs = Pick<User, 'email' | 'avatarUrl' | 'displayName'>
 
 export interface MainRepository {
-  space: {
-    find: (args: FindSpaceArgs) => Promise<Space | null>
-    findMany: () => Promise<Space[]>
-    create: (options: CreateSpaceOptions) => Promise<Space>
-  }
-  seat: {
-    findByFurniture: (furnitureId: string) => Promise<Seat | null>
-    find: (args: FindSeatArgs) => Promise<Seat | null>
-    findMany: (args: FindSeatsArgs) => Promise<Seat[]>
-    create: (furnitureId: string, spaceId: string) => Promise<Seat>
-    update: (id: string, residentId: string | null) => Promise<Seat>
-    delete: (id: string) => Promise<void>
-  }
-  reservation: {
-    create: (args: CreateReservationArgs) => Promise<Reservation>
-    delete: (id: string) => Promise<void>
-    find: (args: FindReservationArgs) => Promise<Reservation | null>
-    findMany: (args: FindReservationsArgs) => Promise<Reservation[]>
-  }
   user: {
     create: (args: CreateUserArgs) => Promise<User>
-    findByEmail: (args: FindUserArgs) => Promise<User | null>
+    find: (args: FindUserArgs) => Promise<User | null>
+  }
+  organization: {
+    findMany: (args: FindOrganizationsArgs) => Promise<Organization[]>
+    find: (args: FindOrganizationArgs) => Promise<Organization | null>
+    create: (args: CreateOrganizationArgs) => Promise<Organization>
   }
 }

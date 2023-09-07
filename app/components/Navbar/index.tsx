@@ -7,6 +7,9 @@ import {
   NavbarItem,
   Avatar,
   Link as NextUiLink,
+  NavbarMenuToggle,
+  NavbarMenu,
+  NavbarMenuItem,
 } from '@nextui-org/react'
 import { Link, useLocation } from '@remix-run/react'
 import { Theme, useTheme } from 'remix-themes'
@@ -17,19 +20,20 @@ export const Header = () => {
   const { pathname } = useLocation()
   const [theme, setTheme] = useTheme()
 
-  console.log({ theme })
-
   return (
     <Navbar isBordered>
+      <NavbarMenuToggle className="sm:hidden" />
       <NavbarBrand className="flex gap-1">
         <h1 className="font-extrabold text-xl">Hot Seat</h1>
         <FireIcon className="text-red-500 dark:text-red-300" width={32} />
       </NavbarBrand>
-      <NavbarContent>
+      <NavbarContent className="hidden sm:flex ">
         <NavbarItem>
           <NextUiLink
             isBlock
-            color={pathname === '/app/organizations' ? 'primary' : 'foreground'}
+            color={
+              pathname.includes('/app/organizations') ? 'primary' : 'foreground'
+            }
             as={Link}
             to="/app/organizations"
           >
@@ -39,7 +43,9 @@ export const Header = () => {
         <NavbarItem>
           <NextUiLink
             isBlock
-            color={pathname === '/app/reservations' ? 'primary' : 'foreground'}
+            color={
+              pathname.includes('/app/reservations') ? 'primary' : 'foreground'
+            }
             as={Link}
             to="/app/reservations"
           >
@@ -47,7 +53,7 @@ export const Header = () => {
           </NextUiLink>
         </NavbarItem>
       </NavbarContent>
-      <NavbarContent justify="end">
+      <NavbarContent justify="end" className="hidden sm:flex">
         <p>{user.displayName}</p>
         <Avatar src={user.photo} name={user.displayName} />
         <NavbarItem className="flex items-center gap-1">
@@ -64,11 +70,60 @@ export const Header = () => {
               <SunIcon height={24} />
             )}
           </Button>
-          <Button variant="flat" color="primary" href="/logout" as="a">
+          <Button variant="flat" color="danger" href="/logout" as="a">
             Logout
           </Button>
         </NavbarItem>
       </NavbarContent>
+      <NavbarMenu>
+        <NavbarMenuItem className="flex gap-4 items-center mb-4">
+          <Avatar src={user.photo} name={user.displayName} />
+          <p>{user.displayName}</p>
+          <NavbarItem className="flex items-center gap-1">
+            <Button
+              isIconOnly
+              variant="flat"
+              onClick={() =>
+                setTheme(theme === Theme.DARK ? Theme.LIGHT : Theme.DARK)
+              }
+            >
+              {theme === Theme.LIGHT ? (
+                <MoonIcon height={24} />
+              ) : (
+                <SunIcon height={24} />
+              )}
+            </Button>
+          </NavbarItem>
+        </NavbarMenuItem>
+
+        <NavbarMenuItem>
+          <NextUiLink
+            color={
+              pathname.includes('/app/organizations') ? 'primary' : 'foreground'
+            }
+            as={Link}
+            to="/app/organizations"
+          >
+            Organizations
+          </NextUiLink>
+        </NavbarMenuItem>
+        <NavbarMenuItem>
+          <NextUiLink
+            color={
+              pathname.includes('/app/reservations') ? 'primary' : 'foreground'
+            }
+            as={Link}
+            to="/app/reservations"
+          >
+            Reservations
+          </NextUiLink>
+        </NavbarMenuItem>
+        <NavbarMenuItem>
+          <NextUiLink color="danger" as={Link} to="/logout">
+            Log Out
+          </NextUiLink>
+        </NavbarMenuItem>
+      </NavbarMenu>
     </Navbar>
   )
 }

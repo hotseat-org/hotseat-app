@@ -5,7 +5,7 @@ import type { User } from './types'
 export const getUser =
   ({ mainRepository }: CoreContext) =>
   async (email: string): Promise<User | null> => {
-    const user = await mainRepository.user.findByEmail({ email })
+    const user = await mainRepository.user.find({ email })
 
     return user && userMapper.fromRepository(user)
   }

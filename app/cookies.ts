@@ -10,7 +10,7 @@ export const returnToPage = createCookie('lastPage', {
 })
 
 export const sessionCookie = createCookie('session', {
-  maxAge: 3600,
+  maxAge: 60 * 24 * 7, // One week
   sameSite: 'lax',
   path: '/',
   httpOnly: true,

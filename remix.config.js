@@ -15,9 +15,5 @@ module.exports = {
     v2_dev: true,
     v2_headers: true,
   },
-  publicPath: process.env.ASSETS_PATH || "/build/",
-  // appDirectory: "app",
-  // assetsBuildDirectory: "public/build",
-  // serverBuildPath: "build/index.js",
-  // devServerPort: 8002
+  serverDependenciesToBundle: ["@uidotdev/usehooks"],
 }

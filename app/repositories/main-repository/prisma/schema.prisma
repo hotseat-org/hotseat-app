@@ -54,7 +54,7 @@ model Profile {
 model Organization {
   PK           Int           @id @default(autoincrement())
 
-  name         String        @unique
+  name         String        
   slug         String        @unique
   members      User[]
   profiles      Profile[]
