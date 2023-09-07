@@ -1,5 +1,6 @@
 import { createOrganization } from './organization/create'
-import { isAvailable } from './organization/isAvailable'
+import { getOrganizationForUser } from './organization/getForUser'
+import { organizationIsAvailable } from './organization/isAvailable'
 import { cancelReservation } from './reservation/cancel'
 import { createReservation } from './reservation/create'
 import { getManyReservationsByUser } from './reservation/getManyByUser'
@@ -18,6 +19,7 @@ import type { CoreContext } from './types'
 import { createUser } from './user/create'
 import { getUser } from './user/get'
 import { getUserOrganizations } from './user/getOrganizations'
+import { userIsMember } from './user/isMember'
 
 export const createCore = (context: CoreContext) => ({
   space: {
@@ -39,6 +41,7 @@ export const createCore = (context: CoreContext) => ({
     get: getUser(context),
     create: createUser(context),
     getOrganizations: getUserOrganizations(context),
+    isMember: userIsMember(context),
   },
   reservation: {
     create: createReservation(context),
@@ -46,8 +49,9 @@ export const createCore = (context: CoreContext) => ({
     getManyByUser: getManyReservationsByUser(context),
   },
   organization: {
-    isAvailable: isAvailable(context),
+    isAvailable: organizationIsAvailable(context),
     create: createOrganization(context),
+    getForUser: getOrganizationForUser(context),
   },
 })
 

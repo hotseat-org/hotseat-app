@@ -47,8 +47,7 @@ export const action = async ({ request }: ActionArgs) => {
   }
 
   if (intent === Intent.CREATE_ORGANIZATION) {
-    const result = await core.organization.create({ name, userId: user.id })
-    console.log(result)
+    await core.organization.create({ name, userId: user.id })
 
     return redirect('..')
   }

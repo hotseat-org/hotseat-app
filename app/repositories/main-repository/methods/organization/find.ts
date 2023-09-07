@@ -1,3 +1,4 @@
+import type { Prisma } from '@prisma/client'
 import prisma from '~/services/prisma.server'
 import type { MainRepository } from '../../types'
 
@@ -5,11 +6,21 @@ type FindOrganizationFn = MainRepository['organization']['find']
 
 export interface FindOrganizationArgs {
   slug: string
+  userId?: string
 }
 
-export const findOrganization: FindOrganizationFn = async ({ slug }) => {
+const getUserFilter = (userId: string): Prisma.UserListRelationFilter => ({
+  some: { id: userId },
+})
+
+export const findOrganization: FindOrganizationFn = async ({
+  slug,
+  userId,
+}) => {
+  const members = userId ? getUserFilter(userId) : undefined
+
   const result = await prisma.organization.findUnique({
-    where: { slug },
+    where: { slug, members },
   })
 
   return result

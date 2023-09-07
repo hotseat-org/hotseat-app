@@ -13,9 +13,14 @@ import {
 } from '@nextui-org/react'
 import { Link, useLocation } from '@remix-run/react'
 import { Theme, useTheme } from 'remix-themes'
+import type { Organization } from '~/core/organization/types'
 import { useUser } from '~/utils/remix'
 
-export const Header = () => {
+interface Props {
+  organization: Organization
+}
+
+export const HeaderOrganization = ({ organization }: Props) => {
   const user = useUser()
   const { pathname } = useLocation()
   const [theme, setTheme] = useTheme()
@@ -23,21 +28,34 @@ export const Header = () => {
   return (
     <Navbar isBordered>
       <NavbarMenuToggle className="sm:hidden" />
-      <NavbarBrand className="flex gap-1">
-        <h1 className="font-extrabold text-xl">Hot Seat</h1>
+      <NavbarBrand
+        as={Link}
+        to={'/'}
+        className="flex gap-1 font-extrabold text-xl"
+      >
+        <h1>Hot Seat</h1>
         <FireIcon className="text-red-500 dark:text-red-300" width={32} />
+        <span>+ {organization.name}</span>
       </NavbarBrand>
       <NavbarContent className="hidden sm:flex ">
         <NavbarItem>
           <NextUiLink
             isBlock
-            color={
-              pathname.includes('organizations') ? 'primary' : 'foreground'
-            }
+            color={pathname.includes('spaces') ? 'primary' : 'foreground'}
             as={Link}
-            to="organizations"
+            to="spaces"
           >
-            Organizations
+            Spaces
+          </NextUiLink>
+        </NavbarItem>
+        <NavbarItem>
+          <NextUiLink
+            isBlock
+            color={pathname.includes('settings') ? 'primary' : 'foreground'}
+            as={Link}
+            to="settings"
+          >
+            Settings
           </NextUiLink>
         </NavbarItem>
       </NavbarContent>

@@ -1,7 +1,7 @@
 import slugify from 'slugify'
 import type { CoreContext } from '../types'
 
-export const isAvailable =
+export const organizationIsAvailable =
   ({ mainRepository }: CoreContext) =>
   async (name: string): Promise<boolean> => {
     const slug = slugify(name, { lower: true, trim: true })
