@@ -12,18 +12,11 @@ export const findProfile: FindProfileFn = async ({
   userId,
   organizationSlug,
 }) => {
-  const [user, organization] = await Promise.all([
-    prisma.user.findUniqueOrThrow({ where: { id: userId } }),
-    prisma.organization.findUniqueOrThrow({
-      where: { slug: organizationSlug },
-    }),
-  ])
-
   const profile = await prisma.profile.findUnique({
     where: {
-      userPK_organizationPK: {
-        userPK: user.PK,
-        organizationPK: organization.PK,
+      userId_organizationSlug: {
+        userId,
+        organizationSlug,
       },
     },
   })

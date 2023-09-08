@@ -21,14 +21,14 @@ export const createOrganization: CreateOrganizationFn = async ({
     data: {
       name,
       slug,
-      members: { connect: { PK: user.PK } },
+      members: { connect: { id: creatorId } },
       profiles: {
         createMany: {
           data: [
             {
               displayName: user.displayName,
               role: Role.ADMIN,
-              userPK: user.PK,
+              userId: creatorId,
             },
           ],
         },

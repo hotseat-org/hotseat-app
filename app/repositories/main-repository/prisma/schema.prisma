@@ -4,18 +4,19 @@
 generator client {
   provider      = "prisma-client-js"
   binaryTargets = ["native", "rhel-openssl-1.0.x"]
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  extensions = [pgcrypto]
 }
 
 model User {
-  PK Int    @id @default(autoincrement())
-  id String @unique @default(uuid()) @db.VarChar(36)
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 
-  email         String         @unique
+  email        String         @unique
   profiles      Profile[]
   organizations Organization[]
 
@@ -35,13 +36,12 @@ enum Role {
 }
 
 model Profile {
-  PK Int    @id @default(autoincrement())
-  id String @unique @default(uuid()) @db.VarChar(36)
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 
-  userPK         Int          
-  user           User         @relation(fields: [userPK], references: [PK], onDelete: Cascade)
-  organizationPK Int          
-  organization   Organization @relation(fields: [organizationPK], references: [PK], onDelete: Cascade)
+  userId         String @db.Uuid        
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationSlug String        
+  organization   Organization @relation(fields: [organizationSlug], references: [slug], onDelete: Cascade)
 
   residentSeat Seat?
   reservations Reservation[]
@@ -54,17 +54,14 @@ model Profile {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([userPK, organizationPK])
+  @@unique([userId, organizationSlug])
+  @@index([userId, organizationSlug])
   @@index([id])
-  @@index([userPK])
-  @@index([organizationPK])
 }
 
 model Organization {
-  PK Int @id @default(autoincrement())
-
+  slug     String  @id @unique
   name     String
-  slug     String    @unique
   members  User[]
   profiles Profile[]
   spaces   Space[]
@@ -76,55 +73,50 @@ model Organization {
 }
 
 model Seat {
-  PK Int    @id @default(autoincrement())
-  id String @unique @default(uuid()) @db.VarChar(36)
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 
-  furnitureId  String        @unique
+  furnitureId  String        @unique 
   reservations Reservation[]
-  residentPK   Int?          @unique
-  resident     Profile?      @relation(fields: [residentPK], references: [PK])
-  spacePK      Int
-  space        Space         @relation(fields: [spacePK], references: [PK])
+  residentId   String?          @unique @db.Uuid
+  resident     Profile?      @relation(fields: [residentId], references: [id])
+  spaceId      String @db.Uuid
+  space        Space         @relation(fields: [spaceId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Reservation {
-  PK Int    @id @default(autoincrement())
-  id String @unique @default(uuid()) @db.VarChar(36)
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 
   from   DateTime
   to     DateTime
-  byPK   Int      @unique
-  by     Profile  @relation(fields: [byPK], references: [PK])
-  seatPK Int      @unique
-  seat   Seat     @relation(fields: [seatPK], references: [PK])
+  byId   String      @unique @db.Uuid
+  by     Profile  @relation(fields: [byId], references: [id])
+  seatId String    @unique @db.Uuid
+  seat   Seat     @relation(fields: [seatId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Room {
-  PK Int    @id @default(autoincrement())
-  id String @unique @default(uuid()) @db.VarChar(36)
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 
   name    String
-  space   Space  @relation(fields: [spacePK], references: [PK])
-  spacePK Int
+  space   Space  @relation(fields: [spaceId], references: [id])
+  spaceId String @db.Uuid
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Space {
-  PK Int    @id @default(autoincrement())
-  id String @unique @default(uuid()) @db.VarChar(36)
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 
-  organizationPK Int          @unique
-  organization   Organization @relation(fields: [organizationPK], references: [PK])
+  organizationSlug String          @unique
+  organization   Organization @relation(fields: [organizationSlug], references: [slug])
   name           String       @unique
-  spaceId        String
   description    String?
   rooms          Room[]
   seats          Seat[]
