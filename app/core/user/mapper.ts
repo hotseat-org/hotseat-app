@@ -6,5 +6,6 @@ export const userMapper = {
     id: user.id,
     displayName: user.displayName,
     photo: user.avatarUrl ?? undefined,
+    email: user.email,
   }),
 }

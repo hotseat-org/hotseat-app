@@ -49,6 +49,7 @@
     "remix-auth": "^3.5.1",
     "remix-auth-socials": "^2.0.5",
     "remix-themes": "^1.2.1",
+    "remix-utils": "^6.6.0",
     "slugify": "^1.6.6",
     "zod": "^3.22.2"
   },

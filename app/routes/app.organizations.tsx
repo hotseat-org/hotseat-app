@@ -1,4 +1,15 @@
-import { Avatar, Card, CardBody, CardHeader, Link } from '@nextui-org/react'
+import {
+  Avatar,
+  AvatarGroup,
+  Card,
+  CardBody,
+  CardFooter,
+  CardHeader,
+  Divider,
+  Link,
+  Tooltip,
+  User,
+} from '@nextui-org/react'
 import type { LoaderArgs } from '@remix-run/node'
 import { Outlet, Link as RemixLink, useLoaderData } from '@remix-run/react'
 import clsx from 'clsx'
@@ -39,7 +50,13 @@ export default function Index() {
                   create one yourself!
                 </p>
               </div>
-              <Link className="text-blue-100" isBlock as={RemixLink} to="new">
+              <Link
+                replace
+                className="text-blue-100"
+                isBlock
+                as={RemixLink}
+                to="new"
+              >
                 <ArrowRight className="h-[32px] w-[32px] md:h-[52px] md:w-[52px]" />
               </Link>
             </div>
@@ -60,31 +77,44 @@ export default function Index() {
             >
               Your organizations
             </h1>
-            <Button
-              className="hidden sm:flex"
-              as={RemixLink}
-              to="new"
-              color="primary"
-            >
-              Create organization
-            </Button>
           </div>
           <div className="flex flex-wrap gap-4">
-            {organizations.map((organization) => (
-              <Card
-                key={organization.slug}
-                className="w-full sm:w-auto"
-                isPressable
-                isHoverable
-                as={RemixLink}
-                to={`/o/${organization.slug}`}
-              >
+            {organizations.map((organization, index) => (
+              <Card key={organization.slug} className="w-full sm:w-72">
                 <CardHeader>
-                  <div className="flex gap-4 items-center">
-                    <Avatar size="lg" showFallback fallback={<LampDesk />} />
-                    <p>{organization.name}</p>
-                  </div>
+                  <User
+                    avatarProps={{
+                      showFallback: true,
+                      fallback: <LampDesk />,
+                      src: `https://picsum.photos/300?random=${index}`,
+                    }}
+                    name={organization.name}
+                    description={organization.slug}
+                  />
                 </CardHeader>
+                <Divider />
+                <CardFooter>
+                  <div className="flex justify-between w-full">
+                    <AvatarGroup size="sm" className="pl-4" max={4}>
+                      {Array.from({ length: 20 }).map((_, index) => (
+                        <Tooltip key={index} content="User name">
+                          <Avatar
+                            src={`https://picsum.photos/200?random=${index}`}
+                          />
+                        </Tooltip>
+                      ))}
+                    </AvatarGroup>
+                    <Button
+                      className="font-bold"
+                      color="primary"
+                      variant="flat"
+                      as={RemixLink}
+                      to={`/o/${organization.slug}`}
+                    >
+                      View
+                    </Button>
+                  </div>
+                </CardFooter>
               </Card>
             ))}
           </div>

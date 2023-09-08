@@ -47,9 +47,12 @@ export const action = async ({ request }: ActionArgs) => {
   }
 
   if (intent === Intent.CREATE_ORGANIZATION) {
-    await core.organization.create({ name, userId: user.id })
+    const organization = await core.organization.create({
+      name,
+      userId: user.id,
+    })
 
-    return redirect('..')
+    return redirect(`/o/${organization.slug}`)
   }
 
   return null
@@ -86,6 +89,7 @@ export default function Index() {
       closeButton
       onClose={() => navigate('..')}
       placement="auto"
+      backdrop="blur"
     >
       <Form method="POST">
         <ModalContent>

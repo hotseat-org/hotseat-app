@@ -1,7 +1,5 @@
-import { FireIcon, MoonIcon, SunIcon } from '@heroicons/react/24/solid'
+import { FireIcon } from '@heroicons/react/24/solid'
 import {
-  Avatar,
-  Button,
   Navbar,
   NavbarBrand,
   NavbarContent,
@@ -12,9 +10,9 @@ import {
   Link as NextUiLink,
 } from '@nextui-org/react'
 import { Link, useLocation } from '@remix-run/react'
-import { Theme, useTheme } from 'remix-themes'
 import type { Organization } from '~/core/organization/types'
 import { useUser } from '~/utils/remix'
+import { UserDropdown } from '../Navigation/UserDropdown'
 
 interface Props {
   organization: Organization
@@ -23,7 +21,6 @@ interface Props {
 export const HeaderOrganization = ({ organization }: Props) => {
   const user = useUser()
   const { pathname } = useLocation()
-  const [theme, setTheme] = useTheme()
 
   return (
     <Navbar isBordered>
@@ -60,46 +57,11 @@ export const HeaderOrganization = ({ organization }: Props) => {
         </NavbarItem>
       </NavbarContent>
       <NavbarContent justify="end" className="hidden sm:flex">
-        <p>{user.displayName}</p>
-        <Avatar src={user.photo} name={user.displayName} />
-        <NavbarItem className="flex items-center gap-1">
-          <Button
-            isIconOnly
-            variant="flat"
-            onClick={() =>
-              setTheme(theme === Theme.DARK ? Theme.LIGHT : Theme.DARK)
-            }
-          >
-            {theme === Theme.LIGHT ? (
-              <MoonIcon height={24} />
-            ) : (
-              <SunIcon height={24} />
-            )}
-          </Button>
-          <Button variant="flat" color="danger" href="/logout" as="a">
-            Logout
-          </Button>
-        </NavbarItem>
+        <UserDropdown user={user} />
       </NavbarContent>
       <NavbarMenu>
-        <NavbarMenuItem className="flex gap-4 items-center mb-4">
-          <Avatar src={user.photo} name={user.displayName} />
-          <p>{user.displayName}</p>
-          <NavbarItem className="flex items-center gap-1">
-            <Button
-              isIconOnly
-              variant="flat"
-              onClick={() =>
-                setTheme(theme === Theme.DARK ? Theme.LIGHT : Theme.DARK)
-              }
-            >
-              {theme === Theme.LIGHT ? (
-                <MoonIcon height={24} />
-              ) : (
-                <SunIcon height={24} />
-              )}
-            </Button>
-          </NavbarItem>
+        <NavbarMenuItem>
+          <UserDropdown user={user} />
         </NavbarMenuItem>
 
         <NavbarMenuItem>
@@ -111,11 +73,6 @@ export const HeaderOrganization = ({ organization }: Props) => {
             to="/app/organizations"
           >
             Organizations
-          </NextUiLink>
-        </NavbarMenuItem>
-        <NavbarMenuItem>
-          <NextUiLink color="danger" as={Link} to="/logout">
-            Log Out
           </NextUiLink>
         </NavbarMenuItem>
       </NavbarMenu>
