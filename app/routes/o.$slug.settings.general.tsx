@@ -1,5 +1,5 @@
-import { Divider, Input, Textarea } from '@nextui-org/react'
-import { useRouteLoaderData } from '@remix-run/react'
+import { Button, Divider, Input, Textarea } from '@nextui-org/react'
+import { Link, Outlet, useRouteLoaderData } from '@remix-run/react'
 import type { loader } from './o.$slug'
 
 const SettingsInfo = () => {
@@ -41,6 +41,18 @@ const SettingsInfo = () => {
           <Textarea />
         </div>
       </div>
+      <Divider />
+      <div className="flex justify-between">
+        <div className="w-96">
+          <p className="font-extrabold text-red-600">Danger zone</p>
+        </div>
+        <div className="w-72 flex flex-col gap-2">
+          <Button as={Link} to="delete" color="danger" variant="light">
+            Delete organization
+          </Button>
+        </div>
+      </div>
+      <Outlet />
     </div>
   )
 }

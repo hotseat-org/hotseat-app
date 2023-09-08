@@ -1,6 +1,9 @@
+import type { Role } from '@prisma/client'
 import type { CreateOrganizationArgs } from './methods/organization/create'
+import type { DeleteOrganizationArgs } from './methods/organization/delete'
 import type { FindOrganizationArgs } from './methods/organization/find'
 import type { FindOrganizationsArgs } from './methods/organization/findMany'
+import type { FindProfileArgs } from './methods/profile/find'
 import type { FindUserArgs } from './methods/user/find'
 
 export interface Space {
@@ -49,6 +52,11 @@ export interface Organization {
   slug: string
 }
 
+export interface Profile {
+  id: string
+  role: Role
+}
+
 export type CreateSpaceOptions = Pick<Space, 'name' | 'spaceId' | 'description'>
 export type CreateUserArgs = Pick<User, 'email' | 'avatarUrl' | 'displayName'>
 
@@ -61,5 +69,9 @@ export interface MainRepository {
     findMany: (args: FindOrganizationsArgs) => Promise<Organization[]>
     find: (args: FindOrganizationArgs) => Promise<Organization | null>
     create: (args: CreateOrganizationArgs) => Promise<Organization>
+    delete: (args: DeleteOrganizationArgs) => Promise<Organization>
+  }
+  profile: {
+    find: (args: FindProfileArgs) => Promise<Profile | null>
   }
 }

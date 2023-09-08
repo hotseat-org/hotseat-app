@@ -13,6 +13,8 @@
     "prisma:reset": "npx prisma migrate reset --schema=./app/repositories/main-repository/prisma/schema.prisma",
     "prisma:migrate": "npx prisma migrate dev --schema=./app/repositories/main-repository/prisma/schema.prisma",
     "prisma:studio": "npx prisma studio --schema=./app/repositories/main-repository/prisma/schema.prisma",
+    "prisma:format": "npx prisma format --schema=./app/repositories/main-repository/prisma/schema.prisma",
+    "prisma:validate": "npx prisma validate --schema=./app/repositories/main-repository/prisma/schema.prisma",
     "db:start": "docker compose up -d postgres",
     "db:stop": "docker compose stop postgres",
     "typecheck": "tsc --project ./tsconfig.json"

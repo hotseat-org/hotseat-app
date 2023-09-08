@@ -2,14 +2,19 @@ import { Tab, Tabs } from '@nextui-org/react'
 import { Outlet, useLocation, useNavigate } from '@remix-run/react'
 import clsx from 'clsx'
 import { Cog, PersonStanding } from 'lucide-react'
-import { last } from 'ramda'
+import { useMemo } from 'react'
 import { Container } from '~/components/Container'
+
+const keys = ['general', 'members']
 
 const Organization = () => {
   const location = useLocation()
   const navigate = useNavigate()
 
-  const key = last(location.pathname.split('/'))
+  const key = useMemo(
+    () => keys.find((key) => location.pathname.includes(key)),
+    [location.pathname]
+  )
 
   return (
     <Container>

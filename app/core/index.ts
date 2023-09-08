@@ -1,4 +1,5 @@
 import { createOrganization } from './organization/create'
+import { deleteOrganization } from './organization/delete'
 import { getOrganizationForUser } from './organization/getForUser'
 import { organizationIsAvailable } from './organization/isAvailable'
 import { cancelReservation } from './reservation/cancel'
@@ -52,6 +53,7 @@ export const createCore = (context: CoreContext) => ({
     isAvailable: organizationIsAvailable(context),
     create: createOrganization(context),
     getForUser: getOrganizationForUser(context),
+    delete: deleteOrganization(context),
   },
 })
 

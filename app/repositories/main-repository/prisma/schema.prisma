@@ -12,18 +12,21 @@ datasource db {
 }
 
 model User {
-  PK              Int           @id @default(autoincrement())
-  id              String        @unique @default(uuid()) @db.VarChar(36)
+  PK Int    @id @default(autoincrement())
+  id String @unique @default(uuid()) @db.VarChar(36)
 
-  email           String        @unique
-  profiles         Profile[]
-  organizations   Organization[]
+  email         String         @unique
+  profiles      Profile[]
+  organizations Organization[]
 
-  displayName     String
-  avatarUrl       String?
+  displayName String
+  avatarUrl   String?
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([id])
+  @@index([email])
 }
 
 enum Role {
@@ -32,92 +35,100 @@ enum Role {
 }
 
 model Profile {
-  PK              Int           @id @default(autoincrement())
+  PK Int    @id @default(autoincrement())
+  id String @unique @default(uuid()) @db.VarChar(36)
 
-  userPK          Int
-  user            User          @relation(fields: [userPK], references: [PK])
-  organizationPK  Int
-  organization    Organization  @relation(fields: [organizationPK], references: [PK])
+  userPK         Int          
+  user           User         @relation(fields: [userPK], references: [PK], onDelete: Cascade)
+  organizationPK Int          
+  organization   Organization @relation(fields: [organizationPK], references: [PK], onDelete: Cascade)
 
-  residentSeat    Seat?
-  reservations    Reservation[]
+  residentSeat Seat?
+  reservations Reservation[]
 
-  displayName     String
-  avatarUrl       String?
+  displayName String
+  avatarUrl   String?
 
-  role            Role
+  role Role
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userPK, organizationPK])
+  @@index([id])
+  @@index([userPK])
+  @@index([organizationPK])
 }
 
 model Organization {
-  PK           Int           @id @default(autoincrement())
+  PK Int @id @default(autoincrement())
 
-  name         String        
-  slug         String        @unique
-  members      User[]
-  profiles      Profile[]
-  spaces       Space[]
+  name     String
+  slug     String    @unique
+  members  User[]
+  profiles Profile[]
+  spaces   Space[]
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
 }
 
 model Seat {
-  PK            Int           @id @default(autoincrement())
-  id            String        @unique @default(uuid()) @db.VarChar(36)
+  PK Int    @id @default(autoincrement())
+  id String @unique @default(uuid()) @db.VarChar(36)
 
-  furnitureId   String        @unique
-  reservations  Reservation[]
-  residentPK    Int?          @unique
-  resident      Profile?       @relation(fields: [residentPK], references: [PK])
-  spacePK       Int
-  space         Space         @relation(fields: [spacePK], references: [PK])
+  furnitureId  String        @unique
+  reservations Reservation[]
+  residentPK   Int?          @unique
+  resident     Profile?      @relation(fields: [residentPK], references: [PK])
+  spacePK      Int
+  space        Space         @relation(fields: [spacePK], references: [PK])
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Reservation {
-  PK        Int      @id @default(autoincrement())
-  id        String   @unique @default(uuid()) @db.VarChar(36)
+  PK Int    @id @default(autoincrement())
+  id String @unique @default(uuid()) @db.VarChar(36)
 
-  from      DateTime
-  to        DateTime
-  byPK      Int      @unique
-  by        Profile   @relation(fields: [byPK], references: [PK])
-  seatPK    Int
-  seat      Seat     @relation(fields: [seatPK], references: [PK])
+  from   DateTime
+  to     DateTime
+  byPK   Int      @unique
+  by     Profile  @relation(fields: [byPK], references: [PK])
+  seatPK Int      @unique
+  seat   Seat     @relation(fields: [seatPK], references: [PK])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Room {
-  PK        Int    @id @default(autoincrement())
-  id        String @unique @default(uuid()) @db.VarChar(36)
+  PK Int    @id @default(autoincrement())
+  id String @unique @default(uuid()) @db.VarChar(36)
 
-  name      String
-  space     Space  @relation(fields: [spacePK], references: [PK])
-  spacePK   Int
+  name    String
+  space   Space  @relation(fields: [spacePK], references: [PK])
+  spacePK Int
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Space {
-  PK              Int     @id @default(autoincrement())
-  id              String  @unique @default(uuid()) @db.VarChar(36)
+  PK Int    @id @default(autoincrement())
+  id String @unique @default(uuid()) @db.VarChar(36)
 
-  organizationPK  Int @unique
-  organization    Organization @relation(fields: [organizationPK], references: [PK])
-  name            String  @unique
-  spaceId         String
-  description     String?
-  rooms           Room[]
-  seats           Seat[]
+  organizationPK Int          @unique
+  organization   Organization @relation(fields: [organizationPK], references: [PK])
+  name           String       @unique
+  spaceId        String
+  description    String?
+  rooms          Room[]
+  seats          Seat[]
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
