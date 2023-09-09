@@ -1,59 +1,115 @@
-import { Button, Divider, Input, Textarea } from '@nextui-org/react'
-import { Link, Outlet, useRouteLoaderData } from '@remix-run/react'
-import type { loader } from './o.$slug'
+import {
+  Avatar,
+  Button,
+  Card,
+  CardFooter,
+  Input,
+  Textarea,
+} from '@nextui-org/react'
+import type { ActionArgs } from '@remix-run/node'
+import {
+  Form,
+  Link,
+  Outlet,
+  useNavigation,
+  useRouteLoaderData,
+} from '@remix-run/react'
+import { Edit, Trash, Users } from 'lucide-react'
+import { z } from 'zod'
+import { getCore } from '~/core/get-core'
+import { requireUser } from '~/services/session.server'
+import type { loader as organizationLoader } from './o.$slug'
+
+const FormSchema = z.object({
+  name: z.string().optional(),
+  description: z.string().optional(),
+})
+
+export const action = async ({ request, params }: ActionArgs) => {
+  const user = await requireUser(request)
+
+  const slug = params.slug
+  if (!slug) return null
+
+  const formData = await request.formData()
+  const data = FormSchema.parse(Object.fromEntries([...formData.entries()]))
+
+  const core = getCore()
+
+  await core.organization.update({ slug, userId: user.id, data })
+
+  return null
+}
 
 const SettingsInfo = () => {
-  const organization = useRouteLoaderData<typeof loader>('routes/o.$slug')
+  const organization =
+    useRouteLoaderData<typeof organizationLoader>('routes/o.$slug')
+  const { state } = useNavigation()
+
+  const thumbnailUrl = organization?.thumbnailUrl
 
   return (
-    <div className="flex flex-col gap-6 w-[825px]">
-      <div className="flex justify-between ">
-        <div className="w-96">
-          <p className="font-bold">Name</p>
-          <p className="text-slate-400">
-            Changing name will also change the URL
-          </p>
-        </div>
-        <div className="w-72 flex flex-col gap-2">
-          <Input isRequired name="name" defaultValue={organization?.name} />
+    <Form method="POST">
+      <div className="flex flex-col-reverse md:flex-row gap-12 md:w-[825px]">
+        <div className="md:w-[462px] flex flex-col gap-8">
           <Input
-            type="url"
-            disabled
-            startContent={
-              <div className="pointer-events-none flex items-center">
-                <span className="text-default-400 text-small">
-                  https://localhost/o/
-                </span>
-              </div>
-            }
+            label="Name"
             isRequired
             name="name"
-            defaultValue={organization?.slug}
+            labelPlacement="outside"
+            description="Your organization is visible only to its members"
+            defaultValue={organization?.name}
           />
+          <Textarea
+            name="description"
+            label="Description"
+            labelPlacement="outside"
+            defaultValue={organization?.description}
+          />
+          <div className="flex justify-end">
+            <Button
+              isLoading={state === 'submitting'}
+              type="submit"
+              color="primary"
+            >
+              Save
+            </Button>
+          </div>
         </div>
-      </div>
-      <Divider />
-      <div className="flex justify-between">
-        <div className="w-96">
-          <p className="font-bold">Description</p>
-        </div>
-        <div className="w-72 flex flex-col gap-2">
-          <Textarea />
-        </div>
-      </div>
-      <Divider />
-      <div className="flex justify-between">
-        <div className="w-96">
-          <p className="font-extrabold text-red-600">Danger zone</p>
-        </div>
-        <div className="w-72 flex flex-col gap-2">
-          <Button as={Link} to="delete" color="danger" variant="light">
-            Delete organization
-          </Button>
+
+        <div className="flex md:flex-col">
+          <div className="relative">
+            <Avatar
+              fallback={<Users size={72} />}
+              className="w-52 h-52 z-0"
+              src={thumbnailUrl}
+              isBordered
+            />
+            <Card
+              isBlurred
+              className="absolute top-[80%] left-[80%] -translate-x-1/2 -translate-y-1/2 z-1"
+            >
+              <CardFooter className="gap-2 p-1">
+                <Button
+                  as={Link}
+                  to="delete-logo"
+                  variant="light"
+                  isIconOnly
+                  color="danger"
+                  size="sm"
+                >
+                  <Trash size="18" />
+                </Button>
+                <Button as={Link} to="set-logo" variant="flat" size="sm">
+                  <Edit size="18" /> Edit
+                </Button>
+              </CardFooter>
+            </Card>
+          </div>
         </div>
       </div>
       <Outlet />
-    </div>
+    </Form>
   )
 }
 

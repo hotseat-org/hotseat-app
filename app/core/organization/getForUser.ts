@@ -1,4 +1,5 @@
 import type { CoreContext } from '../types'
+import { organizationMapper } from './mapper'
 import type { Organization } from './types'
 
 interface GetOrganizationForUserArgs {
@@ -7,7 +8,7 @@ interface GetOrganizationForUserArgs {
 }
 
 export const getOrganizationForUser =
-  ({ mainRepository }: CoreContext) =>
+  ({ mainRepository, imageService }: CoreContext) =>
   async ({
     userId,
     slug,
@@ -17,5 +18,7 @@ export const getOrganizationForUser =
       userId,
     })
 
-    return organization
+    if (!organization) return null
+
+    return organizationMapper(imageService).fromRepository(organization)
   }

@@ -1,4 +1,5 @@
 import { createMainMysqlRepository } from '~/repositories/main-repository'
+import { imageService } from '~/services/images'
 import type { Core } from '.'
 import { createCore } from '.'
 
@@ -9,7 +10,7 @@ export const getCore = () => {
 
   const mainRepository = createMainMysqlRepository()
 
-  core = createCore({ mainRepository })
+  core = createCore({ mainRepository, imageService })
 
   return core
 }

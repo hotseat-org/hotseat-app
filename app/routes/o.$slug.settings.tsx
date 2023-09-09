@@ -1,11 +1,11 @@
-import { Tab, Tabs } from '@nextui-org/react'
+import { Divider, Tab, Tabs } from '@nextui-org/react'
 import { Outlet, useLocation, useNavigate } from '@remix-run/react'
 import clsx from 'clsx'
-import { Cog, PersonStanding } from 'lucide-react'
+import { Cog, PersonStanding, Skull } from 'lucide-react'
 import { useMemo } from 'react'
 import { Container } from '~/components/Container'
 
-const keys = ['general', 'members']
+const keys = ['general', 'members', 'danger']
 
 const Organization = () => {
   const location = useLocation()
@@ -34,6 +34,7 @@ const Organization = () => {
       <Tabs
         variant="bordered"
         selectedKey={key}
+        color={key === 'danger' ? 'danger' : 'default'}
         onSelectionChange={(value) => navigate(value.toString())}
       >
         <Tab
@@ -45,6 +46,7 @@ const Organization = () => {
             </div>
           }
         >
+          <Divider className="mb-14" />
           <Outlet />
         </Tab>
         <Tab
@@ -56,6 +58,19 @@ const Organization = () => {
             </div>
           }
         >
+          <Divider className="mb-12" />
+          <Outlet />
+        </Tab>
+        <Tab
+          key="danger"
+          title={
+            <div className="flex items-center space-x-2">
+              <Skull />
+              <span>Danger zone</span>
+            </div>
+          }
+        >
+          <Divider className="mb-12" />
           <Outlet />
         </Tab>
       </Tabs>

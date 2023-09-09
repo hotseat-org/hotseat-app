@@ -23,5 +23,12 @@ export const findOrganization: FindOrganizationFn = async ({
     where: { slug, members },
   })
 
-  return result
+  if (!result) return null
+
+  return {
+    name: result.name,
+    slug: result.slug,
+    description: result.description ?? undefined,
+    thumbnail: result.thumbnail ?? undefined,
+  }
 }

@@ -3,6 +3,7 @@ import type { CreateOrganizationArgs } from './methods/organization/create'
 import type { DeleteOrganizationArgs } from './methods/organization/delete'
 import type { FindOrganizationArgs } from './methods/organization/find'
 import type { FindOrganizationsArgs } from './methods/organization/findMany'
+import type { UpdateOrganizationArgs } from './methods/organization/update'
 import type { FindProfileArgs } from './methods/profile/find'
 import type { FindUserArgs } from './methods/user/find'
 
@@ -50,6 +51,8 @@ export interface User {
 export interface Organization {
   name: string
   slug: string
+  description?: string
+  thumbnail?: string
 }
 
 export interface Profile {
@@ -69,6 +72,7 @@ export interface MainRepository {
     findMany: (args: FindOrganizationsArgs) => Promise<Organization[]>
     find: (args: FindOrganizationArgs) => Promise<Organization | null>
     create: (args: CreateOrganizationArgs) => Promise<Organization>
+    update: (args: UpdateOrganizationArgs) => Promise<Organization>
     delete: (args: DeleteOrganizationArgs) => Promise<Organization>
   }
   profile: {

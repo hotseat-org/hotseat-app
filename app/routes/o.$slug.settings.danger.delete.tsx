@@ -40,7 +40,7 @@ export default function Index() {
     >
       <Form method="POST">
         <ModalContent>
-          <ModalHeader></ModalHeader>
+          <ModalHeader />
           <ModalBody>
             <p>Are you sure you want to delete this organization?</p>
           </ModalBody>

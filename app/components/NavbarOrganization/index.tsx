@@ -25,29 +25,25 @@ export const HeaderOrganization = ({ organization }: Props) => {
   return (
     <Navbar isBordered>
       <NavbarMenuToggle className="sm:hidden" />
-      <NavbarBrand
-        as={Link}
-        to={'/'}
-        className="flex gap-1 font-extrabold text-xl"
-      >
-        <h1>Hot Seat</h1>
+      <NavbarBrand as={Link} to={'/'} className="flex gap-4">
         <FireIcon className="text-red-500 dark:text-red-300" width={32} />
-        <span>+ {organization.name}</span>
+        <div className="flex flex-col">
+          <h1 className="font-extrabold text-xl">Hot Seat</h1>
+          <h2 className="text-bold text-foreground/70">@{organization.name}</h2>
+        </div>
       </NavbarBrand>
-      <NavbarContent className="hidden sm:flex ">
-        <NavbarItem>
+      <NavbarContent className="hidden sm:flex">
+        <NavbarItem isActive={pathname.includes('offices')}>
           <NextUiLink
-            isBlock
-            color={pathname.includes('spaces') ? 'primary' : 'foreground'}
+            color={pathname.includes('offices') ? 'primary' : 'foreground'}
             as={Link}
-            to="spaces"
+            to="offices"
           >
-            Spaces
+            Offices
           </NextUiLink>
         </NavbarItem>
-        <NavbarItem>
+        <NavbarItem isActive={pathname.includes('settings')}>
           <NextUiLink
-            isBlock
             color={pathname.includes('settings') ? 'primary' : 'foreground'}
             as={Link}
             to="settings"

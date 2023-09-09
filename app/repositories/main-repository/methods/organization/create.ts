@@ -36,5 +36,9 @@ export const createOrganization: CreateOrganizationFn = async ({
     },
   })
 
-  return result
+  return {
+    ...result,
+    description: result.description ?? undefined,
+    thumbnail: result.thumbnail ?? undefined,
+  }
 }

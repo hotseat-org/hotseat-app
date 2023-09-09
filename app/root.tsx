@@ -1,20 +1,20 @@
-import type { LinksFunction, LoaderArgs } from '@vercel/remix'
+import { NextUIProvider } from '@nextui-org/react'
 import {
-  Meta,
   Links,
-  Outlet,
-  ScrollRestoration,
-  Scripts,
   LiveReload,
+  Meta,
+  Outlet,
+  Scripts,
+  ScrollRestoration,
   useLoaderData,
 } from '@remix-run/react'
 import type { V2_MetaFunction } from '@remix-run/react/dist/routeModules'
+import type { LinksFunction, LoaderArgs } from '@vercel/remix'
 import { authenticator } from './services/auth.server'
-import { NextUIProvider } from '@nextui-org/react'
 import { themeSessionResolver } from './services/theme.server'
 
-import stylesheet from '~/styles/tailwind.css'
 import { PreventFlashOnWrongTheme, ThemeProvider, useTheme } from 'remix-themes'
+import stylesheet from '~/styles/tailwind.css'
 
 export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: stylesheet },
@@ -35,7 +35,7 @@ export default function AppWithProvider() {
   const data = useLoaderData<typeof loader>()
 
   return (
-    <ThemeProvider specifiedTheme={data.theme} themeAction="/action/set-theme">
+    <ThemeProvider specifiedTheme={data.theme} themeAction="/api/set-theme">
       <App />
     </ThemeProvider>
   )

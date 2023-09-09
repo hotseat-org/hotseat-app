@@ -63,8 +63,11 @@ model Organization {
   slug     String  @id @unique
   name     String
   members  User[]
-  profiles Profile[]
+  profiles  Profile[]
   spaces   Space[]
+
+  description String?
+  thumbnail String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

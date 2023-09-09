@@ -1,4 +1,8 @@
 import { createCookie } from '@vercel/remix'
+import dayjs from 'dayjs'
+import duration from 'dayjs/plugin/duration'
+
+dayjs.extend(duration)
 
 export const returnToPage = createCookie('lastPage', {
   maxAge: 60,
@@ -10,7 +14,7 @@ export const returnToPage = createCookie('lastPage', {
 })
 
 export const sessionCookie = createCookie('session', {
-  maxAge: 60 * 24 * 7, // One week
+  maxAge: dayjs.duration({ weeks: 1 }).seconds(),
   sameSite: 'lax',
   path: '/',
   httpOnly: true,

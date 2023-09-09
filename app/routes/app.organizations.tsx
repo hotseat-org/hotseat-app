@@ -86,7 +86,7 @@ export default function Index() {
                     avatarProps={{
                       showFallback: true,
                       fallback: <LampDesk />,
-                      src: `https://picsum.photos/300?random=${index}`,
+                      src: organization.thumbnailUrl,
                     }}
                     name={organization.name}
                     description={organization.slug}
