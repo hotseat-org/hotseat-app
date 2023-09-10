@@ -8,17 +8,20 @@ import {
   NavbarMenuToggle,
   Link as NextUiLink,
 } from '@nextui-org/react'
+import { Role } from '@prisma/client'
 import { Link, useLocation } from '@remix-run/react'
 import { Flame } from 'lucide-react'
 import type { Organization } from '~/core/organization/types'
+import type { Profile } from '~/core/profile/types'
 import { useUser } from '~/utils/remix'
 import { UserDropdown } from '../Navigation/UserDropdown'
 
 interface Props {
   organization: Organization
+  profile: Profile
 }
 
-export const HeaderOrganization = ({ organization }: Props) => {
+export const HeaderOrganization = ({ organization, profile }: Props) => {
   const user = useUser()
   const { pathname } = useLocation()
 
@@ -42,15 +45,17 @@ export const HeaderOrganization = ({ organization }: Props) => {
             Offices
           </NextUiLink>
         </NavbarItem>
-        <NavbarItem isActive={pathname.includes('settings')}>
-          <NextUiLink
-            color={pathname.includes('settings') ? 'primary' : 'foreground'}
-            as={Link}
-            to="settings"
-          >
-            Settings
-          </NextUiLink>
-        </NavbarItem>
+        {profile.role === Role.ADMIN && (
+          <NavbarItem isActive={pathname.includes('settings')}>
+            <NextUiLink
+              color={pathname.includes('settings') ? 'primary' : 'foreground'}
+              as={Link}
+              to="settings"
+            >
+              Settings
+            </NextUiLink>
+          </NavbarItem>
+        )}
       </NavbarContent>
       <NavbarContent justify="end" className="hidden sm:flex">
         <UserDropdown user={user} />

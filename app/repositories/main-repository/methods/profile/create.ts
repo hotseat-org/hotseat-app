@@ -27,10 +27,12 @@ export const createProfile: CreateProfileFn = async ({
       role,
       avatarUrl,
     },
+    include: { user: true },
   })
 
   return {
     ...profile,
+    email: profile.user.email,
     avatarUrl: profile.avatarUrl ?? undefined,
   }
 }

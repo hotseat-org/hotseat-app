@@ -19,12 +19,14 @@ export const findProfile: FindProfileFn = async ({
         organizationSlug,
       },
     },
+    include: { user: true },
   })
 
   if (!profile) return null
 
   return {
     ...profile,
+    email: profile.user.email,
     avatarUrl: profile.avatarUrl ?? undefined,
   }
 }

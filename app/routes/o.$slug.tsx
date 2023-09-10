@@ -1,36 +1,31 @@
-import { redirect, type LoaderArgs } from '@vercel/remix'
-
-import { requireUser } from '~/services/session.server'
+import { type LoaderArgs } from '@vercel/remix'
 
 import { Response, json } from '@remix-run/node'
 import { Outlet, useLoaderData } from '@remix-run/react'
 import { HeaderOrganization } from '~/components/NavbarOrganization'
 import { getCore } from '~/core/get-core'
+import { requireProfile } from '~/utils/loader-helpers/requireProfile'
 
-export const loader = async ({ request, params }: LoaderArgs) => {
-  const slug = params.slug
-
-  if (!slug) return redirect('/app')
-
-  const user = await requireUser(request)
+export const loader = async (args: LoaderArgs) => {
+  const profile = await requireProfile(args)
   const core = getCore()
 
   const organization = await core.organization.getForUser({
-    userId: user.id,
-    slug,
+    userId: profile.userId,
+    slug: profile.organizationSlug,
   })
 
   if (!organization) throw new Response('Not found', { status: 404 })
 
-  return json(organization)
+  return json({ organization, profile })
 }
 
 export default function Index() {
-  const organization = useLoaderData<typeof loader>()
+  const { organization, profile } = useLoaderData<typeof loader>()
 
   return (
     <>
-      <HeaderOrganization organization={organization} />
+      <HeaderOrganization organization={organization} profile={profile} />
       <Outlet />
     </>
   )

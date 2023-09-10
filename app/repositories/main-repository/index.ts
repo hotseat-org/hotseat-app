@@ -9,6 +9,7 @@ import { findManyOrganizations } from './methods/organization/findMany'
 import { updateOrganization } from './methods/organization/update'
 import { createProfile } from './methods/profile/create'
 import { findProfile } from './methods/profile/find'
+import { findProfiles } from './methods/profile/findMany'
 import { createUser } from './methods/user/create'
 import { findUser } from './methods/user/find'
 import type { MainRepository } from './types'
@@ -34,6 +35,7 @@ export const createMainMysqlRepository = (): MainRepository => {
     },
     profile: {
       find: findProfile,
+      findMany: findProfiles,
       create: createProfile,
     },
   }

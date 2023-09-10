@@ -13,15 +13,7 @@ import {
 } from '@nextui-org/react'
 import type { LoaderArgs } from '@remix-run/node'
 import { json, redirect } from '@remix-run/node'
-import {
-  Form,
-  Link,
-  Outlet,
-  useLoaderData,
-  useLocation,
-  useParams,
-  useRouteLoaderData,
-} from '@remix-run/react'
+import { Form, Link, Outlet, useLoaderData, useParams } from '@remix-run/react'
 import dayjs from 'dayjs'
 import { Copy, ExternalLink, Mail, RefreshCcw, Trash } from 'lucide-react'
 import pluralize from 'pluralize'
@@ -30,7 +22,7 @@ import { z } from 'zod'
 import { getCore } from '~/core/get-core'
 import { InviteStatus } from '~/core/organization-invite/types'
 import { requireUser } from '~/services/session.server'
-import type { loader as organizationLoader } from './o.$slug'
+import { useOrganizationContext } from '~/utils/hooks/useProfileData'
 
 enum Intent {
   DELETE_INVITE = 'delete-invite',
@@ -54,7 +46,6 @@ export const action = async ({ request, params }: LoaderArgs) => {
 }
 
 export const loader = async ({ request, params }: LoaderArgs) => {
-  console.log(new URL(request.url))
   const slug = params.slug
   if (!slug) return redirect('/')
 
@@ -65,15 +56,11 @@ export const loader = async ({ request, params }: LoaderArgs) => {
 }
 
 const Invitations = () => {
-  const organization =
-    useRouteLoaderData<typeof organizationLoader>('routes/o.$slug')
+  const { organization } = useOrganizationContext()
   const invites = useLoaderData<typeof loader>()
   const { slug } = useParams()
   const inviteUrlRef = useRef<HTMLDivElement | null>(null)
   const universalInviteUrlRef = useRef<HTMLDivElement | null>(null)
-  const location = useLocation()
-
-  console.log(location)
 
   return (
     <div className="flex flex-col gap-10">
@@ -94,7 +81,6 @@ const Invitations = () => {
                   onClick={() => {
                     if (inviteUrlRef.current) {
                       const element = inviteUrlRef.current
-                      // Copy the text inside the text field
                       navigator.clipboard.writeText(element.innerText)
                     }
                   }}
@@ -172,7 +158,7 @@ const Invitations = () => {
           </TableBody>
         </Table>
       </div>
-      {organization?.invitationHash && (
+      {organization.invitationHash && (
         <>
           <Divider />
           <div className="flex justify-between items-end">
@@ -188,7 +174,7 @@ const Invitations = () => {
                   </div>
                 }
               >
-                <div className="flex gap-2 text-danger/60 items-center">
+                <div className="flex gap-2 text-danger/80 items-center">
                   <p>Don't share this link publicly.</p>
 
                   <ExternalLink size={16} />

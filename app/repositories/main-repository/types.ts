@@ -10,6 +10,7 @@ import type { FindOrganizationsArgs } from './methods/organization/findMany'
 import type { UpdateOrganizationArgs } from './methods/organization/update'
 import type { CreateProfileArgs } from './methods/profile/create'
 import type { FindProfileArgs } from './methods/profile/find'
+import type { FindProfilesArgs } from './methods/profile/findMany'
 import type { FindUserArgs } from './methods/user/find'
 
 export interface Space {
@@ -63,6 +64,8 @@ export interface Organization {
 
 export interface Profile {
   id: string
+  userId: string
+  email: string
   organizationSlug: string
   role: Role
   displayName: string
@@ -105,6 +108,7 @@ export interface MainRepository {
   }
   profile: {
     find: (args: FindProfileArgs) => Promise<Profile | null>
+    findMany: (args: FindProfilesArgs) => Promise<Profile[]>
     create: (args: CreateProfileArgs) => Promise<Profile>
   }
 }

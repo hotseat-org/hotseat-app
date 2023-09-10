@@ -7,18 +7,12 @@ import {
   Textarea,
 } from '@nextui-org/react'
 import type { ActionArgs } from '@remix-run/node'
-import {
-  Form,
-  Link,
-  Outlet,
-  useNavigation,
-  useRouteLoaderData,
-} from '@remix-run/react'
+import { Form, Link, Outlet, useNavigation } from '@remix-run/react'
 import { Edit, Trash, Users } from 'lucide-react'
 import { z } from 'zod'
 import { getCore } from '~/core/get-core'
 import { requireUser } from '~/services/session.server'
-import type { loader as organizationLoader } from './o.$slug'
+import { useOrganizationContext } from '~/utils/hooks/useProfileData'
 
 const FormSchema = z.object({
   name: z.string().optional(),
@@ -42,8 +36,7 @@ export const action = async ({ request, params }: ActionArgs) => {
 }
 
 const General = () => {
-  const organization =
-    useRouteLoaderData<typeof organizationLoader>('routes/o.$slug')
+  const { organization } = useOrganizationContext()
   const { state } = useNavigation()
 
   const thumbnailUrl = organization?.thumbnailUrl
