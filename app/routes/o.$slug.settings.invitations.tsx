@@ -216,7 +216,13 @@ const Invitations = () => {
                   <Copy size={14} />
                 </Button>
               </Code>
-              <Button color="primary" variant="flat" isIconOnly>
+              <Button
+                as={Link}
+                to="generate"
+                color="primary"
+                variant="flat"
+                isIconOnly
+              >
                 <RefreshCcw />
               </Button>
             </div>

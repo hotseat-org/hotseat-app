@@ -10,6 +10,7 @@ export interface UpdateOrganizationArgs {
     name?: string
     description?: string
     thumbnail?: string | null
+    invitationHash?: string
   }
 }
 
@@ -26,5 +27,6 @@ export const updateOrganization: UpdateOrganizationFn = async ({
     ...result,
     description: result.description ?? undefined,
     thumbnail: result.thumbnail ?? undefined,
+    invitationHash: result.invitationHash ?? undefined,
   }
 }

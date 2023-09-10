@@ -2,6 +2,7 @@ import { confirmOrganizationInvite } from './organization/confirmInvite'
 import { createOrganization } from './organization/create'
 import { deleteOrganization } from './organization/delete'
 import { deleteOrganizationInvite } from './organization/deleteInvite'
+import { generateNewOrganizationInviteLink } from './organization/generateNewInviteLink'
 import { getOrganizationForUser } from './organization/getForUser'
 import { getOrganizationInvites } from './organization/getInvites'
 import { organizationInviteMember } from './organization/inviteMember'
@@ -66,6 +67,7 @@ export const createCore = (context: CoreContext) => ({
     deleteInvite: deleteOrganizationInvite(context),
     confirmInvite: confirmOrganizationInvite(context),
     joinWithHash: joinOrganizationWithHash(context),
+    generateNewInviteLink: generateNewOrganizationInviteLink(context),
   },
 })
 
