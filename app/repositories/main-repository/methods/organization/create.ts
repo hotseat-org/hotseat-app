@@ -8,12 +8,14 @@ export interface CreateOrganizationArgs {
   name: string
   slug: string
   creatorId: string
+  invitationHash: string
 }
 
 export const createOrganization: CreateOrganizationFn = async ({
   slug,
   name,
   creatorId,
+  invitationHash,
 }) => {
   const user = await prisma.user.findUniqueOrThrow({ where: { id: creatorId } })
 
@@ -21,7 +23,7 @@ export const createOrganization: CreateOrganizationFn = async ({
     data: {
       name,
       slug,
-      members: { connect: { id: creatorId } },
+      invitationHash,
       profiles: {
         createMany: {
           data: [
@@ -40,5 +42,6 @@ export const createOrganization: CreateOrganizationFn = async ({
     ...result,
     description: result.description ?? undefined,
     thumbnail: result.thumbnail ?? undefined,
+    invitationHash: result.invitationHash ?? undefined,
   }
 }

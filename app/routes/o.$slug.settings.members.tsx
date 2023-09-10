@@ -1,11 +1,7 @@
 import { Code } from '@nextui-org/react'
 
-const SettingsInfo = () => {
-  return (
-    <Code className="text-xl" color="warning">
-      Not implemented
-    </Code>
-  )
+const Members = () => {
+  return <Code color="warning">Not implemented</Code>
 }
 
-export default SettingsInfo
+export default Members

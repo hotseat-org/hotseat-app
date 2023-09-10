@@ -1,6 +1,6 @@
+import { redirect, type LoaderFunction } from '@vercel/remix'
 import { returnToPage } from '~/cookies'
 import { authenticator } from '../services/auth.server'
-import { redirect, type LoaderFunction } from '@vercel/remix'
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   const provider = params.provider

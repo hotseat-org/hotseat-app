@@ -13,9 +13,15 @@ export const getOrganizationForUser =
     userId,
     slug,
   }: GetOrganizationForUserArgs): Promise<Organization | null> => {
+    const profile = await mainRepository.profile.find({
+      userId,
+      organizationSlug: slug,
+    })
+
+    if (!profile) throw new Error('Forbidden')
+
     const organization = await mainRepository.organization.find({
       slug,
-      userId,
     })
 
     if (!organization) return null

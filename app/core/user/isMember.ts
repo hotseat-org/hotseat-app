@@ -8,10 +8,10 @@ interface UserIsMemberArgs {
 export const userIsMember =
   ({ mainRepository }: CoreContext) =>
   async ({ userId, organizationSlug }: UserIsMemberArgs): Promise<boolean> => {
-    const organization = await mainRepository.organization.find({
+    const profile = await mainRepository.profile.find({
       userId,
-      slug: organizationSlug,
+      organizationSlug,
     })
 
-    return !!organization
+    return !!profile
   }

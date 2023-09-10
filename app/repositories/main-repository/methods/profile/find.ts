@@ -21,5 +21,10 @@ export const findProfile: FindProfileFn = async ({
     },
   })
 
-  return profile
+  if (!profile) return null
+
+  return {
+    ...profile,
+    avatarUrl: profile.avatarUrl ?? undefined,
+  }
 }

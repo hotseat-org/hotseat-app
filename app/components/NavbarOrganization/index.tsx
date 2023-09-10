@@ -1,4 +1,3 @@
-import { FireIcon } from '@heroicons/react/24/solid'
 import {
   Navbar,
   NavbarBrand,
@@ -10,6 +9,7 @@ import {
   Link as NextUiLink,
 } from '@nextui-org/react'
 import { Link, useLocation } from '@remix-run/react'
+import { Flame } from 'lucide-react'
 import type { Organization } from '~/core/organization/types'
 import { useUser } from '~/utils/remix'
 import { UserDropdown } from '../Navigation/UserDropdown'
@@ -26,7 +26,7 @@ export const HeaderOrganization = ({ organization }: Props) => {
     <Navbar isBordered>
       <NavbarMenuToggle className="sm:hidden" />
       <NavbarBrand as={Link} to={'/'} className="flex gap-4">
-        <FireIcon className="text-red-500 dark:text-red-300" width={32} />
+        <Flame className="text-red-500 dark:text-red-300" width={32} />
         <div className="flex flex-col">
           <h1 className="font-extrabold text-xl">Hot Seat</h1>
           <h2 className="text-bold text-foreground/70">@{organization.name}</h2>

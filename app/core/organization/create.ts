@@ -1,3 +1,4 @@
+import { nanoid } from 'nanoid'
 import slugify from 'slugify'
 import { getCore } from '../get-core'
 import type { CoreContext } from '../types'
@@ -23,6 +24,7 @@ export const createOrganization =
       name,
       creatorId: userId,
       slug,
+      invitationHash: nanoid(8),
     })
 
     return organization

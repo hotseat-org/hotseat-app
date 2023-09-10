@@ -141,8 +141,8 @@ export default function Index() {
               type="submit"
               name="intent"
               value={Intent.CREATE_ORGANIZATION}
-              disabled={availability !== 'available'}
-              color={availability === 'available' ? 'primary' : 'default'}
+              isDisabled={availability !== 'available'}
+              color="primary"
             >
               Create
             </Button>

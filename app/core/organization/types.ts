@@ -3,4 +3,5 @@ export interface Organization {
   slug: string
   description?: string
   thumbnailUrl?: string
+  invitationHash?: string
 }

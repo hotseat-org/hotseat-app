@@ -1,13 +1,13 @@
 import { Divider, Tab, Tabs } from '@nextui-org/react'
 import { Outlet, useLocation, useNavigate } from '@remix-run/react'
 import clsx from 'clsx'
-import { Cog, PersonStanding, Skull } from 'lucide-react'
+import { Cog, Mails, Skull, Users } from 'lucide-react'
 import { useMemo } from 'react'
 import { Container } from '~/components/Container'
 
-const keys = ['general', 'members', 'danger']
+const keys = ['general', 'invitations', 'members', 'danger']
 
-const Organization = () => {
+const Settings = () => {
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -50,10 +50,22 @@ const Organization = () => {
           <Outlet />
         </Tab>
         <Tab
+          key="invitations"
+          title={
+            <div className="flex items-center space-x-2">
+              <Mails />
+              <span>Invitations</span>
+            </div>
+          }
+        >
+          <Divider className="mb-12" />
+          <Outlet />
+        </Tab>
+        <Tab
           key="members"
           title={
             <div className="flex items-center space-x-2">
-              <PersonStanding />
+              <Users />
               <span>Members</span>
             </div>
           }
@@ -78,4 +90,4 @@ const Organization = () => {
   )
 }
 
-export default Organization
+export default Settings

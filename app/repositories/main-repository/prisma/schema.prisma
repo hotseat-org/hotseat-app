@@ -18,7 +18,6 @@ model User {
 
   email        String         @unique
   profiles      Profile[]
-  organizations Organization[]
 
   displayName String
   avatarUrl   String?
@@ -43,9 +42,6 @@ model Profile {
   organizationSlug String        
   organization   Organization @relation(fields: [organizationSlug], references: [slug], onDelete: Cascade)
 
-  residentSeat Seat?
-  reservations Reservation[]
-
   displayName String
   avatarUrl   String?
 
@@ -54,17 +50,18 @@ model Profile {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+
   @@unique([userId, organizationSlug])
   @@index([userId, organizationSlug])
-  @@index([id])
 }
 
 model Organization {
   slug     String  @id @unique
   name     String
-  members  User[]
   profiles  Profile[]
-  spaces   Space[]
+  invites  OrganizationInvite[]
+
+  invitationHash String? @unique
 
   description String?
   thumbnail String?
@@ -72,58 +69,20 @@ model Organization {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([invitationHash])
   @@index([slug])
 }
 
-model Seat {
-  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+model OrganizationInvite {
+  expiresAt DateTime
+  email String
 
-  furnitureId  String        @unique 
-  reservations Reservation[]
-  residentId   String?          @unique @db.Uuid
-  resident     Profile?      @relation(fields: [residentId], references: [id])
-  spaceId      String @db.Uuid
-  space        Space         @relation(fields: [spaceId], references: [id])
+  organizationSlug String
+  organization  Organization @relation(fields: [organizationSlug], references: [slug], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-}
 
-model Reservation {
-  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-
-  from   DateTime
-  to     DateTime
-  byId   String      @unique @db.Uuid
-  by     Profile  @relation(fields: [byId], references: [id])
-  seatId String    @unique @db.Uuid
-  seat   Seat     @relation(fields: [seatId], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Room {
-  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-
-  name    String
-  space   Space  @relation(fields: [spaceId], references: [id])
-  spaceId String @db.Uuid
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Space {
-  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-
-  organizationSlug String          @unique
-  organization   Organization @relation(fields: [organizationSlug], references: [slug])
-  name           String       @unique
-  description    String?
-  rooms          Room[]
-  seats          Seat[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  @@unique([email, organizationSlug])
+  @@index([email, organizationSlug])
 }

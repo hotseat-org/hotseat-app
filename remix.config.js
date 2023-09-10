@@ -15,5 +15,5 @@ module.exports = {
     v2_dev: true,
     v2_headers: true,
   },
-  serverDependenciesToBundle: ["@uidotdev/usehooks"],
+  serverDependenciesToBundle: ["@uidotdev/usehooks", "nanoid"],
 }

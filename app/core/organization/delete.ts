@@ -14,7 +14,7 @@ export const deleteOrganization =
       userId,
       organizationSlug: slug,
     })
-    console.log(profile)
+
     if (!profile) throw new Error('Forbidden')
     // * TODO: Use core or repository Enums
     if (profile.role !== Role.ADMIN) throw new Error('Forbidden')

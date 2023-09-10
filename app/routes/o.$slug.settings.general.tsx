@@ -41,7 +41,7 @@ export const action = async ({ request, params }: ActionArgs) => {
   return null
 }
 
-const SettingsInfo = () => {
+const General = () => {
   const organization =
     useRouteLoaderData<typeof organizationLoader>('routes/o.$slug')
   const { state } = useNavigation()
@@ -87,10 +87,11 @@ const SettingsInfo = () => {
             />
             <Card
               isBlurred
-              className="absolute top-[80%] left-[80%] -translate-x-1/2 -translate-y-1/2 z-1"
+              className="absolute top-[95%] left-[50%] -translate-x-1/2 -translate-y-1/2 z-1 border-1 dark:border-slate-800/60"
             >
               <CardFooter className="gap-2 p-1">
                 <Button
+                  isDisabled={!thumbnailUrl}
                   as={Link}
                   to="delete-logo"
                   variant="light"
@@ -113,4 +114,4 @@ const SettingsInfo = () => {
   )
 }
 
-export default SettingsInfo
+export default General

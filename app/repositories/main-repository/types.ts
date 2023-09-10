@@ -1,9 +1,14 @@
 import type { Role } from '@prisma/client'
+import type { CreateOrganizationInviteArgs } from './methods/organization-invite/create'
+import type { DeleteOrganizationInviteArgs } from './methods/organization-invite/delete'
+import type { FindOrganizationInviteArgs } from './methods/organization-invite/find'
+import type { FindOrganizationInvitesArgs } from './methods/organization-invite/findMany'
 import type { CreateOrganizationArgs } from './methods/organization/create'
 import type { DeleteOrganizationArgs } from './methods/organization/delete'
 import type { FindOrganizationArgs } from './methods/organization/find'
 import type { FindOrganizationsArgs } from './methods/organization/findMany'
 import type { UpdateOrganizationArgs } from './methods/organization/update'
+import type { CreateProfileArgs } from './methods/profile/create'
 import type { FindProfileArgs } from './methods/profile/find'
 import type { FindUserArgs } from './methods/user/find'
 
@@ -41,7 +46,7 @@ export interface Reservation {
 export interface User {
   id: string
   email: string
-  avatarUrl?: string | null
+  avatarUrl?: string
   displayName: string
 
   createdAt: Date
@@ -53,11 +58,24 @@ export interface Organization {
   slug: string
   description?: string
   thumbnail?: string
+  invitationHash?: string
 }
 
 export interface Profile {
   id: string
+  organizationSlug: string
   role: Role
+  displayName: string
+  avatarUrl?: string
+}
+
+export interface OrganizationInvite {
+  email: string
+  expiresAt: Date
+  organizationSlug: string
+
+  createdAt: Date
+  updatedAt: Date
 }
 
 export type CreateSpaceOptions = Pick<Space, 'name' | 'spaceId' | 'description'>
@@ -75,7 +93,18 @@ export interface MainRepository {
     update: (args: UpdateOrganizationArgs) => Promise<Organization>
     delete: (args: DeleteOrganizationArgs) => Promise<Organization>
   }
+  organizationInvite: {
+    create: (args: CreateOrganizationInviteArgs) => Promise<OrganizationInvite>
+    find: (
+      args: FindOrganizationInviteArgs
+    ) => Promise<OrganizationInvite | null>
+    findMany: (
+      args: FindOrganizationInvitesArgs
+    ) => Promise<OrganizationInvite[]>
+    delete: (args: DeleteOrganizationInviteArgs) => Promise<OrganizationInvite>
+  }
   profile: {
     find: (args: FindProfileArgs) => Promise<Profile | null>
+    create: (args: CreateProfileArgs) => Promise<Profile>
   }
 }

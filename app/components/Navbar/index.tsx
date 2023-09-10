@@ -1,4 +1,3 @@
-import { FireIcon } from '@heroicons/react/24/solid'
 import {
   Button,
   Dropdown,
@@ -10,7 +9,7 @@ import {
   NavbarContent,
 } from '@nextui-org/react'
 import { Link } from '@remix-run/react'
-import { Plus, Users } from 'lucide-react'
+import { Flame, Plus, Users } from 'lucide-react'
 import { useUser } from '~/utils/remix'
 import { UserDropdown } from '../Navigation/UserDropdown'
 
@@ -21,7 +20,7 @@ export const Header = () => {
     <Navbar isBordered>
       <NavbarBrand className="flex gap-1">
         <h1 className="font-extrabold text-xl">Hot Seat</h1>
-        <FireIcon className="text-red-500 dark:text-red-300" width={32} />
+        <Flame className="text-red-500 dark:text-red-300" width={32} />
       </NavbarBrand>
       <div className="flex gap-4 items-center">
         <NavbarContent>

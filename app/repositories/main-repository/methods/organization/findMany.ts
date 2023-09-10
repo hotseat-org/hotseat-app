@@ -13,7 +13,7 @@ export const findManyOrganizations: FindOrganizationsFn = async ({
   filter: { userId },
 }) => {
   const result = await prisma.organization.findMany({
-    where: { members: { some: { id: userId } } },
+    where: { profiles: { some: { userId } } },
   })
 
   return result

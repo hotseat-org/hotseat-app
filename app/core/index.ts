@@ -1,7 +1,12 @@
+import { confirmOrganizationInvite } from './organization/confirmInvite'
 import { createOrganization } from './organization/create'
 import { deleteOrganization } from './organization/delete'
+import { deleteOrganizationInvite } from './organization/deleteInvite'
 import { getOrganizationForUser } from './organization/getForUser'
+import { getOrganizationInvites } from './organization/getInvites'
+import { organizationInviteMember } from './organization/inviteMember'
 import { organizationIsAvailable } from './organization/isAvailable'
+import { joinOrganizationWithHash } from './organization/joinWithHash'
 import { updateOrganization } from './organization/update'
 import { cancelReservation } from './reservation/cancel'
 import { createReservation } from './reservation/create'
@@ -56,6 +61,11 @@ export const createCore = (context: CoreContext) => ({
     create: createOrganization(context),
     update: updateOrganization(context),
     delete: deleteOrganization(context),
+    inviteMember: organizationInviteMember(context),
+    getInvites: getOrganizationInvites(context),
+    deleteInvite: deleteOrganizationInvite(context),
+    confirmInvite: confirmOrganizationInvite(context),
+    joinWithHash: joinOrganizationWithHash(context),
   },
 })
 
