@@ -8,13 +8,14 @@ import {
   NavbarBrand,
   NavbarContent,
 } from '@nextui-org/react'
-import { Link } from '@remix-run/react'
+import { useNavigate } from '@remix-run/react'
 import { Flame, Plus, Users } from 'lucide-react'
 import { useUser } from '~/utils/remix'
 import { UserDropdown } from '../Navigation/UserDropdown'
 
 export const Header = () => {
   const user = useUser()
+  const navigate = useNavigate()
 
   return (
     <Navbar isBordered>
@@ -30,10 +31,9 @@ export const Header = () => {
                 <Plus />
               </Button>
             </DropdownTrigger>
-            <DropdownMenu>
+            <DropdownMenu onAction={(key) => navigate(key.toString())}>
               <DropdownItem
-                as={Link}
-                key="new-organization"
+                key="/app/organizations/new"
                 startContent={
                   <Users
                     size={28}
@@ -41,9 +41,7 @@ export const Header = () => {
                   />
                 }
               >
-                <Link replace to="/app/organizations/new">
-                  New organization
-                </Link>
+                New organization
               </DropdownItem>
             </DropdownMenu>
           </Dropdown>

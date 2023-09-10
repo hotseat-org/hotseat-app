@@ -8,7 +8,7 @@ import {
   Switch,
   User,
 } from '@nextui-org/react'
-import { Link } from '@remix-run/react'
+import { useNavigate } from '@remix-run/react'
 import { LogOut, Moon, Sun } from 'lucide-react'
 import { Theme, useTheme } from 'remix-themes'
 import type { User as UserType } from '~/core/user/types'
@@ -19,6 +19,8 @@ interface Props {
 
 export const UserDropdown = ({ user }: Props) => {
   const [theme, setTheme] = useTheme()
+  const navigate = useNavigate()
+
   return (
     <Dropdown>
       <DropdownTrigger>
@@ -30,7 +32,12 @@ export const UserDropdown = ({ user }: Props) => {
           name={user.displayName}
         />
       </DropdownTrigger>
-      <DropdownMenu disabledKeys={['profile']}>
+      <DropdownMenu
+        disabledKeys={['profile']}
+        onAction={(key) =>
+          navigate(key.toString(), { replace: key === '/logout' })
+        }
+      >
         <DropdownSection aria-label="Profile & Actions" showDivider>
           <DropdownItem
             isReadOnly
@@ -61,6 +68,7 @@ export const UserDropdown = ({ user }: Props) => {
           </DropdownItem>
         </DropdownSection>
         <DropdownItem
+          key="/logout"
           className="font-bold text-danger"
           color="danger"
           variant="flat"
@@ -70,9 +78,7 @@ export const UserDropdown = ({ user }: Props) => {
             </div>
           }
         >
-          <Link replace to="/logout">
-            Logout
-          </Link>
+          Logout
         </DropdownItem>
       </DropdownMenu>
     </Dropdown>
