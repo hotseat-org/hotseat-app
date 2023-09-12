@@ -1,15 +1,18 @@
 import type { CoreContext } from '../types'
 
 interface UserIsMemberArgs {
-  userId: string
+  userEmail: string
   organizationSlug: string
 }
 
 export const userIsMember =
   ({ mainRepository }: CoreContext) =>
-  async ({ userId, organizationSlug }: UserIsMemberArgs): Promise<boolean> => {
+  async ({
+    userEmail,
+    organizationSlug,
+  }: UserIsMemberArgs): Promise<boolean> => {
     const profile = await mainRepository.profile.find({
-      userId,
+      userEmail,
       organizationSlug,
     })
 

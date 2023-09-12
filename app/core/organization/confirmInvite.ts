@@ -31,7 +31,7 @@ export const confirmOrganizationInvite =
 
     const profile = await mainRepository.profile.create({
       organizationSlug,
-      userId: user.id,
+      email,
       data: {
         displayName: user.displayName,
         role: Role.USER,
@@ -39,7 +39,10 @@ export const confirmOrganizationInvite =
       },
     })
 
-    await mainRepository.organizationInvite.delete({ email, organizationSlug })
+    await mainRepository.organizationInvite.delete({
+      email,
+      organizationSlug,
+    })
 
     return profile
   }

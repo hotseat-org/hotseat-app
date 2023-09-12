@@ -16,11 +16,21 @@ export const joinOrganizationWithHash =
     const organization = await mainRepository.organization.find({
       invitationHash: hash,
     })
+
     if (!organization) throw new Error('Organization not found')
+
+    const currentProfile = await mainRepository.profile.find({
+      userEmail: user.email,
+      organizationSlug: organization.slug,
+    })
+
+    if (currentProfile) {
+      return currentProfile
+    }
 
     const profile = await mainRepository.profile.create({
       organizationSlug: organization.slug,
-      userId: user.id,
+      email: user.email,
       data: {
         displayName: user.displayName,
         role: Role.USER,

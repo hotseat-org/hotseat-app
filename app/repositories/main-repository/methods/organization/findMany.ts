@@ -5,15 +5,15 @@ type FindOrganizationsFn = MainRepository['organization']['findMany']
 
 export interface FindOrganizationsArgs {
   filter: {
-    userId: string
+    userEmail: string
   }
 }
 
 export const findManyOrganizations: FindOrganizationsFn = async ({
-  filter: { userId },
+  filter: { userEmail },
 }) => {
   const result = await prisma.organization.findMany({
-    where: { profiles: { some: { userId } } },
+    where: { profiles: { some: { userEmail } } },
   })
 
   return result

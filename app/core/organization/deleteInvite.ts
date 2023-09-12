@@ -6,18 +6,18 @@ import type { CoreContext } from '../types'
 export interface DeleteOrganizationInviteArgs {
   email: string
   slug: string
-  userId: string
+  userEmail: string
 }
 
 export const deleteOrganizationInvite =
   ({ mainRepository }: CoreContext) =>
   async ({
     slug,
-    userId,
+    userEmail,
     email,
   }: DeleteOrganizationInviteArgs): Promise<OrganizationInvite> => {
     const profile = await mainRepository.profile.find({
-      userId,
+      userEmail,
       organizationSlug: slug,
     })
 

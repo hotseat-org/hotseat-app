@@ -7,17 +7,19 @@ type CreateOrganizationFn = MainRepository['organization']['create']
 export interface CreateOrganizationArgs {
   name: string
   slug: string
-  creatorId: string
+  creatorEmail: string
   invitationHash: string
 }
 
 export const createOrganization: CreateOrganizationFn = async ({
   slug,
   name,
-  creatorId,
+  creatorEmail,
   invitationHash,
 }) => {
-  const user = await prisma.user.findUniqueOrThrow({ where: { id: creatorId } })
+  const user = await prisma.user.findUniqueOrThrow({
+    where: { email: creatorEmail },
+  })
 
   const result = await prisma.organization.create({
     data: {
@@ -30,7 +32,7 @@ export const createOrganization: CreateOrganizationFn = async ({
             {
               displayName: user.displayName,
               role: Role.ADMIN,
-              userId: creatorId,
+              userEmail: creatorEmail,
             },
           ],
         },

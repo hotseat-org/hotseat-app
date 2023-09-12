@@ -5,7 +5,7 @@ import type { OrganizationInvite } from '../organization-invite/types'
 import type { CoreContext } from '../types'
 
 export interface OrganizationInviteMemberArgs {
-  userId: string
+  userEmail: string
   slug: string
   data: {
     email: string
@@ -15,26 +15,24 @@ export interface OrganizationInviteMemberArgs {
 export const organizationInviteMember =
   ({ mainRepository }: CoreContext) =>
   async ({
-    userId,
+    userEmail,
     slug,
     data,
   }: OrganizationInviteMemberArgs): Promise<OrganizationInvite> => {
     const profile = await mainRepository.profile.find({
       organizationSlug: slug,
-      userId,
+      userEmail,
     })
 
     if (!profile) throw new Error('Forbidden')
     if (profile.role !== Role.ADMIN) throw new Error('Forbidden')
 
-    const invitedUser = await mainRepository.user.find({ email: data.email })
+    const invitedUserProfile = await mainRepository.profile.find({
+      organizationSlug: slug,
+      userEmail: data.email,
+    })
 
-    if (invitedUser) {
-      const invitedUserProfile = await mainRepository.profile.find({
-        organizationSlug: slug,
-        userId: invitedUser.id,
-      })
-
+    if (invitedUserProfile) {
       if (invitedUserProfile) {
         throw new Error(
           'User with this email is already member of this organization'

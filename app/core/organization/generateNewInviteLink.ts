@@ -5,18 +5,18 @@ import { organizationMapper } from './mapper'
 import type { Organization } from './types'
 
 export interface GenerateNewOrganizationInviteLinkArgs {
-  userId: string
+  userEmail: string
   organizationSlug: string
 }
 
 export const generateNewOrganizationInviteLink =
   ({ mainRepository, imageService }: CoreContext) =>
   async ({
-    userId,
+    userEmail,
     organizationSlug,
   }: GenerateNewOrganizationInviteLinkArgs): Promise<Organization> => {
     const profile = await mainRepository.profile.find({
-      userId,
+      userEmail,
       organizationSlug,
     })
     if (!profile) throw new Error('Forbidden')

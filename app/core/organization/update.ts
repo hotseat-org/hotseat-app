@@ -5,7 +5,7 @@ import type { Organization } from './types'
 
 export interface UpdateOrganizationArgs {
   slug: string
-  userId: string
+  userEmail: string
   data: {
     name?: string
     thumbnail?: string | null
@@ -17,11 +17,11 @@ export const updateOrganization =
   ({ mainRepository, imageService }: CoreContext) =>
   async ({
     slug,
-    userId,
+    userEmail,
     data,
   }: UpdateOrganizationArgs): Promise<Organization> => {
     const profile = await mainRepository.profile.find({
-      userId,
+      userEmail,
       organizationSlug: slug,
     })
 

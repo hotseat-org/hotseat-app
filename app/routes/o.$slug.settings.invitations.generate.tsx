@@ -19,7 +19,7 @@ export const action = async ({ request, params }: ActionArgs) => {
   const core = getCore()
 
   await core.organization.generateNewInviteLink({
-    userId: user.id,
+    userEmail: user.email,
     organizationSlug: slug,
   })
 

@@ -5,7 +5,7 @@ import type { MainRepository } from '../../types'
 type CreateProfileFn = MainRepository['profile']['create']
 
 export interface CreateProfileArgs {
-  userId: string
+  email: string
   organizationSlug: string
   data: {
     displayName: string
@@ -15,13 +15,13 @@ export interface CreateProfileArgs {
 }
 
 export const createProfile: CreateProfileFn = async ({
-  userId,
+  email,
   organizationSlug,
   data: { displayName, role, avatarUrl },
 }) => {
   const profile = await prisma.profile.create({
     data: {
-      userId,
+      userEmail: email,
       organizationSlug,
       displayName,
       role,

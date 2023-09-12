@@ -2,16 +2,19 @@ import type { Profile } from '../profile/types'
 import type { CoreContext } from '../types'
 
 interface GetOrganizationMembersArgs {
-  userId: string
+  userEmail: string
   slug: string
 }
 
 export const getOrganizationMembers =
   ({ mainRepository }: CoreContext) =>
-  async ({ userId, slug }: GetOrganizationMembersArgs): Promise<Profile[]> => {
+  async ({
+    userEmail,
+    slug,
+  }: GetOrganizationMembersArgs): Promise<Profile[]> => {
     const profile = await mainRepository.profile.find({
       organizationSlug: slug,
-      userId,
+      userEmail,
     })
 
     if (!profile) throw new Error('Forbidden')

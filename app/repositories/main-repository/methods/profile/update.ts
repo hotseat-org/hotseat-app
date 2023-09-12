@@ -5,8 +5,7 @@ import type { MainRepository } from '../../types'
 type UpdateProfileFn = MainRepository['profile']['update']
 
 export interface UpdateProfileArgs {
-  id?: string
-  userId?: string
+  userEmail?: string
   organizationSlug?: string
   data: {
     displayName?: string
@@ -16,16 +15,15 @@ export interface UpdateProfileArgs {
 }
 
 export const updateProfile: UpdateProfileFn = async ({
-  id,
-  userId,
+  userEmail,
   organizationSlug,
   data: { displayName, role, avatarUrl },
 }) => {
-  const userId_organizationSlug =
-    userId && organizationSlug ? { userId, organizationSlug } : undefined
+  const userEmail_organizationSlug =
+    userEmail && organizationSlug ? { userEmail, organizationSlug } : undefined
 
   const profile = await prisma.profile.update({
-    where: { id, userId_organizationSlug },
+    where: { userEmail, userEmail_organizationSlug },
     data: {
       displayName,
       role,

@@ -23,7 +23,7 @@ export const action = async ({ request, params }: ActionArgs) => {
 
   await core.organization.update({
     slug,
-    userId: user.id,
+    userEmail: user.email,
     data: { thumbnail: null },
   })
 

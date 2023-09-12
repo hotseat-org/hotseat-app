@@ -22,7 +22,7 @@ export const action = async ({ request, params }: ActionArgs) => {
 
   const core = getCore()
 
-  await core.organization.delete({ slug, userId: user.id })
+  await core.organization.delete({ slug, userEmail: user.email })
 
   return redirect('/')
 }

@@ -14,39 +14,7 @@ import type { FindProfilesArgs } from './methods/profile/findMany'
 import type { UpdateProfileArgs } from './methods/profile/update'
 import type { FindUserArgs } from './methods/user/find'
 
-export interface Space {
-  id: string
-  name: string
-  spaceId: string
-  description?: string
-  seats: Seat[]
-
-  createdAt: Date
-  updatedAt: Date
-}
-
-export interface Seat {
-  id: string
-  furnitureId: string
-  residentId?: string | null
-  space: Pick<Space, 'id'>
-  reservations?: Reservation[]
-
-  createdAt: Date
-  updatedAt: Date
-}
-
-export interface Reservation {
-  id: string
-  userId: string
-  seat: Seat
-
-  createdAt: Date
-  updatedAt: Date
-}
-
 export interface User {
-  id: string
   email: string
   avatarUrl?: string
   displayName: string
@@ -64,9 +32,7 @@ export interface Organization {
 }
 
 export interface Profile {
-  id: string
-  userId: string
-  email: string
+  userEmail: string
   organizationSlug: string
   role: Role
   displayName: string
@@ -82,7 +48,6 @@ export interface OrganizationInvite {
   updatedAt: Date
 }
 
-export type CreateSpaceOptions = Pick<Space, 'name' | 'spaceId' | 'description'>
 export type CreateUserArgs = Pick<User, 'email' | 'avatarUrl' | 'displayName'>
 
 export interface MainRepository {

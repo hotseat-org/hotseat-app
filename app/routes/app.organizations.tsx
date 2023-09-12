@@ -23,7 +23,7 @@ export const loader = async ({ request }: LoaderArgs) => {
   const user = await requireUser(request)
   const core = getCore()
 
-  return core.user.getOrganizations(user.id)
+  return core.user.getOrganizations(user.email)
 }
 
 export default function Index() {

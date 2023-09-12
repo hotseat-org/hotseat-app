@@ -11,7 +11,7 @@ export const loader = async (args: LoaderArgs) => {
   const core = getCore()
 
   const organization = await core.organization.getForUser({
-    userId: profile.userId,
+    userEmail: profile.userEmail,
     slug: profile.organizationSlug,
   })
 

@@ -14,8 +14,6 @@ datasource db {
 }
 
 model User {
-  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-
   email        String         @unique
   profiles      Profile[]
 
@@ -25,7 +23,6 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([id])
   @@index([email])
 }
 
@@ -35,10 +32,8 @@ enum Role {
 }
 
 model Profile {
-  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-
-  userId         String @db.Uuid        
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userEmail      String       
+  user           User         @relation(fields: [userEmail], references: [email], onDelete: Cascade)
   organizationSlug String        
   organization   Organization @relation(fields: [organizationSlug], references: [slug], onDelete: Cascade)
 
@@ -51,8 +46,7 @@ model Profile {
   updatedAt DateTime @updatedAt
 
 
-  @@unique([userId, organizationSlug])
-  @@index([userId, organizationSlug])
+  @@unique([userEmail, organizationSlug])
 }
 
 model Organization {
@@ -70,7 +64,6 @@ model Organization {
   updatedAt DateTime @updatedAt
 
   @@index([invitationHash])
-  @@index([slug])
 }
 
 model OrganizationInvite {
@@ -84,5 +77,4 @@ model OrganizationInvite {
   updatedAt DateTime @updatedAt
 
   @@unique([email, organizationSlug])
-  @@index([email, organizationSlug])
 }

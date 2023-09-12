@@ -4,9 +4,9 @@ import type { CoreContext } from '../types'
 
 export const getUserOrganizations =
   ({ mainRepository, imageService }: CoreContext) =>
-  async (userId: string): Promise<Organization[]> => {
+  async (userEmail: string): Promise<Organization[]> => {
     const organizations = await mainRepository.organization.findMany({
-      filter: { userId },
+      filter: { userEmail },
     })
 
     const mapper = organizationMapper(imageService)

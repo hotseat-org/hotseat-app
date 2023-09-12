@@ -30,7 +30,11 @@ export const action = async ({ request, params }: ActionArgs) => {
 
   const core = getCore()
 
-  await core.organization.update({ slug, userId: user.id, data: { thumbnail } })
+  await core.organization.update({
+    slug,
+    userEmail: user.email,
+    data: { thumbnail },
+  })
 
   return redirect('..')
 }

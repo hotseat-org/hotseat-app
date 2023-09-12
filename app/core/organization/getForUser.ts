@@ -3,18 +3,18 @@ import { organizationMapper } from './mapper'
 import type { Organization } from './types'
 
 interface GetOrganizationForUserArgs {
-  userId: string
+  userEmail: string
   slug: string
 }
 
 export const getOrganizationForUser =
   ({ mainRepository, imageService }: CoreContext) =>
   async ({
-    userId,
+    userEmail,
     slug,
   }: GetOrganizationForUserArgs): Promise<Organization | null> => {
     const profile = await mainRepository.profile.find({
-      userId,
+      userEmail,
       organizationSlug: slug,
     })
 

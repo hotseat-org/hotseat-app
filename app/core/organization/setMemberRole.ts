@@ -4,19 +4,19 @@ import type { Profile } from '../profile/types'
 import type { CoreContext } from '../types'
 
 export interface SetOrganizationMemberRoleArgs {
-  userId: string
+  userEmail: string
   slug: string
-  otherUserId: string
+  otherUserEmail: string
   role: Role
 }
 
 const requireAdminInOrganization = async (
   mainRepository: MainRepository,
-  userId: string,
+  userEmail: string,
   slug: string
 ) => {
   const profile = await mainRepository.profile.find({
-    userId,
+    userEmail,
     organizationSlug: slug,
   })
 
@@ -30,18 +30,18 @@ export const setOrganizationMemberRole =
   ({ mainRepository }: CoreContext) =>
   async ({
     slug,
-    userId,
-    otherUserId,
+    userEmail,
+    otherUserEmail,
     role,
   }: SetOrganizationMemberRoleArgs): Promise<Profile> => {
-    await requireAdminInOrganization(mainRepository, userId, slug)
+    await requireAdminInOrganization(mainRepository, userEmail, slug)
 
     const members = await mainRepository.profile.findMany({
       filter: { organizationSlug: slug },
     })
 
     const currentProfile = await mainRepository.profile.find({
-      userId: otherUserId,
+      userEmail: otherUserEmail,
       organizationSlug: slug,
     })
 
@@ -65,7 +65,7 @@ export const setOrganizationMemberRole =
 
     const profile = await mainRepository.profile.update({
       organizationSlug: slug,
-      userId: otherUserId,
+      userEmail: otherUserEmail,
       data: {
         role,
       },

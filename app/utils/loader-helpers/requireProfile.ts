@@ -20,7 +20,7 @@ export const requireProfile = async (
   const core = getCore()
 
   const profile = await core.profile.get({
-    userId: user.id,
+    userEmail: user.email,
     organizationSlug: slug,
   })
 

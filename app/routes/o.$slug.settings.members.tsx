@@ -28,15 +28,15 @@ export const action = async ({ request, params }: ActionArgs) => {
   const user = await requireUser(request)
 
   const formData = await request.formData()
-  const { role, userId } = z
-    .object({ role: z.nativeEnum(Role), userId: z.string() })
+  const { role, userEmail } = z
+    .object({ role: z.nativeEnum(Role), userEmail: z.string() })
     .parse(Object.fromEntries([...formData.entries()]))
 
   const core = getCore()
   await core.organization.setMemberRole({
     slug,
-    userId: user.id,
-    otherUserId: userId,
+    userEmail: user.email,
+    otherUserEmail: userEmail,
     role,
   })
 
@@ -50,7 +50,9 @@ export const loader = async ({ request, params }: LoaderArgs) => {
   const user = await requireUser(request)
   const core = getCore()
 
-  return json(await core.organization.getMembers({ userId: user.id, slug }))
+  return json(
+    await core.organization.getMembers({ userEmail: user.email, slug })
+  )
 }
 
 const Invitations = () => {
@@ -111,8 +113,8 @@ const Invitations = () => {
                     ]
 
               return (
-                <TableRow key={member.email}>
-                  <TableCell>{member.email}</TableCell>
+                <TableRow key={member.userEmail}>
+                  <TableCell>{member.userEmail}</TableCell>
                   <TableCell>{member.displayName}</TableCell>
                   <TableCell>
                     <Chip
@@ -140,7 +142,7 @@ const Invitations = () => {
                         items={availableRoles}
                         onAction={(role) =>
                           submit(
-                            { role, userId: member.userId },
+                            { role, userEmail: member.userEmail },
                             { method: 'POST' }
                           )
                         }

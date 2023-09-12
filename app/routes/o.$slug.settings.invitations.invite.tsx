@@ -23,7 +23,7 @@ export const action = async ({ request, params }: ActionArgs) => {
   const core = getCore()
 
   await core.organization.inviteMember({
-    userId: user.id,
+    userEmail: user.email,
     slug,
     data: { email },
   })

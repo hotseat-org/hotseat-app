@@ -6,12 +6,15 @@ import type { Organization } from './types'
 
 export interface CreateOrganizationArgs {
   name: string
-  userId: string
+  userEmail: string
 }
 
 export const createOrganization =
   ({ mainRepository }: CoreContext) =>
-  async ({ name, userId }: CreateOrganizationArgs): Promise<Organization> => {
+  async ({
+    name,
+    userEmail,
+  }: CreateOrganizationArgs): Promise<Organization> => {
     const core = getCore()
 
     const isAvailable = await core.organization.isAvailable(name)
@@ -22,7 +25,7 @@ export const createOrganization =
     const slug = slugify(name, { lower: true, trim: true })
     const organization = await mainRepository.organization.create({
       name,
-      creatorId: userId,
+      creatorEmail: userEmail,
       slug,
       invitationHash: nanoid(8),
     })

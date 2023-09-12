@@ -39,7 +39,7 @@ export const action = async ({ request, params }: LoaderArgs) => {
 
   if (intent === Intent.DELETE_INVITE) {
     const email = z.string().email().parse(formData.get('email'))
-    await core.organization.deleteInvite({ slug, userId: user.id, email })
+    await core.organization.deleteInvite({ slug, userEmail: user.email, email })
   }
 
   return null
@@ -52,7 +52,9 @@ export const loader = async ({ request, params }: LoaderArgs) => {
   const user = await requireUser(request)
   const core = getCore()
 
-  return json(await core.organization.getInvites({ userId: user.id, slug }))
+  return json(
+    await core.organization.getInvites({ userEmail: user.email, slug })
+  )
 }
 
 const Invitations = () => {

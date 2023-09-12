@@ -2,15 +2,15 @@ import type { CoreContext } from '../types'
 import type { Profile } from './types'
 
 interface GetProfileArgs {
-  userId: string
+  userEmail: string
   organizationSlug: string
 }
 
 export const getProfile =
   ({ mainRepository, imageService }: CoreContext) =>
-  async ({ userId, organizationSlug }: GetProfileArgs): Promise<Profile> => {
+  async ({ userEmail, organizationSlug }: GetProfileArgs): Promise<Profile> => {
     const profile = await mainRepository.profile.find({
-      userId,
+      userEmail,
       organizationSlug,
     })
 
