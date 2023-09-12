@@ -84,7 +84,7 @@ const Invitations = () => {
             <TableColumn>ACTIONS</TableColumn>
           </TableHeader>
           <TableBody>
-            {members.map((member) => {
+            {members.data.map((member) => {
               const availableRoles =
                 member.role === Role.USER
                   ? [

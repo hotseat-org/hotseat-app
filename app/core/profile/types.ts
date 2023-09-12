@@ -5,4 +5,5 @@ export interface Profile {
   organizationSlug: string
   role: Role
   displayName?: string
+  avatarUrl?: string
 }

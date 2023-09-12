@@ -29,12 +29,11 @@ export const updateProfile: UpdateProfileFn = async ({
       role,
       avatarUrl,
     },
-    include: { user: true },
   })
 
   return {
     ...profile,
-    email: profile.user.email,
+    email: profile.userEmail,
     avatarUrl: profile.avatarUrl ?? undefined,
   }
 }

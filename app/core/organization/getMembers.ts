@@ -1,3 +1,4 @@
+import type { PaginatedResult } from '~/repositories/main-repository/types'
 import type { Profile } from '../profile/types'
 import type { CoreContext } from '../types'
 
@@ -11,7 +12,7 @@ export const getOrganizationMembers =
   async ({
     userEmail,
     slug,
-  }: GetOrganizationMembersArgs): Promise<Profile[]> => {
+  }: GetOrganizationMembersArgs): Promise<PaginatedResult<Profile>> => {
     const profile = await mainRepository.profile.find({
       organizationSlug: slug,
       userEmail,
@@ -21,6 +22,7 @@ export const getOrganizationMembers =
 
     const profiles = await mainRepository.profile.findMany({
       filter: { organizationSlug: slug },
+      pagination: { skip: 0, take: 60 }, // TODO: Add pagination from the outside
     })
 
     return profiles

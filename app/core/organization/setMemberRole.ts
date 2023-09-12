@@ -37,7 +37,7 @@ export const setOrganizationMemberRole =
     await requireAdminInOrganization(mainRepository, userEmail, slug)
 
     const members = await mainRepository.profile.findMany({
-      filter: { organizationSlug: slug },
+      filter: { organizationSlug: slug, role: Role.ADMIN },
     })
 
     const currentProfile = await mainRepository.profile.find({
@@ -54,11 +54,7 @@ export const setOrganizationMemberRole =
     // * When user is demoted from admin to user, ensure there is always at least one admin
     // * TLDR: if you are the only admin, you can't demote yourself to user
     if (currentRole === Role.ADMIN && role === Role.USER) {
-      const adminsCount = members.filter(
-        (member) => member.role === Role.ADMIN
-      ).length
-
-      if (adminsCount < 2) {
+      if (members.data.length < 2) {
         throw new Error('There always needs to be at least one admin')
       }
     }

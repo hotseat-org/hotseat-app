@@ -79,7 +79,7 @@ export default function Index() {
             </h1>
           </div>
           <div className="flex flex-wrap gap-4">
-            {organizations.map((organization, index) => (
+            {organizations.map((organization) => (
               <Card key={organization.slug} className="w-full sm:w-72">
                 <CardHeader>
                   <User
@@ -95,12 +95,21 @@ export default function Index() {
                 <Divider />
                 <CardFooter>
                   <div className="flex justify-between w-full">
-                    <AvatarGroup size="sm" className="pl-4" max={4}>
-                      {Array.from({ length: 20 }).map((_, index) => (
-                        <Tooltip key={index} content="User name">
-                          <Avatar
-                            src={`https://picsum.photos/200?random=${index}`}
-                          />
+                    <AvatarGroup
+                      size="sm"
+                      className="pl-4"
+                      max={4}
+                      total={
+                        organization.members.totalCount -
+                        organization.members.data.length
+                      }
+                    >
+                      {organization.members.data.map((member) => (
+                        <Tooltip
+                          key={member.userEmail}
+                          content={member.displayName}
+                        >
+                          <Avatar src={member.avatarUrl} />
                         </Tooltip>
                       ))}
                     </AvatarGroup>

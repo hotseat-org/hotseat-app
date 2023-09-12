@@ -33,6 +33,7 @@ export const createOrganization: CreateOrganizationFn = async ({
               displayName: user.displayName,
               role: Role.ADMIN,
               userEmail: creatorEmail,
+              avatarUrl: user.avatarUrl,
             },
           ],
         },
