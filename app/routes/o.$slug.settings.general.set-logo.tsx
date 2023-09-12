@@ -23,7 +23,6 @@ export const action = async ({ request, params }: ActionArgs) => {
   const user = await requireUser(request)
 
   const slug = params.slug
-
   if (!slug) throw new Error('Missing slug parameter')
 
   const formData = await request.formData()

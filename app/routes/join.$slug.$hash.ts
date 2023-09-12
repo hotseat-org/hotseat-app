@@ -7,7 +7,7 @@ export const loader = async ({ request, params }: LoaderArgs) => {
 
   const slug = params.slug
   const hash = params.hash
-  console.log({ slug, hash })
+
   if (!slug || !hash) return redirect('/')
 
   const core = getCore()

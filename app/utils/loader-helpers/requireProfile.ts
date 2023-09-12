@@ -13,7 +13,7 @@ export const requireProfile = async (
   options?: Options
 ) => {
   const slug = params.slug
-  console.log(request)
+
   if (!slug) throw redirect('/app')
 
   const user = await requireUser(request)

@@ -12,6 +12,7 @@ export interface FindProfilesArgs {
 export const findProfiles: FindProfilesFn = async ({ filter }) => {
   const profiles = await prisma.profile.findMany({
     where: filter,
+    orderBy: { role: 'desc' },
     include: { user: true },
   })
 

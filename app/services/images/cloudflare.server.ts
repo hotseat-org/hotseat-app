@@ -63,8 +63,6 @@ export const getUploadUrl = async () => {
     }
   ).then((res) => res.json())
 
-  console.log(response)
-
   return {
     imageId: response.result.id,
     uploadUrl: new URL(response.result.uploadURL),

@@ -11,6 +11,7 @@ import type { UpdateOrganizationArgs } from './methods/organization/update'
 import type { CreateProfileArgs } from './methods/profile/create'
 import type { FindProfileArgs } from './methods/profile/find'
 import type { FindProfilesArgs } from './methods/profile/findMany'
+import type { UpdateProfileArgs } from './methods/profile/update'
 import type { FindUserArgs } from './methods/user/find'
 
 export interface Space {
@@ -110,5 +111,6 @@ export interface MainRepository {
     find: (args: FindProfileArgs) => Promise<Profile | null>
     findMany: (args: FindProfilesArgs) => Promise<Profile[]>
     create: (args: CreateProfileArgs) => Promise<Profile>
+    update: (args: UpdateProfileArgs) => Promise<Profile>
   }
 }
