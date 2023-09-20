@@ -1,7 +1,7 @@
 import { Divider, Tab, Tabs } from '@nextui-org/react'
 import { Role } from '@prisma/client'
-import type { LoaderArgs } from '@remix-run/node'
 import { Outlet, useLocation, useNavigate } from '@remix-run/react'
+import type { LoaderFunctionArgs } from '@vercel/remix'
 import clsx from 'clsx'
 import { Cog, Mails, Skull, Users } from 'lucide-react'
 import { useMemo } from 'react'
@@ -10,7 +10,7 @@ import { requireProfile } from '~/utils/loader-helpers/requireProfile'
 
 const keys = ['general', 'invitations', 'members', 'danger']
 
-export const loader = async (args: LoaderArgs) => {
+export const loader = async (args: LoaderFunctionArgs) => {
   await requireProfile(args, { requiredRole: Role.ADMIN })
   return null
 }

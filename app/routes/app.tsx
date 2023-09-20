@@ -1,4 +1,4 @@
-import { type LoaderArgs } from '@vercel/remix'
+import { type LoaderFunctionArgs } from '@vercel/remix'
 
 import { requireUser } from '~/services/session.server'
 
@@ -6,7 +6,7 @@ import { Image } from '@nextui-org/react'
 import { Outlet } from '@remix-run/react'
 import { Header } from '~/components/Navbar'
 
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   await requireUser(request)
 
   return null

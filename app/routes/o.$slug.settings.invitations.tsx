@@ -11,9 +11,9 @@ import {
   TableRow,
   Tooltip,
 } from '@nextui-org/react'
-import type { LoaderArgs } from '@remix-run/node'
-import { json, redirect } from '@remix-run/node'
 import { Form, Link, Outlet, useLoaderData, useParams } from '@remix-run/react'
+import type { LoaderFunctionArgs } from '@vercel/remix'
+import { json, redirect } from '@vercel/remix'
 import dayjs from 'dayjs'
 import { Copy, ExternalLink, Mail, RefreshCcw, Trash } from 'lucide-react'
 import pluralize from 'pluralize'
@@ -28,7 +28,7 @@ enum Intent {
   DELETE_INVITE = 'delete-invite',
 }
 
-export const action = async ({ request, params }: LoaderArgs) => {
+export const action = async ({ request, params }: LoaderFunctionArgs) => {
   const slug = params.slug
   if (!slug) return redirect('/')
 
@@ -45,7 +45,7 @@ export const action = async ({ request, params }: LoaderArgs) => {
   return null
 }
 
-export const loader = async ({ request, params }: LoaderArgs) => {
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const slug = params.slug
   if (!slug) return redirect('/')
 

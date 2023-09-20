@@ -11,7 +11,7 @@ import {
 import { Link, useFetcher, useNavigate } from '@remix-run/react'
 import { useDebounce } from '@uidotdev/usehooks'
 
-import { redirect, type ActionArgs } from '@vercel/remix'
+import { redirect, type ActionFunctionArgs } from '@vercel/remix'
 import { Check, HelpCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { z } from 'zod'
@@ -32,7 +32,7 @@ const availabilityToLabelMap: Record<Availability, string> = {
   unknown: 'Start typing to check availability',
 }
 
-export const action = async ({ request }: ActionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await requireUser(request)
 
   const formData = await request.formData()

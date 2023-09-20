@@ -9,7 +9,7 @@ import {
 } from '@nextui-org/react'
 import { Form, Link, useNavigate } from '@remix-run/react'
 
-import { redirect, type ActionArgs } from '@vercel/remix'
+import { redirect, type ActionFunctionArgs } from '@vercel/remix'
 import clsx from 'clsx'
 import { UploadCloud } from 'lucide-react'
 import { useState } from 'react'
@@ -19,7 +19,7 @@ import { Button } from '~/components/Button'
 import { getCore } from '~/core/get-core'
 import { requireUser } from '~/services/session.server'
 
-export const action = async ({ request, params }: ActionArgs) => {
+export const action = async ({ request, params }: ActionFunctionArgs) => {
   const user = await requireUser(request)
 
   const slug = params.slug

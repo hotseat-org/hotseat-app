@@ -1,11 +1,11 @@
 import { Button } from '@nextui-org/react'
-import type { LoaderArgs } from '@vercel/remix'
-import { redirect } from '@vercel/remix'
 import { Form } from '@remix-run/react'
+import type { LoaderFunctionArgs } from '@vercel/remix'
+import { redirect } from '@vercel/remix'
 import { SocialsProvider } from 'remix-auth-socials'
 import { authenticator } from '~/services/auth.server'
 
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request)
 
   if (user) return redirect('/')

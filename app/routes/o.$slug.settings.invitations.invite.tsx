@@ -6,14 +6,14 @@ import {
   ModalFooter,
   ModalHeader,
 } from '@nextui-org/react'
-import { redirect, type ActionArgs } from '@remix-run/node'
 import { Form, Link, useNavigate } from '@remix-run/react'
+import { redirect, type ActionFunctionArgs } from '@vercel/remix'
 import { z } from 'zod'
 import { Button } from '~/components/Button'
 import { getCore } from '~/core/get-core'
 import { requireUser } from '~/services/session.server'
 
-export const action = async ({ request, params }: ActionArgs) => {
+export const action = async ({ request, params }: ActionFunctionArgs) => {
   const slug = params.slug
   if (!slug) return null
 

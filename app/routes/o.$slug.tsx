@@ -1,12 +1,12 @@
-import { type LoaderArgs } from '@vercel/remix'
+import { type LoaderFunctionArgs } from '@vercel/remix'
 
-import { Response, json } from '@remix-run/node'
 import { Outlet, useLoaderData } from '@remix-run/react'
+import { json } from '@vercel/remix'
 import { HeaderOrganization } from '~/components/NavbarOrganization'
 import { getCore } from '~/core/get-core'
 import { requireProfile } from '~/utils/loader-helpers/requireProfile'
 
-export const loader = async (args: LoaderArgs) => {
+export const loader = async (args: LoaderFunctionArgs) => {
   const profile = await requireProfile(args)
   const core = getCore()
 

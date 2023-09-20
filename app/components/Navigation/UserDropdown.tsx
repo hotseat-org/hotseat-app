@@ -9,7 +9,7 @@ import {
   User,
 } from '@nextui-org/react'
 import { useNavigate } from '@remix-run/react'
-import { LogOut, Moon, Sun } from 'lucide-react'
+import { LogOut, Moon, Settings, Sun } from 'lucide-react'
 import { Theme, useTheme } from 'remix-themes'
 import type { User as UserType } from '~/core/user/types'
 
@@ -67,6 +67,17 @@ export const UserDropdown = ({ user }: Props) => {
             </Switch>
           </DropdownItem>
         </DropdownSection>
+        <DropdownItem
+          variant="flat"
+          startContent={
+            <div className="bg-foreground/10 text-foreground flex items-center rounded-small justify-center w-7 h-7">
+              <Settings size={18} />
+            </div>
+          }
+          key="settings"
+        >
+          Settings
+        </DropdownItem>
         <DropdownItem
           key="/logout"
           className="font-bold text-danger"

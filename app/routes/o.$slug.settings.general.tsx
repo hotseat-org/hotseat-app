@@ -6,8 +6,8 @@ import {
   Input,
   Textarea,
 } from '@nextui-org/react'
-import type { ActionArgs } from '@remix-run/node'
 import { Form, Link, Outlet, useNavigation } from '@remix-run/react'
+import type { ActionFunctionArgs } from '@vercel/remix'
 import { Edit, Trash, Users } from 'lucide-react'
 import { z } from 'zod'
 import { getCore } from '~/core/get-core'
@@ -19,7 +19,7 @@ const FormSchema = z.object({
   description: z.string().optional(),
 })
 
-export const action = async ({ request, params }: ActionArgs) => {
+export const action = async ({ request, params }: ActionFunctionArgs) => {
   const user = await requireUser(request)
 
   const slug = params.slug

@@ -1,6 +1,6 @@
 import type { Role } from '@prisma/client'
-import type { LoaderArgs } from '@remix-run/node'
-import { redirect } from '@remix-run/node'
+import type { LoaderFunctionArgs } from '@vercel/remix'
+import { redirect } from '@vercel/remix'
 import { getCore } from '~/core/get-core'
 import { requireUser } from '~/services/session.server'
 
@@ -9,7 +9,7 @@ interface Options {
 }
 
 export const requireProfile = async (
-  { request, params }: LoaderArgs,
+  { request, params }: LoaderFunctionArgs,
   options?: Options
 ) => {
   const slug = params.slug

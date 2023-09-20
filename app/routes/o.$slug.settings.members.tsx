@@ -13,15 +13,15 @@ import {
   TableRow,
 } from '@nextui-org/react'
 import { Role } from '@prisma/client'
-import type { ActionArgs, LoaderArgs } from '@remix-run/node'
-import { json, redirect } from '@remix-run/node'
 import { Link, Outlet, useFetcher, useLoaderData } from '@remix-run/react'
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@vercel/remix'
+import { json, redirect } from '@vercel/remix'
 import { ChevronUp, ChevronsUp, CornerUpLeft } from 'lucide-react'
 import { z } from 'zod'
 import { getCore } from '~/core/get-core'
 import { requireUser } from '~/services/session.server'
 
-export const action = async ({ request, params }: ActionArgs) => {
+export const action = async ({ request, params }: ActionFunctionArgs) => {
   const slug = params.slug
   if (!slug) throw new Error('Missing slug parameter')
 
@@ -43,7 +43,7 @@ export const action = async ({ request, params }: ActionArgs) => {
   return null
 }
 
-export const loader = async ({ request, params }: LoaderArgs) => {
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const slug = params.slug
   if (!slug) return redirect('/')
 

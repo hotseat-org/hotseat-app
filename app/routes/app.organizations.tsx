@@ -10,8 +10,8 @@ import {
   Tooltip,
   User,
 } from '@nextui-org/react'
-import type { LoaderArgs } from '@remix-run/node'
 import { Outlet, Link as RemixLink, useLoaderData } from '@remix-run/react'
+import type { LoaderFunctionArgs } from '@vercel/remix'
 import clsx from 'clsx'
 import { ArrowRight, LampDesk } from 'lucide-react'
 import { Button } from '~/components/Button'
@@ -19,7 +19,7 @@ import { Container } from '~/components/Container'
 import { getCore } from '~/core/get-core'
 import { requireUser } from '~/services/session.server'
 
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await requireUser(request)
   const core = getCore()
 

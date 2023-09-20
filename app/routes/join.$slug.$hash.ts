@@ -1,8 +1,8 @@
-import { redirect, type LoaderArgs } from '@remix-run/node'
+import { redirect, type LoaderFunctionArgs } from '@vercel/remix'
 import { getCore } from '~/core/get-core'
 import { requireUser } from '~/services/session.server'
 
-export const loader = async ({ request, params }: LoaderArgs) => {
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await requireUser(request)
 
   const slug = params.slug

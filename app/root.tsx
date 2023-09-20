@@ -8,8 +8,8 @@ import {
   ScrollRestoration,
   useLoaderData,
 } from '@remix-run/react'
-import type { V2_MetaFunction } from '@remix-run/react/dist/routeModules'
-import type { LinksFunction, LoaderArgs } from '@vercel/remix'
+import type { MetaFunction } from '@remix-run/react/dist/routeModules'
+import type { LinksFunction, LoaderFunctionArgs } from '@vercel/remix'
 import { authenticator } from './services/auth.server'
 import { themeSessionResolver } from './services/theme.server'
 
@@ -20,11 +20,11 @@ export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: stylesheet },
 ]
 
-export const meta: V2_MetaFunction = () => {
+export const meta: MetaFunction = () => {
   return [{ title: 'Hot Seat' }]
 }
 
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request)
   const { getTheme } = await themeSessionResolver(request)
 
