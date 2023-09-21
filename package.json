@@ -26,6 +26,7 @@
     "@remix-run/node": "^2.0.0",
     "@remix-run/react": "^2.0.0",
     "@remix-run/serve": "^2.0.0",
+    "@remix-run/server-runtime": "^2.0.0",
     "@smplrspace/smplr-loader": "^2.9.0",
     "@types/pluralize": "^0.0.30",
     "@uidotdev/usehooks": "^2.3.1",
@@ -46,7 +47,8 @@
     "react-dom": "^18.2.0",
     "remix": "^2.0.0",
     "remix-auth": "^3.5.1",
-    "remix-auth-socials": "^2.0.5",
+    "remix-auth-github": "^1.6.0",
+    "remix-auth-google": "^1.2.0",
     "remix-themes": "^1.2.1",
     "remix-utils": "^6.6.0",
     "slugify": "^1.6.6",
@@ -68,5 +70,27 @@
   },
   "engines": {
     "node": ">=18"
+  },
+  "overrides": {
+    "remix-auth": {
+      "@remix-run/react": "$@remix-run/react",
+      "@remix-run/server-runtime": "$@remix-run/server-runtime"
+    },
+    "remix-auth-github": {
+      "@remix-run/react": "$@remix-run/react",
+      "@remix-run/server-runtime": "$@remix-run/server-runtime"
+    },
+    "remix-auth-google": {
+      "@remix-run/react": "$@remix-run/react",
+      "@remix-run/server-runtime": "$@remix-run/server-runtime"
+    },
+    "remix-themes": {
+      "@remix-run/react": "$@remix-run/react",
+      "@remix-run/server-runtime": "$@remix-run/server-runtime"
+    },
+    "remix-utils": {
+      "@remix-run/react": "$@remix-run/react",
+      "@remix-run/server-runtime": "$@remix-run/server-runtime"
+    }
   }
 }

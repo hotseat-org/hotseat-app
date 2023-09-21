@@ -1,12 +1,9 @@
 import { Authenticator } from 'remix-auth'
-import { sessionStorage } from '~/services/session.server'
-import {
-  GitHubStrategy,
-  GoogleStrategy,
-  SocialsProvider,
-} from 'remix-auth-socials'
-import type { User } from '~/core/user/types'
+import { GitHubStrategy, GitHubStrategyDefaultName } from 'remix-auth-github'
+import { GoogleStrategy, GoogleStrategyDefaultName } from 'remix-auth-google'
 import { getCore } from '~/core/get-core'
+import type { User } from '~/core/user/types'
+import { sessionStorage } from '~/services/session.server'
 
 // Create an instance of the authenticator
 // It will take session storage as an input parameter and creates the user session on successful authentication
@@ -20,7 +17,7 @@ authenticator.use(
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
       scope: ['email', 'openid', 'profile'],
       prompt: 'select_account',
-      callbackURL: `${process.env.BASE_URL}/auth/${SocialsProvider.GOOGLE}/callback`,
+      callbackURL: `${process.env.BASE_URL}/auth/${GoogleStrategyDefaultName}/callback`,
     },
     async ({ profile }) => {
       const core = getCore()
@@ -50,7 +47,7 @@ authenticator.use(
       clientID: process.env.GITHUB_CLIENT_ID as string,
       clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
       scope: ['user:email', 'user'],
-      callbackURL: `${process.env.BASE_URL}/auth/${SocialsProvider.GITHUB}/callback`,
+      callbackURL: `${process.env.BASE_URL}/auth/${GitHubStrategyDefaultName}/callback`,
     },
     async ({ profile }) => {
       const core = getCore()
