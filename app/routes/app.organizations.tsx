@@ -13,7 +13,7 @@ import {
 import { Outlet, Link as RemixLink, useLoaderData } from '@remix-run/react'
 import type { LoaderFunctionArgs } from '@vercel/remix'
 import clsx from 'clsx'
-import { ArrowRight, LampDesk } from 'lucide-react'
+import { ArrowRight, Users } from 'lucide-react'
 import { Button } from '~/components/Button'
 import { Container } from '~/components/Container'
 import { getCore } from '~/core/get-core'
@@ -85,7 +85,7 @@ export default function Index() {
                   <User
                     avatarProps={{
                       showFallback: true,
-                      fallback: <LampDesk />,
+                      fallback: <Users />,
                       src: organization.thumbnailUrl,
                     }}
                     name={organization.name}

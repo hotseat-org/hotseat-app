@@ -8,7 +8,7 @@
   "scripts": {
     "build": "npm run prisma:generate && remix build",
     "dev": "node -r dotenv/config ./node_modules/.bin/remix dev",
-    "postinstall": "remix setup node && npm run prisma:generate",
+    "postinstall": "npm run prisma:generate",
     "start": "cross-env NODE_ENV=production node -r dotenv/config ./node_modules/.bin/remix-serve build",
     "prisma:generate": "npx prisma generate --schema=./app/repositories/main-repository/prisma/schema.prisma",
     "prisma:reset": "npx prisma migrate reset --schema=./app/repositories/main-repository/prisma/schema.prisma",
@@ -46,11 +46,11 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "remix": "^2.0.0",
-    "remix-auth": "^3.5.1",
+    "remix-auth": "^3.6.0",
     "remix-auth-github": "^1.6.0",
     "remix-auth-google": "^1.2.0",
-    "remix-themes": "^1.2.1",
-    "remix-utils": "^6.6.0",
+    "remix-themes": "^1.2.2",
+    "remix-utils": "^7.0.1",
     "slugify": "^1.6.6",
     "zod": "^3.22.2"
   },
@@ -72,23 +72,11 @@
     "node": ">=18"
   },
   "overrides": {
-    "remix-auth": {
-      "@remix-run/react": "$@remix-run/react",
-      "@remix-run/server-runtime": "$@remix-run/server-runtime"
-    },
     "remix-auth-github": {
       "@remix-run/react": "$@remix-run/react",
       "@remix-run/server-runtime": "$@remix-run/server-runtime"
     },
     "remix-auth-google": {
-      "@remix-run/react": "$@remix-run/react",
-      "@remix-run/server-runtime": "$@remix-run/server-runtime"
-    },
-    "remix-themes": {
-      "@remix-run/react": "$@remix-run/react",
-      "@remix-run/server-runtime": "$@remix-run/server-runtime"
-    },
-    "remix-utils": {
       "@remix-run/react": "$@remix-run/react",
       "@remix-run/server-runtime": "$@remix-run/server-runtime"
     }

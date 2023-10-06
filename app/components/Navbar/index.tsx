@@ -8,7 +8,7 @@ import {
   NavbarBrand,
   NavbarContent,
 } from '@nextui-org/react'
-import { useNavigate } from '@remix-run/react'
+import { Link, useNavigate } from '@remix-run/react'
 import { Flame, Plus, Users } from 'lucide-react'
 import { useUser } from '~/utils/remix'
 import { UserDropdown } from '../Navigation/UserDropdown'
@@ -19,9 +19,9 @@ export const Header = () => {
 
   return (
     <Navbar isBordered>
-      <NavbarBrand className="flex gap-1">
-        <h1 className="font-extrabold text-xl">Hot Seat</h1>
+      <NavbarBrand as={Link} to={'/'} className="flex gap-4">
         <Flame className="text-red-500 dark:text-red-300" width={32} />
+        <h1 className="font-extrabold text-xl">Hot Seat</h1>
       </NavbarBrand>
       <div className="flex gap-4 items-center">
         <NavbarContent>

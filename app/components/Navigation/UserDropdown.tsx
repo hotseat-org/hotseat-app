@@ -74,7 +74,7 @@ export const UserDropdown = ({ user }: Props) => {
               <Settings size={18} />
             </div>
           }
-          key="settings"
+          key="/app/settings"
         >
           Settings
         </DropdownItem>
