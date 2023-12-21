@@ -14,7 +14,7 @@ export const returnToPage = createCookie('lastPage', {
 })
 
 export const sessionCookie = createCookie('session', {
-  maxAge: dayjs.duration({ weeks: 1 }).seconds(),
+  maxAge: dayjs.duration({ weeks: 1 }).asSeconds(),
   sameSite: 'lax',
   path: '/',
   httpOnly: true,
