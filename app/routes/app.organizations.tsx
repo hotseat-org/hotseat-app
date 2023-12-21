@@ -1,21 +1,11 @@
-import {
-  Avatar,
-  AvatarGroup,
-  Card,
-  CardBody,
-  CardFooter,
-  CardHeader,
-  Divider,
-  Link,
-  Tooltip,
-  User,
-} from '@nextui-org/react'
+import { Card, CardBody, Link } from '@nextui-org/react'
 import { Outlet, Link as RemixLink, useLoaderData } from '@remix-run/react'
 import type { LoaderFunctionArgs } from '@vercel/remix'
 import clsx from 'clsx'
-import { ArrowRight, Users } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { Button } from '~/components/Button'
 import { Container } from '~/components/Container'
+import { OrganizationPreviewCard } from '~/components/Organization/Card'
 import { getCore } from '~/core/get-core'
 import { requireUser } from '~/services/session.server'
 
@@ -80,51 +70,20 @@ export default function Index() {
           </div>
           <div className="flex flex-wrap gap-4">
             {organizations.map((organization) => (
-              <Card key={organization.slug} className="w-full sm:w-72">
-                <CardHeader>
-                  <User
-                    avatarProps={{
-                      showFallback: true,
-                      fallback: <Users />,
-                      src: organization.thumbnailUrl,
-                    }}
-                    name={organization.name}
-                    description={organization.slug}
-                  />
-                </CardHeader>
-                <Divider />
-                <CardFooter>
-                  <div className="flex justify-between w-full">
-                    <AvatarGroup
-                      size="sm"
-                      className="pl-4"
-                      max={4}
-                      total={
-                        organization.members.totalCount -
-                        organization.members.data.length
-                      }
-                    >
-                      {organization.members.data.map((member) => (
-                        <Tooltip
-                          key={member.userEmail}
-                          content={member.displayName}
-                        >
-                          <Avatar src={member.avatarUrl} />
-                        </Tooltip>
-                      ))}
-                    </AvatarGroup>
-                    <Button
-                      className="font-bold"
-                      color="primary"
-                      variant="flat"
-                      as={RemixLink}
-                      to={`/o/${organization.slug}`}
-                    >
-                      View
-                    </Button>
-                  </div>
-                </CardFooter>
-              </Card>
+              <OrganizationPreviewCard
+                key={organization.slug}
+                organization={organization}
+              >
+                <Button
+                  className="font-bold"
+                  color="primary"
+                  variant="flat"
+                  as={RemixLink}
+                  to={`/o/${organization.slug}`}
+                >
+                  View
+                </Button>
+              </OrganizationPreviewCard>
             ))}
           </div>
         </div>

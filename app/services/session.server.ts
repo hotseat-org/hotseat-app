@@ -1,6 +1,6 @@
 import { createCookieSessionStorage, redirect } from '@vercel/remix'
-import { authenticator } from './auth.server'
 import { returnToPage, sessionCookie } from '~/cookies'
+import { authenticator } from './auth.server'
 
 export const sessionStorage = createCookieSessionStorage({
   cookie: sessionCookie,

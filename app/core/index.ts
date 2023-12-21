@@ -3,6 +3,7 @@ import { createOrganization } from './organization/create'
 import { deleteOrganization } from './organization/delete'
 import { deleteOrganizationInvite } from './organization/deleteInvite'
 import { generateNewOrganizationInviteLink } from './organization/generateNewInviteLink'
+import { getOrganizationForPublic } from './organization/getForPublic'
 import { getOrganizationForUser } from './organization/getForUser'
 import { getOrganizationInvites } from './organization/getInvites'
 import { getOrganizationMembers } from './organization/getMembers'
@@ -31,6 +32,7 @@ export const createCore = (context: CoreContext) => ({
   organization: {
     isAvailable: organizationIsAvailable(context),
     getForUser: getOrganizationForUser(context),
+    getForPublic: getOrganizationForPublic(context),
     create: createOrganization(context),
     update: updateOrganization(context),
     delete: deleteOrganization(context),

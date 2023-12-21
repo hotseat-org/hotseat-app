@@ -1,15 +1,8 @@
-import {
-  Avatar,
-  Button,
-  Card,
-  CardFooter,
-  Input,
-  Textarea,
-} from '@nextui-org/react'
-import { Form, Link, Outlet, useNavigation } from '@remix-run/react'
+import { Button, Input, Textarea } from '@nextui-org/react'
+import { Form, Outlet, useNavigation } from '@remix-run/react'
 import type { ActionFunctionArgs } from '@vercel/remix'
-import { Edit, Trash, Users } from 'lucide-react'
 import { z } from 'zod'
+import { InputAvatar } from '~/components/Inputs/Avatar'
 import { getCore } from '~/core/get-core'
 import { requireUser } from '~/services/session.server'
 import { useOrganizationContext } from '~/utils/hooks/useProfileData'
@@ -70,37 +63,11 @@ const General = () => {
           </div>
         </div>
 
-        <div className="flex md:flex-col">
-          <div className="relative">
-            <Avatar
-              fallback={<Users size={72} />}
-              className="w-52 h-52 z-0"
-              src={thumbnailUrl}
-              isBordered
-            />
-            <Card
-              isBlurred
-              className="absolute top-[95%] left-[50%] -translate-x-1/2 -translate-y-1/2 z-1 border-1 dark:border-slate-800/60"
-            >
-              <CardFooter className="gap-2 p-1">
-                <Button
-                  isDisabled={!thumbnailUrl}
-                  as={Link}
-                  to="delete-logo"
-                  variant="light"
-                  isIconOnly
-                  color="danger"
-                  size="sm"
-                >
-                  <Trash size="18" />
-                </Button>
-                <Button as={Link} to="set-logo" variant="flat" size="sm">
-                  <Edit size="18" /> Edit
-                </Button>
-              </CardFooter>
-            </Card>
-          </div>
-        </div>
+        <InputAvatar
+          src={thumbnailUrl}
+          editTo="set-logo"
+          deleteTo="delete-logo"
+        />
       </div>
       <Outlet />
     </Form>
