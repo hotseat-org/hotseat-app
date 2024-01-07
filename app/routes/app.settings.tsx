@@ -1,13 +1,23 @@
 import { Input } from '@nextui-org/react'
-import { Link, Outlet, useLoaderData } from '@remix-run/react'
-import { LoaderFunctionArgs, json } from '@remix-run/server-runtime'
+import { Form, Link, Outlet, useLoaderData } from '@remix-run/react'
+import {
+  ActionFunctionArgs,
+  LoaderFunctionArgs,
+  json,
+} from '@remix-run/server-runtime'
 import clsx from 'clsx'
+import { z } from 'zod'
 import { Button } from '~/components/Button'
 import { Container } from '~/components/Container'
 import { InputAvatar } from '~/components/Inputs/Avatar'
 import { OrganizationPreviewCard } from '~/components/Organization/Card'
 import { getCore } from '~/core/get-core'
-import { requireUser } from '~/services/session.server'
+import { authenticator } from '~/services/auth.server'
+import {
+  commitSession,
+  getSession,
+  requireUser,
+} from '~/services/session.server'
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await requireUser(request)
@@ -21,6 +31,26 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   if (!userData) throw new Response(null, { status: 404 })
 
   return json({ userData, organizations })
+}
+
+export const action = async ({ request }: ActionFunctionArgs) => {
+  const user = await requireUser(request)
+
+  const formData = await request.formData()
+  const displayName = z.string().parse(formData.get('displayName'))
+
+  const core = getCore()
+
+  const updatedUser = await core.user.update({
+    email: user.email,
+    data: { displayName },
+  })
+
+  const session = await getSession(request.headers.get('cookie'))
+  session.set(authenticator.sessionKey, updatedUser)
+  let headers = new Headers({ 'Set-Cookie': await commitSession(session) })
+
+  return json(null, { headers })
 }
 
 export default function Settings() {
@@ -46,17 +76,25 @@ export default function Settings() {
           editTo="set-avatar"
           deleteTo="delete-avatar"
         />
-        <div className="flex flex-col gap-2 w-72">
-          <Input label="Email" defaultValue={userData.email} isDisabled />
-          <Input label="Display name" defaultValue={userData.displayName} />
-          <div className="flex justify-end">
-            <Button color="primary">Save</Button>
+        <Form method="POST">
+          <div className="flex flex-col gap-2 w-72">
+            <Input label="Email" defaultValue={userData.email} isDisabled />
+            <Input
+              name="displayName"
+              label="Display name"
+              defaultValue={userData.displayName}
+            />
+            <div className="flex justify-end">
+              <Button type="submit" color="primary">
+                Save
+              </Button>
+            </div>
           </div>
-        </div>
+        </Form>
       </div>
 
       <div className="flex flex-col gap-4">
-        <h2>Your organizations</h2>
+        {organizations.length > 0 && <h2>Your organizations</h2>}
         <div className="flex flex-wrap gap-4">
           {organizations.map((organization) => (
             <OrganizationPreviewCard

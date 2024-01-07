@@ -1,5 +1,4 @@
 import type { CoreContext } from '../types'
-import { userMapper } from './mapper'
 import type { User } from './types'
 
 interface CreateUserArgs {
@@ -9,13 +8,29 @@ interface CreateUserArgs {
 }
 
 export const createUser =
-  ({ mainRepository }: CoreContext) =>
+  ({ mainRepository, imageService, mappers }: CoreContext) =>
   async ({ email, displayName, avatarUrl }: CreateUserArgs): Promise<User> => {
-    const seat = await mainRepository.user.create({
+    const { uploadUrl } = await imageService.getUploadUrl()
+
+    let avatar = undefined
+
+    if (avatarUrl) {
+      const body = new FormData()
+
+      body.append('url', avatarUrl)
+      const uploadResult = await fetch(uploadUrl, {
+        method: 'POST',
+        body,
+      }).then((res) => res.json())
+
+      avatar = uploadResult.result.id
+    }
+
+    const user = await mainRepository.user.create({
       email,
       displayName,
-      avatarUrl,
+      avatarUrl: avatar,
     })
 
-    return userMapper.fromRepository(seat)
+    return mappers.user.fromRepository(user)
   }

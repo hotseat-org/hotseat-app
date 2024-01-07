@@ -13,6 +13,7 @@ import { findProfiles } from './methods/profile/findMany'
 import { updateProfile } from './methods/profile/update'
 import { createUser } from './methods/user/create'
 import { findUser } from './methods/user/find'
+import { updateUser } from './methods/user/update'
 import type { MainRepository } from './types'
 
 export const createMainMysqlRepository = (): MainRepository => {
@@ -20,6 +21,7 @@ export const createMainMysqlRepository = (): MainRepository => {
     user: {
       create: createUser,
       find: findUser,
+      update: updateUser,
     },
     organization: {
       find: findOrganization,

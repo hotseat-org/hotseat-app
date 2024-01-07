@@ -1,3 +1,4 @@
+import { mappers } from '~/mappers'
 import { createMainMysqlRepository } from '~/repositories/main-repository'
 import { imageService } from '~/services/images'
 import type { Core } from '.'
@@ -10,7 +11,7 @@ export const getCore = () => {
 
   const mainRepository = createMainMysqlRepository()
 
-  core = createCore({ mainRepository, imageService })
+  core = createCore({ mainRepository, imageService, mappers })
 
   return core
 }

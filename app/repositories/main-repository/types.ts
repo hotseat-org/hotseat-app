@@ -13,6 +13,7 @@ import type { FindProfileArgs } from './methods/profile/find'
 import type { FindProfilesArgs } from './methods/profile/findMany'
 import type { UpdateProfileArgs } from './methods/profile/update'
 import type { FindUserArgs } from './methods/user/find'
+import { UpdateUserArgs } from './methods/user/update'
 
 export type PaginatedResult<Data> = {
   data: Data[]
@@ -23,7 +24,7 @@ export type PaginatedResult<Data> = {
 
 export interface User {
   email: string
-  avatarUrl?: string
+  avatarUrl?: string | null
   displayName: string
 
   createdAt: Date
@@ -66,6 +67,7 @@ export interface MainRepository {
   user: {
     create: (args: CreateUserArgs) => Promise<User>
     find: (args: FindUserArgs) => Promise<User | null>
+    update: (args: UpdateUserArgs) => Promise<User>
   }
   organization: {
     findMany: (args: FindOrganizationsArgs) => Promise<Organization[]>

@@ -6,29 +6,34 @@ import { z } from 'zod'
 
 import ImageUpload from '~/components/Forms/ImageUpload'
 import { getCore } from '~/core/get-core'
-import { requireUser } from '~/services/session.server'
+import { authenticator } from '~/services/auth.server'
+import {
+  commitSession,
+  getSession,
+  requireUser,
+} from '~/services/session.server'
 
-export const action = async ({ request, params }: ActionFunctionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await requireUser(request)
-
-  const slug = params.slug
-  if (!slug) throw new Error('Missing slug parameter')
 
   const formData = await request.formData()
   const thumbnail = z.string().parse(formData.get('thumbnail'))
 
   const core = getCore()
 
-  await core.organization.update({
-    slug,
-    userEmail: user.email,
-    data: { thumbnail },
+  const updatedUser = await core.user.update({
+    email: user.email,
+    data: { avatarUrl: thumbnail },
   })
 
-  return redirect('..')
+  const session = await getSession(request.headers.get('cookie'))
+  session.set(authenticator.sessionKey, updatedUser)
+  let headers = new Headers({ 'Set-Cookie': await commitSession(session) })
+
+  return redirect('..', { headers })
 }
 
-export default function SetLogo() {
+export default function Index() {
   const navigate = useNavigate()
 
   return (
