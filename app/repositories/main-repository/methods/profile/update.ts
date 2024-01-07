@@ -8,16 +8,14 @@ export interface UpdateProfileArgs {
   userEmail?: string
   organizationSlug?: string
   data: {
-    displayName?: string
     role?: Role
-    avatarUrl?: string
   }
 }
 
 export const updateProfile: UpdateProfileFn = async ({
   userEmail,
   organizationSlug,
-  data: { displayName, role, avatarUrl },
+  data: { role },
 }) => {
   const userEmail_organizationSlug =
     userEmail && organizationSlug ? { userEmail, organizationSlug } : undefined
@@ -25,15 +23,15 @@ export const updateProfile: UpdateProfileFn = async ({
   const profile = await prisma.profile.update({
     where: { userEmail, userEmail_organizationSlug },
     data: {
-      displayName,
       role,
-      avatarUrl,
     },
+    include: { user: true },
   })
 
   return {
     ...profile,
     email: profile.userEmail,
-    avatarUrl: profile.avatarUrl ?? undefined,
+    avatarUrl: profile.user.avatarUrl ?? undefined,
+    displayName: profile.user.displayName ?? undefined,
   }
 }

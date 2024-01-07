@@ -8,30 +8,29 @@ export interface CreateProfileArgs {
   email: string
   organizationSlug: string
   data: {
-    displayName: string
     role: Role
-    avatarUrl?: string
   }
 }
 
 export const createProfile: CreateProfileFn = async ({
   email,
   organizationSlug,
-  data: { displayName, role, avatarUrl },
+  data: { role },
 }) => {
   const profile = await prisma.profile.create({
     data: {
       userEmail: email,
       organizationSlug,
-      displayName,
+
       role,
-      avatarUrl,
     },
+    include: { user: true },
   })
 
   return {
     ...profile,
     email: profile.userEmail,
-    avatarUrl: profile.avatarUrl ?? undefined,
+    avatarUrl: profile.user.avatarUrl ?? undefined,
+    displayName: profile.user.displayName ?? undefined,
   }
 }

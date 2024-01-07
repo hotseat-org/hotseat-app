@@ -19,6 +19,7 @@ export const findProfile: FindProfileFn = async ({
         organizationSlug,
       },
     },
+    include: { user: true },
   })
 
   if (!profile) return null
@@ -26,6 +27,7 @@ export const findProfile: FindProfileFn = async ({
   return {
     ...profile,
     email: profile.userEmail,
-    avatarUrl: profile.avatarUrl ?? undefined,
+    avatarUrl: profile.user.avatarUrl ?? undefined,
+    displayName: profile.user.displayName ?? undefined,
   }
 }

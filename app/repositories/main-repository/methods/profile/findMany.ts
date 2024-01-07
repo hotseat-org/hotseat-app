@@ -23,6 +23,7 @@ export const findProfiles: FindProfilesFn = async ({ filter, pagination }) => {
       take: pagination?.take,
       skip: pagination?.skip,
       orderBy: { role: 'desc' },
+      include: { user: true },
     }),
   ])
 
@@ -33,7 +34,8 @@ export const findProfiles: FindProfilesFn = async ({ filter, pagination }) => {
     data: profiles.map((profile) => ({
       ...profile,
       email: profile.userEmail,
-      avatarUrl: profile.avatarUrl ?? undefined,
+      avatarUrl: profile.user.avatarUrl ?? undefined,
+      displayName: profile.user.displayName ?? undefined,
     })),
   }
 }

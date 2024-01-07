@@ -7,7 +7,7 @@ interface GetProfileArgs {
 }
 
 export const getProfile =
-  ({ mainRepository, imageService }: CoreContext) =>
+  ({ mainRepository, mappers }: CoreContext) =>
   async ({ userEmail, organizationSlug }: GetProfileArgs): Promise<Profile> => {
     const profile = await mainRepository.profile.find({
       userEmail,
@@ -16,5 +16,5 @@ export const getProfile =
 
     if (!profile) throw new Error('Forbidden')
 
-    return profile
+    return mappers.profile.fromRepository(profile)
   }

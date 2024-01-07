@@ -3,7 +3,7 @@ import type { OrganizationWithMembers } from '../organization/types'
 import type { CoreContext } from '../types'
 
 export const getUserOrganizations =
-  ({ mainRepository, imageService }: CoreContext) =>
+  ({ mainRepository, imageService, mappers }: CoreContext) =>
   async (userEmail: string): Promise<OrganizationWithMembers[]> => {
     const organizations = await mainRepository.organization.findMany({
       filter: { userEmail },
@@ -23,7 +23,12 @@ export const getUserOrganizations =
 
           return {
             ...mappedOrganization,
-            members: profiles,
+            members: {
+              ...profiles,
+              data: await Promise.all(
+                profiles.data.map(mappers.profile.fromRepository)
+              ),
+            },
           }
         }
       )

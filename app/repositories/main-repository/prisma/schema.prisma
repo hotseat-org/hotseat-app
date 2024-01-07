@@ -37,9 +37,6 @@ model Profile {
   organizationSlug String        
   organization   Organization @relation(fields: [organizationSlug], references: [slug], onDelete: Cascade)
 
-  displayName String
-  avatarUrl   String?
-
   role Role
 
   createdAt DateTime @default(now())

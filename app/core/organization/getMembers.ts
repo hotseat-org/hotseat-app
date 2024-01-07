@@ -8,7 +8,7 @@ interface GetOrganizationMembersArgs {
 }
 
 export const getOrganizationMembers =
-  ({ mainRepository }: CoreContext) =>
+  ({ mainRepository, mappers }: CoreContext) =>
   async ({
     userEmail,
     slug,
@@ -25,5 +25,10 @@ export const getOrganizationMembers =
       pagination: { skip: 0, take: 60 }, // TODO: Add pagination from the outside
     })
 
-    return profiles
+    return {
+      ...profiles,
+      data: await Promise.all(
+        profiles.data.map(mappers.profile.fromRepository)
+      ),
+    }
   }
