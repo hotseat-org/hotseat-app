@@ -10,6 +10,7 @@ import { getOrganizationMembers } from './organization/getMembers'
 import { organizationInviteMember } from './organization/inviteMember'
 import { organizationIsAvailable } from './organization/isAvailable'
 import { joinOrganizationWithHash } from './organization/joinWithHash'
+import { leaveOrganization } from './organization/leave'
 import { setOrganizationMemberRole } from './organization/setMemberRole'
 import { updateOrganization } from './organization/update'
 import { getProfile } from './profile/get'
@@ -46,6 +47,7 @@ export const createCore = (context: CoreContext) => ({
     generateNewInviteLink: generateNewOrganizationInviteLink(context),
     getMembers: getOrganizationMembers(context),
     setMemberRole: setOrganizationMemberRole(context),
+    leave: leaveOrganization(context),
   },
 })
 

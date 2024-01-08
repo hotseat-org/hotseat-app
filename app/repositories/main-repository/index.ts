@@ -8,6 +8,7 @@ import { findOrganization } from './methods/organization/find'
 import { findManyOrganizations } from './methods/organization/findMany'
 import { updateOrganization } from './methods/organization/update'
 import { createProfile } from './methods/profile/create'
+import { deleteProfile } from './methods/profile/delete'
 import { findProfile } from './methods/profile/find'
 import { findProfiles } from './methods/profile/findMany'
 import { updateProfile } from './methods/profile/update'
@@ -41,6 +42,7 @@ export const createMainMysqlRepository = (): MainRepository => {
       findMany: findProfiles,
       create: createProfile,
       update: updateProfile,
+      delete: deleteProfile,
     },
   }
 }

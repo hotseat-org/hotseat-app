@@ -9,6 +9,7 @@ import type { FindOrganizationArgs } from './methods/organization/find'
 import type { FindOrganizationsArgs } from './methods/organization/findMany'
 import type { UpdateOrganizationArgs } from './methods/organization/update'
 import type { CreateProfileArgs } from './methods/profile/create'
+import { DeleteProfileArgs } from './methods/profile/delete'
 import type { FindProfileArgs } from './methods/profile/find'
 import type { FindProfilesArgs } from './methods/profile/findMany'
 import type { UpdateProfileArgs } from './methods/profile/update'
@@ -91,5 +92,6 @@ export interface MainRepository {
     findMany: (args: FindProfilesArgs) => Promise<PaginatedResult<Profile>>
     create: (args: CreateProfileArgs) => Promise<Profile>
     update: (args: UpdateProfileArgs) => Promise<Profile>
+    delete: (args: DeleteProfileArgs) => Promise<Profile>
   }
 }
