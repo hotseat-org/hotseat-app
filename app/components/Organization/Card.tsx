@@ -8,6 +8,7 @@ import {
   Tooltip,
   User,
 } from '@nextui-org/react'
+import { Role } from '@prisma/client'
 import { Users } from 'lucide-react'
 import { ReactNode } from 'react'
 import { OrganizationWithMembers } from '~/core/organization/types'
@@ -44,8 +45,17 @@ export const OrganizationPreviewCard = ({
             total={members.totalCount - members.data.length}
           >
             {members.data.map((member) => (
-              <Tooltip key={member.userEmail} content={member.displayName}>
-                <Avatar src={member.avatarUrl} />
+              <Tooltip
+                key={member.userEmail}
+                content={`${member.displayName}${
+                  member.role === Role.ADMIN ? ' (Admin)' : ''
+                }`}
+              >
+                <Avatar
+                  isBordered
+                  color={member.role === Role.ADMIN ? 'primary' : 'default'}
+                  src={member.avatarUrl}
+                />
               </Tooltip>
             ))}
           </AvatarGroup>

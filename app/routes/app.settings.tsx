@@ -6,6 +6,7 @@ import {
   json,
 } from '@remix-run/server-runtime'
 import clsx from 'clsx'
+import { Check, Trash } from 'lucide-react'
 import { z } from 'zod'
 import { Button } from '~/components/Button'
 import { Container } from '~/components/Container'
@@ -23,14 +24,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await requireUser(request)
 
   const core = getCore()
-  const [userData, organizations] = await Promise.all([
+  const [userData, organizations, organizationInvites] = await Promise.all([
     core.user.get(user.email),
     core.user.getOrganizations(user.email),
+    core.user.getOrganizationInvites(user.email),
   ])
 
   if (!userData) throw new Response(null, { status: 404 })
 
-  return json({ userData, organizations })
+  return json({ userData, organizations, organizationInvites })
 }
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -54,7 +56,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 }
 
 export default function Settings() {
-  const { userData, organizations } = useLoaderData<typeof loader>()
+  const { userData, organizations, organizationInvites } =
+    useLoaderData<typeof loader>()
 
   return (
     <Container>
@@ -119,6 +122,44 @@ export default function Settings() {
                   to={`/o/${organization.slug}`}
                 >
                   View
+                </Button>
+              </div>
+            </OrganizationPreviewCard>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-4">
+        {organizationInvites.length > 0 && (
+          <h2>You were invited into these organizations</h2>
+        )}
+        <div className="flex flex-wrap gap-4">
+          {organizationInvites.map((invite) => (
+            <OrganizationPreviewCard
+              key={invite.organization.slug}
+              organization={invite.organization}
+            >
+              <div className="flex gap-1">
+                <Button
+                  className="font-bold"
+                  color="danger"
+                  variant="light"
+                  isIconOnly
+                  as={Link}
+                  to={`decline-invitation/${invite.organization.slug}`}
+                >
+                  <Trash />
+                </Button>
+
+                <Button
+                  className="font-bold"
+                  color="success"
+                  variant="flat"
+                  isIconOnly
+                  as={Link}
+                  to={`/join/${invite.organization.slug}`}
+                >
+                  <Check />
                 </Button>
               </div>
             </OrganizationPreviewCard>

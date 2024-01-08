@@ -1,20 +1,18 @@
 import prisma from '~/services/prisma.server'
-import type { MainRepository } from '../../types'
-
-type FindOrganizationInvitesFn =
-  MainRepository['organizationInvite']['findMany']
 
 export interface FindOrganizationInvitesArgs {
   filter: {
     organizationSlug?: string
+    email?: string
   }
 }
 
-export const findManyOrganizationInvites: FindOrganizationInvitesFn = async ({
-  filter: { organizationSlug },
-}) => {
+export const findManyOrganizationInvites = async ({
+  filter,
+}: FindOrganizationInvitesArgs) => {
   const result = await prisma.organizationInvite.findMany({
-    where: { organizationSlug },
+    where: filter,
+    include: { organization: true },
   })
 
   return result

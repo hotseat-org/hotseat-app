@@ -57,6 +57,7 @@ export interface OrganizationInvite {
   email: string
   expiresAt: Date
   organizationSlug: string
+  organization: Organization
 
   createdAt: Date
   updatedAt: Date

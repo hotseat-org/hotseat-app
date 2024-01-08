@@ -5,7 +5,7 @@ interface UpdateUserArgs {
   email: string
   data?: {
     displayName?: string
-    avatarUrl?: string
+    avatarUrl?: string | null
   }
 }
 

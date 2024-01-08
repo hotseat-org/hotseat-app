@@ -17,6 +17,7 @@ import { getProfile } from './profile/get'
 import type { CoreContext } from './types'
 import { createUser } from './user/create'
 import { getUser } from './user/get'
+import { getUserOrganizationInvites } from './user/getOrganizationInvites'
 import { getUserOrganizations } from './user/getOrganizations'
 import { userIsMember } from './user/isMember'
 import { updateUser } from './user/update'
@@ -26,6 +27,7 @@ export const createCore = (context: CoreContext) => ({
     get: getUser(context),
     create: createUser(context),
     getOrganizations: getUserOrganizations(context),
+    getOrganizationInvites: getUserOrganizationInvites(context),
     isMember: userIsMember(context),
     update: updateUser(context),
   },
