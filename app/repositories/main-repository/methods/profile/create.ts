@@ -21,7 +21,6 @@ export const createProfile: CreateProfileFn = async ({
     data: {
       userEmail: email,
       organizationSlug,
-
       role,
     },
     include: { user: true },

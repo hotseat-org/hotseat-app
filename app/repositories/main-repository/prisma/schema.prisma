@@ -51,6 +51,7 @@ model Organization {
   name     String
   profiles  Profile[]
   invites  OrganizationInvite[]
+  offices Office[]
 
   invitationHash String? @unique
 
@@ -74,4 +75,18 @@ model OrganizationInvite {
   updatedAt DateTime @updatedAt
 
   @@unique([email, organizationSlug])
+}
+
+model Office {
+  slug String @id @unique
+  name String
+  spaceUrl String
+
+  organizationSlug String
+  organization  Organization @relation(fields: [organizationSlug], references: [slug], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([organizationSlug, slug])
 }

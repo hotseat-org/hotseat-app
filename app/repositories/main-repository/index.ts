@@ -1,3 +1,7 @@
+import { createOffice } from './methods/office/create'
+import { deleteOffice } from './methods/office/delete'
+import { findOffice } from './methods/office/find'
+import { findOffices } from './methods/office/findMany'
 import { createOrganizationInvite } from './methods/organization-invite/create'
 import { deleteOrganizationInvite } from './methods/organization-invite/delete'
 import { findOrganizationInvite } from './methods/organization-invite/find'
@@ -43,6 +47,12 @@ export const createMainMysqlRepository = (): MainRepository => {
       create: createProfile,
       update: updateProfile,
       delete: deleteProfile,
+    },
+    office: {
+      find: findOffice,
+      findMany: findOffices,
+      create: createOffice,
+      delete: deleteOffice,
     },
   }
 }

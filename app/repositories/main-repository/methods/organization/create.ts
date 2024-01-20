@@ -17,10 +17,6 @@ export const createOrganization: CreateOrganizationFn = async ({
   creatorEmail,
   invitationHash,
 }) => {
-  const user = await prisma.user.findUniqueOrThrow({
-    where: { email: creatorEmail },
-  })
-
   const result = await prisma.organization.create({
     data: {
       name,
@@ -30,10 +26,8 @@ export const createOrganization: CreateOrganizationFn = async ({
         createMany: {
           data: [
             {
-              displayName: user.displayName,
               role: Role.ADMIN,
               userEmail: creatorEmail,
-              avatarUrl: user.avatarUrl,
             },
           ],
         },

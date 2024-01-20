@@ -1,3 +1,5 @@
+import { createOffice } from './office/create'
+import { officeIsAvailable } from './office/isAvailable'
 import { confirmOrganizationInvite } from './organization/confirmInvite'
 import { createOrganization } from './organization/create'
 import { deleteOrganization } from './organization/delete'
@@ -7,6 +9,7 @@ import { getOrganizationForPublic } from './organization/getForPublic'
 import { getOrganizationForUser } from './organization/getForUser'
 import { getOrganizationInvites } from './organization/getInvites'
 import { getOrganizationMembers } from './organization/getMembers'
+import { getOrganizationOffices } from './organization/getOffices'
 import { organizationInviteMember } from './organization/inviteMember'
 import { organizationIsAvailable } from './organization/isAvailable'
 import { joinOrganizationWithHash } from './organization/joinWithHash'
@@ -50,6 +53,11 @@ export const createCore = (context: CoreContext) => ({
     getMembers: getOrganizationMembers(context),
     setMemberRole: setOrganizationMemberRole(context),
     leave: leaveOrganization(context),
+    getOffices: getOrganizationOffices(context),
+  },
+  office: {
+    isAvailable: officeIsAvailable(context),
+    create: createOffice(context),
   },
 })
 

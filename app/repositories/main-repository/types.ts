@@ -1,4 +1,8 @@
 import type { Role } from '@prisma/client'
+import { CreateOfficeArgs } from './methods/office/create'
+import { DeleteOfficeArgs } from './methods/office/delete'
+import { FindOfficeArgs } from './methods/office/find'
+import { FindOfficesArgs } from './methods/office/findMany'
 import type { CreateOrganizationInviteArgs } from './methods/organization-invite/create'
 import type { DeleteOrganizationInviteArgs } from './methods/organization-invite/delete'
 import type { FindOrganizationInviteArgs } from './methods/organization-invite/find'
@@ -63,6 +67,16 @@ export interface OrganizationInvite {
   updatedAt: Date
 }
 
+export interface Office {
+  slug: string
+  organizationSlug: string
+  name: string
+  spaceUrl: string
+
+  createdAt: Date
+  updatedAt: Date
+}
+
 export type CreateUserArgs = Pick<User, 'email' | 'avatarUrl' | 'displayName'>
 
 export interface MainRepository {
@@ -94,5 +108,11 @@ export interface MainRepository {
     create: (args: CreateProfileArgs) => Promise<Profile>
     update: (args: UpdateProfileArgs) => Promise<Profile>
     delete: (args: DeleteProfileArgs) => Promise<Profile>
+  }
+  office: {
+    find: (args: FindOfficeArgs) => Promise<Office | null>
+    findMany: (args: FindOfficesArgs) => Promise<PaginatedResult<Office>>
+    create: (args: CreateOfficeArgs) => Promise<Office>
+    delete: (args: DeleteOfficeArgs) => Promise<Office>
   }
 }
