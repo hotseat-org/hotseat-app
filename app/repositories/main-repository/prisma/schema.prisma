@@ -37,6 +37,9 @@ model Profile {
   organizationSlug String        
   organization   Organization @relation(fields: [organizationSlug], references: [slug], onDelete: Cascade)
 
+  favoriteOfficeSlug String?
+  favoriteOffice Office? @relation(fields: [favoriteOfficeSlug, organizationSlug], references: [slug, organizationSlug])
+
   role Role
 
   createdAt DateTime @default(now())
@@ -78,12 +81,14 @@ model OrganizationInvite {
 }
 
 model Office {
-  slug String @id @unique
+  slug String
   name String
   spaceUrl String
 
   organizationSlug String
   organization  Organization @relation(fields: [organizationSlug], references: [slug], onDelete: Cascade)
+
+  favoriteBy Profile[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

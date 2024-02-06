@@ -3,7 +3,4 @@ export interface Office {
   organizationSlug: string
   name: string
   spaceUrl: string
-
-  createdAt: Date
-  updatedAt: Date
 }

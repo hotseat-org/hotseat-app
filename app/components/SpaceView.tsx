@@ -1,5 +1,5 @@
-import { memo, useEffect, useState } from 'react'
 import type { Space } from '@smplrspace/smplr-loader/dist/generated/smplr'
+import { memo, useEffect, useState } from 'react'
 import { loadSmplr } from '~/utils/smplr'
 
 interface Props {

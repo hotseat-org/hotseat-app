@@ -9,13 +9,14 @@ export interface UpdateProfileArgs {
   organizationSlug?: string
   data: {
     role?: Role
+    favoriteOfficeSlug?: string | null
   }
 }
 
 export const updateProfile: UpdateProfileFn = async ({
   userEmail,
   organizationSlug,
-  data: { role },
+  data: { role, favoriteOfficeSlug },
 }) => {
   const userEmail_organizationSlug =
     userEmail && organizationSlug ? { userEmail, organizationSlug } : undefined
@@ -24,8 +25,9 @@ export const updateProfile: UpdateProfileFn = async ({
     where: { userEmail, userEmail_organizationSlug },
     data: {
       role,
+      favoriteOfficeSlug,
     },
-    include: { user: true },
+    include: { user: true, favoriteOffice: true },
   })
 
   return {

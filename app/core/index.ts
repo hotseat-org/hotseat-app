@@ -1,5 +1,7 @@
 import { createOffice } from './office/create'
 import { officeIsAvailable } from './office/isAvailable'
+import { setOfficeFavorite } from './office/setFavorite'
+import { unsetOfficeFavorite } from './office/unsetFavorite'
 import { confirmOrganizationInvite } from './organization/confirmInvite'
 import { createOrganization } from './organization/create'
 import { deleteOrganization } from './organization/delete'
@@ -56,6 +58,8 @@ export const createCore = (context: CoreContext) => ({
     getOffices: getOrganizationOffices(context),
   },
   office: {
+    setFavorite: setOfficeFavorite(context),
+    unsetFavorite: unsetOfficeFavorite(context),
     isAvailable: officeIsAvailable(context),
     create: createOffice(context),
   },
