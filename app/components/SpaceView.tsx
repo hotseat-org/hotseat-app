@@ -1,5 +1,6 @@
 import type { Space } from '@smplrspace/smplr-loader/dist/generated/smplr'
 import { memo, useEffect, useState } from 'react'
+import { Theme, useTheme } from 'remix-themes'
 import { loadSmplr } from '~/utils/smplr'
 
 interface Props {
@@ -17,6 +18,7 @@ export const SpaceViewer = memo(
     onSpaceReady,
   }: Props) => {
     const [space, setSpace] = useState<Space | undefined>()
+    const [theme] = useTheme()
 
     useEffect(() => {
       if (space) {
@@ -24,7 +26,7 @@ export const SpaceViewer = memo(
           preview: isPreview,
           loadingMessage: ' ',
           renderOptions: {
-            backgroundColor: '#cfd8dc',
+            backgroundColor: theme === Theme.DARK ? '#18181B' : undefined,
           },
           onReady: () => {
             onSpaceReady?.(space)
@@ -32,7 +34,7 @@ export const SpaceViewer = memo(
           onError: (error) => console.error('Could not start viewer', error),
         })
       }
-    }, [space, isPreview, onSpaceReady, spaceId])
+    }, [space, isPreview, onSpaceReady, spaceId, theme])
 
     useEffect(() => {
       loadSmplr()
@@ -52,7 +54,9 @@ export const SpaceViewer = memo(
       <div className={`smplr-wrapper ${isPreview ? `h-56` : `min-h-screen`}`}>
         <div
           id={spaceId}
-          className={`smplr-embed ${isPreview ? `h-56` : `min-h-screen`}`}
+          className={`smplr-embed [&>*:first-child]:rounded-lg [&>*:first-child]:overflow-hidden ${
+            isPreview ? `h-56` : `min-h-screen`
+          }`}
         ></div>
       </div>
     )

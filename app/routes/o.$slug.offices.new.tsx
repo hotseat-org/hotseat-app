@@ -105,7 +105,7 @@ const NewOffice = () => {
       <Form method="POST">
         <ModalContent>
           <ModalHeader>
-            <p>Create a new organization</p>
+            <p>Create a new office</p>
           </ModalHeader>
           <ModalBody>
             <Input
@@ -147,7 +147,7 @@ const NewOffice = () => {
               fullWidth
               isRequired
               name="spaceUrl"
-              label="Space url"
+              label="Space ID"
             />
           </ModalBody>
           <ModalFooter>

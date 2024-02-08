@@ -13,6 +13,7 @@ import type { LinksFunction, LoaderFunctionArgs } from '@vercel/remix'
 import { authenticator } from './services/auth.server'
 import { themeSessionResolver } from './services/theme.server'
 
+import dayjs from 'dayjs'
 import { PreventFlashOnWrongTheme, ThemeProvider, useTheme } from 'remix-themes'
 import stylesheet from '~/styles/tailwind.css'
 
@@ -27,6 +28,7 @@ export const meta: MetaFunction = () => {
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await authenticator.isAuthenticated(request)
   const { getTheme } = await themeSessionResolver(request)
+  console.log(dayjs.duration({ weeks: 1 }).asSeconds())
 
   return { user, theme: getTheme() }
 }
