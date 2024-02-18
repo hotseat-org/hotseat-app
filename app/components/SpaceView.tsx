@@ -25,6 +25,16 @@ export const SpaceViewer = memo(
         space.startViewer({
           preview: isPreview,
           loadingMessage: ' ',
+          cameraPlacement: {
+            alpha: -0.012,
+            beta: 0.34,
+            radius: 18.21,
+            target: {
+              x: 2.41,
+              y: 1.5,
+              z: 8.35,
+            },
+          },
           renderOptions: {
             backgroundColor: theme === Theme.DARK ? '#18181B' : undefined,
           },
