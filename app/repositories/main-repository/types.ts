@@ -71,7 +71,10 @@ export interface Office {
   slug: string
   organizationSlug: string
   name: string
-  spaceUrl: string
+  spaceId: string
+
+  thumbnail?: string
+  description?: string
 
   createdAt: Date
   updatedAt: Date

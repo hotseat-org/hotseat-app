@@ -68,10 +68,10 @@ export const HeaderOrganization = ({ organization, profile }: Props) => {
         <NavbarMenuItem>
           <NextUiLink
             color={
-              pathname.includes('/app/organizations') ? 'primary' : 'foreground'
+              pathname.includes('/app/invitations') ? 'primary' : 'foreground'
             }
             as={Link}
-            to="/app/organizations"
+            to="/app/invitations"
           >
             Organizations
           </NextUiLink>

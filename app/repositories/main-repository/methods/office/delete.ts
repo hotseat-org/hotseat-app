@@ -1,4 +1,5 @@
 import prisma from '~/services/prisma.server'
+import { Office } from '../../types'
 
 export interface DeleteOfficeArgs {
   slug: string
@@ -8,10 +9,14 @@ export interface DeleteOfficeArgs {
 export const deleteOffice = async ({
   slug,
   organizationSlug,
-}: DeleteOfficeArgs) => {
+}: DeleteOfficeArgs): Promise<Office> => {
   const result = await prisma.office.delete({
     where: { organizationSlug_slug: { slug, organizationSlug } },
   })
 
-  return result
+  return {
+    ...result,
+    thumbnail: result.thumbnail ?? undefined,
+    description: result.thumbnail ?? undefined,
+  }
 }

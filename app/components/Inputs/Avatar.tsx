@@ -28,6 +28,7 @@ export const InputAvatar = ({ src, editTo, deleteTo }: Props) => {
               isDisabled={!src}
               as={Link}
               to={deleteTo}
+              replace
               variant="light"
               isIconOnly
               color="danger"
@@ -35,7 +36,7 @@ export const InputAvatar = ({ src, editTo, deleteTo }: Props) => {
             >
               <Trash size="18" />
             </Button>
-            <Button as={Link} to={editTo} variant="flat" size="sm">
+            <Button as={Link} replace to={editTo} variant="flat" size="sm">
               <Edit size="18" /> Edit
             </Button>
           </CardFooter>

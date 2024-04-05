@@ -15,6 +15,7 @@ import { Check, HelpCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { z } from 'zod'
 import { Button } from '~/components/Button'
+import { ImageUploadInput } from '~/components/Inputs/ImageUpload'
 import { getCore } from '~/core/get-core'
 import { requireProfile } from '~/utils/loader-helpers/requireProfile'
 
@@ -54,12 +55,14 @@ export const action = async ({
   }
 
   if (intent === Intent.CREATE_OFFICE) {
-    const spaceUrl = z.string().parse(formData.get('spaceUrl'))
+    const spaceId = z.string().parse(formData.get('spaceId'))
+    const thumbnail = z.string().parse(formData.get('thumbnail'))
 
     const office = await core.office.create({
       name,
       organizationSlug: profile.organizationSlug,
-      spaceUrl,
+      spaceId,
+      thumbnail,
       userEmail: profile.userEmail,
     })
 
@@ -102,12 +105,13 @@ const NewOffice = () => {
       placement="auto"
       backdrop="blur"
     >
-      <Form method="POST">
-        <ModalContent>
+      <ModalContent>
+        <Form method="POST">
           <ModalHeader>
             <p>Create a new office</p>
           </ModalHeader>
           <ModalBody>
+            <ImageUploadInput name="thumbnail" />
             <Input
               isClearable
               onClear={() => setName(undefined)}
@@ -146,7 +150,7 @@ const NewOffice = () => {
               isClearable
               fullWidth
               isRequired
-              name="spaceUrl"
+              name="spaceId"
               label="Space ID"
             />
           </ModalBody>
@@ -164,8 +168,8 @@ const NewOffice = () => {
               Create
             </Button>
           </ModalFooter>
-        </ModalContent>
-      </Form>
+        </Form>
+      </ModalContent>
     </Modal>
   )
 }

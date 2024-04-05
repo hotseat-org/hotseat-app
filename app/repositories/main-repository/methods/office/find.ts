@@ -1,4 +1,5 @@
 import prisma from '~/services/prisma.server'
+import { Office } from '../../types'
 
 export interface FindOfficeArgs {
   filter: {
@@ -9,10 +10,16 @@ export interface FindOfficeArgs {
 
 export const findOffice = async ({
   filter: { organizationSlug, slug },
-}: FindOfficeArgs) => {
+}: FindOfficeArgs): Promise<Office | null> => {
   const result = await prisma.office.findUnique({
     where: { organizationSlug_slug: { organizationSlug, slug } },
   })
 
-  return result
+  if (!result) return null
+
+  return {
+    ...result,
+    thumbnail: result.thumbnail ?? undefined,
+    description: result.thumbnail ?? undefined,
+  }
 }

@@ -1,17 +1,19 @@
-import { useLoaderData } from '@remix-run/react'
+import { Tab, Tabs } from '@nextui-org/react'
+import {
+  Outlet,
+  useLoaderData,
+  useLocation,
+  useNavigate,
+} from '@remix-run/react'
 import { LoaderFunctionArgs, json } from '@remix-run/server-runtime'
-import { Space } from '@smplrspace/smplr-loader/dist/generated/smplr'
-import { useEffect, useState } from 'react'
+import { Cog, Eye } from 'lucide-react'
+import { useMemo } from 'react'
 import { z } from 'zod'
-import { Button } from '~/components/Button'
 import { Container } from '~/components/Container'
-import { SpaceViewer } from '~/components/SpaceView'
 import { getCore } from '~/core/get-core'
 import { requireProfile } from '~/utils/loader-helpers/requireProfile'
 
-enum DataLayer {
-  SELECTED_SEAT = 'SelectedSeat',
-}
+const keys = ['view', 'settings']
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const profile = await requireProfile(args)
@@ -27,62 +29,48 @@ export const loader = async (args: LoaderFunctionArgs) => {
 }
 
 const Office = () => {
-  const { name, spaceUrl } = useLoaderData<typeof loader>()
+  const { name } = useLoaderData<typeof loader>()
 
-  const [space, setSpace] = useState<Space>()
-  const [selectedFurniture, setSelectedFurniture] = useState<string>()
+  const location = useLocation()
+  const navigate = useNavigate()
 
-  useEffect(() => {
-    const dl = space?.getDataLayer(DataLayer.SELECTED_SEAT)
-    if (dl) {
-      dl.update({
-        data: selectedFurniture
-          ? [
-              {
-                furnitureId: selectedFurniture,
-              },
-            ]
-          : [],
-      })
-    }
-  }, [selectedFurniture, space])
-
-  useEffect(() => {
-    if (space) {
-      space.addDataLayer({
-        type: 'furniture',
-        data: [],
-        id: DataLayer.SELECTED_SEAT,
-        color: '#2393d4',
-      })
-
-      space.enablePickingMode({
-        onPick: (data) => {
-          setSelectedFurniture(data.furnitureId)
-        },
-      })
-    }
-  }, [space])
+  const key = useMemo(
+    () => keys.find((key) => location.pathname.includes(key)),
+    [location.pathname]
+  )
 
   return (
-    <div>
-      <Container isWide>
-        <div className="flex justify-between items-center">
-          <h1 className="text-4xl font-extrabold">{name}</h1>
-          <div>
-            {selectedFurniture && (
-              <Button variant="flat" color="primary">
-                Create a seat
-              </Button>
-            )}
-          </div>
-        </div>
-        <SpaceViewer
-          spaceId={spaceUrl}
-          onSpaceReady={(space) => setSpace(space)}
-        />
-      </Container>
-    </div>
+    <Container>
+      <div className="flex gap-12">
+        <h1 className="text-4xl font-extrabold">{name}</h1>
+        <Tabs
+          variant="bordered"
+          selectedKey={key}
+          color={key === 'danger' ? 'danger' : 'default'}
+          onSelectionChange={(value) => navigate(value.toString())}
+        >
+          <Tab
+            key="view"
+            title={
+              <div className="flex items-center space-x-2">
+                <Eye />
+                <span>View</span>
+              </div>
+            }
+          />
+          <Tab
+            key="settings"
+            title={
+              <div className="flex items-center space-x-2">
+                <Cog />
+                <span>Settings</span>
+              </div>
+            }
+          />
+        </Tabs>
+      </div>
+      <Outlet />
+    </Container>
   )
 }
 

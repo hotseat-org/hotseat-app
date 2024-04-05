@@ -6,17 +6,19 @@ import type { Office } from './types'
 
 export interface CreateOfficeArgs {
   name: string
-  spaceUrl: string
+  spaceId: string
+  thumbnail: string
   organizationSlug: string
   userEmail: string
 }
 
 export const createOffice =
-  ({ mainRepository }: CoreContext) =>
+  ({ mainRepository, mappers }: CoreContext) =>
   async ({
     name,
     userEmail,
-    spaceUrl,
+    spaceId,
+    thumbnail,
     organizationSlug,
   }: CreateOfficeArgs): Promise<Office> => {
     const core = getCore()
@@ -42,8 +44,9 @@ export const createOffice =
       name,
       organizationSlug,
       slug,
-      spaceUrl,
+      spaceId,
+      thumbnail,
     })
 
-    return office
+    return mappers.office.fromRepository(office)
   }

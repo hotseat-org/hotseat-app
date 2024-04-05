@@ -8,7 +8,7 @@ interface GetOrganizationOfficesArgs {
 }
 
 export const getOrganizationOffices =
-  ({ mainRepository }: CoreContext) =>
+  ({ mainRepository, mappers }: CoreContext) =>
   async ({
     userEmail,
     slug,
@@ -24,5 +24,8 @@ export const getOrganizationOffices =
       filter: { organizationSlug: slug },
     })
 
-    return offices
+    return {
+      ...offices,
+      data: await Promise.all(offices.data.map(mappers.office.fromRepository)),
+    }
   }

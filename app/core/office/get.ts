@@ -7,7 +7,7 @@ interface GetOfficeArgs {
 }
 
 export const getOffice =
-  ({ mainRepository }: CoreContext) =>
+  ({ mainRepository, mappers }: CoreContext) =>
   async ({ slug, organizationSlug }: GetOfficeArgs): Promise<Office> => {
     const office = await mainRepository.office.find({
       filter: { organizationSlug, slug },
@@ -15,5 +15,5 @@ export const getOffice =
 
     if (!office) throw new Error('Not Found')
 
-    return office
+    return mappers.office.fromRepository(office)
   }

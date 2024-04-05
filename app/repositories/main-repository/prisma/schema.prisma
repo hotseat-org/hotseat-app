@@ -83,7 +83,10 @@ model OrganizationInvite {
 model Office {
   slug String
   name String
-  spaceUrl String
+  spaceId String
+
+  thumbnail String?
+  description String?
 
   organizationSlug String
   organization  Organization @relation(fields: [organizationSlug], references: [slug], onDelete: Cascade)

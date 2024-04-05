@@ -1,4 +1,5 @@
 import prisma from '~/services/prisma.server'
+import { Office, PaginatedResult } from '../../types'
 
 export interface FindOfficesArgs {
   filter: {
@@ -10,7 +11,10 @@ export interface FindOfficesArgs {
   }
 }
 
-export const findOffices = async ({ filter, pagination }: FindOfficesArgs) => {
+export const findOffices = async ({
+  filter,
+  pagination,
+}: FindOfficesArgs): Promise<PaginatedResult<Office>> => {
   const [totalCount, offices] = await Promise.all([
     prisma.office.count({ where: filter }),
     prisma.office.findMany({
@@ -24,6 +28,10 @@ export const findOffices = async ({ filter, pagination }: FindOfficesArgs) => {
     take: pagination?.take ?? 0,
     skip: pagination?.skip ?? 0,
     totalCount,
-    data: offices,
+    data: offices.map((office) => ({
+      ...office,
+      description: office.description ?? undefined,
+      thumbnail: office.thumbnail ?? undefined,
+    })),
   }
 }

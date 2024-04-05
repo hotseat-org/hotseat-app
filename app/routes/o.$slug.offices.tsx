@@ -1,4 +1,4 @@
-import { Card, CardBody, CardFooter, Link, Tooltip } from '@nextui-org/react'
+import { Card, CardBody, CardHeader, Link, Tooltip } from '@nextui-org/react'
 import { Role } from '@prisma/client'
 import {
   Form,
@@ -16,7 +16,6 @@ import { ArrowRight, Star } from 'lucide-react'
 import { z } from 'zod'
 import { Button } from '~/components/Button'
 import { Container } from '~/components/Container'
-import { SpaceViewer } from '~/components/SpaceView'
 import { getCore } from '~/core/get-core'
 import { requireProfile } from '~/utils/loader-helpers/requireProfile'
 import { useProfile } from '~/utils/remix'
@@ -69,8 +68,6 @@ const Offices = () => {
   const { offices } = useLoaderData<typeof loader>()
   const { role, favoriteOffice } = useProfile()
 
-  console.log(favoriteOffice)
-
   if (offices.totalCount === 0 && role === Role.ADMIN) {
     return (
       <Container>
@@ -114,8 +111,11 @@ const Offices = () => {
         const isFavoriteOffice = office.slug === favoriteOffice?.slug
         return (
           <Card key={office.slug} className="w-full sm:w-72 border-none">
-            <SpaceViewer isPreview spaceId={office.spaceUrl} />
-            <CardFooter className=" bg-foreground-100 before:bg-white/10 border-white/20 border-1 overflow-hidden py-1 absolute before:rounded-xl rounded-large bottom-1 w-[calc(100%_-_8px)] shadow-small ml-1 z-10">
+            <CardHeader className="p-0">
+              <img src={office.thumbnail} />
+            </CardHeader>
+            <CardBody>
+              {' '}
               <div className="flex justify-between w-full items-center">
                 <span>{office.name}</span>
                 <div className="flex gap-2 items-center">
@@ -156,7 +156,7 @@ const Offices = () => {
                   </Link>
                 </div>
               </div>
-            </CardFooter>
+            </CardBody>
           </Card>
         )
       })}
