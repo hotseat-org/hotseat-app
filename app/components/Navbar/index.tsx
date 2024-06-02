@@ -33,6 +33,7 @@ export const Header = () => {
             </DropdownTrigger>
             <DropdownMenu onAction={(key) => navigate(key.toString())}>
               <DropdownItem
+                textValue="New organization"
                 key="/app/new-organization"
                 startContent={
                   <Users

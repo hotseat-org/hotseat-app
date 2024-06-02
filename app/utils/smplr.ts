@@ -8,7 +8,7 @@ export const loadSmplr = async (): Promise<Smplr> => {
     return smplr
   }
 
-  smplr = await loadSmplrJs('umd')
+  smplr = await loadSmplrJs('esm')
 
   return smplr
 }

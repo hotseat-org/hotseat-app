@@ -40,6 +40,7 @@ export const UserDropdown = ({ user }: Props) => {
       >
         <DropdownSection aria-label="Profile & Actions" showDivider>
           <DropdownItem
+            textValue={user.displayName}
             isReadOnly
             key="profile"
             className="opacity-100 h-14 gap-2"
@@ -53,7 +54,12 @@ export const UserDropdown = ({ user }: Props) => {
               }}
             />
           </DropdownItem>
-          <DropdownItem isReadOnly key="theme" className="opacity-100 ">
+          <DropdownItem
+            textValue={theme ?? 'Theme'}
+            isReadOnly
+            key="theme"
+            className="opacity-100 "
+          >
             <Switch
               defaultSelected={theme === Theme.DARK}
               color="primary"
@@ -68,6 +74,7 @@ export const UserDropdown = ({ user }: Props) => {
           </DropdownItem>
         </DropdownSection>
         <DropdownItem
+          textValue="Setting"
           variant="flat"
           startContent={
             <div className="bg-foreground/10 text-foreground flex items-center rounded-small justify-center w-7 h-7">
@@ -79,6 +86,7 @@ export const UserDropdown = ({ user }: Props) => {
           Settings
         </DropdownItem>
         <DropdownItem
+          textValue="Logout"
           key="/logout"
           className="font-bold text-danger"
           color="danger"

@@ -1,6 +1,6 @@
 import { useLoaderData } from '@remix-run/react'
 import { LoaderFunctionArgs, json } from '@remix-run/server-runtime'
-import { Space } from '@smplrspace/smplr-loader/dist/generated/smplr'
+import { Space } from 'node_modules/@smplrspace/smplr-loader/dist/generated/smplr'
 import { useEffect, useState } from 'react'
 import { z } from 'zod'
 import { SpaceViewer } from '~/components/SpaceView'
@@ -25,7 +25,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
 }
 
 const Office = () => {
-  const { name, spaceId } = useLoaderData<typeof loader>()
+  const { spaceId } = useLoaderData<typeof loader>()
 
   const [space, setSpace] = useState<Space>()
   const [selectedFurniture, setSelectedFurniture] = useState<string>()

@@ -1,4 +1,4 @@
-import type { Space } from '@smplrspace/smplr-loader/dist/generated/smplr'
+import { Space } from 'node_modules/@smplrspace/smplr-loader/dist/generated/smplr'
 import { memo, useEffect, useState } from 'react'
 import { Theme, useTheme } from 'remix-themes'
 import { loadSmplr } from '~/utils/smplr'
@@ -17,7 +17,7 @@ export const SpaceViewer = memo(
     clientToken = 'pub_eb760fee77634cdab2fe31146fc371c2',
     onSpaceReady,
   }: Props) => {
-    const [space, setSpace] = useState<Space | undefined>()
+    const [space, setSpace] = useState<Space>()
     const [theme] = useTheme()
 
     useEffect(() => {
