@@ -1,5 +1,5 @@
-import type { CoreContext } from '../types'
-import type { User } from './types'
+import type { CoreContext } from "../types"
+import type { User } from "./types"
 
 export const getUser =
   ({ mainRepository, mappers }: CoreContext) =>

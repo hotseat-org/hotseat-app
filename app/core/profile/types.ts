@@ -1,5 +1,5 @@
-import type { Role } from '@prisma/client'
-import { Office } from '../office/types'
+import type { Role } from "@prisma/client"
+import { Office } from "../office/types"
 
 export interface Profile {
   userEmail: string

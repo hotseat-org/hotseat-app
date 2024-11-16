@@ -1,8 +1,8 @@
-import type { Role } from '@prisma/client'
-import type { LoaderFunctionArgs } from '@vercel/remix'
-import { redirect } from '@vercel/remix'
-import { getCore } from '~/core/get-core'
-import { requireUser } from '~/services/session.server'
+import type { Role } from "@prisma/client"
+import type { LoaderFunctionArgs } from "@vercel/remix"
+import { redirect } from "@vercel/remix"
+import { getCore } from "~/core/get-core"
+import { requireUser } from "~/services/session.server"
 
 interface Options {
   requiredRole?: Role
@@ -14,7 +14,7 @@ export const requireProfile = async (
 ) => {
   const slug = params.slug
 
-  if (!slug) throw redirect('/app')
+  if (!slug) throw redirect("/app")
 
   const user = await requireUser(request)
   const core = getCore()

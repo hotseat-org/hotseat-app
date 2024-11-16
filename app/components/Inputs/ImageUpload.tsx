@@ -1,7 +1,7 @@
-import { Avatar, Spinner } from '@nextui-org/react'
-import clsx from 'clsx'
-import { UploadCloud } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Avatar, Spinner } from "@nextui-org/react"
+import clsx from "clsx"
+import { UploadCloud } from "lucide-react"
+import { useEffect, useState } from "react"
 
 interface Props {
   onChange?: (value?: string) => void
@@ -19,15 +19,15 @@ export const ImageUploadInput = ({ onChange, name }: Props) => {
       setThumbnail(undefined)
       setFile(newFile)
 
-      const data = await fetch(`/api/upload-url`, {
-        method: 'POST',
+      const data = await fetch("/api/upload-url", {
+        method: "POST",
       }).then((res) => res.json())
 
       const body = new FormData()
-      body.append('file', newFile)
+      body.append("file", newFile)
 
       const uploadResult = await fetch(data.uploadUrl, {
-        method: 'POST',
+        method: "POST",
         body,
       }).then((res) => res.json())
 
@@ -46,20 +46,17 @@ export const ImageUploadInput = ({ onChange, name }: Props) => {
       <div className="flex items-center justify-center w-full">
         <label
           className={clsx(
-            'flex flex-col items-center justify-center w-full h-64 cursor-pointer',
-            'border-2 border-dashed rounded-lg',
-            'border-gray-700 bg-slate-100 hover:bg-slate-200',
-            'dark:bg-black/30 dark:hover:bg-black/50 dark:border-slate-400 dark:hover:border-slate-500 '
+            "flex flex-col items-center justify-center w-full h-64 cursor-pointer",
+            "border-2 border-dashed rounded-lg",
+            "border-gray-700 bg-slate-100 hover:bg-slate-200",
+            "dark:bg-black/30 dark:hover:bg-black/50 dark:border-slate-400 dark:hover:border-slate-500 "
           )}
         >
           {file ? (
             <div className="flex">
               <div className="relative">
-                <div className={clsx({ 'opacity-10': isOptimistic })}>
-                  <Avatar
-                    className="w-52 h-52 z-0"
-                    src={URL.createObjectURL(file)}
-                  />
+                <div className={clsx({ "opacity-10": isOptimistic })}>
+                  <Avatar className="w-52 h-52 z-0" src={URL.createObjectURL(file)} />
                 </div>
                 {isOptimistic && (
                   <Spinner
@@ -73,8 +70,7 @@ export const ImageUploadInput = ({ onChange, name }: Props) => {
             <div className="flex flex-col items-center justify-center pt-5 pb-6">
               <UploadCloud />
               <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
-                <span className="font-semibold">Click to upload</span> or drag
-                and drop
+                <span className="font-semibold">Click to upload</span> or drag and drop
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 SVG, PNG, JPG, WEBP, or GIF

@@ -1,6 +1,6 @@
-import { createCookieSessionStorage, redirect } from '@vercel/remix'
-import { returnToPage, sessionCookie } from '~/cookies'
-import { authenticator } from './auth.server'
+import { createCookieSessionStorage, redirect } from "@vercel/remix"
+import { authenticator } from "./auth.server"
+import { returnToPage, sessionCookie } from "~/cookies"
 
 export const sessionStorage = createCookieSessionStorage({
   cookie: sessionCookie,
@@ -12,8 +12,8 @@ export async function requireUser(request: Request) {
   if (!user) {
     const url = new URL(request.url)
 
-    throw redirect(`/login`, {
-      headers: { 'Set-cookie': await returnToPage.serialize(url.pathname) },
+    throw redirect("/login", {
+      headers: { "Set-cookie": await returnToPage.serialize(url.pathname) },
     })
   }
   return user

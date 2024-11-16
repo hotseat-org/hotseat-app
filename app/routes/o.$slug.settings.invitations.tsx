@@ -10,35 +10,35 @@ import {
   TableHeader,
   TableRow,
   Tooltip,
-} from '@nextui-org/react'
-import { Form, Link, Outlet, useLoaderData, useParams } from '@remix-run/react'
-import type { LoaderFunctionArgs } from '@vercel/remix'
-import { json, redirect } from '@vercel/remix'
-import dayjs from 'dayjs'
-import { Copy, ExternalLink, Mail, RefreshCcw, Trash } from 'lucide-react'
-import pluralize from 'pluralize'
-import { useRef } from 'react'
-import { z } from 'zod'
-import { getCore } from '~/core/get-core'
-import { InviteStatus } from '~/core/organization-invite/types'
-import { requireUser } from '~/services/session.server'
-import { useOrganizationContext } from '~/utils/hooks/useProfileData'
+} from "@nextui-org/react"
+import { Form, Link, Outlet, useLoaderData, useParams } from "@remix-run/react"
+import type { LoaderFunctionArgs } from "@vercel/remix"
+import { json, redirect } from "@vercel/remix"
+import dayjs from "dayjs"
+import { Copy, ExternalLink, Mail, RefreshCcw, Trash } from "lucide-react"
+import pluralize from "pluralize"
+import { useRef } from "react"
+import { z } from "zod"
+import { getCore } from "~/core/get-core"
+import { InviteStatus } from "~/core/organization-invite/types"
+import { requireUser } from "~/services/session.server"
+import { useOrganizationContext } from "~/utils/hooks/useProfileData"
 
 enum Intent {
-  DELETE_INVITE = 'delete-invite',
+  DELETE_INVITE = "delete-invite",
 }
 
 export const action = async ({ request, params }: LoaderFunctionArgs) => {
   const slug = params.slug
-  if (!slug) return redirect('/')
+  if (!slug) return redirect("/")
 
   const formData = await request.formData()
-  const intent = z.nativeEnum(Intent).parse(formData.get('intent'))
+  const intent = z.nativeEnum(Intent).parse(formData.get("intent"))
   const user = await requireUser(request)
   const core = getCore()
 
   if (intent === Intent.DELETE_INVITE) {
-    const email = z.string().email().parse(formData.get('email'))
+    const email = z.string().email().parse(formData.get("email"))
     await core.organization.deleteInvite({ slug, userEmail: user.email, email })
   }
 
@@ -47,14 +47,12 @@ export const action = async ({ request, params }: LoaderFunctionArgs) => {
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const slug = params.slug
-  if (!slug) return redirect('/')
+  if (!slug) return redirect("/")
 
   const user = await requireUser(request)
   const core = getCore()
 
-  return json(
-    await core.organization.getInvites({ userEmail: user.email, slug })
-  )
+  return json(await core.organization.getInvites({ userEmail: user.email, slug }))
 }
 
 const Invitations = () => {
@@ -71,11 +69,7 @@ const Invitations = () => {
           <h2 className="text-xl font-bold">Direct invitations</h2>
           <div className="flex items-center gap-2">
             <Tooltip content="Invited members can join at this url">
-              <Code
-                ref={inviteUrlRef}
-                size="sm"
-                className="flex items-center gap-2"
-              >
+              <Code ref={inviteUrlRef} size="sm" className="flex items-center gap-2">
                 http://localhost:3000/join/{slug}
                 <Button
                   isIconOnly
@@ -91,13 +85,7 @@ const Invitations = () => {
                 </Button>
               </Code>
             </Tooltip>
-            <Button
-              variant="flat"
-              color="primary"
-              as={Link}
-              to="invite"
-              replace
-            >
+            <Button variant="flat" color="primary" as={Link} to="invite" replace>
               <Mail /> Invite new member
             </Button>
           </div>
@@ -116,24 +104,12 @@ const Invitations = () => {
             {invites.map((invite) => (
               <TableRow key={invite.email}>
                 <TableCell>{invite.email}</TableCell>
+                <TableCell>{dayjs(invite.createdAt).format("D.M.YYYY")}</TableCell>
                 <TableCell>
-                  {dayjs(invite.createdAt).format('D.M.YYYY')}
+                  {pluralize("day", dayjs(invite.expiresAt).diff(dayjs(), "days"), true)}
                 </TableCell>
                 <TableCell>
-                  {pluralize(
-                    'day',
-                    dayjs(invite.expiresAt).diff(dayjs(), 'days'),
-                    true
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    color={
-                      invite.status === InviteStatus.PENDING
-                        ? 'primary'
-                        : 'danger'
-                    }
-                  >
+                  <Chip color={invite.status === InviteStatus.PENDING ? "primary" : "danger"}>
                     {invite.status}
                   </Chip>
                 </TableCell>
@@ -170,9 +146,7 @@ const Invitations = () => {
                 content={
                   <div className="flex flex-col justify-start">
                     <p>Anyone with this link can join your organization.</p>
-                    <p>
-                      You can generate a new one to disable the current one.
-                    </p>
+                    <p>You can generate a new one to disable the current one.</p>
                   </div>
                 }
               >
@@ -184,11 +158,7 @@ const Invitations = () => {
               </Tooltip>
             </div>
             <div className="flex gap-1">
-              <Code
-                ref={universalInviteUrlRef}
-                size="sm"
-                className="flex items-center gap-2"
-              >
+              <Code ref={universalInviteUrlRef} size="sm" className="flex items-center gap-2">
                 http://localhost:3000/join/{slug}/{organization.invitationHash}
                 <Button
                   isIconOnly
@@ -204,13 +174,7 @@ const Invitations = () => {
                   <Copy size={14} />
                 </Button>
               </Code>
-              <Button
-                as={Link}
-                to="generate"
-                color="primary"
-                variant="flat"
-                isIconOnly
-              >
+              <Button as={Link} to="generate" color="primary" variant="flat" isIconOnly>
                 <RefreshCcw />
               </Button>
             </div>

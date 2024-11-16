@@ -1,19 +1,14 @@
-import { Tab, Tabs } from '@nextui-org/react'
-import {
-  Outlet,
-  useLoaderData,
-  useLocation,
-  useNavigate,
-} from '@remix-run/react'
-import { LoaderFunctionArgs, json } from '@remix-run/server-runtime'
-import { Cog, Eye } from 'lucide-react'
-import { useMemo } from 'react'
-import { z } from 'zod'
-import { Container } from '~/components/Container'
-import { getCore } from '~/core/get-core'
-import { requireProfile } from '~/utils/loader-helpers/requireProfile'
+import { Tab, Tabs } from "@nextui-org/react"
+import { Outlet, useLoaderData, useLocation, useNavigate } from "@remix-run/react"
+import { LoaderFunctionArgs, json } from "@remix-run/server-runtime"
+import { Cog, Eye } from "lucide-react"
+import { useMemo } from "react"
+import { z } from "zod"
+import { Container } from "~/components/Container"
+import { getCore } from "~/core/get-core"
+import { requireProfile } from "~/utils/loader-helpers/requireProfile"
 
-const keys = ['view', 'settings']
+const keys = ["view", "settings"]
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const profile = await requireProfile(args)
@@ -46,7 +41,7 @@ const Office = () => {
         <Tabs
           variant="bordered"
           selectedKey={key}
-          color={key === 'danger' ? 'danger' : 'default'}
+          color={key === "danger" ? "danger" : "default"}
           onSelectionChange={(value) => navigate(value.toString())}
         >
           <Tab

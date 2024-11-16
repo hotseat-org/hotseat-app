@@ -1,7 +1,7 @@
-import { LoaderFunctionArgs, redirect } from '@vercel/remix'
-import { Container } from '~/components/Container'
-import { getCore } from '~/core/get-core'
-import { requireUser } from '~/services/session.server'
+import { LoaderFunctionArgs, redirect } from "@vercel/remix"
+import { Container } from "~/components/Container"
+import { getCore } from "~/core/get-core"
+import { requireUser } from "~/services/session.server"
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await requireUser(request)

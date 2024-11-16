@@ -1,7 +1,7 @@
-import prisma from '~/services/prisma.server'
-import type { MainRepository } from '../../types'
+import type { MainRepository } from "../../types"
+import prisma from "~/services/prisma.server"
 
-type FindOrganizationInviteFn = MainRepository['organizationInvite']['find']
+type FindOrganizationInviteFn = MainRepository["organizationInvite"]["find"]
 
 export interface FindOrganizationInviteArgs {
   email: string

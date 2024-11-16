@@ -1,7 +1,7 @@
-import prisma from '~/services/prisma.server'
-import type { MainRepository } from '../../types'
+import type { MainRepository } from "../../types"
+import prisma from "~/services/prisma.server"
 
-export const createUser: MainRepository['user']['create'] = async ({
+export const createUser: MainRepository["user"]["create"] = async ({
   displayName,
   email,
   avatarUrl,

@@ -1,14 +1,11 @@
-import prisma from '~/services/prisma.server'
+import prisma from "~/services/prisma.server"
 
 export interface DeleteProfileArgs {
   organizationSlug: string
   userEmail: string
 }
 
-export const deleteProfile = async ({
-  organizationSlug,
-  userEmail,
-}: DeleteProfileArgs) => {
+export const deleteProfile = async ({ organizationSlug, userEmail }: DeleteProfileArgs) => {
   const profile = await prisma.profile.delete({
     where: { userEmail_organizationSlug: { userEmail, organizationSlug } },
     include: { user: true },

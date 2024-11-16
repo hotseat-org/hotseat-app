@@ -1,11 +1,11 @@
-import { Button, Input, Textarea } from '@nextui-org/react'
-import { Form, Outlet, useNavigation } from '@remix-run/react'
-import type { ActionFunctionArgs } from '@vercel/remix'
-import { z } from 'zod'
-import { InputAvatar } from '~/components/Inputs/Avatar'
-import { getCore } from '~/core/get-core'
-import { requireUser } from '~/services/session.server'
-import { useOrganizationContext } from '~/utils/hooks/useProfileData'
+import { Button, Input, Textarea } from "@nextui-org/react"
+import { Form, Outlet, useNavigation } from "@remix-run/react"
+import type { ActionFunctionArgs } from "@vercel/remix"
+import { z } from "zod"
+import { InputAvatar } from "~/components/Inputs/Avatar"
+import { getCore } from "~/core/get-core"
+import { requireUser } from "~/services/session.server"
+import { useOrganizationContext } from "~/utils/hooks/useProfileData"
 
 const FormSchema = z.object({
   name: z.string().optional(),
@@ -53,21 +53,13 @@ const General = () => {
             defaultValue={organization?.description}
           />
           <div className="flex justify-end">
-            <Button
-              isLoading={state === 'submitting'}
-              type="submit"
-              color="primary"
-            >
+            <Button isLoading={state === "submitting"} type="submit" color="primary">
               Save
             </Button>
           </div>
         </div>
 
-        <InputAvatar
-          src={thumbnailUrl}
-          editTo="set-logo"
-          deleteTo="delete-logo"
-        />
+        <InputAvatar src={thumbnailUrl} editTo="set-logo" deleteTo="delete-logo" />
       </div>
       <Outlet />
     </Form>

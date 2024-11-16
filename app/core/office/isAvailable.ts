@@ -1,5 +1,5 @@
-import slugify from 'slugify'
-import type { CoreContext } from '../types'
+import slugify from "slugify"
+import type { CoreContext } from "../types"
 
 export const officeIsAvailable =
   ({ mainRepository }: CoreContext) =>

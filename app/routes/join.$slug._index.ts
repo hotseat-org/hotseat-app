@@ -1,13 +1,13 @@
-import type { LoaderFunctionArgs } from '@vercel/remix'
-import { redirect } from '@vercel/remix'
-import { getCore } from '~/core/get-core'
-import { requireUser } from '~/services/session.server'
+import type { LoaderFunctionArgs } from "@vercel/remix"
+import { redirect } from "@vercel/remix"
+import { getCore } from "~/core/get-core"
+import { requireUser } from "~/services/session.server"
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await requireUser(request)
 
   const slug = params.slug
-  if (!slug) return redirect('/')
+  if (!slug) return redirect("/")
 
   const core = getCore()
 
@@ -18,6 +18,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     })
     return redirect(`/o/${profile.organizationSlug}`)
   } catch (e) {
-    return redirect('/')
+    return redirect("/")
   }
 }

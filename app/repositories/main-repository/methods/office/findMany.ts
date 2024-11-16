@@ -1,5 +1,5 @@
-import prisma from '~/services/prisma.server'
-import { Office, PaginatedResult } from '../../types'
+import { Office, PaginatedResult } from "../../types"
+import prisma from "~/services/prisma.server"
 
 export interface FindOfficesArgs {
   filter: {

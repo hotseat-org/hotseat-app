@@ -1,8 +1,8 @@
-import type { Role } from '@prisma/client'
-import prisma from '~/services/prisma.server'
-import type { MainRepository } from '../../types'
+import type { Role } from "@prisma/client"
+import type { MainRepository } from "../../types"
+import prisma from "~/services/prisma.server"
 
-type UpdateProfileFn = MainRepository['profile']['update']
+type UpdateProfileFn = MainRepository["profile"]["update"]
 
 export interface UpdateProfileArgs {
   userEmail?: string

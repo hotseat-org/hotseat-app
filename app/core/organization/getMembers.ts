@@ -1,6 +1,6 @@
-import type { PaginatedResult } from '~/repositories/main-repository/types'
-import type { Profile } from '../profile/types'
-import type { CoreContext } from '../types'
+import type { Profile } from "../profile/types"
+import type { CoreContext } from "../types"
+import type { PaginatedResult } from "~/repositories/main-repository/types"
 
 interface GetOrganizationMembersArgs {
   userEmail: string
@@ -9,16 +9,13 @@ interface GetOrganizationMembersArgs {
 
 export const getOrganizationMembers =
   ({ mainRepository, mappers }: CoreContext) =>
-  async ({
-    userEmail,
-    slug,
-  }: GetOrganizationMembersArgs): Promise<PaginatedResult<Profile>> => {
+  async ({ userEmail, slug }: GetOrganizationMembersArgs): Promise<PaginatedResult<Profile>> => {
     const profile = await mainRepository.profile.find({
       organizationSlug: slug,
       userEmail,
     })
 
-    if (!profile) throw new Error('Forbidden')
+    if (!profile) throw new Error("Forbidden")
 
     const profiles = await mainRepository.profile.findMany({
       filter: { organizationSlug: slug },
@@ -27,8 +24,6 @@ export const getOrganizationMembers =
 
     return {
       ...profiles,
-      data: await Promise.all(
-        profiles.data.map(mappers.profile.fromRepository)
-      ),
+      data: await Promise.all(profiles.data.map(mappers.profile.fromRepository)),
     }
   }

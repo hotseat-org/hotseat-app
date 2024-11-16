@@ -1,7 +1,7 @@
-import { Role } from '@prisma/client'
-import type { MainRepository } from '~/repositories/main-repository/types'
-import type { Profile } from '../profile/types'
-import type { CoreContext } from '../types'
+import { Role } from "@prisma/client"
+import type { Profile } from "../profile/types"
+import type { CoreContext } from "../types"
+import type { MainRepository } from "~/repositories/main-repository/types"
 
 export interface SetOrganizationMemberRoleArgs {
   userEmail: string
@@ -20,8 +20,8 @@ const requireAdminInOrganization = async (
     organizationSlug: slug,
   })
 
-  if (!profile) throw new Error('Forbidden')
-  if (profile.role !== Role.ADMIN) throw new Error('Forbidden')
+  if (!profile) throw new Error("Forbidden")
+  if (profile.role !== Role.ADMIN) throw new Error("Forbidden")
 
   return profile
 }
@@ -46,16 +46,16 @@ export const setOrganizationMemberRole =
     })
 
     if (!currentProfile) {
-      throw new Error('User is not a member of your organization')
+      throw new Error("User is not a member of your organization")
     }
 
     const currentRole = currentProfile.role
 
     // * When user is demoted from admin to user, ensure there is always at least one admin
-    // * TLDR: if you are the only admin, you can't demote yourself to user
+    // * TLDR: if you are the only admin, you can't demote yourself to user
     if (currentRole === Role.ADMIN && role === Role.USER) {
       if (members.data.length < 2) {
-        throw new Error('There always needs to be at least one admin')
+        throw new Error("There always needs to be at least one admin")
       }
     }
 

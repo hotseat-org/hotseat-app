@@ -1,7 +1,7 @@
-import prisma from '~/services/prisma.server'
-import type { MainRepository } from '../../types'
+import type { MainRepository } from "../../types"
+import prisma from "~/services/prisma.server"
 
-type DeleteOrganizationFn = MainRepository['organization']['delete']
+type DeleteOrganizationFn = MainRepository["organization"]["delete"]
 
 export interface DeleteOrganizationArgs {
   slug: string

@@ -1,8 +1,8 @@
-import { Role } from '@prisma/client'
-import prisma from '~/services/prisma.server'
-import type { MainRepository } from '../../types'
+import { Role } from "@prisma/client"
+import type { MainRepository } from "../../types"
+import prisma from "~/services/prisma.server"
 
-type CreateOrganizationFn = MainRepository['organization']['create']
+type CreateOrganizationFn = MainRepository["organization"]["create"]
 
 export interface CreateOrganizationArgs {
   name: string

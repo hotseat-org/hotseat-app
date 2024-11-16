@@ -1,6 +1,6 @@
 export enum InviteStatus {
-  PENDING = 'pending',
-  EXPIRED = 'expired',
+  PENDING = "pending",
+  EXPIRED = "expired",
 }
 
 export interface OrganizationInvite {

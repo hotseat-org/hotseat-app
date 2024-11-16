@@ -1,14 +1,14 @@
-import { useLoaderData } from '@remix-run/react'
-import { LoaderFunctionArgs, json } from '@remix-run/server-runtime'
-import { Space } from 'node_modules/@smplrspace/smplr-loader/dist/generated/smplr'
-import { useEffect, useState } from 'react'
-import { z } from 'zod'
-import { SpaceViewer } from '~/components/SpaceView'
-import { getCore } from '~/core/get-core'
-import { requireProfile } from '~/utils/loader-helpers/requireProfile'
+import { useLoaderData } from "@remix-run/react"
+import { LoaderFunctionArgs, json } from "@remix-run/server-runtime"
+import { Space } from "node_modules/@smplrspace/smplr-loader/dist/generated/smplr"
+import { useEffect, useState } from "react"
+import { z } from "zod"
+import { SpaceViewer } from "~/components/SpaceView"
+import { getCore } from "~/core/get-core"
+import { requireProfile } from "~/utils/loader-helpers/requireProfile"
 
 enum DataLayer {
-  SELECTED_SEAT = 'SelectedSeat',
+  SELECTED_SEAT = "SelectedSeat",
 }
 
 export const loader = async (args: LoaderFunctionArgs) => {
@@ -48,10 +48,10 @@ const Office = () => {
   useEffect(() => {
     if (space) {
       space.addDataLayer({
-        type: 'furniture',
+        type: "furniture",
         data: [],
         id: DataLayer.SELECTED_SEAT,
-        color: '#2393d4',
+        color: "#2393d4",
       })
 
       space.enablePickingMode({
@@ -62,9 +62,7 @@ const Office = () => {
     }
   }, [space])
 
-  return (
-    <SpaceViewer spaceId={spaceId} onSpaceReady={(space) => setSpace(space)} />
-  )
+  return <SpaceViewer spaceId={spaceId} onSpaceReady={(space) => setSpace(space)} />
 }
 
 export default Office

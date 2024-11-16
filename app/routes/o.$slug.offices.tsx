@@ -1,28 +1,19 @@
-import { Card, CardBody, CardHeader, Link, Tooltip } from '@nextui-org/react'
-import { Role } from '@prisma/client'
-import {
-  Form,
-  Outlet,
-  Link as RemixLink,
-  useLoaderData,
-} from '@remix-run/react'
-import {
-  ActionFunctionArgs,
-  LoaderFunctionArgs,
-  json,
-} from '@remix-run/server-runtime'
-import clsx from 'clsx'
-import { ArrowRight, Star } from 'lucide-react'
-import { z } from 'zod'
-import { Button } from '~/components/Button'
-import { Container } from '~/components/Container'
-import { getCore } from '~/core/get-core'
-import { requireProfile } from '~/utils/loader-helpers/requireProfile'
-import { useProfile } from '~/utils/remix'
+import { Card, CardBody, CardHeader, Link, Tooltip } from "@nextui-org/react"
+import { Role } from "@prisma/client"
+import { Form, Outlet, Link as RemixLink, useLoaderData } from "@remix-run/react"
+import { ActionFunctionArgs, LoaderFunctionArgs, json } from "@remix-run/server-runtime"
+import clsx from "clsx"
+import { ArrowRight, Star } from "lucide-react"
+import { z } from "zod"
+import { Button } from "~/components/Button"
+import { Container } from "~/components/Container"
+import { getCore } from "~/core/get-core"
+import { requireProfile } from "~/utils/loader-helpers/requireProfile"
+import { useProfile } from "~/utils/remix"
 
 enum FormIntent {
-  SET_FAVORITE = 'set-favorite',
-  UNSET_FAVORITE = 'unset-favorite',
+  SET_FAVORITE = "set-favorite",
+  UNSET_FAVORITE = "unset-favorite",
 }
 
 export const loader = async (args: LoaderFunctionArgs) => {
@@ -43,8 +34,8 @@ export const action = async (args: ActionFunctionArgs) => {
   const { request } = args
 
   const formData = await request.formData()
-  const intent = z.nativeEnum(FormIntent).parse(formData.get('intent'))
-  const officeSlug = z.string().parse(formData.get('officeSlug'))
+  const intent = z.nativeEnum(FormIntent).parse(formData.get("intent"))
+  const officeSlug = z.string().parse(formData.get("officeSlug"))
 
   if (intent === FormIntent.SET_FAVORITE && officeSlug) {
     await core.office.setFavorite({
@@ -73,28 +64,20 @@ const Offices = () => {
       <Container>
         <Card
           className={clsx(
-            'w-full',
-            'bg-gradient-to-r',
-            'from-blue-900 via-blue-700 to-red-400 text-blue-300'
+            "w-full",
+            "bg-gradient-to-r",
+            "from-blue-900 via-blue-700 to-red-400 text-blue-300"
           )}
         >
           <CardBody>
             <div className="flex justify-between items-center">
               <div className="flex flex-col gap-2">
-                <p className="text-xl md:text-4xl">
-                  Your organization has no offices
-                </p>
+                <p className="text-xl md:text-4xl">Your organization has no offices</p>
                 <p className="text-slate-300 md:text-lg max-w-[528px]">
                   You can create one yourself!
                 </p>
               </div>
-              <Link
-                replace
-                className="text-blue-100"
-                isBlock
-                as={RemixLink}
-                to="new"
-              >
+              <Link replace className="text-blue-100" isBlock as={RemixLink} to="new">
                 <ArrowRight className="h-[32px] w-[32px] md:h-[52px] md:w-[52px]" />
               </Link>
             </div>
@@ -115,7 +98,7 @@ const Offices = () => {
               <img src={office.thumbnail} />
             </CardHeader>
             <CardBody>
-              {' '}
+              {" "}
               <div className="flex justify-between w-full items-center">
                 <span>{office.name}</span>
                 <div className="flex gap-2 items-center">
@@ -123,24 +106,14 @@ const Offices = () => {
                     <input hidden name="officeSlug" value={office.slug} />
                     <Button
                       size="sm"
-                      color={isFavoriteOffice ? 'warning' : 'default'}
+                      color={isFavoriteOffice ? "warning" : "default"}
                       variant="light"
                       isIconOnly
                       type="submit"
                       name="intent"
-                      value={
-                        isFavoriteOffice
-                          ? FormIntent.UNSET_FAVORITE
-                          : FormIntent.SET_FAVORITE
-                      }
+                      value={isFavoriteOffice ? FormIntent.UNSET_FAVORITE : FormIntent.SET_FAVORITE}
                     >
-                      <Tooltip
-                        content={
-                          isFavoriteOffice
-                            ? 'Remove favorite'
-                            : 'Set as favorite'
-                        }
-                      >
+                      <Tooltip content={isFavoriteOffice ? "Remove favorite" : "Set as favorite"}>
                         <Star strokeWidth={isFavoriteOffice ? 3 : undefined} />
                       </Tooltip>
                     </Button>

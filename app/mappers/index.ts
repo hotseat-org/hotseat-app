@@ -1,7 +1,7 @@
-import { imageService } from '~/services/images'
-import { createOfficeMapper } from './office'
-import { createProfileMapper } from './profile'
-import { createUserMapper } from './user'
+import { createOfficeMapper } from "./office"
+import { createProfileMapper } from "./profile"
+import { createUserMapper } from "./user"
+import { imageService } from "~/services/images"
 
 export const mappers = {
   user: createUserMapper(imageService),

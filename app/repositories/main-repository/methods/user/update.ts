@@ -1,4 +1,4 @@
-import prisma from '~/services/prisma.server'
+import prisma from "~/services/prisma.server"
 
 export interface UpdateUserArgs {
   email: string

@@ -1,6 +1,6 @@
-import type { CoreContext } from '../types'
-import { organizationMapper } from './mapper'
-import type { Organization } from './types'
+import type { CoreContext } from "../types"
+import { organizationMapper } from "./mapper"
+import type { Organization } from "./types"
 
 interface GetOrganizationForUserArgs {
   slug: string
@@ -8,9 +8,7 @@ interface GetOrganizationForUserArgs {
 
 export const getOrganizationForPublic =
   ({ mainRepository, imageService }: CoreContext) =>
-  async ({
-    slug,
-  }: GetOrganizationForUserArgs): Promise<Organization | null> => {
+  async ({ slug }: GetOrganizationForUserArgs): Promise<Organization | null> => {
     const organization = await mainRepository.organization.find({
       slug,
     })

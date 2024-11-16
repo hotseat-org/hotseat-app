@@ -1,4 +1,4 @@
-import prisma from '~/services/prisma.server'
+import prisma from "~/services/prisma.server"
 
 export interface FindOrganizationInvitesArgs {
   filter: {
@@ -7,9 +7,7 @@ export interface FindOrganizationInvitesArgs {
   }
 }
 
-export const findManyOrganizationInvites = async ({
-  filter,
-}: FindOrganizationInvitesArgs) => {
+export const findManyOrganizationInvites = async ({ filter }: FindOrganizationInvitesArgs) => {
   const result = await prisma.organizationInvite.findMany({
     where: filter,
     include: { organization: true },

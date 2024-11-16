@@ -1,14 +1,14 @@
-import { Divider, Tab, Tabs } from '@nextui-org/react'
-import { Role } from '@prisma/client'
-import { Outlet, useLocation, useNavigate } from '@remix-run/react'
-import type { LoaderFunctionArgs } from '@vercel/remix'
-import clsx from 'clsx'
-import { Cog, Mails, Skull, Users } from 'lucide-react'
-import { useMemo } from 'react'
-import { Container } from '~/components/Container'
-import { requireProfile } from '~/utils/loader-helpers/requireProfile'
+import { Divider, Tab, Tabs } from "@nextui-org/react"
+import { Role } from "@prisma/client"
+import { Outlet, useLocation, useNavigate } from "@remix-run/react"
+import type { LoaderFunctionArgs } from "@vercel/remix"
+import clsx from "clsx"
+import { Cog, Mails, Skull, Users } from "lucide-react"
+import { useMemo } from "react"
+import { Container } from "~/components/Container"
+import { requireProfile } from "~/utils/loader-helpers/requireProfile"
 
-const keys = ['general', 'invitations', 'members', 'danger']
+const keys = ["general", "invitations", "members", "danger"]
 
 export const loader = async (args: LoaderFunctionArgs) => {
   await requireProfile(args, { requiredRole: Role.ADMIN })
@@ -29,10 +29,10 @@ const Settings = () => {
       <div className="flex gap-2 items-center">
         <h1
           className={clsx(
-            'text-3xl',
-            'font-extrabold text-transparent',
-            'bg-clip-text bg-gradient-to-r',
-            'from-blue-700 to-red-400'
+            "text-3xl",
+            "font-extrabold text-transparent",
+            "bg-clip-text bg-gradient-to-r",
+            "from-blue-700 to-red-400"
           )}
         >
           Organization settings
@@ -42,7 +42,7 @@ const Settings = () => {
       <Tabs
         variant="bordered"
         selectedKey={key}
-        color={key === 'danger' ? 'danger' : 'default'}
+        color={key === "danger" ? "danger" : "default"}
         onSelectionChange={(value) => navigate(value.toString())}
       >
         <Tab

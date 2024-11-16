@@ -1,24 +1,24 @@
-import type { Role } from '@prisma/client'
-import { CreateOfficeArgs } from './methods/office/create'
-import { DeleteOfficeArgs } from './methods/office/delete'
-import { FindOfficeArgs } from './methods/office/find'
-import { FindOfficesArgs } from './methods/office/findMany'
-import type { CreateOrganizationInviteArgs } from './methods/organization-invite/create'
-import type { DeleteOrganizationInviteArgs } from './methods/organization-invite/delete'
-import type { FindOrganizationInviteArgs } from './methods/organization-invite/find'
-import type { FindOrganizationInvitesArgs } from './methods/organization-invite/findMany'
-import type { CreateOrganizationArgs } from './methods/organization/create'
-import type { DeleteOrganizationArgs } from './methods/organization/delete'
-import type { FindOrganizationArgs } from './methods/organization/find'
-import type { FindOrganizationsArgs } from './methods/organization/findMany'
-import type { UpdateOrganizationArgs } from './methods/organization/update'
-import type { CreateProfileArgs } from './methods/profile/create'
-import { DeleteProfileArgs } from './methods/profile/delete'
-import type { FindProfileArgs } from './methods/profile/find'
-import type { FindProfilesArgs } from './methods/profile/findMany'
-import type { UpdateProfileArgs } from './methods/profile/update'
-import type { FindUserArgs } from './methods/user/find'
-import { UpdateUserArgs } from './methods/user/update'
+import type { Role } from "@prisma/client"
+import { CreateOfficeArgs } from "./methods/office/create"
+import { DeleteOfficeArgs } from "./methods/office/delete"
+import { FindOfficeArgs } from "./methods/office/find"
+import { FindOfficesArgs } from "./methods/office/findMany"
+import type { CreateOrganizationInviteArgs } from "./methods/organization-invite/create"
+import type { DeleteOrganizationInviteArgs } from "./methods/organization-invite/delete"
+import type { FindOrganizationInviteArgs } from "./methods/organization-invite/find"
+import type { FindOrganizationInvitesArgs } from "./methods/organization-invite/findMany"
+import type { CreateOrganizationArgs } from "./methods/organization/create"
+import type { DeleteOrganizationArgs } from "./methods/organization/delete"
+import type { FindOrganizationArgs } from "./methods/organization/find"
+import type { FindOrganizationsArgs } from "./methods/organization/findMany"
+import type { UpdateOrganizationArgs } from "./methods/organization/update"
+import type { CreateProfileArgs } from "./methods/profile/create"
+import { DeleteProfileArgs } from "./methods/profile/delete"
+import type { FindProfileArgs } from "./methods/profile/find"
+import type { FindProfilesArgs } from "./methods/profile/findMany"
+import type { UpdateProfileArgs } from "./methods/profile/update"
+import type { FindUserArgs } from "./methods/user/find"
+import { UpdateUserArgs } from "./methods/user/update"
 
 export type PaginatedResult<Data> = {
   data: Data[]
@@ -80,7 +80,7 @@ export interface Office {
   updatedAt: Date
 }
 
-export type CreateUserArgs = Pick<User, 'email' | 'avatarUrl' | 'displayName'>
+export type CreateUserArgs = Pick<User, "email" | "avatarUrl" | "displayName">
 
 export interface MainRepository {
   user: {
@@ -97,12 +97,8 @@ export interface MainRepository {
   }
   organizationInvite: {
     create: (args: CreateOrganizationInviteArgs) => Promise<OrganizationInvite>
-    find: (
-      args: FindOrganizationInviteArgs
-    ) => Promise<OrganizationInvite | null>
-    findMany: (
-      args: FindOrganizationInvitesArgs
-    ) => Promise<OrganizationInvite[]>
+    find: (args: FindOrganizationInviteArgs) => Promise<OrganizationInvite | null>
+    findMany: (args: FindOrganizationInvitesArgs) => Promise<OrganizationInvite[]>
     delete: (args: DeleteOrganizationInviteArgs) => Promise<OrganizationInvite>
   }
   profile: {

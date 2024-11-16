@@ -7,37 +7,36 @@ import {
   ModalFooter,
   ModalHeader,
   Spinner,
-} from '@nextui-org/react'
-import { Link, useFetcher, useNavigate } from '@remix-run/react'
-import { useDebounce } from '@uidotdev/usehooks'
+} from "@nextui-org/react"
+import { Link, useFetcher, useNavigate } from "@remix-run/react"
+import { useDebounce } from "@uidotdev/usehooks"
+import { redirect, type ActionFunctionArgs } from "@vercel/remix"
+import { Check, HelpCircle } from "lucide-react"
+import { useEffect, useState } from "react"
+import { z } from "zod"
+import { Button } from "~/components/Button"
+import { getCore } from "~/core/get-core"
+import { requireUser } from "~/services/session.server"
 
-import { redirect, type ActionFunctionArgs } from '@vercel/remix'
-import { Check, HelpCircle } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { z } from 'zod'
-import { Button } from '~/components/Button'
-import { getCore } from '~/core/get-core'
-import { requireUser } from '~/services/session.server'
-
-type Availability = 'available' | 'not-available' | 'unknown' | 'checking'
+type Availability = "available" | "not-available" | "unknown" | "checking"
 enum Intent {
-  CREATE_ORGANIZATION = 'createOrganization',
-  CHECK_AVAILABILITY = 'checkAvailability',
+  CREATE_ORGANIZATION = "createOrganization",
+  CHECK_AVAILABILITY = "checkAvailability",
 }
 
 const availabilityToLabelMap: Record<Availability, string> = {
-  available: 'Available',
-  'not-available': 'Not available',
-  checking: 'Checking availability',
-  unknown: 'Start typing to check availability',
+  available: "Available",
+  "not-available": "Not available",
+  checking: "Checking availability",
+  unknown: "Start typing to check availability",
 }
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await requireUser(request)
 
   const formData = await request.formData()
-  const name = z.string().parse(formData.get('name'))
-  const intent = z.nativeEnum(Intent).parse(formData.get('intent'))
+  const name = z.string().parse(formData.get("name"))
+  const intent = z.nativeEnum(Intent).parse(formData.get("intent"))
   const core = getCore()
 
   if (intent === Intent.CHECK_AVAILABILITY) {
@@ -65,20 +64,17 @@ export default function Index() {
   const { Form, submit, state, data: isAvailable } = useFetcher<typeof action>()
 
   const getAvailabilityState = (): Availability => {
-    if (state === 'submitting') return 'checking'
-    if (!debouncedName) return 'unknown'
-    if (isAvailable) return 'available'
-    return 'not-available'
+    if (state === "submitting") return "checking"
+    if (!debouncedName) return "unknown"
+    if (isAvailable) return "available"
+    return "not-available"
   }
 
   const availability = useDebounce(getAvailabilityState(), 200)
 
   useEffect(() => {
     if (debouncedName) {
-      submit(
-        { name: debouncedName, intent: Intent.CHECK_AVAILABILITY },
-        { method: 'POST' }
-      )
+      submit({ name: debouncedName, intent: Intent.CHECK_AVAILABILITY }, { method: "POST" })
     }
   }, [debouncedName, submit])
 
@@ -87,7 +83,7 @@ export default function Index() {
       aria-labelledby="modal-title"
       isOpen
       closeButton
-      onClose={() => navigate('..')}
+      onClose={() => navigate("..")}
       placement="auto"
       backdrop="blur"
     >
@@ -113,21 +109,19 @@ export default function Index() {
               color={
                 (
                   {
-                    available: 'success',
-                    'not-available': 'danger',
-                    unknown: 'warning',
-                    checking: 'warning',
+                    available: "success",
+                    "not-available": "danger",
+                    unknown: "warning",
+                    checking: "warning",
                   } as const
                 )[availability]
               }
             >
               <div className="flex flex-col gap-2 h-8 justify-center">
                 <div className="flex gap-2 items-center">
-                  {availability === 'available' && <Check size="20" />}
-                  {availability === 'checking' && (
-                    <Spinner size="sm" color="warning" />
-                  )}
-                  {availability === 'unknown' && <HelpCircle size="20" />}
+                  {availability === "available" && <Check size="20" />}
+                  {availability === "checking" && <Spinner size="sm" color="warning" />}
+                  {availability === "unknown" && <HelpCircle size="20" />}
                   <span>{availabilityToLabelMap[availability]}</span>
                 </div>
               </div>
@@ -141,7 +135,7 @@ export default function Index() {
               type="submit"
               name="intent"
               value={Intent.CREATE_ORGANIZATION}
-              isDisabled={availability !== 'available'}
+              isDisabled={availability !== "available"}
               color="primary"
             >
               Create

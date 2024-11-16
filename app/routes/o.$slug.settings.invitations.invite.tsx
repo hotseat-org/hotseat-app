@@ -1,17 +1,10 @@
-import {
-  Input,
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-} from '@nextui-org/react'
-import { Form, Link, useNavigate } from '@remix-run/react'
-import { redirect, type ActionFunctionArgs } from '@vercel/remix'
-import { z } from 'zod'
-import { Button } from '~/components/Button'
-import { getCore } from '~/core/get-core'
-import { requireUser } from '~/services/session.server'
+import { Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader } from "@nextui-org/react"
+import { Form, Link, useNavigate } from "@remix-run/react"
+import { redirect, type ActionFunctionArgs } from "@vercel/remix"
+import { z } from "zod"
+import { Button } from "~/components/Button"
+import { getCore } from "~/core/get-core"
+import { requireUser } from "~/services/session.server"
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const slug = params.slug
@@ -19,7 +12,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
   const user = await requireUser(request)
   const formData = await request.formData()
-  const email = z.string().email().parse(formData.get('email'))
+  const email = z.string().email().parse(formData.get("email"))
   const core = getCore()
 
   await core.organization.inviteMember({
@@ -28,7 +21,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     data: { email },
   })
 
-  return redirect('..')
+  return redirect("..")
 }
 
 const Invite = () => {
@@ -40,7 +33,7 @@ const Invite = () => {
       aria-labelledby="modal-title"
       isOpen
       closeButton
-      onClose={() => navigate('..')}
+      onClose={() => navigate("..")}
       placement="auto"
     >
       <Form method="POST">

@@ -1,14 +1,7 @@
-import {
-  Button,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-} from '@nextui-org/react'
-import { Form, Link } from '@remix-run/react'
-
-import { useState } from 'react'
-import { ImageUploadInput } from '../Inputs/ImageUpload'
+import { Button, ModalBody, ModalContent, ModalFooter, ModalHeader } from "@nextui-org/react"
+import { Form, Link } from "@remix-run/react"
+import { useState } from "react"
+import { ImageUploadInput } from "../Inputs/ImageUpload"
 
 export const ImageUpload = () => {
   const [thumbnail, setThumbnail] = useState<string | undefined>()

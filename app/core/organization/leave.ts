@@ -1,5 +1,5 @@
-import { Role } from '@prisma/client'
-import type { CoreContext } from '../types'
+import { Role } from "@prisma/client"
+import type { CoreContext } from "../types"
 
 export interface LeaveOrganizationArgs {
   email: string
@@ -26,10 +26,10 @@ export const leaveOrganization =
     const currentRole = currentProfile.role
 
     // * When user is demoted from admin to user, ensure there is always at least one admin
-    // * TLDR: if you are the only admin, you can't demote yourself to user
+    // * TLDR: if you are the only admin, you can't demote yourself to user
     if (currentRole === Role.ADMIN) {
       if (members.data.length < 2) {
-        throw new Error('There always needs to be at least one admin')
+        throw new Error("There always needs to be at least one admin")
       }
     }
 

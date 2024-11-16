@@ -7,11 +7,11 @@ import {
   Divider,
   Tooltip,
   User,
-} from '@nextui-org/react'
-import { Role } from '@prisma/client'
-import { Users } from 'lucide-react'
-import { ReactNode } from 'react'
-import { OrganizationWithMembers } from '~/core/organization/types'
+} from "@nextui-org/react"
+import { Role } from "@prisma/client"
+import { Users } from "lucide-react"
+import { ReactNode } from "react"
+import { OrganizationWithMembers } from "~/core/organization/types"
 
 interface Props {
   organization: OrganizationWithMembers
@@ -47,13 +47,11 @@ export const OrganizationPreviewCard = ({
             {members.data.map((member) => (
               <Tooltip
                 key={member.userEmail}
-                content={`${member.displayName}${
-                  member.role === Role.ADMIN ? ' (Admin)' : ''
-                }`}
+                content={`${member.displayName}${member.role === Role.ADMIN ? " (Admin)" : ""}`}
               >
                 <Avatar
                   isBordered
-                  color={member.role === Role.ADMIN ? 'primary' : 'default'}
+                  color={member.role === Role.ADMIN ? "primary" : "default"}
                   src={member.avatarUrl}
                 />
               </Tooltip>

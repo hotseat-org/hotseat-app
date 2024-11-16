@@ -1,22 +1,10 @@
-import {
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-} from '@nextui-org/react'
-import { Form, Link, useNavigate } from '@remix-run/react'
-
-import { redirect, type ActionFunctionArgs } from '@vercel/remix'
-
-import { Button } from '~/components/Button'
-import { getCore } from '~/core/get-core'
-import { authenticator } from '~/services/auth.server'
-import {
-  commitSession,
-  getSession,
-  requireUser,
-} from '~/services/session.server'
+import { Modal, ModalBody, ModalContent, ModalFooter, ModalHeader } from "@nextui-org/react"
+import { Form, Link, useNavigate } from "@remix-run/react"
+import { redirect, type ActionFunctionArgs } from "@vercel/remix"
+import { Button } from "~/components/Button"
+import { getCore } from "~/core/get-core"
+import { authenticator } from "~/services/auth.server"
+import { commitSession, getSession, requireUser } from "~/services/session.server"
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await requireUser(request)
@@ -28,11 +16,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     data: { avatarUrl: null },
   })
 
-  const session = await getSession(request.headers.get('cookie'))
+  const session = await getSession(request.headers.get("cookie"))
   session.set(authenticator.sessionKey, updatedUser)
-  let headers = new Headers({ 'Set-Cookie': await commitSession(session) })
+  const headers = new Headers({ "Set-Cookie": await commitSession(session) })
 
-  return redirect('..', { headers })
+  return redirect("..", { headers })
 }
 
 export default function DeleteAvatar() {
@@ -44,7 +32,7 @@ export default function DeleteAvatar() {
       aria-labelledby="modal-title"
       isOpen
       closeButton
-      onClose={() => navigate('..')}
+      onClose={() => navigate("..")}
       placement="auto"
     >
       <Form method="POST">

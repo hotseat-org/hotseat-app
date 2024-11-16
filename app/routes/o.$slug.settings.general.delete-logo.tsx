@@ -1,23 +1,15 @@
-import {
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-} from '@nextui-org/react'
-import { Form, Link, useNavigate } from '@remix-run/react'
-
-import { redirect, type ActionFunctionArgs } from '@vercel/remix'
-
-import { Button } from '~/components/Button'
-import { getCore } from '~/core/get-core'
-import { requireUser } from '~/services/session.server'
+import { Modal, ModalBody, ModalContent, ModalFooter, ModalHeader } from "@nextui-org/react"
+import { Form, Link, useNavigate } from "@remix-run/react"
+import { redirect, type ActionFunctionArgs } from "@vercel/remix"
+import { Button } from "~/components/Button"
+import { getCore } from "~/core/get-core"
+import { requireUser } from "~/services/session.server"
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const user = await requireUser(request)
 
   const slug = params.slug
-  if (!slug) throw new Error('Missing slug parameter')
+  if (!slug) throw new Error("Missing slug parameter")
 
   const core = getCore()
 
@@ -27,7 +19,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     data: { thumbnail: null },
   })
 
-  return redirect('..')
+  return redirect("..")
 }
 
 export default function Index() {
@@ -39,7 +31,7 @@ export default function Index() {
       aria-labelledby="modal-title"
       isOpen
       closeButton
-      onClose={() => navigate('..')}
+      onClose={() => navigate("..")}
       placement="auto"
     >
       <Form method="POST">

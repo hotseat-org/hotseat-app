@@ -1,7 +1,7 @@
-import { Space } from 'node_modules/@smplrspace/smplr-loader/dist/generated/smplr'
-import { memo, useEffect, useState } from 'react'
-import { Theme, useTheme } from 'remix-themes'
-import { loadSmplr } from '~/utils/smplr'
+import { Space } from "node_modules/@smplrspace/smplr-loader/dist/generated/smplr"
+import { memo, useEffect, useState } from "react"
+import { Theme, useTheme } from "remix-themes"
+import { loadSmplr } from "~/utils/smplr"
 
 interface Props {
   isPreview?: boolean
@@ -13,8 +13,8 @@ interface Props {
 export const SpaceViewer = memo(
   ({
     isPreview,
-    spaceId = 'f438671f-9979-42c6-8338-05c0015abb2d',
-    clientToken = 'pub_eb760fee77634cdab2fe31146fc371c2',
+    spaceId = "f438671f-9979-42c6-8338-05c0015abb2d",
+    clientToken = "pub_eb760fee77634cdab2fe31146fc371c2",
     onSpaceReady,
   }: Props) => {
     const [space, setSpace] = useState<Space>()
@@ -24,7 +24,7 @@ export const SpaceViewer = memo(
       if (space) {
         space.startViewer({
           preview: isPreview,
-          loadingMessage: ' ',
+          loadingMessage: " ",
           cameraPlacement: {
             alpha: -0.012,
             beta: 0.34,
@@ -36,12 +36,12 @@ export const SpaceViewer = memo(
             },
           },
           renderOptions: {
-            backgroundColor: theme === Theme.DARK ? '#18181B' : undefined,
+            backgroundColor: theme === Theme.DARK ? "#18181B" : undefined,
           },
           onReady: () => {
             onSpaceReady?.(space)
           },
-          onError: (error) => console.error('Could not start viewer', error),
+          onError: (error) => console.error("Could not start viewer", error),
         })
       }
     }, [space, isPreview, onSpaceReady, spaceId, theme])
@@ -61,11 +61,11 @@ export const SpaceViewer = memo(
     }, [spaceId, clientToken])
 
     return (
-      <div className={`smplr-wrapper ${isPreview ? `h-56` : `min-h-screen`}`}>
+      <div className={`smplr-wrapper ${isPreview ? "h-56" : "min-h-screen"}`}>
         <div
           id={spaceId}
           className={`smplr-embed [&>*:first-child]:rounded-lg [&>*:first-child]:overflow-hidden ${
-            isPreview ? `h-56` : `min-h-screen`
+            isPreview ? "h-56" : "min-h-screen"
           }`}
         ></div>
       </div>
@@ -80,4 +80,4 @@ export const SpaceViewer = memo(
   }
 )
 
-SpaceViewer.displayName = 'SpaceViewer'
+SpaceViewer.displayName = "SpaceViewer"

@@ -1,8 +1,8 @@
-import type { Role } from '@prisma/client'
-import prisma from '~/services/prisma.server'
-import type { MainRepository } from '../../types'
+import type { Role } from "@prisma/client"
+import type { MainRepository } from "../../types"
+import prisma from "~/services/prisma.server"
 
-type FindProfilesFn = MainRepository['profile']['findMany']
+type FindProfilesFn = MainRepository["profile"]["findMany"]
 
 export interface FindProfilesArgs {
   filter?: {
@@ -22,7 +22,7 @@ export const findProfiles: FindProfilesFn = async ({ filter, pagination }) => {
       where: filter,
       take: pagination?.take,
       skip: pagination?.skip,
-      orderBy: { role: 'desc' },
+      orderBy: { role: "desc" },
       include: { user: true },
     }),
   ])

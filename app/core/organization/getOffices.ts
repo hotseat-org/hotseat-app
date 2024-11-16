@@ -1,6 +1,6 @@
-import { PaginatedResult } from '~/repositories/main-repository/types'
-import { Office } from '../office/types'
-import type { CoreContext } from '../types'
+import { Office } from "../office/types"
+import type { CoreContext } from "../types"
+import { PaginatedResult } from "~/repositories/main-repository/types"
 
 interface GetOrganizationOfficesArgs {
   userEmail: string
@@ -9,16 +9,13 @@ interface GetOrganizationOfficesArgs {
 
 export const getOrganizationOffices =
   ({ mainRepository, mappers }: CoreContext) =>
-  async ({
-    userEmail,
-    slug,
-  }: GetOrganizationOfficesArgs): Promise<PaginatedResult<Office>> => {
+  async ({ userEmail, slug }: GetOrganizationOfficesArgs): Promise<PaginatedResult<Office>> => {
     const profile = await mainRepository.profile.find({
       organizationSlug: slug,
       userEmail,
     })
 
-    if (!profile) throw new Error('Forbidden')
+    if (!profile) throw new Error("Forbidden")
 
     const offices = await mainRepository.office.findMany({
       filter: { organizationSlug: slug },

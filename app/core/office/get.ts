@@ -1,5 +1,5 @@
-import type { CoreContext } from '../types'
-import { Office } from './types'
+import type { CoreContext } from "../types"
+import { Office } from "./types"
 
 interface GetOfficeArgs {
   slug: string
@@ -13,7 +13,7 @@ export const getOffice =
       filter: { organizationSlug, slug },
     })
 
-    if (!office) throw new Error('Not Found')
+    if (!office) throw new Error("Not Found")
 
     return mappers.office.fromRepository(office)
   }

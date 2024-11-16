@@ -1,8 +1,8 @@
-import { nanoid } from 'nanoid'
-import slugify from 'slugify'
-import { getCore } from '../get-core'
-import type { CoreContext } from '../types'
-import type { Organization } from './types'
+import { nanoid } from "nanoid"
+import slugify from "slugify"
+import { getCore } from "../get-core"
+import type { CoreContext } from "../types"
+import type { Organization } from "./types"
 
 export interface CreateOrganizationArgs {
   name: string
@@ -11,16 +11,12 @@ export interface CreateOrganizationArgs {
 
 export const createOrganization =
   ({ mainRepository }: CoreContext) =>
-  async ({
-    name,
-    userEmail,
-  }: CreateOrganizationArgs): Promise<Organization> => {
+  async ({ name, userEmail }: CreateOrganizationArgs): Promise<Organization> => {
     const core = getCore()
 
     const isAvailable = await core.organization.isAvailable(name)
 
-    if (!isAvailable)
-      throw new Error(`Organization with name: ${name} already exists`)
+    if (!isAvailable) throw new Error(`Organization with name: ${name} already exists`)
 
     const slug = slugify(name, { lower: true, trim: true })
     const organization = await mainRepository.organization.create({

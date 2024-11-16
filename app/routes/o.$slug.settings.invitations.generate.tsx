@@ -1,15 +1,9 @@
-import {
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-} from '@nextui-org/react'
-import { Form, Link, useNavigate } from '@remix-run/react'
-import { redirect, type ActionFunctionArgs } from '@vercel/remix'
-import { Button } from '~/components/Button'
-import { getCore } from '~/core/get-core'
-import { requireUser } from '~/services/session.server'
+import { Modal, ModalBody, ModalContent, ModalFooter, ModalHeader } from "@nextui-org/react"
+import { Form, Link, useNavigate } from "@remix-run/react"
+import { redirect, type ActionFunctionArgs } from "@vercel/remix"
+import { Button } from "~/components/Button"
+import { getCore } from "~/core/get-core"
+import { requireUser } from "~/services/session.server"
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const slug = params.slug
@@ -23,7 +17,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     organizationSlug: slug,
   })
 
-  return redirect('..')
+  return redirect("..")
 }
 
 const GenerateInviteLink = () => {
@@ -35,7 +29,7 @@ const GenerateInviteLink = () => {
       aria-labelledby="Generate new invite link"
       isOpen
       closeButton
-      onClose={() => navigate('..')}
+      onClose={() => navigate("..")}
       placement="auto"
     >
       <Form method="POST">

@@ -1,5 +1,5 @@
-import type { CoreContext } from '../types'
-import type { User } from './types'
+import type { CoreContext } from "../types"
+import type { User } from "./types"
 
 interface CreateUserArgs {
   email: string
@@ -17,9 +17,9 @@ export const createUser =
     if (avatarUrl) {
       const body = new FormData()
 
-      body.append('url', avatarUrl)
+      body.append("url", avatarUrl)
       const uploadResult = await fetch(uploadUrl, {
-        method: 'POST',
+        method: "POST",
         body,
       }).then((res) => res.json())
 

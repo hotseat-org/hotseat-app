@@ -1,5 +1,5 @@
-import prisma from '~/services/prisma.server'
-import { Office } from '../../types'
+import { Office } from "../../types"
+import prisma from "~/services/prisma.server"
 
 export interface DeleteOfficeArgs {
   slug: string

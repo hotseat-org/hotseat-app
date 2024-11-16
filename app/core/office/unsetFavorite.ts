@@ -1,5 +1,5 @@
-import { Profile } from '../profile/types'
-import type { CoreContext } from '../types'
+import { Profile } from "../profile/types"
+import type { CoreContext } from "../types"
 
 export interface UnsetOfficeFavoriteArgs {
   organizationSlug: string
@@ -8,10 +8,7 @@ export interface UnsetOfficeFavoriteArgs {
 
 export const unsetOfficeFavorite =
   ({ mainRepository, mappers }: CoreContext) =>
-  async ({
-    organizationSlug,
-    email,
-  }: UnsetOfficeFavoriteArgs): Promise<Profile> => {
+  async ({ organizationSlug, email }: UnsetOfficeFavoriteArgs): Promise<Profile> => {
     const result = await mainRepository.profile.update({
       userEmail: email,
       organizationSlug,

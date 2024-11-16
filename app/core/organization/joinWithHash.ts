@@ -1,6 +1,6 @@
-import { Role } from '@prisma/client'
-import type { Profile } from '../profile/types'
-import type { CoreContext } from '../types'
+import { Role } from "@prisma/client"
+import type { Profile } from "../profile/types"
+import type { CoreContext } from "../types"
 
 export interface JoinOrganizationWithHashArgs {
   email: string
@@ -11,13 +11,13 @@ export const joinOrganizationWithHash =
   ({ mainRepository }: CoreContext) =>
   async ({ email, hash }: JoinOrganizationWithHashArgs): Promise<Profile> => {
     const user = await mainRepository.user.find({ email })
-    if (!user) throw new Error('User not found')
+    if (!user) throw new Error("User not found")
 
     const organization = await mainRepository.organization.find({
       invitationHash: hash,
     })
 
-    if (!organization) throw new Error('Organization not found')
+    if (!organization) throw new Error("Organization not found")
 
     const currentProfile = await mainRepository.profile.find({
       userEmail: user.email,

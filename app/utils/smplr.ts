@@ -1,5 +1,5 @@
-import type { Smplr } from '@smplrspace/smplr-loader'
-import { loadSmplrJs } from '@smplrspace/smplr-loader'
+import type { Smplr } from "@smplrspace/smplr-loader"
+import { loadSmplrJs } from "@smplrspace/smplr-loader"
 
 export let smplr: Smplr
 
@@ -8,7 +8,7 @@ export const loadSmplr = async (): Promise<Smplr> => {
     return smplr
   }
 
-  smplr = await loadSmplrJs('esm')
+  smplr = await loadSmplrJs("esm")
 
   return smplr
 }

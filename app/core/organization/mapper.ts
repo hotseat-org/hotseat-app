@@ -1,6 +1,6 @@
-import type { Organization as RepositoryOrganization } from '~/repositories/main-repository/types'
-import type { ImageService } from '~/services/images/types'
-import type { Organization } from './types'
+import type { Organization } from "./types"
+import type { Organization as RepositoryOrganization } from "~/repositories/main-repository/types"
+import type { ImageService } from "~/services/images/types"
 
 export const organizationMapper = (imageService: ImageService) => ({
   fromRepository: async ({
@@ -14,7 +14,6 @@ export const organizationMapper = (imageService: ImageService) => ({
     slug,
     description,
     invitationHash,
-    thumbnailUrl:
-      thumbnail && (await imageService.getSignedUrl(thumbnail, 'thumbnail')),
+    thumbnailUrl: thumbnail && (await imageService.getSignedUrl(thumbnail, "thumbnail")),
   }),
 })

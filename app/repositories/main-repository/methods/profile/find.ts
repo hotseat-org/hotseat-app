@@ -1,17 +1,14 @@
-import prisma from '~/services/prisma.server'
-import type { MainRepository } from '../../types'
+import type { MainRepository } from "../../types"
+import prisma from "~/services/prisma.server"
 
-type FindProfileFn = MainRepository['profile']['find']
+type FindProfileFn = MainRepository["profile"]["find"]
 
 export interface FindProfileArgs {
   userEmail: string
   organizationSlug: string
 }
 
-export const findProfile: FindProfileFn = async ({
-  userEmail,
-  organizationSlug,
-}) => {
+export const findProfile: FindProfileFn = async ({ userEmail, organizationSlug }) => {
   const profile = await prisma.profile.findUnique({
     where: {
       userEmail_organizationSlug: {

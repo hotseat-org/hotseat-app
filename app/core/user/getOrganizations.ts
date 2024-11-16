@@ -1,6 +1,6 @@
-import { organizationMapper } from '../organization/mapper'
-import type { OrganizationWithMembers } from '../organization/types'
-import type { CoreContext } from '../types'
+import { organizationMapper } from "../organization/mapper"
+import type { OrganizationWithMembers } from "../organization/types"
+import type { CoreContext } from "../types"
 
 export const getUserOrganizations =
   ({ mainRepository, imageService, mappers }: CoreContext) =>
@@ -12,26 +12,22 @@ export const getUserOrganizations =
     const mapper = organizationMapper(imageService)
 
     const result = await Promise.all(
-      organizations.map(
-        async (organization): Promise<OrganizationWithMembers> => {
-          const profiles = await mainRepository.profile.findMany({
-            filter: { organizationSlug: organization.slug },
-            pagination: { skip: 0, take: 4 },
-          })
+      organizations.map(async (organization): Promise<OrganizationWithMembers> => {
+        const profiles = await mainRepository.profile.findMany({
+          filter: { organizationSlug: organization.slug },
+          pagination: { skip: 0, take: 4 },
+        })
 
-          const mappedOrganization = await mapper.fromRepository(organization)
+        const mappedOrganization = await mapper.fromRepository(organization)
 
-          return {
-            ...mappedOrganization,
-            members: {
-              ...profiles,
-              data: await Promise.all(
-                profiles.data.map(mappers.profile.fromRepository)
-              ),
-            },
-          }
+        return {
+          ...mappedOrganization,
+          members: {
+            ...profiles,
+            data: await Promise.all(profiles.data.map(mappers.profile.fromRepository)),
+          },
         }
-      )
+      })
     )
 
     return result

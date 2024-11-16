@@ -1,7 +1,7 @@
-import prisma from '~/services/prisma.server'
-import type { MainRepository } from '../../types'
+import type { MainRepository } from "../../types"
+import prisma from "~/services/prisma.server"
 
-type UpdateOrganizationFn = MainRepository['organization']['update']
+type UpdateOrganizationFn = MainRepository["organization"]["update"]
 
 export interface UpdateOrganizationArgs {
   slug: string
@@ -14,10 +14,7 @@ export interface UpdateOrganizationArgs {
   }
 }
 
-export const updateOrganization: UpdateOrganizationFn = async ({
-  slug,
-  data,
-}) => {
+export const updateOrganization: UpdateOrganizationFn = async ({ slug, data }) => {
   const result = await prisma.organization.update({
     where: { slug },
     data,

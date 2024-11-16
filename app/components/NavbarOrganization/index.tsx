@@ -7,14 +7,14 @@ import {
   NavbarMenuItem,
   NavbarMenuToggle,
   Link as NextUiLink,
-} from '@nextui-org/react'
-import { Role } from '@prisma/client'
-import { Link, useLocation } from '@remix-run/react'
-import { Flame } from 'lucide-react'
-import type { Organization } from '~/core/organization/types'
-import type { Profile } from '~/core/profile/types'
-import { useUser } from '~/utils/remix'
-import { UserDropdown } from '../Navigation/UserDropdown'
+} from "@nextui-org/react"
+import { Role } from "@prisma/client"
+import { Link, useLocation } from "@remix-run/react"
+import { Flame } from "lucide-react"
+import { UserDropdown } from "../Navigation/UserDropdown"
+import type { Organization } from "~/core/organization/types"
+import type { Profile } from "~/core/profile/types"
+import { useUser } from "~/utils/remix"
 
 interface Props {
   organization: Organization
@@ -28,7 +28,7 @@ export const HeaderOrganization = ({ organization, profile }: Props) => {
   return (
     <Navbar isBordered>
       <NavbarMenuToggle className="sm:hidden" />
-      <NavbarBrand as={Link} to={'/'} className="flex gap-4">
+      <NavbarBrand as={Link} to={"/"} className="flex gap-4">
         <Flame className="text-red-500 dark:text-red-300" width={32} />
         <div className="flex flex-col">
           <h1 className="font-extrabold text-xl">Hot Seat</h1>
@@ -36,9 +36,9 @@ export const HeaderOrganization = ({ organization, profile }: Props) => {
         </div>
       </NavbarBrand>
       <NavbarContent className="hidden sm:flex">
-        <NavbarItem isActive={pathname.includes('offices')}>
+        <NavbarItem isActive={pathname.includes("offices")}>
           <NextUiLink
-            color={pathname.includes('offices') ? 'primary' : 'foreground'}
+            color={pathname.includes("offices") ? "primary" : "foreground"}
             as={Link}
             to="offices"
           >
@@ -46,9 +46,9 @@ export const HeaderOrganization = ({ organization, profile }: Props) => {
           </NextUiLink>
         </NavbarItem>
         {profile.role === Role.ADMIN && (
-          <NavbarItem isActive={pathname.includes('settings')}>
+          <NavbarItem isActive={pathname.includes("settings")}>
             <NextUiLink
-              color={pathname.includes('settings') ? 'primary' : 'foreground'}
+              color={pathname.includes("settings") ? "primary" : "foreground"}
               as={Link}
               to="settings"
             >
@@ -67,9 +67,7 @@ export const HeaderOrganization = ({ organization, profile }: Props) => {
 
         <NavbarMenuItem>
           <NextUiLink
-            color={
-              pathname.includes('/app/invitations') ? 'primary' : 'foreground'
-            }
+            color={pathname.includes("/app/invitations") ? "primary" : "foreground"}
             as={Link}
             to="/app/invitations"
           >

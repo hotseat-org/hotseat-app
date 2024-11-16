@@ -1,17 +1,14 @@
-import prisma from '~/services/prisma.server'
-import type { MainRepository } from '../../types'
+import type { MainRepository } from "../../types"
+import prisma from "~/services/prisma.server"
 
-type FindOrganizationFn = MainRepository['organization']['find']
+type FindOrganizationFn = MainRepository["organization"]["find"]
 
 export interface FindOrganizationArgs {
   slug?: string
   invitationHash?: string
 }
 
-export const findOrganization: FindOrganizationFn = async ({
-  slug,
-  invitationHash,
-}) => {
+export const findOrganization: FindOrganizationFn = async ({ slug, invitationHash }) => {
   const result = await prisma.organization.findUnique({
     where: { slug, invitationHash },
   })

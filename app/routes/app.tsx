@@ -1,5 +1,5 @@
-import { Outlet } from '@remix-run/react'
-import { Header } from '~/components/Navbar'
+import { Outlet } from "@remix-run/react"
+import { Header } from "~/components/Navbar"
 
 export default function Index() {
   return (

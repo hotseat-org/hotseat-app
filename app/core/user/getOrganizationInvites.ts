@@ -1,6 +1,6 @@
-import dayjs from 'dayjs'
-import { organizationMapper } from '../organization/mapper'
-import type { CoreContext } from '../types'
+import dayjs from "dayjs"
+import { organizationMapper } from "../organization/mapper"
+import type { CoreContext } from "../types"
 
 export const getUserOrganizationInvites =
   ({ mainRepository, imageService, mappers }: CoreContext) =>
@@ -22,9 +22,7 @@ export const getUserOrganizationInvites =
           pagination: { skip: 0, take: 4 },
         })
 
-        const mappedOrganization = await mapper.fromRepository(
-          invite.organization
-        )
+        const mappedOrganization = await mapper.fromRepository(invite.organization)
 
         return {
           ...invite,
@@ -32,9 +30,7 @@ export const getUserOrganizationInvites =
             ...mappedOrganization,
             members: {
               ...profiles,
-              data: await Promise.all(
-                profiles.data.map(mappers.profile.fromRepository)
-              ),
+              data: await Promise.all(profiles.data.map(mappers.profile.fromRepository)),
             },
           },
         }

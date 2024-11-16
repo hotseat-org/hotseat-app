@@ -7,11 +7,11 @@ import {
   DropdownTrigger,
   Switch,
   User,
-} from '@nextui-org/react'
-import { useNavigate } from '@remix-run/react'
-import { LogOut, Moon, Settings, Sun } from 'lucide-react'
-import { Theme, useTheme } from 'remix-themes'
-import type { User as UserType } from '~/core/user/types'
+} from "@nextui-org/react"
+import { useNavigate } from "@remix-run/react"
+import { LogOut, Moon, Settings, Sun } from "lucide-react"
+import { Theme, useTheme } from "remix-themes"
+import type { User as UserType } from "~/core/user/types"
 
 interface Props {
   user: UserType
@@ -24,19 +24,11 @@ export const UserDropdown = ({ user }: Props) => {
   return (
     <Dropdown>
       <DropdownTrigger>
-        <Avatar
-          as="button"
-          isFocusable
-          isBordered
-          src={user.photo}
-          name={user.displayName}
-        />
+        <Avatar as="button" isFocusable isBordered src={user.photo} name={user.displayName} />
       </DropdownTrigger>
       <DropdownMenu
-        disabledKeys={['profile']}
-        onAction={(key) =>
-          navigate(key.toString(), { replace: key === '/logout' })
-        }
+        disabledKeys={["profile"]}
+        onAction={(key) => navigate(key.toString(), { replace: key === "/logout" })}
       >
         <DropdownSection aria-label="Profile & Actions" showDivider>
           <DropdownItem
@@ -49,13 +41,13 @@ export const UserDropdown = ({ user }: Props) => {
               name={user.displayName}
               description={user.email}
               avatarProps={{
-                size: 'sm',
+                size: "sm",
                 src: user.photo,
               }}
             />
           </DropdownItem>
           <DropdownItem
-            textValue={theme ?? 'Theme'}
+            textValue={theme ?? "Theme"}
             isReadOnly
             key="theme"
             className="opacity-100 "
@@ -65,9 +57,7 @@ export const UserDropdown = ({ user }: Props) => {
               color="primary"
               startContent={<Moon />}
               endContent={<Sun />}
-              onValueChange={(isSelected) =>
-                setTheme(isSelected ? Theme.DARK : Theme.LIGHT)
-              }
+              onValueChange={(isSelected) => setTheme(isSelected ? Theme.DARK : Theme.LIGHT)}
             >
               Dark mode
             </Switch>

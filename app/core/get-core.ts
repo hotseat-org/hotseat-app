@@ -1,8 +1,8 @@
-import { mappers } from '~/mappers'
-import { createMainMysqlRepository } from '~/repositories/main-repository'
-import { imageService } from '~/services/images'
-import type { Core } from '.'
-import { createCore } from '.'
+import type { Core } from "."
+import { createCore } from "."
+import { mappers } from "~/mappers"
+import { createMainMysqlRepository } from "~/repositories/main-repository"
+import { imageService } from "~/services/images"
 
 let core: Core
 

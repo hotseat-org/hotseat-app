@@ -7,11 +7,11 @@ import {
   Navbar,
   NavbarBrand,
   NavbarContent,
-} from '@nextui-org/react'
-import { Link, useNavigate } from '@remix-run/react'
-import { Flame, Plus, Users } from 'lucide-react'
-import { useUser } from '~/utils/remix'
-import { UserDropdown } from '../Navigation/UserDropdown'
+} from "@nextui-org/react"
+import { Link, useNavigate } from "@remix-run/react"
+import { Flame, Plus, Users } from "lucide-react"
+import { UserDropdown } from "../Navigation/UserDropdown"
+import { useUser } from "~/utils/remix"
 
 export const Header = () => {
   const user = useUser()
@@ -19,7 +19,7 @@ export const Header = () => {
 
   return (
     <Navbar isBordered>
-      <NavbarBrand as={Link} to={'/'} className="flex gap-4">
+      <NavbarBrand as={Link} to={"/"} className="flex gap-4">
         <Flame className="text-red-500 dark:text-red-300" width={32} />
         <h1 className="font-extrabold text-xl">Hot Seat</h1>
       </NavbarBrand>
@@ -36,10 +36,7 @@ export const Header = () => {
                 textValue="New organization"
                 key="/app/new-organization"
                 startContent={
-                  <Users
-                    size={28}
-                    className="p-1 bg-primary/10 text-primary rounded-small"
-                  />
+                  <Users size={28} className="p-1 bg-primary/10 text-primary rounded-small" />
                 }
               >
                 New organization

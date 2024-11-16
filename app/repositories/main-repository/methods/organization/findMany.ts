@@ -1,7 +1,7 @@
-import prisma from '~/services/prisma.server'
-import type { MainRepository } from '../../types'
+import type { MainRepository } from "../../types"
+import prisma from "~/services/prisma.server"
 
-type FindOrganizationsFn = MainRepository['organization']['findMany']
+type FindOrganizationsFn = MainRepository["organization"]["findMany"]
 
 export interface FindOrganizationsArgs {
   filter: {
@@ -9,9 +9,7 @@ export interface FindOrganizationsArgs {
   }
 }
 
-export const findManyOrganizations: FindOrganizationsFn = async ({
-  filter: { userEmail },
-}) => {
+export const findManyOrganizations: FindOrganizationsFn = async ({ filter: { userEmail } }) => {
   const result = await prisma.organization.findMany({
     where: { profiles: { some: { userEmail } } },
   })

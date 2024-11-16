@@ -1,8 +1,8 @@
-import { Role } from '@prisma/client'
-import dayjs from 'dayjs'
-import { organizationInviteMapper } from '../organization-invite/mapper'
-import type { OrganizationInvite } from '../organization-invite/types'
-import type { CoreContext } from '../types'
+import { Role } from "@prisma/client"
+import dayjs from "dayjs"
+import { organizationInviteMapper } from "../organization-invite/mapper"
+import type { OrganizationInvite } from "../organization-invite/types"
+import type { CoreContext } from "../types"
 
 export interface OrganizationInviteMemberArgs {
   userEmail: string
@@ -14,18 +14,14 @@ export interface OrganizationInviteMemberArgs {
 
 export const organizationInviteMember =
   ({ mainRepository }: CoreContext) =>
-  async ({
-    userEmail,
-    slug,
-    data,
-  }: OrganizationInviteMemberArgs): Promise<OrganizationInvite> => {
+  async ({ userEmail, slug, data }: OrganizationInviteMemberArgs): Promise<OrganizationInvite> => {
     const profile = await mainRepository.profile.find({
       organizationSlug: slug,
       userEmail,
     })
 
-    if (!profile) throw new Error('Forbidden')
-    if (profile.role !== Role.ADMIN) throw new Error('Forbidden')
+    if (!profile) throw new Error("Forbidden")
+    if (profile.role !== Role.ADMIN) throw new Error("Forbidden")
 
     const invitedUserProfile = await mainRepository.profile.find({
       organizationSlug: slug,
@@ -34,13 +30,11 @@ export const organizationInviteMember =
 
     if (invitedUserProfile) {
       if (invitedUserProfile) {
-        throw new Error(
-          'User with this email is already member of this organization'
-        )
+        throw new Error("User with this email is already member of this organization")
       }
     }
 
-    const expiresAt = dayjs().add(7, 'days').toDate()
+    const expiresAt = dayjs().add(7, "days").toDate()
 
     const invite = await mainRepository.organizationInvite.create({
       email: data.email,

@@ -1,5 +1,5 @@
-import type { CoreContext } from '../types'
-import type { Profile } from './types'
+import type { CoreContext } from "../types"
+import type { Profile } from "./types"
 
 interface GetProfileArgs {
   userEmail: string
@@ -14,7 +14,7 @@ export const getProfile =
       organizationSlug,
     })
 
-    if (!profile) throw new Error('Forbidden')
+    if (!profile) throw new Error("Forbidden")
 
     return mappers.profile.fromRepository(profile)
   }

@@ -1,7 +1,7 @@
-import prisma from '~/services/prisma.server'
-import type { MainRepository } from '../../types'
+import type { MainRepository } from "../../types"
+import prisma from "~/services/prisma.server"
 
-type DeleteOrganizationInviteFn = MainRepository['organizationInvite']['delete']
+type DeleteOrganizationInviteFn = MainRepository["organizationInvite"]["delete"]
 
 export interface DeleteOrganizationInviteArgs {
   email: string
