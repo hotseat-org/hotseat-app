@@ -1,4 +1,4 @@
-import { MetaFunction, json, redirect, type LoaderFunctionArgs } from "@vercel/remix"
+import { MetaFunction, redirect, type LoaderFunctionArgs } from "@vercel/remix"
 import login from "./login"
 import { getCore } from "~/core/get-core"
 import { authenticator } from "~/services/auth.server"
@@ -41,7 +41,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     }
   }
 
-  return json({ slug })
+  return { slug }
 }
 
 export default login

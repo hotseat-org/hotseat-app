@@ -15,7 +15,7 @@ import {
 import { Role } from "@prisma/client"
 import { Link, Outlet, useFetcher, useLoaderData } from "@remix-run/react"
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@vercel/remix"
-import { json, redirect } from "@vercel/remix"
+import { redirect } from "@vercel/remix"
 import { ChevronUp, ChevronsUp, CornerUpLeft } from "lucide-react"
 import { z } from "zod"
 import { getCore } from "~/core/get-core"
@@ -50,7 +50,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await requireUser(request)
   const core = getCore()
 
-  return json(await core.organization.getMembers({ userEmail: user.email, slug }))
+  return await core.organization.getMembers({ userEmail: user.email, slug })
 }
 
 const Invitations = () => {

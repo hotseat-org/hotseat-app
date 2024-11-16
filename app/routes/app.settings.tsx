@@ -1,6 +1,6 @@
 import { Input } from "@nextui-org/react"
 import { Form, Link, Outlet, useLoaderData } from "@remix-run/react"
-import { ActionFunctionArgs, LoaderFunctionArgs, json } from "@remix-run/server-runtime"
+import { ActionFunctionArgs, LoaderFunctionArgs, data } from "@remix-run/server-runtime"
 import clsx from "clsx"
 import { Check, Trash } from "lucide-react"
 import { z } from "zod"
@@ -24,7 +24,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   if (!userData) throw new Response(null, { status: 404 })
 
-  return json({ userData, organizations, organizationInvites })
+  return { userData, organizations, organizationInvites }
 }
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -44,7 +44,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   session.set(authenticator.sessionKey, updatedUser)
   const headers = new Headers({ "Set-Cookie": await commitSession(session) })
 
-  return json(null, { headers })
+  return data(null, { headers })
 }
 
 export default function Settings() {

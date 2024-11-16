@@ -13,7 +13,7 @@ import {
 } from "@nextui-org/react"
 import { Form, Link, Outlet, useLoaderData, useParams } from "@remix-run/react"
 import type { LoaderFunctionArgs } from "@vercel/remix"
-import { json, redirect } from "@vercel/remix"
+import { redirect } from "@vercel/remix"
 import dayjs from "dayjs"
 import { Copy, ExternalLink, Mail, RefreshCcw, Trash } from "lucide-react"
 import pluralize from "pluralize"
@@ -52,7 +52,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await requireUser(request)
   const core = getCore()
 
-  return json(await core.organization.getInvites({ userEmail: user.email, slug }))
+  return await core.organization.getInvites({ userEmail: user.email, slug })
 }
 
 const Invitations = () => {

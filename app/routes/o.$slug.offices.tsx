@@ -1,7 +1,7 @@
 import { Card, CardBody, CardHeader, Link, Tooltip } from "@nextui-org/react"
 import { Role } from "@prisma/client"
 import { Form, Outlet, Link as RemixLink, useLoaderData } from "@remix-run/react"
-import { ActionFunctionArgs, LoaderFunctionArgs, json } from "@remix-run/server-runtime"
+import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/server-runtime"
 import clsx from "clsx"
 import { ArrowRight, Star } from "lucide-react"
 import { z } from "zod"
@@ -25,7 +25,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
     slug: profile.organizationSlug,
   })
 
-  return json({ offices })
+  return { offices }
 }
 
 export const action = async (args: ActionFunctionArgs) => {

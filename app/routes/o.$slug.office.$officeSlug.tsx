@@ -1,6 +1,6 @@
 import { Tab, Tabs } from "@nextui-org/react"
 import { Outlet, useLoaderData, useLocation, useNavigate } from "@remix-run/react"
-import { LoaderFunctionArgs, json } from "@remix-run/server-runtime"
+import { LoaderFunctionArgs } from "@remix-run/server-runtime"
 import { Cog, Eye } from "lucide-react"
 import { useMemo } from "react"
 import { z } from "zod"
@@ -20,7 +20,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
     organizationSlug: profile.organizationSlug,
   })
 
-  return json(office)
+  return office
 }
 
 const Office = () => {

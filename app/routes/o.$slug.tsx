@@ -1,6 +1,5 @@
 import { type LoaderFunctionArgs } from "@vercel/remix"
 import { Outlet, useLoaderData } from "@remix-run/react"
-import { json } from "@vercel/remix"
 import { HeaderOrganization } from "~/components/NavbarOrganization"
 import { getCore } from "~/core/get-core"
 import { requireProfile } from "~/utils/loader-helpers/requireProfile"
@@ -16,7 +15,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
 
   if (!organization) throw new Response("Not found", { status: 404 })
 
-  return json({ organization, profile })
+  return { organization, profile }
 }
 
 export default function Index() {
