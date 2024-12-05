@@ -1,6 +1,6 @@
 import type { Role } from "@prisma/client"
-import type { LoaderFunctionArgs } from "@vercel/remix"
-import { redirect } from "@vercel/remix"
+import type { LoaderFunctionArgs } from "react-router"
+import { redirect } from "react-router"
 import { getCore } from "~/core/get-core"
 import { requireUser } from "~/services/session.server"
 

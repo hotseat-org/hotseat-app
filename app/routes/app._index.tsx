@@ -1,9 +1,10 @@
-import { LoaderFunctionArgs, redirect } from "@vercel/remix"
+import { redirect } from "react-router"
+import { Route } from "./+types/app._index"
 import { Container } from "~/components/Container"
 import { getCore } from "~/core/get-core"
 import { requireUser } from "~/services/session.server"
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async ({ request }: Route.LoaderArgs) => {
   const user = await requireUser(request)
   const core = getCore()
   const [firstOrganization] = await core.user.getOrganizations(user.email)

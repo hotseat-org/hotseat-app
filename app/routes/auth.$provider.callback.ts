@@ -1,4 +1,4 @@
-import { redirect, type LoaderFunction } from "@vercel/remix"
+import { redirect, type LoaderFunction } from "react-router"
 import { authenticator } from "../services/auth.server"
 import { returnToPage } from "~/cookies"
 

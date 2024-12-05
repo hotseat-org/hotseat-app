@@ -1,6 +1,6 @@
 import { Button, Input, Textarea } from "@nextui-org/react"
-import { Form, Outlet, useNavigation } from "@remix-run/react"
-import type { ActionFunctionArgs } from "@vercel/remix"
+import { Form, Outlet, useNavigation } from "react-router"
+import type { ActionFunctionArgs } from "react-router"
 import { z } from "zod"
 import { InputAvatar } from "~/components/Inputs/Avatar"
 import { getCore } from "~/core/get-core"

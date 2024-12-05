@@ -1,4 +1,4 @@
-import { createCookie } from "@vercel/remix"
+import { createCookie } from "react-router"
 import dayjs from "dayjs"
 import duration from "dayjs/plugin/duration.js"
 

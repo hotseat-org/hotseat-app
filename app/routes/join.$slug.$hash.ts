@@ -1,4 +1,4 @@
-import { MetaFunction, redirect, type LoaderFunctionArgs } from "@vercel/remix"
+import { MetaFunction, redirect, type LoaderFunctionArgs } from "react-router"
 import login from "./login"
 import { getCore } from "~/core/get-core"
 import { authenticator } from "~/services/auth.server"

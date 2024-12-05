@@ -1,14 +1,10 @@
-import type { LoaderFunctionArgs } from "@vercel/remix"
-import { redirect } from "@vercel/remix"
+import { redirect } from "react-router"
+import { Route } from "./+types/join.$slug._index"
 import { getCore } from "~/core/get-core"
 import { requireUser } from "~/services/session.server"
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+export const loader = async ({ request, params: { slug } }: Route.LoaderArgs) => {
   const user = await requireUser(request)
-
-  const slug = params.slug
-  if (!slug) return redirect("/")
-
   const core = getCore()
 
   try {

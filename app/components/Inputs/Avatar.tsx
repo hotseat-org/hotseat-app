@@ -1,5 +1,5 @@
 import { Avatar, Card, CardFooter } from "@nextui-org/react"
-import { Link } from "@remix-run/react"
+import { Link } from "react-router"
 import { Edit, Trash, Users } from "lucide-react"
 import { Button } from "../Button"
 

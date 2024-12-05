@@ -1,5 +1,4 @@
-import { useLoaderData } from "@remix-run/react"
-import { LoaderFunctionArgs } from "@remix-run/server-runtime"
+import { useLoaderData, LoaderFunctionArgs } from "react-router"
 import { z } from "zod"
 import { getCore } from "~/core/get-core"
 import { requireProfile } from "~/utils/loader-helpers/requireProfile"

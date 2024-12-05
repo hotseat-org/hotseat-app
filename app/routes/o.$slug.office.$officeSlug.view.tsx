@@ -1,5 +1,4 @@
-import { useLoaderData } from "@remix-run/react"
-import { LoaderFunctionArgs } from "@remix-run/server-runtime"
+import { useLoaderData, LoaderFunctionArgs } from "react-router"
 import { Space } from "node_modules/@smplrspace/smplr-loader/dist/generated/smplr"
 import { useEffect, useState } from "react"
 import { z } from "zod"

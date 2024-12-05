@@ -1,5 +1,5 @@
-import { type LoaderFunctionArgs } from "@vercel/remix"
-import { Outlet, useLoaderData } from "@remix-run/react"
+import { type LoaderFunctionArgs } from "react-router"
+import { Outlet, useLoaderData } from "react-router"
 import { HeaderOrganization } from "~/components/NavbarOrganization"
 import { getCore } from "~/core/get-core"
 import { requireProfile } from "~/utils/loader-helpers/requireProfile"

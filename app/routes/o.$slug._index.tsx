@@ -1,4 +1,4 @@
-import { LoaderFunctionArgs, redirect } from "@vercel/remix"
+import { LoaderFunctionArgs, redirect } from "react-router"
 import { requireProfile } from "~/utils/loader-helpers/requireProfile"
 
 export const loader = async (args: LoaderFunctionArgs) => {

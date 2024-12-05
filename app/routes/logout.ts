@@ -1,4 +1,4 @@
-import type { ActionFunction, LoaderFunction } from "@vercel/remix"
+import type { ActionFunction, LoaderFunction } from "react-router"
 import { authenticator } from "../services/auth.server.js"
 
 export const action: ActionFunction = ({ request }) => {

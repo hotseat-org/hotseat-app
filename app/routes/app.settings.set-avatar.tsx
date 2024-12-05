@@ -1,6 +1,6 @@
 import { Modal } from "@nextui-org/react"
-import { useNavigate } from "@remix-run/react"
-import { redirect, type ActionFunctionArgs } from "@vercel/remix"
+import { useNavigate } from "react-router"
+import { redirect, type ActionFunctionArgs } from "react-router"
 import { z } from "zod"
 import ImageUpload from "~/components/Forms/ImageUpload"
 import { getCore } from "~/core/get-core"

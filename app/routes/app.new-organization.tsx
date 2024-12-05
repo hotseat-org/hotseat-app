@@ -8,9 +8,9 @@ import {
   ModalHeader,
   Spinner,
 } from "@nextui-org/react"
-import { Link, useFetcher, useNavigate } from "@remix-run/react"
+import { Link, useFetcher, useNavigate } from "react-router"
 import { useDebounce } from "@uidotdev/usehooks"
-import { redirect, type ActionFunctionArgs } from "@vercel/remix"
+import { redirect, type ActionFunctionArgs } from "react-router"
 import { Check, HelpCircle } from "lucide-react"
 import { useEffect, useState } from "react"
 import { z } from "zod"

@@ -9,7 +9,7 @@ import {
   Link as NextUiLink,
 } from "@nextui-org/react"
 import { Role } from "@prisma/client"
-import { Link, useLocation } from "@remix-run/react"
+import { Link, useLocation } from "react-router"
 import { Flame } from "lucide-react"
 import { UserDropdown } from "../Navigation/UserDropdown"
 import type { Organization } from "~/core/organization/types"

@@ -1,4 +1,4 @@
-import { useRouteLoaderData } from "@remix-run/react"
+import { useRouteLoaderData } from "react-router"
 import { Profile } from "~/core/profile/types"
 import type { User } from "~/core/user/types"
 

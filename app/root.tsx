@@ -1,7 +1,14 @@
 import { NextUIProvider } from "@nextui-org/react"
-import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from "@remix-run/react"
-import type { MetaFunction } from "@remix-run/react/dist/routeModules"
-import type { LinksFunction, LoaderFunctionArgs } from "@vercel/remix"
+import {
+  Links,
+  Meta,
+  MetaFunction,
+  Outlet,
+  Scripts,
+  ScrollRestoration,
+  useLoaderData,
+} from "react-router"
+import type { LinksFunction, LoaderFunctionArgs } from "react-router"
 import { PreventFlashOnWrongTheme, ThemeProvider, useTheme } from "remix-themes"
 import { authenticator } from "./services/auth.server"
 import { themeSessionResolver } from "./services/theme.server"

@@ -8,7 +8,7 @@ import {
   Switch,
   User,
 } from "@nextui-org/react"
-import { useNavigate } from "@remix-run/react"
+import { useNavigate } from "react-router";
 import { LogOut, Moon, Settings, Sun } from "lucide-react"
 import { Theme, useTheme } from "remix-themes"
 import type { User as UserType } from "~/core/user/types"

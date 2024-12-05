@@ -11,9 +11,8 @@ import {
   TableRow,
   Tooltip,
 } from "@nextui-org/react"
-import { Form, Link, Outlet, useLoaderData, useParams } from "@remix-run/react"
-import type { LoaderFunctionArgs } from "@vercel/remix"
-import { redirect } from "@vercel/remix"
+import { Form, Link, Outlet, useLoaderData, useParams, redirect } from "react-router"
+import type { LoaderFunctionArgs } from "react-router"
 import dayjs from "dayjs"
 import { Copy, ExternalLink, Mail, RefreshCcw, Trash } from "lucide-react"
 import pluralize from "pluralize"
@@ -47,7 +46,7 @@ export const action = async ({ request, params }: LoaderFunctionArgs) => {
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const slug = params.slug
-  if (!slug) return redirect("/")
+  if (!slug) throw redirect("/")
 
   const user = await requireUser(request)
   const core = getCore()

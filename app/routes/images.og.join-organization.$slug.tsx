@@ -1,5 +1,5 @@
 import { createHash } from "crypto"
-import { LoaderFunctionArgs, redirect } from "@remix-run/server-runtime"
+import { LoaderFunctionArgs, redirect } from "react-router"
 import { ImageResponse } from "@vercel/og"
 import { getCore } from "~/core/get-core"
 

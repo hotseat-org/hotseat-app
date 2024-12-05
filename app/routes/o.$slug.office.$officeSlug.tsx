@@ -1,6 +1,5 @@
 import { Tab, Tabs } from "@nextui-org/react"
-import { Outlet, useLoaderData, useLocation, useNavigate } from "@remix-run/react"
-import { LoaderFunctionArgs } from "@remix-run/server-runtime"
+import { Outlet, useLoaderData, useLocation, useNavigate, LoaderFunctionArgs } from "react-router"
 import { Cog, Eye } from "lucide-react"
 import { useMemo } from "react"
 import { z } from "zod"

@@ -1,5 +1,5 @@
-import type { LoaderFunctionArgs } from "@vercel/remix"
-import { redirect } from "@vercel/remix"
+import type { LoaderFunctionArgs } from "react-router"
+import { redirect } from "react-router"
 import { requireUser } from "~/services/session.server"
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {

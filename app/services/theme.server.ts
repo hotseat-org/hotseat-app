@@ -1,5 +1,5 @@
 import { createThemeSessionResolver } from "remix-themes"
-import { createCookieSessionStorage } from "@vercel/remix"
+import { createCookieSessionStorage } from "react-router"
 import { themeCookie } from "~/cookies"
 
 const cookieSession = createCookieSessionStorage({ cookie: themeCookie })

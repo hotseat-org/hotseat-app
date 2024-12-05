@@ -1,6 +1,6 @@
 import { Input, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader } from "@nextui-org/react"
-import { Form, Link, useNavigate } from "@remix-run/react"
-import { redirect, type ActionFunctionArgs } from "@vercel/remix"
+import { Form, Link, useNavigate } from "react-router"
+import { redirect, type ActionFunctionArgs } from "react-router"
 import { z } from "zod"
 import { Button } from "~/components/Button"
 import { getCore } from "~/core/get-core"

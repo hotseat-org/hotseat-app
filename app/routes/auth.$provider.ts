@@ -1,4 +1,4 @@
-import { redirect, type ActionFunction } from "@vercel/remix"
+import { redirect, type ActionFunction } from "react-router"
 import { authenticator } from "../services/auth.server.js"
 
 export const loader = () => redirect("/login")

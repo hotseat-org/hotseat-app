@@ -13,9 +13,8 @@ import {
   TableRow,
 } from "@nextui-org/react"
 import { Role } from "@prisma/client"
-import { Link, Outlet, useFetcher, useLoaderData } from "@remix-run/react"
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "@vercel/remix"
-import { redirect } from "@vercel/remix"
+import { Link, Outlet, useFetcher, useLoaderData, redirect } from "react-router"
+import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router"
 import { ChevronUp, ChevronsUp, CornerUpLeft } from "lucide-react"
 import { z } from "zod"
 import { getCore } from "~/core/get-core"
@@ -45,7 +44,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const slug = params.slug
-  if (!slug) return redirect("/")
+  if (!slug) throw redirect("/")
 
   const user = await requireUser(request)
   const core = getCore()

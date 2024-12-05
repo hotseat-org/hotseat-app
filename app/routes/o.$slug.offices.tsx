@@ -1,7 +1,13 @@
 import { Card, CardBody, CardHeader, Link, Tooltip } from "@nextui-org/react"
 import { Role } from "@prisma/client"
-import { Form, Outlet, Link as RemixLink, useLoaderData } from "@remix-run/react"
-import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/server-runtime"
+import {
+  Form,
+  Outlet,
+  Link as RemixLink,
+  useLoaderData,
+  ActionFunctionArgs,
+  LoaderFunctionArgs,
+} from "react-router"
 import clsx from "clsx"
 import { ArrowRight, Star } from "lucide-react"
 import { z } from "zod"

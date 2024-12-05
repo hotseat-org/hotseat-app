@@ -1,4 +1,4 @@
-import type { ActionFunctionArgs } from "@vercel/remix"
+import type { ActionFunctionArgs } from "react-router"
 import { imageService } from "~/services/images"
 import { requireUser } from "~/services/session.server"
 

@@ -1,4 +1,4 @@
-import { createCookieSessionStorage, redirect } from "@vercel/remix"
+import { createCookieSessionStorage, redirect } from "react-router"
 import { authenticator } from "./auth.server"
 import { returnToPage, sessionCookie } from "~/cookies"
 

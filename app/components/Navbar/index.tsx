@@ -8,7 +8,7 @@ import {
   NavbarBrand,
   NavbarContent,
 } from "@nextui-org/react"
-import { Link, useNavigate } from "@remix-run/react"
+import { Link, useNavigate } from "react-router"
 import { Flame, Plus, Users } from "lucide-react"
 import { UserDropdown } from "../Navigation/UserDropdown"
 import { useUser } from "~/utils/remix"
