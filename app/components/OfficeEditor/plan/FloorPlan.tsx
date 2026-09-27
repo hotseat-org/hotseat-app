@@ -1,5 +1,6 @@
+import { Button } from "@heroui/react"
 import clsx from "clsx"
-import { Pin } from "lucide-react"
+import { Pin, RotateCcw, RotateCw } from "lucide-react"
 import {
   useCallback,
   useEffect,
@@ -53,6 +54,36 @@ const PARTITION = 0.75
 /** Tags and the desk card hang this high above a desk. */
 const TAG_Y = 1.55
 
+/** The viewer's last view angle (quarter turns), remembered per browser. */
+const TURN_KEY = "office-editor:plan-turn"
+const readTurn = () => {
+  try {
+    return Number(localStorage.getItem(TURN_KEY)) & 3
+  } catch {
+    return 0
+  }
+}
+
+/**
+ * The layout turned by `q` quarter turns about the origin (the same Y-rotation
+ * convention as the pieces' own). Turning the world instead of the camera keeps
+ * everything axis-aligned on the grid — cells and edges land on cells and
+ * edges — so the drawing, its walls and its depth sort work unchanged.
+ */
+const turnPoint = (x: number, z: number, q: number): [number, number] => {
+  const t = (q * Math.PI) / 2
+  const c = Math.round(Math.cos(t))
+  const s = Math.round(Math.sin(t))
+  return [x * c + z * s, -x * s + z * c]
+}
+const turnObject = (o: SceneObject, q: number): SceneObject => {
+  if (!q) return o
+  const [x, z] = turnPoint(o.x, o.z, q)
+  // Snapped to an exact quarter turn: helpers like runsAlongX expect clean values.
+  const quarters = (Math.round(o.rotation / (Math.PI / 2)) + q) & 3
+  return { ...o, x, z, rotation: (quarters * Math.PI) / 2 }
+}
+
 interface View {
   /** Pixels per plan unit. */
   k: number
@@ -91,16 +122,34 @@ export const FloorPlan = ({
   /** Screen space the right-hand panels cover, kept clear when fitting (px). */
   padRight?: number
 }) => {
-  const objects = useEditorStore((s) => s.objects)
+  const layout = useEditorStore((s) => s.objects)
   const fitNonce = useEditorStore((s) => s.fitNonce)
   const openSeatCard = useEditorStore((s) => s.openSeatCard)
   const closeSeatCard = useEditorStore((s) => s.closeSeatCard)
   const bookingOn = useEditorStore((s) => s.booking.enabled)
   const past = useEditorStore((s) => s.booking.day < s.booking.today)
-  const { desks } = useDesksOnDay()
+  const { desks: deskStates } = useDesksOnDay()
   const people = usePeople()
   const card = useSeatCard()
   const surfaces = dark ? SURFACES.dark : SURFACES.light
+
+  // View angle: the whole layout turned by quarter turns (see turnObject).
+  const [turn, setTurn] = useState(readTurn)
+  const turnBy = (d: number) =>
+    setTurn((q) => {
+      const next = (q + d) & 3
+      try {
+        localStorage.setItem(TURN_KEY, String(next))
+      } catch {
+        // Not remembered — fine.
+      }
+      return next
+    })
+  const objects = useMemo(() => layout.map((o) => turnObject(o, turn)), [layout, turn])
+  const desks = useMemo(
+    () => deskStates.map((d) => ({ ...d, desk: turnObject(d.desk, turn) })),
+    [deskStates, turn]
+  )
 
   const box = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState<{ w: number; h: number } | null>(null)
@@ -143,7 +192,7 @@ export const FloorPlan = ({
   useLayoutEffect(() => {
     const { size: s, bounds: b, padRight: right } = latest.current
     if (s && b) setView(fitView(b, s.w, s.h, right))
-  }, [fitNonce, hasContent, measured])
+  }, [fitNonce, hasContent, measured, turn])
 
   // --- Pan (drag) and zoom (wheel, pinch) --------------------------------
   const zoomAt = useCallback(
@@ -225,6 +274,8 @@ export const FloorPlan = ({
     return { left: px * view.k + view.tx, top: py * view.k + view.ty }
   }
   const openId = card?.seat.id
+  // The card's desk comes from the store, so it's turned here to match.
+  const cardAt = card && turnPoint(card.seat.x, card.seat.z, turn)
 
   return (
     <div
@@ -270,8 +321,34 @@ export const FloorPlan = ({
           )
         })}
 
-      {card && view && (
-        <div className="absolute" style={screen(card.seat.x, 1.3, card.seat.z)}>
+      {/* Turn the view (bottom-left, where the 3D view keeps its FPS toggle). */}
+      <div
+        className="absolute bottom-4 left-4 flex gap-1 rounded-xl border border-border bg-overlay/90 p-1 shadow-overlay backdrop-blur-md"
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Button
+          isIconOnly
+          size="sm"
+          variant="ghost"
+          aria-label="Turn view left"
+          onPress={() => turnBy(1)}
+        >
+          <RotateCcw className="size-4" />
+        </Button>
+        <Button
+          isIconOnly
+          size="sm"
+          variant="ghost"
+          aria-label="Turn view right"
+          onPress={() => turnBy(-1)}
+        >
+          <RotateCw className="size-4" />
+        </Button>
+      </div>
+
+      {card && cardAt && view && (
+        <div className="absolute" style={screen(cardAt[0], 1.3, cardAt[1])}>
           <SeatCardBody key={card.key} {...card.body} />
         </div>
       )}
