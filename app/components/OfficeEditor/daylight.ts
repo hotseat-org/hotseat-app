@@ -1,5 +1,4 @@
 import { createContext } from "react"
-import { Color } from "three"
 
 /** A full scene-lighting profile derived from a time of day. */
 export interface DayProfile {
@@ -24,8 +23,25 @@ export interface DayProfile {
 
 const clamp01 = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x)
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t
-const mix = (a: string, b: string, t: number) =>
-  new Color(a).lerp(new Color(b), clamp01(t)).getStyle()
+// Hex colours mixed in linear light (as three's Color.lerp does) — kept
+// three-free so the simple view's sky slider doesn't pull three.js in.
+const toLinear = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)
+const toSrgb = (c: number) => (c <= 0.0031308 ? c * 12.92 : 1.055 * c ** (1 / 2.4) - 0.055)
+/** "#rrggbb" or "rgb(r,g,b)" (mix's own output, fed back in) → linear RGB. */
+const channels = (color: string) => {
+  let rgb: number[]
+  if (color.startsWith("#")) {
+    const n = parseInt(color.slice(1), 16)
+    rgb = [(n >> 16) & 255, (n >> 8) & 255, n & 255]
+  } else rgb = color.slice(4, -1).split(",").map(Number)
+  return rgb.map((v) => toLinear(v / 255))
+}
+const mix = (a: string, b: string, t: number) => {
+  const ca = channels(a)
+  const cb = channels(b)
+  const [r, g, bl] = ca.map((v, i) => Math.round(toSrgb(lerp(v, cb[i], clamp01(t))) * 255))
+  return `rgb(${r},${g},${bl})`
+}
 
 // Sky colour across 24h (linearly interpolated between stops).
 const SKY: [number, string][] = [

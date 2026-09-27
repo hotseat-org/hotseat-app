@@ -1,6 +1,14 @@
 import { Button } from "@heroui/react"
-import { Canvas } from "@react-three/fiber"
-import { Suspense, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react"
+import {
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react"
 import { useTheme } from "remix-themes"
 import { Check, Gauge, Pencil, PencilRuler } from "lucide-react"
 import {
@@ -11,9 +19,6 @@ import {
   type EditorStore,
 } from "./store"
 import type { SceneObject } from "./types"
-import { Scene } from "./scene/Scene"
-import { FpsMeter } from "./scene/FpsMeter"
-import { preloadModels } from "./objects/Model"
 import { Catalog } from "./ui/Catalog"
 import { Inspector } from "./ui/Inspector"
 import { TopBar } from "./ui/TopBar"
@@ -30,6 +35,8 @@ import { EmptyState } from "~/components/ui/EmptyState"
 import { groupBookings, type BookingRow, type Day } from "~/utils/booking"
 
 const NO_PEOPLE: People = { me: null, members: [] }
+// three.js + the whole scene load only when the 3D view is shown.
+const SceneCanvas = lazy(() => import("./scene/SceneCanvas"))
 
 const KEY_TO_TOOL = new Map(TOOLS.map((t) => [t.key, t.tool]))
 
@@ -167,11 +174,6 @@ const OfficeEditorInner = ({
     return () => window.clearInterval(id)
   }, [store])
 
-  // Load the GLB animal models into cache (available, but not user-placeable).
-  useEffect(() => {
-    preloadModels()
-  }, [])
-
   // Editing is 3D-only: without WebGL the office is view-only (as a 2D plan).
   const [webglOk] = useState(hasWebGL)
   const editable = canEdit && webglOk
@@ -197,6 +199,7 @@ const OfficeEditorInner = ({
   // that on-demand rendering happens to produce.
   const [showStats, setShowStats] = useState(false)
   const [stats, setStats] = useState({ fps: 0, ms: 0 })
+  const onStats = useCallback((fps: number, ms: number) => setStats({ fps, ms }), [])
   const dbMode = !!onSave
   // What's already persisted, so autosave doesn't re-save the freshly-loaded scene.
   const lastSaved = useRef<string>(JSON.stringify(initialObjects ?? []))
@@ -306,25 +309,16 @@ const OfficeEditorInner = ({
     <div className="relative h-full w-full overflow-hidden">
       {!isEmpty && flat && <FloorPlan dark={isDark} padRight={shellMode ? 340 : 40} />}
       {!isEmpty && !flat && (
-        <Canvas
-          shadows
-          // Capped at 1.5× — on retina, 2× is ~1.8× the pixels (and post-fx cost)
-          // for a barely visible sharpness gain on this soft, rounded style.
-          dpr={[1, 1.5]}
-          gl={{ antialias: true, powerPreference: "high-performance" }}
-          frameloop={showStats ? "always" : "demand"}
-          onPointerMissed={() => store.getState().closeSeatCard()}
-        >
-          <Suspense fallback={null}>
-            {/* Bridge the store into the R3F tree — context doesn't cross the Canvas. */}
-            <EditorStoreContextProvider value={store}>
-              <PeopleContext.Provider value={people ?? NO_PEOPLE}>
-                <Scene readOnly={readOnly} dark={isDark} />
-              </PeopleContext.Provider>
-            </EditorStoreContextProvider>
-            {showStats && <FpsMeter onSample={(fps, ms) => setStats({ fps, ms })} />}
-          </Suspense>
-        </Canvas>
+        <Suspense fallback={null}>
+          <SceneCanvas
+            store={store}
+            people={people ?? NO_PEOPLE}
+            readOnly={readOnly}
+            dark={isDark}
+            showStats={showStats}
+            onStats={onStats}
+          />
+        </Suspense>
       )}
 
       {/* Empty office: cover the bare 3D scene with the same grid+dots backdrop

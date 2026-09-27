@@ -22,7 +22,7 @@ import {
 import { SURFACES } from "../palette"
 import { initials, personByEmail, usePeople, type People } from "../people"
 import { spotFor } from "../seatSpot"
-import { SeatCardBody, useSeatCard } from "../scene/SeatPopup"
+import { SeatCardBody, useSeatCard } from "../seatCard"
 import { useDesksOnDay, type DeskOnDay } from "../useBooking"
 import { GRID, isEdgeType, isMarker, isSeatable, type SceneObject } from "../types"
 import { WALL } from "../objects/dimensions"

@@ -1,11 +1,14 @@
 import { ToggleButton, Tooltip } from "@heroui/react"
 import clsx from "clsx"
-import { useEffect, useRef, useState } from "react"
+import { Suspense, lazy, useEffect, useRef, useState } from "react"
 import { Ban, Eraser, MousePointer2, PaintBucket } from "lucide-react"
 import { useEditorStore } from "../store"
 import { DEFAULT_COLOR, FLOOR_SWATCHES, SWATCHES } from "../palette"
 import { CATEGORIES, TOOL_META, categoryOf, colorKey, isCatalogItem } from "./categories"
-import { PreviewTile } from "./PreviewView"
+
+// Each tile is a small three.js canvas — loaded with the catalog (edit mode),
+// not with the editor, so the simple view never pulls three.js in.
+const PreviewTile = lazy(() => import("./PreviewView").then((m) => ({ default: m.PreviewTile })))
 
 /**
  * The Sims-style build catalog: a category rail on the left and a grid of live,
@@ -141,7 +144,9 @@ export const Catalog = () => {
                 >
                   <div className="h-24 w-full overflow-hidden rounded-lg">
                     {/* Each tile reflects its own per-type colour. */}
-                    <PreviewTile type={t} color={placementColors[colorKey(t)]} active={active} />
+                    <Suspense fallback={null}>
+                      <PreviewTile type={t} color={placementColors[colorKey(t)]} active={active} />
+                    </Suspense>
                   </div>
                   <span
                     className={clsx(

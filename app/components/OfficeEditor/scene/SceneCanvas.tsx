@@ -1,0 +1,53 @@
+import { Canvas } from "@react-three/fiber"
+import { Suspense, useEffect } from "react"
+import { EditorStoreContextProvider, type EditorStore } from "../store"
+import { PeopleContext, type People } from "../people"
+import { preloadModels } from "../objects/Model"
+import { Scene } from "./Scene"
+import { FpsMeter } from "./FpsMeter"
+
+interface Props {
+  store: EditorStore
+  people: People
+  readOnly: boolean
+  dark: boolean
+  /** Perf HUD on: render continuously so the FPS reading is comparable. */
+  showStats: boolean
+  onStats: (fps: number, ms: number) => void
+}
+
+/**
+ * The 3D office. Its own module so OfficeEditor can load it lazily: three.js,
+ * R3F and every model stay out of the bundle until the 3D view is shown — the
+ * simple (isometric SVG) view never downloads them.
+ */
+const SceneCanvas = ({ store, people, readOnly, dark, showStats, onStats }: Props) => {
+  // Load the GLB animal models into cache (available, but not user-placeable).
+  useEffect(() => {
+    preloadModels()
+  }, [])
+
+  return (
+    <Canvas
+      shadows
+      // Capped at 1.5× — on retina, 2× is ~1.8× the pixels (and post-fx cost)
+      // for a barely visible sharpness gain on this soft, rounded style.
+      dpr={[1, 1.5]}
+      gl={{ antialias: true, powerPreference: "high-performance" }}
+      frameloop={showStats ? "always" : "demand"}
+      onPointerMissed={() => store.getState().closeSeatCard()}
+    >
+      <Suspense fallback={null}>
+        {/* Bridge the store into the R3F tree — context doesn't cross the Canvas. */}
+        <EditorStoreContextProvider value={store}>
+          <PeopleContext.Provider value={people}>
+            <Scene readOnly={readOnly} dark={dark} />
+          </PeopleContext.Provider>
+        </EditorStoreContextProvider>
+        {showStats && <FpsMeter onSample={onStats} />}
+      </Suspense>
+    </Canvas>
+  )
+}
+
+export default SceneCanvas
