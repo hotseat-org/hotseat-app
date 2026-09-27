@@ -10,6 +10,7 @@ let prisma: PrismaClient
 
 declare global {
   var __prisma: PrismaClient | undefined
+  var __prismaClass: typeof PrismaClient | undefined
 }
 
 // this is needed because in development we don't want to restart
@@ -20,7 +21,15 @@ if (process.env.NODE_ENV === "production") {
   prisma = new PrismaClient({ adapter })
   prisma.$connect()
 } else {
+  // After `prisma generate` (a new migration) the dev server reloads the
+  // generated client as a new class: drop the cached instance built from the
+  // old one, or queries using new columns fail until a restart.
+  if (global.__prisma && global.__prismaClass !== PrismaClient) {
+    void global.__prisma.$disconnect()
+    global.__prisma = undefined
+  }
   if (!global.__prisma) {
+    global.__prismaClass = PrismaClient
     const adapter = new PrismaPg({ connectionString })
     global.__prisma = new PrismaClient({ adapter })
     global.__prisma.$connect()
