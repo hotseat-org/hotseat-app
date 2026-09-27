@@ -9,5 +9,6 @@ export const createUserMapper = (imageService: ImageService) => ({
       ? await imageService.getSignedUrl(user.avatarUrl, "thumbnail")
       : undefined,
     email: user.email,
+    pet: user.pet ?? undefined,
   }),
 })

@@ -63,15 +63,18 @@ export const MODELS: ModelDef[] = ANIMALS.map((name) => ({
   rotationOffset: 0,
 }))
 
+/** A pet's picture for 2D UI (the settings picker): rendered from its GLB. */
+export const petThumb = (id: string) => `/pets/${id}.png`
+
 export const modelById = (id: string): ModelDef | undefined => MODELS.find((m) => m.id === id)
 
 /** A random model id (used when placing a deskmate). */
 export const randomModelId = (): string => MODELS[Math.floor(Math.random() * MODELS.length)].id
 
 /**
- * The pet that stands in for a person at their desk. For now each person gets
- * a stable one derived from their email; `chosen` (a model id picked by the
- * user, once they can) wins when set.
+ * The pet that stands in for a person at their desk: `chosen` (their pick in
+ * settings → Desk pet, `User.pet`) when set, else a stable one derived from
+ * their email.
  */
 export const petFor = (email: string, chosen?: string): ModelDef => {
   const own = chosen ? modelById(chosen) : undefined

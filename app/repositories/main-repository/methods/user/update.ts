@@ -5,6 +5,7 @@ export interface UpdateUserArgs {
   data: {
     displayName?: string
     avatarUrl?: string | null
+    pet?: string | null
   }
 }
 

@@ -34,6 +34,7 @@ export const updateProfile: UpdateProfileFn = async ({
     ...profile,
     email: profile.userEmail,
     avatarUrl: profile.user.avatarUrl ?? undefined,
+    pet: profile.user.pet ?? undefined,
     displayName: profile.user.displayName ?? undefined,
   }
 }

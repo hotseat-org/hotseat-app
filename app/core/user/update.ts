@@ -6,6 +6,7 @@ interface UpdateUserArgs {
   data?: {
     displayName?: string
     avatarUrl?: string | null
+    pet?: string | null
   }
 }
 
@@ -15,7 +16,7 @@ export const updateUser =
     const user = await mainRepository.user.find({ email })
 
     if (!user) throw new Error("User not found")
-    if (!data) return user
+    if (!data) return mappers.user.fromRepository(user)
 
     const seat = await mainRepository.user.update({
       email,

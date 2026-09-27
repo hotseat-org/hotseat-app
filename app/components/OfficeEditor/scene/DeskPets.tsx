@@ -4,6 +4,7 @@ import type { ThreeEvent } from "@react-three/fiber"
 import { useEditorStore } from "../store"
 import { useDesksOnDay } from "../useBooking"
 import { petFor } from "../models"
+import { personByEmail, usePeople } from "../people"
 import { WiggleModel } from "../objects/WiggleModel"
 import { spotFor, type Spot } from "../seatSpot"
 
@@ -18,16 +19,21 @@ export const DeskPets = () => {
   const { desks } = useDesksOnDay()
   const objects = useEditorStore((s) => s.objects)
   const openSeatCard = useEditorStore((s) => s.openSeatCard)
+  const people = usePeople()
   const pets = useMemo(() => {
     const seats = objects.filter((o) => o.type === "seat")
     return desks
       .filter((d) => d.state.kind !== "free")
-      .map((d) => ({
-        desk: d.desk,
-        pet: petFor(d.state.kind === "free" ? "" : d.state.email),
-        spot: spotFor(d.desk, seats),
-      }))
-  }, [desks, objects])
+      .map((d) => {
+        const email = d.state.kind === "free" ? "" : d.state.email
+        return {
+          desk: d.desk,
+          // Their own pick (settings → Desk pet), else one derived from the email.
+          pet: petFor(email, personByEmail(people, email)?.pet),
+          spot: spotFor(d.desk, seats),
+        }
+      })
+  }, [desks, objects, people])
 
   return (
     <>

@@ -34,6 +34,7 @@ const toMember = (p: Profile): ShellMember => ({
   userEmail: p.userEmail,
   displayName: p.displayName,
   avatarUrl: p.avatarUrl,
+  pet: p.pet,
   role: String(p.role),
 })
 
@@ -155,6 +156,7 @@ export default function OfficeRoute() {
       email: m.userEmail,
       name: nameOf(m),
       avatarUrl: m.avatarUrl,
+      pet: m.pet,
     })
     return { me: toPerson(me), members: members.map(toPerson) }
   }, [me, members])

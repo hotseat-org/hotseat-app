@@ -7,6 +7,7 @@ export interface Profile {
   role: Role
   displayName?: string
   avatarUrl?: string
+  pet?: string
   favoriteOffice?: Office
   createdAt: Date
 }

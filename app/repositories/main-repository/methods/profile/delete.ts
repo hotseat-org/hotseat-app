@@ -15,6 +15,7 @@ export const deleteProfile = async ({ organizationSlug, userEmail }: DeleteProfi
     ...profile,
     email: profile.userEmail,
     avatarUrl: profile.user.avatarUrl ?? undefined,
+    pet: profile.user.pet ?? undefined,
     displayName: profile.user.displayName ?? undefined,
   }
 }

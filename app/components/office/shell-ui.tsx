@@ -4,6 +4,8 @@ export interface ShellMember {
   userEmail: string
   displayName?: string
   avatarUrl?: string
+  /** Desk pet model id; unset = derived from the email. */
+  pet?: string
   role: string
 }
 

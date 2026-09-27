@@ -6,6 +6,8 @@ export interface Person {
   email: string
   name: string
   avatarUrl?: string
+  /** Their chosen desk pet (a model id); unset = derived from the email. */
+  pet?: string
 }
 
 export interface People {

@@ -17,6 +17,8 @@ model User {
 
   displayName String
   avatarUrl   String?
+  /// Desk pet (a model id from OfficeEditor/models.ts); null = derived from the email.
+  pet         String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

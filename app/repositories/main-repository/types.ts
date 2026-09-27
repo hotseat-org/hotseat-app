@@ -35,6 +35,7 @@ export type PaginatedResult<Data> = {
 export interface User {
   email: string
   avatarUrl?: string | null
+  pet?: string | null
   displayName: string
 
   createdAt: Date
@@ -60,6 +61,7 @@ export interface Profile {
   role: Role
   displayName: string
   avatarUrl?: string
+  pet?: string
   createdAt: Date
 }
 

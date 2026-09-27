@@ -5,6 +5,7 @@ import {
   Building,
   Building2,
   Mail,
+  PawPrint,
   SlidersHorizontal,
   UserRound,
   Users,
@@ -19,6 +20,7 @@ import { OfficeDanger } from "./panels/OfficeDanger"
 import { UserDanger } from "./panels/UserDanger"
 import { UserInvitations } from "./panels/UserInvitations"
 import { UserOrganizations } from "./panels/UserOrganizations"
+import { UserPet } from "./panels/UserPet"
 import { UserProfile } from "./panels/UserProfile"
 import { useSettings } from "./useSettings"
 import { useUser } from "~/utils/remix"
@@ -28,6 +30,12 @@ import { ThumbAvatar } from "~/components/office/shell-ui"
 
 const userLinks: SettingsLink[] = [
   { id: "profile", label: "Profile", icon: UserRound, description: "Your name, photo and theme." },
+  {
+    id: "pet",
+    label: "Desk pet",
+    icon: PawPrint,
+    description: "Who sits at your desk on the days you book it.",
+  },
   {
     id: "organizations",
     label: "Organizations",
@@ -40,6 +48,7 @@ const userLinks: SettingsLink[] = [
 
 const userPanels: Record<string, ReactNode> = {
   profile: <UserProfile />,
+  pet: <UserPet />,
   organizations: <UserOrganizations />,
   invitations: <UserInvitations />,
   danger: <UserDanger />,
