@@ -1,4 +1,5 @@
 import type { MainRepository } from "../../types"
+import { toOrganization } from "../organization/map"
 import prisma from "~/services/prisma.server"
 
 type FindOrganizationInviteFn = MainRepository["organizationInvite"]["find"]
@@ -14,7 +15,8 @@ export const findOrganizationInvite: FindOrganizationInviteFn = async ({
 }) => {
   const result = await prisma.organizationInvite.findUnique({
     where: { email_organizationSlug: { email, organizationSlug } },
+    include: { organization: true },
   })
 
-  return result
+  return result && { ...result, organization: toOrganization(result.organization) }
 }

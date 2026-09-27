@@ -5,7 +5,6 @@ export interface CreateOfficeArgs {
   slug: string
   name: string
   organizationSlug: string
-  spaceId: string
   thumbnail: string
 }
 
@@ -13,16 +12,17 @@ export const createOffice = async ({
   slug,
   name,
   organizationSlug,
-  spaceId,
   thumbnail,
 }: CreateOfficeArgs): Promise<Office> => {
   const result = await prisma.office.create({
-    data: { slug, spaceId, name, organizationSlug, thumbnail },
+    data: { slug, name, organizationSlug, thumbnail },
   })
 
   return {
     ...result,
+    spaceId: result.spaceId ?? undefined,
     thumbnail: result.thumbnail ?? undefined,
-    description: result.thumbnail ?? undefined,
+    description: result.description ?? undefined,
+    layout: result.layout ?? undefined,
   }
 }

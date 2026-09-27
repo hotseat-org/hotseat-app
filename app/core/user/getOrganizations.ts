@@ -1,3 +1,4 @@
+import assert from "assert"
 import { organizationMapper } from "../organization/mapper"
 import type { OrganizationWithMembers } from "../organization/types"
 import type { CoreContext } from "../types"
@@ -19,6 +20,12 @@ export const getUserOrganizations =
         })
 
         const mappedOrganization = await mapper.fromRepository(organization)
+        const profile = await mainRepository.profile.find({
+          userEmail,
+          organizationSlug: organization.slug,
+        })
+
+        assert(profile)
 
         return {
           ...mappedOrganization,
@@ -26,6 +33,7 @@ export const getUserOrganizations =
             ...profiles,
             data: await Promise.all(profiles.data.map(mappers.profile.fromRepository)),
           },
+          profile,
         }
       })
     )

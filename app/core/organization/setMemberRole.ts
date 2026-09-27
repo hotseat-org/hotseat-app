@@ -1,6 +1,6 @@
-import { Role } from "@prisma/client"
 import type { Profile } from "../profile/types"
 import type { CoreContext } from "../types"
+import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import type { MainRepository } from "~/repositories/main-repository/types"
 
 export interface SetOrganizationMemberRoleArgs {

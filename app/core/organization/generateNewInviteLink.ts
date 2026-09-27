@@ -1,8 +1,8 @@
-import { Role } from "@prisma/client"
 import { nanoid } from "nanoid"
 import type { CoreContext } from "../types"
 import { organizationMapper } from "./mapper"
 import type { Organization } from "./types"
+import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 
 export interface GenerateNewOrganizationInviteLinkArgs {
   userEmail: string

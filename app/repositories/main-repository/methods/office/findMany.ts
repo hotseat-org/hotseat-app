@@ -30,8 +30,10 @@ export const findOffices = async ({
     totalCount,
     data: offices.map((office) => ({
       ...office,
+      spaceId: office.spaceId ?? undefined,
       description: office.description ?? undefined,
       thumbnail: office.thumbnail ?? undefined,
+      layout: office.layout ?? undefined,
     })),
   }
 }

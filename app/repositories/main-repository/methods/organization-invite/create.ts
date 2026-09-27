@@ -1,4 +1,5 @@
 import type { MainRepository } from "../../types"
+import { toOrganization } from "../organization/map"
 import prisma from "~/services/prisma.server"
 
 type CreateOrganizationFn = MainRepository["organizationInvite"]["create"]
@@ -20,7 +21,8 @@ export const createOrganizationInvite: CreateOrganizationFn = async ({
       expiresAt,
       organizationSlug,
     },
+    include: { organization: true },
   })
 
-  return result
+  return { ...result, organization: toOrganization(result.organization) }
 }

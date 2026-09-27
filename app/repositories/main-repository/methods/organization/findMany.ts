@@ -1,4 +1,5 @@
 import type { MainRepository } from "../../types"
+import { toOrganization } from "./map"
 import prisma from "~/services/prisma.server"
 
 type FindOrganizationsFn = MainRepository["organization"]["findMany"]
@@ -14,5 +15,5 @@ export const findManyOrganizations: FindOrganizationsFn = async ({ filter: { use
     where: { profiles: { some: { userEmail } } },
   })
 
-  return result
+  return result.map(toOrganization)
 }

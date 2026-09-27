@@ -1,5 +1,5 @@
-import type { Role } from "@prisma/client"
 import { Office } from "../office/types"
+import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 
 export interface Profile {
   userEmail: string
@@ -8,4 +8,5 @@ export interface Profile {
   displayName?: string
   avatarUrl?: string
   favoriteOffice?: Office
+  createdAt: Date
 }

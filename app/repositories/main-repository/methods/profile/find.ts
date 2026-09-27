@@ -26,5 +26,6 @@ export const findProfile: FindProfileFn = async ({ userEmail, organizationSlug }
     email: profile.userEmail,
     avatarUrl: profile.user.avatarUrl ?? undefined,
     displayName: profile.user.displayName ?? undefined,
+    createdAt: profile.createdAt,
   }
 }

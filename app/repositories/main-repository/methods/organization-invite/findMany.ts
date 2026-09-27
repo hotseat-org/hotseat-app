@@ -1,3 +1,4 @@
+import { toOrganization } from "../organization/map"
 import prisma from "~/services/prisma.server"
 
 export interface FindOrganizationInvitesArgs {
@@ -13,5 +14,5 @@ export const findManyOrganizationInvites = async ({ filter }: FindOrganizationIn
     include: { organization: true },
   })
 
-  return result
+  return result.map((i) => ({ ...i, organization: toOrganization(i.organization) }))
 }

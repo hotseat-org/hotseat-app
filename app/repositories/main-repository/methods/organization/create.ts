@@ -1,5 +1,5 @@
-import { Role } from "@prisma/client"
 import type { MainRepository } from "../../types"
+import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import prisma from "~/services/prisma.server"
 
 type CreateOrganizationFn = MainRepository["organization"]["create"]

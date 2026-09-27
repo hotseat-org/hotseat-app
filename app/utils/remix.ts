@@ -13,7 +13,7 @@ export function useUser(): User {
 }
 
 export function useProfile(): Profile {
-  const data = useRouteLoaderData<{ profile: Profile }>("routes/o.$slug")
+  const data = useRouteLoaderData<{ profile: Profile }>("routes/app.o.$slug")
 
   if (data?.profile) {
     return data.profile

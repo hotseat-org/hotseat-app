@@ -26,7 +26,17 @@ const encode = async (value: string) => {
   return bufferToHex(new Uint8Array(mac).buffer)
 }
 
+const isUrl = (str: string): boolean => {
+  try {
+    const url = new URL(str)
+    return url.protocol === "http:" || url.protocol === "https:"
+  } catch {
+    return false
+  }
+}
+
 export const getSignedUrl = async (id: string, variant: string) => {
+  if (isUrl(id)) return id
   const newUrl = new URL(`${DELIVERY_URL}/${id}/${variant}`)
 
   // Attach the expiration value to the `url`

@@ -1,8 +1,9 @@
-import type { Role } from "@prisma/client"
 import { CreateOfficeArgs } from "./methods/office/create"
 import { DeleteOfficeArgs } from "./methods/office/delete"
 import { FindOfficeArgs } from "./methods/office/find"
 import { FindOfficesArgs } from "./methods/office/findMany"
+import type { SaveOfficeLayoutArgs } from "./methods/office/saveLayout"
+import { UpdateOfficeArgs } from "./methods/office/update"
 import type { CreateOrganizationInviteArgs } from "./methods/organization-invite/create"
 import type { DeleteOrganizationInviteArgs } from "./methods/organization-invite/delete"
 import type { FindOrganizationInviteArgs } from "./methods/organization-invite/find"
@@ -17,8 +18,12 @@ import { DeleteProfileArgs } from "./methods/profile/delete"
 import type { FindProfileArgs } from "./methods/profile/find"
 import type { FindProfilesArgs } from "./methods/profile/findMany"
 import type { UpdateProfileArgs } from "./methods/profile/update"
+import type { BookReservationsArgs, BookReservationsResult } from "./methods/reservation/book"
+import type { DeleteReservationsArgs } from "./methods/reservation/deleteMany"
+import type { FindReservationsArgs } from "./methods/reservation/findMany"
 import type { FindUserArgs } from "./methods/user/find"
 import { UpdateUserArgs } from "./methods/user/update"
+import type { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/client"
 
 export type PaginatedResult<Data> = {
   data: Data[]
@@ -55,6 +60,7 @@ export interface Profile {
   role: Role
   displayName: string
   avatarUrl?: string
+  createdAt: Date
 }
 
 export interface OrganizationInvite {
@@ -71,13 +77,30 @@ export interface Office {
   slug: string
   organizationSlug: string
   name: string
-  spaceId: string
+  spaceId?: string
 
   thumbnail?: string
   description?: string
+  layout?: unknown
+  /** IANA timezone that decides "today" for bookings. */
+  timezone: string
+  bookingWindowDays: number
 
   createdAt: Date
   updatedAt: Date
+}
+
+export interface Reservation {
+  id: string
+  organizationSlug: string
+  officeSlug: string
+  userEmail: string
+  deskId: string
+  /** Office-local day, `YYYY-MM-DD`. */
+  date: string
+  seriesId: string | null
+  createdByEmail: string
+  createdAt: Date
 }
 
 export type CreateUserArgs = Pick<User, "email" | "avatarUrl" | "displayName">
@@ -112,6 +135,13 @@ export interface MainRepository {
     find: (args: FindOfficeArgs) => Promise<Office | null>
     findMany: (args: FindOfficesArgs) => Promise<PaginatedResult<Office>>
     create: (args: CreateOfficeArgs) => Promise<Office>
+    update: (args: UpdateOfficeArgs) => Promise<Office>
     delete: (args: DeleteOfficeArgs) => Promise<Office>
+    saveLayout: (args: SaveOfficeLayoutArgs) => Promise<{ office: Office; cancelled: number }>
+  }
+  reservation: {
+    findMany: (args: FindReservationsArgs) => Promise<Reservation[]>
+    book: (args: BookReservationsArgs) => Promise<BookReservationsResult>
+    delete: (args: DeleteReservationsArgs) => Promise<number>
   }
 }

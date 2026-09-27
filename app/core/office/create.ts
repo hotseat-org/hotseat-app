@@ -1,12 +1,11 @@
-import { Role } from "@prisma/client"
 import slugify from "slugify"
 import { getCore } from "../get-core"
 import type { CoreContext } from "../types"
 import type { Office } from "./types"
+import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 
 export interface CreateOfficeArgs {
   name: string
-  spaceId: string
   thumbnail: string
   organizationSlug: string
   userEmail: string
@@ -14,13 +13,7 @@ export interface CreateOfficeArgs {
 
 export const createOffice =
   ({ mainRepository, mappers }: CoreContext) =>
-  async ({
-    name,
-    userEmail,
-    spaceId,
-    thumbnail,
-    organizationSlug,
-  }: CreateOfficeArgs): Promise<Office> => {
+  async ({ name, userEmail, thumbnail, organizationSlug }: CreateOfficeArgs): Promise<Office> => {
     const core = getCore()
 
     const profile = await mainRepository.profile.find({
@@ -42,7 +35,6 @@ export const createOffice =
       name,
       organizationSlug,
       slug,
-      spaceId,
       thumbnail,
     })
 

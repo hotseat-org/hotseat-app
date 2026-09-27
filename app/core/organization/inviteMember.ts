@@ -1,8 +1,8 @@
-import { Role } from "@prisma/client"
 import dayjs from "dayjs"
 import { organizationInviteMapper } from "../organization-invite/mapper"
 import type { OrganizationInvite } from "../organization-invite/types"
 import type { CoreContext } from "../types"
+import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 
 export interface OrganizationInviteMemberArgs {
   userEmail: string

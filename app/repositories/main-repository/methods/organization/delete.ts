@@ -1,4 +1,5 @@
 import type { MainRepository } from "../../types"
+import { toOrganization } from "./map"
 import prisma from "~/services/prisma.server"
 
 type DeleteOrganizationFn = MainRepository["organization"]["delete"]
@@ -12,5 +13,5 @@ export const deleteOrganization: DeleteOrganizationFn = async ({ slug }) => {
     where: { slug },
   })
 
-  return result
+  return toOrganization(result)
 }

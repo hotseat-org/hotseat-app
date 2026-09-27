@@ -2,20 +2,18 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider      = "prisma-client-js"
+  provider      = "prisma-client"
+  output        = "./generated/prisma-client"
   binaryTargets = ["native", "rhel-openssl-1.0.x"]
-  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
-  extensions = [pgcrypto]
 }
 
 model User {
-  email        String         @unique
-  profiles      Profile[]
+  email    String    @unique
+  profiles Profile[]
 
   displayName String
   avatarUrl   String?
@@ -32,34 +30,35 @@ enum Role {
 }
 
 model Profile {
-  userEmail      String       
-  user           User         @relation(fields: [userEmail], references: [email], onDelete: Cascade)
-  organizationSlug String        
-  organization   Organization @relation(fields: [organizationSlug], references: [slug], onDelete: Cascade)
+  userEmail        String
+  user             User         @relation(fields: [userEmail], references: [email], onDelete: Cascade)
+  organizationSlug String
+  organization     Organization @relation(fields: [organizationSlug], references: [slug], onDelete: Cascade)
 
   favoriteOfficeSlug String?
-  favoriteOffice Office? @relation(fields: [favoriteOfficeSlug, organizationSlug], references: [slug, organizationSlug])
+  favoriteOffice     Office? @relation(fields: [favoriteOfficeSlug, organizationSlug], references: [slug, organizationSlug])
 
   role Role
 
+  reservations Reservation[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
 
   @@unique([userEmail, organizationSlug])
 }
 
 model Organization {
-  slug     String  @id @unique
+  slug     String               @id @unique
   name     String
-  profiles  Profile[]
+  profiles Profile[]
   invites  OrganizationInvite[]
-  offices Office[]
+  offices  Office[]
 
   invitationHash String? @unique
 
   description String?
-  thumbnail String?
+  thumbnail   String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -69,10 +68,10 @@ model Organization {
 
 model OrganizationInvite {
   expiresAt DateTime
-  email String
+  email     String
 
   organizationSlug String
-  organization  Organization @relation(fields: [organizationSlug], references: [slug], onDelete: Cascade)
+  organization     Organization @relation(fields: [organizationSlug], references: [slug], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -83,18 +82,59 @@ model OrganizationInvite {
 model Office {
   slug String
   name String
-  spaceId String
 
-  thumbnail String?
+  // Legacy Smplrspace id — no longer used (offices render via the R3F editor).
+  spaceId String?
+
+  thumbnail   String?
   description String?
 
+  // 3D editor scene: array of placed objects (walls/doors/desks/seats/plants).
+  layout Json?
+
   organizationSlug String
-  organization  Organization @relation(fields: [organizationSlug], references: [slug], onDelete: Cascade)
+  organization     Organization @relation(fields: [organizationSlug], references: [slug], onDelete: Cascade)
 
   favoriteBy Profile[]
+
+  // Desk booking. "Today" and "past" are judged in this IANA timezone; people
+  // can book up to `bookingWindowDays` ahead.
+  timezone          String        @default("Europe/Prague")
+  bookingWindowDays Int           @default(14)
+  reservations      Reservation[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([organizationSlug, slug])
+}
+
+// One person at one desk on one day. Desks with a permanent resident (the
+// desk's `assignee` in Office.layout) are never booked; everything else is.
+model Reservation {
+  id String @id @default(cuid())
+
+  organizationSlug String
+  officeSlug       String
+  office           Office @relation(fields: [organizationSlug, officeSlug], references: [organizationSlug, slug], onDelete: Cascade, onUpdate: Cascade)
+
+  userEmail String
+  profile   Profile @relation(fields: [userEmail, organizationSlug], references: [userEmail, organizationSlug], onDelete: Cascade, onUpdate: Cascade)
+
+  // SceneObject.id inside Office.layout (JSON, so no FK — layout saves clean up).
+  deskId String
+  // The office's local calendar day (no time).
+  date   DateTime @db.Date
+
+  // Days booked together (a multi-day or repeating booking).
+  seriesId       String?
+  // Who made it — differs from userEmail when an admin books for someone.
+  createdByEmail String
+
+  createdAt DateTime @default(now())
+
+  // One person per desk per day; one desk per person per day (across offices).
+  @@unique([organizationSlug, officeSlug, deskId, date])
+  @@unique([organizationSlug, userEmail, date])
+  @@index([organizationSlug, officeSlug, date])
 }

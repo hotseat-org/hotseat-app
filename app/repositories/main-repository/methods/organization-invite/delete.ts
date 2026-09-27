@@ -1,4 +1,5 @@
 import type { MainRepository } from "../../types"
+import { toOrganization } from "../organization/map"
 import prisma from "~/services/prisma.server"
 
 type DeleteOrganizationInviteFn = MainRepository["organizationInvite"]["delete"]
@@ -14,7 +15,8 @@ export const deleteOrganizationInvite: DeleteOrganizationInviteFn = async ({
 }) => {
   const result = await prisma.organizationInvite.delete({
     where: { email_organizationSlug: { email, organizationSlug } },
+    include: { organization: true },
   })
 
-  return result
+  return { ...result, organization: toOrganization(result.organization) }
 }

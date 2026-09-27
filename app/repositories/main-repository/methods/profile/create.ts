@@ -1,5 +1,5 @@
-import type { Role } from "@prisma/client"
 import type { MainRepository } from "../../types"
+import type { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/client"
 import prisma from "~/services/prisma.server"
 
 type CreateProfileFn = MainRepository["profile"]["create"]

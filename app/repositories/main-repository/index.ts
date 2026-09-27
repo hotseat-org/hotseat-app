@@ -2,6 +2,8 @@ import { createOffice } from "./methods/office/create"
 import { deleteOffice } from "./methods/office/delete"
 import { findOffice } from "./methods/office/find"
 import { findOffices } from "./methods/office/findMany"
+import { saveOfficeLayout } from "./methods/office/saveLayout"
+import { updateOffice } from "./methods/office/update"
 import { createOrganizationInvite } from "./methods/organization-invite/create"
 import { deleteOrganizationInvite } from "./methods/organization-invite/delete"
 import { findOrganizationInvite } from "./methods/organization-invite/find"
@@ -16,6 +18,9 @@ import { deleteProfile } from "./methods/profile/delete"
 import { findProfile } from "./methods/profile/find"
 import { findProfiles } from "./methods/profile/findMany"
 import { updateProfile } from "./methods/profile/update"
+import { bookReservations } from "./methods/reservation/book"
+import { deleteReservations } from "./methods/reservation/deleteMany"
+import { findReservations } from "./methods/reservation/findMany"
 import { createUser } from "./methods/user/create"
 import { findUser } from "./methods/user/find"
 import { updateUser } from "./methods/user/update"
@@ -52,7 +57,14 @@ export const createMainMysqlRepository = (): MainRepository => {
       find: findOffice,
       findMany: findOffices,
       create: createOffice,
+      update: updateOffice,
       delete: deleteOffice,
+      saveLayout: saveOfficeLayout,
+    },
+    reservation: {
+      findMany: findReservations,
+      book: bookReservations,
+      delete: deleteReservations,
     },
   }
 }

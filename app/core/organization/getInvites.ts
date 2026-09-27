@@ -1,7 +1,7 @@
-import { Role } from "@prisma/client"
 import { organizationInviteMapper } from "../organization-invite/mapper"
 import type { OrganizationInvite } from "../organization-invite/types"
 import type { CoreContext } from "../types"
+import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 
 interface GetOrganizationInvitesArgs {
   userEmail: string

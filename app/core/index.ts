@@ -1,5 +1,8 @@
 import { createOffice } from "./office/create"
 import { getOffice } from "./office/get"
+import { saveOfficeLayout } from "./office/saveLayout"
+import { updateOffice } from "./office/update"
+import { deleteOffice } from "./office/delete"
 import { officeIsAvailable } from "./office/isAvailable"
 import { setOfficeFavorite } from "./office/setFavorite"
 import { unsetOfficeFavorite } from "./office/unsetFavorite"
@@ -20,6 +23,10 @@ import { leaveOrganization } from "./organization/leave"
 import { setOrganizationMemberRole } from "./organization/setMemberRole"
 import { updateOrganization } from "./organization/update"
 import { getProfile } from "./profile/get"
+import { cancelReservations } from "./reservation/cancel"
+import { listReservations } from "./reservation/list"
+import { getMyBookings } from "./reservation/mine"
+import { reserveDesk } from "./reservation/reserve"
 import type { CoreContext } from "./types"
 import { createUser } from "./user/create"
 import { getUser } from "./user/get"
@@ -64,6 +71,15 @@ export const createCore = (context: CoreContext) => ({
     unsetFavorite: unsetOfficeFavorite(context),
     isAvailable: officeIsAvailable(context),
     create: createOffice(context),
+    saveLayout: saveOfficeLayout(context),
+    update: updateOffice(context),
+    delete: deleteOffice(context),
+  },
+  reservation: {
+    list: listReservations(context),
+    reserve: reserveDesk(context),
+    cancel: cancelReservations(context),
+    mine: getMyBookings(context),
   },
 })
 

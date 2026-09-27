@@ -1,6 +1,6 @@
-import { Role } from "@prisma/client"
 import type { CoreContext } from "../types"
 import type { Organization } from "./types"
+import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 
 export interface DeleteOrganizationArgs {
   slug: string

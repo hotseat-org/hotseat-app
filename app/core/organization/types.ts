@@ -11,4 +11,5 @@ export interface Organization {
 
 export interface OrganizationWithMembers extends Organization {
   members: PaginatedResult<Profile>
+  profile: Profile
 }

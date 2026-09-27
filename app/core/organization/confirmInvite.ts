@@ -1,7 +1,7 @@
-import { Role } from "@prisma/client"
 import dayjs from "dayjs"
 import type { Profile } from "../profile/types"
 import type { CoreContext } from "../types"
+import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 
 export interface ConfirmOrganizationInviteArgs {
   email: string
@@ -29,11 +29,8 @@ export const confirmOrganizationInvite =
     const profile = await mainRepository.profile.create({
       organizationSlug,
       email,
-      data: {
-        displayName: user.displayName,
-        role: Role.USER,
-        avatarUrl: user.avatarUrl,
-      },
+      // Name/avatar come from the user record (profiles don't store them).
+      data: { role: Role.USER },
     })
 
     await mainRepository.organizationInvite.delete({

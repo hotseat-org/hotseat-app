@@ -19,7 +19,9 @@ export const findOffice = async ({
 
   return {
     ...result,
+    spaceId: result.spaceId ?? undefined,
     thumbnail: result.thumbnail ?? undefined,
-    description: result.thumbnail ?? undefined,
+    description: result.description ?? undefined,
+    layout: result.layout ?? undefined,
   }
 }
