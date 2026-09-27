@@ -21,7 +21,8 @@ import {
   unitEdges,
 } from "../layout"
 import { SURFACES } from "../palette"
-import { initials, personByEmail, usePeople, type People } from "../people"
+import { personByEmail, usePeople, type People } from "../people"
+import { petFor, petThumb } from "../models"
 import { spotFor } from "../seatSpot"
 import { SeatCardBody, useSeatCard } from "../seatCard"
 import { useDesksOnDay, type DeskOnDay } from "../useBooking"
@@ -51,6 +52,9 @@ const DRAG = 4
 const STUB = 0.22
 /** A partition between two rooms: half height. */
 const PARTITION = 0.75
+/** A booked desk's pet: its picture's size, standing on the chair seat. */
+const PET_SIZE = 0.72
+const SEAT_TOP = 0.46
 /** Tags and the desk card hang this high above a desk. */
 const TAG_Y = 1.55
 
@@ -420,8 +424,8 @@ const buildScene = ({
   const me = people.me?.email
 
   const drawables: Drawable[] = []
-  const push = (ext: Extent, node: ReactNode) =>
-    drawables.push({ ext, node, order: drawables.length })
+  /** Booked desks' pets, drawn over everything (back to front among themselves). */
+  const pets: { depth: number; node: ReactNode }[] = []
 
   // --- Walls: back walls of a room stand; walls facing the viewer are cut
   // down to a stub, partitions to half height.
@@ -563,45 +567,43 @@ const buildScene = ({
       const spot = spotFor(o, seats)
       const person = personByEmail(people, state.email)
       const mine = state.email === me
-      const [px, py] = project(spot.x, 0.98, spot.z)
-      push(
-        {
-          x0: spot.x - 0.2,
-          x1: spot.x + 0.2,
-          z0: spot.z - 0.2,
-          z1: spot.z + 0.2,
-          y0: 0.6,
-          y1: 1.2,
-        },
-        <g
-          className="cursor-pointer"
-          onClick={(e) => {
-            e.stopPropagation()
-            onDesk(o.id)
-          }}
-        >
-          <circle
-            cx={px}
-            cy={py}
-            r={0.24}
-            className={mine ? "fill-accent" : undefined}
-            fill={mine ? undefined : "#ffffff"}
-            stroke={mine ? "#ffffff" : "#4a5263"}
-            strokeWidth={0.03}
-          />
-          <text
-            x={px}
-            y={py}
-            textAnchor="middle"
-            dominantBaseline="central"
-            fontSize={0.19}
-            fontWeight={800}
-            fill={mine ? "#ffffff" : "#4a5263"}
+      // Their desk pet (the same one as in 3D) on the chair — a picture
+      // rendered from its model. Drawn over the furniture like a marker: sorted
+      // with it, a chair's backrest would hide the pet from most angles.
+      const pet = petFor(state.email, person?.pet)
+      const [px, py] = project(spot.x, SEAT_TOP, spot.z)
+      pets.push({
+        depth: spot.x + spot.z,
+        node: (
+          <g
+            className="cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation()
+              onDesk(o.id)
+            }}
           >
-            {person ? initials(person.name) : "?"}
-          </text>
-        </g>
-      )
+            <title>{`${person ? (mine ? "You" : person.name) : "Taken"} · ${pet.label}`}</title>
+            {mine && (
+              <ellipse
+                cx={px}
+                cy={py}
+                rx={0.3}
+                ry={0.15}
+                className="fill-accent"
+                stroke="#ffffff"
+                strokeWidth={0.03}
+              />
+            )}
+            <image
+              href={petThumb(pet.id)}
+              x={px - PET_SIZE / 2}
+              y={py - PET_SIZE * 0.86}
+              width={PET_SIZE}
+              height={PET_SIZE}
+            />
+          </g>
+        ),
+      })
     }
   }
 
@@ -701,6 +703,11 @@ const buildScene = ({
         {sorted.map((d, i) => (
           <g key={i}>{d.node}</g>
         ))}
+        {pets
+          .sort((a, b) => a.depth - b.depth)
+          .map((p, i) => (
+            <g key={`p${i}`}>{p.node}</g>
+          ))}
       </>
     ),
   }
