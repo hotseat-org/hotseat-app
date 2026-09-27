@@ -18,6 +18,8 @@ const compat = new FlatCompat({
 })
 
 export default [
+  // Generated code (Prisma client, `prisma generate`) — not ours to lint.
+  { ignores: ["**/generated/**"] },
   ...compat.extends(
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",

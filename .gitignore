@@ -5,5 +5,8 @@ node_modules
 /public/build
 .env
 .react-router/
+generated
 
 cdk.out
+
+/generated/prisma

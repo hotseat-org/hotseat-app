@@ -2,8 +2,8 @@
   "include": ["env.d.ts", "**/*.ts", "**/*.tsx", ".react-router/types/**/*"],
   "exclude": ["node_modules"],
   "compilerOptions": {
-    "types": ["@react-router/node", "vite/client"],
-    "lib": ["DOM", "DOM.Iterable", "ES2019"],
+    "types": ["@react-router/node", "vite/client", "@types/node"],
+    "lib": ["DOM", "DOM.Iterable", "es2020"],
     "isolatedModules": true,
     "esModuleInterop": true,
     "jsx": "react-jsx",
@@ -11,7 +11,7 @@
     "moduleResolution": "Bundler",
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "target": "ES2019",
+    "target": "ESNext",
     "strict": true,
     "baseUrl": ".",
     "paths": {
