@@ -1,0 +1,175 @@
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react"
+import { useThree } from "@react-three/fiber"
+import { BufferGeometry, Matrix4, Mesh, type Group, type Material, type Object3D } from "three"
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js"
+import { markShadowsDirty } from "../scene/shadows"
+
+/** Mark a subtree (e.g. an animated model) to be left out of baking. */
+export const NO_BAKE = { noBake: true }
+
+interface Part {
+  key: string
+  geometry: BufferGeometry
+  material: Material
+  castShadow: boolean
+  receiveShadow: boolean
+}
+
+type AnyMaterial = Material & {
+  color?: { getHexString(): string }
+  emissive?: { getHexString(): string }
+  roughness?: number
+  metalness?: number
+  emissiveIntensity?: number
+  flatShading?: boolean
+  clippingPlanes?: unknown[] | null
+}
+
+/**
+ * How a material LOOKS — materials that render identically share a batch. Not
+ * opacity: the wall/door cutaway animates it per frame on the material itself.
+ */
+const materialKey = (m: AnyMaterial) =>
+  [
+    m.type,
+    m.color?.getHexString(),
+    m.roughness,
+    m.metalness,
+    m.emissive?.getHexString(),
+    m.emissiveIntensity,
+    m.flatShading,
+    m.transparent,
+    m.depthWrite,
+    m.side,
+    m.clippingPlanes?.length ?? 0,
+  ].join("|")
+
+/** The meshes to bake (skipping NO_BAKE subtrees and our own merged output). */
+const collect = (root: Object3D, skip: Object3D | null): Mesh[] => {
+  const out: Mesh[] = []
+  const walk = (o: Object3D) => {
+    if (o === skip || o.userData.noBake) return
+    if ((o as Mesh).isMesh && !Array.isArray((o as Mesh).material)) out.push(o as Mesh)
+    for (const c of o.children) walk(c)
+  }
+  for (const c of root.children) walk(c)
+  return out
+}
+
+/**
+ * Draw-call batching for one piece of furniture: its many small meshes are
+ * merged into ONE mesh per distinct material look (a chair's 11 meshes → 3), and
+ * the originals are hidden.
+ *
+ * The originals stay mounted, so everything keyed to them keeps working:
+ * recolouring and the cutaway swap their materials (→ re-bake), pointer events
+ * still raycast them (three ignores `visible` when raycasting), and the carry
+ * animation moves an ancestor group. Merged meshes don't raycast. Re-baking
+ * only happens when a cheap fingerprint of the parts actually changes.
+ */
+export const Baked = ({ children }: { children: ReactNode }) => {
+  const root = useRef<Group>(null)
+  const output = useRef<Group>(null)
+  const [parts, setParts] = useState<Part[]>([])
+  const fingerprint = useRef("")
+  // Shadows depend on shape, not material: only a geometry/transform change
+  // needs the (cached) shadow maps redrawn — not the door/window cutaway
+  // swapping materials, which happens constantly while hovering walls.
+  const shapeFingerprint = useRef("")
+  const shapeChanged = useRef(false)
+  const gl = useThree((s) => s.gl)
+  const invalidate = useThree((s) => s.invalidate)
+
+  useLayoutEffect(() => {
+    const g = root.current
+    if (!g) return
+    const meshes = collect(g, output.current)
+    const fp = meshes
+      .map(
+        (m) =>
+          // Material look included: recolouring mutates a material in place.
+          `${m.geometry.uuid}:${(m.material as Material).uuid}:${materialKey(m.material as AnyMaterial)}:${m.position.toArray()}:${m.rotation.toArray()}:${m.scale.toArray()}`
+      )
+      .join(";")
+    // Hide originals every time (newly mounted ones included); cheap.
+    for (const m of meshes) m.visible = false
+    if (fp === fingerprint.current) return
+    fingerprint.current = fp
+    const shape = meshes
+      .map(
+        (m) =>
+          `${m.geometry.uuid}:${m.position.toArray()}:${m.rotation.toArray()}:${m.scale.toArray()}:${m.castShadow}`
+      )
+      .join(";")
+    if (shape !== shapeFingerprint.current) {
+      shapeFingerprint.current = shape
+      shapeChanged.current = true
+    }
+
+    g.updateWorldMatrix(true, true)
+    const inv = new Matrix4().copy(g.matrixWorld).invert()
+    const groups = new Map<string, { meshes: Mesh[]; material: Material }>()
+    for (const m of meshes) {
+      const mat = m.material as AnyMaterial
+      const key = `${materialKey(mat)}|${m.castShadow}|${m.receiveShadow}`
+      const grp = groups.get(key)
+      if (grp) grp.meshes.push(m)
+      else groups.set(key, { meshes: [m], material: mat })
+    }
+
+    const next: Part[] = []
+    for (const [key, { meshes: ms, material }] of groups) {
+      const geoms = ms.map((m) => {
+        const src = m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone()
+        // Keep only what our (texture-less) materials use, so attributes match.
+        const geo = new BufferGeometry()
+        geo.setAttribute("position", src.getAttribute("position"))
+        if (src.getAttribute("normal")) geo.setAttribute("normal", src.getAttribute("normal"))
+        else geo.computeVertexNormals()
+        src.dispose()
+        return geo.applyMatrix4(new Matrix4().multiplyMatrices(inv, m.matrixWorld))
+      })
+      const merged = mergeGeometries(geoms, false)
+      geoms.forEach((x) => x.dispose())
+      if (!merged) {
+        ms.forEach((m) => (m.visible = true)) // couldn't merge: leave them as-is
+        continue
+      }
+      next.push({
+        key,
+        geometry: merged,
+        material,
+        castShadow: ms[0].castShadow,
+        receiveShadow: ms[0].receiveShadow,
+      })
+    }
+    setParts(next)
+  })
+
+  // New shapes → the cached shadow maps must include them; free old geometry.
+  useLayoutEffect(() => {
+    if (shapeChanged.current) {
+      shapeChanged.current = false
+      markShadowsDirty(gl, invalidate)
+    } else invalidate()
+    return () => parts.forEach((p) => p.geometry.dispose())
+  }, [parts, gl, invalidate])
+
+  return (
+    <group ref={root}>
+      {children}
+      <group ref={output}>
+        {parts.map((p) => (
+          <mesh
+            key={p.key + p.geometry.uuid}
+            geometry={p.geometry}
+            material={p.material}
+            castShadow={p.castShadow}
+            receiveShadow={p.receiveShadow}
+            raycast={() => null}
+          />
+        ))}
+      </group>
+    </group>
+  )
+}

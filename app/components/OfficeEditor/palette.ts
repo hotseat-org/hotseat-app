@@ -1,0 +1,148 @@
+import type { ObjectType } from "./types"
+
+/**
+ * A regular office palette — warm, slightly-desaturated naturals — with only a
+ * hint of outrun (a soft neon `ACCENT` used sparingly, e.g. the monitor glow).
+ */
+export const PALETTE = {
+  wall: "#efe7db",
+  wallTrim: "#e2d6c4",
+  door: "#d98a63",
+  doorFrame: "#efe7db",
+  doorHandle: "#e8c07a",
+  deskTop: "#c9946a",
+  deskLeg: "#8f6a4a",
+  seat: "#6d90c9",
+  seatDark: "#5878ab",
+  seatLeg: "#3d4657",
+  plantLeaf: "#7fa66a",
+  plantLeafDark: "#6b9159",
+  pot: "#c9765a",
+  floor: "#e6d7bf",
+  /** Warmer wood tone for the enclosed office interior (vs. the lighter exterior). */
+  floorInside: "#c9b48d",
+  groundEdge: "#d8c6a8",
+} as const
+
+/** The lone outrun touch: a soft neon cyan for screen glow / small accents. */
+export const ACCENT = "#3fd0ff"
+
+/** Primary (recolourable) colour per type. */
+export const DEFAULT_COLOR: Record<ObjectType, string> = {
+  wall: PALETTE.wall,
+  door: PALETTE.door,
+  window: "#f4efe6",
+  glassWall: "#5b6577",
+  glassDoor: "#5b6577",
+  desk: PALETTE.deskTop,
+  seat: PALETTE.seat,
+  plant: PALETTE.plantLeaf,
+  workstation: PALETTE.deskTop,
+  deskmate: PALETTE.deskTop,
+  sofa: "#5f8a86",
+  coffeeTable: PALETTE.deskTop,
+  meetingTable: PALETTE.deskTop,
+  bookshelf: PALETTE.deskLeg,
+  rug: "#b96f6f",
+  cooler: "#e8edf2",
+  filingCabinet: "#8f9aa6",
+  lockers: "#5f7d9a",
+  printer: "#e8edf2",
+  tvScreen: PALETTE.deskLeg,
+  whiteboard: "#b9bcc4",
+  vendingMachine: "#c9564f",
+  floorLamp: "#f0e2c0",
+  trashBin: "#5b6577",
+  kitchenCounter: "#d9cbb4",
+  fridge: "#e8edf2",
+  armchair: "#c0876a",
+  ceilingLight: "#3d4657",
+  wardrobe: "#c9a27e",
+  barStool: "#d98a63",
+  barTable: PALETTE.deskTop,
+  toilet: "#f3f1ec",
+  shower: "#9fc3c9",
+  bathroomSink: "#6d7f99",
+  roundTable: PALETTE.deskTop,
+  squareTable: PALETTE.deskTop,
+  ovalTable: PALETTE.deskTop,
+  ovalBarTable: PALETTE.deskTop,
+  serverRack: "#2c313c",
+  shelvingUnit: "#e9e1d4",
+  wallTv: "#2c313c",
+  wallArt: "#c9946a",
+  wallClock: "#3d4657",
+  wallShelf: PALETTE.deskTop,
+  coatRack: PALETTE.deskLeg,
+  planterBox: "#8f9aa6",
+  divider: "#5f8a86",
+  floorPaint: "#c9b48d",
+}
+
+/** Floor finishes for the Paint tool (woods, carpets, stone). */
+export const FLOOR_SWATCHES = [
+  "#e6d7bf",
+  "#c9b48d",
+  "#a67c52",
+  "#7a5a3c",
+  "#8c9aa8",
+  "#6d7f99",
+  "#7f8f6a",
+  "#b8a99a",
+  "#d8d2c8",
+  "#4a4f5c",
+] as const
+
+/** Recolour swatches — muted naturals. */
+export const SWATCHES = [
+  "#efe7db",
+  "#c9946a",
+  "#d98a63",
+  "#6d90c9",
+  "#7fa66a",
+  "#e8c07a",
+  "#b96f6f",
+  "#8b7fb0",
+  "#5f8a86",
+  "#3d4657",
+] as const
+
+/**
+ * The big neutral surfaces per app theme. Lighting stays bright daylight in both
+ * themes (visibility first); dark mode only swaps these to deep slate tones so
+ * the office sits naturally inside the dark UI. Furniture keeps its colours.
+ * `background: null` → use the time-of-day sky.
+ */
+export interface SurfacePalette {
+  background: string | null
+  floor: string
+  floorInside: string
+  wall: string
+  grid: string
+  /**
+   * How deep night gets: 0 = bright/readable, 1 = deep, >1 darker still (~2.3
+   * is near-black). Light surfaces need a deeper night to read as night; dark
+   * surfaces already do.
+   */
+  nightDepth: number
+}
+
+export const SURFACES: Record<"light" | "dark", SurfacePalette> = {
+  light: {
+    background: null,
+    floor: PALETTE.floor,
+    floorInside: PALETTE.floorInside,
+    wall: PALETTE.wall,
+    grid: "#9c855e",
+    nightDepth: 1.5,
+  },
+  dark: {
+    // Matches the app's dark --background so the scene blends into the UI.
+    background: "#20242e",
+    floor: "#2e3441",
+    floorInside: "#4a4135",
+    wall: "#5a6275",
+    grid: "#56607a",
+    nightDepth: 0,
+  },
+}

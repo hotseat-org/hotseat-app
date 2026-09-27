@@ -1,0 +1,71 @@
+import { z } from "zod"
+
+/**
+ * Validation for a persisted office layout. Server-safe (no three/R3F imports)
+ * so it can be used in loaders/actions as well as the client.
+ */
+export const sceneObjectSchema = z.object({
+  id: z.string(),
+  type: z.enum([
+    "wall",
+    "door",
+    "window",
+    "glassWall",
+    "glassDoor",
+    "desk",
+    "seat",
+    "plant",
+    "workstation",
+    "deskmate",
+    "sofa",
+    "coffeeTable",
+    "meetingTable",
+    "bookshelf",
+    "rug",
+    "cooler",
+    "filingCabinet",
+    "lockers",
+    "printer",
+    "tvScreen",
+    "whiteboard",
+    "vendingMachine",
+    "floorLamp",
+    "trashBin",
+    "kitchenCounter",
+    "fridge",
+    "armchair",
+    "ceilingLight",
+    "wardrobe",
+    "barStool",
+    "barTable",
+    "toilet",
+    "shower",
+    "bathroomSink",
+    "roundTable",
+    "squareTable",
+    "ovalTable",
+    "ovalBarTable",
+    "serverRack",
+    "shelvingUnit",
+    "wallTv",
+    "wallArt",
+    "wallClock",
+    "wallShelf",
+    "coatRack",
+    "planterBox",
+    "divider",
+    "floorPaint",
+  ]),
+  x: z.number(),
+  z: z.number(),
+  rotation: z.number(),
+  color: z.string().optional(),
+  model: z.string().optional(),
+  label: z.string().max(24).optional(),
+  assignee: z.string().optional(),
+  variant: z.number().int().min(0).optional(),
+})
+
+export const layoutSchema = z.array(sceneObjectSchema)
+
+export type LayoutObject = z.infer<typeof sceneObjectSchema>

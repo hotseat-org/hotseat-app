@@ -1,0 +1,324 @@
+import { ToggleButton, Tooltip } from "@heroui/react"
+import clsx from "clsx"
+import { useEffect, useRef, useState } from "react"
+import { Ban, Eraser, MousePointer2, PaintBucket } from "lucide-react"
+import { useEditorStore } from "../store"
+import { DEFAULT_COLOR, FLOOR_SWATCHES, SWATCHES } from "../palette"
+import { CATEGORIES, TOOL_META, categoryOf, colorKey, isCatalogItem } from "./categories"
+import { PreviewTile } from "./PreviewView"
+
+/**
+ * The Sims-style build catalog: a category rail on the left and a grid of live,
+ * turntable 3D previews on the right. Each preview renders the real object as
+ * it'll be placed — not an icon. Select/Erase live above the categories.
+ *
+ * Opening a category just shows its assets — nothing is armed until you pick
+ * one. The armed asset always belongs to the open category: opening another
+ * category (or closing this one) disarms it, and arming an asset by shortcut
+ * opens its category. Select/Erase (which place nothing) collapse the panel.
+ */
+export const Catalog = () => {
+  const tool = useEditorStore((s) => s.tool)
+  const setTool = useEditorStore((s) => s.setTool)
+  const placementColors = useEditorStore((s) => s.placementColors)
+  const setPlacementColor = useEditorStore((s) => s.setPlacementColor)
+
+  const [openId, setOpenId] = useState<string | null>(null)
+  const category = CATEGORIES.find((c) => c.id === openId)
+  // Arming an asset any other way (number keys) opens its category.
+  useEffect(() => {
+    const c = isCatalogItem(tool) ? categoryOf(tool) : undefined
+    if (c) setOpenId(c.id)
+  }, [tool])
+
+  // The armed asset, if it's in the open category (drives the colour picker).
+  const armed = category && isCatalogItem(tool) && category.types.includes(tool) ? tool : null
+  // The colour chosen for the armed type (null = its default); Room → walls'.
+  const colorType = armed ? colorKey(armed) : null
+  const activeColor = colorType ? (placementColors[colorType] ?? null) : null
+
+  const toggleCategory = (id: string) => {
+    // Don't leave an asset from another (or the closing) category armed.
+    if (isCatalogItem(tool)) setTool("select")
+    setOpenId((cur) => (cur === id ? null : id))
+  }
+  // The panel matches the rail's height exactly (tiles scroll inside it), so
+  // measure the rail.
+  const railRef = useRef<HTMLDivElement>(null)
+  const [railHeight, setRailHeight] = useState(0)
+  useEffect(() => {
+    const el = railRef.current
+    if (!el) return
+    const ro = new ResizeObserver(() => setRailHeight(el.offsetHeight))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  const pickMode = (mode: "select" | "delete" | "paint") => {
+    setOpenId(null)
+    setTool(mode)
+  }
+
+  // Only the rail sizes this box, so it stays centred on the screen no matter
+  // what the (absolutely positioned) preview panel does.
+  return (
+    <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2">
+      {/* Category rail */}
+      <div
+        ref={railRef}
+        className="pointer-events-auto flex max-h-[calc(100dvh-10rem)] flex-col gap-1 overflow-y-auto rounded-2xl border border-border bg-overlay/90 p-1.5 shadow-overlay backdrop-blur-md [scrollbar-width:none]"
+      >
+        <RailButton
+          label="Select"
+          shortcut="1"
+          active={tool === "select" && !category}
+          onClick={() => pickMode("select")}
+        >
+          <MousePointer2 className="size-5" strokeWidth={2} />
+        </RailButton>
+        <RailButton
+          label="Erase"
+          shortcut="0"
+          active={tool === "delete"}
+          danger
+          onClick={() => pickMode("delete")}
+        >
+          <Eraser className="size-5" strokeWidth={2} />
+        </RailButton>
+        <RailButton label="Paint" active={tool === "paint"} onClick={() => pickMode("paint")}>
+          <PaintBucket className="size-5" strokeWidth={2} />
+        </RailButton>
+
+        <div className="my-1 h-px bg-separator" />
+
+        {CATEGORIES.map((c) => {
+          const Icon = c.icon
+          return (
+            <RailButton
+              key={c.id}
+              label={c.label}
+              active={openId === c.id}
+              onClick={() => toggleCategory(c.id)}
+            >
+              <Icon className="size-5" strokeWidth={2} />
+            </RailButton>
+          )
+        })}
+      </div>
+
+      {/* Paint: colour choice + how-to, in the same slot/size as a category. */}
+      {tool === "paint" && !category && <PaintPanel height={railHeight} />}
+
+      {/* Preview grid — only while an asset (a category) is armed, so Select and
+          Erase collapse the catalog to just the rail. */}
+      {category && (
+        // Same height as the rail, always: title on top, colour swatches pinned
+        // at the bottom, and the tile grid scrolls in between.
+        <div
+          style={railHeight ? { height: railHeight } : undefined}
+          className="pointer-events-auto absolute left-full top-0 ml-2 flex w-60 flex-col rounded-2xl border border-border bg-overlay/90 p-3 shadow-overlay backdrop-blur-md"
+        >
+          <h2 className="mb-2 shrink-0 px-1 text-sm font-semibold text-foreground">
+            {category.label}
+          </h2>
+
+          <div className="-mr-2 grid min-h-0 flex-1 grid-cols-2 content-start gap-2 overflow-y-auto overscroll-contain pr-2 [scrollbar-width:thin]">
+            {category.types.map((t) => {
+              const meta = TOOL_META.get(t)
+              const active = tool === t
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setTool(t)}
+                  title={meta?.label}
+                  className={clsx(
+                    "group flex flex-col items-center gap-1 rounded-xl border p-1.5 transition-colors",
+                    active
+                      ? "border-accent bg-accent/15"
+                      : "border-border bg-foreground/[0.04] hover:border-accent/50 hover:bg-foreground/10"
+                  )}
+                >
+                  <div className="h-24 w-full overflow-hidden rounded-lg">
+                    {/* Each tile reflects its own per-type colour. */}
+                    <PreviewTile type={t} color={placementColors[colorKey(t)]} active={active} />
+                  </div>
+                  <span
+                    className={clsx(
+                      "w-full truncate text-center text-[11px] font-medium",
+                      active ? "text-foreground" : "text-muted"
+                    )}
+                  >
+                    {meta?.label ?? t}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Colour picker for the armed asset — sets the colour of what you place
+            next. Always present (reserved space, so nothing jumps); disabled until
+            an asset is picked. "Default" (the type's own colour) is a non-colour option, so this
+            stays a custom swatch grid rather than HeroUI's ColorSwatchPicker (which
+            can't host a null/default chip inline with the colours). */}
+          <div
+            className={clsx(
+              "mt-3 shrink-0 border-t border-separator pt-2.5 transition-opacity",
+              !armed && "pointer-events-none opacity-40"
+            )}
+            aria-disabled={!armed}
+          >
+            <div className="mb-1.5 px-1 text-[11px] font-medium text-muted">
+              {armed ? "Colour" : "Colour — pick an item"}
+            </div>
+            <div className="flex flex-wrap gap-1.5 px-1">
+              <Swatch
+                title="Default"
+                selected={!!armed && activeColor === null}
+                onClick={() => colorType && setPlacementColor(colorType, null)}
+              >
+                <span
+                  className="flex size-full items-center justify-center rounded-md"
+                  style={{ background: colorType ? DEFAULT_COLOR[colorType] : "transparent" }}
+                >
+                  <Ban className="size-3.5 text-slate-900/70" strokeWidth={2.5} />
+                </span>
+              </Swatch>
+              {SWATCHES.map((c) => (
+                <Swatch
+                  key={c}
+                  title={c}
+                  selected={activeColor === c}
+                  onClick={() => colorType && setPlacementColor(colorType, c)}
+                >
+                  <span className="block size-full rounded-md" style={{ background: c }} />
+                </Swatch>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+interface SwatchProps {
+  title: string
+  selected: boolean
+  onClick: () => void
+  children: React.ReactNode
+}
+
+const Swatch = ({ title, selected, onClick, children }: SwatchProps) => (
+  <button
+    type="button"
+    onClick={onClick}
+    title={title}
+    className={clsx(
+      "size-6 rounded-md ring-2 ring-offset-2 ring-offset-overlay transition",
+      selected ? "ring-foreground" : "ring-transparent hover:ring-foreground/40"
+    )}
+  >
+    {children}
+  </button>
+)
+
+interface RailButtonProps {
+  label: string
+  shortcut?: string
+  active: boolean
+  danger?: boolean
+  onClick: () => void
+  children: React.ReactNode
+}
+
+const RailButton = ({ label, shortcut, active, danger, onClick, children }: RailButtonProps) => (
+  <Tooltip delay={350}>
+    {/* Controlled isSelected + onPress: re-pressing an armed tool re-selects it
+        (never toggles off), matching the old click-to-arm behaviour. */}
+    <ToggleButton
+      isIconOnly
+      variant="ghost"
+      aria-label={label}
+      isSelected={active}
+      onPress={onClick}
+      className={clsx(
+        "flex size-11 items-center justify-center rounded-xl transition-colors",
+        active
+          ? danger
+            ? "bg-danger text-danger-foreground"
+            : "bg-accent text-accent-foreground"
+          : "text-muted hover:bg-foreground/10 hover:text-foreground"
+      )}
+    >
+      {children}
+    </ToggleButton>
+    <Tooltip.Content
+      placement="right"
+      className="rounded-md border border-border bg-overlay px-2 py-1 text-xs text-foreground shadow-overlay"
+    >
+      {label}
+      {shortcut ? <span className="ml-1 text-muted">{shortcut}</span> : null}
+    </Tooltip.Content>
+  </Tooltip>
+)
+
+/**
+ * Paint tool panel: pick a colour, then click a wall (its whole line; Shift for
+ * one segment) or a room's floor. "Default" returns it to the theme colour.
+ */
+const PaintPanel = ({ height }: { height: number }) => {
+  const paintColor = useEditorStore((s) => s.paintColor)
+  const setPaintColor = useEditorStore((s) => s.setPaintColor)
+  return (
+    <div
+      style={height ? { height } : undefined}
+      className="pointer-events-auto absolute left-full top-0 ml-2 flex w-60 flex-col rounded-2xl border border-border bg-overlay/90 p-3 shadow-overlay backdrop-blur-md"
+    >
+      <h2 className="mb-1 shrink-0 px-1 text-sm font-semibold text-foreground">Paint</h2>
+      <p className="mb-3 shrink-0 px-1 text-xs leading-snug text-muted">
+        Click a wall to paint its whole line (⇧ for one segment), or a room&apos;s floor.
+      </p>
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-width:thin]">
+        <SwatchGroup title="Walls" colors={SWATCHES} value={paintColor} onPick={setPaintColor} />
+        <SwatchGroup
+          title="Floors"
+          colors={FLOOR_SWATCHES}
+          value={paintColor}
+          onPick={setPaintColor}
+        />
+      </div>
+      <div className="mt-3 shrink-0 border-t border-separator px-1 pt-2.5">
+        <Swatch title="Default" selected={paintColor === null} onClick={() => setPaintColor(null)}>
+          <span className="flex size-full items-center justify-center rounded-md bg-foreground/10">
+            <Ban className="size-3.5 text-muted" strokeWidth={2.5} />
+          </span>
+        </Swatch>
+        <span className="ml-2 align-middle text-[11px] text-muted">Reset to default</span>
+      </div>
+    </div>
+  )
+}
+
+const SwatchGroup = ({
+  title,
+  colors,
+  value,
+  onPick,
+}: {
+  title: string
+  colors: readonly string[]
+  value: string | null
+  onPick: (c: string) => void
+}) => (
+  <div className="mb-3">
+    <div className="mb-1.5 px-1 text-[11px] font-medium text-muted">{title}</div>
+    <div className="flex flex-wrap gap-1.5 px-1">
+      {colors.map((c) => (
+        <Swatch key={c} title={c} selected={value === c} onClick={() => onPick(c)}>
+          <span className="block size-full rounded-md" style={{ background: c }} />
+        </Swatch>
+      ))}
+    </div>
+  </div>
+)
