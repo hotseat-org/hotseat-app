@@ -1,0 +1,64 @@
+import clsx from "clsx"
+import { useRef, type ReactNode } from "react"
+import { FocusScope, useDialog, usePreventScroll } from "react-aria"
+
+/**
+ * A modal that renders where it's written — no portal — so it comes out of
+ * the server already open: a direct visit to a URL with a modal shows it in
+ * the first paint, before any JavaScript. (React Aria's portal-based Modal
+ * renders nothing on the server and appears only after hydration.)
+ *
+ * Accessibility comes from React Aria's primitives, which all run fine on the
+ * server: focus is trapped inside and restored on close, the page behind
+ * doesn't scroll, Escape and a click on the backdrop close it.
+ */
+export function InlineModal({
+  label,
+  onClose,
+  children,
+  className,
+}: {
+  /** Accessible name of the dialog. */
+  label: string
+  onClose: () => void
+  children: ReactNode
+  /** Classes for the dialog box itself (size, layout). */
+  className?: string
+}) {
+  usePreventScroll()
+  const ref = useRef<HTMLDivElement>(null)
+  const { dialogProps } = useDialog({ "aria-label": label }, ref)
+
+  return (
+    <div
+      className="modal-in-backdrop fixed inset-0 z-50 grid place-items-center bg-black/50 p-4 backdrop-blur-md"
+      // Only a press that starts and ends on the backdrop itself closes it (a
+      // text selection dragged out of the dialog must not).
+      onPointerDown={(e) => {
+        if (e.target === e.currentTarget) e.currentTarget.dataset.pressed = "true"
+      }}
+      onPointerUp={(e) => {
+        const started = e.currentTarget.dataset.pressed === "true"
+        delete e.currentTarget.dataset.pressed
+        if (started && e.target === e.currentTarget) onClose()
+      }}
+    >
+      <FocusScope contain restoreFocus autoFocus>
+        <div
+          {...dialogProps}
+          ref={ref}
+          aria-modal="true"
+          onKeyDown={(e) => {
+            if (e.key === "Escape" && !e.defaultPrevented) {
+              e.stopPropagation()
+              onClose()
+            }
+          }}
+          className={clsx("modal-in relative outline-none", className)}
+        >
+          {children}
+        </div>
+      </FocusScope>
+    </div>
+  )
+}

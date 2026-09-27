@@ -1,6 +1,214 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "@heroui/styles";
+
+/* ============================================================
+   Nunito — self-hosted rounded typeface (no external CDN).
+   Variable weight axis (200–1000) in a single file per subset;
+   latin-ext covers Czech/Slovak glyphs (á, ř, ž, ...).
+   ============================================================ */
+@font-face {
+  font-family: "Nunito";
+  font-style: normal;
+  font-weight: 200 1000;
+  font-display: swap;
+  src: url("./fonts/nunito-latin-wght-normal.woff2") format("woff2");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Nunito";
+  font-style: normal;
+  font-weight: 200 1000;
+  font-display: swap;
+  src: url("./fonts/nunito-latin-ext-wght-normal.woff2") format("woff2");
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+    U+A720-A7FF;
+}
+
+/* ============================================================
+   Hotseat "Warm office" theme — makes the app match the 3D office
+   editor's soft, rounded, pastel look. Colors are derived from
+   app/components/OfficeEditor/palette.ts. These override HeroUI v3
+   semantic tokens; kept UNLAYERED so they win over @heroui/styles'
+   `theme` layer. HeroUI's hover/soft variants auto-recompute from
+   these base colors (they color-mix off var(--accent) etc.).
+   ============================================================ */
+
+/* Light — warm paper */
+:root {
+  --radius: 0.85rem; /* softer, rounder than the 0.5rem default */
+
+  --background: #f1e9db;
+  --foreground: #33384a; /* editor seatLeg, darkened for text */
+
+  --surface: #fbf6ee;
+  --surface-foreground: var(--foreground);
+  --surface-secondary: #f4ecdd;
+  --surface-secondary-foreground: var(--foreground);
+  --surface-tertiary: #ede3d2;
+  --surface-tertiary-foreground: var(--foreground);
+
+  --overlay: #fbf6ee;
+  --overlay-foreground: var(--foreground);
+
+  --muted: #6f6857;
+
+  --default: #e7dcc8; /* warm tan neutral (secondary buttons) */
+  --default-foreground: #33384a;
+
+  --accent: #4a6fae; /* denim — the editor's office chairs */
+  --accent-foreground: #fbf6ee;
+
+  --success: #6f9a58; /* editor plant sage */
+  --success-foreground: #23271b;
+  --warning: #e8c07a; /* editor door handle amber */
+  --warning-foreground: #3a2e10;
+  --danger: #b8443d; /* editor vending-machine red */
+  --danger-foreground: #fbf6ee;
+
+  --border: #e2d6c4; /* editor wallTrim */
+  --separator: #e7ddcc;
+  --focus: var(--accent);
+  --link: var(--accent);
+
+  /* Fields — subtle warm border on cream */
+  --field-background: #fbf6ee;
+  --field-foreground: var(--foreground);
+  --field-placeholder: var(--muted);
+  --field-border: #e0d2ba;
+  --field-border-width: 1px;
+
+  --segment: #efe6d5;
+  --segment-foreground: var(--foreground);
+
+  /* Soft, warm-tinted shadows (brown-biased, not neutral grey) */
+  --surface-shadow: 0 1px 2px 0 rgba(74, 58, 36, 0.06), 0 2px 6px -1px rgba(74, 58, 36, 0.08);
+  --overlay-shadow: 0 8px 30px -8px rgba(74, 58, 36, 0.22), 0 4px 12px -6px rgba(74, 58, 36, 0.14);
+  --field-shadow: 0 1px 2px 0 rgba(74, 58, 36, 0.06);
+
+  --scrollbar-thumb: color-mix(in oklch, var(--foreground) 18%, transparent);
+
+  /* The editor's lone "hint of outrun" cyan — for glow / selected states */
+  --brand: #3fd0ff;
+  --brand-foreground: #20242e;
+}
+
+/* Dark — the editor's deep-slate night environment */
+.dark,
+[data-theme="dark"] {
+  --background: #20242e; /* editor ENVIRONMENT.dark.background */
+  --foreground: #ece4d6;
+
+  --surface: #2a2f3b;
+  --surface-foreground: var(--foreground);
+  --surface-secondary: #313745;
+  --surface-secondary-foreground: var(--foreground);
+  --surface-tertiary: #363d4d;
+  --surface-tertiary-foreground: var(--foreground);
+
+  --overlay: #2d3340;
+  --overlay-foreground: var(--foreground);
+
+  --muted: #9c9484;
+
+  --default: #333a49;
+  --default-foreground: var(--foreground);
+
+  --accent: #7fa6df; /* lighter denim for the dark ground */
+  --accent-foreground: #20242e;
+
+  --success: #86b06a;
+  --success-foreground: #1b2015;
+  --warning: #e8c07a;
+  --warning-foreground: #3a2e10;
+  --danger: #d66a62;
+  --danger-foreground: #20242e;
+
+  --border: #3a4152;
+  --separator: #333a49;
+  --focus: var(--brand); /* cyan glow reads great on dark */
+  --link: var(--accent);
+
+  --field-background: #262b36;
+  --field-foreground: var(--foreground);
+  --field-placeholder: var(--muted);
+  --field-border: #3a4152;
+  --field-border-width: 1px;
+
+  --segment: #333a49;
+  --segment-foreground: var(--foreground);
+
+  --surface-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --overlay-shadow: 0 10px 34px -10px rgba(0, 0, 0, 0.6);
+  --field-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.35);
+
+  --scrollbar-thumb: color-mix(in oklch, var(--foreground) 22%, transparent);
+
+  --brand: #3fd0ff;
+  --brand-foreground: #20242e;
+}
+
+/* Expose the editor cyan to Tailwind utilities (bg-brand / text-brand). */
+@theme inline {
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+}
+
+@theme {
+  --animate-dot-pulse: dot-pulse 0.8s ease-in-out infinite;
+  --animate-slide-in: slide-in 0.2s ease-out;
+  --animate-icon-pop: icon-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Rounded, soft type to match the editor's cartoony models. Self-hosted
+     Nunito leads so the look is identical on every platform; `ui-rounded`
+     (SF Pro Rounded on Apple) and system fonts cover the swap-in gap. Drives
+     the `font-sans` utility and the base font. */
+  --font-sans:
+    "Nunito", ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Apply the rounded stack to everything (HeroUI components inherit it). */
+body {
+  font-family: var(--font-sans);
+}
+
+@keyframes dot-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes icon-pop {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+@plugin "@iconify/tailwind4" {
+  prefixes: devicon;
+}
 
 .bg-clip-text {
   -webkit-background-clip: text;
@@ -10,7 +218,9 @@
 /* Removes chrome weird autocomplete style  */
 input:-webkit-autofill,
 input:-webkit-autofill:focus {
-  transition: background-color 0s 600000s, color 0s 600000s;
+  transition:
+    background-color 0s 600000s,
+    color 0s 600000s;
 }
 
 @keyframes rotate {
@@ -24,20 +234,487 @@ input:-webkit-autofill:focus {
 
 .gradient {
   --size: 400px;
-  --speed: 20s;
-  --easing: cubic-bezier(0.8, 0.2, 0.2, 0.8);
-  opacity: 0.3;
+  --speed: 30s;
+  --easing: cubic-bezier(0, 0, 1, 1);
+  opacity: 0.6;
 
   width: var(--size);
   height: var(--size);
   filter: blur(calc(var(--size) / 5));
-  background-image: linear-gradient(rgba(94, 62, 255, 0.85), #eb3752);
-  animation: rotate var(--speed) var(--easing) alternate infinite;
+  background-image: linear-gradient(var(--color-blue-200), var(--color-red-200));
+  animation: rotate var(--speed) var(--easing) infinite;
   border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
 }
 
 @media (min-width: 720px) {
   .gradient {
     --size: 800px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .gradient {
+    background-image: linear-gradient(var(--color-blue-900), var(--color-red-400));
+  }
+}
+
+/* Twinkling stars */
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* Office-floor shine: small glowing dots that twinkle at random spots on the
+   grid (scale + fade), each on its own cadence. */
+@keyframes grid-shine {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+}
+
+/* In-scene desk card (SeatPopup): springs up out of the desk, eases out. */
+@keyframes seat-pop {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.82);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes seat-pop-out {
+  to {
+    opacity: 0;
+    transform: translateY(6px) scale(0.92);
+  }
+}
+.seat-pop {
+  animation: seat-pop 320ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.seat-pop-out {
+  animation: seat-pop-out 140ms ease-in both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .seat-pop,
+  .seat-pop-out {
+    animation-name: none;
+    transition: opacity 120ms;
+  }
+  .seat-pop-out {
+    opacity: 0;
+  }
+  .grid-shine-dot {
+    animation: none !important;
+    opacity: 0.3;
+  }
+}
+
+/* Every pressable thing shows the hand. Tailwind v4's preflight gives buttons
+   the default arrow (v3 used pointer); HeroUI components already use
+   --cursor-interactive (pointer), but plain <button>s, role="button" triggers,
+   tabs, native selects/checkboxes etc. need it here. In the base layer, so an
+   explicit cursor-* utility still wins; disabled things keep the arrow. */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  a[href],
+  summary,
+  label[for],
+  select:not(:disabled),
+  input:is(
+      [type="checkbox"],
+      [type="radio"],
+      [type="color"],
+      [type="file"],
+      [type="range"],
+      [type="submit"],
+      [type="button"],
+      [type="reset"]
+    ):not(:disabled),
+  [role="tab"]:not([aria-disabled="true"]),
+  [role="menuitem"]:not([aria-disabled="true"]),
+  [role="menuitemradio"],
+  [role="menuitemcheckbox"],
+  [role="option"]:not([aria-disabled="true"]),
+  [role="switch"],
+  [role="checkbox"],
+  [role="radio"],
+  [role="link"] {
+    cursor: pointer;
+  }
+}
+
+/* ── ThemeSwitcher (components/ui/ThemeSwitcher.tsx): a little day ⇄ night sky ── */
+.theme-switch {
+  --ts-travel: calc(var(--ts-w) - var(--ts-k) - var(--ts-pad) * 2);
+  --ts-spring: cubic-bezier(0.34, 1.45, 0.64, 1);
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+  width: var(--ts-w);
+  height: var(--ts-h);
+  border-radius: 999px;
+  overflow: hidden;
+  isolation: isolate;
+  box-shadow:
+    inset 0 1px 3px rgb(0 0 0 / 0.18),
+    0 1px 0 rgb(255 255 255 / 0.35);
+  outline: none;
+}
+.theme-switch:focus-visible {
+  box-shadow: 0 0 0 3px var(--focus);
+}
+.ts-sky {
+  position: absolute;
+  inset: 0;
+  transition: opacity 600ms ease;
+}
+.ts-day {
+  background: linear-gradient(180deg, #8fc8ec 0%, #cfe6f2 55%, #f5deb4 100%);
+}
+.ts-night {
+  opacity: 0;
+  background: linear-gradient(180deg, #151a2b 0%, #262a44 55%, #3d3760 100%);
+}
+.theme-switch[data-dark="true"] .ts-day {
+  opacity: 0;
+}
+.theme-switch[data-dark="true"] .ts-night {
+  opacity: 1;
+}
+
+/* Clouds drift on the right while it's day; sink away at night. */
+.ts-clouds {
+  position: absolute;
+  inset: 0;
+  transition:
+    transform 600ms var(--ts-spring),
+    opacity 400ms ease;
+}
+.theme-switch[data-dark="true"] .ts-clouds {
+  transform: translateY(70%);
+  opacity: 0;
+}
+.ts-cloud {
+  position: absolute;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.92);
+  box-shadow:
+    calc(var(--ts-h) * 0.16) calc(var(--ts-h) * -0.08) 0 calc(var(--ts-h) * -0.02)
+      rgb(255 255 255 / 0.92),
+    calc(var(--ts-h) * 0.32) 0 0 calc(var(--ts-h) * -0.04) rgb(255 255 255 / 0.92);
+  animation: ts-drift 6s ease-in-out infinite alternate;
+}
+.ts-cloud-a {
+  right: 24%;
+  top: 30%;
+  width: calc(var(--ts-h) * 0.3);
+  height: calc(var(--ts-h) * 0.2);
+}
+.ts-cloud-b {
+  right: 10%;
+  top: 58%;
+  width: calc(var(--ts-h) * 0.22);
+  height: calc(var(--ts-h) * 0.15);
+  opacity: 0.8;
+  animation-duration: 8s;
+}
+@keyframes ts-drift {
+  to {
+    translate: calc(var(--ts-h) * -0.12) 0;
+  }
+}
+
+/* Stars fade in and twinkle at night. */
+.ts-stars {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: translateY(-40%);
+  transition:
+    opacity 500ms ease 150ms,
+    transform 600ms var(--ts-spring);
+}
+.theme-switch[data-dark="true"] .ts-stars {
+  opacity: 1;
+  transform: none;
+}
+.ts-star {
+  position: absolute;
+  border-radius: 999px;
+  background: #fff8e6;
+  box-shadow: 0 0 3px 1px rgb(255 248 230 / 0.6);
+  animation: twinkle 2.4s ease-in-out infinite;
+}
+
+/* The thumb rolls across; the sun turns into a moon. */
+.ts-thumb {
+  position: absolute;
+  top: var(--ts-pad);
+  left: var(--ts-pad);
+  width: var(--ts-k);
+  height: var(--ts-k);
+  transition: transform 650ms var(--ts-spring);
+}
+.theme-switch[data-dark="true"] .ts-thumb {
+  transform: translateX(var(--ts-travel));
+}
+.theme-switch:hover .ts-orb {
+  scale: 1.06;
+}
+.ts-orb {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  transition:
+    rotate 650ms var(--ts-spring),
+    scale 200ms ease,
+    box-shadow 600ms ease;
+  box-shadow: 0 0 calc(var(--ts-k) * 0.45) rgb(255 196 80 / 0.75);
+}
+.theme-switch[data-dark="true"] .ts-orb {
+  rotate: 250deg;
+  box-shadow: 0 0 calc(var(--ts-k) * 0.4) rgb(210 222 255 / 0.45);
+}
+.ts-sun,
+.ts-moon {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  transition: opacity 450ms ease;
+}
+.ts-sun {
+  background: radial-gradient(circle at 35% 32%, #fff1c2 0%, #f7c55c 55%, #e89f2e 100%);
+}
+.ts-moon {
+  opacity: 0;
+  background: radial-gradient(circle at 35% 32%, #fbf8f1 0%, #ddd5c4 70%, #bfb5a1 100%);
+}
+.theme-switch[data-dark="true"] .ts-sun {
+  opacity: 0;
+}
+.theme-switch[data-dark="true"] .ts-moon {
+  opacity: 1;
+}
+.ts-crater {
+  position: absolute;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background: rgb(150 138 118 / 0.45);
+  box-shadow: inset 1px 1px 1px rgb(0 0 0 / 0.15);
+}
+
+/* Sun rays: spin gently by day, shrink away at night. */
+.ts-rays {
+  position: absolute;
+  inset: calc(var(--ts-k) * -0.3);
+  animation: ts-spin 14s linear infinite;
+  transition:
+    opacity 300ms ease,
+    scale 450ms var(--ts-spring);
+}
+.theme-switch[data-dark="true"] .ts-rays {
+  opacity: 0;
+  scale: 0.4;
+}
+.ts-ray {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: calc(var(--ts-k) * 0.09);
+  height: 50%;
+  margin-left: calc(var(--ts-k) * -0.045);
+  transform-origin: 50% 100%;
+}
+.ts-ray::before {
+  content: "";
+  display: block;
+  height: 28%;
+  border-radius: 999px;
+  background: rgb(255 214 120 / 0.85);
+}
+@keyframes ts-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+/* The page-wide circular reveal is our own animation — no default crossfade. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-switch *,
+  .theme-switch {
+    animation: none !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+/* ── SkySlider (OfficeEditor/ui/SkySlider.tsx): time of day as a 24 h sky ── */
+.sky-slider {
+  --ss-h: 18px; /* track height */
+  --ss-k: 26px; /* knob height */
+  --ss-kw: 62px; /* knob width */
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: var(--ss-k);
+  min-width: 120px;
+}
+.ss-track {
+  position: absolute;
+  inset-inline: 0;
+  height: var(--ss-h);
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow:
+    inset 0 1px 3px rgb(0 0 0 / 0.22),
+    0 1px 0 rgb(255 255 255 / 0.3);
+}
+.ss-star {
+  position: absolute;
+  border-radius: 999px;
+  background: #fff8e6;
+  box-shadow: 0 0 3px 1px rgb(255 248 230 / 0.55);
+  animation: twinkle 2.6s ease-in-out infinite;
+}
+/* The knob: a pill carrying the time, with a sun / moon icon that swaps with a
+   springy turn when night falls. Glow shifts warm → cool with --sky-night. */
+.ss-thumb {
+  position: absolute;
+  /* Keep the pill inside the track ends (--sky-t = position 0…1). */
+  left: calc((100% - var(--ss-kw)) * var(--sky-t));
+  width: var(--ss-kw);
+  height: var(--ss-k);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px 0 5px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--foreground);
+  font-size: 12px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  pointer-events: none;
+  box-shadow:
+    0 2px 8px rgb(0 0 0 / 0.2),
+    0 0 12px
+      color-mix(
+        in oklab,
+        rgb(255 196 80 / 0.55),
+        rgb(160 180 255 / 0.45) calc(var(--sky-night) * 100%)
+      );
+  transition: scale 180ms ease;
+}
+/* Enlarge on hover / drag / keyboard focus. */
+.sky-slider:hover .ss-thumb,
+.sky-slider:has(.ss-input:active) .ss-thumb,
+.sky-slider:has(.ss-input:focus-visible) .ss-thumb {
+  scale: 1.08;
+}
+.sky-slider:has(.ss-input:focus-visible) .ss-thumb {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.ss-icon {
+  position: relative;
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+.ss-icon svg {
+  position: absolute;
+  inset: 0;
+  width: 16px;
+  height: 16px;
+  transition:
+    rotate 420ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    scale 420ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 200ms ease;
+}
+.ss-icon .ss-sun {
+  color: #e3962a;
+}
+.ss-icon .ss-moon {
+  color: #8a9ed8;
+  rotate: 90deg;
+  scale: 0.3;
+  opacity: 0;
+}
+.sky-slider[data-night] .ss-sun {
+  rotate: -90deg;
+  scale: 0.3;
+  opacity: 0;
+}
+.sky-slider[data-night] .ss-moon {
+  rotate: 0deg;
+  scale: 1;
+  opacity: 1;
+}
+/* The real control: invisible, covering the whole slider. */
+.ss-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: grab;
+}
+.ss-input:active {
+  cursor: grabbing;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sky-slider * {
+    animation: none !important;
+  }
+  .ss-icon svg {
+    transition: opacity 150ms ease;
+  }
+}
+
+/* InlineModal (server-rendered modal): fade the backdrop, lift the dialog in. */
+@keyframes modal-in-backdrop {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    scale: 0.97;
+    translate: 0 8px;
+  }
+}
+.modal-in-backdrop {
+  animation: modal-in-backdrop 180ms ease-out;
+}
+.modal-in {
+  animation: modal-in 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .modal-in-backdrop,
+  .modal-in {
+    animation: none;
   }
 }

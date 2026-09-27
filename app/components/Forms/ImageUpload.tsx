@@ -1,27 +1,27 @@
-import { Button, ModalBody, ModalContent, ModalFooter, ModalHeader } from "@nextui-org/react"
-import { Form, Link } from "react-router";
+import { Button } from "@heroui/react"
+import { Form, Link } from "react-router"
 import { useState } from "react"
 import { ImageUploadInput } from "../Inputs/ImageUpload"
+import { ButtonLink } from "../ButtonLink"
 
 export const ImageUpload = () => {
   const [thumbnail, setThumbnail] = useState<string | undefined>()
 
   return (
     <Form method="POST">
-      <ModalContent>
-        <ModalHeader />
-        <ModalBody>
-          <ImageUploadInput name="thumbnail" onChange={setThumbnail} />
-        </ModalBody>
-        <ModalFooter>
-          <Button variant="light" as={Link} to=".." replace>
-            Close
-          </Button>
-          <Button isDisabled={!thumbnail} type="submit" color="primary">
+      <ImageUploadInput name="thumbnail" onChange={setThumbnail} />
+      <div className="flex justify-end pt-6">
+        <div className="flex gap-2">
+          <ButtonLink to=".." replace variant="tertiary">
+            <Link to=".." replace>
+              Close
+            </Link>
+          </ButtonLink>
+          <Button variant="secondary" isDisabled={!thumbnail} type="submit">
             Save
           </Button>
-        </ModalFooter>
-      </ModalContent>
+        </div>
+      </div>
     </Form>
   )
 }

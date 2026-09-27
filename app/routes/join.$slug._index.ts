@@ -12,8 +12,9 @@ export const loader = async ({ request, params: { slug } }: Route.LoaderArgs) =>
       email: user.email,
       organizationSlug: slug,
     })
-    return redirect(`/o/${profile.organizationSlug}`)
-  } catch (e) {
+    // Org pages live under /app (was `/o/…` — a 404 after accepting an invite).
+    return redirect(`/app/o/${profile.organizationSlug}`)
+  } catch {
     return redirect("/")
   }
 }

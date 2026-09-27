@@ -1,42 +1,32 @@
-import { Avatar, Card, CardFooter } from "@nextui-org/react"
-import { Link } from "react-router"
+import { Avatar, AvatarFallback, Card } from "@heroui/react"
 import { Edit, Trash, Users } from "lucide-react"
 import { Button } from "../Button"
 
 interface Props {
   src?: string
-  editTo: string
-  deleteTo: string
+  onEdit: () => void
+  onDelete: () => void
 }
 
-export const InputAvatar = ({ src, editTo, deleteTo }: Props) => {
+export const InputAvatar = ({ src, onEdit, onDelete }: Props) => {
   return (
-    <div className="flex md:flex-col">
-      <div className="relative">
-        <Avatar fallback={<Users size={72} />} className="w-52 h-52 z-0" src={src} isBordered />
-        <Card
-          isBlurred
-          className="absolute top-[95%] left-[50%] -translate-x-1/2 -translate-y-1/2 z-1 border-1 dark:border-slate-800/60"
-        >
-          <CardFooter className="gap-2 p-1">
-            <Button
-              isDisabled={!src}
-              as={Link}
-              to={deleteTo}
-              replace
-              variant="light"
-              isIconOnly
-              color="danger"
-              size="sm"
-            >
-              <Trash size="18" />
-            </Button>
-            <Button as={Link} replace to={editTo} variant="flat" size="sm">
-              <Edit size="18" /> Edit
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
+    <div className="relative w-fit">
+      <Avatar className="w-52 h-52 z-0">
+        <Avatar.Image src={src} />
+        <AvatarFallback>
+          <Users size={72} />
+        </AvatarFallback>
+      </Avatar>
+      <Card className="bg-background-secondary/60 absolute top-[90%] left-[50%] -translate-x-1/2 -translate-y-1/2 z-1 border dark:border-slate-800/30">
+        <div className="gap-2 p-1 flex">
+          <Button onPress={onDelete} isIconOnly size="sm" variant="secondary">
+            <Trash size="18" />
+          </Button>
+          <Button onPress={onEdit} size="sm" variant="secondary">
+            <Edit size="18" /> Edit
+          </Button>
+        </div>
+      </Card>
     </div>
   )
 }

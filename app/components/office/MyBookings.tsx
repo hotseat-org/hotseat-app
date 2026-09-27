@@ -1,0 +1,222 @@
+import { Button, CloseButton, toast } from "@heroui/react"
+import clsx from "clsx"
+import { CalendarDays, MapPin, Pin } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import { useFetcher, useNavigate, useParams } from "react-router"
+import { PANEL } from "./shell-ui"
+import { useEditorStore } from "~/components/OfficeEditor/store"
+import type { MyBooking } from "~/core/reservation/mine"
+import type { MyBookingsData } from "~/routes/api.my-bookings.$slug"
+import type { ReservationActionData } from "~/routes/api.reservations.$slug.$officeSlug"
+import { formatLong, formatShort, type Day } from "~/utils/booking"
+
+const deskText = (label?: string) => (label ? `Desk ${label}` : "A desk")
+
+/**
+ * "My bookings": your upcoming days in every office of the organization, and
+ * any desk that's permanently yours. Show jumps the map to that day (and
+ * office); Cancel asks once, inline, then frees the day.
+ *
+ * Anchored top and bottom next to the rail, so its size never depends on how
+ * many bookings there are — the list scrolls inside.
+ */
+export const MyBookings = ({ onClose }: { onClose: () => void }) => {
+  const { slug, officeSlug } = useParams()
+  const navigate = useNavigate()
+  const list = useFetcher<MyBookingsData>()
+  const cancel = useFetcher<ReservationActionData>()
+  const setDay = useEditorStore((s) => s.setBookingDay)
+  const applyCancel = useEditorStore((s) => s.applyCancel)
+  const me = useEditorStore((s) => s.booking.me)
+  // The map's bookings: when they change (you booked or cancelled on the map),
+  // this list is stale — reload it.
+  const byDay = useEditorStore((s) => s.booking.byDay)
+  const load = list.load
+  const url = `/api/my-bookings/${slug}`
+  useEffect(() => {
+    load(url)
+  }, [load, url, byDay])
+
+  // Rows being cancelled: hidden at once, restored if the server says no.
+  const [hidden, setHidden] = useState<Set<string>>(new Set())
+  const [confirming, setConfirming] = useState<string | null>(null)
+  useEffect(() => {
+    const d = cancel.data
+    if (!d || cancel.state !== "idle") return
+    if (!d.ok) {
+      toast.danger(d.error)
+      setHidden(new Set())
+    }
+    load(url)
+  }, [cancel.data, cancel.state, load, url])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose()
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [onClose])
+
+  const data = list.data && !("error" in list.data) ? list.data : undefined
+  const error = list.data && "error" in list.data ? list.data.error : undefined
+  const keyOf = (b: MyBooking) => `${b.officeSlug}:${b.date}`
+  // Once a fresh list no longer has a cancelled row, stop hiding it (so booking
+  // that day again later shows up).
+  useEffect(() => {
+    if (!data) return
+    const present = new Set(data.bookings.map(keyOf))
+    setHidden((h) => {
+      const next = new Set([...h].filter((k) => present.has(k)))
+      return next.size === h.size ? h : next
+    })
+  }, [data])
+  const days = useMemo(() => {
+    const groups = new Map<Day, MyBooking[]>()
+    for (const b of data?.bookings ?? []) {
+      if (hidden.has(keyOf(b))) continue
+      groups.set(b.date, [...(groups.get(b.date) ?? []), b])
+    }
+    return [...groups.entries()]
+  }, [data, hidden])
+
+  const show = (b: { officeSlug: string; date?: Day }) => {
+    if (b.officeSlug === officeSlug) {
+      if (b.date) setDay(b.date)
+    } else navigate(`/app/o/${slug}/offices/${b.officeSlug}${b.date ? `?day=${b.date}` : ""}`)
+  }
+  const doCancel = (b: MyBooking) => {
+    setConfirming(null)
+    setHidden((h) => new Set(h).add(keyOf(b)))
+    if (b.officeSlug === officeSlug && me) applyCancel(me, [b.date])
+    cancel.submit(
+      { intent: "cancel", dates: JSON.stringify([b.date]) },
+      { method: "post", action: `/api/reservations/${slug}/${b.officeSlug}` }
+    )
+  }
+
+  const count = days.reduce((n, [, bs]) => n + bs.length, 0)
+
+  return (
+    <section
+      aria-label="My bookings"
+      className={`${PANEL} absolute bottom-24 left-[5.75rem] top-24 flex w-[340px] flex-col p-4`}
+    >
+      <header className="mb-3 flex items-start justify-between">
+        <div>
+          <h2 className="text-lg font-extrabold text-foreground">My bookings</h2>
+          <p className="text-xs text-muted">
+            {data
+              ? count
+                ? `${count} upcoming ${count === 1 ? "day" : "days"}`
+                : "Nothing booked yet"
+              : "Loading…"}
+          </p>
+        </div>
+        <CloseButton aria-label="Close my bookings" onPress={onClose} />
+      </header>
+
+      <div className="-mx-1 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-1">
+        {data?.permanent.map((p) => (
+          <button
+            key={p.deskId}
+            type="button"
+            onClick={() => show(p)}
+            className="flex items-center gap-3 rounded-xl bg-accent/12 p-3 text-left transition-colors hover:bg-accent/20"
+          >
+            <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent text-accent-foreground">
+              <Pin className="size-4" />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-sm font-bold text-foreground">
+                Permanent: {deskText(p.deskLabel)}
+              </span>
+              <span className="block truncate text-xs text-muted">{p.officeName} · every day</span>
+            </span>
+          </button>
+        ))}
+
+        {!data && !error && (
+          <div className="flex flex-col gap-2" aria-hidden>
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="h-16 animate-pulse rounded-xl bg-surface-secondary" />
+            ))}
+          </div>
+        )}
+        {error && <p className="rounded-xl bg-danger/10 p-3 text-sm text-danger">{error}</p>}
+
+        {data && count === 0 && (
+          <div className="flex flex-1 flex-col items-center justify-center gap-3 py-8 text-center">
+            <div className="grid size-11 place-items-center rounded-2xl bg-accent/12 text-accent">
+              <CalendarDays className="size-5" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-foreground">No upcoming bookings</p>
+              <p className="mt-0.5 text-xs text-muted">
+                Pick a day at the bottom, then click a free desk on the map.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {days.map(([date, bookings]) => (
+          <div key={date} className="flex flex-col gap-1.5">
+            <p className="text-[0.64rem] font-extrabold uppercase tracking-wider text-muted">
+              {formatLong(date)}
+              {date === bookings[0].today && <span className="ml-1.5 text-accent">Today</span>}
+            </p>
+            {bookings.map((b) => {
+              const key = keyOf(b)
+              const asking = confirming === key
+              return (
+                // Fixed height: asking "Cancel?" swaps the row's content in place.
+                <div
+                  key={key}
+                  className={clsx(
+                    "flex h-16 items-center gap-3 rounded-xl border px-3",
+                    asking ? "border-danger/40 bg-danger/5" : "border-border bg-surface"
+                  )}
+                >
+                  {asking ? (
+                    <>
+                      <p className="min-w-0 flex-1 text-sm font-semibold text-foreground">
+                        Cancel {formatShort(b.date)}?
+                      </p>
+                      <Button size="sm" variant="ghost" onPress={() => setConfirming(null)}>
+                        Keep
+                      </Button>
+                      <Button size="sm" variant="danger" onPress={() => doCancel(b)}>
+                        Cancel it
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-bold text-foreground">
+                          {deskText(b.deskLabel)}
+                        </p>
+                        <p className="truncate text-xs text-muted">
+                          {b.officeName}
+                          {b.officeSlug === officeSlug && " · this office"}
+                        </p>
+                      </div>
+                      <Button size="sm" variant="ghost" onPress={() => show(b)}>
+                        <MapPin className="size-4" /> Show
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-danger"
+                        onPress={() => setConfirming(key)}
+                      >
+                        Cancel
+                      </Button>
+                    </>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}

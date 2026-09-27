@@ -1,0 +1,145 @@
+import { Popover } from "@heroui/react"
+import { Armchair, Search } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import { MemberAvatar, PANEL, PANEL_HOVER, nameOf, type ShellMember } from "./shell-ui"
+import { useEditorStore } from "~/components/OfficeEditor/store"
+import { isSeatable } from "~/components/OfficeEditor/types"
+
+interface Result {
+  key: string
+  title: string
+  subtitle: string
+  /** The desk to open (a person without a desk has none). */
+  deskId?: string
+  member?: ShellMember
+}
+
+/**
+ * "Find a person or seat" (⌘K): search members and desk labels in this office.
+ * Picking a desk — or a person who has one — opens that desk's card in the
+ * scene (the same card as clicking the desk).
+ */
+export const ShellSearch = ({ members }: { members: ShellMember[] }) => {
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState("")
+  const objects = useEditorStore((s) => s.objects)
+  const openSeatCard = useEditorStore((s) => s.openSeatCard)
+
+  // ⌘K / Ctrl+K toggles it.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault()
+        setOpen((v) => !v)
+      }
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [])
+  useEffect(() => {
+    if (!open) setQuery("")
+  }, [open])
+
+  const results = useMemo<Result[]>(() => {
+    const q = query.trim().toLowerCase()
+    const desks = objects.filter((o) => isSeatable(o.type))
+    const people: Result[] = members.map((m) => {
+      const desk = desks.find((d) => d.assignee === m.userEmail)
+      return {
+        key: `p:${m.userEmail}`,
+        title: nameOf(m),
+        subtitle: desk ? `Desk ${desk.label ?? "assigned"}` : "No desk in this office",
+        deskId: desk?.id,
+        member: m,
+      }
+    })
+    const seats: Result[] = desks
+      .filter((d) => d.label)
+      .map((d) => {
+        const who = members.find((m) => m.userEmail === d.assignee)
+        return {
+          key: `d:${d.id}`,
+          title: `Desk ${d.label}`,
+          subtitle: who ? nameOf(who) : "Free",
+          deskId: d.id,
+        }
+      })
+    const all = [...people, ...seats]
+    if (!q) return all.slice(0, 8)
+    return all
+      .filter((r) =>
+        `${r.title} ${r.subtitle} ${r.member?.userEmail ?? ""}`.toLowerCase().includes(q)
+      )
+      .slice(0, 8)
+  }, [query, objects, members])
+
+  const pick = (r: Result) => {
+    if (!r.deskId) return
+    openSeatCard(r.deskId)
+    setOpen(false)
+  }
+
+  return (
+    <Popover isOpen={open} onOpenChange={setOpen}>
+      <Popover.Trigger>
+        <div
+          role="button"
+          tabIndex={0}
+          aria-label="Find a person or seat (⌘K)"
+          className={`${PANEL} ${PANEL_HOVER} flex cursor-pointer items-center gap-2 px-3.5 py-2.5 text-sm text-muted outline-none focus-visible:ring-2 focus-visible:ring-focus`}
+        >
+          <Search className="size-4" />
+          <span className="hidden sm:inline">Find a person or seat…</span>
+          <kbd className="ml-1 hidden rounded border border-border px-1.5 text-[0.65rem] sm:inline">
+            ⌘K
+          </kbd>
+        </div>
+      </Popover.Trigger>
+      <Popover.Content placement="bottom end" className="rounded-xl">
+        <Popover.Dialog className="w-80 p-2 outline-none">
+          <input
+            autoFocus
+            value={query}
+            onChange={(e) => setQuery(e.currentTarget.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && results[0]) pick(results[0])
+            }}
+            placeholder="Name, email or desk…"
+            aria-label="Search people and desks"
+            className="mb-2 h-9 w-full rounded-lg border border-border bg-surface px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-focus"
+          />
+          {results.length === 0 ? (
+            <p className="px-2 py-6 text-center text-sm text-muted">No people or desks match.</p>
+          ) : (
+            <ul className="flex flex-col gap-0.5">
+              {results.map((r) => (
+                <li key={r.key}>
+                  <button
+                    type="button"
+                    onClick={() => pick(r)}
+                    disabled={!r.deskId}
+                    className="flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-foreground/5 disabled:cursor-default disabled:hover:bg-transparent"
+                  >
+                    {r.member ? (
+                      <MemberAvatar m={r.member} className="size-8 rounded-full" />
+                    ) : (
+                      <span className="grid size-8 place-items-center rounded-full bg-accent/15 text-accent">
+                        <Armchair className="size-4" />
+                      </span>
+                    )}
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold text-foreground">
+                        {r.title}
+                      </span>
+                      <span className="block truncate text-xs text-muted">{r.subtitle}</span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Popover.Dialog>
+      </Popover.Content>
+    </Popover>
+  )
+}

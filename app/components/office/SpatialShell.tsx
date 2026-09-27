@@ -1,0 +1,310 @@
+import { useMemo, useState } from "react"
+import { Link } from "react-router"
+import { Button, Chip, Popover, Tooltip } from "@heroui/react"
+import {
+  BarChart3,
+  Bell,
+  Building2,
+  Calendar,
+  MapPin,
+  Pencil,
+  Pin,
+  Settings,
+  Users,
+} from "lucide-react"
+import type { LucideIcon } from "lucide-react"
+import {
+  MemberAvatar,
+  PANEL,
+  PANEL_HOVER,
+  nameOf,
+  type ShellMember,
+  type ShellOffice,
+} from "./shell-ui"
+import { WorkspaceSwitcher } from "./WorkspaceSwitcher"
+import { ShellSearch } from "./ShellSearch"
+import { AccountMenu } from "./AccountMenu"
+import { MyBookings } from "./MyBookings"
+import { useEditorStore } from "~/components/OfficeEditor/store"
+import { TimeOfDay } from "~/components/OfficeEditor/ui/TimeOfDay"
+import { hasWebGL } from "~/components/OfficeEditor/webgl"
+import { dayPhrase, useDesksOnDay } from "~/components/OfficeEditor/useBooking"
+import { formatLong } from "~/utils/booking"
+import { useSettings } from "~/components/settings/useSettings"
+
+export type { ShellMember } from "./shell-ui"
+
+interface Props {
+  /** Offices in the current org (for the office switcher). */
+  offices: ShellOffice[]
+  me: ShellMember
+  members: ShellMember[]
+  /** Link to the org's offices list. */
+  officesHref: string
+  /** Switch the editor into edit mode. */
+  enterEdit: () => void
+  /** May this person edit the layout (admins)? */
+  canEdit: boolean
+  /** Office has no layout yet: only the switcher + account (like the empty-org screen). */
+  empty?: boolean
+}
+
+interface RailItem {
+  icon: LucideIcon
+  label: string
+  to?: string
+  onClick?: () => void
+  active?: boolean
+  /** Not built yet: shown dimmed, not clickable (instead of a silent no-op). */
+  disabled?: boolean
+}
+
+const RailLink = ({ icon: Icon, label, to, onClick, active, disabled }: RailItem) => {
+  const cls = `flex size-11 items-center justify-center rounded-xl transition-colors outline-none focus-visible:ring-2 focus-visible:ring-focus ${
+    active
+      ? "bg-accent text-accent-foreground"
+      : disabled
+        ? "cursor-not-allowed text-muted/40"
+        : "text-muted hover:bg-foreground/10 hover:text-foreground"
+  }`
+  return (
+    <Tooltip delay={350}>
+      {to ? (
+        <Link to={to} className={cls} aria-label={label}>
+          <Icon className="size-5" />
+        </Link>
+      ) : (
+        <button
+          type="button"
+          onClick={disabled ? undefined : onClick}
+          aria-disabled={disabled || undefined}
+          className={cls}
+          aria-label={label}
+        >
+          <Icon className="size-5" />
+        </button>
+      )}
+      <Tooltip.Content
+        placement="right"
+        className="rounded-md border border-border bg-overlay px-2 py-1 text-xs text-foreground shadow-overlay"
+      >
+        {label}
+      </Tooltip.Content>
+    </Tooltip>
+  )
+}
+
+export const SpatialShell = ({
+  offices,
+  me,
+  members,
+  officesHref,
+  enterEdit,
+  canEdit,
+  empty = false,
+}: Props) => {
+  const { open: openSettings } = useSettings()
+  // Who sits where on the shown day: permanent residents + bookings.
+  const day = useEditorStore((s) => s.booking.day)
+  const today = useEditorStore((s) => s.booking.today)
+  const { byPerson } = useDesksOnDay()
+  const [bookingsOpen, setBookingsOpen] = useState(false)
+  const mine = byPerson.get(me.userEmail)
+
+  // People with a desk that day first, then everyone else (original order).
+  const roster = useMemo(
+    () =>
+      members
+        .map((m, i) => ({ m, i, at: byPerson.get(m.userEmail) }))
+        .sort((a, b) => Number(!a.at) - Number(!b.at) || a.i - b.i),
+    [members, byPerson]
+  )
+  const inCount = roster.filter((r) => r.at).length
+
+  // Empty office: the first-run card is the whole page; keep just where you are
+  // (switcher) and who you are (account).
+  if (empty)
+    return (
+      <>
+        <WorkspaceSwitcher offices={offices} />
+        <div className="pointer-events-none absolute right-5 top-5 flex items-center gap-2.5">
+          <AccountMenu />
+        </div>
+      </>
+    )
+
+  return (
+    <>
+      <WorkspaceSwitcher offices={offices} />
+
+      {/* Left rail */}
+      <nav
+        className={`${PANEL} absolute left-5 top-1/2 flex -translate-y-1/2 flex-col gap-1.5 p-2`}
+        aria-label="Primary"
+      >
+        <RailLink
+          icon={Building2}
+          label="Office"
+          active={!bookingsOpen}
+          onClick={() => setBookingsOpen(false)}
+        />
+        <RailLink icon={Users} label="People" onClick={() => openSettings("org", "members")} />
+        <RailLink
+          icon={Calendar}
+          label="My bookings"
+          active={bookingsOpen}
+          onClick={() => setBookingsOpen((o) => !o)}
+        />
+        <RailLink icon={BarChart3} label="Insights — coming soon" disabled />
+        <div className="mx-1.5 my-1 h-px bg-separator" />
+        <RailLink icon={Building2} label="All offices" to={officesHref} />
+        <RailLink
+          icon={Settings}
+          label="Office settings"
+          onClick={() => openSettings("office", "general")}
+        />
+      </nav>
+
+      {/* Top-right: search + notifications + account */}
+      <div className="pointer-events-none absolute right-5 top-5 flex items-center gap-2.5">
+        <div className="pointer-events-auto">
+          <ShellSearch members={members} />
+        </div>
+        {/* No notification system yet: honest empty state (no fake unread dot). */}
+        <Popover>
+          <Popover.Trigger>
+            <div
+              role="button"
+              tabIndex={0}
+              aria-label="Notifications"
+              className={`${PANEL} ${PANEL_HOVER} grid size-11 cursor-pointer place-items-center text-foreground outline-none focus-visible:ring-2 focus-visible:ring-focus`}
+            >
+              <Bell className="size-5" />
+            </div>
+          </Popover.Trigger>
+          <Popover.Content placement="bottom end" className="rounded-xl">
+            <Popover.Dialog className="w-64 p-4 text-center outline-none">
+              <p className="text-sm font-semibold text-foreground">You&apos;re all caught up</p>
+              <p className="mt-0.5 text-xs text-muted">Notifications will show up here.</p>
+            </Popover.Dialog>
+          </Popover.Content>
+        </Popover>
+        <AccountMenu />
+      </div>
+
+      {bookingsOpen && <MyBookings onClose={() => setBookingsOpen(false)} />}
+
+      {/* Right stack: You + presence */}
+      <div className="pointer-events-none absolute bottom-24 right-5 top-24 flex w-[320px] flex-col gap-3.5">
+        <div className={`${PANEL} p-4`}>
+          <div className="flex items-center gap-3.5">
+            <MemberAvatar m={me} className="size-13 rounded-2xl" />
+            <div className="min-w-0">
+              <h3 className="truncate text-base font-extrabold text-foreground">{nameOf(me)}</h3>
+              <p className="mt-0.5 flex items-center gap-1 text-xs text-muted">
+                {mine?.state.kind === "resident" ? (
+                  <>
+                    <Pin className="size-3.5" /> Permanent desk
+                    {mine.desk.label ? ` ${mine.desk.label}` : ""}
+                  </>
+                ) : mine ? (
+                  <>
+                    <MapPin className="size-3.5" />{" "}
+                    {mine.desk.label
+                      ? `Desk ${mine.desk.label} ${dayPhrase(day, today)}`
+                      : `You have a desk ${dayPhrase(day, today)}`}
+                  </>
+                ) : (
+                  <>
+                    <MapPin className="size-3.5" /> No desk {dayPhrase(day, today)}. Click a free
+                    one.
+                  </>
+                )}
+              </p>
+              <button
+                type="button"
+                onClick={() => setBookingsOpen(true)}
+                className="mt-1 text-xs font-bold text-accent hover:underline"
+              >
+                All my bookings
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className={`${PANEL} flex min-h-0 flex-1 flex-col p-4`}>
+          <header className="mb-3 flex items-end justify-between">
+            <div>
+              <p className="text-[0.64rem] font-extrabold uppercase tracking-wider text-muted">
+                {day === today ? "In today" : `In on ${formatLong(day)}`}
+              </p>
+              <p className="text-2xl font-extrabold tabular-nums text-foreground">
+                {inCount} <span className="text-sm font-bold text-muted">of {members.length}</span>
+              </p>
+            </div>
+          </header>
+          {members.length <= 1 ? (
+            <div className="flex flex-1 flex-col items-center justify-center gap-3 py-8 text-center">
+              <div className="grid size-11 place-items-center rounded-2xl bg-accent/12 text-accent">
+                <Users className="size-5" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-foreground">It&apos;s just you so far</p>
+                <p className="mt-0.5 text-xs text-muted">
+                  Invite your team so they can grab a seat.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => openSettings("org", "invitations")}
+                className="rounded-xl bg-accent/15 px-3.5 py-2 text-sm font-bold text-accent transition hover:bg-accent/25"
+              >
+                Invite teammates
+              </button>
+            </div>
+          ) : (
+            <>
+              {inCount === 0 && (
+                <p className="mb-2 rounded-lg bg-foreground/5 px-3 py-2 text-xs text-muted">
+                  Nobody has a desk {dayPhrase(day, today)} yet.
+                </p>
+              )}
+              <ul className="-mx-1 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-1">
+                {roster.map(({ m, at }) => {
+                  return (
+                    <li
+                      key={m.userEmail}
+                      className="flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-foreground/5"
+                    >
+                      <MemberAvatar m={m} className="size-9 rounded-xl" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-bold text-foreground">{nameOf(m)}</p>
+                        <p className="truncate text-xs capitalize text-muted">
+                          {m.role.toLowerCase()}
+                        </p>
+                      </div>
+                      <Chip size="sm" variant="soft" color={at ? "success" : "default"}>
+                        {at ? (at.desk.label ?? "In") : "Not in"}
+                      </Chip>
+                    </li>
+                  )
+                })}
+              </ul>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Bottom dock: real-time sync + time-of-day + edit */}
+      <TimeOfDay viewSwitch>
+        {/* Editing is 3D-only (no WebGL → view-only). */}
+        {canEdit && hasWebGL() && (
+          <Button variant="primary" size="sm" onPress={enterEdit}>
+            <Pencil className="size-4" />
+            Edit layout
+          </Button>
+        )}
+      </TimeOfDay>
+    </>
+  )
+}

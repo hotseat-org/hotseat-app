@@ -1,4 +1,4 @@
-import { Avatar, Spinner } from "@nextui-org/react"
+import { Avatar, Spinner } from "@heroui/react"
 import clsx from "clsx"
 import { UploadCloud } from "lucide-react"
 import { useEffect, useState } from "react"
@@ -56,7 +56,9 @@ export const ImageUploadInput = ({ onChange, name }: Props) => {
             <div className="flex">
               <div className="relative">
                 <div className={clsx({ "opacity-10": isOptimistic })}>
-                  <Avatar className="w-52 h-52 z-0" src={URL.createObjectURL(file)} />
+                  <Avatar className="w-52 h-52 z-0">
+                    <Avatar.Image src={URL.createObjectURL(file)} />
+                  </Avatar>
                 </div>
                 {isOptimistic && (
                   <Spinner
