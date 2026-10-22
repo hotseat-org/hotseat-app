@@ -20,6 +20,7 @@ import {
   type SceneObject,
 } from "../types"
 import { ObjectRenderer } from "../objects/ObjectRenderer"
+import { CURSORS, getToolCursor } from "../cursors"
 import { PlacementHighlight } from "./PlacementHighlight"
 import { markShadowsDirty } from "./shadows"
 import { Lighting } from "./Lighting"
@@ -32,7 +33,7 @@ import { Posts } from "./Posts"
 import { Walls } from "./Walls"
 import { BuildController } from "./BuildController"
 import { CarryController } from "./CarryController"
-import { CameraControls } from "./CameraControls"
+import { CameraControls, type FloorPan } from "./CameraControls"
 import { WallXray } from "./WallXray"
 import { CameraFit } from "./CameraFit"
 import { SeatTags } from "./SeatTags"
@@ -55,13 +56,14 @@ interface Props {
   dark?: boolean
 }
 
-// Same camera controls in both modes: right-drag pans, middle-drag (or
-// Shift/⌘/Ctrl + right-drag — OrbitControls' built-in modifier, for trackpads)
-// orbits, wheel zooms. Edit mode keeps the left button for building/selecting;
-// display mode has nothing to build, so left-drag orbits there as well.
+// Same camera drags in both modes: right-drag orbits, middle-drag (or
+// Shift/⌘/Ctrl + right-drag — OrbitControls' built-in modifier) pans. Edit mode
+// keeps the left button for building/selecting; display mode has nothing to
+// build, so left-drag pans there, like the simple view. Wheel, trackpad,
+// Space-drag and keys: CameraControls.
 type Buttons = { LEFT: MOUSE; MIDDLE: MOUSE; RIGHT: MOUSE }
-const EDIT_BUTTONS = { LEFT: -1, MIDDLE: MOUSE.ROTATE, RIGHT: MOUSE.PAN } as unknown as Buttons
-const VIEW_BUTTONS: Buttons = { LEFT: MOUSE.ROTATE, MIDDLE: MOUSE.ROTATE, RIGHT: MOUSE.PAN }
+const EDIT_BUTTONS = { LEFT: -1, MIDDLE: MOUSE.PAN, RIGHT: MOUSE.ROTATE } as unknown as Buttons
+const VIEW_BUTTONS: Buttons = { LEFT: MOUSE.PAN, MIDDLE: MOUSE.PAN, RIGHT: MOUSE.ROTATE }
 
 const FURNITURE = new Set([
   "desk",
@@ -268,6 +270,16 @@ export const Scene = ({ readOnly = false, dark = false }: Props) => {
   const onStartDrag = useCallback((id: string) => handlers.current.handlePick(id), [])
   const onPickOpening = useCallback((id: string) => handlers.current.pickOpening(id), [])
 
+  const floorPan = useRef<FloorPan | null>(null)
+  // The current press began on bare floor. Objects don't stop pointerup, so the
+  // floor hears a release over a piece too; this tells the two apart. Cleared
+  // by the window once each press ends (after the scene's own handlers).
+  const isFloorPress = useRef(false)
+  useEffect(() => {
+    const clear = () => (isFloorPress.current = false)
+    window.addEventListener("pointerup", clear)
+    return () => window.removeEventListener("pointerup", clear)
+  }, [])
   // Wall + Erase tools are owned by BuildController; here we handle select and
   // furniture placement only. All no-ops in display mode.
   const handleDown = (_x: number, _z: number, button: number, e: PointerEvent) => {
@@ -276,13 +288,18 @@ export const Scene = ({ readOnly = false, dark = false }: Props) => {
       tryDrop() // clicking anywhere drops what you're carrying (if the spot is free)
       return
     }
-    if (tool !== "select" || carriedOpening) return
-    // Bare floor: deselect (unless Shift, which adds to it) and start a box
-    // selection — BoxSelect takes over the drag.
-    if (!e.shiftKey) select(null)
-    storeApi
-      .getState()
-      .setBox({ x0: e.clientX, y0: e.clientY, x1: e.clientX, y1: e.clientY, additive: e.shiftKey })
+    if (carriedOpening) return
+    // Bare floor, Select tool + Shift: a box selection, added to the current
+    // one — BoxSelect takes over the drag.
+    if (tool === "select" && e.shiftKey) {
+      storeApi
+        .getState()
+        .setBox({ x0: e.clientX, y0: e.clientY, x1: e.clientX, y1: e.clientY, additive: true })
+      return
+    }
+    // Otherwise a drag pans (Select, furniture); a click acts on pointerup.
+    isFloorPress.current = true
+    if (tool === "select" || isFurniture) floorPan.current?.start(e)
   }
 
   const handleMove = (x: number, z: number) => {
@@ -293,6 +310,8 @@ export const Scene = ({ readOnly = false, dark = false }: Props) => {
 
   const handleUp = (x: number, z: number, button: number) => {
     if (readOnly || button !== 0 || dragId) return
+    if (floorPan.current?.hasMoved()) return // that was a pan, not a click
+    if (tool === "select" && isFloorPress.current) select(null) // click on bare floor
     if (isFurniture) {
       const p = placeAt(tool as ObjectType, x, z)
       addObject({
@@ -308,6 +327,13 @@ export const Scene = ({ readOnly = false, dark = false }: Props) => {
   }
 
   const carried = dragId ? objects.find((o) => o.id === dragId) : undefined
+  // Canvas cursor between camera gestures: the tool's, a closed hand while
+  // carrying a piece, the plain arrow in display mode.
+  const cursor = readOnly
+    ? CURSORS.select
+    : carried || carriedOpening
+      ? "grabbing"
+      : getToolCursor(tool, isFurniture)
 
   return (
     <SceneThemeContext.Provider value={surfaces}>
@@ -325,7 +351,7 @@ export const Scene = ({ readOnly = false, dark = false }: Props) => {
             mouseButtons={readOnly ? VIEW_BUTTONS : EDIT_BUTTONS}
             target={[0, 0, 0]}
           />
-          <CameraControls />
+          <CameraControls floorPan={floorPan} cursor={cursor} readOnly={readOnly} />
           <CameraFit />
 
           {/* See-through, cut-down wall section under the cursor — always in view
@@ -358,7 +384,7 @@ export const Scene = ({ readOnly = false, dark = false }: Props) => {
             onUp={handleUp}
             onLeave={() => setHover(null)}
             // View mode: a click on bare floor closes the desk card (a drag that
-            // orbits the camera doesn't). Desk clicks stop propagation first.
+            // pans the camera doesn't). Desk clicks stop propagation first.
             onClick={
               readOnly
                 ? (delta) => {

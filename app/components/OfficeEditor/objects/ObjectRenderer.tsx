@@ -219,7 +219,7 @@ export const ObjectRenderer = memo(function ObjectRenderer({
           : undefined
       }
       onPointerOut={interactive || clickable ? () => setHovered(false) : undefined}
-      // View mode: desks are clickable (seat card). A drag (camera orbit) isn't
+      // View mode: desks are clickable (seat card). A drag (camera pan) isn't
       // a click — R3F's `delta` is the pointer travel in px.
       onClick={
         clickable && onSeatClick

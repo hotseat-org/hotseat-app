@@ -27,6 +27,8 @@ import { spotFor } from "../seatSpot"
 import { SeatCardBody, useSeatCard } from "../seatCard"
 import { useDesksOnDay, type DeskOnDay } from "../useBooking"
 import { GRID, isEdgeType, isMarker, isSeatable, type SceneObject } from "../types"
+import { isTypingTarget } from "../keyboard"
+import { createWheelReader, getSmoothZoomFactor, getStepZoomFactor } from "../wheel"
 import { WALL } from "../objects/dimensions"
 import {
   boxNode,
@@ -115,8 +117,8 @@ const fitView = (b: Bounds, w: number, h: number, right: number): View => {
  * devices that struggle with the 3D scene, or have no WebGL at all. Same data
  * and booking as 3D: every piece drawn as a few shaded boxes, back walls up
  * and front walls cut down (so rooms stay visible), desks marked by who's in
- * on the shown day, and the same desk card on click. Drag to pan, scroll or
- * pinch to zoom; Fit (bottom bar) re-frames it.
+ * on the shown day, and the same desk card on click. Drag to pan; wheel,
+ * two-finger scroll or pinch to zoom; Q / E to turn; Fit (bottom bar) re-frames it.
  */
 export const FloorPlan = ({
   dark,
@@ -210,16 +212,40 @@ export const FloorPlan = ({
     []
   )
 
+  // Same reading as the 3D view: wheel, two-finger scroll and pinch all zoom.
+  // (⌥ + scroll orbits there; quarter turns don't scroll, so it's ignored here.)
   useEffect(() => {
     const el = box.current
     if (!el) return
+    const readWheel = createWheelReader()
     const onWheel = (e: WheelEvent) => {
       e.preventDefault()
+      const intent = readWheel(e)
+      if (intent === "rotate" || e.deltaY === 0) return
       const r = el.getBoundingClientRect()
-      zoomAt(Math.exp(-e.deltaY * 0.0015), e.clientX - r.left, e.clientY - r.top)
+      const factor =
+        intent === "smoothZoom" ? getSmoothZoomFactor(e.deltaY) : getStepZoomFactor(e.deltaY)
+      zoomAt(factor, e.clientX - r.left, e.clientY - r.top)
     }
     el.addEventListener("wheel", onWheel, { passive: false })
     return () => el.removeEventListener("wheel", onWheel)
+  }, [zoomAt])
+
+  // Keys, as in the 3D view: Q / E turn (a quarter turn here), + / − zoom.
+  const turnByRef = useRef(turnBy)
+  turnByRef.current = turnBy
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (isTypingTarget(e.target) || e.metaKey || e.ctrlKey || e.altKey) return
+      const k = e.key.toLowerCase()
+      if (k === "q") return turnByRef.current(1)
+      if (k === "e") return turnByRef.current(-1)
+      const el = box.current
+      const factor = k === "+" || k === "=" ? 1.25 : k === "-" || k === "_" ? 1 / 1.25 : 0
+      if (factor && el) zoomAt(factor, el.clientWidth / 2, el.clientHeight / 2)
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
   }, [zoomAt])
 
   const pointers = useRef(new Map<number, { x: number; y: number }>())

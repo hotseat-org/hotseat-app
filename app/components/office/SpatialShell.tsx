@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useMemo, useState, type ReactNode } from "react"
 import { Link } from "react-router"
 import { Button, Chip, Popover, Tooltip } from "@heroui/react"
 import {
@@ -47,6 +47,8 @@ interface Props {
   canEdit: boolean
   /** Office has no layout yet: only the switcher + account (like the empty-org screen). */
   empty?: boolean
+  /** The editor's camera controls guide, shown under the presence panel. */
+  guide?: ReactNode
 }
 
 interface RailItem {
@@ -102,6 +104,7 @@ export const SpatialShell = ({
   enterEdit,
   canEdit,
   empty = false,
+  guide,
 }: Props) => {
   const { open: openSettings } = useSettings()
   // Who sits where on the shown day: permanent residents + bookings.
@@ -293,6 +296,7 @@ export const SpatialShell = ({
             </>
           )}
         </div>
+        {guide && <div className="shrink-0 self-end">{guide}</div>}
       </div>
 
       {/* Bottom dock: real-time sync + time-of-day + edit */}

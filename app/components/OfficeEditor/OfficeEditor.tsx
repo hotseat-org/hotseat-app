@@ -30,6 +30,7 @@ import { TOOLS } from "./ui/tools"
 import { PeopleContext, type People } from "./people"
 import { isTypingTarget } from "./keyboard"
 import { isEdgeType } from "./types"
+import { ControlsGuide } from "./ui/ControlsGuide"
 import { OfficeFloor } from "~/components/office/OfficeFloor"
 import { EmptyState } from "~/components/ui/EmptyState"
 import { groupBookings, type BookingRow, type Day } from "~/utils/booking"
@@ -81,6 +82,8 @@ interface Props {
     enterEdit: () => void
     /** No layout yet (first-run screen): show only the essential chrome. */
     empty: boolean
+    /** The camera controls guide, for the shell to place among its panels. */
+    guide: ReactNode
   }) => ReactNode
 }
 
@@ -193,6 +196,7 @@ const OfficeEditorInner = ({
   // Simple mode: the 2D floor plan instead of the 3D scene (view mode only).
   const view = useEditorStore((s) => s.view)
   const flat = readOnly && (view === "2d" || !webglOk)
+  const guide = <ControlsGuide view={flat ? "plan" : readOnly ? "view" : "edit"} />
 
   // Perf HUD. While on, the Canvas renders continuously (`frameloop="always"`)
   // so the reading reflects a true, comparable FPS instead of only the frames
@@ -393,12 +397,20 @@ const OfficeEditorInner = ({
               onRetrySave={onRetrySave}
             />
             <Catalog />
-            <Inspector />
           </>
         )}
 
+        {/* Bottom-right: the selection inspector (edit) above the controls
+            guide. The app shell places the guide itself, in its side panel. */}
+        {!isEmpty && !shellMode && (
+          <div className="pointer-events-none absolute bottom-4 right-4 flex flex-col items-end gap-2">
+            {!readOnly && <Inspector />}
+            {guide}
+          </div>
+        )}
+
         {/* App chrome (floating panels) for the spatial display experience. */}
-        {shellMode && displayShell?.({ enterEdit: () => setMode("edit"), empty: isEmpty })}
+        {shellMode && displayShell?.({ enterEdit: () => setMode("edit"), empty: isEmpty, guide })}
 
         {/* Empty-office first run: offer templates or a blank start (admins),
             or explain why there's nothing here yet (everyone else). */}

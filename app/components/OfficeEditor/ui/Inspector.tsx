@@ -35,7 +35,7 @@ export const Inspector = () => {
   const edge = isEdgeType(obj.type)
 
   return (
-    <div className="pointer-events-auto absolute bottom-4 right-4 w-64 rounded-2xl border border-border bg-overlay/90 p-4 text-foreground shadow-overlay backdrop-blur-md">
+    <div className="pointer-events-auto w-64 rounded-2xl border border-border bg-overlay/90 p-4 text-foreground shadow-overlay backdrop-blur-md">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-semibold">
           {count > 1 ? `${count} items` : (TYPE_LABEL.get(obj.type) ?? obj.type)}
