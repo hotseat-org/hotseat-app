@@ -1,3 +1,4 @@
+import { createContext } from "react"
 import { isEdgeType, type Tool } from "./types"
 
 // Editor cursors: small SVGs in the editor palette — dark ink with a light
@@ -16,6 +17,26 @@ const line = (d: string, color = INK) =>
 const shape = (d: string, color = INK) =>
   `<path d="${d}" fill="none" stroke="${HALO}" stroke-width="3" stroke-linejoin="round"/>` +
   `<path d="${d}" fill="${color}" stroke="${color}" stroke-width="1" stroke-linejoin="round"/>`
+
+/**
+ * A multi-stroke icon (lucide's hands): a light palm, one halo under all
+ * strokes, then the ink — so the hand reads solid on a dark floor too.
+ */
+const PALM = "M6 11 H22 V15 A7 7 0 0 1 15 22 H11.5 A5.5 5.5 0 0 1 6 16.5 Z"
+const glyph = (ds: string[]) =>
+  `<path d="${PALM}" fill="${HALO}"/>` +
+  ds
+    .map(
+      (d) =>
+        `<path d="${d}" fill="none" stroke="${HALO}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>`
+    )
+    .join("") +
+  ds
+    .map(
+      (d) =>
+        `<path d="${d}" fill="none" stroke="${INK}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>`
+    )
+    .join("")
 
 const compose = (body: string, x: number, y: number, fallback: string) => {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">${body}</svg>`
@@ -60,6 +81,31 @@ export const CURSORS = {
     20,
     "crosshair"
   ),
+  /** Over something the Select tool picks up (lucide `hand`). */
+  grab: compose(
+    glyph([
+      "M18 11V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2",
+      "M14 10V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v2",
+      "M10 10.5V6a2 2 0 0 0-2-2a2 2 0 0 0-2 2v8",
+      "M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15",
+    ]),
+    12,
+    8,
+    "grab"
+  ),
+  /** Over something clickable in display mode — a desk (lucide `pointer`). */
+  point: compose(
+    glyph([
+      "M22 14a8 8 0 0 1-8 8",
+      "M18 11v-1a2 2 0 0 0-2-2a2 2 0 0 0-2 2",
+      "M14 10V9a2 2 0 0 0-2-2a2 2 0 0 0-2 2v1",
+      "M10 9.5V4a2 2 0 0 0-2-2a2 2 0 0 0-2 2v10",
+      "M18 11a2 2 0 1 1 4 0v3a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15",
+    ]),
+    8,
+    2,
+    "pointer"
+  ),
   /** Ready to pan (Space held). */
   pan: compose(line(MOVE_ARROWS), 12, 12, "grab"),
   /** Panning. */
@@ -83,3 +129,14 @@ export const getToolCursor = (tool: Tool, isFurniture: boolean) => {
   if (tool === "room" || isEdgeType(tool)) return CURSORS.build
   return isFurniture ? CURSORS.place : CURSORS.select
 }
+
+/** What a click on the hovered piece would do: pick it up, or open it (a desk in view mode). */
+export type CursorHint = "grab" | "point"
+
+/**
+ * Hovered pieces report their hint here (by id; null when the hover ends).
+ * Provided by Scene, shown by CameraControls — under any camera gesture.
+ */
+export const CursorHintContext = createContext<(id: string, hint: CursorHint | null) => void>(
+  () => {}
+)

@@ -2,7 +2,7 @@ import { useFrame, useThree } from "@react-three/fiber"
 import { useEffect, useRef, type RefObject } from "react"
 import { OrthographicCamera, Vector3 } from "three"
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib"
-import { CURSORS } from "../cursors"
+import { CURSORS, type CursorHint } from "../cursors"
 import { isTypingTarget } from "../keyboard"
 import { createWheelReader, getSmoothZoomFactor, getStepZoomFactor } from "../wheel"
 
@@ -34,8 +34,12 @@ export interface FloorPan {
 
 interface Props {
   floorPan?: RefObject<FloorPan | null>
+  /** Filled with the setter Scene hands to hovered pieces (CursorHintContext). */
+  setCursorHint?: RefObject<((id: string, hint: CursorHint | null) => void) | null>
   /** The canvas cursor while no camera gesture is going on (the tool's). */
   cursor: string
+  /** Hovered pieces may show their hint over `cursor` (not while carrying one). */
+  isHintShown?: boolean
   /** Display mode: OrbitControls pans on left-drag too. */
   readOnly?: boolean
 }
@@ -51,7 +55,13 @@ interface Props {
  * Pans move the camera and the orbit target together along the ground plane.
  * Owns the canvas cursor too: the tool's, or the running gesture's.
  */
-export const CameraControls = ({ floorPan, cursor, readOnly = false }: Props) => {
+export const CameraControls = ({
+  floorPan,
+  setCursorHint,
+  cursor,
+  isHintShown = true,
+  readOnly = false,
+}: Props) => {
   const camera = useThree((s) => s.camera) as OrthographicCamera
   const controls = useThree((s) => s.controls) as OrbitControlsImpl | null
   const gl = useThree((s) => s.gl)
@@ -65,15 +75,18 @@ export const CameraControls = ({ floorPan, cursor, readOnly = false }: Props) =>
   // --- Cursor ---------------------------------------------------------------
   const cursorState = useRef({
     base: cursor,
+    isHintShown,
+    hints: new Map<string, CursorHint>(),
     held: {} as Partial<Record<GestureSource, Gesture>>,
     flash: null as Gesture | null,
     flashTimer: 0,
   })
   const applyCursor = () => {
-    const { base, held, flash } = cursorState.current
+    const { base, isHintShown, hints, held, flash } = cursorState.current
     const heldGestures = Object.values(held)
     const gesture = GESTURES.find((g) => heldGestures.includes(g)) ?? flash
-    gl.domElement.style.cursor = gesture ? CURSORS[gesture] : base
+    const hint = isHintShown ? hints.values().next().value : undefined
+    gl.domElement.style.cursor = gesture ? CURSORS[gesture] : hint ? CURSORS[hint] : base
   }
   const setHeldGesture = (source: GestureSource, gesture: Gesture | null) => {
     const { held } = cursorState.current
@@ -94,8 +107,24 @@ export const CameraControls = ({ floorPan, cursor, readOnly = false }: Props) =>
   }
   useEffect(() => {
     cursorState.current.base = cursor
+    cursorState.current.isHintShown = isHintShown
     applyCursor()
   })
+  // Registered once, not per render: a hover that ends in the same commit as
+  // a re-render here would otherwise call it while unset, and the hint stuck.
+  useEffect(() => {
+    if (!setCursorHint) return
+    const { hints } = cursorState.current
+    setCursorHint.current = (id, hint) => {
+      if (hint) hints.set(id, hint)
+      else hints.delete(id)
+      actions.current.applyCursor()
+    }
+    return () => {
+      setCursorHint.current = null
+      hints.clear()
+    }
+  }, [setCursorHint])
   useEffect(() => {
     const el = gl.domElement
     const state = cursorState.current
@@ -157,8 +186,8 @@ export const CameraControls = ({ floorPan, cursor, readOnly = false }: Props) =>
   }
 
   // The latest closures for the listeners below (they're attached once).
-  const actions = useRef({ panByPixels, zoomAt, orbit, setHeldGesture, flashGesture })
-  actions.current = { panByPixels, zoomAt, orbit, setHeldGesture, flashGesture }
+  const actions = useRef({ panByPixels, zoomAt, orbit, setHeldGesture, flashGesture, applyCursor })
+  actions.current = { panByPixels, zoomAt, orbit, setHeldGesture, flashGesture, applyCursor }
 
   // Keys: held W A S D / Q E move in useFrame; + / − zoom a step per press.
   useEffect(() => {

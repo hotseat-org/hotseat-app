@@ -20,7 +20,7 @@ import {
   type SceneObject,
 } from "../types"
 import { ObjectRenderer } from "../objects/ObjectRenderer"
-import { CURSORS, getToolCursor } from "../cursors"
+import { CURSORS, CursorHintContext, getToolCursor, type CursorHint } from "../cursors"
 import { PlacementHighlight } from "./PlacementHighlight"
 import { markShadowsDirty } from "./shadows"
 import { Lighting } from "./Lighting"
@@ -271,6 +271,13 @@ export const Scene = ({ readOnly = false, dark = false }: Props) => {
   const onPickOpening = useCallback((id: string) => handlers.current.pickOpening(id), [])
 
   const floorPan = useRef<FloorPan | null>(null)
+  // Hovered pieces' cursor hints, forwarded to CameraControls (a stable
+  // callback, so hovering never re-renders the scene).
+  const cursorHintRef = useRef<((id: string, hint: CursorHint | null) => void) | null>(null)
+  const setCursorHint = useCallback(
+    (id: string, hint: CursorHint | null) => cursorHintRef.current?.(id, hint),
+    []
+  )
   // The current press began on bare floor. Objects don't stop pointerup, so the
   // floor hears a release over a piece too; this tells the two apart. Cleared
   // by the window once each press ends (after the scene's own handlers).
@@ -337,194 +344,208 @@ export const Scene = ({ readOnly = false, dark = false }: Props) => {
 
   return (
     <SceneThemeContext.Provider value={surfaces}>
-      <XrayContext.Provider value={xray}>
-        <DaylightContext.Provider value={profile.nightness}>
-          <OrthographicCamera makeDefault position={[22, 20, 22]} zoom={46} near={0.1} far={200} />
-          <OrbitControls
-            makeDefault
-            enableDamping
-            dampingFactor={0.12}
-            minPolarAngle={0.2}
-            maxPolarAngle={1.15}
-            minZoom={20}
-            maxZoom={120}
-            mouseButtons={readOnly ? VIEW_BUTTONS : EDIT_BUTTONS}
-            target={[0, 0, 0]}
-          />
-          <CameraControls floorPan={floorPan} cursor={cursor} readOnly={readOnly} />
-          <CameraFit />
+      <CursorHintContext.Provider value={setCursorHint}>
+        <XrayContext.Provider value={xray}>
+          <DaylightContext.Provider value={profile.nightness}>
+            <OrthographicCamera
+              makeDefault
+              position={[22, 20, 22]}
+              zoom={46}
+              near={0.1}
+              far={200}
+            />
+            <OrbitControls
+              makeDefault
+              enableDamping
+              dampingFactor={0.12}
+              minPolarAngle={0.2}
+              maxPolarAngle={1.15}
+              minZoom={20}
+              maxZoom={120}
+              mouseButtons={readOnly ? VIEW_BUTTONS : EDIT_BUTTONS}
+              target={[0, 0, 0]}
+            />
+            <CameraControls
+              floorPan={floorPan}
+              setCursorHint={cursorHintRef}
+              cursor={cursor}
+              isHintShown={!carried && !carriedOpening}
+              readOnly={readOnly}
+            />
+            <CameraFit />
 
-          {/* See-through, cut-down wall section under the cursor — always in view
+            {/* See-through, cut-down wall section under the cursor — always in view
             mode; in edit mode while selecting or placing furniture (the wall,
             door and erase tools target walls directly). */}
-          <WallXray
-            // Off while hanging or carrying a wall item — you're pointing at
-            // the very wall it goes on.
-            enabled={
-              (readOnly || tool === "select" || isFurniture) &&
-              !carriedOpening &&
-              !isWallMounted(tool as ObjectType) &&
-              !(carried && isWallMounted(carried.type))
-            }
-            fades={fades.current}
-            onChange={setXrayActive}
-          />
-          <CarryController carryId={readOnly ? null : dragId} />
+            <WallXray
+              // Off while hanging or carrying a wall item — you're pointing at
+              // the very wall it goes on.
+              enabled={
+                (readOnly || tool === "select" || isFurniture) &&
+                !carriedOpening &&
+                !isWallMounted(tool as ObjectType) &&
+                !(carried && isWallMounted(carried.type))
+              }
+              fades={fades.current}
+              onChange={setXrayActive}
+            />
+            <CarryController carryId={readOnly ? null : dragId} />
 
-          <Lighting profile={profile} />
+            <Lighting profile={profile} />
 
-          {readOnly && <SeatTags />}
-          {readOnly && <DeskPets />}
-          {readOnly && <SeatPopup />}
-          {readOnly && <StudioEnvironment intensity={profile.envIntensity} />}
+            {readOnly && <SeatTags />}
+            {readOnly && <DeskPets />}
+            {readOnly && <SeatPopup />}
+            {readOnly && <StudioEnvironment intensity={profile.envIntensity} />}
 
-          <Ground
-            onDown={handleDown}
-            onMove={handleMove}
-            onUp={handleUp}
-            onLeave={() => setHover(null)}
-            // View mode: a click on bare floor closes the desk card (a drag that
-            // pans the camera doesn't). Desk clicks stop propagation first.
-            onClick={
-              readOnly
-                ? (delta) => {
-                    if (delta <= 4) storeApi.getState().closeSeatCard()
-                  }
-                : undefined
-            }
-            showGrid={!readOnly}
-          />
+            <Ground
+              onDown={handleDown}
+              onMove={handleMove}
+              onUp={handleUp}
+              onLeave={() => setHover(null)}
+              // View mode: a click on bare floor closes the desk card (a drag that
+              // pans the camera doesn't). Desk clicks stop propagation first.
+              onClick={
+                readOnly
+                  ? (delta) => {
+                      if (delta <= 4) storeApi.getState().closeSeatCard()
+                    }
+                  : undefined
+              }
+              showGrid={!readOnly}
+            />
 
-          {/* Tint the floor enclosed by walls (the office interior). */}
-          <InteriorFloor />
+            {/* Tint the floor enclosed by walls (the office interior). */}
+            <InteriorFloor />
 
-          {/* Walls render as merged runs (seamless); everything else individually. */}
-          <Walls />
-          {objects
-            .filter((obj) => !isWall(obj.type) && !isMarker(obj.type))
-            .map((obj) => (
-              <ObjectRenderer
-                key={obj.id}
-                obj={obj}
-                selected={!readOnly && selection.includes(obj.id)}
-                carried={!readOnly && obj.id === dragId}
-                blockedAt={obj.id === dragId ? blockedAt : 0}
-                tool={tool}
-                interactive={!readOnly}
-                onSelect={select}
-                onDelete={removeObject}
-                onStartDrag={onStartDrag}
-                onPickOpening={onPickOpening}
-                onToggleSelect={toggleSelect}
-                onSeatClick={readOnly ? openSeatCard : undefined}
-                occupied={isSeatable(obj.type) ? occupied?.get(obj.id) : undefined}
-                mountedOn={mounts.get(obj.id)}
-              />
-            ))}
-
-          {/* Corner posts finishing wall joints */}
-          <Posts />
-
-          {!readOnly && (
-            <>
-              {/* Wall draw + erase previews and interaction */}
-              <BuildController />
-              <BoxSelect />
-              {tool === "paint" && <PaintController />}
-              <NudgeKeys />
-
-              {/* A door/window being moved along the walls */}
-              {carriedOpening && (
-                <OpeningCarry
-                  carried={carriedOpening}
-                  onDone={() => {
-                    setCarriedOpening(null)
-                    storeApi.getState().endBatch()
-                  }}
+            {/* Walls render as merged runs (seamless); everything else individually. */}
+            <Walls />
+            {objects
+              .filter((obj) => !isWall(obj.type) && !isMarker(obj.type))
+              .map((obj) => (
+                <ObjectRenderer
+                  key={obj.id}
+                  obj={obj}
+                  selected={!readOnly && selection.includes(obj.id)}
+                  carried={!readOnly && obj.id === dragId}
+                  blockedAt={obj.id === dragId ? blockedAt : 0}
+                  tool={tool}
+                  interactive={!readOnly}
+                  onSelect={select}
+                  onDelete={removeObject}
+                  onStartDrag={onStartDrag}
+                  onPickOpening={onPickOpening}
+                  onToggleSelect={toggleSelect}
+                  onSeatClick={readOnly ? openSeatCard : undefined}
+                  occupied={isSeatable(obj.type) ? occupied?.get(obj.id) : undefined}
+                  mountedOn={mounts.get(obj.id)}
                 />
-              )}
+              ))}
 
-              {/* Furniture build preview — red when it would overlap something */}
-              {isFurniture &&
-                hover &&
-                !dragId &&
-                (() => {
-                  const rot = hover.rotation ?? placementRotation
-                  const blocked = furnitureCollides(
-                    objects,
-                    tool as ObjectType,
-                    hover.x,
-                    hover.z,
-                    rot
-                  )
-                  return (
-                    <>
-                      <PlacementHighlight
-                        type={tool as ObjectType}
-                        x={hover.x}
-                        z={hover.z}
-                        rotation={rot}
-                        valid={!blocked}
-                      />
-                      {measureHints && (
-                        <MeasureHints
-                          objects={objects}
+            {/* Corner posts finishing wall joints */}
+            <Posts />
+
+            {!readOnly && (
+              <>
+                {/* Wall draw + erase previews and interaction */}
+                <BuildController />
+                <BoxSelect />
+                {tool === "paint" && <PaintController />}
+                <NudgeKeys />
+
+                {/* A door/window being moved along the walls */}
+                {carriedOpening && (
+                  <OpeningCarry
+                    carried={carriedOpening}
+                    onDone={() => {
+                      setCarriedOpening(null)
+                      storeApi.getState().endBatch()
+                    }}
+                  />
+                )}
+
+                {/* Furniture build preview — red when it would overlap something */}
+                {isFurniture &&
+                  hover &&
+                  !dragId &&
+                  (() => {
+                    const rot = hover.rotation ?? placementRotation
+                    const blocked = furnitureCollides(
+                      objects,
+                      tool as ObjectType,
+                      hover.x,
+                      hover.z,
+                      rot
+                    )
+                    return (
+                      <>
+                        <PlacementHighlight
                           type={tool as ObjectType}
                           x={hover.x}
                           z={hover.z}
                           rotation={rot}
+                          valid={!blocked}
                         />
-                      )}
-                      <GhostObject
-                        type={tool as ObjectType}
-                        x={hover.x}
-                        z={hover.z}
-                        rotation={rot}
-                        tint={blocked ? "#ef4444" : undefined}
-                        color={placementColor ?? undefined}
-                      />
-                    </>
-                  )
-                })()}
-
-              {/* Target-square highlight for the object being carried */}
-              {carried && measureHints && (
-                <MeasureHints
-                  objects={objects}
-                  type={carried.type}
-                  x={carried.x}
-                  z={carried.z}
-                  rotation={carried.rotation}
-                  ignoreId={carried.id}
-                />
-              )}
-              {carried && (
-                <PlacementHighlight
-                  type={carried.type}
-                  x={carried.x}
-                  z={carried.z}
-                  rotation={carried.rotation}
-                  valid={
-                    !furnitureCollides(
-                      objects,
-                      carried.type,
-                      carried.x,
-                      carried.z,
-                      carried.rotation,
-                      carried.id
+                        {measureHints && (
+                          <MeasureHints
+                            objects={objects}
+                            type={tool as ObjectType}
+                            x={hover.x}
+                            z={hover.z}
+                            rotation={rot}
+                          />
+                        )}
+                        <GhostObject
+                          type={tool as ObjectType}
+                          x={hover.x}
+                          z={hover.z}
+                          rotation={rot}
+                          tint={blocked ? "#ef4444" : undefined}
+                          color={placementColor ?? undefined}
+                        />
+                      </>
                     )
-                  }
-                />
-              )}
-            </>
-          )}
+                  })()}
 
-          {/* Post-processing only in display mode. In edit mode we keep the plain
+                {/* Target-square highlight for the object being carried */}
+                {carried && measureHints && (
+                  <MeasureHints
+                    objects={objects}
+                    type={carried.type}
+                    x={carried.x}
+                    z={carried.z}
+                    rotation={carried.rotation}
+                    ignoreId={carried.id}
+                  />
+                )}
+                {carried && (
+                  <PlacementHighlight
+                    type={carried.type}
+                    x={carried.x}
+                    z={carried.z}
+                    rotation={carried.rotation}
+                    valid={
+                      !furnitureCollides(
+                        objects,
+                        carried.type,
+                        carried.x,
+                        carried.z,
+                        carried.rotation,
+                        carried.id
+                      )
+                    }
+                  />
+                )}
+              </>
+            )}
+
+            {/* Post-processing only in display mode. In edit mode we keep the plain
           R3F render so previews update live (the EffectComposer takes over the
           render loop, and reconfiguring it on mode-toggle can stall it). */}
-          {readOnly && <PostFx highQuality />}
-        </DaylightContext.Provider>
-      </XrayContext.Provider>
+            {readOnly && <PostFx highQuality />}
+          </DaylightContext.Provider>
+        </XrayContext.Provider>
+      </CursorHintContext.Provider>
     </SceneThemeContext.Provider>
   )
 }

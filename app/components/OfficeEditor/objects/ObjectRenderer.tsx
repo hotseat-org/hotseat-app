@@ -1,7 +1,6 @@
-import { memo, useLayoutEffect, useRef, useState } from "react"
+import { memo, useContext, useEffect, useLayoutEffect, useRef, useState } from "react"
 import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber"
 import type { Group } from "three"
-import { useCursor } from "@react-three/drei"
 import {
   FOOTPRINT_CELLS,
   GRID,
@@ -18,6 +17,7 @@ import { GhostObject } from "../scene/GhostObject"
 import { edgeLength } from "../layout"
 import { markShadowsDirty } from "../scene/shadows"
 import { useXray } from "../scene/xray"
+import { CursorHintContext } from "../cursors"
 import { ObjectMesh } from "./ObjectMesh"
 import { WALL } from "./dimensions"
 import { GhostContext } from "./Surface"
@@ -90,9 +90,15 @@ export const ObjectRenderer = memo(function ObjectRenderer({
   // Edit mode: with the Select tool, everything that renders here (furniture,
   // doors, windows) can be clicked/picked up.
   const selectable = interactive && tool === "select" && !carried
-  // Same hover language in both modes: pointer cursor + footprint outline.
+  // Same hover language in both modes: a hand cursor + footprint outline —
+  // open (pick it up) in edit mode, pointing (open its card) in view mode.
   const hoverable = clickable || selectable
-  useCursor(hoverable && hovered)
+  const setCursorHint = useContext(CursorHintContext)
+  useEffect(() => {
+    if (!hoverable || !hovered) return
+    setCursorHint(obj.id, selectable ? "grab" : "point")
+    return () => setCursorHint(obj.id, null)
+  }, [hoverable, hovered, selectable, obj.id, setCursorHint])
   // A door in the cursor's wall cutaway fades with its wall section.
   const xray = useXray()
   // A wall item goes with its wall's cutaway.
