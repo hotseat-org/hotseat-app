@@ -60,9 +60,11 @@ export const saveOfficeLayout =
       mainRepository.deskRelease.findMany({ organizationSlug, officeSlug: slug, from: today }),
     ])
     const releasedBy = new Map(releases.map((r) => [`${r.deskId}|${r.date}`, r.userEmail]))
-    const keeps = (r: { deskId: string; date: string }) => {
+    // A permanent resident books nothing else here: their own desk is theirs.
+    const residentEmails = new Set(residents)
+    const keeps = (r: { deskId: string; date: string; userEmail: string }) => {
       const desk = byId.get(r.deskId)
-      if (!desk) return false
+      if (!desk || residentEmails.has(r.userEmail)) return false
       return !desk.assignee || releasedBy.get(`${r.deskId}|${r.date}`) === desk.assignee
     }
     // Who loses what (read before the save deletes it) — they're told below.
@@ -130,9 +132,12 @@ const notifyLayoutChange = async (
 
   for (const { userEmail, deskId, days } of groupBookings(lost)) {
     const desk = current.get(deskId) ?? previous.get(deskId)
-    const reason = current.get(deskId)?.assignee
-      ? `it's now ${nameOf(current.get(deskId)!.assignee!)}'s permanent desk`
-      : "the desk was removed"
+    const ownDesk = after.find((d) => d.assignee === userEmail)
+    const reason = ownDesk
+      ? `you have a permanent desk here now (${deskPhrase(ownDesk.label)})`
+      : current.get(deskId)?.assignee
+        ? `it's now ${nameOf(current.get(deskId)!.assignee!)}'s permanent desk`
+        : "the desk was removed"
     notes.push({
       userEmail,
       message: `Your booking of ${deskPhrase(desk?.label)} in ${office.name} on ${daysPhrase(days)} was cancelled: ${reason}.`,

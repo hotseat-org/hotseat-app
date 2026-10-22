@@ -139,6 +139,23 @@ const SeatSection = ({ id }: { id: string }) => {
   const [pendingResident, setPendingResident] = useState<string | null>(null)
   const nameOf = (email: string) => people.members.find((p) => p.email === email)?.name ?? email
   const lostTo = (resident: string) => bookings.filter((b) => b.email !== resident)
+  /** The new resident's own upcoming bookings in this office (any desk): they go too. */
+  const ownDays = (resident: string) =>
+    isBookingOn
+      ? Object.entries(byDay)
+          .filter(([d, desks]) => d >= today && Object.values(desks).includes(resident))
+          .map(([d]) => d as Day)
+          .sort()
+      : []
+  const cancels = (resident: string) =>
+    [
+      lostTo(resident).length ? describe(lostTo(resident)) : null,
+      ownDays(resident).length
+        ? `${nameOf(resident)}'s own bookings (${ownDays(resident).map(formatShort).join(", ")})`
+        : null,
+    ]
+      .filter(Boolean)
+      .join(" and ")
   const describe = (list: typeof bookings) =>
     list.map((b) => `${nameOf(b.email)} (${formatShort(b.day)})`).join(", ")
   if (!seat) return null
@@ -175,7 +192,8 @@ const SeatSection = ({ id }: { id: string }) => {
             value={seat.assignee ?? ""}
             onChange={(e) => {
               const email = e.currentTarget.value || null
-              if (email && lostTo(email).length > 0) setPendingResident(email)
+              if (email && (lostTo(email).length > 0 || ownDays(email).length > 0))
+                setPendingResident(email)
               else assignSeat(seat.id, email)
             }}
             className="h-8 rounded-lg border border-border bg-surface px-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-focus"
@@ -190,8 +208,7 @@ const SeatSection = ({ id }: { id: string }) => {
           {pendingResident ? (
             <div className="flex flex-col gap-2 rounded-lg bg-warning/15 px-2.5 py-2 text-xs text-foreground">
               <p>
-                Making {nameOf(pendingResident)} its resident cancels{" "}
-                {describe(lostTo(pendingResident))}.
+                Making {nameOf(pendingResident)} its resident cancels {cancels(pendingResident)}.
               </p>
               <div className="flex justify-end gap-1.5">
                 <button
