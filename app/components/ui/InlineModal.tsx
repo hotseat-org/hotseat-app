@@ -17,6 +17,7 @@ export function InlineModal({
   onClose,
   children,
   className,
+  isFullScreenOnPhone = false,
 }: {
   /** Accessible name of the dialog. */
   label: string
@@ -24,6 +25,8 @@ export function InlineModal({
   children: ReactNode
   /** Classes for the dialog box itself (size, layout). */
   className?: string
+  /** No margin round the dialog on a phone (it fills the screen there). */
+  isFullScreenOnPhone?: boolean
 }) {
   usePreventScroll()
   const ref = useRef<HTMLDivElement>(null)
@@ -31,7 +34,10 @@ export function InlineModal({
 
   return (
     <div
-      className="modal-in-backdrop fixed inset-0 z-50 grid place-items-center bg-black/50 p-4 backdrop-blur-md"
+      className={clsx(
+        "modal-in-backdrop fixed inset-0 z-50 grid place-items-center bg-black/50 backdrop-blur-md",
+        isFullScreenOnPhone ? "p-0 md:p-4" : "p-4"
+      )}
       // Only a press that starts and ends on the backdrop itself closes it (a
       // text selection dragged out of the dialog must not).
       onPointerDown={(e) => {

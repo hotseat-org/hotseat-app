@@ -34,7 +34,7 @@ export function UserPet() {
 
   return (
     <>
-      <SettingsCard className="flex items-center gap-6 !py-[18px] !pl-[18px]">
+      <SettingsCard className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6 sm:!py-[18px] sm:!pl-[18px]">
         <div className="relative h-[124px] w-[150px] shrink-0 overflow-hidden rounded-2xl bg-surface-secondary">
           <div className="absolute inset-x-6 bottom-3.5 h-6 rounded-full bg-foreground/[0.07]" />
           <img
@@ -58,7 +58,7 @@ export function UserPet() {
           <p className="max-w-[380px] text-sm leading-snug text-muted">
             Sits in your chair on the days you've booked. Everyone in your organizations sees it.
           </p>
-          <div className="mt-1.5 flex gap-2">
+          <div className="mt-1.5 flex flex-wrap gap-2">
             <Button size="sm" variant="secondary" onPress={surprise}>
               <Shuffle className="size-4" />
               Surprise me

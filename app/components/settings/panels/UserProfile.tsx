@@ -26,7 +26,7 @@ export function UserProfile() {
 
   return (
     <>
-      <SettingsCard className="flex items-center gap-6">
+      <SettingsCard className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6">
         <ThumbAvatar
           src={photo}
           fallback={(displayName || email).slice(0, 1).toUpperCase()}
@@ -35,7 +35,7 @@ export function UserProfile() {
         <div className="flex flex-col gap-2">
           <CardTitle>Photo</CardTitle>
           <p className="text-sm text-muted">Shown to your teammates, on desks and in the office.</p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button size="sm" variant="secondary" onPress={() => openDialog("set-avatar")}>
               Upload new
             </Button>

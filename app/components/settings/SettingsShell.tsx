@@ -2,6 +2,7 @@ import clsx from "clsx"
 import type { LucideIcon } from "lucide-react"
 import { X } from "lucide-react"
 import type { ReactNode } from "react"
+import { useEffect, useRef } from "react"
 import { InlineModal } from "~/components/ui/InlineModal"
 
 export type SettingsLink = {
@@ -50,6 +51,19 @@ export function SettingsShell({
   const active = links.find((l) => l.id === activeSection) ?? links[0]
   const main = links.filter((l) => !l.danger)
   const danger = links.filter((l) => l.danger)
+  const tabsRef = useRef<HTMLElement>(null)
+
+  // Phones: keep the active tab in view (the row scrolls sideways). Only the
+  // row scrolls, never the page — so no scrollIntoView.
+  useEffect(() => {
+    const tabs = tabsRef.current
+    const tab = tabs?.querySelector<HTMLElement>("[aria-current=page]")
+    if (!tabs || !tab) return
+    const gutter = 16
+    if (tab.offsetLeft - gutter < tabs.scrollLeft) tabs.scrollLeft = tab.offsetLeft - gutter
+    else if (tab.offsetLeft + tab.offsetWidth + gutter > tabs.scrollLeft + tabs.clientWidth)
+      tabs.scrollLeft = tab.offsetLeft + tab.offsetWidth + gutter - tabs.clientWidth
+  }, [active.id])
 
   const item = (l: SettingsLink) => {
     const Icon = l.icon
@@ -81,10 +95,12 @@ export function SettingsShell({
   return (
     // Rendered in place (not portalled) so a settings URL comes out of the
     // server with the modal already open.
+    // On a phone: the whole screen, sections as a row of tabs under the title.
     <InlineModal
       label={title}
       onClose={onClose}
-      className="flex h-[82vh] max-h-[760px] w-[min(1080px,94vw)] flex-row gap-0 overflow-hidden rounded-[28px] border border-border bg-overlay p-0 shadow-overlay"
+      isFullScreenOnPhone
+      className="flex h-dvh w-screen flex-row gap-0 overflow-hidden bg-overlay p-0 md:h-[82vh] md:max-h-[760px] md:w-[min(1080px,94vw)] md:rounded-[28px] md:border md:border-border md:shadow-overlay"
     >
       <nav
         aria-label={title}
@@ -108,10 +124,15 @@ export function SettingsShell({
       </nav>
 
       <main className="flex min-w-0 flex-1 flex-col bg-overlay">
-        <header className="flex items-start justify-between gap-4 px-9 pb-5 pt-8">
-          <div>
-            <h1 className="text-2xl font-black tracking-tight text-foreground">{active.label}</h1>
-            {active.description && <p className="mt-1 text-sm text-muted">{active.description}</p>}
+        <header className="flex items-start justify-between gap-4 px-4 pb-3 pt-4 md:px-9 md:pb-5 md:pt-8">
+          <div className="min-w-0">
+            <h1 className="text-xl font-black tracking-tight text-foreground md:text-2xl">
+              {active.label}
+            </h1>
+            {/* Not on phones: the tabs name the section, and every header stays one height. */}
+            {active.description && (
+              <p className="mt-1 hidden text-sm text-muted md:block">{active.description}</p>
+            )}
           </div>
           <button
             type="button"
@@ -123,8 +144,37 @@ export function SettingsShell({
             <X className="size-[18px]" />
           </button>
         </header>
+        {/* Phones: the sidebar's sections as a scrolling row of tabs. */}
+        <nav
+          ref={tabsRef}
+          aria-label={title}
+          className="relative -mt-1 mb-3 flex shrink-0 gap-1.5 overflow-x-auto px-4 [scrollbar-width:none] md:hidden"
+        >
+          {links.map((l) => {
+            const isActive = l.id === active.id
+            return (
+              <button
+                key={l.id}
+                type="button"
+                onClick={() => onSelect(l.id)}
+                aria-current={isActive ? "page" : undefined}
+                className={clsx(
+                  "flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-sm font-bold",
+                  isActive
+                    ? "border-accent bg-accent text-accent-foreground"
+                    : l.danger
+                      ? "border-danger/30 text-danger"
+                      : "border-border text-foreground"
+                )}
+              >
+                <l.icon className="size-4" />
+                {l.label}
+              </button>
+            )
+          })}
+        </nav>
         {/* Scrolls; a panel's SaveBar sticks to the bottom of this area. */}
-        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-9 pb-8">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-6 md:px-9 md:pb-8">
           {children}
         </div>
       </main>

@@ -43,11 +43,11 @@ export function UserOrganizations() {
         organizations.map((organization) => {
           const isAdmin = organization.profile.role === "ADMIN"
           return (
-            <SettingsCard key={organization.slug} className="flex items-center gap-4">
+            <SettingsCard key={organization.slug} className="flex flex-wrap items-center gap-4">
               <ThumbAvatar
                 src={organization.thumbnailUrl}
                 fallback={organization.name.slice(0, 1).toUpperCase()}
-                className="size-16 shrink-0 rounded-2xl"
+                className="size-14 shrink-0 rounded-2xl sm:size-16"
               />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
@@ -85,7 +85,7 @@ export function UserOrganizations() {
                   </span>
                 </div>
               </div>
-              <div className="flex shrink-0 gap-2">
+              <div className="flex w-full shrink-0 justify-end gap-2 sm:w-auto">
                 <ButtonLink to={`/app/o/${organization.slug}`} variant="secondary" size="sm">
                   Open
                 </ButtonLink>

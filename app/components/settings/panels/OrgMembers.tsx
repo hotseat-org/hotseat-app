@@ -40,7 +40,8 @@ export function OrgMembers() {
         ) : (
           <Table>
             <Table.ScrollContainer>
-              <Table.Content aria-label="Members table">
+              {/* Wide enough to read: on a phone the table scrolls sideways. */}
+              <Table.Content aria-label="Members table" className="min-w-[560px]">
                 <Table.Header>
                   <Table.Column isRowHeader>EMAIL</Table.Column>
                   <Table.Column>NAME</Table.Column>

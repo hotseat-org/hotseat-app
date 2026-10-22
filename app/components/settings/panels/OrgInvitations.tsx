@@ -46,7 +46,7 @@ export function OrgInvitations() {
   return (
     <>
       <SettingsCard className="flex flex-col gap-4">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col items-start gap-3 sm:flex-row sm:justify-between sm:gap-4">
           <div>
             <CardTitle>Direct invitations</CardTitle>
             <p className="mt-1 text-sm text-muted">
@@ -61,7 +61,8 @@ export function OrgInvitations() {
         {invites.length > 0 ? (
           <Table>
             <Table.ScrollContainer>
-              <Table.Content aria-label="Invitations table">
+              {/* Wide enough to read: on a phone the table scrolls sideways. */}
+              <Table.Content aria-label="Invitations table" className="min-w-[560px]">
                 <Table.Header>
                   <Table.Column isRowHeader>EMAIL</Table.Column>
                   <Table.Column>SENT</Table.Column>

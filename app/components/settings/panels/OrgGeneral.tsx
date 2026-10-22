@@ -29,7 +29,7 @@ export function OrgGeneral() {
 
   return (
     <>
-      <SettingsCard className="flex items-center gap-6">
+      <SettingsCard className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6">
         <ThumbAvatar
           src={organization.thumbnailUrl}
           fallback={organization.name.slice(0, 1).toUpperCase()}
@@ -40,7 +40,7 @@ export function OrgGeneral() {
           <p className="text-sm text-muted">
             Square image, at least 256 × 256. Shown in the switcher and on invites.
           </p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button size="sm" variant="secondary" onPress={() => openDialog("set-logo")}>
               Upload new
             </Button>
