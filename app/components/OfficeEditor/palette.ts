@@ -127,12 +127,16 @@ export interface SurfacePalette {
   nightDepth: number
 }
 
+// Walls stand apart from the UI around them, so they read as the building,
+// not the interface: cool dove grey against the light theme's warm cream
+// panels; in the dark theme a light, muted blue-grey — far lighter than its
+// slate panels and its dark wood floor.
 export const SURFACES: Record<"light" | "dark", SurfacePalette> = {
   light: {
     background: null,
     floor: PALETTE.floor,
     floorInside: PALETTE.floorInside,
-    wall: PALETTE.wall,
+    wall: "#c9ced8",
     grid: "#9c855e",
     nightDepth: 1.5,
   },
@@ -141,7 +145,7 @@ export const SURFACES: Record<"light" | "dark", SurfacePalette> = {
     background: "#20242e",
     floor: "#2e3441",
     floorInside: "#4a4135",
-    wall: "#5a6275",
+    wall: "#8f97a8",
     grid: "#56607a",
     nightDepth: 0,
   },
