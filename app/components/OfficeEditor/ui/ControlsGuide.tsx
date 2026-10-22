@@ -1,4 +1,4 @@
-import { Button, CloseButton, Kbd } from "@heroui/react"
+import { Button, CloseButton } from "@heroui/react"
 import { Mouse } from "lucide-react"
 import { useState } from "react"
 
@@ -69,10 +69,15 @@ export const ControlsGuide = ({ view }: { view: GuideView }) => {
           <div key={action} className="contents">
             <dt className="font-semibold text-muted">{action}</dt>
             <dd className="flex flex-wrap gap-1">
+              {/* Plain tags, not HeroUI's Kbd: it collapses spaces and swaps
+                  "+ −" for an arrow glyph ("Q E" → "QE", "+ −" → "←"). */}
               {inputs.map((input) => (
-                <Kbd key={input} className="text-[11px]">
+                <span
+                  key={input}
+                  className="whitespace-pre rounded-md bg-default px-1.5 py-0.5 text-[11px] font-medium text-foreground/80"
+                >
                   {input}
-                </Kbd>
+                </span>
               ))}
             </dd>
           </div>
