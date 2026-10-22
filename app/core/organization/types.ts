@@ -1,4 +1,5 @@
 import type { Profile } from "../profile/types"
+import type { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import type { PaginatedResult } from "~/repositories/main-repository/types"
 
 export interface Organization {
@@ -7,6 +8,12 @@ export interface Organization {
   description?: string
   thumbnailUrl?: string
   invitationHash?: string
+}
+
+/** One of someone's organizations, for the switcher: their role and how many members. */
+export interface OrganizationSummary extends Organization {
+  role: Role
+  memberCount: number
 }
 
 export interface OrganizationWithMembers extends Organization {

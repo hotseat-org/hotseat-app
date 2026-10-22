@@ -64,6 +64,8 @@ export interface Profile {
   displayName: string
   avatarUrl?: string
   pet?: string
+  /** Their favourite office here (opened first), if any. */
+  favoriteOfficeSlug?: string | null
   createdAt: Date
 }
 
@@ -136,6 +138,9 @@ export interface MainRepository {
   }
   organization: {
     findMany: (args: FindOrganizationsArgs) => Promise<Organization[]>
+    findSummaries: (args: {
+      userEmail: string
+    }) => Promise<(Organization & { role: Role; memberCount: number })[]>
     find: (args: FindOrganizationArgs) => Promise<Organization | null>
     create: (args: CreateOrganizationArgs) => Promise<Organization>
     update: (args: UpdateOrganizationArgs) => Promise<Organization>

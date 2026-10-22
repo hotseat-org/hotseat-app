@@ -12,19 +12,19 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const profile = await requireProfile(args)
   const core = getCore()
 
-  const organization = await core.organization.getForUser({
-    userEmail: profile.userEmail,
-    slug: profile.organizationSlug,
-  })
-  const organizations = await core.user.getOrganizations(profile.userEmail)
+  // Membership is checked above; the rest is independent — fetched together.
+  const [organization, organizations, orgSettings, notifications] = await Promise.all([
+    core.organization.getForPublic({ slug: profile.organizationSlug }),
+    // Lean (one query): the switcher needs names, roles and member counts.
+    core.user.listOrganizations(profile.userEmail),
+    // Organization settings (?settings=org/…) can open over any org page: load
+    // the open panel's data here so it's server-rendered with the page.
+    loadOrgSettings(args.request, profile),
+    // Under the bell (any org page): what others' changes did to this person.
+    core.notification.list(profile.userEmail),
+  ])
 
   if (!organization) throw new Response("Not found", { status: 404 })
-
-  // Organization settings (?settings=org/…) can open over any org page: load
-  // the open panel's data here so it's server-rendered with the page.
-  const orgSettings = await loadOrgSettings(args.request, profile)
-  // Under the bell (any org page): what others' changes did to this person.
-  const notifications = await core.notification.list(profile.userEmail)
 
   return { organization, profile, organizations, orgSettings, notifications }
 }

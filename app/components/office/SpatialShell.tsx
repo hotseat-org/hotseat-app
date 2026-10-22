@@ -1,7 +1,6 @@
 import { useMemo, useState, type ReactNode } from "react"
-import { Link } from "react-router"
 import { Button, Chip, Tooltip } from "@heroui/react"
-import { BarChart3, Building2, Calendar, MapPin, Pencil, Pin, Settings, Users } from "lucide-react"
+import { BarChart3, Building2, Calendar, MapPin, Pencil, Pin, Users } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import {
   MemberAvatar,
@@ -38,8 +37,6 @@ interface Props {
   offices: ShellOffice[]
   me: ShellMember
   members: ShellMember[]
-  /** Link to the org's offices list. */
-  officesHref: string
   /** Switch the editor into edit mode. */
   enterEdit: () => void
   /** May this person edit the layout (admins)? */
@@ -53,14 +50,13 @@ interface Props {
 interface RailItem {
   icon: LucideIcon
   label: string
-  to?: string
   onClick?: () => void
   active?: boolean
   /** Not built yet: shown dimmed, not clickable (instead of a silent no-op). */
   disabled?: boolean
 }
 
-const RailLink = ({ icon: Icon, label, to, onClick, active, disabled }: RailItem) => {
+const RailLink = ({ icon: Icon, label, onClick, active, disabled }: RailItem) => {
   const cls = `flex size-11 items-center justify-center rounded-xl transition-colors outline-none focus-visible:ring-2 focus-visible:ring-focus ${
     active
       ? "bg-accent text-accent-foreground"
@@ -70,21 +66,15 @@ const RailLink = ({ icon: Icon, label, to, onClick, active, disabled }: RailItem
   }`
   return (
     <Tooltip delay={350}>
-      {to ? (
-        <Link to={to} className={cls} aria-label={label}>
-          <Icon className="size-5" />
-        </Link>
-      ) : (
-        <button
-          type="button"
-          onClick={disabled ? undefined : onClick}
-          aria-disabled={disabled || undefined}
-          className={cls}
-          aria-label={label}
-        >
-          <Icon className="size-5" />
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={disabled ? undefined : onClick}
+        aria-disabled={disabled || undefined}
+        className={cls}
+        aria-label={label}
+      >
+        <Icon className="size-5" />
+      </button>
       <Tooltip.Content
         placement="right"
         className="rounded-md border border-border bg-overlay px-2 py-1 text-xs text-foreground shadow-overlay"
@@ -99,7 +89,6 @@ export const SpatialShell = ({
   offices,
   me,
   members,
-  officesHref,
   enterEdit,
   canEdit,
   empty = false,
@@ -164,13 +153,6 @@ export const SpatialShell = ({
           onClick={() => setBookingsOpen((o) => !o)}
         />
         <RailLink icon={BarChart3} label="Insights — coming soon" disabled />
-        <div className="mx-1.5 my-1 h-px bg-separator" />
-        <RailLink icon={Building2} label="All offices" to={officesHref} />
-        <RailLink
-          icon={Settings}
-          label="Office settings"
-          onClick={() => openSettings("office", "general")}
-        />
       </nav>
 
       {/* Top-right: search + notifications + account */}

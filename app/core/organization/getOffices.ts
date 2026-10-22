@@ -26,3 +26,11 @@ export const getOrganizationOffices =
       data: await Promise.all(offices.data.map(mappers.office.fromRepository)),
     }
   }
+
+/** An organization's offices — for a caller that has already checked membership. */
+export const listOrganizationOffices =
+  ({ mainRepository, mappers }: CoreContext) =>
+  async (slug: string): Promise<PaginatedResult<Office>> => {
+    const offices = await mainRepository.office.findMany({ filter: { organizationSlug: slug } })
+    return { ...offices, data: await Promise.all(offices.data.map(mappers.office.fromRepository)) }
+  }

@@ -1,8 +1,9 @@
 import { Outlet, useSearchParams } from "react-router"
 import { Toast } from "@heroui/react"
+import { lazy, Suspense } from "react"
 import { Route } from "./+types/app"
 import NewOrganization from "./api.new-organization"
-import { SettingsOverlay } from "~/components/settings/SettingsOverlay"
+import { useSettings } from "~/components/settings/useSettings"
 import { requireUser } from "~/services/session.server"
 import { loadUserSettings } from "~/utils/loader-helpers/settings.server"
 import { revalidateOn } from "~/utils/revalidation"
@@ -16,9 +17,15 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
 export const shouldRevalidate = revalidateOn({ settings: "user" })
 
+// The settings dialog's code (~170 KB) loads only when settings are opened.
+const SettingsOverlay = lazy(() =>
+  import("~/components/settings/SettingsOverlay").then((m) => ({ default: m.SettingsOverlay }))
+)
+
 export default function Index() {
   const [searchParams] = useSearchParams()
   const modal = searchParams.get("modal")
+  const { scope } = useSettings()
 
   return (
     <main className="flex h-full bg-background">
@@ -26,7 +33,11 @@ export default function Index() {
       <Toast.Provider placement="top" />
       <Outlet />
       {modal === "new-organization" && <NewOrganization />}
-      <SettingsOverlay />
+      {(scope === "user" || scope === "org") && (
+        <Suspense fallback={null}>
+          <SettingsOverlay />
+        </Suspense>
+      )}
     </main>
   )
 }

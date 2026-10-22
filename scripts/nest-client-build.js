@@ -8,6 +8,8 @@ const basePath = "hotseat"
 const nestedDirectory = join(clientDirectory, basePath)
 
 mkdirSync(nestedDirectory, { recursive: true })
+// `_headers` configures the asset server itself: it stays at the root.
+const rootFiles = new Set([basePath, "_headers"])
 for (const entry of readdirSync(clientDirectory)) {
-  if (entry !== basePath) renameSync(join(clientDirectory, entry), join(nestedDirectory, entry))
+  if (!rootFiles.has(entry)) renameSync(join(clientDirectory, entry), join(nestedDirectory, entry))
 }

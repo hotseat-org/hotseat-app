@@ -341,6 +341,17 @@ input:-webkit-autofill:focus {
   animation: sheet-down 140ms ease-in both;
 }
 
+/* A phone menu dropping down from the top bar. */
+@keyframes drop-down {
+  from {
+    transform: translateY(-12px);
+    opacity: 0;
+  }
+}
+.drop-down {
+  animation: drop-down 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 /* A desk brought into view: rings ripple out from it a few times. */
 @keyframes spotlight {
   from {
@@ -357,7 +368,8 @@ input:-webkit-autofill:focus {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .spotlight {
+  .spotlight,
+  .drop-down {
     animation: none;
   }
   .seat-pop,

@@ -110,7 +110,7 @@ function OrgSettings({ section }: { section: string }) {
   const { slug } = useParams()
   const { selectSection, close } = useSettings()
   const { organization, organizations, profile } = useOrganizationContext()
-  const memberCount = organizations.find((o) => o.slug === organization.slug)?.members.totalCount
+  const memberCount = organizations.find((o) => o.slug === organization.slug)?.memberCount
 
   // Org settings only make sense over an org page (slug in the URL).
   if (!slug) return null

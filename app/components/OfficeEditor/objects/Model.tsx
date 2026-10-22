@@ -2,13 +2,7 @@ import { useEffect } from "react"
 import { Clone, useGLTF } from "@react-three/drei"
 import { useThree } from "@react-three/fiber"
 import { markShadowsDirty } from "../scene/shadows"
-import { MODELS } from "../models"
 import { NO_BAKE } from "./Baked"
-
-/** Warm the GLB cache for all registered models (client-only). */
-export const preloadModels = () => {
-  for (const m of MODELS) useGLTF.preload(m.url)
-}
 
 interface Props {
   url: string
@@ -19,7 +13,8 @@ interface Props {
 
 /**
  * Loads a GLB and clones it (so many copies share one download). Wrap usages in
- * <Suspense> — useGLTF suspends while loading. Preload with useGLTF.preload(url).
+ * <Suspense> — useGLTF suspends while loading. Each model downloads the first
+ * time it's shown (a desk pet only once someone has booked that desk).
  */
 export const Model = ({ url, scale = 1, yOffset = 0, rotationOffset = 0 }: Props) => {
   const { scene } = useGLTF(url)

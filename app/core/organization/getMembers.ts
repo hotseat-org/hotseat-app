@@ -27,3 +27,17 @@ export const getOrganizationMembers =
       data: await Promise.all(profiles.data.map(mappers.profile.fromRepository)),
     }
   }
+
+/** The members of an organization — for a caller that has already checked membership. */
+export const listOrganizationMembers =
+  ({ mainRepository, mappers }: CoreContext) =>
+  async (slug: string): Promise<PaginatedResult<Profile>> => {
+    const profiles = await mainRepository.profile.findMany({
+      filter: { organizationSlug: slug },
+      pagination: { skip: 0, take: 60 },
+    })
+    return {
+      ...profiles,
+      data: await Promise.all(profiles.data.map(mappers.profile.fromRepository)),
+    }
+  }

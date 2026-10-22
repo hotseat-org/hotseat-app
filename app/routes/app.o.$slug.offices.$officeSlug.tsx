@@ -65,9 +65,11 @@ export const loader = async (args: LoaderFunctionArgs) => {
       if (renamed) throw redirectToRenamedPage(args.request, "/offices/", slug, renamed)
       throw data("Office not found", { status: 404, statusText: "Not Found" })
     }),
-    core.organization.getForUser({ userEmail: profile.userEmail, slug: organizationSlug }),
-    core.organization.getMembers({ userEmail: profile.userEmail, slug: organizationSlug }),
-    core.organization.getOffices({ userEmail: profile.userEmail, slug: organizationSlug }),
+    // Membership was checked by requireProfile: no re-checks (each one is a
+    // database round trip).
+    core.organization.getForPublic({ slug: organizationSlug }),
+    core.organization.listMembers(organizationSlug),
+    core.organization.listOffices(organizationSlug),
   ])
 
   const parsed = layoutSchema.safeParse(office.layout)
@@ -80,16 +82,15 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const lastDay = addDays(today, office.bookingWindowDays)
   const asked = new URL(args.request.url).searchParams.get("day")
   const day: Day = isDay(asked) && asked >= from && asked <= lastDay ? asked : today
-  const range = {
-    organizationSlug,
-    officeSlug: office.slug,
-    userEmail: profile.userEmail,
-    from,
-    to: maxDay(lastDay, day),
-  }
-  const [reservations, releases] = await Promise.all([
-    core.reservation.list(range),
-    core.reservation.releases(range),
+  const [{ reservations, releases }, occupancy] = await Promise.all([
+    core.reservation.listForOffice({
+      organizationSlug,
+      officeSlug: office.slug,
+      from,
+      to: maxDay(lastDay, day),
+    }),
+    // "5 of 9 in today" for each office in the switcher.
+    core.office.occupancyToday(organizationSlug, offices.data),
   ])
 
   return {
@@ -101,7 +102,12 @@ export const loader = async (args: LoaderFunctionArgs) => {
       description: office.description,
       thumbnail: office.thumbnail,
     },
-    offices: offices.data.map((o) => ({ name: o.name, slug: o.slug, thumbnail: o.thumbnail })),
+    offices: offices.data.map((o) => ({
+      name: o.name,
+      slug: o.slug,
+      thumbnail: o.thumbnail,
+      ...occupancy[o.slug],
+    })),
     me: toMember(profile),
     members: members.data.map(toMember),
     // Only admins edit the layout (it also sets who has a permanent desk).
@@ -305,7 +311,6 @@ export default function OfficeRoute() {
                     offices={offices}
                     me={me}
                     members={members}
-                    officesHref={`/app/o/${slug}/offices`}
                     enterEdit={enterEdit}
                     canEdit={canEdit}
                     empty={empty}

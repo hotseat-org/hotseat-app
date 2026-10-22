@@ -1,8 +1,7 @@
 import { Canvas } from "@react-three/fiber"
-import { Suspense, useEffect } from "react"
+import { Suspense } from "react"
 import { EditorStoreContextProvider, type EditorStore } from "../store"
 import { PeopleContext, type People } from "../people"
-import { preloadModels } from "../objects/Model"
 import { Scene } from "./Scene"
 import { FpsMeter } from "./FpsMeter"
 import type { FitInsets } from "./CameraFit"
@@ -25,11 +24,6 @@ interface Props {
  * simple (top-down SVG) view never downloads them.
  */
 const SceneCanvas = ({ store, people, readOnly, dark, fitInsets, showStats, onStats }: Props) => {
-  // Load the GLB animal models into cache (available, but not user-placeable).
-  useEffect(() => {
-    preloadModels()
-  }, [])
-
   return (
     <Canvas
       shadows

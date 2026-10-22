@@ -11,11 +11,9 @@ import { revalidateOn } from "~/utils/revalidation"
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const user = await requireUser(request)
   const core = getCore()
-  const [firstOrganization] = await core.user.getOrganizations(user.email)
-
-  if (firstOrganization) {
-    return redirect(`/app/o/${firstOrganization.slug}`)
-  }
+  // In an organization: straight to their office (one hop).
+  const landing = await core.user.landing(user.email)
+  if (landing !== "/app") return redirect(landing)
 
   // The user record, not the session: it follows a rename in Profile.
   const [current, invites] = await Promise.all([

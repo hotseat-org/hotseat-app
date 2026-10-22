@@ -17,3 +17,19 @@ export const findManyOrganizations: FindOrganizationsFn = async ({ filter: { use
 
   return result.map(toOrganization)
 }
+
+/** A user's organizations with their role and the member count — one query. */
+export const findOrganizationSummaries = async ({ userEmail }: { userEmail: string }) => {
+  const rows = await prisma.profile.findMany({
+    where: { userEmail },
+    select: {
+      role: true,
+      organization: { include: { _count: { select: { profiles: true } } } },
+    },
+  })
+  return rows.map(({ role, organization }) => ({
+    ...toOrganization(organization),
+    role,
+    memberCount: organization._count.profiles,
+  }))
+}

@@ -14,19 +14,22 @@ import { generateNewOrganizationInviteLink } from "./organization/generateNewInv
 import { getOrganizationForPublic } from "./organization/getForPublic"
 import { getOrganizationForUser } from "./organization/getForUser"
 import { getOrganizationInvites } from "./organization/getInvites"
-import { getOrganizationMembers } from "./organization/getMembers"
-import { getOrganizationOffices } from "./organization/getOffices"
+import { getOrganizationMembers, listOrganizationMembers } from "./organization/getMembers"
+import { getOrganizationOffices, listOrganizationOffices } from "./organization/getOffices"
 import { organizationInviteMember } from "./organization/inviteMember"
 import { organizationIsAvailable } from "./organization/isAvailable"
 import { joinOrganizationWithHash } from "./organization/joinWithHash"
 import { listNotifications, markNotificationsRead } from "./notification"
+import { getOfficesOccupancy } from "./office/occupancy"
+import { getOrganizationLanding, getUserLanding } from "./user/landing"
+import { listUserOrganizations } from "./user/listOrganizations"
 import { listDeskReleases, reclaimDesk, releaseDesk } from "./reservation/release"
 import { leaveOrganization, removeOrganizationMember } from "./organization/leave"
 import { setOrganizationMemberRole } from "./organization/setMemberRole"
 import { updateOrganization } from "./organization/update"
 import { getProfile } from "./profile/get"
 import { cancelReservations } from "./reservation/cancel"
-import { listReservations } from "./reservation/list"
+import { listOfficeBookings, listReservations } from "./reservation/list"
 import { getMyBookings } from "./reservation/mine"
 import { reserveDesk } from "./reservation/reserve"
 import type { CoreContext } from "./types"
@@ -42,8 +45,10 @@ export const createCore = (context: CoreContext) => ({
     get: getUser(context),
     create: createUser(context),
     getOrganizations: getUserOrganizations(context),
+    listOrganizations: listUserOrganizations(context),
     getOrganizationInvites: getUserOrganizationInvites(context),
     isMember: userIsMember(context),
+    landing: getUserLanding(context),
     update: updateUser(context),
   },
   profile: {
@@ -63,10 +68,13 @@ export const createCore = (context: CoreContext) => ({
     joinWithHash: joinOrganizationWithHash(context),
     generateNewInviteLink: generateNewOrganizationInviteLink(context),
     getMembers: getOrganizationMembers(context),
+    listMembers: listOrganizationMembers(context),
     setMemberRole: setOrganizationMemberRole(context),
     leave: leaveOrganization(context),
     removeMember: removeOrganizationMember(context),
     getOffices: getOrganizationOffices(context),
+    listOffices: listOrganizationOffices(context),
+    landing: getOrganizationLanding(context),
     /** The current slug of an organization renamed away from `oldSlug`. */
     renamedTo: (oldSlug: string) => context.mainRepository.slugRedirect.findOrganization(oldSlug),
   },
@@ -79,11 +87,13 @@ export const createCore = (context: CoreContext) => ({
     saveLayout: saveOfficeLayout(context),
     update: updateOffice(context),
     delete: deleteOffice(context),
+    occupancyToday: getOfficesOccupancy(context),
     renamedTo: (organizationSlug: string, oldSlug: string) =>
       context.mainRepository.slugRedirect.findOffice(organizationSlug, oldSlug),
   },
   reservation: {
     list: listReservations(context),
+    listForOffice: listOfficeBookings(context),
     reserve: reserveDesk(context),
     cancel: cancelReservations(context),
     mine: getMyBookings(context),

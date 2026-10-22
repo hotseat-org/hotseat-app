@@ -1,0 +1,12 @@
+# Workers static assets: cache rules (paths include the /hotseat base).
+# Hashed build output never changes under the same name.
+/hotseat/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Not hashed: a day, then refreshed in the background.
+/hotseat/models/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+/hotseat/pets/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+/hotseat/images/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800

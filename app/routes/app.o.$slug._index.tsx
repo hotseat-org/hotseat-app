@@ -1,10 +1,12 @@
 import { LoaderFunctionArgs, redirect } from "react-router"
+import { getCore } from "~/core/get-core"
 import { requireProfile } from "~/utils/loader-helpers/requireProfile"
 import { revalidateOn } from "~/utils/revalidation"
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const profile = await requireProfile(args)
-  return redirect(profile.favoriteOffice ? `offices/${profile.favoriteOffice.slug}` : "offices")
+  // Straight to the office (not via the offices list, which redirects again).
+  return redirect(await getCore().organization.landing(profile.userEmail, profile.organizationSlug))
 }
 
 // A component (even an empty one) keeps this a UI route: without it React

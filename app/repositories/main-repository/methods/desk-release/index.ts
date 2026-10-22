@@ -4,7 +4,8 @@ import { fromUtcDate, toUtcDate, type Day } from "~/utils/booking"
 
 export interface FindDeskReleasesArgs {
   organizationSlug: string
-  officeSlug: string
+  /** Omitted: every office of the organization. */
+  officeSlug?: string
   /** Inclusive day range. */
   from: Day
   to?: Day

@@ -13,6 +13,9 @@ export interface ShellOffice {
   name: string
   slug: string
   thumbnail?: string
+  /** Desks, and how many have someone today (the switcher's "5 of 9 in today"). */
+  seats?: number
+  inToday?: number
 }
 
 /** Shared glass-panel styling for floating chrome. */
