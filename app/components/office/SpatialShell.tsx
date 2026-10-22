@@ -276,8 +276,9 @@ export const SpatialShell = ({
                       <MemberAvatar m={m} className="size-9 rounded-xl" />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-bold text-foreground">{nameOf(m)}</p>
-                        <p className="flex items-center gap-2 truncate text-xs capitalize text-muted">
-                          {m.role.toLowerCase()}
+                        <p className="flex items-center gap-2 text-xs capitalize text-muted">
+                          {/* Fixed width: every row's dots start at the same spot. */}
+                          <span className="w-10 shrink-0 truncate">{m.role.toLowerCase()}</span>
                           <WeekDots email={m.userEmail} presence={week} />
                         </p>
                       </div>

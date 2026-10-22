@@ -332,8 +332,11 @@ const People = ({
                 <p className="truncate text-sm font-bold text-foreground">
                   {m.userEmail === me.userEmail ? "You" : nameOf(m)}
                 </p>
-                <p className="flex items-center gap-2 truncate text-xs text-muted">
-                  {at ? deskName(at.desk) : "Not in"}
+                <p className="flex items-center gap-2 text-xs text-muted">
+                  {/* Fixed width: every row's dots start at the same spot. */}
+                  <span className="w-16 shrink-0 truncate">
+                    {at ? deskName(at.desk) : "Not in"}
+                  </span>
                   <WeekDots email={m.userEmail} presence={week} />
                 </p>
               </div>
