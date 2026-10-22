@@ -11,6 +11,13 @@ import { useProfile } from "~/utils/remix"
 interface Props {
   /** Offices in the current org (empty on the no-office screen). */
   offices: ShellOffice[]
+  /**
+   * Phones: the organization as its logo only (so the office name fits), and
+   * no panel of its own — it sits in the phone's top bar.
+   */
+  isCompact?: boolean
+  /** Placement; floats top-left by default. */
+  className?: string
 }
 
 /**
@@ -20,7 +27,11 @@ interface Props {
  * project switchers). Offices are switched far more often, so that's one
  * direct menu; orgs sit one level up.
  */
-export const WorkspaceSwitcher = ({ offices }: Props) => {
+export const WorkspaceSwitcher = ({
+  offices,
+  isCompact = false,
+  className = "absolute left-5 top-5",
+}: Props) => {
   const d = useSwitcher(offices)
   const [orgOpen, setOrgOpen] = useState(false)
   const [officeOpen, setOfficeOpen] = useState(false)
@@ -31,9 +42,11 @@ export const WorkspaceSwitcher = ({ offices }: Props) => {
     d.navigate(to)
   }
   return (
-    <div className={`${PANEL} absolute left-5 top-5 flex items-center gap-0.5 p-1.5`}>
+    <div
+      className={`${isCompact ? "pointer-events-auto rounded-2xl" : `${PANEL} p-1.5`} ${className} flex min-w-0 items-center gap-0.5`}
+    >
       <Popover isOpen={orgOpen} onOpenChange={setOrgOpen}>
-        <Popover.Trigger>
+        <Popover.Trigger className="shrink-0">
           <div
             role="button"
             tabIndex={0}
@@ -45,9 +58,11 @@ export const WorkspaceSwitcher = ({ offices }: Props) => {
               name={d.organization.name}
               className="size-8 rounded-lg"
             />
-            <span className="max-w-36 truncate text-sm font-extrabold text-foreground">
-              {d.organization.name}
-            </span>
+            {!isCompact && (
+              <span className="max-w-36 truncate text-sm font-extrabold text-foreground">
+                {d.organization.name}
+              </span>
+            )}
             <ChevronDown className="size-3.5 text-muted" />
           </div>
         </Popover.Trigger>
@@ -97,21 +112,24 @@ export const WorkspaceSwitcher = ({ offices }: Props) => {
         </Popover.Content>
       </Popover>
 
-      <span className="px-0.5 text-lg font-light text-muted/50">/</span>
+      <span className="shrink-0 px-0.5 text-lg font-light text-muted/50">/</span>
 
       <Popover isOpen={officeOpen} onOpenChange={setOfficeOpen}>
-        <Popover.Trigger>
+        {/* The part that gives way when space is short: its name truncates. */}
+        <Popover.Trigger className="min-w-0">
           <div
             role="button"
             tabIndex={0}
             aria-label="Switch office"
-            className="flex cursor-pointer items-center gap-2 rounded-xl px-2 py-1.5 outline-none transition-colors hover:bg-surface-secondary focus-visible:ring-2 focus-visible:ring-focus"
+            className="flex min-w-0 cursor-pointer items-center gap-2 rounded-xl px-2 py-1.5 outline-none transition-colors hover:bg-surface-secondary focus-visible:ring-2 focus-visible:ring-focus"
           >
-            <Building2 className="size-4 text-accent" />
-            <span className="max-w-36 truncate text-sm font-semibold text-foreground">
+            <Building2 className="size-4 shrink-0 text-accent" />
+            <span
+              className={`min-w-0 truncate text-sm font-semibold text-foreground ${isCompact ? "" : "max-w-36"}`}
+            >
               {d.currentOffice?.name ?? (offices.length ? "Select office" : "No offices")}
             </span>
-            <ChevronDown className="size-3.5 text-muted" />
+            <ChevronDown className="size-3.5 shrink-0 text-muted" />
           </div>
         </Popover.Trigger>
         <Popover.Content placement="bottom start" offset={10} className={MENU}>

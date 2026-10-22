@@ -1,6 +1,6 @@
 import { Button } from "@heroui/react"
 import clsx from "clsx"
-import { Pin, RotateCcw, RotateCw } from "lucide-react"
+import { Pin, RotateCcw, RotateCw, Scan } from "lucide-react"
 import {
   useCallback,
   useEffect,
@@ -8,13 +8,14 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
   type ReactNode,
 } from "react"
 import { useEditorStore } from "../store"
 import { edgeNodes, enclosedRegions, footprintCells, runsAlongX, SEG } from "../layout"
 import { SURFACES } from "../palette"
-import { personByEmail, usePeople, type People } from "../people"
-import { petFor, petThumb } from "../models"
+import { personByEmail, usePeople, type Person } from "../people"
+import { SeatAvatar } from "../SeatAvatar"
 import { spotFor } from "../seatSpot"
 import { SeatCardBody, useSeatCard } from "../seatCard"
 import { useDesksOnDay, type DeskOnDay } from "../useBooking"
@@ -30,12 +31,24 @@ const MIN_K = 8
 const MAX_K = 220
 /** Room kept clear of the floating chrome when fitting (px). */
 const FIT_PAD = { top: 96, bottom: 112, left: 112 }
+
+/** Screen space (px) kept clear around the office when fitting it. */
+type Insets = { top: number; bottom: number; left: number; right: number }
 /** Name tags show once desks are big enough to tell apart. */
 const TAG_ZOOM = 22
+/** Bringing a desk into view: at least this zoom (px per plan unit)… */
+const SPOTLIGHT_K = 44
+/** …gliding there over this long (ms); the highlight then ripples this long. */
+const SPOTLIGHT_GLIDE_MS = 450
+const SPOTLIGHT_MS = 2700
 /** A press that moves further than this is a pan, not a click (px). */
 const DRAG = 4
-/** A booked desk's pet: its picture's size, sitting on the chair. */
-const PET_SIZE = 0.72
+/** A booked desk's avatar on its chair: this wide in plan units, but never smaller on screen than… */
+const AVATAR_SIZE = 0.8
+/** …this (px) — so who sits where reads even with the whole office in view. */
+const MIN_AVATAR_PX = 30
+/** …nor bigger than this (px), so close up it doesn't bury the desk. */
+const MAX_AVATAR_PX = 56
 /** A free desk's marker (the "+" ring), radius in plan units. */
 const FREE_MARK = 0.2
 /** How far furniture that can't be tapped fades toward the floor (0…1). */
@@ -82,16 +95,16 @@ interface View {
 
 type Bounds = { x0: number; x1: number; y0: number; y1: number }
 
-const fitView = (b: Bounds, w: number, h: number, right: number): View => {
-  const aw = Math.max(1, w - FIT_PAD.left - right)
-  const ah = Math.max(1, h - FIT_PAD.top - FIT_PAD.bottom)
+const fitView = (b: Bounds, w: number, h: number, pad: Insets): View => {
+  const aw = Math.max(1, w - pad.left - pad.right)
+  const ah = Math.max(1, h - pad.top - pad.bottom)
   const bw = Math.max(1, b.x1 - b.x0)
   const bh = Math.max(1, b.y1 - b.y0)
   const k = Math.min(MAX_K, Math.max(MIN_K, Math.min(aw / bw, ah / bh)))
   return {
     k,
-    tx: FIT_PAD.left + aw / 2 - ((b.x0 + b.x1) / 2) * k,
-    ty: FIT_PAD.top + ah / 2 - ((b.y0 + b.y1) / 2) * k,
+    tx: pad.left + aw / 2 - ((b.x0 + b.x1) / 2) * k,
+    ty: pad.top + ah / 2 - ((b.y0 + b.y1) / 2) * k,
   }
 }
 
@@ -102,17 +115,24 @@ const fitView = (b: Bounds, w: number, h: number, right: number): View => {
  * shown day (their pet; a "+" ring when free), and the same desk card on tap.
  * Drag to pan; wheel, two-finger scroll or pinch to zoom; Q / E to turn; Fit
  * (bottom bar) re-frames it.
+ *
+ * On a phone (`phoneChrome`: what the phone shell covers at the top and
+ * bottom) the office fits between that chrome, the turn / fit buttons sit just
+ * above the bottom of it, and a tapped desk opens as a bottom sheet.
  */
 export const FloorPlan = ({
   dark,
   padRight = 40,
+  phoneChrome,
 }: {
   dark: boolean
   /** Screen space the right-hand panels cover, kept clear when fitting (px). */
   padRight?: number
+  phoneChrome?: { top: number; bottom: number }
 }) => {
   const layout = useEditorStore((s) => s.objects)
   const fitNonce = useEditorStore((s) => s.fitNonce)
+  const requestFit = useEditorStore((s) => s.requestFit)
   const openSeatCard = useEditorStore((s) => s.openSeatCard)
   const closeSeatCard = useEditorStore((s) => s.closeSeatCard)
   const bookingOn = useEditorStore((s) => s.booking.enabled)
@@ -151,7 +171,6 @@ export const FloorPlan = ({
       buildScene({
         objects,
         desks,
-        people,
         wall: surfaces.wall,
         floorInside: surfaces.floorInside,
         bookable: bookingOn && !past,
@@ -159,7 +178,7 @@ export const FloorPlan = ({
           if (!moved.current) openSeatCard(id)
         },
       }),
-    [objects, desks, people, surfaces.wall, surfaces.floorInside, bookingOn, past, openSeatCard]
+    [objects, desks, surfaces.wall, surfaces.floorInside, bookingOn, past, openSeatCard]
   )
 
   useLayoutEffect(() => {
@@ -174,14 +193,64 @@ export const FloorPlan = ({
 
   // Frame the office on open, on Fit, and when the layout first gets content —
   // but not on every layout or size change (that would undo the viewer's pan).
-  const latest = useRef({ size, bounds: scene.bounds, padRight })
-  latest.current = { size, bounds: scene.bounds, padRight }
+  const insets: Insets = phoneChrome
+    ? { top: phoneChrome.top + 12, bottom: phoneChrome.bottom + 68, left: 16, right: 16 }
+    : { ...FIT_PAD, right: padRight }
+  const latest = useRef({ size, bounds: scene.bounds, insets })
+  latest.current = { size, bounds: scene.bounds, insets }
   const hasContent = !!scene.bounds
   const measured = size !== null
   useLayoutEffect(() => {
-    const { size: s, bounds: b, padRight: right } = latest.current
-    if (s && b) setView(fitView(b, s.w, s.h, right))
+    const { size: s, bounds: b, insets: pad } = latest.current
+    if (s && b) setView(fitView(b, s.w, s.h, pad))
   }, [fitNonce, hasContent, measured, turn])
+
+  // --- Spotlight: glide to a desk ("Show my desk", "Find") and ripple on it.
+  const spotlight = useEditorStore((s) => s.spotlight)
+  const resetSpotlight = useEditorStore((s) => s.resetSpotlight)
+  const [highlightId, setHighlightId] = useState<string | null>(null)
+  const viewRef = useRef(view)
+  viewRef.current = view
+  const hasView = view !== null
+  const glide = useRef({ frame: 0, timer: undefined as ReturnType<typeof setTimeout> | undefined })
+  useEffect(() => {
+    const current = glide.current
+    return () => {
+      cancelAnimationFrame(current.frame)
+      clearTimeout(current.timer)
+    }
+  }, [])
+  useEffect(() => {
+    const from = viewRef.current
+    const { size: s, insets: pad } = latest.current
+    if (!spotlight || !from || !s) return
+    resetSpotlight()
+    const target =
+      scene.occupants.get(spotlight.id) ?? desks.find((d) => d.desk.id === spotlight.id)?.desk
+    if (!target) return
+    const k = Math.min(MAX_K, Math.max(from.k, SPOTLIGHT_K))
+    const cx = pad.left + (s.w - pad.left - pad.right) / 2
+    const cy = pad.top + (s.h - pad.top - pad.bottom) / 2
+    const to = { k, tx: cx - target.x * k, ty: cy - target.z * k }
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches
+    const start = performance.now()
+    const step = (now: number) => {
+      const t = reduced ? 1 : Math.min(1, (now - start) / SPOTLIGHT_GLIDE_MS)
+      const e = 1 - (1 - t) ** 3
+      setView({
+        k: from.k + (to.k - from.k) * e,
+        tx: from.tx + (to.tx - from.tx) * e,
+        ty: from.ty + (to.ty - from.ty) * e,
+      })
+      if (t < 1) glide.current.frame = requestAnimationFrame(step)
+    }
+    // Clearing the request re-runs this effect: the glide outlives it.
+    cancelAnimationFrame(glide.current.frame)
+    clearTimeout(glide.current.timer)
+    glide.current.frame = requestAnimationFrame(step)
+    setHighlightId(spotlight.id)
+    glide.current.timer = setTimeout(() => setHighlightId(null), SPOTLIGHT_GLIDE_MS + SPOTLIGHT_MS)
+  }, [spotlight, hasView, scene, desks, resetSpotlight])
 
   // --- Pan (drag) and zoom (wheel, pinch) --------------------------------
   const zoomAt = useCallback(
@@ -286,6 +355,9 @@ export const FloorPlan = ({
     return { left: x * view.k + view.tx, top: z * view.k + view.ty }
   }
   const openId = card?.seat.id
+  const avatarSize = view
+    ? Math.min(MAX_AVATAR_PX, Math.max(MIN_AVATAR_PX, AVATAR_SIZE * view.k))
+    : MIN_AVATAR_PX
   // The card's desk comes from the store, so it's turned here to match.
   const cardAt = card && turnPoint(card.seat.x, card.seat.z, turn)
 
@@ -307,6 +379,45 @@ export const FloorPlan = ({
         )}
       </svg>
 
+      {/* The spotlit desk: rings ripple out from it. */}
+      {view &&
+        highlightId &&
+        (() => {
+          const target =
+            scene.occupants.get(highlightId) ?? desks.find((d) => d.desk.id === highlightId)?.desk
+          if (!target) return null
+          const ring = avatarSize + 14
+          return (
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"
+              style={{ ...screen(target.x, target.z), width: ring, height: ring }}
+            >
+              <span className="absolute inset-0 rounded-full border-[3px] border-accent bg-accent/15" />
+              <span className="spotlight absolute inset-0 rounded-full border-[3px] border-accent" />
+            </div>
+          )
+        })()}
+
+      {/* Who sits where — HTML, at least MIN_AVATAR_PX at any zoom. */}
+      {view &&
+        [...scene.occupants.values()].map((o) =>
+          o.id === openId ? null : (
+            <Occupant
+              key={o.id}
+              person={personByEmail(people, o.email)}
+              email={o.email}
+              isMine={o.email === people.me?.email}
+              size={avatarSize}
+              style={screen(o.x, o.z)}
+              onClick={(e) => {
+                e.stopPropagation()
+                if (!moved.current) openSeatCard(o.id)
+              }}
+            />
+          )
+        )}
+
       {/* Name tags — HTML, so they stay legible at any zoom. */}
       {view &&
         view.k >= TAG_ZOOM &&
@@ -317,11 +428,15 @@ export const FloorPlan = ({
           // A free desk already shows its "+" ring: a tag only for its label.
           if (!person && !desk.label) return null
           const mine = !!person && person.email === people.me?.email
+          // A booked desk's tag sits just above its avatar.
+          const occupant = scene.occupants.get(desk.id)
+          const at = occupant ? screen(occupant.x, occupant.z) : screen(desk.x, desk.z - 0.45)
+          if (occupant) at.top -= avatarSize / 2 + 3
           return (
             <div
               key={desk.id}
               className="pointer-events-none absolute -translate-x-1/2 -translate-y-full"
-              style={screen(desk.x, desk.z - 0.45)}
+              style={at}
             >
               <DeskTag
                 person={person}
@@ -334,15 +449,20 @@ export const FloorPlan = ({
           )
         })}
 
-      {/* Turn the view (bottom-left, where the 3D view keeps its FPS toggle). */}
+      {/* Turn the view: bottom-left (where the 3D view keeps its FPS toggle);
+          on a phone bottom-right above the shell, with Fit (no dock there). */}
       <div
-        className="absolute bottom-4 left-4 flex gap-1 rounded-xl border border-border bg-overlay/90 p-1 shadow-overlay backdrop-blur-md"
+        className={clsx(
+          "absolute flex gap-1 rounded-xl border border-chrome-border bg-chrome/95 p-1 shadow-overlay backdrop-blur-md",
+          phoneChrome ? "right-4" : "bottom-4 left-4"
+        )}
+        style={phoneChrome ? { bottom: phoneChrome.bottom + 12 } : undefined}
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
       >
         <Button
           isIconOnly
-          size="sm"
+          size={phoneChrome ? "md" : "sm"}
           variant="ghost"
           aria-label="Turn view left"
           onPress={() => turnBy(1)}
@@ -351,21 +471,84 @@ export const FloorPlan = ({
         </Button>
         <Button
           isIconOnly
-          size="sm"
+          size={phoneChrome ? "md" : "sm"}
           variant="ghost"
           aria-label="Turn view right"
           onPress={() => turnBy(-1)}
         >
           <RotateCw className="size-4" />
         </Button>
+        {phoneChrome && (
+          <Button
+            isIconOnly
+            size="md"
+            variant="ghost"
+            aria-label="Fit the office"
+            onPress={requestFit}
+          >
+            <Scan className="size-4" />
+          </Button>
+        )}
       </div>
 
-      {card && cardAt && view && (
-        <div className="absolute" style={screen(cardAt[0], cardAt[1])}>
-          <SeatCardBody key={card.key} {...card.body} />
-        </div>
-      )}
+      {card &&
+        (phoneChrome ? (
+          // A bottom sheet over the shell; tapping the dimmed plan closes it.
+          <div className="fixed inset-0 z-50 flex flex-col justify-end">
+            <button
+              type="button"
+              aria-label="Close desk"
+              className="absolute inset-0 bg-foreground/25"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation()
+                card.body.onClose()
+              }}
+            />
+            <div className="relative">
+              <SeatCardBody key={card.key} layout="sheet" {...card.body} />
+            </div>
+          </div>
+        ) : (
+          cardAt &&
+          view && (
+            <div className="absolute" style={screen(cardAt[0], cardAt[1])}>
+              <SeatCardBody key={card.key} {...card.body} />
+            </div>
+          )
+        ))}
     </div>
+  )
+}
+
+/** A booked desk: who sits there (tap for the desk's card). */
+const Occupant = ({
+  person,
+  email,
+  isMine,
+  size,
+  style,
+  onClick,
+}: {
+  person: Person | null
+  email: string
+  isMine: boolean
+  size: number
+  style: CSSProperties
+  onClick: (e: React.MouseEvent) => void
+}) => {
+  const name = person ? (isMine ? "You" : person.name) : "Taken"
+  return (
+    <button
+      type="button"
+      aria-label={name}
+      title={name}
+      onClick={onClick}
+      className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full"
+      style={style}
+    >
+      <SeatAvatar person={person} email={email} isMine={isMine} size={size} />
+    </button>
   )
 }
 
@@ -401,7 +584,6 @@ const DeskTag = ({
 interface SceneInput {
   objects: SceneObject[]
   desks: DeskOnDay[]
-  people: People
   wall: string
   floorInside: string
   bookable: boolean
@@ -413,28 +595,21 @@ interface SceneInput {
  * doors and furniture layered bottom to top, then desk markers for the shown
  * day — and the drawing's bounds (for fitting).
  */
-const buildScene = ({
-  objects,
-  desks,
-  people,
-  wall,
-  floorInside,
-  bookable,
-  onDesk,
-}: SceneInput) => {
+const buildScene = ({ objects, desks, wall, floorInside, bookable, onDesk }: SceneInput) => {
   // Panning reuses this whole element (memoized), so React skips it entirely.
   const paints = objects.filter((o) => o.type === "floorPaint" && o.color)
   const byId = new Map(desks.map((d) => [d.desk.id, d]))
   const seats = objects.filter((o) => o.type === "seat")
-  const me = people.me?.email
 
   /** Furniture that can't be tapped, blended this far toward the floor. */
   const subdue = (color: string) => mix(color, floorInside, MUTED)
   const drawables: Drawable[] = []
   /** Furniture's soft shadows: one layer over the floor and rugs, under the pieces. */
   const shadows: ReactNode[] = []
-  /** Drawn over everything: who sits where, and which desks are free. */
+  /** Drawn over everything: which desks are free. */
   const markers: ReactNode[] = []
+  /** Who sits where: their chair's spot (plan units), for the HTML layer. */
+  const occupants = new Map<string, { id: string; x: number; z: number; email: string }>()
   const t = WALL.depth / 2
   const push = (ext: Extent, node: ReactNode) =>
     drawables.push({ ext, node, order: drawables.length })
@@ -629,34 +804,8 @@ const buildScene = ({
       )
       continue
     }
-    // Taken: their desk pet (the same one as in 3D) on the chair — a picture
-    // rendered from its model; yours on an accent ring.
-    const state = on.state
-    const person = personByEmail(people, state.email)
-    const mine = state.email === me
-    const pet = petFor(state.email, person?.pet)
-    markers.push(
-      <g key={o.id} className="cursor-pointer" onClick={open}>
-        <title>{`${person ? (mine ? "You" : person.name) : "Taken"} · ${pet.label}`}</title>
-        {mine && (
-          <circle
-            cx={spot.x}
-            cy={spot.z}
-            r={PET_SIZE * 0.42}
-            className="fill-accent"
-            stroke="#ffffff"
-            strokeWidth={0.04}
-          />
-        )}
-        <image
-          href={petThumb(pet.id)}
-          x={spot.x - PET_SIZE / 2}
-          y={spot.z - PET_SIZE / 2}
-          width={PET_SIZE}
-          height={PET_SIZE}
-        />
-      </g>
-    )
+    // Taken: who sits there — drawn over the plan in HTML (see Occupant).
+    occupants.set(o.id, { id: o.id, x: spot.x, z: spot.z, email: on.state.email })
   }
 
   // --- The floor: rooms (each in its floor paint) as row-merged strips.
@@ -711,6 +860,7 @@ const buildScene = ({
   const layered = sortBottomToTop(drawables)
   return {
     bounds,
+    occupants,
     node: (
       <>
         {[...rooms].map(([color, list]) => (

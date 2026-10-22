@@ -86,7 +86,17 @@ const shiftMonth = (month: Day, n: number) => {
   return d.toISOString().slice(0, 10)
 }
 
-const MonthCalendar = ({ onPick }: { onPick: (day: Day) => void }) => {
+/**
+ * A month of days to pick from: how full each one is, and yours. Also the
+ * phone's calendar sheet (`className` sizes it there).
+ */
+export const MonthCalendar = ({
+  onPick,
+  className = "w-72",
+}: {
+  onPick: (day: Day) => void
+  className?: string
+}) => {
   const day = useEditorStore((s) => s.booking.day)
   const today = useEditorStore((s) => s.booking.today)
   const from = useEditorStore((s) => s.booking.from)
@@ -120,7 +130,7 @@ const MonthCalendar = ({ onPick }: { onPick: (day: Day) => void }) => {
   const canNext = monthOf(lastDay) > month
 
   return (
-    <div className="w-72">
+    <div className={className}>
       <div className="mb-2 flex items-center justify-between">
         <Button
           isIconOnly

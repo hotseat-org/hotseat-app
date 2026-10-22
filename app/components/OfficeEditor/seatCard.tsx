@@ -174,8 +174,13 @@ export interface BodyProps {
 
 const stop = (e: { stopPropagation: () => void }) => e.stopPropagation()
 
-/** The card itself — plain props only (the 3D view renders it in drei's separate root). */
+/**
+ * The card itself — plain props only (the 3D view renders it in drei's separate
+ * root). Anchored over its desk, or on phones a bottom sheet (`layout="sheet"`):
+ * the same content, full width, with bigger targets.
+ */
 export const SeatCardBody = ({
+  layout = "anchored",
   title,
   dayLabel,
   state,
@@ -190,7 +195,8 @@ export const SeatCardBody = ({
   onClose,
   onReserve,
   onCancel,
-}: BodyProps) => {
+}: BodyProps & { layout?: "anchored" | "sheet" }) => {
+  const isSheet = layout === "sheet"
   const [choice, setChoice] = useState<BookingPreset | undefined>(
     () => options.find((o) => o.free.length > 0)?.key
   )
@@ -202,8 +208,8 @@ export const SeatCardBody = ({
   const [below, setBelow] = useState(false)
   useLayoutEffect(() => {
     const top = ref.current?.getBoundingClientRect().top ?? 0
-    if (top < 8) setBelow(true)
-  }, [])
+    if (!isSheet && top < 8) setBelow(true)
+  }, [isSheet])
 
   return (
     // Centred on the anchor, lifted a little; the inner box animates.
@@ -212,8 +218,8 @@ export const SeatCardBody = ({
     <div
       ref={ref}
       className={clsx(
-        "pointer-events-none -translate-x-1/2",
-        below ? "pt-3" : "-translate-y-full pb-3"
+        "pointer-events-none",
+        isSheet ? "w-full" : clsx("-translate-x-1/2", below ? "pt-3" : "-translate-y-full pb-3")
       )}
     >
       <div
@@ -224,14 +230,28 @@ export const SeatCardBody = ({
         onPointerUp={stop}
         onClick={stop}
         className={clsx(
-          "relative flex w-64 flex-col gap-2.5 rounded-2xl border border-border bg-overlay/95 p-3 text-foreground shadow-overlay backdrop-blur-md [&_button]:pointer-events-auto",
-          below ? "origin-top" : "origin-bottom",
-          closing ? "seat-pop-out" : "seat-pop"
+          "relative flex flex-col text-foreground [&_button]:pointer-events-auto",
+          isSheet
+            ? clsx(
+                "w-full gap-3.5 rounded-t-3xl border-t border-border bg-overlay px-5 pb-7 pt-2.5 shadow-overlay",
+                closing ? "sheet-down" : "sheet-up"
+              )
+            : clsx(
+                "w-64 gap-2.5 rounded-2xl border border-border bg-overlay/95 p-3 shadow-overlay backdrop-blur-md",
+                below ? "origin-top" : "origin-bottom",
+                closing ? "seat-pop-out" : "seat-pop"
+              )
         )}
       >
+        {isSheet && <span aria-hidden className="mx-auto h-1.5 w-10 rounded-full bg-border" />}
         <div className="flex items-center justify-between">
-          <p className="flex items-center gap-1.5 text-sm font-extrabold">
-            <Armchair className="size-4 text-accent" />
+          <p
+            className={clsx(
+              "flex items-center gap-1.5 font-extrabold",
+              isSheet ? "text-lg" : "text-sm"
+            )}
+          >
+            <Armchair className={clsx("text-accent", isSheet ? "size-5" : "size-4")} />
             {title}
           </p>
           <CloseButton aria-label="Close" onPress={onClose} />
@@ -298,7 +318,8 @@ export const SeatCardBody = ({
                     disabled={disabled}
                     onClick={() => setChoice(o.key)}
                     className={clsx(
-                      "flex items-start gap-2.5 rounded-xl border-[1.5px] px-2.5 py-2 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus",
+                      "flex items-start gap-2.5 rounded-xl border-[1.5px] px-2.5 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus",
+                      isSheet ? "py-3" : "py-2",
                       on ? "border-accent bg-accent/10" : "border-border bg-surface",
                       disabled ? "opacity-50" : !on && "hover:border-muted"
                     )}
@@ -318,7 +339,7 @@ export const SeatCardBody = ({
               })}
             </div>
             <Button
-              size="sm"
+              size={isSheet ? "lg" : "sm"}
               variant="primary"
               className="w-full"
               isDisabled={!picked || pending}
@@ -334,7 +355,7 @@ export const SeatCardBody = ({
 
         {canCancel && (
           <Button
-            size="sm"
+            size={isSheet ? "lg" : "sm"}
             variant="secondary"
             className="w-full"
             isDisabled={pending}
@@ -345,12 +366,14 @@ export const SeatCardBody = ({
         )}
 
         {/* Pointer to the desk */}
-        <span
-          className={clsx(
-            "absolute left-1/2 size-3 -translate-x-1/2 border-b border-r border-border bg-overlay",
-            below ? "-top-1.5 rotate-[225deg]" : "-bottom-1.5 rotate-45"
-          )}
-        />
+        {!isSheet && (
+          <span
+            className={clsx(
+              "absolute left-1/2 size-3 -translate-x-1/2 border-b border-r border-border bg-overlay",
+              below ? "-top-1.5 rotate-[225deg]" : "-bottom-1.5 rotate-45"
+            )}
+          />
+        )}
       </div>
     </div>
   )

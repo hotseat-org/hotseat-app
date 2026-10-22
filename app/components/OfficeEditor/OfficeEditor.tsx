@@ -31,6 +31,8 @@ import { PeopleContext, type People } from "./people"
 import { isTypingTarget } from "./keyboard"
 import { isEdgeType } from "./types"
 import { ControlsGuide } from "./ui/ControlsGuide"
+import { MOBILE_CHROME } from "~/components/office/mobile"
+import { useIsMobile } from "~/utils/hooks/useIsMobile"
 import { OfficeFloor } from "~/components/office/OfficeFloor"
 import { EmptyState } from "~/components/ui/EmptyState"
 import { groupBookings, type BookingRow, type Day } from "~/utils/booking"
@@ -178,9 +180,14 @@ const OfficeEditorInner = ({
   }, [store])
 
   // Editing is 3D-only: without WebGL the office is view-only (as a 2D plan).
+  // Phones are view-and-book only, always on the plan.
   const [webglOk] = useState(hasWebGL)
-  const editable = canEdit && webglOk
+  const isMobile = useIsMobile()
+  const editable = canEdit && webglOk && !isMobile
   const [mode, setMode] = useState<Mode>(editable ? initialMode : "display")
+  useEffect(() => {
+    if (isMobile) setMode("display")
+  }, [isMobile])
   // "Edit layout" from the office settings (outside this tree) → edit mode.
   useEffect(() => {
     if (!editable) return
@@ -195,8 +202,11 @@ const OfficeEditorInner = ({
   const [emptyDismissed, setEmptyDismissed] = useState(false)
   // Simple mode: the 2D floor plan instead of the 3D scene (view mode only).
   const view = useEditorStore((s) => s.view)
-  const flat = readOnly && (view === "2d" || !webglOk)
-  const guide = <ControlsGuide view={flat ? "plan" : readOnly ? "view" : "edit"} />
+  const flat = readOnly && (view === "2d" || !webglOk || isMobile)
+  // Mouse / trackpad controls: no use on a touch phone.
+  const guide = isMobile ? null : (
+    <ControlsGuide view={flat ? "plan" : readOnly ? "view" : "edit"} />
+  )
 
   // Perf HUD. While on, the Canvas renders continuously (`frameloop="always"`)
   // so the reading reflects a true, comparable FPS instead of only the frames
@@ -311,7 +321,13 @@ const OfficeEditorInner = ({
 
   return (
     <div className="relative h-full w-full overflow-hidden">
-      {!isEmpty && flat && <FloorPlan dark={isDark} padRight={shellMode ? 340 : 40} />}
+      {!isEmpty && flat && (
+        <FloorPlan
+          dark={isDark}
+          padRight={shellMode ? 340 : 40}
+          phoneChrome={shellMode && isMobile ? MOBILE_CHROME : undefined}
+        />
+      )}
       {!isEmpty && !flat && (
         <Suspense fallback={null}>
           <SceneCanvas

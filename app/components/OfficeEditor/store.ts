@@ -185,6 +185,10 @@ export interface EditorState {
   seatCard: { id: string } | null
   openSeatCard: (id: string) => void
   closeSeatCard: () => void
+  /** Plan: a desk to bring into view and highlight ("Show my desk", "Find"); the plan clears it once shown. */
+  spotlight: { id: string } | null
+  spotlightSeat: (id: string) => void
+  resetSpotlight: () => void
   /** Paint tool colour (null = back to the default/theme colour). */
   paintColor: string | null
   setPaintColor: (color: string | null) => void
@@ -428,6 +432,9 @@ const makeInitializer =
       seatCard: null,
       openSeatCard: (id) => set({ seatCard: { id } }),
       closeSeatCard: () => set({ seatCard: null }),
+      spotlight: null,
+      spotlightSeat: (id) => set({ spotlight: { id }, seatCard: null }),
+      resetSpotlight: () => set({ spotlight: null }),
       paintColor: "#c9b48d",
       setPaintColor: (paintColor) => set({ paintColor }),
       paintWalls: (ids, color) => {

@@ -84,6 +84,12 @@
   --segment: #efe6d5;
   --segment-foreground: var(--foreground);
 
+  /* Phone chrome: the raised bars over the plan (top bar, the bottom panel of
+     day dock + tabs, plan controls) — they read apart from the floor. */
+  --chrome: #fffcf7;
+  --chrome-border: #ddd0bb;
+  --chrome-shadow: rgba(74, 58, 36, 0.12);
+
   /* Soft, warm-tinted shadows (brown-biased, not neutral grey) */
   --surface-shadow: 0 1px 2px 0 rgba(74, 58, 36, 0.06), 0 2px 6px -1px rgba(74, 58, 36, 0.08);
   --overlay-shadow: 0 8px 30px -8px rgba(74, 58, 36, 0.22), 0 4px 12px -6px rgba(74, 58, 36, 0.14);
@@ -141,6 +147,10 @@
   --segment: #333a49;
   --segment-foreground: var(--foreground);
 
+  --chrome: #3b4354;
+  --chrome-border: #4a5367;
+  --chrome-shadow: rgba(0, 0, 0, 0.45);
+
   --surface-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
   --overlay-shadow: 0 10px 34px -10px rgba(0, 0, 0, 0.6);
   --field-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.35);
@@ -153,6 +163,8 @@
 
 /* Expose the editor cyan to Tailwind utilities (bg-brand / text-brand). */
 @theme inline {
+  --color-chrome: var(--chrome);
+  --color-chrome-border: var(--chrome-border);
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
 }
@@ -307,13 +319,56 @@ input:-webkit-autofill:focus {
   animation: seat-pop-out 140ms ease-in both;
 }
 
+/* The desk card as a phone's bottom sheet: slides up, slides away (same 140ms
+   exit as the in-scene card — seatCard.tsx's EXIT_MS). */
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+@keyframes sheet-down {
+  to {
+    transform: translateY(100%);
+  }
+}
+.sheet-up {
+  animation: sheet-up 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.sheet-down {
+  animation: sheet-down 140ms ease-in both;
+}
+
+/* A desk brought into view: rings ripple out from it a few times. */
+@keyframes spotlight {
+  from {
+    transform: scale(0.8);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+.spotlight {
+  animation: spotlight 900ms cubic-bezier(0.22, 1, 0.36, 1) 3 both;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .spotlight {
+    animation: none;
+  }
   .seat-pop,
-  .seat-pop-out {
+  .seat-pop-out,
+  .sheet-up,
+  .sheet-down {
     animation-name: none;
     transition: opacity 120ms;
   }
-  .seat-pop-out {
+  .seat-pop-out,
+  .sheet-down {
     opacity: 0;
   }
   .grid-shine-dot {

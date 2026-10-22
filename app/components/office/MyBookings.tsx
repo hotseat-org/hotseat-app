@@ -20,7 +20,20 @@ const deskText = (label?: string) => (label ? `Desk ${label}` : "A desk")
  * Anchored top and bottom next to the rail, so its size never depends on how
  * many bookings there are — the list scrolls inside.
  */
-export const MyBookings = ({ onClose }: { onClose: () => void }) => {
+export const MyBookings = ({
+  onClose,
+  onShow,
+  isScreen = false,
+  style,
+}: {
+  onClose: () => void
+  /** After Show moved the map to a booking (the phone switches to its Office tab). */
+  onShow?: () => void
+  /** Phones: a whole screen between the shell's header and tab bar, no close button. */
+  isScreen?: boolean
+  /** Placement for `isScreen`. */
+  style?: React.CSSProperties
+}) => {
   const { slug, officeSlug } = useParams()
   const navigate = useNavigate()
   const list = useFetcher<MyBookingsData>()
@@ -51,10 +64,11 @@ export const MyBookings = ({ onClose }: { onClose: () => void }) => {
   }, [cancel.data, cancel.state, load, url])
 
   useEffect(() => {
+    if (isScreen) return
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose()
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
-  }, [onClose])
+  }, [onClose, isScreen])
 
   const data = list.data && !("error" in list.data) ? list.data : undefined
   const error = list.data && "error" in list.data ? list.data.error : undefined
@@ -82,6 +96,7 @@ export const MyBookings = ({ onClose }: { onClose: () => void }) => {
     if (b.officeSlug === officeSlug) {
       if (b.date) setDay(b.date)
     } else navigate(`/app/o/${slug}/offices/${b.officeSlug}${b.date ? `?day=${b.date}` : ""}`)
+    onShow?.()
   }
   const doCancel = (b: MyBooking) => {
     setConfirming(null)
@@ -98,7 +113,12 @@ export const MyBookings = ({ onClose }: { onClose: () => void }) => {
   return (
     <section
       aria-label="My bookings"
-      className={`${PANEL} absolute bottom-24 left-[5.75rem] top-24 flex w-[340px] flex-col p-4`}
+      className={clsx(
+        PANEL,
+        "absolute flex flex-col p-4",
+        isScreen ? "inset-x-3" : "bottom-24 left-[5.75rem] top-24 w-[340px]"
+      )}
+      style={isScreen ? style : undefined}
     >
       <header className="mb-3 flex items-start justify-between">
         <div>
@@ -111,7 +131,7 @@ export const MyBookings = ({ onClose }: { onClose: () => void }) => {
               : "Loading…"}
           </p>
         </div>
-        <CloseButton aria-label="Close my bookings" onPress={onClose} />
+        {!isScreen && <CloseButton aria-label="Close my bookings" onPress={onClose} />}
       </header>
 
       <div className="-mx-1 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-1">
@@ -151,7 +171,9 @@ export const MyBookings = ({ onClose }: { onClose: () => void }) => {
             <div>
               <p className="text-sm font-bold text-foreground">No upcoming bookings</p>
               <p className="mt-0.5 text-xs text-muted">
-                Pick a day at the bottom, then click a free desk on the map.
+                {isScreen
+                  ? "Pick a day at the top of the Office tab, then tap a free desk."
+                  : "Pick a day at the bottom, then click a free desk on the map."}
               </p>
             </div>
           </div>

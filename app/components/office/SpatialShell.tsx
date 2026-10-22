@@ -25,12 +25,14 @@ import { WorkspaceSwitcher } from "./WorkspaceSwitcher"
 import { ShellSearch } from "./ShellSearch"
 import { AccountMenu } from "./AccountMenu"
 import { MyBookings } from "./MyBookings"
+import { MobileShell } from "./MobileShell"
 import { useEditorStore } from "~/components/OfficeEditor/store"
 import { TimeOfDay } from "~/components/OfficeEditor/ui/TimeOfDay"
 import { hasWebGL } from "~/components/OfficeEditor/webgl"
 import { dayPhrase, useDesksOnDay } from "~/components/OfficeEditor/useBooking"
 import { formatLong } from "~/utils/booking"
 import { useSettings } from "~/components/settings/useSettings"
+import { useIsMobile } from "~/utils/hooks/useIsMobile"
 
 export type { ShellMember } from "./shell-ui"
 
@@ -123,6 +125,10 @@ export const SpatialShell = ({
     [members, byPerson]
   )
   const inCount = roster.filter((r) => r.at).length
+
+  // Phones get their own shell: tab bar, day strip, bottom sheets.
+  const isMobile = useIsMobile()
+  if (isMobile) return <MobileShell offices={offices} me={me} members={members} empty={empty} />
 
   // Empty office: the first-run card is the whole page; keep just where you are
   // (switcher) and who you are (account).

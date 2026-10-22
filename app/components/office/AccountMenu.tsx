@@ -10,8 +10,11 @@ import { ThemeSwitcher } from "~/components/ui/ThemeSwitcher"
 const item =
   "flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-foreground/5"
 
-/** Avatar menu: user settings, org settings, log out. */
-export const AccountMenu = () => {
+/**
+ * Avatar menu: user settings, org settings, log out. `isFlat`: no panel of its
+ * own, for a bar that already is one (the phone's top bar).
+ */
+export const AccountMenu = ({ isFlat = false }: { isFlat?: boolean }) => {
   const profile = useProfile()
   const me: ShellMember = {
     userEmail: profile.userEmail,
@@ -35,7 +38,7 @@ export const AccountMenu = () => {
           role="button"
           tabIndex={0}
           aria-label="Account menu"
-          className={`${PANEL} ${PANEL_HOVER} flex cursor-pointer items-center gap-2 p-1.5 outline-none focus-visible:ring-2 focus-visible:ring-focus`}
+          className={`${isFlat ? "pointer-events-auto rounded-xl" : `${PANEL} ${PANEL_HOVER} p-1.5`} flex cursor-pointer items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-focus`}
         >
           <MemberAvatar m={me} className="size-9 rounded-xl" />
         </div>

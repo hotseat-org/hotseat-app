@@ -52,7 +52,10 @@ const hash = (s: string) => {
   return Math.abs(h)
 }
 
-export const colorOf = (m: ShellMember) => AVATAR_COLORS[hash(m.userEmail) % AVATAR_COLORS.length]
+/** A person's avatar colour (behind their initials), stable per email. */
+export const colorForEmail = (email: string) => AVATAR_COLORS[hash(email) % AVATAR_COLORS.length]
+
+export const colorOf = (m: ShellMember) => colorForEmail(m.userEmail)
 
 export const MemberAvatar = ({ m, className }: { m: ShellMember; className?: string }) => (
   <Avatar className={className ?? "size-9 rounded-xl"}>
