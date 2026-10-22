@@ -19,7 +19,7 @@ interface Props {
 /**
  * The 3D office. Its own module so OfficeEditor can load it lazily: three.js,
  * R3F and every model stay out of the bundle until the 3D view is shown — the
- * simple (isometric SVG) view never downloads them.
+ * simple (top-down SVG) view never downloads them.
  */
 const SceneCanvas = ({ store, people, readOnly, dark, showStats, onStats }: Props) => {
   // Load the GLB animal models into cache (available, but not user-placeable).

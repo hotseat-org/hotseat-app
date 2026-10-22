@@ -79,7 +79,7 @@ export const TimeOfDay = ({
 }
 
 /**
- * 3D scene ⇄ simple view (a light isometric drawing, for devices that
+ * 3D scene ⇄ simple view (a light top-down plan, for devices that
  * struggle with 3D). The choice is remembered per browser.
  */
 const ViewSwitch = ({

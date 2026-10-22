@@ -11,15 +11,7 @@ import {
   type ReactNode,
 } from "react"
 import { useEditorStore } from "../store"
-import {
-  edgeNodes,
-  enclosedCells,
-  enclosedRegions,
-  footprintCells,
-  runsAlongX,
-  SEG,
-  unitEdges,
-} from "../layout"
+import { edgeNodes, enclosedRegions, footprintCells, runsAlongX, SEG } from "../layout"
 import { SURFACES } from "../palette"
 import { personByEmail, usePeople, type People } from "../people"
 import { petFor, petThumb } from "../models"
@@ -30,16 +22,8 @@ import { GRID, isEdgeType, isMarker, isSeatable, type SceneObject } from "../typ
 import { isTypingTarget } from "../keyboard"
 import { createWheelReader, getSmoothZoomFactor, getStepZoomFactor } from "../wheel"
 import { WALL } from "../objects/dimensions"
-import {
-  boxNode,
-  floorPolygon,
-  project,
-  screenBounds,
-  sortBackToFront,
-  type Drawable,
-  type Extent,
-} from "./iso"
-import { buildKit, Kit, WINDOW_GLASS } from "./kits"
+import { floorRect, mix, shade, sortBottomToTop, type Drawable, type Extent } from "./shapes"
+import { drawPiece, WINDOW_GLASS } from "./kits"
 
 /** Screen pixels per plan unit: the zoom range. */
 const MIN_K = 8
@@ -50,15 +34,14 @@ const FIT_PAD = { top: 96, bottom: 112, left: 112 }
 const TAG_ZOOM = 22
 /** A press that moves further than this is a pan, not a click (px). */
 const DRAG = 4
-/** Walls facing the viewer are cut down to this, so the rooms stay visible. */
-const STUB = 0.22
-/** A partition between two rooms: half height. */
-const PARTITION = 0.75
-/** A booked desk's pet: its picture's size, standing on the chair seat. */
+/** A booked desk's pet: its picture's size, sitting on the chair. */
 const PET_SIZE = 0.72
-const SEAT_TOP = 0.46
-/** Tags and the desk card hang this high above a desk. */
-const TAG_Y = 1.55
+/** A free desk's marker (the "+" ring), radius in plan units. */
+const FREE_MARK = 0.2
+/** How far furniture that can't be tapped fades toward the floor (0…1). */
+const MUTED = 0.55
+/** Up to this height (m) a piece lies flat on the floor (rugs): under the shadows. */
+const FLAT = 0.02
 
 /** The viewer's last view angle (quarter turns), remembered per browser. */
 const TURN_KEY = "office-editor:plan-turn"
@@ -113,12 +96,12 @@ const fitView = (b: Bounds, w: number, h: number, right: number): View => {
 }
 
 /**
- * Simple mode: the office as a light isometric illustration (SVG) — for
- * devices that struggle with the 3D scene, or have no WebGL at all. Same data
- * and booking as 3D: every piece drawn as a few shaded boxes, back walls up
- * and front walls cut down (so rooms stay visible), desks marked by who's in
- * on the shown day, and the same desk card on click. Drag to pan; wheel,
- * two-finger scroll or pinch to zoom; Q / E to turn; Fit (bottom bar) re-frames it.
+ * Simple mode: the office as a top-down plan (SVG) — for phones, devices that
+ * struggle with the 3D scene, or no WebGL at all. Same data and booking as 3D:
+ * walls, doors and furniture seen from above, desks marked by who's in on the
+ * shown day (their pet; a "+" ring when free), and the same desk card on tap.
+ * Drag to pan; wheel, two-finger scroll or pinch to zoom; Q / E to turn; Fit
+ * (bottom bar) re-frames it.
  */
 export const FloorPlan = ({
   dark,
@@ -298,10 +281,9 @@ export const FloorPlan = ({
   }
 
   /** A world point on screen (px, within the plan). */
-  const screen = (x: number, y: number, z: number) => {
+  const screen = (x: number, z: number) => {
     if (!view) return { left: 0, top: 0 }
-    const [px, py] = project(x, y, z)
-    return { left: px * view.k + view.tx, top: py * view.k + view.ty }
+    return { left: x * view.k + view.tx, top: z * view.k + view.ty }
   }
   const openId = card?.seat.id
   // The card's desk comes from the store, so it's turned here to match.
@@ -332,13 +314,14 @@ export const FloorPlan = ({
           if (desk.id === openId) return null
           const person = state.kind === "free" ? null : personByEmail(people, state.email)
           const free = state.kind === "free" && bookingOn && !past
-          if (!person && !free && !desk.label) return null
+          // A free desk already shows its "+" ring: a tag only for its label.
+          if (!person && !desk.label) return null
           const mine = !!person && person.email === people.me?.email
           return (
             <div
               key={desk.id}
               className="pointer-events-none absolute -translate-x-1/2 -translate-y-full"
-              style={screen(desk.x, TAG_Y, desk.z)}
+              style={screen(desk.x, desk.z - 0.45)}
             >
               <DeskTag
                 person={person}
@@ -378,7 +361,7 @@ export const FloorPlan = ({
       </div>
 
       {card && cardAt && view && (
-        <div className="absolute" style={screen(cardAt[0], 1.3, cardAt[1])}>
+        <div className="absolute" style={screen(cardAt[0], cardAt[1])}>
           <SeatCardBody key={card.key} {...card.body} />
         </div>
       )}
@@ -412,7 +395,6 @@ const DeskTag = ({
     {label && <span className="opacity-80">{label}</span>}
     {person && <span>{mine ? "You" : person.name}</span>}
     {resident && <Pin className="size-3 opacity-70" aria-label="Permanent desk" />}
-    {free && <span>Free</span>}
   </div>
 )
 
@@ -427,9 +409,9 @@ interface SceneInput {
 }
 
 /**
- * Everything in plan units: the rooms' floor, desk footprints for the shown
- * day, then every wall and piece sorted back to front — and the drawing's
- * bounds (for fitting).
+ * Everything in plan units (metres, top-down): the rooms' floor, then walls,
+ * doors and furniture layered bottom to top, then desk markers for the shown
+ * day — and the drawing's bounds (for fitting).
  */
 const buildScene = ({
   objects,
@@ -441,75 +423,67 @@ const buildScene = ({
   onDesk,
 }: SceneInput) => {
   // Panning reuses this whole element (memoized), so React skips it entirely.
-  const inside = new Set(enclosedCells(objects).map((c) => `${c.x},${c.z}`))
-  const isInside = (x: number, z: number) =>
-    inside.has(`${Math.floor(x / SEG) * SEG},${Math.floor(z / SEG) * SEG}`)
   const paints = objects.filter((o) => o.type === "floorPaint" && o.color)
   const byId = new Map(desks.map((d) => [d.desk.id, d]))
   const seats = objects.filter((o) => o.type === "seat")
   const me = people.me?.email
 
+  /** Furniture that can't be tapped, blended this far toward the floor. */
+  const subdue = (color: string) => mix(color, floorInside, MUTED)
   const drawables: Drawable[] = []
-  /** Booked desks' pets, drawn over everything (back to front among themselves). */
-  const pets: { depth: number; node: ReactNode }[] = []
-
-  // --- Walls: back walls of a room stand; walls facing the viewer are cut
-  // down to a stub, partitions to half height.
-  const heightOf = (o: SceneObject) => {
-    const e = unitEdges(o)[0]
-    const d = SEG / 2
-    const [front, back] = runsAlongX(o.rotation)
-      ? [isInside(e.x, e.z + d), isInside(e.x, e.z - d)]
-      : [isInside(e.x + d, e.z), isInside(e.x - d, e.z)]
-    return front ? (back ? PARTITION : WALL.height) : STUB
-  }
+  /** Furniture's soft shadows: one layer over the floor and rugs, under the pieces. */
+  const shadows: ReactNode[] = []
+  /** Drawn over everything: who sits where, and which desks are free. */
+  const markers: ReactNode[] = []
   const t = WALL.depth / 2
+  const push = (ext: Extent, node: ReactNode) =>
+    drawables.push({ ext, node, order: drawables.length })
+
   /**
    * A wall piece along its line from `from` to `to` (world coords along the
-   * run; `fixed` across it). Drawn at full thickness with its ends overlapping
-   * the neighbours by half a wall (so corners close); SORTED as its thin centre
-   * line without the overlap — furniture standing flush against it, and the
-   * next piece along the line, then order cleanly instead of by chance.
+   * run; `fixed` across it), full thickness. Its ends overlap the neighbours
+   * by half a wall, so corners close.
    */
   const wallPiece = (
     alongX: boolean,
     fixed: number,
     from: number,
     to: number,
-    y0: number,
-    y1: number,
     color: string,
-    opacity = 1,
-    extend = t
+    { opacity = 1, extend = t, across = t, y1 = WALL.height } = {}
   ) => {
-    const span = (lo: number, hi: number, across: number): Extent =>
-      alongX
-        ? { x0: lo, x1: hi, z0: fixed - across, z1: fixed + across, y0, y1 }
-        : { x0: fixed - across, x1: fixed + across, z0: lo, z1: hi, y0, y1 }
-    const draw = span(from - extend, to + extend, t)
-    drawables.push({
-      ext: draw,
-      sort: span(from, to, 0.01),
-      node: boxNode(draw, color, opacity),
-      order: drawables.length,
-    })
+    const lo = from - extend
+    const hi = to + extend
+    const ext: Extent = alongX
+      ? { x0: lo, x1: hi, z0: fixed - across, z1: fixed + across, y0: 0, y1 }
+      : { x0: fixed - across, x1: fixed + across, z0: lo, z1: hi, y0: 0, y1 }
+    push(
+      ext,
+      <rect
+        x={ext.x0}
+        y={ext.z0}
+        width={ext.x1 - ext.x0}
+        height={ext.z1 - ext.z0}
+        fill={color}
+        opacity={opacity < 1 ? opacity : undefined}
+      />
+    )
   }
 
-  // Plain and glass walls merge into straight runs of the same height and
-  // colour — one box per run, so no seams between half-metre segments.
+  // Plain and glass walls merge into straight runs of the same colour — one
+  // piece per run, so no seams between half-metre segments.
   const runs = new Map<
     string,
-    { alongX: boolean; fixed: number; at: number[]; h: number; color: string; glass: boolean }
+    { alongX: boolean; fixed: number; at: number[]; color: string; glass: boolean }
   >()
   for (const o of objects) {
     if (o.type !== "wall" && o.type !== "glassWall") continue
     const alongX = runsAlongX(o.rotation)
     const glass = o.type === "glassWall"
-    const h = heightOf(o)
     const color = glass ? WINDOW_GLASS : (o.color ?? wall)
     const fixed = alongX ? o.z : o.x
-    const key = `${alongX}|${fixed}|${glass}|${color}|${h}`
-    const run = runs.get(key) ?? { alongX, fixed, at: [], h, color, glass }
+    const key = `${alongX}|${fixed}|${glass}|${color}`
+    const run = runs.get(key) ?? { alongX, fixed, at: [], color, glass }
     run.at.push(alongX ? o.x : o.z)
     runs.set(key, run)
   }
@@ -518,16 +492,11 @@ const buildScene = ({
     let start = r.at[0]
     let prev = r.at[0]
     const flush = () =>
-      wallPiece(
-        r.alongX,
-        r.fixed,
-        start - SEG / 2,
-        prev + SEG / 2,
-        0,
-        r.h,
-        r.color,
-        r.glass ? 0.55 : 1
-      )
+      wallPiece(r.alongX, r.fixed, start - SEG / 2, prev + SEG / 2, r.color, {
+        // Glass partitions: a slimmer, see-through line.
+        opacity: r.glass ? 0.8 : 1,
+        across: r.glass ? t * 0.5 : t,
+      })
     for (const v of r.at.slice(1)) {
       if (Math.abs(v - prev - SEG) > 1e-6) {
         flush()
@@ -538,105 +507,157 @@ const buildScene = ({
     flush()
   }
 
-  // Windows and doors, cut into their wall's height.
+  // Windows: the wall with a pane of glass along its middle. Doors: the gap
+  // between two jambs, the leaf standing open and its swing — a plan's door.
   for (const o of objects) {
     if (o.type !== "window" && o.type !== "door" && o.type !== "glassDoor") continue
     const [a, b] = edgeNodes(o)
     const alongX = runsAlongX(o.rotation)
     const fixed = alongX ? a.z : a.x
-    const [from, to] = alongX ? [a.x, b.x] : [a.z, b.z]
-    const h = heightOf(o)
+    const [from, to] = alongX
+      ? [Math.min(a.x, b.x), Math.max(a.x, b.x)]
+      : [Math.min(a.z, b.z), Math.max(a.z, b.z)]
     if (o.type === "window") {
-      wallPiece(alongX, fixed, from, to, 0, Math.min(h, 0.55), wall)
-      if (h > 0.55) {
-        wallPiece(alongX, fixed, from, to, 0.55, 1.2, WINDOW_GLASS, 0.5, 0)
-        wallPiece(alongX, fixed, from, to, 1.2, h, wall)
-      }
+      wallPiece(alongX, fixed, from, to, o.color ?? wall)
+      wallPiece(alongX, fixed, from, to, WINDOW_GLASS, { extend: -0.06, across: t * 0.35 })
       continue
     }
-    // Door / glass door: jambs (and a lintel in a standing wall), open
-    // between. In a cut-down wall it's just the gap.
-    if (h === STUB) continue
-    const post = 0.12
-    const frame = o.type === "glassDoor" ? "#5b6577" : wall
-    wallPiece(alongX, fixed, from, from + post, 0, h, frame)
-    wallPiece(alongX, fixed, to - post, to, 0, h, frame)
-    if (h === WALL.height) wallPiece(alongX, fixed, from, to, 1.24, h, frame, 1, 0)
+    const post = 0.1
+    const frame = o.type === "glassDoor" ? "#5b6577" : (o.color ?? wall)
+    wallPiece(alongX, fixed, from, from + post, frame, { extend: 0 })
+    wallPiece(alongX, fixed, to - post, to, frame, { extend: 0 })
+    // The leaf opens to the door's front (its +Z), hinged at the `from` jamb.
+    const side = alongX
+      ? Math.sign(Math.cos(o.rotation)) || 1
+      : Math.sign(Math.sin(o.rotation)) || 1
+    const len = to - from - post * 2
+    const hinge = from + post
+    const at = (u: number, v: number): [number, number] => (alongX ? [u, v] : [v, u])
+    const [hx, hz] = at(hinge, fixed)
+    const [ox, oz] = at(hinge + len, fixed)
+    const [lx, lz] = at(hinge, fixed + side * len)
+    const leafColor = o.type === "glassDoor" ? WINDOW_GLASS : (o.color ?? "#d98a63")
+    push(
+      { x0: hx, x1: hx, z0: hz, z1: hz, y0: 0, y1: 0.02 },
+      <g>
+        <path
+          d={`M${ox} ${oz} A${len} ${len} 0 0 ${alongX === side > 0 ? 1 : 0} ${lx} ${lz}`}
+          fill="none"
+          stroke={shade(wall, 0.7)}
+          strokeWidth={0.02}
+          strokeDasharray="0.06 0.05"
+        />
+        <line
+          x1={hx}
+          y1={hz}
+          x2={lx}
+          y2={lz}
+          stroke={leafColor}
+          strokeWidth={0.06}
+          strokeLinecap="round"
+        />
+      </g>
+    )
   }
 
-  // --- Furniture, desks (clickable) and whoever sits at them.
+  // --- Furniture, desks (tap to open) and whoever sits at them.
   for (const o of objects) {
     if (isEdgeType(o.type) || isMarker(o.type)) continue
     const on = byId.get(o.id)
-    if (!isSeatable(o.type)) {
-      const k = new Kit(o)
-      buildKit(k, o)
-      drawables.push(...k.items.map((it) => ({ ...it, order: drawables.length })))
+    const seatable = isSeatable(o.type)
+    const taken = !!on && on.state.kind !== "free"
+    // Can't be tapped: muted toward the floor, so desks stand out.
+    const piece = seatable
+      ? drawPiece(o, { occupied: bookable || taken ? taken : undefined })
+      : drawPiece(o, {}, subdue)
+    if (!piece) continue
+    const open = (e: React.MouseEvent) => {
+      e.stopPropagation()
+      onDesk(o.id)
+    }
+    // The symbol is drawn in the piece's frame: move and turn it into place
+    // (its +Z front turned by `rotation`, as in 3D). The shadow falls the same
+    // way for every piece: down and to the right.
+    const turn = (-o.rotation * 180) / Math.PI
+    const [cx, cz] = footprintCells(o.type, o.rotation)
+    push(
+      {
+        x0: o.x - (cx * GRID) / 2,
+        x1: o.x + (cx * GRID) / 2,
+        z0: o.z - (cz * GRID) / 2,
+        z1: o.z + (cz * GRID) / 2,
+        y0: 0,
+        y1: piece.height,
+      },
+      <g
+        transform={`translate(${o.x} ${o.z}) rotate(${turn})`}
+        className={seatable ? "cursor-pointer" : undefined}
+        onClick={seatable ? open : undefined}
+      >
+        {piece.node}
+      </g>
+    )
+    if (piece.height > 0.05)
+      shadows.push(
+        <g key={o.id} transform={`translate(${o.x + 0.04} ${o.z + 0.07}) rotate(${turn})`}>
+          {piece.silhouette}
+        </g>
+      )
+    if (!seatable || !on) continue
+    const spot = spotFor(o, seats)
+    if (on.state.kind === "free") {
+      if (!bookable) continue
+      // Free to book: the "+" ring on the seat.
+      const r = FREE_MARK
+      markers.push(
+        <g key={o.id} className="cursor-pointer" onClick={open}>
+          <title>Free — tap to book</title>
+          <circle
+            cx={spot.x}
+            cy={spot.z}
+            r={r}
+            className="fill-overlay stroke-success"
+            strokeWidth={0.045}
+          />
+          <path
+            d={`M${spot.x - r * 0.45} ${spot.z}h${r * 0.9}M${spot.x} ${spot.z - r * 0.45}v${r * 0.9}`}
+            className="stroke-success"
+            strokeWidth={0.045}
+            strokeLinecap="round"
+          />
+        </g>
+      )
       continue
     }
-    const taken = !!on && on.state.kind !== "free"
-    const k = new Kit(o, (node) => (
-      <g
-        className="cursor-pointer"
-        onClick={(e) => {
-          e.stopPropagation()
-          onDesk(o.id)
-        }}
-      >
-        {node}
+    // Taken: their desk pet (the same one as in 3D) on the chair — a picture
+    // rendered from its model; yours on an accent ring.
+    const state = on.state
+    const person = personByEmail(people, state.email)
+    const mine = state.email === me
+    const pet = petFor(state.email, person?.pet)
+    markers.push(
+      <g key={o.id} className="cursor-pointer" onClick={open}>
+        <title>{`${person ? (mine ? "You" : person.name) : "Taken"} · ${pet.label}`}</title>
+        {mine && (
+          <circle
+            cx={spot.x}
+            cy={spot.z}
+            r={PET_SIZE * 0.42}
+            className="fill-accent"
+            stroke="#ffffff"
+            strokeWidth={0.04}
+          />
+        )}
+        <image
+          href={petThumb(pet.id)}
+          x={spot.x - PET_SIZE / 2}
+          y={spot.z - PET_SIZE / 2}
+          width={PET_SIZE}
+          height={PET_SIZE}
+        />
       </g>
-    ))
-    buildKit(k, o, { occupied: bookable || taken ? taken : undefined })
-    drawables.push(...k.items.map((it) => ({ ...it, order: drawables.length })))
-    if (on && on.state.kind !== "free") {
-      const state = on.state
-      const spot = spotFor(o, seats)
-      const person = personByEmail(people, state.email)
-      const mine = state.email === me
-      // Their desk pet (the same one as in 3D) on the chair — a picture
-      // rendered from its model. Drawn over the furniture like a marker: sorted
-      // with it, a chair's backrest would hide the pet from most angles.
-      const pet = petFor(state.email, person?.pet)
-      const [px, py] = project(spot.x, SEAT_TOP, spot.z)
-      pets.push({
-        depth: spot.x + spot.z,
-        node: (
-          <g
-            className="cursor-pointer"
-            onClick={(e) => {
-              e.stopPropagation()
-              onDesk(o.id)
-            }}
-          >
-            <title>{`${person ? (mine ? "You" : person.name) : "Taken"} · ${pet.label}`}</title>
-            {mine && (
-              <ellipse
-                cx={px}
-                cy={py}
-                rx={0.3}
-                ry={0.15}
-                className="fill-accent"
-                stroke="#ffffff"
-                strokeWidth={0.03}
-              />
-            )}
-            <image
-              href={petThumb(pet.id)}
-              x={px - PET_SIZE / 2}
-              y={py - PET_SIZE * 0.86}
-              width={PET_SIZE}
-              height={PET_SIZE}
-            />
-          </g>
-        ),
-      })
-    }
+    )
   }
-
-  // Flat things (rugs) lie on the floor under everything: drawn with the
-  // floor, not depth-sorted against what stands on them.
-  const flat = drawables.filter((d) => d.ext.y1 <= 0.02)
-  const sorted = sortBackToFront(drawables.filter((d) => d.ext.y1 > 0.02))
 
   // --- The floor: rooms (each in its floor paint) as row-merged strips.
   const colorOf = new Map<string, string>()
@@ -661,7 +682,8 @@ const buildScene = ({
     let prev = xs[0]
     const flush = () => {
       const list = rooms.get(color(start)) ?? []
-      list.push(floorPolygon(start, z, prev + SEG, z + SEG, 0, {}, `${z},${start}`))
+      // A hair taller than the row, so neighbouring strips leave no hairline.
+      list.push(floorRect(start, z, prev + SEG, z + SEG + 0.005, {}, `${z},${start}`))
       rooms.set(color(start), list)
     }
     for (const x of xs.slice(1)) {
@@ -674,45 +696,19 @@ const buildScene = ({
     flush()
   }
 
-  // Desk footprints for the shown day: free (dashed green) or yours (accent).
-  const footprints: ReactNode[] = []
-  for (const { desk, state } of desks) {
-    const mine = state.kind !== "free" && state.email === me
-    const free = state.kind === "free" && bookable
-    if (!mine && !free) continue
-    const [cx, cz] = footprintCells(desk.type, desk.rotation)
-    const hx = (cx * GRID) / 2
-    const hz = (cz * GRID) / 2
-    footprints.push(
-      floorPolygon(
-        desk.x - hx,
-        desk.z - hz,
-        desk.x + hx,
-        desk.z + hz,
-        0.012,
-        {
-          className: mine ? "fill-accent/25 stroke-accent" : "fill-success/20 stroke-success",
-          strokeWidth: mine ? 0.05 : 0.04,
-          strokeDasharray: mine ? undefined : "0.12 0.08",
-        },
-        desk.id
-      )
-    )
-  }
-
   let bounds: Bounds | null = null
-  for (const d of drawables) {
-    const b = screenBounds(d.ext)
+  for (const { ext: e } of drawables) {
     bounds = bounds
       ? {
-          x0: Math.min(bounds.x0, b.x0),
-          x1: Math.max(bounds.x1, b.x1),
-          y0: Math.min(bounds.y0, b.y0),
-          y1: Math.max(bounds.y1, b.y1),
+          x0: Math.min(bounds.x0, e.x0),
+          x1: Math.max(bounds.x1, e.x1),
+          y0: Math.min(bounds.y0, e.z0),
+          y1: Math.max(bounds.y1, e.z1),
         }
-      : b
+      : { x0: e.x0, x1: e.x1, y0: e.z0, y1: e.z1 }
   }
 
+  const layered = sortBottomToTop(drawables)
   return {
     bounds,
     node: (
@@ -722,18 +718,20 @@ const buildScene = ({
             {list}
           </g>
         ))}
-        {flat.map((d, i) => (
-          <g key={`f${i}`}>{d.node}</g>
-        ))}
-        {footprints}
-        {sorted.map((d, i) => (
-          <g key={i}>{d.node}</g>
-        ))}
-        {pets
-          .sort((a, b) => a.depth - b.depth)
-          .map((p, i) => (
-            <g key={`p${i}`}>{p.node}</g>
+        {layered
+          .filter((d) => d.ext.y1 <= FLAT)
+          .map((d, i) => (
+            <g key={`flat${i}`}>{d.node}</g>
           ))}
+        <g fill="#000000" opacity={0.13}>
+          {shadows}
+        </g>
+        {layered
+          .filter((d) => d.ext.y1 > FLAT)
+          .map((d, i) => (
+            <g key={i}>{d.node}</g>
+          ))}
+        {markers}
       </>
     ),
   }
