@@ -22,7 +22,7 @@ export const meta: MetaFunction<typeof loader> = ({ loaderData }) => [
   { property: "og:description", content: "You've been invited to a Hotseat workspace." },
   {
     property: "og:image",
-    content: `${loaderData?.baseUrl}/images/og/join-organization/${loaderData?.slug}`,
+    content: `${loaderData?.baseUrl}${import.meta.env.BASE_URL}images/og/join-organization/${loaderData?.slug}`,
   },
 ]
 

@@ -1,40 +1,29 @@
-import "dotenv/config"
+import { AsyncLocalStorage } from "node:async_hooks"
 import { PrismaPg } from "@prisma/adapter-pg"
 import { PrismaClient } from "~/repositories/main-repository/prisma/generated/prisma-client/client"
 
-const connectionString = `${process.env.DATABASE_URL}`
+// Workers can't share I/O (DB sockets) between requests, so every request gets
+// its own client, bound in `workers/app.ts`. Hyperdrive pools the real
+// connections, which keeps a client per request cheap.
+const requestPrisma = new AsyncLocalStorage<PrismaClient>()
 
-export { prisma }
-
-let prisma: PrismaClient
-
-declare global {
-  var __prisma: PrismaClient | undefined
-  var __prismaClass: typeof PrismaClient | undefined
-}
-
-// this is needed because in development we don't want to restart
-// the server with every change, but we want to make sure we don't
-// create a new connection to the DB with every change either.
-if (process.env.NODE_ENV === "production") {
+export const runWithPrisma = <Result>(connectionString: string, callback: () => Result) => {
   const adapter = new PrismaPg({ connectionString })
-  prisma = new PrismaClient({ adapter })
-  prisma.$connect()
-} else {
-  // After `prisma generate` (a new migration) the dev server reloads the
-  // generated client as a new class: drop the cached instance built from the
-  // old one, or queries using new columns fail until a restart.
-  if (global.__prisma && global.__prismaClass !== PrismaClient) {
-    void global.__prisma.$disconnect()
-    global.__prisma = undefined
-  }
-  if (!global.__prisma) {
-    global.__prismaClass = PrismaClient
-    const adapter = new PrismaPg({ connectionString })
-    global.__prisma = new PrismaClient({ adapter })
-    global.__prisma.$connect()
-  }
-  prisma = global.__prisma
+  return requestPrisma.run(new PrismaClient({ adapter }), callback)
 }
+
+const getRequestPrisma = () => {
+  const client = requestPrisma.getStore()
+  if (!client) throw new Error("Prisma used outside of a request (runWithPrisma)")
+  return client
+}
+
+export const prisma = new Proxy({} as PrismaClient, {
+  get: (_, key) => {
+    const client = getRequestPrisma()
+    const value = Reflect.get(client, key)
+    return typeof value === "function" ? value.bind(client) : value
+  },
+})
 
 export default prisma

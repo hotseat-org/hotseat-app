@@ -135,7 +135,7 @@ export function ErrorBoundary() {
               </pre>
             )}
             <a
-              href="/app"
+              href={`${import.meta.env.BASE_URL}app`}
               className="mt-6 inline-flex rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-accent-foreground transition hover:brightness-105"
             >
               Back to your offices

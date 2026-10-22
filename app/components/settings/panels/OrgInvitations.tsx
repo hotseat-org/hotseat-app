@@ -38,9 +38,9 @@ export function OrgInvitations() {
     )
 
   const { invites, origin } = data
-  const joinUrl = `${origin}/join/${slug}`
+  const joinUrl = `${origin}${import.meta.env.BASE_URL}join/${slug}`
   const universalJoinUrl = organization.invitationHash
-    ? `${origin}/join/${slug}/${organization.invitationHash}`
+    ? `${origin}${import.meta.env.BASE_URL}join/${slug}/${organization.invitationHash}`
     : null
 
   return (

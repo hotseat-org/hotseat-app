@@ -28,7 +28,7 @@ import type { ReservationActionData } from "~/routes/api.reservations.$slug.$off
 import { addDays, formatShort, isDay, maxDay, todayIn, weekStart, type Day } from "~/utils/booking"
 
 // three / R3F are browser-only — keep them out of the server bundle.
-const OfficeEditor = lazy(() => import("~/components/OfficeEditor/OfficeEditor"))
+const OfficeEditor = lazy(() => import("~/components/OfficeEditor/OfficeEditor.client"))
 
 const toMember = (p: Profile): ShellMember => ({
   userEmail: p.userEmail,

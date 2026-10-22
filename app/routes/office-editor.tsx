@@ -4,7 +4,7 @@ import type { MetaFunction } from "react-router"
 import { EditorBoundary } from "~/components/OfficeEditor/EditorBoundary"
 
 // three / R3F are browser-only — keep them out of the server bundle.
-const OfficeEditor = lazy(() => import("~/components/OfficeEditor/OfficeEditor"))
+const OfficeEditor = lazy(() => import("~/components/OfficeEditor/OfficeEditor.client"))
 
 export const meta: MetaFunction = () => [{ title: "Office Editor · Hot Seat" }]
 

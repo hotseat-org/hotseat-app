@@ -13,7 +13,10 @@ export async function requireUser(request: Request): Promise<User> {
   if (!user) {
     const url = new URL(request.url)
     // Strip the `.data` suffix present on data requests (v8 passThroughRequests)
-    const returnTo = url.pathname.replace(/\.data$/, "")
+    // and the basename: `redirect()` adds it back
+    const returnTo = url.pathname
+      .replace(/\.data$/, "")
+      .replace(new RegExp(`^${import.meta.env.BASE_URL}`), "/")
 
     throw redirect("/login", {
       headers: { "Set-cookie": await returnToPage.serialize(returnTo) },

@@ -1,3 +1,4 @@
+import { cloudflare } from "@cloudflare/vite-plugin"
 import { reactRouter } from "@react-router/dev/vite"
 import { defineConfig } from "vite"
 import tsconfigPaths from "vite-tsconfig-paths"
@@ -5,11 +6,18 @@ import tailwind from "@tailwindcss/vite"
 import devtoolsJson from "vite-plugin-devtools-json"
 
 export default defineConfig({
+  base: "/hotseat/",
   server: {
     port: 3000,
     allowedHosts: ["hotseat.vidlak.net"],
   },
-  plugins: [reactRouter(), tsconfigPaths(), tailwind(), devtoolsJson()],
+  plugins: [
+    cloudflare({ viteEnvironment: { name: "ssr" } }),
+    reactRouter(),
+    tsconfigPaths(),
+    tailwind(),
+    devtoolsJson(),
+  ],
   // Ensure a single React instance across the app and the lazily-loaded R3F
   // editor. Without this, Vite can pre-bundle zustand/three against a second
   // React copy at dev time, nulling React's hook dispatcher and crashing with

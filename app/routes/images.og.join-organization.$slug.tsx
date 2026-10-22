@@ -1,11 +1,9 @@
 import { createHash } from "crypto"
 import { LoaderFunctionArgs, redirect } from "react-router"
-import { ImageResponse } from "@vercel/og"
+import { ImageResponse } from "workers-og"
 import { GifReader } from "omggif"
 import { PNG } from "pngjs"
 import { getCore } from "~/core/get-core"
-
-export const runtime = "edge"
 
 const md5 = (value: string) => createHash("md5").update(value).digest("hex")
 

@@ -56,7 +56,7 @@ const LABELS: Record<string, string> = { polar: "Polar Bear" }
 export const MODELS: ModelDef[] = ANIMALS.map((name) => ({
   id: name,
   label: LABELS[name] ?? name[0].toUpperCase() + name.slice(1),
-  url: `/models/animal-${name}.glb`,
+  url: `${import.meta.env.BASE_URL}models/animal-${name}.glb`,
   footprint: [2, 2],
   scale: 0.5,
   yOffset: 0,
@@ -64,7 +64,7 @@ export const MODELS: ModelDef[] = ANIMALS.map((name) => ({
 }))
 
 /** A pet's picture for 2D UI (the settings picker): rendered from its GLB. */
-export const petThumb = (id: string) => `/pets/${id}.png`
+export const petThumb = (id: string) => `${import.meta.env.BASE_URL}pets/${id}.png`
 
 export const modelById = (id: string): ModelDef | undefined => MODELS.find((m) => m.id === id)
 

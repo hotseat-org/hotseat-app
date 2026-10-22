@@ -19,7 +19,7 @@ export const ImageUploadInput = ({ onChange, name }: Props) => {
       setThumbnail(undefined)
       setFile(newFile)
 
-      const data = await fetch("/api/upload-url", {
+      const data = await fetch(`${import.meta.env.BASE_URL}api/upload-url`, {
         method: "POST",
       }).then((res) => res.json())
 

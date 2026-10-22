@@ -48,7 +48,7 @@ const DeskmatePreview = ({ color }: { color?: string }) => (
       <Seat />
     </group>
     <group position={[0, SEAT.seatHeight + 0.06, 0.4]} rotation={[0, Math.PI, 0]}>
-      <Model url="/models/animal-cat.glb" scale={0.4} />
+      <Model url={`${import.meta.env.BASE_URL}models/animal-cat.glb`} scale={0.4} />
     </group>
   </group>
 )

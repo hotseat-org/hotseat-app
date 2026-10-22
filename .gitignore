@@ -10,3 +10,7 @@ generated
 cdk.out
 
 /generated/prisma
+
+# Cloudflare
+.wrangler
+worker-configuration.d.ts

@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "hotseat",
+  "account_id": "402c20b4a84956c6cec0476fe52fd448",
+  "main": "./workers/app.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "routes": [{ "pattern": "alpha.vidlak.net/hotseat*", "zone_name": "vidlak.net" }],
+  "workers_dev": false,
+  "observability": { "enabled": true },
+  "vars": {
+    "BASE_URL": "https://alpha.vidlak.net/hotseat",
+  },
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "72c81fff5ca54183ba43740644092ef1",
+      "localConnectionString": "postgres://postgres:qseat@localhost:5432/qseat",
+    },
+  ],
+}
