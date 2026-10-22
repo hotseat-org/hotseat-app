@@ -9,7 +9,8 @@ export const loader: ActionFunction = async ({ request, params }) => {
 
   // Only honor same-origin, relative redirects (no open-redirect).
   const redirectTo = new URL(request.url).searchParams.get("redirectTo")
-  const safeRedirect = redirectTo && redirectTo.startsWith("/") ? redirectTo : null
+  const safeRedirect =
+    redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//") ? redirectTo : null
 
   try {
     return await authenticator.authenticate(provider, request)

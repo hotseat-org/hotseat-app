@@ -2,6 +2,7 @@ import { Input, Label, TextField } from "@heroui/react"
 import clsx from "clsx"
 import { AlertTriangle, Check, Link2, X } from "lucide-react"
 import type { ReactNode } from "react"
+import { useLocation } from "react-router"
 import type { useRename } from "./useRename"
 import { Button } from "~/components/Button"
 
@@ -77,39 +78,44 @@ export const NameField = ({
   /** Everything before the slug, e.g. "/app/o/". */
   urlPrefix: string
   warning: string
-}) => (
-  <div className="flex flex-col gap-2">
-    <TextField
-      isRequired
-      name="name"
-      value={rename.name}
-      onChange={rename.setName}
-      isInvalid={rename.taken}
-    >
-      <Label>Name</Label>
-      <Input />
-    </TextField>
-    <p className="flex min-w-0 items-center gap-1.5 text-xs text-muted">
-      <Link2 className="size-3.5 shrink-0" />
-      <span className="truncate font-mono">
-        {urlPrefix}
-        <b className="text-foreground">{rename.slug || "…"}</b>
-      </span>
-      {rename.taken ? (
-        <span className="flex shrink-0 items-center gap-1 font-bold text-danger">
-          <X className="size-3.5" /> Taken
+}) => {
+  const location = useLocation()
+  return (
+    <div className="flex flex-col gap-2">
+      {/* Where to come back to if the rename moves the URL (see redirectToRenamed). */}
+      <input type="hidden" name="returnTo" value={location.pathname + location.search} />
+      <TextField
+        isRequired
+        name="name"
+        value={rename.name}
+        onChange={rename.setName}
+        isInvalid={rename.taken}
+      >
+        <Label>Name</Label>
+        <Input />
+      </TextField>
+      <p className="flex min-w-0 items-center gap-1.5 text-xs text-muted">
+        <Link2 className="size-3.5 shrink-0" />
+        <span className="truncate font-mono">
+          {urlPrefix}
+          <b className="text-foreground">{rename.slug || "…"}</b>
         </span>
-      ) : rename.available ? (
-        <span className="flex shrink-0 items-center gap-1 font-bold text-success">
-          <Check className="size-3.5" /> Available
-        </span>
-      ) : null}
-    </p>
-    {rename.slugChanges && !rename.taken && (
-      <p className="flex items-start gap-2 rounded-xl bg-warning/15 px-3 py-2.5 text-xs text-foreground">
-        <AlertTriangle className="mt-px size-3.5 shrink-0 text-warning" />
-        {warning}
+        {rename.taken ? (
+          <span className="flex shrink-0 items-center gap-1 font-bold text-danger">
+            <X className="size-3.5" /> Taken
+          </span>
+        ) : rename.available ? (
+          <span className="flex shrink-0 items-center gap-1 font-bold text-success">
+            <Check className="size-3.5" /> Available
+          </span>
+        ) : null}
       </p>
-    )}
-  </div>
-)
+      {rename.slugChanges && !rename.taken && (
+        <p className="flex items-start gap-2 rounded-xl bg-warning/15 px-3 py-2.5 text-xs text-foreground">
+          <AlertTriangle className="mt-px size-3.5 shrink-0 text-warning" />
+          {warning}
+        </p>
+      )}
+    </div>
+  )
+}

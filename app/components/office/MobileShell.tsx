@@ -8,10 +8,18 @@ import { MemberAvatar, PANEL, nameOf, type ShellMember, type ShellOffice } from 
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher"
 import { AccountMenu } from "./AccountMenu"
 import { MyBookings } from "./MyBookings"
+import { NotificationsBell } from "./Notifications"
+import { WeekDots } from "./WeekDots"
 import { MOBILE_CHROME } from "./mobile"
 import { MonthCalendar } from "~/components/OfficeEditor/ui/DateStepper"
 import { useEditorStore } from "~/components/OfficeEditor/store"
-import { dayPhrase, deskName, useDesksOnDay } from "~/components/OfficeEditor/useBooking"
+import {
+  dayPhrase,
+  deskName,
+  useDesksOnDay,
+  useGivenUpDesk,
+  useWeekPresence,
+} from "~/components/OfficeEditor/useBooking"
 import { useSettings } from "~/components/settings/useSettings"
 import { daysBetween, formatDow, formatLong, isWeekend, type Day } from "~/utils/booking"
 
@@ -66,10 +74,10 @@ export const MobileShell = ({ offices, me, members, empty = false }: Props) => {
   )
 }
 
-/** Where you are (office switcher) and who you are (account), edge to edge. */
+/** Where you are (office switcher), what changed (bell) and who you are (account), edge to edge. */
 const TopBar = ({ offices }: { offices: ShellOffice[] }) => (
   <header
-    className="pointer-events-auto absolute inset-x-0 top-0 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b border-chrome-border bg-chrome/95 px-3 shadow-[0_2px_10px_var(--chrome-shadow)] backdrop-blur-md"
+    className="pointer-events-auto absolute inset-x-0 top-0 grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-1 border-b border-chrome-border bg-chrome/95 px-3 shadow-[0_2px_10px_var(--chrome-shadow)] backdrop-blur-md"
     style={{ height: TOP_BAR_HEIGHT }}
   >
     {/* The switcher takes what the account leaves, and truncates in it. */}
@@ -78,6 +86,7 @@ const TopBar = ({ offices }: { offices: ShellOffice[] }) => (
       isCompact
       className="relative max-w-full justify-self-start"
     />
+    <NotificationsBell triggerClassName="grid size-11 place-items-center rounded-full text-foreground outline-none focus-visible:ring-2 focus-visible:ring-focus" />
     <AccountMenu isFlat />
   </header>
 )
@@ -94,6 +103,7 @@ const DayDock = ({ me }: { me: ShellMember }) => {
   const spotlightSeat = useEditorStore((s) => s.spotlightSeat)
   const { byPerson } = useDesksOnDay()
   const mine = byPerson.get(me.userEmail)
+  const givenUp = useGivenUpDesk(me.userEmail)
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
 
   return (
@@ -106,7 +116,11 @@ const DayDock = ({ me }: { me: ShellMember }) => {
         <MemberAvatar m={me} className="size-8 shrink-0 rounded-lg" />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-extrabold text-foreground">
-            {mine ? deskName(mine.desk) : `No desk ${dayPhrase(day, today)}`}
+            {mine
+              ? deskName(mine.desk)
+              : givenUp
+                ? `Away ${dayPhrase(day, today)}`
+                : `No desk ${dayPhrase(day, today)}`}
           </p>
           <p className="flex items-center gap-1 truncate text-xs text-muted">
             {mine?.state.kind === "resident" ? (
@@ -115,6 +129,10 @@ const DayDock = ({ me }: { me: ShellMember }) => {
               </>
             ) : mine ? (
               `Yours ${dayPhrase(day, today)}`
+            ) : givenUp ? (
+              `You gave ${deskName(givenUp)} up — others can book it`
+            ) : day < today ? (
+              "Past days can't be booked"
             ) : (
               "Tap a free + on the plan to book one"
             )}
@@ -272,6 +290,7 @@ const People = ({
   const spotlightSeat = useEditorStore((s) => s.spotlightSeat)
   const { open: openSettings } = useSettings()
   const { byPerson } = useDesksOnDay()
+  const week = useWeekPresence()
   const roster = useMemo(
     () =>
       members
@@ -313,7 +332,10 @@ const People = ({
                 <p className="truncate text-sm font-bold text-foreground">
                   {m.userEmail === me.userEmail ? "You" : nameOf(m)}
                 </p>
-                <p className="truncate text-xs text-muted">{at ? deskName(at.desk) : "Not in"}</p>
+                <p className="flex items-center gap-2 truncate text-xs text-muted">
+                  {at ? deskName(at.desk) : "Not in"}
+                  <WeekDots email={m.userEmail} presence={week} />
+                </p>
               </div>
               {at && (
                 <button

@@ -130,7 +130,12 @@ export const NewOrganization = () => {
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  <TextField name="name" onChange={(value) => setName(value)} variant="secondary">
+                  <TextField
+                    name="name"
+                    onChange={(value) => setName(value)}
+                    variant="secondary"
+                    autoFocus
+                  >
                     <Label className="text-sm font-medium text-foreground/60">
                       Organization name
                     </Label>
@@ -138,7 +143,8 @@ export const NewOrganization = () => {
                   </TextField>
                   <AvailabilityIndicator availability={availability} />
                   <p className="text-xs text-foreground/40">
-                    hotseat.app/o/
+                    {/* The real path (as in settings), not a made-up domain. */}
+                    /app/o/
                     <span className="font-medium text-accent">
                       {name ? slugify(name, { lower: true, trim: true }) : "your-org"}
                     </span>

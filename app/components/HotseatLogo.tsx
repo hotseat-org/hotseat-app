@@ -1,5 +1,6 @@
 import { type FC, useMemo } from "react"
 import { useTheme, Theme } from "remix-themes"
+import { useIsHydrated } from "~/utils/hooks/useIsHydrated"
 
 /* ------------------------------------------------------------------ */
 /*  Theme tokens                                                       */
@@ -445,12 +446,18 @@ interface HotseatLogoProps {
 }
 
 const HotseatLogo: FC<HotseatLogoProps> = ({ size = 320 }) => {
-  const [theme] = useTheme()
+  const [theme, , { definedBy }] = useTheme()
   const isDark = theme !== Theme.LIGHT
   const tokens = isDark ? darkTokens : lightTokens
   const scale = size / 320
   const fontSize = 58 * scale
   const styles = useMemo(() => buildStyles(tokens), [tokens])
+  // Without a theme cookie the server can't know light from dark (the system
+  // decides, in the browser): until hydrated, hold the logo's space empty —
+  // rendering a guess would mismatch the client's first render.
+  const isHydrated = useIsHydrated()
+  if (definedBy === "SYSTEM" && !isHydrated)
+    return <div aria-hidden style={{ width: size, height: size }} />
 
   return (
     <>

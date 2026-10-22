@@ -22,7 +22,8 @@ export default function Index() {
 
   return (
     <main className="flex h-full bg-background">
-      <Toast.Provider />
+      {/* Top: the bottom holds the day toolbar (desktop) and the dock + tabs (phone). */}
+      <Toast.Provider placement="top" />
       <Outlet />
       {modal === "new-organization" && <NewOrganization />}
       <SettingsOverlay />

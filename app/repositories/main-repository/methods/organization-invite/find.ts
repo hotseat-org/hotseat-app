@@ -13,8 +13,9 @@ export const findOrganizationInvite: FindOrganizationInviteFn = async ({
   email,
   organizationSlug,
 }) => {
-  const result = await prisma.organizationInvite.findUnique({
-    where: { email_organizationSlug: { email, organizationSlug } },
+  // Emails match whatever their case (an invite to Bob@… is bob@…'s).
+  const result = await prisma.organizationInvite.findFirst({
+    where: { organizationSlug, email: { equals: email, mode: "insensitive" } },
     include: { organization: true },
   })
 

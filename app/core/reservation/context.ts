@@ -33,12 +33,16 @@ export const bookingContext = async (
   const parsed = layoutSchema.safeParse(office.layout ?? [])
   const desks = (parsed.success ? parsed.data : []).filter((o) => isSeatable(o.type))
 
-  return {
-    profile,
-    office,
-    targetEmail,
-    today,
-    lastDay: addDays(today, office.bookingWindowDays),
-    desks,
-  }
+  const lastDay = addDays(today, office.bookingWindowDays)
+  // Days residents gave their desks up (bookable like any desk on those days).
+  const releases = await mainRepository.deskRelease.findMany({
+    organizationSlug,
+    officeSlug,
+    from: today,
+    to: lastDay,
+  })
+  const released = new Set(releases.map((r) => `${r.deskId}|${r.date}`))
+  const isReleased = (deskId: string, day: string) => released.has(`${deskId}|${day}`)
+
+  return { profile, office, targetEmail, today, lastDay, desks, isReleased }
 }

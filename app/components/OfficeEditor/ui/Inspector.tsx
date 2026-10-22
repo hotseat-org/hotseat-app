@@ -1,11 +1,13 @@
 import { Button, CloseButton, ColorSwatchPicker } from "@heroui/react"
 import clsx from "clsx"
+import { useMemo, useState } from "react"
 import { Copy, Dices, RotateCw, Trash2 } from "lucide-react"
 import { useEditorStore } from "../store"
 import { SWATCHES, DEFAULT_COLOR } from "../palette"
 import { hasLooks, isEdgeType, isSeatable, isWallMounted } from "../types"
 import { usePeople } from "../people"
 import { TOOLS } from "./tools"
+import { formatShort, type Day } from "~/utils/booking"
 
 const TYPE_LABEL = new Map<string, string>(TOOLS.map((t) => [t.tool, t.label]))
 
@@ -63,7 +65,7 @@ export const Inspector = () => {
         ))}
       </ColorSwatchPicker>
 
-      {count === 1 && isSeatable(obj.type) && <SeatSection id={obj.id} />}
+      {count === 1 && isSeatable(obj.type) && <SeatSection key={obj.id} id={obj.id} />}
 
       {/* Two columns (four labelled buttons don't fit one row); Delete spans
           the row when it would be left on its own. */}
@@ -118,12 +120,27 @@ const SeatSection = ({ id }: { id: string }) => {
   const assignSeat = useEditorStore((s) => s.assignSeat)
   const numberDesks = useEditorStore((s) => s.numberDesks)
   const people = usePeople()
-  // Upcoming bookings on this desk — a resident means saving cancels them.
-  const upcoming = useEditorStore((s) => {
-    const { enabled, today, byDay } = s.booking
-    if (!enabled) return 0
-    return Object.entries(byDay).filter(([d, desks]) => d >= today && desks[id]).length
-  })
+  // Upcoming bookings on this desk: giving it a resident (or deleting it)
+  // cancels them — said before it happens, not after.
+  const byDay = useEditorStore((s) => s.booking.byDay)
+  const today = useEditorStore((s) => s.booking.today)
+  const isBookingOn = useEditorStore((s) => s.booking.enabled)
+  const bookings = useMemo(
+    () =>
+      isBookingOn
+        ? Object.entries(byDay)
+            .filter(([d, desks]) => d >= today && desks[id])
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([d, desks]) => ({ day: d as Day, email: desks[id] }))
+        : [],
+    [isBookingOn, byDay, today, id]
+  )
+  /** A resident picked whose assignment would cancel someone's bookings: confirm first. */
+  const [pendingResident, setPendingResident] = useState<string | null>(null)
+  const nameOf = (email: string) => people.members.find((p) => p.email === email)?.name ?? email
+  const lostTo = (resident: string) => bookings.filter((b) => b.email !== resident)
+  const describe = (list: typeof bookings) =>
+    list.map((b) => `${nameOf(b.email)} (${formatShort(b.day)})`).join(", ")
   if (!seat) return null
   return (
     <div className="mb-4 flex flex-col gap-2">
@@ -156,7 +173,11 @@ const SeatSection = ({ id }: { id: string }) => {
           <select
             id={`resident-${seat.id}`}
             value={seat.assignee ?? ""}
-            onChange={(e) => assignSeat(seat.id, e.currentTarget.value || null)}
+            onChange={(e) => {
+              const email = e.currentTarget.value || null
+              if (email && lostTo(email).length > 0) setPendingResident(email)
+              else assignSeat(seat.id, email)
+            }}
             className="h-8 rounded-lg border border-border bg-surface px-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-focus"
           >
             <option value="">None (anyone can book it)</option>
@@ -166,11 +187,39 @@ const SeatSection = ({ id }: { id: string }) => {
               </option>
             ))}
           </select>
-          {seat.assignee && upcoming > 0 && (
-            <p className="rounded-lg bg-warning/15 px-2.5 py-2 text-xs text-foreground">
-              This desk has bookings on {upcoming} upcoming {upcoming === 1 ? "day" : "days"}.
-              They&apos;ll be cancelled when the layout saves.
-            </p>
+          {pendingResident ? (
+            <div className="flex flex-col gap-2 rounded-lg bg-warning/15 px-2.5 py-2 text-xs text-foreground">
+              <p>
+                Making {nameOf(pendingResident)} its resident cancels{" "}
+                {describe(lostTo(pendingResident))}.
+              </p>
+              <div className="flex justify-end gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setPendingResident(null)}
+                  className="rounded-md px-2 py-1 font-bold hover:bg-foreground/5"
+                >
+                  Keep bookings
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    assignSeat(seat.id, pendingResident)
+                    setPendingResident(null)
+                  }}
+                  className="rounded-md bg-warning px-2 py-1 font-bold text-warning-foreground"
+                >
+                  Assign anyway
+                </button>
+              </div>
+            </div>
+          ) : (
+            !seat.assignee &&
+            bookings.length > 0 && (
+              <p className="rounded-lg bg-foreground/5 px-2.5 py-2 text-xs text-muted">
+                Booked: {describe(bookings)}. Giving it a resident or deleting it cancels these.
+              </p>
+            )
           )}
         </>
       )}

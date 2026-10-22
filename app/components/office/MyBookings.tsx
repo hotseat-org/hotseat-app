@@ -172,7 +172,7 @@ export const MyBookings = ({
               <p className="text-sm font-bold text-foreground">No upcoming bookings</p>
               <p className="mt-0.5 text-xs text-muted">
                 {isScreen
-                  ? "Pick a day at the top of the Office tab, then tap a free desk."
+                  ? "Pick a day at the bottom of the Office tab, then tap a free desk."
                   : "Pick a day at the bottom, then click a free desk on the map."}
               </p>
             </div>
@@ -215,10 +215,7 @@ export const MyBookings = ({
                         <p className="truncate text-sm font-bold text-foreground">
                           {deskText(b.deskLabel)}
                         </p>
-                        <p className="truncate text-xs text-muted">
-                          {b.officeName}
-                          {b.officeSlug === officeSlug && " · this office"}
-                        </p>
+                        <p className="truncate text-xs text-muted">{b.officeName}</p>
                       </div>
                       <Button size="sm" variant="ghost" onPress={() => show(b)}>
                         <MapPin className="size-4" /> Show

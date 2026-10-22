@@ -4,7 +4,7 @@ import { useFetcher, useParams } from "react-router"
 import { DeleteLogoDialog } from "../dialogs/DeleteLogo"
 import { SetLogoDialog } from "../dialogs/SetLogo"
 import { CardTitle, NameField, SaveBar, SettingsCard } from "../ui"
-import { useFollowSlug, useRename } from "../useRename"
+import { useRename } from "../useRename"
 import { useSettings } from "../useSettings"
 import { Button } from "~/components/Button"
 import { ThumbAvatar } from "~/components/office/shell-ui"
@@ -21,7 +21,6 @@ export function OrgGeneral() {
 
   // Renaming renames the URL too (same rule as on create).
   const rename = useRename({ currentName: organization.name, currentSlug: slug, action })
-  useFollowSlug(fetcher, slug, "/app/o/")
 
   const [description, setDescription] = useState(organization.description ?? "")
   useEffect(() => setDescription(organization.description ?? ""), [organization.description])
@@ -59,7 +58,7 @@ export function OrgGeneral() {
           <NameField
             rename={rename}
             urlPrefix="/app/o/"
-            warning="Renaming changes the URL. Old links and invite links stop working — share the new invite link afterwards."
+            warning="Renaming changes the URL. Old links and invite links keep working — they forward to the new one."
           />
           <TextField name="description" value={description} onChange={setDescription}>
             <Label>Description</Label>

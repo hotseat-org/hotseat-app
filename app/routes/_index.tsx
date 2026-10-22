@@ -7,3 +7,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   return redirect("app")
 }
+
+// A component, so this isn't a resource route: a client-side navigation here
+// would otherwise render nothing (a blank page) instead of following the redirect.
+export default () => null

@@ -1,17 +1,7 @@
 import { useMemo, useState, type ReactNode } from "react"
 import { Link } from "react-router"
-import { Button, Chip, Popover, Tooltip } from "@heroui/react"
-import {
-  BarChart3,
-  Bell,
-  Building2,
-  Calendar,
-  MapPin,
-  Pencil,
-  Pin,
-  Settings,
-  Users,
-} from "lucide-react"
+import { Button, Chip, Tooltip } from "@heroui/react"
+import { BarChart3, Building2, Calendar, MapPin, Pencil, Pin, Settings, Users } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import {
   MemberAvatar,
@@ -26,10 +16,17 @@ import { ShellSearch } from "./ShellSearch"
 import { AccountMenu } from "./AccountMenu"
 import { MyBookings } from "./MyBookings"
 import { MobileShell } from "./MobileShell"
+import { NotificationsBell } from "./Notifications"
+import { WeekDots } from "./WeekDots"
 import { useEditorStore } from "~/components/OfficeEditor/store"
 import { TimeOfDay } from "~/components/OfficeEditor/ui/TimeOfDay"
 import { hasWebGL } from "~/components/OfficeEditor/webgl"
-import { dayPhrase, useDesksOnDay } from "~/components/OfficeEditor/useBooking"
+import {
+  dayPhrase,
+  useDesksOnDay,
+  useGivenUpDesk,
+  useWeekPresence,
+} from "~/components/OfficeEditor/useBooking"
 import { formatLong } from "~/utils/booking"
 import { useSettings } from "~/components/settings/useSettings"
 import { useIsMobile } from "~/utils/hooks/useIsMobile"
@@ -115,6 +112,8 @@ export const SpatialShell = ({
   const { byPerson } = useDesksOnDay()
   const [bookingsOpen, setBookingsOpen] = useState(false)
   const mine = byPerson.get(me.userEmail)
+  const givenUp = useGivenUpDesk(me.userEmail)
+  const week = useWeekPresence()
 
   // People with a desk that day first, then everyone else (original order).
   const roster = useMemo(
@@ -179,25 +178,9 @@ export const SpatialShell = ({
         <div className="pointer-events-auto">
           <ShellSearch members={members} />
         </div>
-        {/* No notification system yet: honest empty state (no fake unread dot). */}
-        <Popover>
-          <Popover.Trigger>
-            <div
-              role="button"
-              tabIndex={0}
-              aria-label="Notifications"
-              className={`${PANEL} ${PANEL_HOVER} grid size-11 cursor-pointer place-items-center text-foreground outline-none focus-visible:ring-2 focus-visible:ring-focus`}
-            >
-              <Bell className="size-5" />
-            </div>
-          </Popover.Trigger>
-          <Popover.Content placement="bottom end" className="rounded-xl">
-            <Popover.Dialog className="w-64 p-4 text-center outline-none">
-              <p className="text-sm font-semibold text-foreground">You&apos;re all caught up</p>
-              <p className="mt-0.5 text-xs text-muted">Notifications will show up here.</p>
-            </Popover.Dialog>
-          </Popover.Content>
-        </Popover>
+        <NotificationsBell
+          triggerClassName={`${PANEL} ${PANEL_HOVER} pointer-events-auto grid size-11 cursor-pointer place-items-center text-foreground outline-none focus-visible:ring-2 focus-visible:ring-focus`}
+        />
         <AccountMenu />
       </div>
 
@@ -223,10 +206,15 @@ export const SpatialShell = ({
                       ? `Desk ${mine.desk.label} ${dayPhrase(day, today)}`
                       : `You have a desk ${dayPhrase(day, today)}`}
                   </>
+                ) : givenUp ? (
+                  <>
+                    <Pin className="size-3.5" /> Away {dayPhrase(day, today)} — you gave your desk
+                    up.
+                  </>
                 ) : (
                   <>
-                    <MapPin className="size-3.5" /> No desk {dayPhrase(day, today)}. Click a free
-                    one.
+                    <MapPin className="size-3.5" /> No desk {dayPhrase(day, today)}.
+                    {day >= today && " Click a free one."}
                   </>
                 )}
               </p>
@@ -288,8 +276,9 @@ export const SpatialShell = ({
                       <MemberAvatar m={m} className="size-9 rounded-xl" />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-bold text-foreground">{nameOf(m)}</p>
-                        <p className="truncate text-xs capitalize text-muted">
+                        <p className="flex items-center gap-2 truncate text-xs capitalize text-muted">
                           {m.role.toLowerCase()}
+                          <WeekDots email={m.userEmail} presence={week} />
                         </p>
                       </div>
                       <Chip size="sm" variant="soft" color={at ? "success" : "default"}>

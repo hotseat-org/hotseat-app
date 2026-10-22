@@ -21,6 +21,8 @@ import type { UpdateProfileArgs } from "./methods/profile/update"
 import type { BookReservationsArgs, BookReservationsResult } from "./methods/reservation/book"
 import type { DeleteReservationsArgs } from "./methods/reservation/deleteMany"
 import type { FindReservationsArgs } from "./methods/reservation/findMany"
+import type { CreateNotificationsArgs, FindNotificationsArgs } from "./methods/notification"
+import type { ChangeDeskReleasesArgs, FindDeskReleasesArgs } from "./methods/desk-release"
 import type { FindUserArgs } from "./methods/user/find"
 import { UpdateUserArgs } from "./methods/user/update"
 import type { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/client"
@@ -92,6 +94,25 @@ export interface Office {
   updatedAt: Date
 }
 
+export interface DeskRelease {
+  organizationSlug: string
+  officeSlug: string
+  deskId: string
+  /** Office-local day, `YYYY-MM-DD`. */
+  date: string
+  userEmail: string
+}
+
+export interface Notification {
+  id: string
+  userEmail: string
+  organizationSlug: string | null
+  message: string
+  link: string | null
+  createdAt: Date
+  readAt: Date | null
+}
+
 export interface Reservation {
   id: string
   organizationSlug: string
@@ -140,6 +161,27 @@ export interface MainRepository {
     update: (args: UpdateOfficeArgs) => Promise<Office>
     delete: (args: DeleteOfficeArgs) => Promise<Office>
     saveLayout: (args: SaveOfficeLayoutArgs) => Promise<{ office: Office; cancelled: number }>
+  }
+  deskRelease: {
+    findMany: (args: FindDeskReleasesArgs) => Promise<DeskRelease[]>
+    create: (args: ChangeDeskReleasesArgs) => Promise<void>
+    delete: (args: ChangeDeskReleasesArgs) => Promise<void>
+    deleteStale: (args: {
+      organizationSlug: string
+      officeSlug: string
+      residents: Record<string, string>
+    }) => Promise<void>
+  }
+  slugRedirect: {
+    addOrganization: (args: { oldSlug: string; slug: string }) => Promise<void>
+    findOrganization: (oldSlug: string) => Promise<string | null>
+    addOffice: (args: { organizationSlug: string; oldSlug: string; slug: string }) => Promise<void>
+    findOffice: (organizationSlug: string, oldSlug: string) => Promise<string | null>
+  }
+  notification: {
+    create: (args: CreateNotificationsArgs) => Promise<void>
+    findMany: (args: FindNotificationsArgs) => Promise<{ items: Notification[]; unread: number }>
+    markRead: (args: { userEmail: string }) => Promise<void>
   }
   reservation: {
     findMany: (args: FindReservationsArgs) => Promise<Reservation[]>

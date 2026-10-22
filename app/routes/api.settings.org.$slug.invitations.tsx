@@ -1,6 +1,7 @@
 import { data, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router"
 import { z } from "zod"
 import { getCore } from "~/core/get-core"
+import { OrganizationInviteError } from "~/core/organization/inviteMember"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { requireProfile } from "~/utils/loader-helpers/requireProfile"
 
@@ -28,8 +29,23 @@ export const action = async (args: ActionFunctionArgs) => {
 
   switch (intent) {
     case "invite": {
-      const email = z.email().parse(formData.get("email"))
-      await core.organization.inviteMember({ userEmail: profile.userEmail, slug, data: { email } })
+      const email = z.email().safeParse(String(formData.get("email") ?? "").trim())
+      if (!email.success)
+        return data(
+          { ok: false as const, error: "That doesn't look like an email address." },
+          { status: 400 }
+        )
+      try {
+        await core.organization.inviteMember({
+          userEmail: profile.userEmail,
+          slug,
+          data: { email: email.data },
+        })
+      } catch (error) {
+        if (error instanceof OrganizationInviteError)
+          return data({ ok: false as const, error: error.message }, { status: 409 })
+        throw error
+      }
       break
     }
     case "generate":

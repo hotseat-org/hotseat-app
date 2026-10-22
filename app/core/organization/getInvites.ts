@@ -19,9 +19,14 @@ export const getOrganizationInvites =
     if (!profile) throw new Error("Forbidden")
     if (profile.role !== Role.ADMIN) throw new Error("Forbidden")
 
-    const invites = await mainRepository.organizationInvite.findMany({
-      filter: { organizationSlug: slug },
-    })
+    const [invites, members] = await Promise.all([
+      mainRepository.organizationInvite.findMany({ filter: { organizationSlug: slug } }),
+      mainRepository.profile.findMany({ filter: { organizationSlug: slug } }),
+    ])
+    // Someone who has joined since (e.g. by the universal link) isn't pending.
+    const joined = new Set(members.data.map((m) => m.userEmail.toLowerCase()))
 
-    return invites.map(organizationInviteMapper.fromRepository)
+    return invites
+      .filter((invite) => !joined.has(invite.email.toLowerCase()))
+      .map(organizationInviteMapper.fromRepository)
   }

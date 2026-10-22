@@ -10,7 +10,11 @@ export interface FindOrganizationInvitesArgs {
 
 export const findManyOrganizationInvites = async ({ filter }: FindOrganizationInvitesArgs) => {
   const result = await prisma.organizationInvite.findMany({
-    where: filter,
+    where: {
+      organizationSlug: filter.organizationSlug,
+      // Emails match whatever their case.
+      ...(filter.email && { email: { equals: filter.email, mode: "insensitive" as const } }),
+    },
     include: { organization: true },
   })
 

@@ -19,7 +19,9 @@ import { getOrganizationOffices } from "./organization/getOffices"
 import { organizationInviteMember } from "./organization/inviteMember"
 import { organizationIsAvailable } from "./organization/isAvailable"
 import { joinOrganizationWithHash } from "./organization/joinWithHash"
-import { leaveOrganization } from "./organization/leave"
+import { listNotifications, markNotificationsRead } from "./notification"
+import { listDeskReleases, reclaimDesk, releaseDesk } from "./reservation/release"
+import { leaveOrganization, removeOrganizationMember } from "./organization/leave"
 import { setOrganizationMemberRole } from "./organization/setMemberRole"
 import { updateOrganization } from "./organization/update"
 import { getProfile } from "./profile/get"
@@ -63,7 +65,10 @@ export const createCore = (context: CoreContext) => ({
     getMembers: getOrganizationMembers(context),
     setMemberRole: setOrganizationMemberRole(context),
     leave: leaveOrganization(context),
+    removeMember: removeOrganizationMember(context),
     getOffices: getOrganizationOffices(context),
+    /** The current slug of an organization renamed away from `oldSlug`. */
+    renamedTo: (oldSlug: string) => context.mainRepository.slugRedirect.findOrganization(oldSlug),
   },
   office: {
     get: getOffice(context),
@@ -74,12 +79,21 @@ export const createCore = (context: CoreContext) => ({
     saveLayout: saveOfficeLayout(context),
     update: updateOffice(context),
     delete: deleteOffice(context),
+    renamedTo: (organizationSlug: string, oldSlug: string) =>
+      context.mainRepository.slugRedirect.findOffice(organizationSlug, oldSlug),
   },
   reservation: {
     list: listReservations(context),
     reserve: reserveDesk(context),
     cancel: cancelReservations(context),
     mine: getMyBookings(context),
+    release: releaseDesk(context),
+    reclaim: reclaimDesk(context),
+    releases: listDeskReleases(context),
+  },
+  notification: {
+    list: listNotifications(context),
+    markRead: markNotificationsRead(context),
   },
 })
 

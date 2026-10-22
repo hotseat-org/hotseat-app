@@ -3,6 +3,7 @@ import { z } from "zod"
 import { getCore } from "~/core/get-core"
 import { OrganizationNameTakenError, slugForName } from "~/core/organization/update"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
+import { redirectToRenamed } from "~/utils/loader-helpers/redirectToRenamed"
 import { requireProfile } from "~/utils/loader-helpers/requireProfile"
 
 const Intent = z.enum(["update-general", "check-name", "set-logo", "delete-logo"])
@@ -32,7 +33,8 @@ export const action = async (args: ActionFunctionArgs) => {
           userEmail: profile.userEmail,
           data: updateData,
         })
-        // The client moves to the new URL when the slug changed.
+        // A new slug: the same page under the new URL.
+        if (org.slug !== slug) return redirectToRenamed(formData, "/app/o/", slug, org.slug)
         return data({ ok: true as const, intent, slug: org.slug })
       } catch (error) {
         if (error instanceof OrganizationNameTakenError)

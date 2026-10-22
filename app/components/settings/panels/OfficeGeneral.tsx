@@ -5,7 +5,7 @@ import { useFetcher, useParams, useRouteLoaderData } from "react-router"
 import { DeleteLogoDialog } from "../dialogs/DeleteLogo"
 import { SetLogoDialog } from "../dialogs/SetLogo"
 import { CardTitle, NameField, SaveBar, SettingsCard } from "../ui"
-import { useFollowSlug, useRename } from "../useRename"
+import { useRename } from "../useRename"
 import { useSettings } from "../useSettings"
 import { Button } from "~/components/Button"
 import { enclosedRegions } from "~/components/OfficeEditor/layout"
@@ -38,7 +38,6 @@ export function OfficeGeneral() {
 
   // Like organizations: renaming renames the URL.
   const rename = useRename({ currentName: office?.name ?? "", currentSlug: officeSlug, action })
-  useFollowSlug(fetcher, officeSlug, "/offices/")
 
   const [description, setDescription] = useState(office?.description ?? "")
   useEffect(() => setDescription(office?.description ?? ""), [office?.description])
@@ -103,7 +102,7 @@ export function OfficeGeneral() {
             <NameField
               rename={rename}
               urlPrefix={`/app/o/${slug}/offices/`}
-              warning="Renaming changes this office's URL. Old links to it stop working."
+              warning="Renaming changes this office's URL. Old links to it keep working — they forward to the new one."
             />
             <TextField name="description" value={description} onChange={setDescription}>
               <Label>Description</Label>

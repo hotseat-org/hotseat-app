@@ -3,6 +3,7 @@ import { z } from "zod"
 import { getCore } from "~/core/get-core"
 import { OfficeNameTakenError, officeSlugForName } from "~/core/office/update"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
+import { redirectToRenamed } from "~/utils/loader-helpers/redirectToRenamed"
 import { requireProfile } from "~/utils/loader-helpers/requireProfile"
 
 const Intent = z.enum([
@@ -42,7 +43,8 @@ export const action = async (args: ActionFunctionArgs) => {
           ...who,
           data: { name: fields.name, description: fields.description.trim() || null },
         })
-        // The client moves to the new URL when the slug changed.
+        // A new slug: the same page under the new URL.
+        if (office.slug !== slug) return redirectToRenamed(formData, "/offices/", slug, office.slug)
         return data({ ok: true as const, intent, slug: office.slug })
       } catch (error) {
         if (error instanceof OfficeNameTakenError)

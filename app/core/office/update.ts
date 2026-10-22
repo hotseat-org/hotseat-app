@@ -54,5 +54,12 @@ export const updateOffice =
       organizationSlug,
       data: { ...data, ...(newSlug ? { slug: newSlug } : {}) },
     })
+    // Old links keep working.
+    if (newSlug)
+      await mainRepository.slugRedirect.addOffice({
+        organizationSlug,
+        oldSlug: slug,
+        slug: newSlug,
+      })
     return mappers.office.fromRepository(office)
   }

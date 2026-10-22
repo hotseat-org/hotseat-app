@@ -56,6 +56,8 @@ export const updateOrganization =
       slug,
       data: { ...data, ...(newSlug ? { slug: newSlug } : {}) },
     })
+    // Old links (bookmarks, invite links) keep working.
+    if (newSlug) await mainRepository.slugRedirect.addOrganization({ oldSlug: slug, slug: newSlug })
 
     return organizationMapper(imageService).fromRepository(organization)
   }

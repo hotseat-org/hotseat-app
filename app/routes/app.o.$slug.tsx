@@ -23,8 +23,10 @@ export const loader = async (args: LoaderFunctionArgs) => {
   // Organization settings (?settings=org/…) can open over any org page: load
   // the open panel's data here so it's server-rendered with the page.
   const orgSettings = await loadOrgSettings(args.request, profile)
+  // Under the bell (any org page): what others' changes did to this person.
+  const notifications = await core.notification.list(profile.userEmail)
 
-  return { organization, profile, organizations, orgSettings }
+  return { organization, profile, organizations, orgSettings, notifications }
 }
 
 export const shouldRevalidate = revalidateOn({ params: ["slug"], settings: "org" })

@@ -14,6 +14,7 @@ import {
 } from "react-router"
 import { z } from "zod"
 import { getCore } from "~/core/get-core"
+import { redirectToRenamedPage } from "~/utils/loader-helpers/redirectToRenamed"
 import { requireProfile } from "~/utils/loader-helpers/requireProfile"
 import { revalidateOn } from "~/utils/revalidation"
 import { layoutSchema } from "~/components/OfficeEditor/schema"
@@ -58,7 +59,10 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const organizationSlug = profile.organizationSlug
 
   const [office, org, members, offices] = await Promise.all([
-    core.office.get({ slug, organizationSlug }).catch(() => {
+    core.office.get({ slug, organizationSlug }).catch(async () => {
+      // Renamed since this link was made: the same page under its new URL.
+      const renamed = await core.office.renamedTo(organizationSlug, slug)
+      if (renamed) throw redirectToRenamedPage(args.request, "/offices/", slug, renamed)
       throw data("Office not found", { status: 404, statusText: "Not Found" })
     }),
     core.organization.getForUser({ userEmail: profile.userEmail, slug: organizationSlug }),
@@ -76,13 +80,17 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const lastDay = addDays(today, office.bookingWindowDays)
   const asked = new URL(args.request.url).searchParams.get("day")
   const day: Day = isDay(asked) && asked >= from && asked <= lastDay ? asked : today
-  const reservations = await core.reservation.list({
+  const range = {
     organizationSlug,
     officeSlug: office.slug,
     userEmail: profile.userEmail,
     from,
     to: maxDay(lastDay, day),
-  })
+  }
+  const [reservations, releases] = await Promise.all([
+    core.reservation.list(range),
+    core.reservation.releases(range),
+  ])
 
   return {
     initialObjects: parsed.success ? parsed.data : [],
@@ -98,7 +106,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
     members: members.data.map(toMember),
     // Only admins edit the layout (it also sets who has a permanent desk).
     canEdit: profile.role === Role.ADMIN,
-    booking: { today, day, from, lastDay, reservations },
+    booking: { today, day, from, lastDay, reservations, releases },
   }
 }
 
@@ -218,6 +226,23 @@ export default function OfficeRoute() {
       ),
     [bookingSubmit, bookingAction]
   )
+  // A permanent resident's days away: give the desk up, or take it back.
+  const onRelease = useCallback(
+    (deskId: string, dates: Day[]) =>
+      bookingSubmit(
+        { intent: "release", deskId, dates: JSON.stringify(dates) },
+        { method: "post", action: bookingAction }
+      ),
+    [bookingSubmit, bookingAction]
+  )
+  const onReclaim = useCallback(
+    (deskId: string, dates: Day[]) =>
+      bookingSubmit(
+        { intent: "reclaim", deskId, dates: JSON.stringify(dates) },
+        { method: "post", action: bookingAction }
+      ),
+    [bookingSubmit, bookingAction]
+  )
   const nameByEmail = useMemo(
     () => new Map(members.map((m) => [m.userEmail, nameOf(m)])),
     [members]
@@ -240,6 +265,12 @@ export default function OfficeRoute() {
           ? `Booked ${d.booked.map(formatShort).join(", ")}. Already taken: ${taken}.`
           : `Already taken: ${taken}.`
       )
+    }
+    if (d.intent === "reclaim" && d.taken.length) {
+      const taken = d.taken
+        .map((t) => `${formatShort(t.date)} (${nameByEmail.get(t.userEmail) ?? "someone"})`)
+        .join(", ")
+      toast.warning(`Already booked by someone, so still given up: ${taken}.`)
     }
     // Only react to a new result.
   }, [bookingFetcher.data])
@@ -266,6 +297,8 @@ export default function OfficeRoute() {
                   pending: bookingFetcher.state !== "idle",
                   onReserve,
                   onCancel,
+                  onRelease,
+                  onReclaim,
                 }}
                 displayShell={({ enterEdit, empty, guide }) => (
                   <SpatialShell

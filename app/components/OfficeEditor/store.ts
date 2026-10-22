@@ -118,10 +118,15 @@ export interface Booking {
   from: Day
   lastDay: Day
   byDay: BookingsByDay
+  /** Permanent desks their resident gave up, by day (day → desk → resident). */
+  released: BookingsByDay
   /** A booking request is in flight. */
   pending: boolean
   reserve: (deskId: string, dates: Day[]) => void
   cancel: (dates: Day[]) => void
+  /** A resident gives their desk up on days away / takes it back. */
+  release: (deskId: string, dates: Day[]) => void
+  reclaim: (deskId: string, dates: Day[]) => void
 }
 
 const NO_BOOKING: Booking = {
@@ -132,9 +137,12 @@ const NO_BOOKING: Booking = {
   from: "",
   lastDay: "",
   byDay: {},
+  released: {},
   pending: false,
   reserve: () => {},
   cancel: () => {},
+  release: () => {},
+  reclaim: () => {},
 }
 
 export interface EditorState {
@@ -282,6 +290,40 @@ export interface EditorState {
   endBatch: () => void
 }
 
+/** Desk labels: "D-1", "D-2"… — the first numbers not already used. */
+const freeDeskLabels = (objects: SceneObject[]) => {
+  const taken = new Set(objects.map((o) => o.label).filter(Boolean))
+  let n = 1
+  return () => {
+    while (taken.has(`D-${n}`)) n++
+    taken.add(`D-${n}`)
+    return `D-${n}`
+  }
+}
+
+/** Every unlabelled desk numbered, back to front, left to right. */
+export const numberUnlabelledDesks = (objects: SceneObject[]): SceneObject[] => {
+  const next = freeDeskLabels(objects)
+  const labels = new Map(
+    objects
+      .filter((o) => isSeatable(o.type) && !o.label)
+      .sort((a, b) => a.z - b.z || a.x - b.x)
+      .map((o) => [o.id, next()])
+  )
+  return labels.size
+    ? objects.map((o) => (labels.has(o.id) ? { ...o, label: labels.get(o.id) } : o))
+    : objects
+}
+
+/**
+ * New desks (placed, pasted, duplicated) get the next free number and no
+ * permanent resident — a copy never shares the original's label or person.
+ */
+const asNewDesks = (existing: SceneObject[], fresh: SceneObject[]): SceneObject[] => {
+  const next = freeDeskLabels(existing)
+  return fresh.map((o) => (isSeatable(o.type) ? { ...o, label: next(), assignee: undefined } : o))
+}
+
 /** Max undo steps kept. */
 const HISTORY_LIMIT = 100
 
@@ -336,13 +378,10 @@ const makeInitializer =
       ])
       for (const [dx, dz] of offsets) {
         // Copies get their own look (variant unset → derived from the new id).
-        const copies = src.map((o) => ({
-          ...o,
-          id: nanoid(8),
-          x: o.x + dx,
-          z: o.z + dz,
-          variant: undefined,
-        }))
+        const copies = asNewDesks(
+          get().objects,
+          src.map((o) => ({ ...o, id: nanoid(8), x: o.x + dx, z: o.z + dz, variant: undefined }))
+        )
         if (!groupCollides([...get().objects, ...copies], copies)) return copies
       }
       return null
@@ -386,23 +425,8 @@ const makeInitializer =
         })),
       numberDesks: () =>
         set((s) => {
-          const taken = new Set(s.objects.map((o) => o.label).filter(Boolean))
-          const unlabelled = s.objects
-            .filter((o) => isSeatable(o.type) && !o.label)
-            .sort((a, b) => a.z - b.z || a.x - b.x)
-          if (unlabelled.length === 0) return s
-          const labels = new Map<string, string>()
-          let n = 1
-          for (const o of unlabelled) {
-            while (taken.has(`D-${n}`)) n++
-            labels.set(o.id, `D-${n}`)
-            taken.add(`D-${n}`)
-          }
-          return {
-            objects: s.objects.map((o) =>
-              labels.has(o.id) ? { ...o, label: labels.get(o.id) } : o
-            ),
-          }
+          const objects = numberUnlabelledDesks(s.objects)
+          return objects === s.objects ? s : { objects }
         }),
       booking: NO_BOOKING,
       setBooking: (patch) => set((s) => ({ booking: { ...s.booking, ...patch } })),
@@ -500,7 +524,12 @@ const makeInitializer =
         // Don't place furniture inside existing furniture.
         if (furnitureCollides(get().objects, type, x, z, rotation)) return ""
         const id = nanoid(8)
-        set((s) => ({ objects: [...s.objects, { id, type, x, z, rotation, color, model }] }))
+        set((s) => ({
+          objects: [
+            ...s.objects,
+            ...asNewDesks(s.objects, [{ id, type, x, z, rotation, color, model }]),
+          ],
+        }))
         return id
       },
 
@@ -715,7 +744,9 @@ const makeInitializer =
           for (const [dx, dz] of offsets) {
             const p = clampToFloor(src.type, src.rotation, { x: src.x + dx, z: src.z + dz })
             if (furnitureCollides(s.objects, src.type, p.x, p.z, src.rotation)) continue
-            const clone: SceneObject = { ...src, id: nanoid(8), ...p, variant: undefined }
+            const [clone] = asNewDesks(s.objects, [
+              { ...src, id: nanoid(8), ...p, variant: undefined },
+            ])
             return { objects: [...s.objects, clone], selectedId: clone.id }
           }
           return s

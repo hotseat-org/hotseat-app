@@ -92,8 +92,9 @@ export const groupBookings = (rows: BookingRow[]): BookingsByDay => {
 }
 
 /**
- * Who has a desk on a day. A permanent resident (the desk's `assignee`) always
- * wins — a resident desk never shows as free, even with a stray booking.
+ * Who has a desk on a day. A permanent resident (the desk's `assignee`) wins —
+ * unless they gave the desk up that day (`released`): then it's booked or
+ * free like any desk.
  */
 export type DeskState =
   | { kind: "resident"; email: string }
@@ -103,9 +104,11 @@ export type DeskState =
 export const deskState = (
   desk: { id: string; assignee?: string },
   day: Day,
-  bookings: BookingsByDay
+  bookings: BookingsByDay,
+  released: BookingsByDay = {}
 ): DeskState => {
-  if (desk.assignee) return { kind: "resident", email: desk.assignee }
+  if (desk.assignee && released[day]?.[desk.id] !== desk.assignee)
+    return { kind: "resident", email: desk.assignee }
   const email = bookings[day]?.[desk.id]
   return email ? { kind: "booked", email } : { kind: "free" }
 }

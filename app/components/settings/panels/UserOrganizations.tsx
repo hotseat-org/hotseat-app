@@ -42,6 +42,7 @@ export function UserOrganizations() {
       ) : (
         organizations.map((organization) => {
           const isAdmin = organization.profile.role === "ADMIN"
+          const isOnlyAdmin = isAdmin && organization.adminCount < 2
           return (
             <SettingsCard key={organization.slug} className="flex flex-wrap items-center gap-4">
               <ThumbAvatar
@@ -84,6 +85,11 @@ export function UserOrganizations() {
                     {dayjs(organization.profile.createdAt).format("MMM D, YYYY")}
                   </span>
                 </div>
+                {isOnlyAdmin && (
+                  <p className="mt-1.5 text-xs text-muted">
+                    You&apos;re its only admin — make someone else an admin before leaving.
+                  </p>
+                )}
               </div>
               <div className="flex w-full shrink-0 justify-end gap-2 sm:w-auto">
                 <ButtonLink to={`/app/o/${organization.slug}`} variant="secondary" size="sm">
@@ -93,6 +99,7 @@ export function UserOrganizations() {
                   onPress={() => openDialog(`leave:${organization.slug}`)}
                   size="sm"
                   variant="danger-soft"
+                  isDisabled={isOnlyAdmin}
                 >
                   <SquareArrowRightExit size={16} />
                   Leave

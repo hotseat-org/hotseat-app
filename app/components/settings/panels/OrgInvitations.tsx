@@ -50,7 +50,8 @@ export function OrgInvitations() {
           <div>
             <CardTitle>Direct invitations</CardTitle>
             <p className="mt-1 text-sm text-muted">
-              Invite members by email. They'll receive a link to join your organization.
+              Add someone's email and they'll see the invitation when they sign in with it. No email
+              is sent — share the invite link below with them.
             </p>
           </div>
           <Button variant="primary" size="sm" onPress={() => openDialog("invite")}>
@@ -78,7 +79,11 @@ export function OrgInvitations() {
                       <Table.Cell>{invite.email}</Table.Cell>
                       <Table.Cell>{dayjs(invite.createdAt).format("D.M.YYYY")}</Table.Cell>
                       <Table.Cell>
-                        {pluralize("day", dayjs(invite.expiresAt).diff(dayjs(), "days"), true)}
+                        {pluralize(
+                          "day",
+                          Math.ceil(dayjs(invite.expiresAt).diff(dayjs(), "days", true)),
+                          true
+                        )}
                       </Table.Cell>
                       <Table.Cell>
                         <Chip size="sm">{invite.status}</Chip>
@@ -113,7 +118,8 @@ export function OrgInvitations() {
         <div>
           <CardTitle>Invite link</CardTitle>
           <p className="mt-1 text-sm text-muted">
-            Share this link with people you'd like to invite. They'll need an invitation to join.
+            For people you've invited above: it takes them straight in. Anyone else needs an
+            invitation first.
           </p>
         </div>
         <div className="flex items-center gap-2 rounded-xl border border-border bg-surface-secondary px-4 py-2.5">

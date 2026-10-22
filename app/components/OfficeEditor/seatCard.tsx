@@ -1,6 +1,6 @@
 import { Button, CloseButton } from "@heroui/react"
 import clsx from "clsx"
-import { Armchair, Check, LogOut, Pin } from "lucide-react"
+import { Armchair, CalendarX, Check, LogOut, Pin, Undo2 } from "lucide-react"
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { useEditorStore } from "./store"
 import { personByEmail, usePeople, type Person } from "./people"
@@ -63,9 +63,9 @@ export const useSeatCard = () => {
 
   if (!card || !seat) return null
   const me = booking.me
-  const { day, today, lastDay, byDay } = booking
+  const { day, today, lastDay, byDay, released } = booking
   const state = booking.enabled
-    ? deskState(seat, day, byDay)
+    ? deskState(seat, day, byDay, released)
     : seat.assignee
       ? ({ kind: "resident", email: seat.assignee } as const)
       : ({ kind: "free" } as const)
@@ -73,19 +73,41 @@ export const useSeatCard = () => {
   const mine = !!me && state.kind !== "free" && state.email === me
   const past = booking.enabled && day < today
   const myResidentDesk = me ? objects.find((o) => o.assignee === me && o.id !== seat.id) : undefined
+  // Your own permanent desk: give it up on days away, or take a day back.
+  const isMyDesk = booking.enabled && !!me && seat.assignee === me
+  const isGivenUp = (d: Day) => released[d]?.[seat.id] === me
+  let releaseChoices: { label: string; days: Day[] }[] = []
+  let canReclaim = false
+  if (isMyDesk && !past) {
+    if (isGivenUp(day)) canReclaim = state.kind === "free"
+    else {
+      const presets = bookingPresets(day, today, lastDay)
+      releaseChoices = [
+        { label: `Just ${formatShort(day)}`, days: presets.one },
+        { label: `Rest of the week (${formatDow(day)}–Fri)`, days: presets.week },
+      ]
+        .map((c) => ({ ...c, days: c.days.filter((d) => !isGivenUp(d)) }))
+        .filter((c, i) => c.days.length > 0 && (i === 0 || c.days.length > 1))
+    }
+  }
 
   // Quick choices, for a bookable desk someone could still take.
   let options: Option[] = []
   let note: string | undefined
-  if (booking.enabled && me && state.kind !== "resident" && !past && !mine) {
+  if (isMyDesk) {
+    if (state.kind === "booked") note = `You gave ${formatShort(day)} up, and it's been booked.`
+    else if (state.kind === "free") note = `You gave ${formatShort(day)} up — others can book it.`
+  } else if (booking.enabled && me && state.kind !== "resident" && !past && !mine) {
+    if (seat.assignee)
+      note = `${personByEmail(people, seat.assignee)?.name ?? "Someone"}'s permanent desk — free on the days they're away.`
     if (myResidentDesk)
       note = `You have a permanent desk here (${deskName(myResidentDesk)}), so you can't book another.`
     else {
       const presets = bookingPresets(day, today, lastDay)
       const describe = (days: Day[]) => {
-        const free = days.filter((d) => deskState(seat, d, byDay).kind === "free")
+        const free = days.filter((d) => deskState(seat, d, byDay, released).kind === "free")
         const taken = days.flatMap((d) => {
-          const st = deskState(seat, d, byDay)
+          const st = deskState(seat, d, byDay, released)
           return st.kind === "booked" && st.email !== me
             ? [`${formatDow(d)} ${personByEmail(people, st.email)?.name.split(" ")[0] ?? "taken"}`]
             : []
@@ -116,7 +138,7 @@ export const useSeatCard = () => {
             title,
             detail:
               key === "every"
-                ? `Until ${formatShort(presets.every[presets.every.length - 1])} · ${detail}`
+                ? `Until ${formatLong(presets.every[presets.every.length - 1])} · ${detail}`
                 : detail,
             free,
           }
@@ -136,6 +158,8 @@ export const useSeatCard = () => {
     options,
     pending: booking.pending,
     canCancel: booking.enabled && mine && state.kind === "booked" && !past,
+    releaseChoices,
+    canReclaim,
     closing,
     onClose: close,
     onReserve: (days) => {
@@ -148,6 +172,14 @@ export const useSeatCard = () => {
       if (!me) return
       applyCancel(me, [day])
       booking.cancel([day])
+      close()
+    },
+    onRelease: (days) => {
+      booking.release(seat.id, days)
+      close()
+    },
+    onReclaim: () => {
+      booking.reclaim(seat.id, [day])
       close()
     },
   }
@@ -166,10 +198,16 @@ export interface BodyProps {
   options: Option[]
   pending: boolean
   canCancel: boolean
+  /** Your permanent desk: ways to give it up (one day, the rest of the week). */
+  releaseChoices: { label: string; days: Day[] }[]
+  /** Your permanent desk, on a day you gave up (and nobody booked): take it back. */
+  canReclaim: boolean
   closing: boolean
   onClose: () => void
   onReserve: (days: Day[]) => void
   onCancel: () => void
+  onRelease: (days: Day[]) => void
+  onReclaim: () => void
 }
 
 const stop = (e: { stopPropagation: () => void }) => e.stopPropagation()
@@ -191,10 +229,14 @@ export const SeatCardBody = ({
   options,
   pending,
   canCancel,
+  releaseChoices,
+  canReclaim,
   closing,
   onClose,
   onReserve,
   onCancel,
+  onRelease,
+  onReclaim,
 }: BodyProps & { layout?: "anchored" | "sheet" }) => {
   const isSheet = layout === "sheet"
   const [choice, setChoice] = useState<BookingPreset | undefined>(
@@ -362,6 +404,40 @@ export const SeatCardBody = ({
             onPress={onCancel}
           >
             <LogOut className="size-4" /> Cancel {dayLabel}
+          </Button>
+        )}
+
+        {releaseChoices.length > 0 && (
+          <>
+            <p className="text-[0.64rem] font-black uppercase tracking-wider text-muted">
+              Away? Let others book it
+            </p>
+            <div className="flex flex-col gap-1.5">
+              {releaseChoices.map((c) => (
+                <Button
+                  key={c.label}
+                  size={isSheet ? "lg" : "sm"}
+                  variant="secondary"
+                  className="w-full justify-start"
+                  isDisabled={pending}
+                  onPress={() => onRelease(c.days)}
+                >
+                  <CalendarX className="size-4" /> {c.label}
+                </Button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {canReclaim && (
+          <Button
+            size={isSheet ? "lg" : "sm"}
+            variant="secondary"
+            className="w-full"
+            isDisabled={pending}
+            onPress={onReclaim}
+          >
+            <Undo2 className="size-4" /> Take {dayLabel} back
           </Button>
         )}
 

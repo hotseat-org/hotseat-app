@@ -7,10 +7,13 @@ import { Button } from "~/components/Button"
 export function InviteMemberDialog() {
   const { slug } = useParams()
   const { closeDialog } = useSettings()
-  const fetcher = useFetcher()
+  const fetcher = useFetcher<{ ok: boolean; error?: string }>()
+  const error =
+    fetcher.state === "idle" && fetcher.data?.ok === false ? fetcher.data.error : undefined
 
+  // Sent: close. Refused (already a member, not an email): say why, stay open.
   useEffect(() => {
-    if (fetcher.state === "idle" && fetcher.data) closeDialog()
+    if (fetcher.state === "idle" && fetcher.data?.ok) closeDialog()
   }, [fetcher.state, fetcher.data, closeDialog])
 
   return (
@@ -24,10 +27,14 @@ export function InviteMemberDialog() {
                 <p>Invite a new member</p>
               </Modal.Header>
               <Modal.Body>
-                <TextField name="email" isRequired autoFocus>
+                <TextField name="email" type="email" isRequired autoFocus isInvalid={!!error}>
                   <Label>Email</Label>
-                  <Input />
+                  <Input placeholder="name@company.com" />
                 </TextField>
+                {/* Reserved, so the dialog doesn't grow when a message appears. */}
+                <p role="alert" className="mt-2 min-h-5 text-sm font-bold text-danger">
+                  {error}
+                </p>
               </Modal.Body>
               <Modal.Footer>
                 <Button type="button" variant="secondary" onPress={closeDialog}>

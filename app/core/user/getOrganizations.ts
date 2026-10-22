@@ -2,6 +2,7 @@ import assert from "assert"
 import { organizationMapper } from "../organization/mapper"
 import type { OrganizationWithMembers } from "../organization/types"
 import type { CoreContext } from "../types"
+import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 
 export const getUserOrganizations =
   ({ mainRepository, imageService, mappers }: CoreContext) =>
@@ -26,6 +27,10 @@ export const getUserOrganizations =
         })
 
         assert(profile)
+        const admins = await mainRepository.profile.findMany({
+          filter: { organizationSlug: organization.slug, role: Role.ADMIN },
+          pagination: { skip: 0, take: 0 },
+        })
 
         return {
           ...mappedOrganization,
@@ -34,6 +39,7 @@ export const getUserOrganizations =
             data: await Promise.all(profiles.data.map(mappers.profile.fromRepository)),
           },
           profile,
+          adminCount: admins.totalCount,
         }
       })
     )

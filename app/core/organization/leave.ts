@@ -39,6 +39,45 @@ export const leaveOrganization =
     await releasePermanentDesks(mainRepository, organizationSlug, email)
   }
 
+export interface RemoveOrganizationMemberArgs {
+  /** The admin removing them. */
+  userEmail: string
+  organizationSlug: string
+  memberEmail: string
+}
+
+/** A removal that can't happen as asked — the message is shown to the admin. */
+export class MemberRemovalError extends Error {}
+
+/**
+ * An admin removes someone from the organization: like them leaving — their
+ * bookings go, their permanent desks are freed. (Admins leave themselves via
+ * their own settings, which keeps the last-admin rule.)
+ */
+export const removeOrganizationMember =
+  ({ mainRepository }: CoreContext) =>
+  async ({ userEmail, organizationSlug, memberEmail }: RemoveOrganizationMemberArgs) => {
+    const admin = await mainRepository.profile.find({ userEmail, organizationSlug })
+    if (!admin || admin.role !== Role.ADMIN) throw new Error("Forbidden")
+    if (memberEmail === userEmail)
+      throw new MemberRemovalError("To leave, use Organizations in your account settings.")
+
+    const member = await mainRepository.profile.find({ userEmail: memberEmail, organizationSlug })
+    if (!member) return
+    await mainRepository.profile.delete({ organizationSlug, userEmail: memberEmail })
+    await releasePermanentDesks(mainRepository, organizationSlug, memberEmail)
+    const organization = await mainRepository.organization.find({ slug: organizationSlug })
+    await mainRepository.notification.create({
+      data: [
+        {
+          userEmail: memberEmail,
+          organizationSlug,
+          message: `You were removed from ${organization?.name ?? organizationSlug}. Your bookings there were cancelled.`,
+        },
+      ],
+    })
+  }
+
 /** Clear a person's permanent-resident desks in every office of an organization. */
 const releasePermanentDesks = async (
   mainRepository: CoreContext["mainRepository"],

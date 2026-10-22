@@ -43,7 +43,7 @@ export const joinOrganizationWithHash =
     // * If user has invite, delete it as it's no longer needed
     if (invite) {
       await mainRepository.organizationInvite.delete({
-        email,
+        email: invite.email, // as stored (the lookup ignores case)
         organizationSlug: organization.slug,
       })
     }

@@ -20,6 +20,8 @@ model User {
   /// Desk pet (a model id from OfficeEditor/models.ts); null = derived from the email.
   pet         String?
 
+  notifications Notification[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -43,6 +45,7 @@ model Profile {
   role Role
 
   reservations Reservation[]
+  deskReleases DeskRelease[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -58,6 +61,8 @@ model Organization {
   offices  Office[]
 
   invitationHash String? @unique
+
+  renamedFrom OrganizationSlugRedirect[]
 
   description String?
   thumbnail   String?
@@ -104,6 +109,8 @@ model Office {
   timezone          String        @default("Europe/Prague")
   bookingWindowDays Int           @default(14)
   reservations      Reservation[]
+  deskReleases      DeskRelease[]
+  renamedFrom       OfficeSlugRedirect[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -139,4 +146,69 @@ model Reservation {
   @@unique([organizationSlug, officeSlug, deskId, date])
   @@unique([organizationSlug, userEmail, date])
   @@index([organizationSlug, officeSlug, date])
+}
+
+// Something that happened to someone's bookings or membership because of what
+// another person did (an admin's layout change, a deleted office…) — shown
+// under the bell. No emails: in-app only.
+model Notification {
+  id String @id @default(cuid())
+
+  userEmail String
+  user      User   @relation(fields: [userEmail], references: [email], onDelete: Cascade, onUpdate: Cascade)
+  // Where it happened (for the link); no FK, so it outlives a deleted org.
+  organizationSlug String?
+
+  message String
+  // An in-app path to open, e.g. the office on that day.
+  link    String?
+
+  createdAt DateTime  @default(now())
+  readAt    DateTime?
+
+  @@index([userEmail, createdAt])
+}
+
+// Old URLs keep working after a rename: an organization's earlier slugs. The
+// FK follows later renames (ON UPDATE CASCADE), so a chain of renames still
+// lands on the current slug.
+model OrganizationSlugRedirect {
+  oldSlug String @id
+
+  slug         String
+  organization Organization @relation(fields: [slug], references: [slug], onDelete: Cascade, onUpdate: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+// The same for an office's earlier slugs, within its organization.
+model OfficeSlugRedirect {
+  organizationSlug String
+  oldSlug          String
+
+  slug   String
+  office Office @relation(fields: [organizationSlug, slug], references: [organizationSlug, slug], onDelete: Cascade, onUpdate: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@id([organizationSlug, oldSlug])
+}
+
+// A permanent resident giving their desk up for a day they're away: on that
+// day it can be booked like any other desk. Goes with the resident's
+// membership; a layout save drops releases whose desk changed hands.
+model DeskRelease {
+  organizationSlug String
+  officeSlug       String
+  office           Office @relation(fields: [organizationSlug, officeSlug], references: [organizationSlug, slug], onDelete: Cascade, onUpdate: Cascade)
+  deskId           String
+  // The office's local calendar day.
+  date             DateTime @db.Date
+
+  userEmail String
+  profile   Profile @relation(fields: [userEmail, organizationSlug], references: [userEmail, organizationSlug], onDelete: Cascade, onUpdate: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@id([organizationSlug, officeSlug, deskId, date])
 }

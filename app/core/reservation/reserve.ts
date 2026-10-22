@@ -29,7 +29,7 @@ export const reserveDesk =
   async (args: ReserveArgs): Promise<ReserveResult> => {
     const { mainRepository } = context
     const { organizationSlug, officeSlug, deskId, userEmail } = args
-    const { targetEmail, today, lastDay, desks } = await bookingContext(context, args)
+    const { targetEmail, today, lastDay, desks, isReleased } = await bookingContext(context, args)
 
     const dates = [...new Set(args.dates)].sort()
     if (!dates.length || dates.length > MAX_DAYS_PER_REQUEST || !dates.every(isDay))
@@ -40,30 +40,41 @@ export const reserveDesk =
 
     const desk = desks.find((d) => d.id === deskId)
     if (!desk) throw new ReservationError("This desk no longer exists.")
+    // A permanent desk: bookable only on the days its resident gave it up.
+    let free = dates
     if (desk.assignee) {
       if (desk.assignee === targetEmail)
         throw new ReservationError("This is already your permanent desk.")
-      const resident = await mainRepository.profile.find({
-        userEmail: desk.assignee,
-        organizationSlug,
-      })
-      throw new ReservationError(
-        `This is ${resident?.displayName ?? "someone"}'s permanent desk, so it can't be booked.`
-      )
+      free = dates.filter((d) => isReleased(deskId, d))
+      if (!free.length) {
+        const resident = await mainRepository.profile.find({
+          userEmail: desk.assignee,
+          organizationSlug,
+        })
+        throw new ReservationError(
+          `This is ${resident?.displayName ?? "someone"}'s permanent desk, so it can't be booked.`
+        )
+      }
     }
     if (desks.some((d) => d.assignee === targetEmail))
       throw new ReservationError("You already have a permanent desk in this office.")
+    const resident = desk.assignee
+    const kept = dates
+      .filter((d) => !free.includes(d))
+      .map((date) => ({ date, userEmail: resident as string }))
 
     try {
-      return await mainRepository.reservation.book({
+      const result = await mainRepository.reservation.book({
         organizationSlug,
         officeSlug,
         deskId,
         userEmail: targetEmail,
         createdByEmail: userEmail,
-        dates,
-        seriesId: dates.length > 1 ? randomUUID() : null,
+        dates: free,
+        seriesId: free.length > 1 ? randomUUID() : null,
       })
+      // Days the resident kept come back as taken by them.
+      return { ...result, conflicts: [...result.conflicts, ...kept] }
     } catch (error) {
       if ((error as { code?: string }).code === "P2002") throw new ReservationRaceError()
       throw error

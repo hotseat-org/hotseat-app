@@ -1,4 +1,21 @@
+import {
+  createDeskReleases,
+  deleteDeskReleases,
+  deleteStaleDeskReleases,
+  findDeskReleases,
+} from "./methods/desk-release"
+import {
+  createNotifications,
+  findNotifications,
+  markNotificationsRead,
+} from "./methods/notification"
 import { createOffice } from "./methods/office/create"
+import {
+  addOfficeSlugRedirect,
+  addOrganizationSlugRedirect,
+  findOfficeSlugRedirect,
+  findOrganizationSlugRedirect,
+} from "./methods/slug-redirect"
 import { deleteOffice } from "./methods/office/delete"
 import { findOffice } from "./methods/office/find"
 import { findOffices } from "./methods/office/findMany"
@@ -60,6 +77,23 @@ export const createMainMysqlRepository = (): MainRepository => {
       update: updateOffice,
       delete: deleteOffice,
       saveLayout: saveOfficeLayout,
+    },
+    deskRelease: {
+      findMany: findDeskReleases,
+      create: createDeskReleases,
+      delete: deleteDeskReleases,
+      deleteStale: deleteStaleDeskReleases,
+    },
+    slugRedirect: {
+      addOrganization: addOrganizationSlugRedirect,
+      findOrganization: findOrganizationSlugRedirect,
+      addOffice: addOfficeSlugRedirect,
+      findOffice: findOfficeSlugRedirect,
+    },
+    notification: {
+      create: createNotifications,
+      findMany: findNotifications,
+      markRead: markNotificationsRead,
     },
     reservation: {
       findMany: findReservations,

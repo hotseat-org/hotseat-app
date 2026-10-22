@@ -1,10 +1,11 @@
 import { useState, type FormEvent } from "react"
-import { Link, redirect, useLoaderData, useNavigate } from "react-router"
+import { Form, Link, redirect, useLoaderData, useNavigate } from "react-router"
 import { ArrowUpRight, Building2 } from "lucide-react"
 import { Route } from "./+types/app._index"
 import { requireUser } from "~/services/session.server"
 import { getCore } from "~/core/get-core"
 import { CenteredScreen } from "~/components/ui/CenteredScreen"
+import { ThumbAvatar } from "~/components/office/shell-ui"
 import { revalidateOn } from "~/utils/revalidation"
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
@@ -16,11 +17,25 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     return redirect(`/app/o/${firstOrganization.slug}`)
   }
 
-  return { firstName: user.displayName?.split(" ")[0] ?? user.email.split("@")[0] }
+  // The user record, not the session: it follows a rename in Profile.
+  const [current, invites] = await Promise.all([
+    core.user.get(user.email),
+    core.user.getOrganizationInvites(user.email),
+  ])
+  const name = current?.displayName ?? user.displayName
+  return {
+    firstName: name?.split(" ")[0] || user.email.split("@")[0],
+    email: user.email as string,
+    invitations: invites.map((invite) => ({
+      slug: invite.organizationSlug,
+      name: invite.organization.name,
+      thumbnailUrl: invite.organization.thumbnailUrl,
+    })),
+  }
 }
 
 const AppIndex = () => {
-  const { firstName } = useLoaderData<typeof loader>()
+  const { firstName, email, invitations } = useLoaderData<typeof loader>()
   const navigate = useNavigate()
   const [code, setCode] = useState("")
 
@@ -51,6 +66,34 @@ const AppIndex = () => {
 
         <h1 className="mt-5 text-3xl font-extrabold tracking-tight">Welcome, {firstName} 👋</h1>
         <p className="mt-1 text-muted">Let&apos;s find you a workspace. Where do you belong?</p>
+
+        {/* Invitations waiting for this email: the quickest way in. */}
+        {invitations.length > 0 && (
+          <ul className="mt-7 flex flex-col gap-2.5 text-left">
+            {invitations.map((invitation) => (
+              <li
+                key={invitation.slug}
+                className="flex items-center gap-3 rounded-2xl border border-accent/40 bg-surface p-4 shadow-surface"
+              >
+                <ThumbAvatar
+                  src={invitation.thumbnailUrl}
+                  fallback={invitation.name.slice(0, 1).toUpperCase()}
+                  className="size-11 shrink-0 rounded-xl"
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold text-accent">You&apos;re invited</p>
+                  <p className="truncate font-extrabold">{invitation.name}</p>
+                </div>
+                <Link
+                  to={`/join/${invitation.slug}`}
+                  className="shrink-0 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-accent-foreground transition hover:brightness-105"
+                >
+                  View invite
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
 
         <div className="mt-7 grid gap-3.5 text-left sm:grid-cols-2">
           {/* Create */}
@@ -96,7 +139,17 @@ const AppIndex = () => {
           </div>
         </div>
 
-        <p className="mt-6 text-xs text-muted">Find your seat. Own your space.</p>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-muted">
+          <span>Signed in as {email}</span>
+          <Link to="?settings=user/profile" className="font-bold text-accent hover:underline">
+            Account settings
+          </Link>
+          <Form method="post" action="/logout">
+            <button type="submit" className="font-bold text-accent hover:underline">
+              Sign out
+            </button>
+          </Form>
+        </div>
       </div>
     </CenteredScreen>
   )

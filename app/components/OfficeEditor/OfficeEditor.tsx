@@ -70,9 +70,13 @@ interface Props {
     from: Day
     lastDay: Day
     reservations: BookingRow[]
+    /** Days permanent residents gave their desks up. */
+    releases: BookingRow[]
     pending: boolean
     onReserve: (deskId: string, dates: Day[]) => void
     onCancel: (dates: Day[]) => void
+    onRelease: (deskId: string, dates: Day[]) => void
+    onReclaim: (deskId: string, dates: Day[]) => void
   }
   /**
    * In display mode, render floating app chrome instead of the built-in view
@@ -94,6 +98,9 @@ interface Props {
  * scene data. DB-backed instances (with `onSave`) use no localStorage; the
  * standalone editor persists to a localStorage key.
  */
+/** The office shell's floating panels (desktop): the left rail, the right column. */
+const SHELL_INSETS = { left: 100, right: 340 }
+
 export const OfficeEditor = (props: Props) => {
   const storeRef = useRef<EditorStore>(undefined)
   if (!storeRef.current) {
@@ -132,15 +139,19 @@ const OfficeEditorInner = ({
   // optimistic change survives until the server's answer arrives. The chosen
   // day is taken once; after that the day switcher owns it.
   const reservations = booking?.reservations
+  const releases = booking?.releases
   // Layout effects: set before the first paint, so the bar and desk tags don't
   // pop in a frame late.
   useLayoutEffect(() => {
     if (reservations) store.getState().setBooking({ byDay: groupBookings(reservations) })
   }, [reservations, store])
-  const { today, from, lastDay, pending, onReserve, onCancel } = booking ?? {}
+  useLayoutEffect(() => {
+    if (releases) store.getState().setBooking({ released: groupBookings(releases) })
+  }, [releases, store])
+  const { today, from, lastDay, pending, onReserve, onCancel, onRelease, onReclaim } = booking ?? {}
   const firstDay = booking?.day
   useLayoutEffect(() => {
-    if (!today || !from || !lastDay || !onReserve || !onCancel) return
+    if (!today || !from || !lastDay || !onReserve || !onCancel || !onRelease || !onReclaim) return
     const current = store.getState().booking
     store.getState().setBooking({
       enabled: true,
@@ -152,8 +163,22 @@ const OfficeEditorInner = ({
       pending: !!pending,
       reserve: onReserve,
       cancel: onCancel,
+      release: onRelease,
+      reclaim: onReclaim,
     })
-  }, [today, from, lastDay, pending, onReserve, onCancel, firstDay, people, store])
+  }, [
+    today,
+    from,
+    lastDay,
+    pending,
+    onReserve,
+    onCancel,
+    onRelease,
+    onReclaim,
+    firstDay,
+    people,
+    store,
+  ])
   // Keep the chosen day in the URL (?day=, dropped for today) so a reload or a
   // shared link shows the same day. Plain replaceState: no loader round-trip.
   const shownDay = useEditorStore((s) => (s.booking.enabled ? s.booking.day : null))
@@ -335,6 +360,7 @@ const OfficeEditorInner = ({
             people={people ?? NO_PEOPLE}
             readOnly={readOnly}
             dark={isDark}
+            fitInsets={shellMode && !isMobile ? SHELL_INSETS : undefined}
             showStats={showStats}
             onStats={onStats}
           />

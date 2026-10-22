@@ -2,16 +2,15 @@ import type { CoreContext } from "../types"
 import { organizationMapper } from "./mapper"
 import type { Organization } from "./types"
 
-interface GetOrganizationForUserArgs {
-  slug: string
-}
+/** By its URL slug, or by its universal invite code. */
+type GetOrganizationForPublicArgs = { slug: string; hash?: never } | { hash: string; slug?: never }
 
 export const getOrganizationForPublic =
   ({ mainRepository, imageService }: CoreContext) =>
-  async ({ slug }: GetOrganizationForUserArgs): Promise<Organization | null> => {
-    const organization = await mainRepository.organization.find({
-      slug,
-    })
+  async ({ slug, hash }: GetOrganizationForPublicArgs): Promise<Organization | null> => {
+    const organization = await mainRepository.organization.find(
+      hash ? { invitationHash: hash } : { slug }
+    )
 
     if (!organization) return null
 

@@ -1,6 +1,5 @@
 import { useDebounce } from "@uidotdev/usehooks"
 import { useEffect, useState } from "react"
-import { useLocation, useNavigate, type FetcherWithComponents } from "react-router"
 import slugify from "slugify"
 
 /**
@@ -33,7 +32,8 @@ export function useRename({
   useEffect(() => {
     if (!slugChanges) return
     const ctrl = new AbortController()
-    fetch(action, {
+    // A plain fetch doesn't know the app's base path (the app runs under one in production).
+    fetch(`${import.meta.env.BASE_URL}${action.replace(/^\//, "")}`, {
       method: "POST",
       body: new URLSearchParams({ intent: "check-name", name: debounced }),
       headers: { Accept: "application/json" },
@@ -56,34 +56,4 @@ export function useRename({
     available: slugChanges && checked?.available === true,
     taken: slugChanges && checked?.available === false,
   }
-}
-
-/**
- * After a save that returned a new slug, move to the same page under the new
- * URL (keeps `?settings=…` open). `segment` is the URL part holding the slug,
- * e.g. `/app/o/` or `/offices/`.
- */
-export function useFollowSlug(
-  fetcher: FetcherWithComponents<{ slug?: string } | undefined>,
-  currentSlug: string,
-  segment: string
-) {
-  const navigate = useNavigate()
-  const location = useLocation()
-  useEffect(() => {
-    const saved = fetcher.data?.slug
-    if (fetcher.state !== "idle" || !saved || saved === currentSlug) return
-    navigate(
-      location.pathname.replace(`${segment}${currentSlug}`, `${segment}${saved}`) + location.search,
-      { replace: true }
-    )
-  }, [
-    fetcher.state,
-    fetcher.data,
-    currentSlug,
-    segment,
-    navigate,
-    location.pathname,
-    location.search,
-  ])
 }

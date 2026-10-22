@@ -34,7 +34,7 @@ export const confirmOrganizationInvite =
     })
 
     await mainRepository.organizationInvite.delete({
-      email,
+      email: invite.email, // as stored (the lookup ignores case)
       organizationSlug,
     })
 

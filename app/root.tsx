@@ -20,7 +20,12 @@ import { getCore } from "~/core/get-core"
 import stylesheet from "~/styles/tailwind.css?url"
 import { revalidateOn } from "~/utils/revalidation"
 
-export const links: LinksFunction = () => [{ rel: "stylesheet", href: stylesheet }]
+export const links: LinksFunction = () => [
+  { rel: "stylesheet", href: stylesheet },
+  // Explicit, so it's found under the app's base path (the browser's default
+  // /favicon.ico is the domain root, outside the app).
+  { rel: "icon", href: `${import.meta.env.BASE_URL}favicon.ico` },
+]
 
 export const meta: MetaFunction = () => {
   return [{ title: "Hot Seat" }]

@@ -1,4 +1,5 @@
-import { Modal } from "@heroui/react"
+import { Input, Label, Modal, TextField } from "@heroui/react"
+import { useState } from "react"
 import { useFetcher, useParams } from "react-router"
 import { SettingsCard } from "../ui"
 import { useSettings } from "../useSettings"
@@ -38,6 +39,8 @@ function DeleteOfficeDialog({ name }: { name: string }) {
   const { slug, officeSlug } = useParams()
   const { closeDialog } = useSettings()
   const fetcher = useFetcher()
+  const [typed, setTyped] = useState("")
+  const isConfirmed = typed.trim().toLowerCase() === name.trim().toLowerCase()
   return (
     <Modal isOpen onOpenChange={(isOpen) => !isOpen && closeDialog()}>
       <Modal.Backdrop>
@@ -52,16 +55,26 @@ function DeleteOfficeDialog({ name }: { name: string }) {
               <Modal.Header>
                 <p>Delete {name}?</p>
               </Modal.Header>
-              <Modal.Body>
+              <Modal.Body className="flex flex-col gap-3">
                 <p className="text-sm text-muted">
-                  Its layout and every desk assignment are deleted for everyone.
+                  Its layout, every permanent desk and everyone&apos;s upcoming bookings in it are
+                  deleted. There is no going back.
                 </p>
+                <TextField value={typed} onChange={setTyped} autoFocus>
+                  <Label>Type {name} to confirm</Label>
+                  <Input autoComplete="off" />
+                </TextField>
               </Modal.Body>
               <Modal.Footer>
                 <Button type="button" variant="secondary" onPress={closeDialog}>
                   Cancel
                 </Button>
-                <Button type="submit" variant="danger" isPending={fetcher.state !== "idle"}>
+                <Button
+                  type="submit"
+                  variant="danger"
+                  isDisabled={!isConfirmed}
+                  isPending={fetcher.state !== "idle"}
+                >
                   Delete office
                 </Button>
               </Modal.Footer>

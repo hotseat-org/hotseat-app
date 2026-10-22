@@ -12,6 +12,9 @@ export interface OrganizationInviteMemberArgs {
   }
 }
 
+/** An invitation that can't be sent as asked — the message is shown to the admin. */
+export class OrganizationInviteError extends Error {}
+
 export const organizationInviteMember =
   ({ mainRepository }: CoreContext) =>
   async ({ userEmail, slug, data }: OrganizationInviteMemberArgs): Promise<OrganizationInvite> => {
@@ -23,21 +26,23 @@ export const organizationInviteMember =
     if (!profile) throw new Error("Forbidden")
     if (profile.role !== Role.ADMIN) throw new Error("Forbidden")
 
-    const invitedUserProfile = await mainRepository.profile.find({
-      organizationSlug: slug,
-      userEmail: data.email,
-    })
+    const email = data.email.trim().toLowerCase()
+    const members = await mainRepository.profile.findMany({ filter: { organizationSlug: slug } })
+    if (members.data.some((m) => m.userEmail.toLowerCase() === email))
+      throw new OrganizationInviteError(`${data.email.trim()} is already a member.`)
 
-    if (invitedUserProfile) {
-      if (invitedUserProfile) {
-        throw new Error("User with this email is already member of this organization")
-      }
-    }
+    // Inviting again renews the invitation (another 7 days).
+    const existing = await mainRepository.organizationInvite.find({ email, organizationSlug: slug })
+    if (existing)
+      await mainRepository.organizationInvite.delete({
+        email: existing.email,
+        organizationSlug: slug,
+      })
 
     const expiresAt = dayjs().add(7, "days").toDate()
 
     const invite = await mainRepository.organizationInvite.create({
-      email: data.email,
+      email,
       organizationSlug: slug,
       expiresAt,
     })

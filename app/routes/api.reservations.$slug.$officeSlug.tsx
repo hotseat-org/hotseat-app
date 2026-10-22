@@ -12,6 +12,9 @@ const datesSchema = z.preprocess(
 const schema = z.discriminatedUnion("intent", [
   z.object({ intent: z.literal("reserve"), deskId: z.string().min(1), dates: datesSchema }),
   z.object({ intent: z.literal("cancel"), dates: datesSchema }),
+  // A permanent resident giving their desk up on days away, or taking it back.
+  z.object({ intent: z.literal("release"), deskId: z.string().min(1), dates: datesSchema }),
+  z.object({ intent: z.literal("reclaim"), deskId: z.string().min(1), dates: datesSchema }),
 ])
 
 export type ReservationActionData =
@@ -22,11 +25,19 @@ export type ReservationActionData =
       conflicts: { date: string; userEmail: string }[]
     }
   | { ok: true; intent: "cancel"; cancelled: number }
+  | { ok: true; intent: "release"; released: string[] }
+  | {
+      ok: true
+      intent: "reclaim"
+      reclaimed: string[]
+      taken: { date: string; userEmail: string }[]
+    }
   | { ok: false; error: string }
 
 /**
- * Desk bookings for an office: `intent=reserve` (deskId + dates) and
- * `intent=cancel` (dates). Failures come back as data with a message the UI
+ * Desk bookings for an office: `intent=reserve` (deskId + dates),
+ * `intent=cancel` (dates), and for a permanent resident `intent=release` /
+ * `intent=reclaim` (their deskId + dates). Failures come back as data with a message the UI
  * can show, never as a thrown error (a failing fetcher would take the page down).
  */
 export const action = async (args: ActionFunctionArgs) => {
@@ -51,6 +62,22 @@ export const action = async (args: ActionFunctionArgs) => {
         dates: parsed.data.dates,
       })
       return data<ReservationActionData>({ ok: true, intent: "reserve", ...result })
+    }
+    if (parsed.data.intent === "release") {
+      const result = await core.reservation.release({
+        ...base,
+        deskId: parsed.data.deskId,
+        dates: parsed.data.dates,
+      })
+      return data<ReservationActionData>({ ok: true, intent: "release", ...result })
+    }
+    if (parsed.data.intent === "reclaim") {
+      const result = await core.reservation.reclaim({
+        ...base,
+        deskId: parsed.data.deskId,
+        dates: parsed.data.dates,
+      })
+      return data<ReservationActionData>({ ok: true, intent: "reclaim", ...result })
     }
     const result = await core.reservation.cancel({ ...base, dates: parsed.data.dates })
     return data<ReservationActionData>({ ok: true, intent: "cancel", ...result })

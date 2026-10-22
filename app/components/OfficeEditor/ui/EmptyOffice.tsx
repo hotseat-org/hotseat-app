@@ -1,6 +1,6 @@
 import clsx from "clsx"
 import { Building2, LayoutGrid, PencilRuler, Square } from "lucide-react"
-import { useEditorStore } from "../store"
+import { numberUnlabelledDesks, useEditorStore } from "../store"
 import { TEMPLATES, type OfficeTemplate } from "../templates"
 import { EmptyState } from "~/components/ui/EmptyState"
 
@@ -23,7 +23,7 @@ export const EmptyOffice = ({ readOnly, onEnterEdit, onDismiss }: Props) => {
   const load = useEditorStore((s) => s.load)
 
   const pickTemplate = (template: OfficeTemplate) => {
-    load(template.build())
+    load(numberUnlabelledDesks(template.build())) // desks get names right away
     if (readOnly) onEnterEdit()
   }
 

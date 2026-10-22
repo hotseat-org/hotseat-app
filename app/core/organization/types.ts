@@ -12,4 +12,6 @@ export interface Organization {
 export interface OrganizationWithMembers extends Organization {
   members: PaginatedResult<Profile>
   profile: Profile
+  /** How many admins it has (the last one can't leave). */
+  adminCount: number
 }
