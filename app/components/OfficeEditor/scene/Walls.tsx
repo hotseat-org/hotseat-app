@@ -151,7 +151,7 @@ const WallRun = ({ run: r }: { run: Run }) => {
     <group position={pos}>
       <mesh position={[0, (WALL.height - WALL.sink) / 2, 0]} castShadow receiveShadow>
         <boxGeometry args={body} />
-        <Surface color={r.color} roughness={0.85} />
+        <Surface color={r.color} roughness={0.85} isRecessed />
       </mesh>
     </group>
   )
@@ -237,7 +237,7 @@ const WallSlice = ({
         castShadow
         receiveShadow
       >
-        <Surface color={color} roughness={0.85} />
+        <Surface color={color} roughness={0.85} isRecessed />
       </mesh>
     </GhostContext.Provider>
   )

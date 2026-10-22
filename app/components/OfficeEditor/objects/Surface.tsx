@@ -47,7 +47,16 @@ interface SurfaceProps {
   emissiveIntensity?: number
   /** Base opacity (<1 = see-through, e.g. window glass). */
   opacity?: number
+  /**
+   * Draw as if a hair behind anything exactly level with it (a depth bias).
+   * For walls: furniture stands flush against them, and a face landing exactly
+   * on the wall's face (a shower's tiles) would otherwise flicker (z-fighting).
+   */
+  isRecessed?: boolean
 }
+
+/** polygonOffset pushes the depth back by about one depth step: ties only. */
+const RECESSED = { polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 }
 
 /**
  * Drop-in replacement for <meshStandardMaterial> that becomes a translucent or
@@ -63,6 +72,7 @@ export const Surface = ({
   emissive,
   emissiveIntensity = 1,
   opacity: baseOpacity = 1,
+  isRecessed = false,
 }: SurfaceProps) => {
   const ghost = useContext(GhostContext)
 
@@ -78,6 +88,7 @@ export const Surface = ({
         emissive={emissive}
         emissiveIntensity={emissiveIntensity}
         opacity={baseOpacity}
+        isRecessed={isRecessed}
       />
     )
   }
@@ -107,6 +118,7 @@ export const Surface = ({
       transparent={translucent}
       opacity={translucent ? opacity : 1}
       depthWrite={!translucent}
+      {...(isRecessed && RECESSED)}
     />
   )
 }
@@ -135,6 +147,7 @@ const XraySurface = ({
   emissiveIntensity = 1,
   opacity: baseOpacity = 1,
   ramp,
+  isRecessed = false,
 }: SurfaceProps & { fade: () => number; ramp?: XrayRamp }) => {
   // Keeps what's below the plane (normal · p + constant ≥ 0): flat, y ≤ height;
   // or sloped between the heights at the ramp's two ends.
@@ -171,6 +184,7 @@ const XraySurface = ({
       side={DoubleSide}
       clippingPlanes={[plane]}
       dispose={null}
+      {...(isRecessed && RECESSED)}
     />
   )
 }

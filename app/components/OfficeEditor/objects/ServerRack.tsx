@@ -33,10 +33,11 @@ export const ServerRack = ({ color = "#2c313c" }: Props) => {
       >
         <Surface color={color} roughness={0.5} metalness={0.3} />
       </RoundedBox>
-      {/* Front frame around the open bay */}
+      {/* Front frame around the open bay: the posts run between the top and
+          bottom rails, not behind them (they'd share their faces) */}
       {[-1, 1].map((side) => (
         <mesh key={side} position={[side * (W / 2 - 0.02), H / 2, D / 2 - RECESS / 2]} castShadow>
-          <boxGeometry args={[0.04, H, RECESS]} />
+          <boxGeometry args={[0.04, H - 0.2, RECESS]} />
           <Surface color={color} roughness={0.5} metalness={0.3} />
         </mesh>
       ))}

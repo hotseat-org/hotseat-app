@@ -25,8 +25,14 @@ export const GlassDoor = ({ color = PALETTE.seatLeg }: Props) => {
   return (
     <group>
       {[-postX, postX].map((x) => (
-        <mesh key={x} position={[x, (WALL.height - WALL.sink) / 2, 0]} castShadow receiveShadow>
-          <boxGeometry args={[POST, WALL.height + WALL.sink, FRAME_D]} />
+        // Up to the head, not behind it: they'd share its faces (z-fighting).
+        <mesh
+          key={x}
+          position={[x, (WALL.height - HEAD - WALL.sink) / 2, 0]}
+          castShadow
+          receiveShadow
+        >
+          <boxGeometry args={[POST, WALL.height - HEAD + WALL.sink, FRAME_D]} />
           <Surface color={color} roughness={0.4} metalness={0.4} />
         </mesh>
       ))}

@@ -1,6 +1,6 @@
 import { useSurfaces } from "../sceneTheme"
 import { Surface } from "./Surface"
-import { WALL } from "./dimensions"
+import { WALL, FLUSH_INSET } from "./dimensions"
 
 interface Props {
   /** Frame colour. */
@@ -24,9 +24,10 @@ export const Window = ({ color = "#f4efe6" }: Props) => {
   const glassH = HEAD - SILL
   return (
     <group>
-      {/* Wall below the sill (sunk like the walls, no contact gap) */}
-      <mesh position={[0, (SILL - WALL.sink) / 2, 0]} castShadow receiveShadow>
-        <boxGeometry args={[W, SILL + WALL.sink, WALL.depth]} />
+      {/* Wall below the sill (sunk like the walls, no contact gap); its top
+          stays under the sill ledge's, not level with it (FLUSH_INSET) */}
+      <mesh position={[0, (SILL - FLUSH_INSET - WALL.sink) / 2, 0]} castShadow receiveShadow>
+        <boxGeometry args={[W, SILL - FLUSH_INSET + WALL.sink, WALL.depth]} />
         <Surface color={wall} roughness={0.85} />
       </mesh>
       {/* Wall above the head */}
@@ -44,7 +45,9 @@ export const Window = ({ color = "#f4efe6" }: Props) => {
       ))}
       {[-(W / 2 - FRAME / 2), 0, W / 2 - FRAME / 2].map((x) => (
         <mesh key={x} position={[x, (SILL + HEAD) / 2, 0]} castShadow>
-          <boxGeometry args={[x === 0 ? FRAME * 0.7 : FRAME, glassH, FRAME_D]} />
+          {/* Between the sill and head bars, not through them: they'd share
+              their faces (z-fighting) */}
+          <boxGeometry args={[x === 0 ? FRAME * 0.7 : FRAME, glassH - FRAME * 2, FRAME_D]} />
           <Surface color={color} roughness={0.5} />
         </mesh>
       ))}

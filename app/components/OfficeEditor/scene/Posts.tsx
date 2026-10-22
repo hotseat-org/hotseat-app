@@ -63,7 +63,7 @@ export const Posts = () => {
               {glass ? (
                 <Surface color={DEFAULT_COLOR.glassWall} roughness={0.4} metalness={0.4} />
               ) : (
-                <Surface color={surfaces.wall} roughness={0.85} />
+                <Surface color={surfaces.wall} roughness={0.85} isRecessed />
               )}
             </mesh>
           </GhostContext.Provider>

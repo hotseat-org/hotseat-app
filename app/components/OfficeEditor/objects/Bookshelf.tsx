@@ -1,5 +1,6 @@
 import { RoundedBox } from "@react-three/drei"
 import { PALETTE } from "../palette"
+import { FLUSH_INSET } from "./dimensions"
 import { Surface } from "./Surface"
 
 interface Props {
@@ -22,10 +23,11 @@ export const Bookshelf = ({ color = PALETTE.deskLeg }: Props) => {
     <group>
       {/* Back panel */}
       <RoundedBox
-        args={[W, H, 0.04]}
+        // Just inside the sides' back, top and end faces (FLUSH_INSET).
+        args={[W - 2 * FLUSH_INSET, H - FLUSH_INSET, 0.04]}
         radius={0.02}
         smoothness={3}
-        position={[0, H / 2, -D / 2 + 0.02]}
+        position={[0, (H - FLUSH_INSET) / 2, -D / 2 + 0.02 + FLUSH_INSET]}
         castShadow
         receiveShadow
       >

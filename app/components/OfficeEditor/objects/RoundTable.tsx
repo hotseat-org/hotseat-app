@@ -1,6 +1,7 @@
 import { PALETTE } from "../palette"
 import { Croissant, Cutlery, Flowers, Glass, Laptop, Mug, Notebook, Plate, Pot } from "./props"
 import { look } from "./looks"
+import { FLUSH_INSET } from "./dimensions"
 import { Surface } from "./Surface"
 
 interface Props {
@@ -25,7 +26,9 @@ export const RoundTable = ({ color = PALETTE.deskTop, variant }: Props) => (
     {[0, Math.PI / 2].map((r) => (
       <mesh
         key={r}
-        position={[0, 0.03, 0]}
+        // The second bar a hair lower: crossing at one height, their tops
+        // would share a plane where they meet (FLUSH_INSET).
+        position={[0, r ? 0.03 - FLUSH_INSET : 0.03, 0]}
         rotation={[0, r + Math.PI / 4, 0]}
         castShadow
         receiveShadow

@@ -1,6 +1,7 @@
 import { RoundedBox } from "@react-three/drei"
 import { PALETTE } from "../palette"
 import { Glass } from "./GlassWall"
+import { FLUSH_INSET } from "./dimensions"
 import { Surface } from "./Surface"
 
 interface Props {
@@ -21,8 +22,9 @@ export const Shower = ({ color = "#9fc3c9" }: Props) => {
   const glassH = H - TRAY - 0.04
   return (
     <group>
+      {/* Tray: just inside the tiled walls' outer faces (FLUSH_INSET) */}
       <RoundedBox
-        args={[S, TRAY, S]}
+        args={[S - 2 * FLUSH_INSET, TRAY, S - 2 * FLUSH_INSET]}
         radius={0.02}
         smoothness={2}
         position={[0, TRAY / 2, 0]}

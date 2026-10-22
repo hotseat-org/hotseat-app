@@ -1,6 +1,7 @@
 import { RoundedBox } from "@react-three/drei"
 import type { ReactNode } from "react"
 import { ACCENT, PALETTE } from "../palette"
+import { FLUSH_INSET } from "./dimensions"
 import { Steam } from "./Steam"
 import { Surface } from "./Surface"
 
@@ -142,7 +143,8 @@ export const Pot = ({ color = "#c9564f", ...at }: At & { color?: string }) => (
       <cylinderGeometry args={[0.11, 0.1, 0.12, 20]} />
       <Surface color={color} roughness={0.35} metalness={0.1} />
     </mesh>
-    <mesh position={[0, 0.118, 0]}>
+    {/* Soup: its top just above the pot's (level, they'd flicker — FLUSH_INSET) */}
+    <mesh position={[0, 0.118 + FLUSH_INSET, 0]}>
       <cylinderGeometry args={[0.1, 0.1, 0.004, 20]} />
       <Surface color="#d98a3a" roughness={0.6} />
     </mesh>

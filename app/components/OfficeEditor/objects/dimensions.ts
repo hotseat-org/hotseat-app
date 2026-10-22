@@ -29,3 +29,10 @@ export const SEAT = {
 export const WORKSTATION_SEAT_Z = 0.4
 /** Where a deskmate's chair stands (local z). */
 export const DESKMATE_SEAT_Z = 0.4
+
+/**
+ * How far an inner part sits back from an outer part's face it would otherwise
+ * share — a sofa's base under its armrests, a door's jambs under its header.
+ * Two faces in exactly one plane flicker (z-fighting); 3 mm reads as flush.
+ */
+export const FLUSH_INSET = 0.003

@@ -2,6 +2,7 @@ import { RoundedBox } from "@react-three/drei"
 import { PALETTE } from "../palette"
 import { Cushion } from "./props"
 import { look } from "./looks"
+import { FLUSH_INSET } from "./dimensions"
 import { Surface } from "./Surface"
 
 interface Props {
@@ -25,7 +26,8 @@ export const Armchair = ({ color = "#c0876a", variant }: Props) => {
     <group>
       {/* Seat base */}
       <RoundedBox
-        args={[W, SEAT, D]}
+        // Inset from the armrests' faces (see FLUSH_INSET).
+        args={[W - 2 * FLUSH_INSET, SEAT, D - 2 * FLUSH_INSET]}
         radius={0.08}
         smoothness={4}
         position={[0, SEAT / 2 + 0.08, 0]}
@@ -46,10 +48,10 @@ export const Armchair = ({ color = "#c0876a", variant }: Props) => {
       </RoundedBox>
       {/* Backrest (a little taller than the sofa's — it's a lounge chair) */}
       <RoundedBox
-        args={[W, 0.58, 0.18]}
+        args={[W - 2 * FLUSH_INSET, 0.58, 0.18]}
         radius={0.08}
         smoothness={4}
-        position={[0, SEAT + 0.37, -D / 2 + 0.09]}
+        position={[0, SEAT + 0.37, -D / 2 + 0.09 + FLUSH_INSET]}
         castShadow
       >
         <Surface color={color} roughness={0.9} />

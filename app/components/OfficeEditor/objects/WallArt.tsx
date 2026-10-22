@@ -48,12 +48,13 @@ export const WallArt = ({ color = "#c9946a", variant }: Props) => {
   const art = ARTS[look(variant, ARTS.length)]
   return (
     <group position={[0, Y, WALL_FACE]}>
-      {/* Frame */}
+      {/* Frame: the sides fit between the top and bottom bars — overlapping
+          at the corners, their faces would share a plane and flicker */}
       {[
         [0, H / 2 - F / 2, W, F],
         [0, -H / 2 + F / 2, W, F],
-        [-W / 2 + F / 2, 0, F, H],
-        [W / 2 - F / 2, 0, F, H],
+        [-W / 2 + F / 2, 0, F, H - F * 2],
+        [W / 2 - F / 2, 0, F, H - F * 2],
       ].map(([x, y, w, h], i) => (
         <mesh key={i} position={[x, y, 0.02]} castShadow>
           <boxGeometry args={[w, h, 0.04]} />

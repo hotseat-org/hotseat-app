@@ -2,7 +2,7 @@ import { RoundedBox } from "@react-three/drei"
 import { PALETTE } from "../palette"
 import { useSurfaces } from "../sceneTheme"
 import { Surface } from "./Surface"
-import { WALL } from "./dimensions"
+import { WALL, FLUSH_INSET } from "./dimensions"
 
 interface Props {
   color?: string
@@ -22,10 +22,12 @@ export const Door = ({ color = PALETTE.door }: Props) => {
       {[-postX, postX].map((x) => (
         <RoundedBox
           key={x}
-          args={[POST, WALL.height, WALL.depth]}
+          // A hair inside the lintel's front, back, top and end faces, which
+          // they'd otherwise share (FLUSH_INSET).
+          args={[POST - FLUSH_INSET, WALL.height - FLUSH_INSET, WALL.depth - 2 * FLUSH_INSET]}
           radius={0.03}
           smoothness={4}
-          position={[x, WALL.height / 2, 0]}
+          position={[x - Math.sign(x) * (FLUSH_INSET / 2), (WALL.height - FLUSH_INSET) / 2, 0]}
           castShadow
           receiveShadow
         >

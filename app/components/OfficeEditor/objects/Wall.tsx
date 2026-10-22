@@ -18,7 +18,7 @@ export const Wall = ({ color }: Props) => {
   return (
     <mesh position={[0, (WALL.height - WALL.sink) / 2, 0]} castShadow receiveShadow>
       <boxGeometry args={[GRID, WALL.height + WALL.sink, WALL.depth]} />
-      <Surface color={color ?? surfaces.wall} roughness={0.85} />
+      <Surface color={color ?? surfaces.wall} roughness={0.85} isRecessed />
     </mesh>
   )
 }
