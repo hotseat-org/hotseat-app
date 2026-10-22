@@ -1,14 +1,25 @@
 import { ToggleButton, Tooltip } from "@heroui/react"
 import clsx from "clsx"
-import { Suspense, lazy, useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Ban, Eraser, MousePointer2, PaintBucket } from "lucide-react"
 import { useEditorStore } from "../store"
 import { DEFAULT_COLOR, FLOOR_SWATCHES, SWATCHES } from "../palette"
-import { CATEGORIES, TOOL_META, categoryOf, colorKey, isCatalogItem } from "./categories"
+import {
+  CATEGORIES,
+  TOOL_META,
+  categoryOf,
+  colorKey,
+  isCatalogItem,
+  type Category,
+} from "./categories"
+import { PREVIEW_SIZE, requestThumbnail } from "./thumbnails"
 
-// Each tile is a small three.js canvas — loaded with the catalog (edit mode),
-// not with the editor, so the simple view never pulls three.js in.
-const PreviewTile = lazy(() => import("./PreviewView").then((m) => ({ default: m.PreviewTile })))
+// Tile previews (stills + a live canvas on hover) and the studio rendering the
+// stills — three.js, so loaded with the catalog (edit mode), not with the
+// editor: the simple view never pulls it in. Loaded as a module, not through
+// React.lazy: a lazy tile suspends on first render, and React holds a revealed
+// Suspense boundary back ~300 ms — every first category open would wait.
+type PreviewModule = typeof import("./PreviewView")
 
 /**
  * The Sims-style build catalog: a category rail on the left and a grid of live,
@@ -20,11 +31,27 @@ const PreviewTile = lazy(() => import("./PreviewView").then((m) => ({ default: m
  * category (or closing this one) disarms it, and arming an asset by shortcut
  * opens its category. Select/Erase (which place nothing) collapse the panel.
  */
+/** The item panel's least height (px), so a few rows of tiles always show. */
+const PANEL_MIN_HEIGHT = 560
+
 export const Catalog = () => {
   const tool = useEditorStore((s) => s.tool)
   const setTool = useEditorStore((s) => s.setTool)
   const placementColors = useEditorStore((s) => s.placementColors)
   const setPlacementColor = useEditorStore((s) => s.setPlacementColor)
+
+  // Pre-render every tile's still in the background, so categories open
+  // instantly (tiles on screen jump the queue).
+  useEffect(() => {
+    for (const c of CATEGORIES)
+      for (const t of c.types) requestThumbnail(t, placementColors[colorKey(t)])
+    // Once, with the colours as they are on opening the editor.
+  }, [])
+
+  const [preview, setPreview] = useState<PreviewModule | null>(null)
+  useEffect(() => {
+    void import("./PreviewView").then(setPreview)
+  }, [])
 
   const [openId, setOpenId] = useState<string | null>(null)
   const category = CATEGORIES.find((c) => c.id === openId)
@@ -45,8 +72,8 @@ export const Catalog = () => {
     if (isCatalogItem(tool)) setTool("select")
     setOpenId((cur) => (cur === id ? null : id))
   }
-  // The panel matches the rail's height exactly (tiles scroll inside it), so
-  // measure the rail.
+  // The panel is as tall as the tray — but at least PANEL_MIN_HEIGHT (the
+  // two-column tray is short), within the screen; tiles scroll inside it.
   const railRef = useRef<HTMLDivElement>(null)
   const [railHeight, setRailHeight] = useState(0)
   useEffect(() => {
@@ -56,6 +83,9 @@ export const Catalog = () => {
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
+  const panelStyle = railHeight
+    ? { height: Math.max(railHeight, PANEL_MIN_HEIGHT), maxHeight: "calc(100dvh - 10rem)" }
+    : undefined
 
   const pickMode = (mode: "select" | "delete" | "paint") => {
     setOpenId(null)
@@ -66,59 +96,60 @@ export const Catalog = () => {
   // what the (absolutely positioned) preview panel does.
   return (
     <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2">
-      {/* Category rail */}
+      {preview && <preview.ThumbnailStudio />}
+      {/* Category tray: the tools in a row on top, then the categories as a
+          two-column grid of illustrated, named tiles. */}
       <div
         ref={railRef}
-        className="pointer-events-auto flex max-h-[calc(100dvh-10rem)] flex-col gap-1 overflow-y-auto rounded-2xl border border-border bg-overlay/90 p-1.5 shadow-overlay backdrop-blur-md [scrollbar-width:none]"
+        className="pointer-events-auto flex max-h-[calc(100dvh-10rem)] w-42 flex-col gap-1.5 overflow-y-auto rounded-2xl border border-border bg-overlay/90 p-2 shadow-overlay backdrop-blur-md [scrollbar-width:none]"
       >
-        <RailButton
-          label="Select"
-          shortcut="1"
-          active={tool === "select" && !category}
-          onClick={() => pickMode("select")}
-        >
-          <MousePointer2 className="size-5" strokeWidth={2} />
-        </RailButton>
-        <RailButton
-          label="Erase"
-          shortcut="0"
-          active={tool === "delete"}
-          danger
-          onClick={() => pickMode("delete")}
-        >
-          <Eraser className="size-5" strokeWidth={2} />
-        </RailButton>
-        <RailButton label="Paint" active={tool === "paint"} onClick={() => pickMode("paint")}>
-          <PaintBucket className="size-5" strokeWidth={2} />
-        </RailButton>
+        <div className="flex justify-around">
+          <RailButton
+            label="Select"
+            shortcut="1"
+            active={tool === "select" && !category}
+            onClick={() => pickMode("select")}
+          >
+            <MousePointer2 className="size-5" strokeWidth={2} />
+          </RailButton>
+          <RailButton
+            label="Erase"
+            shortcut="0"
+            active={tool === "delete"}
+            danger
+            onClick={() => pickMode("delete")}
+          >
+            <Eraser className="size-5" strokeWidth={2} />
+          </RailButton>
+          <RailButton label="Paint" active={tool === "paint"} onClick={() => pickMode("paint")}>
+            <PaintBucket className="size-5" strokeWidth={2} />
+          </RailButton>
+        </div>
 
-        <div className="my-1 h-px bg-separator" />
+        <div className="h-px shrink-0 bg-separator" />
 
-        {CATEGORIES.map((c) => {
-          const Icon = c.icon
-          return (
-            <RailButton
+        <div className="grid grid-cols-2 gap-1.5">
+          {CATEGORIES.map((c) => (
+            <CategoryButton
               key={c.id}
-              label={c.label}
+              category={c}
               active={openId === c.id}
               onClick={() => toggleCategory(c.id)}
-            >
-              <Icon className="size-5" strokeWidth={2} />
-            </RailButton>
-          )
-        })}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Paint: colour choice + how-to, in the same slot/size as a category. */}
-      {tool === "paint" && !category && <PaintPanel height={railHeight} />}
+      {tool === "paint" && !category && <PaintPanel style={panelStyle} />}
 
       {/* Preview grid — only while an asset (a category) is armed, so Select and
           Erase collapse the catalog to just the rail. */}
       {category && (
-        // Same height as the rail, always: title on top, colour swatches pinned
+        // Fixed height (see panelStyle): title on top, colour swatches pinned
         // at the bottom, and the tile grid scrolls in between.
         <div
-          style={railHeight ? { height: railHeight } : undefined}
+          style={panelStyle}
           className="pointer-events-auto absolute left-full top-0 ml-2 flex w-60 flex-col rounded-2xl border border-border bg-overlay/90 p-3 shadow-overlay backdrop-blur-md"
         >
           <h2 className="mb-2 shrink-0 px-1 text-sm font-semibold text-foreground">
@@ -142,11 +173,15 @@ export const Catalog = () => {
                       : "border-border bg-foreground/[0.04] hover:border-accent/50 hover:bg-foreground/10"
                   )}
                 >
-                  <div className="h-24 w-full overflow-hidden rounded-lg">
+                  <div className="overflow-hidden rounded-lg" style={PREVIEW_SIZE}>
                     {/* Each tile reflects its own per-type colour. */}
-                    <Suspense fallback={null}>
-                      <PreviewTile type={t} color={placementColors[colorKey(t)]} active={active} />
-                    </Suspense>
+                    {preview && (
+                      <preview.PreviewTile
+                        type={t}
+                        color={placementColors[colorKey(t)]}
+                        active={active}
+                      />
+                    )}
                   </div>
                   <span
                     className={clsx(
@@ -228,6 +263,37 @@ const Swatch = ({ title, selected, onClick, children }: SwatchProps) => (
   </button>
 )
 
+/**
+ * A category in the tray: its illustration with the name underneath. Selected
+ * shows as an accent ring on a soft tint (a solid fill would drown the colours).
+ */
+const CategoryButton = ({
+  category,
+  active,
+  onClick,
+}: {
+  category: Category
+  active: boolean
+  onClick: () => void
+}) => (
+  <ToggleButton
+    variant="ghost"
+    isSelected={active}
+    onPress={onClick}
+    className={clsx(
+      "group flex h-auto w-full flex-col items-center gap-1 rounded-xl px-1 pb-1.5 pt-2 transition-colors",
+      active
+        ? "bg-accent/15 text-foreground ring-2 ring-inset ring-accent"
+        : "text-muted hover:bg-foreground/10 hover:text-foreground"
+    )}
+  >
+    <category.icon className="size-10 transition-transform duration-150 group-hover:scale-110" />
+    <span className="w-full truncate text-center text-[11px] font-semibold leading-tight">
+      {category.label}
+    </span>
+  </ToggleButton>
+)
+
 interface RailButtonProps {
   label: string
   shortcut?: string
@@ -272,12 +338,12 @@ const RailButton = ({ label, shortcut, active, danger, onClick, children }: Rail
  * Paint tool panel: pick a colour, then click a wall (its whole line; Shift for
  * one segment) or a room's floor. "Default" returns it to the theme colour.
  */
-const PaintPanel = ({ height }: { height: number }) => {
+const PaintPanel = ({ style }: { style?: React.CSSProperties }) => {
   const paintColor = useEditorStore((s) => s.paintColor)
   const setPaintColor = useEditorStore((s) => s.setPaintColor)
   return (
     <div
-      style={height ? { height } : undefined}
+      style={style}
       className="pointer-events-auto absolute left-full top-0 ml-2 flex w-60 flex-col rounded-2xl border border-border bg-overlay/90 p-3 shadow-overlay backdrop-blur-md"
     >
       <h2 className="mb-1 shrink-0 px-1 text-sm font-semibold text-foreground">Paint</h2>

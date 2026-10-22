@@ -1,11 +1,15 @@
+import clsx from "clsx"
 import { Canvas, useFrame, useThree } from "@react-three/fiber"
-import { Suspense, useEffect, useLayoutEffect, useRef, useState } from "react"
+import { Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
 import {
   Box3,
   Sphere,
   Vector3,
+  type Camera,
   type Group,
   type PerspectiveCamera as PerspectiveCameraImpl,
+  type Scene,
+  type WebGLRenderer,
 } from "three"
 import { ObjectMesh } from "../objects/ObjectMesh"
 import { Desk } from "../objects/Desk"
@@ -14,6 +18,15 @@ import { Model } from "../objects/Model"
 import { SEAT } from "../objects/dimensions"
 import type { CatalogItem } from "../types"
 import { Wall } from "../objects/Wall"
+import {
+  addThumbnail,
+  PREVIEW_SIZE,
+  requestThumbnail,
+  useNextThumbnailRequest,
+  useThumbnail,
+} from "./thumbnails"
+
+const CAMERA = { fov: 32, position: [3.4, 2.6, 3.4] as [number, number, number] }
 
 /**
  * Slow turntable so previews read as 3D (Sims-style) — only while `spinning`
@@ -111,14 +124,40 @@ const RoomPreview = ({ color }: { color?: string }) => {
   )
 }
 
+type ReadyHandler = (gl: WebGLRenderer, scene: Scene, camera: Camera) => void
+
+/** Calls back once its Suspense boundary has resolved and the camera is framed. */
+const OnReady = ({ onReady }: { onReady: ReadyHandler }) => {
+  const { gl, scene, camera } = useThree()
+  useLayoutEffect(() => onReady(gl, scene, camera), [onReady, gl, scene, camera])
+  return null
+}
+
+/** Calls back on the first frame drawn with the item in it (once). */
+const OnFirstFrame = ({ onFirstFrame }: { onFirstFrame: () => void }) => {
+  const hasFired = useRef(false)
+  useFrame(() => {
+    if (hasFired.current) return
+    hasFired.current = true
+    onFirstFrame()
+  })
+  return null
+}
+
 const Contents = ({
   type,
   color,
   spinning,
+  onReady,
+  onFirstFrame,
 }: {
   type: CatalogItem
   color?: string
   spinning: boolean
+  /** Fired once the item (models included) is mounted and framed. */
+  onReady?: ReadyHandler
+  /** Fired as the first frame with the item in it is drawn. */
+  onFirstFrame?: () => void
 }) => (
   <>
     <ambientLight intensity={0.85} />
@@ -138,9 +177,76 @@ const Contents = ({
           )}
         </Spin>
       </FitCamera>
+      {/* After FitCamera: its layout effect (the framing) has run by then. */}
+      {onReady && <OnReady onReady={onReady} />}
+      {onFirstFrame && <OnFirstFrame onFirstFrame={onFirstFrame} />}
     </Suspense>
   </>
 )
+
+/** Runs `callback` in idle time — or within a frame or so if there's none. */
+const whenIdle = (callback: () => void) => {
+  if (typeof window.requestIdleCallback === "function")
+    window.requestIdleCallback(callback, { timeout: 50 })
+  else window.setTimeout(callback, 16)
+}
+
+/**
+ * Renders catalog stills, one at a time, in a single hidden canvas — one WebGL
+ * context whose shaders compile once, instead of a context per tile. Each still
+ * is taken as soon as its item is framed (models loaded). A tile on screen gets
+ * its still right away; the background pre-render moves on in idle time, so it
+ * never competes with the editor.
+ */
+export const ThumbnailStudio = () => {
+  const request = useNextThumbnailRequest()
+  const key = request?.key
+  const handleReady = useRef<ReadyHandler>(() => {})
+  const isUrgent = request?.isUrgent ?? false
+  handleReady.current = (gl, scene, camera) => {
+    if (!key) return
+    gl.render(scene, camera)
+    gl.domElement.toBlob((blob) => {
+      if (!blob) return
+      const add = () => addThumbnail(key, URL.createObjectURL(blob))
+      // A tile is waiting: now. The background pre-render: in idle time.
+      if (isUrgent) add()
+      else whenIdle(add)
+    })
+  }
+  // Stable, so OnReady's effect runs once per item, not per studio render.
+  const onReady = useCallback<ReadyHandler>(
+    (gl, scene, camera) => handleReady.current(gl, scene, camera),
+    []
+  )
+
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none fixed opacity-0"
+      style={{ left: -10000, top: 0, ...PREVIEW_SIZE }}
+    >
+      <Canvas
+        dpr={[1, 2]}
+        // The drawing buffer is read back (toBlob) after the frame is drawn.
+        gl={{ alpha: true, antialias: true, preserveDrawingBuffer: true }}
+        camera={CAMERA}
+        frameloop="never"
+        style={{ width: "100%", height: "100%" }}
+      >
+        {request && (
+          <Contents
+            key={request.key}
+            type={request.type}
+            color={request.color}
+            spinning={false}
+            onReady={onReady}
+          />
+        )}
+      </Canvas>
+    </div>
+  )
+}
 
 interface TileProps {
   type: CatalogItem
@@ -151,44 +257,49 @@ interface TileProps {
 }
 
 /**
- * A live, auto-framed 3D preview of a single object type — its own tiny canvas
- * so the object shows exactly as it'll be placed (not an icon). The canvas only
- * mounts while the tile is on screen (scrolled into the catalog's view): each
- * one is a WebGL context, and browsers drop the OLDEST context past ~16 — which
- * would be the main office scene.
+ * A catalog tile's preview: the item's still (from ThumbnailStudio) — and,
+ * while hovered or armed, a live turntable canvas on top of it, framed the
+ * same way, so the still turns into the spinning model without a jump (and
+ * covers the canvas's start-up). Only those one or two tiles hold a WebGL
+ * context; browsers drop the OLDEST past ~16 — which would be the office scene.
  */
 export const PreviewTile = ({ type, color, active = false }: TileProps) => {
-  const ref = useRef<HTMLDivElement>(null)
-  const [visible, setVisible] = useState(false)
   const [hovered, setHovered] = useState(false)
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const io = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting), {
-      rootMargin: "48px", // mount just before scrolling into view
-    })
-    io.observe(el)
-    return () => io.disconnect()
-  }, [])
+  const image = useThumbnail(type, color)
+  // While a new colour's still renders, keep showing the previous one.
+  const shownImage = useRef(image)
+  if (image) shownImage.current = image
+  useEffect(() => requestThumbnail(type, color, true), [type, color])
+  const isSpinning = hovered || active
+  // The live canvas is transparent: once it has drawn the model, the still
+  // underneath is hidden (it would show through) — and back when it stops.
+  const [isLiveDrawn, setIsLiveDrawn] = useState(false)
+  if (!isSpinning && isLiveDrawn) setIsLiveDrawn(false)
 
   return (
     <div
-      ref={ref}
-      className="size-full"
+      className="relative size-full"
       onPointerEnter={() => setHovered(true)}
       onPointerLeave={() => setHovered(false)}
     >
-      {visible && (
+      {shownImage.current && (
+        <img
+          src={shownImage.current}
+          alt=""
+          draggable={false}
+          className={clsx("absolute inset-0 size-full", isLiveDrawn && "invisible")}
+        />
+      )}
+      {isSpinning && (
         <Canvas
           dpr={[1, 2]}
           gl={{ alpha: true, antialias: true }}
           // Camera exists from the first render, so FitCamera frames the right one.
-          camera={{ fov: 32, position: [3.4, 2.6, 3.4] }}
+          camera={CAMERA}
           frameloop="demand"
-          style={{ width: "100%", height: "100%" }}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
         >
-          <Contents type={type} color={color} spinning={hovered || active} />
+          <Contents type={type} color={color} spinning onFirstFrame={() => setIsLiveDrawn(true)} />
         </Canvas>
       )}
     </div>

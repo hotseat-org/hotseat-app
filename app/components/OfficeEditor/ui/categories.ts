@@ -1,24 +1,25 @@
-import {
-  Archive,
-  Armchair,
-  Bath,
-  Image as ImageIcon,
-  BrickWall,
-  CookingPot,
-  LampDesk,
-  Monitor,
-  Sprout,
-  Table,
-} from "lucide-react"
-import type { LucideIcon } from "lucide-react"
 import type { CatalogItem, ObjectType } from "../types"
+import {
+  BathroomIcon,
+  DecorIcon,
+  DesksIcon,
+  EquipmentIcon,
+  KitchenIcon,
+  OnTheWallIcon,
+  SeatingIcon,
+  StorageIcon,
+  StructureIcon,
+  TablesIcon,
+  type CategoryIcon,
+} from "./categoryIcons"
 import { TOOLS } from "./tools"
 
 /** A Sims-style build category grouping related asset types. */
 export interface Category {
   id: string
   label: string
-  icon: LucideIcon
+  /** The rail icon: a little illustration of the category's most recognisable piece. */
+  icon: CategoryIcon
   types: CatalogItem[]
 }
 
@@ -26,20 +27,25 @@ export const CATEGORIES: Category[] = [
   {
     id: "structure",
     label: "Structure",
-    icon: BrickWall,
+    icon: StructureIcon,
     types: ["room", "wall", "door", "window", "glassWall", "glassDoor"],
   },
-  { id: "desks", label: "Desks", icon: LampDesk, types: ["desk", "workstation", "deskmate"] },
+  {
+    id: "desks",
+    label: "Desks",
+    icon: DesksIcon,
+    types: ["desk", "workstation", "deskmate"],
+  },
   {
     id: "seating",
     label: "Seating",
-    icon: Armchair,
+    icon: SeatingIcon,
     types: ["seat", "sofa", "armchair", "barStool"],
   },
   {
     id: "tables",
     label: "Tables",
-    icon: Table,
+    icon: TablesIcon,
     types: [
       "coffeeTable",
       "meetingTable",
@@ -53,32 +59,37 @@ export const CATEGORIES: Category[] = [
   {
     id: "storage",
     label: "Storage",
-    icon: Archive,
+    icon: StorageIcon,
     types: ["bookshelf", "shelvingUnit", "filingCabinet", "lockers", "wardrobe"],
   },
   {
     id: "equipment",
     label: "Equipment",
-    icon: Monitor,
+    icon: EquipmentIcon,
     types: ["printer", "tvScreen", "whiteboard", "serverRack"],
   },
   {
     id: "kitchen",
     label: "Kitchen",
-    icon: CookingPot,
+    icon: KitchenIcon,
     types: ["kitchenCounter", "fridge", "cooler", "vendingMachine"],
   },
   {
     id: "wall",
     label: "On the wall",
-    icon: ImageIcon,
+    icon: OnTheWallIcon,
     types: ["wallTv", "wallArt", "wallClock", "wallShelf"],
   },
-  { id: "bathroom", label: "Bathroom", icon: Bath, types: ["toilet", "bathroomSink", "shower"] },
+  {
+    id: "bathroom",
+    label: "Bathroom",
+    icon: BathroomIcon,
+    types: ["toilet", "bathroomSink", "shower"],
+  },
   {
     id: "decor",
     label: "Decor",
-    icon: Sprout,
+    icon: DecorIcon,
     types: [
       "plant",
       "planterBox",

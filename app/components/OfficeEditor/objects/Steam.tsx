@@ -80,6 +80,10 @@ export const Steam = ({ position, size = 1 }: Props) => {
       {Array.from({ length: PUFFS }, (_, i) => (
         <mesh
           key={i}
+          // Starts at its smallest puff size (useFrame takes over): a unit-sized
+          // puff would inflate bounds measured before the first frame — e.g. a
+          // catalog still framing the whole table tiny around it.
+          scale={0.035}
           ref={(m) => {
             puffs.current[i] = m
           }}
