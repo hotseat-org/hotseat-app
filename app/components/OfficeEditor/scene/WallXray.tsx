@@ -1,6 +1,6 @@
 import { useFrame, useThree } from "@react-three/fiber"
 import { useEffect, useMemo, useRef } from "react"
-import { Box3, Vector3 } from "three"
+import { Box3, Matrix4, Vector3 } from "three"
 import { useEditorStoreApi } from "../store"
 import { GRID, isEdgeType, isWallMounted } from "../types"
 import { WALL } from "../objects/dimensions"
@@ -33,6 +33,13 @@ const RATE_OUT = 20
 const SLACK = 0.12
 /** Wall items hang above this height (a pointer lower down is at the wall). */
 const MOUNT_BOTTOM = 0.4
+/**
+ * After the camera stops (ms), the cutaway follows the cursor again. While it
+ * moves the cut holds still: the cursor sweeping across walls would otherwise
+ * split and re-merge wall runs every few frames (geometry rebuilds, a stutter —
+ * badly so in Firefox).
+ */
+const CAMERA_SETTLE = 150
 
 interface Props {
   enabled: boolean
@@ -47,6 +54,7 @@ interface Props {
  * through (plus a short section either side) so they can be cut down,
  * revealing — and letting you click/place — what's behind. Walls carry no
  * pointer handlers, so clicks already pass through them; this is the visual.
+ * Holds still while the camera moves (see CAMERA_SETTLE).
  */
 export const WallXray = ({ enabled, fades, onChange }: Props) => {
   const { camera, raycaster, pointer, gl, invalidate } = useThree()
@@ -56,6 +64,10 @@ export const WallXray = ({ enabled, fades, onChange }: Props) => {
   const max = useMemo(() => new Vector3(), [])
   const lastKey = useRef("")
   const inside = useRef(false)
+  const lastView = useRef({ matrix: new Matrix4(), zoom: 0, movedAt: -Infinity })
+  const held = useRef<Map<string, number>>(new Map())
+  const settleTimer = useRef(0)
+  useEffect(() => () => window.clearTimeout(settleTimer.current), [])
 
   // Track whether the cursor is over the canvas (clear when it leaves), and
   // redraw on move so the cutaway follows under frameloop="demand".
@@ -149,7 +161,19 @@ export const WallXray = ({ enabled, fades, onChange }: Props) => {
   // Ease each segment's fade toward its target depth (0 once out of the
   // section); fully-solid segments drop out so they rejoin their merged wall run.
   useFrame((_, dt) => {
-    const want = targets()
+    const now = performance.now()
+    const view = lastView.current
+    if (!view.matrix.equals(camera.matrixWorld) || view.zoom !== camera.zoom) {
+      view.matrix.copy(camera.matrixWorld)
+      view.zoom = camera.zoom
+      view.movedAt = now
+      // Re-aim once the camera has settled (frameloop="demand" won't on its own).
+      window.clearTimeout(settleTimer.current)
+      settleTimer.current = window.setTimeout(invalidate, CAMERA_SETTLE)
+    }
+    const isCameraMoving = now - view.movedAt < CAMERA_SETTLE
+    const want = isCameraMoving ? held.current : targets()
+    held.current = want
     const kIn = 1 - Math.exp(-dt * RATE_IN)
     const kOut = 1 - Math.exp(-dt * RATE_OUT)
     const existing = new Set(store.getState().objects.map((o) => o.id))

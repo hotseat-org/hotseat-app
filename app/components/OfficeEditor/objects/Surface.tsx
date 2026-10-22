@@ -120,6 +120,10 @@ export const Surface = ({
  * scene/shadows.ts — so the cutaway never triggers the expensive shadow pass.)
  * Double-sided so the sliced-open top shows the inner faces and reads as a
  * solid cut.
+ * The material is never disposed: three.js deletes a shader program once no
+ * material uses it, so every new cutaway would compile it again (a hitch per
+ * cut — long ones in Firefox). Undisposed, the few programs stay warm; the
+ * material objects themselves are still garbage-collected.
  */
 const XraySurface = ({
   fade,
@@ -166,6 +170,7 @@ const XraySurface = ({
       depthWrite={baseOpacity >= 1}
       side={DoubleSide}
       clippingPlanes={[plane]}
+      dispose={null}
     />
   )
 }
