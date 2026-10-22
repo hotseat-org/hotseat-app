@@ -5,12 +5,15 @@ import { PeopleContext, type People } from "../people"
 import { preloadModels } from "../objects/Model"
 import { Scene } from "./Scene"
 import { FpsMeter } from "./FpsMeter"
+import type { FitInsets } from "./CameraFit"
 
 interface Props {
   store: EditorStore
   people: People
   readOnly: boolean
   dark: boolean
+  /** Screen space the floating panels cover (px): Fit frames the office beside them. */
+  fitInsets?: FitInsets
   /** Perf HUD on: render continuously so the FPS reading is comparable. */
   showStats: boolean
   onStats: (fps: number, ms: number) => void
@@ -21,7 +24,7 @@ interface Props {
  * R3F and every model stay out of the bundle until the 3D view is shown — the
  * simple (top-down SVG) view never downloads them.
  */
-const SceneCanvas = ({ store, people, readOnly, dark, showStats, onStats }: Props) => {
+const SceneCanvas = ({ store, people, readOnly, dark, fitInsets, showStats, onStats }: Props) => {
   // Load the GLB animal models into cache (available, but not user-placeable).
   useEffect(() => {
     preloadModels()
@@ -41,7 +44,7 @@ const SceneCanvas = ({ store, people, readOnly, dark, showStats, onStats }: Prop
         {/* Bridge the store into the R3F tree — context doesn't cross the Canvas. */}
         <EditorStoreContextProvider value={store}>
           <PeopleContext.Provider value={people}>
-            <Scene readOnly={readOnly} dark={dark} />
+            <Scene readOnly={readOnly} dark={dark} fitInsets={fitInsets} />
           </PeopleContext.Provider>
         </EditorStoreContextProvider>
         {showStats && <FpsMeter onSample={onStats} />}

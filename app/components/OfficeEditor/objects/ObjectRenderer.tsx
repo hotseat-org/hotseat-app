@@ -38,7 +38,8 @@ interface Props {
   blockedAt?: number
   onSelect: (id: string) => void
   onDelete: (id: string) => void
-  onStartDrag: (id: string) => void
+  /** A press on furniture (Select tool): a drag from here moves it. */
+  onStartDrag: (id: string, e: ThreeEvent<PointerEvent>) => void
   /** View mode: clicked a desk (opens its seat card). */
   onSeatClick?: (id: string) => void
   /** Shift-click: toggle this piece in the multi-selection. */
@@ -196,7 +197,7 @@ export const ObjectRenderer = memo(function ObjectRenderer({
       // Shift-click: add/remove to the multi-selection (no pick-up).
       if (e.shiftKey && isFurniture(obj) && onToggleSelect) return onToggleSelect(obj.id)
       onSelect(obj.id)
-      if (isFurniture(obj)) onStartDrag(obj.id)
+      if (isFurniture(obj)) onStartDrag(obj.id, e)
     }
     // Other build tools fall through so placement can read the ground beneath.
   }

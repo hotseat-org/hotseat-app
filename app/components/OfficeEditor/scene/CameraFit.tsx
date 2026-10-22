@@ -15,6 +15,14 @@ const MIN_ZOOM = 20
 const MAX_ZOOM = 120
 const DURATION = 0.45
 
+/** Screen space (px) covered by floating panels on each side. */
+export interface FitInsets {
+  left: number
+  right: number
+}
+
+const NO_INSETS: FitInsets = { left: 0, right: 0 }
+
 interface Anim {
   t: number
   from: { target: Vector3; pos: Vector3; zoom: number }
@@ -26,7 +34,7 @@ interface Anim {
  * it and zooms so it fills the view, keeping the current viewing angle. Runs
  * instantly when the office opens, and animated on `requestFit()` (button / F).
  */
-export const CameraFit = () => {
+export const CameraFit = ({ insets = NO_INSETS }: { insets?: FitInsets }) => {
   const nonce = useEditorStore((s) => s.fitNonce)
   // Also frame the office when it first gets content (e.g. a template picked
   // on an empty office).
@@ -35,7 +43,10 @@ export const CameraFit = () => {
   const camera = useThree((s) => s.camera) as OrthographicCamera
   const controls = useThree((s) => s.controls) as OrbitControlsImpl | null
   const invalidate = useThree((s) => s.invalidate)
+  const width = useThree((s) => s.size.width)
   const anim = useRef<Anim | null>(null)
+  const latest = useRef({ insets, width })
+  latest.current = { insets, width }
   const didInitial = useRef(false)
 
   // F frames the office, in both modes.
@@ -87,16 +98,25 @@ export const CameraFit = () => {
     probe.zoom = 1
     probe.updateMatrixWorld()
     probe.updateProjectionMatrix()
-    let extent = 0
+    let extentX = 0
+    let extentY = 0
     for (const x of [box.min.x, box.max.x])
       for (const y of [box.min.y, box.max.y])
         for (const z of [box.min.z, box.max.z]) {
           const p = new Vector3(x, y, z).project(probe)
-          extent = Math.max(extent, Math.abs(p.x), Math.abs(p.y))
+          extentX = Math.max(extentX, Math.abs(p.x))
+          extentY = Math.max(extentY, Math.abs(p.y))
         }
-    const zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, FILL / Math.max(extent, 1e-6)))
-
-    const to = { target: center, pos, zoom }
+    // Beside the floating panels: the office fits the free width, centred in it.
+    const { insets: pad, width: w } = latest.current
+    const free = w > 0 ? Math.max(0.3, (w - pad.left - pad.right) / w) : 1
+    const extent = Math.max(extentX / free, extentY, 1e-6)
+    const zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, FILL / extent))
+    // The free area's centre, in NDC — moved there by sliding the camera sideways.
+    const shiftNdc = w > 0 ? (pad.left - pad.right) / w : 0
+    const right = new Vector3().setFromMatrixColumn(probe.matrixWorld, 0)
+    const slide = right.multiplyScalar((-shiftNdc * (camera.right - camera.left)) / 2 / zoom)
+    const to = { target: center.clone().add(slide), pos: pos.clone().add(slide), zoom }
     if (instant) {
       apply(to, camera, controls)
       invalidate()

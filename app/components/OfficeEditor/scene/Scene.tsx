@@ -1,7 +1,7 @@
 import { OrbitControls, OrthographicCamera } from "@react-three/drei"
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
-import { useThree } from "@react-three/fiber"
-import { MOUSE } from "three"
+import { useThree, type ThreeEvent } from "@react-three/fiber"
+import { MOUSE, Plane, Vector3 } from "three"
 import { useEditorStore, useEditorStoreApi } from "../store"
 import { clampToFloor, furnitureCollides, mountWalls, snapToFootprint, wallMount } from "../layout"
 import { randomModelId } from "../models"
@@ -35,7 +35,7 @@ import { BuildController } from "./BuildController"
 import { CarryController } from "./CarryController"
 import { CameraControls, type FloorPan } from "./CameraControls"
 import { WallXray } from "./WallXray"
-import { CameraFit } from "./CameraFit"
+import { CameraFit, type FitInsets } from "./CameraFit"
 import { SeatTags } from "./SeatTags"
 import { SeatPopup } from "./SeatPopup"
 import { BoxSelect } from "./BoxSelect"
@@ -54,6 +54,8 @@ interface Props {
   readOnly?: boolean
   /** App theme is dark → deep slate surfaces (lighting stays bright). */
   dark?: boolean
+  /** Screen space the floating panels cover (px): Fit frames the office beside them. */
+  fitInsets?: FitInsets
 }
 
 // Same camera drags in both modes: right-drag orbits, middle-drag (or
@@ -110,7 +112,12 @@ const FURNITURE = new Set([
   "divider",
 ])
 
-export const Scene = ({ readOnly = false, dark = false }: Props) => {
+/** The floor plane: where a grabbed piece is held from. */
+const GROUND = new Plane(new Vector3(0, 1, 0), 0)
+/** A press that travels further than this (px) drags the piece; less is a click. */
+const DRAG_PX = 4
+
+export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
   const objects = useEditorStore((s) => s.objects)
   const selection = useEditorStore((s) => s.selection)
   const tool = useEditorStore((s) => s.tool)
@@ -193,13 +200,10 @@ export const Scene = ({ readOnly = false, dark = false }: Props) => {
 
   const isFurniture = FURNITURE.has(tool)
 
-  // Leaving edit mode drops whatever was being carried (it'd keep following
-  // the cursor in the read-only view otherwise).
+  // Leaving edit mode puts back whatever was being dragged (it'd keep
+  // following the cursor in the read-only view otherwise).
   useEffect(() => {
-    if (readOnly) {
-      setDragId(null)
-      storeApi.getState().endBatch()
-    }
+    if (readOnly) handlers.current.putBack()
   }, [readOnly])
 
   // Snapped placement spot, kept fully on the buildable floor. Wall items snap
@@ -235,7 +239,6 @@ export const Scene = ({ readOnly = false, dark = false }: Props) => {
     return map
   }, [objects])
 
-  // Drop the carried object — but only onto a free footprint.
   // Last refused drop (a timestamp) — the carried object shakes "no".
   const [blockedAt, setBlockedAt] = useState(0)
   // Tell the store what's being carried (R then rotates it freely).
@@ -243,31 +246,81 @@ export const Scene = ({ readOnly = false, dark = false }: Props) => {
     storeApi.getState().setCarrying(dragId)
   }, [dragId, storeApi])
 
-  const tryDrop = () => {
-    const o = objects.find((obj) => obj.id === dragId)
-    if (o && furnitureCollides(objects, o.type, o.x, o.z, o.rotation, o.id)) {
-      setBlockedAt(performance.now())
-      return
-    }
+  // Moving furniture: press on a piece and drag it — a plain click only
+  // selects. It's held by the spot you grabbed (no jump), and released over a
+  // free spot it stays; over other furniture (or on Esc) it goes back.
+  /** Where the dragged piece started — what Esc / a refused drop restores. */
+  const dragStart = useRef<{ id: string; x: number; z: number; rotation: number } | null>(null)
+  /** The grab point's offset from the piece's centre (plan units). */
+  const [grab, setGrab] = useState({ dx: 0, dz: 0 })
+
+  const endDrag = () => {
+    dragStart.current = null
     setDragId(null)
-    storeApi.getState().endBatch() // the whole carry = one undo step
+    storeApi.getState().endBatch() // the whole drag = one undo step (none if put back)
   }
 
-  // Click-to-move: click an object to pick it up (it follows the cursor), click
-  // again to drop it. `dragId` is the object currently being carried.
-  const handlePick = (id: string) => {
-    if (dragId) tryDrop()
-    else {
+  const putBack = () => {
+    const start = dragStart.current
+    if (!start) return
+    storeApi.getState().moveObject(start.id, start.x, start.z, start.rotation)
+    endDrag()
+  }
+
+  const tryDrop = () => {
+    const start = dragStart.current
+    if (!start) return
+    const all = storeApi.getState().objects
+    const o = all.find((obj) => obj.id === start.id)
+    if (o && furnitureCollides(all, o.type, o.x, o.z, o.rotation, o.id)) {
+      setBlockedAt(performance.now())
+      return putBack()
+    }
+    endDrag()
+  }
+
+  const handlePick = (id: string, e: ThreeEvent<PointerEvent>) => {
+    if (dragStart.current) return
+    const o = storeApi.getState().objects.find((obj) => obj.id === id)
+    if (!o) return
+    const hit = e.ray.intersectPlane(GROUND, new Vector3())
+    const offset = hit ? { dx: o.x - hit.x, dz: o.z - hit.z } : { dx: 0, dz: 0 }
+    const { clientX: x0, clientY: y0 } = e.nativeEvent
+    const move = (ev: PointerEvent) => {
+      if (Math.hypot(ev.clientX - x0, ev.clientY - y0) <= DRAG_PX) return
+      window.removeEventListener("pointermove", move)
+      dragStart.current = { id, x: o.x, z: o.z, rotation: o.rotation }
+      setGrab(offset)
       storeApi.getState().beginBatch()
       setDragId(id)
     }
+    const up = () => {
+      window.removeEventListener("pointermove", move)
+      window.removeEventListener("pointerup", up)
+      window.removeEventListener("pointercancel", up)
+      handlers.current.tryDrop()
+    }
+    window.addEventListener("pointermove", move)
+    window.addEventListener("pointerup", up)
+    window.addEventListener("pointercancel", up)
   }
+
+  // Esc while dragging: back where it was.
+  useEffect(() => {
+    if (!dragId) return
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && handlers.current.putBack()
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [dragId])
 
   // Stable handles for the (memoized) pieces — the real handlers change with
   // every render (they close over what's being carried).
-  const handlers = useRef({ handlePick, pickOpening })
-  handlers.current = { handlePick, pickOpening }
-  const onStartDrag = useCallback((id: string) => handlers.current.handlePick(id), [])
+  const handlers = useRef({ handlePick, pickOpening, tryDrop, putBack })
+  handlers.current = { handlePick, pickOpening, tryDrop, putBack }
+  const onStartDrag = useCallback(
+    (id: string, e: ThreeEvent<PointerEvent>) => handlers.current.handlePick(id, e),
+    []
+  )
   const onPickOpening = useCallback((id: string) => handlers.current.pickOpening(id), [])
 
   const floorPan = useRef<FloorPan | null>(null)
@@ -291,10 +344,7 @@ export const Scene = ({ readOnly = false, dark = false }: Props) => {
   // furniture placement only. All no-ops in display mode.
   const handleDown = (_x: number, _z: number, button: number, e: PointerEvent) => {
     if (readOnly || button !== 0) return
-    if (dragId) {
-      tryDrop() // clicking anywhere drops what you're carrying (if the spot is free)
-      return
-    }
+    if (dragId) return // mid-drag (another button/finger): the release decides
     if (carriedOpening) return
     // Bare floor, Select tool + Shift: a box selection, added to the current
     // one — BoxSelect takes over the drag.
@@ -372,7 +422,7 @@ export const Scene = ({ readOnly = false, dark = false }: Props) => {
               isHintShown={!carried && !carriedOpening}
               readOnly={readOnly}
             />
-            <CameraFit />
+            <CameraFit insets={fitInsets} />
 
             {/* See-through, cut-down wall section under the cursor — always in view
             mode; in edit mode while selecting or placing furniture (the wall,
@@ -389,7 +439,7 @@ export const Scene = ({ readOnly = false, dark = false }: Props) => {
               fades={fades.current}
               onChange={setXrayActive}
             />
-            <CarryController carryId={readOnly ? null : dragId} />
+            <CarryController carryId={readOnly ? null : dragId} grab={grab} />
 
             <Lighting profile={profile} />
 
