@@ -1,4 +1,5 @@
-import { Button, ButtonGroup, CloseButton, ColorSwatchPicker } from "@heroui/react"
+import { Button, CloseButton, ColorSwatchPicker } from "@heroui/react"
+import clsx from "clsx"
 import { Copy, Dices, RotateCw, Trash2 } from "lucide-react"
 import { useEditorStore } from "../store"
 import { SWATCHES, DEFAULT_COLOR } from "../palette"
@@ -34,6 +35,9 @@ export const Inspector = () => {
   // Walls/doors sit on grid edges: they can't be turned or copied in place.
   const edge = isEdgeType(obj.type)
 
+  const canRotate = !edge && !isWallMounted(obj.type)
+  const otherActionCount = [canRotate, shufflable, !edge].filter(Boolean).length
+
   return (
     <div className="pointer-events-auto w-64 rounded-2xl border border-border bg-overlay/90 p-4 text-foreground shadow-overlay backdrop-blur-md">
       <div className="mb-3 flex items-center justify-between">
@@ -48,11 +52,12 @@ export const Inspector = () => {
         aria-label="Colour"
         value={current}
         onChange={(c) => colorSelection(c.toString("hex").toLowerCase())}
-        className="mb-4 grid grid-cols-5 gap-1.5"
+        className="mb-4 grid grid-cols-5 justify-items-center gap-1.5"
       >
         {SWATCHES.map((c) => (
-          <ColorSwatchPicker.Item key={c} color={c}>
-            <ColorSwatchPicker.Swatch className="size-8 rounded-lg" />
+          // Size the item (its 2px ring included); the swatch fills it.
+          <ColorSwatchPicker.Item key={c} color={c} className="size-9 rounded-xl">
+            <ColorSwatchPicker.Swatch />
             <ColorSwatchPicker.Indicator />
           </ColorSwatchPicker.Item>
         ))}
@@ -60,16 +65,20 @@ export const Inspector = () => {
 
       {count === 1 && isSeatable(obj.type) && <SeatSection id={obj.id} />}
 
-      <ButtonGroup fullWidth size="sm">
+      {/* Two columns (four labelled buttons don't fit one row); Delete spans
+          the row when it would be left on its own. */}
+      <div className="grid grid-cols-2 gap-1.5">
         {/* Wall items face out from their wall — nothing to rotate. */}
-        {!edge && !isWallMounted(obj.type) && (
-          <Button variant="tertiary" onPress={rotateSelection}>
+        {canRotate && (
+          <Button size="sm" fullWidth variant="tertiary" onPress={rotateSelection}>
             <RotateCw className="size-4" />
             Rotate
           </Button>
         )}
         {shufflable && (
           <Button
+            size="sm"
+            fullWidth
             variant="tertiary"
             onPress={() => shuffleLook(selection)}
             aria-label="Shuffle look"
@@ -79,16 +88,22 @@ export const Inspector = () => {
           </Button>
         )}
         {!edge && (
-          <Button variant="tertiary" onPress={duplicateSelection}>
+          <Button size="sm" fullWidth variant="tertiary" onPress={duplicateSelection}>
             <Copy className="size-4" />
             Copy
           </Button>
         )}
-        <Button variant="danger-soft" onPress={removeSelection}>
+        <Button
+          size="sm"
+          fullWidth
+          variant="danger-soft"
+          onPress={removeSelection}
+          className={clsx(otherActionCount % 2 === 0 && "col-span-2")}
+        >
           <Trash2 className="size-4" />
           Delete
         </Button>
-      </ButtonGroup>
+      </div>
     </div>
   )
 }
