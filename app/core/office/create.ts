@@ -1,6 +1,6 @@
-import slugify from "slugify"
 import { getCore } from "../get-core"
 import type { CoreContext } from "../types"
+import { officeSlugForName } from "./slug"
 import type { Office } from "./types"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 
@@ -29,7 +29,7 @@ export const createOffice =
     if (!isAvailable)
       throw new Error(`Office with name: ${name} already exists in this organization`)
 
-    const slug = slugify(name, { lower: true, trim: true })
+    const slug = officeSlugForName(name)
 
     const office = await mainRepository.office.create({
       name,

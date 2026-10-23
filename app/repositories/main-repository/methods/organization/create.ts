@@ -9,6 +9,8 @@ export interface CreateOrganizationArgs {
   slug: string
   creatorEmail: string
   invitationHash: string
+  /** Logo (an uploaded image id). */
+  thumbnail?: string
 }
 
 export const createOrganization: CreateOrganizationFn = async ({
@@ -16,12 +18,14 @@ export const createOrganization: CreateOrganizationFn = async ({
   name,
   creatorEmail,
   invitationHash,
+  thumbnail,
 }) => {
   const result = await prisma.organization.create({
     data: {
       name,
       slug,
       invitationHash,
+      thumbnail,
       profiles: {
         createMany: {
           data: [

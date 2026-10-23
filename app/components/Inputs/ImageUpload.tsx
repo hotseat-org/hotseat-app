@@ -3,6 +3,19 @@ import clsx from "clsx"
 import { UploadCloud } from "lucide-react"
 import { useEffect, useState } from "react"
 
+/** Upload an image (direct to the image service); resolves to its id. */
+export const uploadImage = async (file: File): Promise<string> => {
+  const data = await fetch(`${import.meta.env.BASE_URL}api/upload-url`, {
+    method: "POST",
+  }).then((res) => res.json())
+  const body = new FormData()
+  body.append("file", file)
+  const uploadResult = await fetch(data.uploadUrl, { method: "POST", body }).then((res) =>
+    res.json()
+  )
+  return uploadResult.result.id
+}
+
 interface Props {
   onChange?: (value?: string) => void
   name: string
@@ -18,20 +31,7 @@ export const ImageUploadInput = ({ onChange, name }: Props) => {
     if (newFile) {
       setThumbnail(undefined)
       setFile(newFile)
-
-      const data = await fetch(`${import.meta.env.BASE_URL}api/upload-url`, {
-        method: "POST",
-      }).then((res) => res.json())
-
-      const body = new FormData()
-      body.append("file", newFile)
-
-      const uploadResult = await fetch(data.uploadUrl, {
-        method: "POST",
-        body,
-      }).then((res) => res.json())
-
-      setThumbnail(uploadResult.result.id)
+      setThumbnail(await uploadImage(newFile))
     }
   }
 

@@ -16,6 +16,7 @@ import { OrgDanger } from "./panels/OrgDanger"
 import { OrgGeneral } from "./panels/OrgGeneral"
 import { OrgInvitations } from "./panels/OrgInvitations"
 import { OrgMembers } from "./panels/OrgMembers"
+import { OrgOffices } from "./panels/OrgOffices"
 import { OfficeGeneral, useOfficeData } from "./panels/OfficeGeneral"
 import { OfficeDanger } from "./panels/OfficeDanger"
 import { UserDanger } from "./panels/UserDanger"
@@ -67,6 +68,7 @@ const orgPanels: Record<string, ReactNode> = {
   general: <OrgGeneral />,
   invitations: <OrgInvitations />,
   members: <OrgMembers />,
+  offices: <OrgOffices />,
   danger: <OrgDanger />,
 }
 
@@ -145,6 +147,12 @@ function OrgSettings({ section }: { section: string }) {
       label: "Invitations",
       icon: Mail,
       description: "Invite people by email or with a link.",
+    },
+    {
+      id: "offices",
+      label: "Offices",
+      icon: Building2,
+      description: "The organization's offices. Deleting one removes its layout and bookings.",
     },
     { id: "danger", label: "Danger zone", icon: AlertTriangle, danger: true },
   ]

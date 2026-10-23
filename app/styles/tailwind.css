@@ -371,6 +371,13 @@
     "Nunito", ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
+/* Fields (inputs, text areas, search, selects…) drop HeroUI's 2px focus ring:
+   focus shows as their slightly darker border, and the caret. Other controls
+   (buttons, switches) keep their focus-visible ring for keyboard users. */
+@utility focus-field-ring {
+  --tw-ring-color: transparent;
+}
+
 /* Apply the rounded stack to everything (HeroUI components inherit it). */
 body {
   font-family: var(--font-sans);

@@ -7,11 +7,13 @@ import type { Organization } from "./types"
 export interface CreateOrganizationArgs {
   name: string
   userEmail: string
+  /** Logo (an uploaded image id). */
+  thumbnail?: string
 }
 
 export const createOrganization =
   ({ mainRepository }: CoreContext) =>
-  async ({ name, userEmail }: CreateOrganizationArgs): Promise<Organization> => {
+  async ({ name, userEmail, thumbnail }: CreateOrganizationArgs): Promise<Organization> => {
     const core = getCore()
 
     const isAvailable = await core.organization.isAvailable(name)
@@ -24,6 +26,7 @@ export const createOrganization =
       creatorEmail: userEmail,
       slug,
       invitationHash: nanoid(8),
+      thumbnail,
     })
 
     return organization

@@ -48,6 +48,13 @@ export async function loadOrgSettings(request: Request, profile: Profile) {
         invites: await core.organization.getInvites(args),
         origin: new URL(request.url).origin,
       }
+    case "offices": {
+      const offices = await core.organization.listOffices(profile.organizationSlug)
+      return {
+        section,
+        offices: offices.data.map(({ slug, name, thumbnail }) => ({ slug, name, thumbnail })),
+      }
+    }
     default:
       return { section }
   }

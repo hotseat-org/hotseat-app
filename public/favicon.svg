@@ -1,11 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- Hot Seat: your spot — a dot held in nested seat curves, like a plateau on
-       the app's contour map. One centre (32,29) for curves and dot; lighter
-       toward the middle, so the eye lands on the dot. -->
-  <rect width="64" height="64" rx="14" fill="#3f63a8"/>
-  <g fill="none" stroke-linecap="round" stroke-width="5.5">
-    <path d="M11.5 15V29A20.5 20.5 0 0 0 52.5 29V15" stroke="#87a8e0"/>
-    <path d="M21 15V29A11 11 0 0 0 43 29V15" stroke="#c6d8f7"/>
+  <!-- Hot Seat "Dusk": three contour lines across a slope, like the app's
+       terrain — warm at dusk on a night-blue tile. Each rises gently mid-way
+       and settles to the right; the lines fan out down the slope. -->
+  <clipPath id="tile"><rect width="64" height="64" rx="14"/></clipPath>
+  <rect width="64" height="64" rx="14" fill="#2c3866"/>
+  <g clip-path="url(#tile)" fill="none" stroke-linecap="round">
+    <path d="M-4 28.0C14 18.0 30 16.0 46 22.0S62 28.0 68 26.0" stroke="#f6c560" stroke-width="5.5"/>
+    <path d="M-4 40.0C14 29.1 30 26.8 46 33.7S62 40.6 68 38.3" stroke="#ef8a5b" stroke-width="5.5"/>
+    <path d="M-4 52.0C14 40.2 30 37.6 46 45.4S62 53.2 68 50.6" stroke="#d1607e" stroke-width="5.5"/>
   </g>
-  <circle cx="32" cy="29" r="5" fill="#ffffff"/>
 </svg>

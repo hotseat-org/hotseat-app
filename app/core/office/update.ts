@@ -1,5 +1,5 @@
-import slugify from "slugify"
 import type { CoreContext } from "../types"
+import { officeSlugForName } from "./slug"
 import type { Office } from "./types"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 
@@ -14,8 +14,7 @@ export interface UpdateOfficeArgs {
   }
 }
 
-/** The slug an office name maps to (same rule as on create). */
-export const officeSlugForName = (name: string) => slugify(name, { lower: true, trim: true })
+export { officeSlugForName }
 
 /** Renaming to a name whose slug another office in the org already has. */
 export class OfficeNameTakenError extends Error {

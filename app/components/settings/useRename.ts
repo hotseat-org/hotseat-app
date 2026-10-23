@@ -12,17 +12,20 @@ export function useRename({
   currentName,
   currentSlug,
   action,
+  slugFor = (name) => slugify(name, { lower: true, trim: true }),
 }: {
   currentName: string
   currentSlug: string
   action: string
+  /** The server's name → slug rule, so the preview matches what's saved. */
+  slugFor?: (name: string) => string
 }) {
   const [name, setName] = useState(currentName)
   // Server data changed (saved, or another page) → follow it.
   useEffect(() => setName(currentName), [currentName])
 
   const renamed = name.trim() !== currentName.trim()
-  const slug = renamed ? slugify(name, { lower: true, trim: true }) : currentSlug
+  const slug = renamed ? slugFor(name) : currentSlug
   const slugChanges = renamed && !!slug && slug !== currentSlug
 
   // A plain fetch, not a fetcher: a failed *check* (offline, blip) must not take

@@ -1,4 +1,4 @@
-import { Input, Label, Modal, Spinner, TextField } from "@heroui/react"
+import { Modal, Spinner } from "@heroui/react"
 import {
   useFetcher,
   useNavigate,
@@ -8,28 +8,25 @@ import {
   redirect,
   useParams,
 } from "react-router"
-import { useDebounce } from "@uidotdev/usehooks"
-import { Check, HelpCircle } from "lucide-react"
-import { useEffect, useState } from "react"
+import { ImagePlus } from "lucide-react"
 import { z } from "zod"
 import { Button } from "~/components/Button"
-import { ImageUploadInput } from "~/components/Inputs/ImageUpload"
+import {
+  BannerClose,
+  ContourBanner,
+  IMAGE_TYPES,
+  TitleNameField,
+  useImageUpload,
+  useNameCheck,
+} from "~/components/CreateModal"
+import { officeSlugForName } from "~/core/office/slug"
 import { getCore } from "~/core/get-core"
 import { requireProfile } from "~/utils/loader-helpers/requireProfile"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 
-type Availability = "available" | "not-available" | "unknown" | "checking"
-
 enum Intent {
   CREATE_OFFICE = "createOffice",
   CHECK_AVAILABILITY = "checkAvailability",
-}
-
-const availabilityToLabelMap: Record<Availability, string> = {
-  available: "Available",
-  "not-available": "Not available",
-  checking: "Checking availability",
-  unknown: "Start typing to check availability",
 }
 
 // Creating offices is an admin's: anyone else is sent back to the organization.
@@ -81,27 +78,14 @@ export const NewOffice = () => {
       setSearchParams(next, { replace: true })
     } else navigate("..", { replace: true })
   }
-  const [name, setName] = useState<string | undefined>()
-  const debouncedName = useDebounce(name, 400)
-  const { Form, submit, state, data: isAvailable } = useFetcher<typeof action>()
-
-  const getAvailabilityState = (): Availability => {
-    if (state === "submitting") return "checking"
-    if (!debouncedName) return "unknown"
-    if (isAvailable) return "available"
-    return "not-available"
-  }
-
-  const availability = useDebounce(getAvailabilityState(), 200)
-
-  useEffect(() => {
-    if (debouncedName) {
-      submit(
-        { name: debouncedName, intent: Intent.CHECK_AVAILABILITY },
-        { method: "POST", action: `/app/o/${slug}/offices/new` }
-      )
-    }
-  }, [debouncedName, submit])
+  const action = `/app/o/${slug}/offices/new`
+  const { name, setName, availability } = useNameCheck({
+    action,
+    intent: Intent.CHECK_AVAILABILITY,
+  })
+  const cover = useImageUpload()
+  const create = useFetcher()
+  const isCreating = create.state !== "idle"
 
   return (
     <Modal
@@ -112,41 +96,55 @@ export const NewOffice = () => {
     >
       <Modal.Backdrop>
         <Modal.Container>
-          <Modal.Dialog>
-            <Form method="POST" action={`/app/o/${slug}/offices/new`}>
-              <Modal.Header>
-                <p>Create a new office</p>
-              </Modal.Header>
-              <Modal.Body>
-                <div className="flex flex-col gap-4">
-                  <ImageUploadInput name="thumbnail" />
-                  <TextField isRequired name="name" onChange={(value) => setName(value)} autoFocus>
-                    <Label>Name</Label>
-                    <Input />
-                  </TextField>
-                  <div className="flex gap-2 items-center h-8">
-                    {availability === "available" && <Check size="20" />}
-                    {availability === "checking" && <Spinner size="sm" color="warning" />}
-                    {availability === "unknown" && <HelpCircle size="20" />}
-                    <span className="text-sm">{availabilityToLabelMap[availability]}</span>
-                  </div>
+          <Modal.Dialog className="overflow-hidden p-0">
+            <create.Form method="POST" action={action}>
+              <input type="hidden" name="thumbnail" value={cover.id ?? ""} />
+              <ContourBanner image={cover.preview} className="h-[190px]">
+                <BannerClose onPress={close} />
+                {/* The whole banner picks the photo; the pill says so. */}
+                <label className="absolute inset-0 flex cursor-pointer items-center justify-center">
+                  <input
+                    type="file"
+                    accept={IMAGE_TYPES}
+                    className="sr-only"
+                    onChange={(e) => cover.pick(e.target.files?.[0])}
+                  />
+                  <span className="inline-flex h-[38px] items-center gap-2 rounded-full border border-border bg-overlay/90 px-4 text-[13px] font-extrabold text-foreground shadow-sm">
+                    {cover.isUploading ? <Spinner size="sm" /> : <ImagePlus size={16} />}
+                    {cover.preview ? "Change cover photo" : "Add a cover photo"}
+                  </span>
+                </label>
+              </ContourBanner>
+              <div className="flex flex-col gap-5 px-[30px] pt-[26px] pb-7">
+                <TitleNameField
+                  label="New office"
+                  placeholder="Name your office"
+                  name={name}
+                  onChange={setName}
+                  path="…/offices/"
+                  slug={officeSlugForName(name)}
+                  availability={availability}
+                />
+                <p className="text-[13px] leading-normal text-muted">
+                  Next you&apos;ll lay out its floor, from a template or a blank plan.
+                </p>
+                <div className="flex justify-end gap-2.5">
+                  <Button variant="ghost" type="button" onPress={close}>
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    name="intent"
+                    value={Intent.CREATE_OFFICE}
+                    isDisabled={availability !== "available" || cover.isUploading}
+                    isPending={isCreating}
+                    variant="primary"
+                  >
+                    Create office
+                  </Button>
                 </div>
-              </Modal.Body>
-              <Modal.Footer>
-                <Button variant="secondary" type="button" onPress={close}>
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  name="intent"
-                  value={Intent.CREATE_OFFICE}
-                  isDisabled={availability !== "available"}
-                  variant="primary"
-                >
-                  Create
-                </Button>
-              </Modal.Footer>
-            </Form>
+              </div>
+            </create.Form>
           </Modal.Dialog>
         </Modal.Container>
       </Modal.Backdrop>

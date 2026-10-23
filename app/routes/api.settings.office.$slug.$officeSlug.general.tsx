@@ -63,7 +63,17 @@ export const action = async (args: ActionFunctionArgs) => {
     }
     case "delete-office": {
       await core.office.delete(who)
-      return redirect(`/app/o/${organizationSlug}/offices`)
+      // From the org's office list, about another office: stay put (the list
+      // refreshes). Otherwise the page underneath is gone: on to the offices.
+      const from = formData.get("from")
+      if (from === "org-list") return data({ ok: true as const, intent })
+      if (from !== "org-current") return redirect(`/app/o/${organizationSlug}/offices`)
+      // Back into the list, over another office — straight there: through the
+      // offices page's own redirect, the org layout (and its list) wouldn't reload.
+      const [next] = (await core.organization.listOffices(organizationSlug)).data
+      return redirect(
+        `/app/o/${organizationSlug}/offices${next ? `/${next.slug}` : ""}?settings=org/offices`
+      )
     }
   }
 }

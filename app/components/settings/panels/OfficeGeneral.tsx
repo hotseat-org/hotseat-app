@@ -7,6 +7,7 @@ import { SetLogoDialog } from "../dialogs/SetLogo"
 import { CardTitle, NameField, SaveBar, SettingsCard } from "../ui"
 import { useRename } from "../useRename"
 import { useSettings } from "../useSettings"
+import { officeSlugForName } from "~/core/office/slug"
 import { Button } from "~/components/Button"
 import { enclosedRegions } from "~/components/OfficeEditor/layout"
 import { isSeatable, type SceneObject } from "~/components/OfficeEditor/types"
@@ -37,7 +38,12 @@ export function OfficeGeneral() {
   const action = `/api/settings/office/${slug}/${officeSlug}/general`
 
   // Like organizations: renaming renames the URL.
-  const rename = useRename({ currentName: office?.name ?? "", currentSlug: officeSlug, action })
+  const rename = useRename({
+    currentName: office?.name ?? "",
+    currentSlug: officeSlug,
+    action,
+    slugFor: officeSlugForName,
+  })
 
   const [description, setDescription] = useState(office?.description ?? "")
   useEffect(() => setDescription(office?.description ?? ""), [office?.description])
