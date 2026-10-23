@@ -32,6 +32,7 @@ import { isTypingTarget } from "./keyboard"
 import { isEdgeType } from "./types"
 import { ControlsGuide } from "./ui/ControlsGuide"
 import { CustomBooking } from "./ui/CustomBooking"
+import { RoutePill } from "./ui/RoutePill"
 import { MOBILE_CHROME } from "~/components/office/mobile"
 import { useIsMobile } from "~/utils/hooks/useIsMobile"
 import { ContourBackdrop } from "~/components/ui/ContourBackdrop"
@@ -223,6 +224,30 @@ const OfficeEditorInner = ({
     return () => window.removeEventListener("hotseat:edit-layout", enterEdit)
   }, [editable])
   const readOnly = mode === "display"
+
+  // Wayfinding: a shared link (?to=<desk>) opens with the way to that desk
+  // shown; the URL then follows whatever way is shown, so "Copy link" is just
+  // the page's address. Editing puts it away.
+  const routeDesk = useEditorStore((s) => s.route?.deskId)
+  const hasLayout = useEditorStore((s) => s.objects.length > 0)
+  const askedRoute = useRef(false)
+  useEffect(() => {
+    if (askedRoute.current || !hasLayout) return
+    askedRoute.current = true
+    const to = new URL(window.location.href).searchParams.get("to")
+    if (to && store.getState().objects.some((o) => o.id === to)) store.getState().showRoute(to)
+  }, [hasLayout, store])
+  useEffect(() => {
+    if (!askedRoute.current) return
+    const url = new URL(window.location.href)
+    if (routeDesk) url.searchParams.set("to", routeDesk)
+    else url.searchParams.delete("to")
+    if (url.href !== window.location.href)
+      window.history.replaceState(window.history.state, "", url)
+  }, [routeDesk])
+  useEffect(() => {
+    if (!readOnly) store.getState().clearRoute()
+  }, [readOnly, store])
   // The one way into the editor: never on a phone or without WebGL, whatever
   // asks (the empty-office card, the shell, a settings button).
   const enterEdit = useCallback(() => {
@@ -353,26 +378,30 @@ const OfficeEditorInner = ({
 
   return (
     <div className="relative h-full w-full overflow-hidden">
-      {!isEmpty && flat && (
-        <FloorPlan
-          dark={isDark}
-          padRight={shellMode ? 340 : 40}
-          phoneChrome={shellMode && isMobile ? MOBILE_CHROME : undefined}
-        />
-      )}
-      {!isEmpty && !flat && (
-        <Suspense fallback={null}>
-          <SceneCanvas
-            store={store}
-            people={people ?? NO_PEOPLE}
-            readOnly={readOnly}
+      {/* The scene's own layer: its floating labels and desk card stack inside
+          it (isolate), so they never cover the panels and menus above. */}
+      <div className="absolute inset-0 isolate">
+        {!isEmpty && flat && (
+          <FloorPlan
             dark={isDark}
-            fitInsets={shellMode && !isMobile ? SHELL_INSETS : undefined}
-            showStats={showStats}
-            onStats={onStats}
+            padRight={shellMode ? 340 : 40}
+            phoneChrome={shellMode && isMobile ? MOBILE_CHROME : undefined}
           />
-        </Suspense>
-      )}
+        )}
+        {!isEmpty && !flat && (
+          <Suspense fallback={null}>
+            <SceneCanvas
+              store={store}
+              people={people ?? NO_PEOPLE}
+              readOnly={readOnly}
+              dark={isDark}
+              fitInsets={shellMode && !isMobile ? SHELL_INSETS : undefined}
+              showStats={showStats}
+              onStats={onStats}
+            />
+          </Suspense>
+        )}
+      </div>
 
       {/* Empty office: cover the bare 3D scene with the same grid+dots backdrop
           as the empty-org screen (sits below the chrome + template card). */}
@@ -387,6 +416,16 @@ const OfficeEditorInner = ({
         <SelectionBox />
         {/* Booking a desk on any days (the seat card's "Custom…"). */}
         {readOnly && <CustomBooking />}
+
+        {/* The way to a desk: where to, how far, share, close. */}
+        {readOnly && (
+          <div
+            className="absolute inset-x-0 flex justify-center px-4"
+            style={{ top: isMobile ? MOBILE_CHROME.top + 12 : 84 }}
+          >
+            <RoutePill className="max-w-full" />
+          </div>
+        )}
 
         {/* Perf HUD toggle + live FPS/frame-time readout (bottom-left). */}
         {!isEmpty && !flat && (

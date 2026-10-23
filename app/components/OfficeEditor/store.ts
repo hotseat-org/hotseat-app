@@ -202,6 +202,16 @@ export interface EditorState {
   spotlight: { id: string } | null
   spotlightSeat: (id: string) => void
   resetSpotlight: () => void
+  /**
+   * Wayfinding: the desk whose way is shown (see wayfinding.ts) — drawn on the
+   * floor in both views until closed. `from`: start at your own desk when you
+   * have one that day (the default), or the nearest entrance. `nonce`
+   * re-frames the view when asked again or switched.
+   */
+  route: { deskId: string; from: "desk" | "entrance"; nonce: number } | null
+  showRoute: (deskId: string) => void
+  setRouteFrom: (from: "desk" | "entrance") => void
+  clearRoute: () => void
   /** Paint tool colour (null = back to the default/theme colour). */
   paintColor: string | null
   setPaintColor: (color: string | null) => void
@@ -467,6 +477,15 @@ const makeInitializer =
       spotlight: null,
       spotlightSeat: (id) => set({ spotlight: { id }, seatCard: null }),
       resetSpotlight: () => set({ spotlight: null }),
+      route: null,
+      showRoute: (deskId) =>
+        set((s) => ({
+          route: { deskId, from: "desk", nonce: (s.route?.nonce ?? 0) + 1 },
+          seatCard: null,
+        })),
+      setRouteFrom: (from) =>
+        set((s) => (s.route ? { route: { ...s.route, from, nonce: s.route.nonce + 1 } } : {})),
+      clearRoute: () => set({ route: null }),
       paintColor: "#c9b48d",
       setPaintColor: (paintColor) => set({ paintColor }),
       paintWalls: (ids, color) => {

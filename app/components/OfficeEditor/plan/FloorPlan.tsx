@@ -11,6 +11,7 @@ import {
   type CSSProperties,
   type ReactNode,
 } from "react"
+import { routeBounds, useRoute } from "../wayfinding"
 import { useEditorStore } from "../store"
 import { edgeNodes, enclosedRegions, footprintCells, runsAlongX, SEG } from "../layout"
 import { SURFACES, type SurfacePalette } from "../palette"
@@ -221,18 +222,8 @@ export const FloorPlan = ({
       clearTimeout(current.timer)
     }
   }, [])
-  useEffect(() => {
-    const from = viewRef.current
-    const { size: s, insets: pad } = latest.current
-    if (!spotlight || !from || !s) return
-    resetSpotlight()
-    const target =
-      scene.occupants.get(spotlight.id) ?? desks.find((d) => d.desk.id === spotlight.id)?.desk
-    if (!target) return
-    const k = Math.min(MAX_K, Math.max(from.k, SPOTLIGHT_K))
-    const cx = pad.left + (s.w - pad.left - pad.right) / 2
-    const cy = pad.top + (s.h - pad.top - pad.bottom) / 2
-    const to = { k, tx: cx - target.x * k, ty: cy - target.z * k }
+  /** Glide the view from `from` to `to` (instant with reduced motion). */
+  const glideTo = useCallback((from: View, to: View) => {
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches
     const start = performance.now()
     const step = (now: number) => {
@@ -245,13 +236,43 @@ export const FloorPlan = ({
       })
       if (t < 1) glide.current.frame = requestAnimationFrame(step)
     }
-    // Clearing the request re-runs this effect: the glide outlives it.
     cancelAnimationFrame(glide.current.frame)
-    clearTimeout(glide.current.timer)
     glide.current.frame = requestAnimationFrame(step)
+  }, [])
+  useEffect(() => {
+    const from = viewRef.current
+    const { size: s, insets: pad } = latest.current
+    if (!spotlight || !from || !s) return
+    resetSpotlight()
+    const target =
+      scene.occupants.get(spotlight.id) ?? desks.find((d) => d.desk.id === spotlight.id)?.desk
+    if (!target) return
+    const k = Math.min(MAX_K, Math.max(from.k, SPOTLIGHT_K))
+    const cx = pad.left + (s.w - pad.left - pad.right) / 2
+    const cy = pad.top + (s.h - pad.top - pad.bottom) / 2
+    const to = { k, tx: cx - target.x * k, ty: cy - target.z * k }
+    // Clearing the request re-runs this effect: the glide outlives it.
+    clearTimeout(glide.current.timer)
+    glideTo(from, to)
     setHighlightId(spotlight.id)
     glide.current.timer = setTimeout(() => setHighlightId(null), SPOTLIGHT_GLIDE_MS + SPOTLIGHT_MS)
-  }, [spotlight, hasView, scene, desks, resetSpotlight])
+  }, [spotlight, hasView, scene, desks, resetSpotlight, glideTo])
+
+  // --- The way to a desk: the route (turned with the plan), framed once shown.
+  const route = useRoute()
+  const routeNonce = route?.path ? route.nonce : null
+  const routePoints = useMemo(
+    () => route?.path?.points.map(([x, z]) => turnPoint(x, z, turn)),
+    [route?.path, turn]
+  )
+  useEffect(() => {
+    const from = viewRef.current
+    const { size: s, insets: pad } = latest.current
+    if (!routePoints || !from || !s) return
+    const b = routeBounds(routePoints)
+    glideTo(from, fitView({ x0: b.x0, x1: b.x1, y0: b.z0, y1: b.z1 }, s.w, s.h, pad))
+    // Only when a way is asked for (or the plan first has a view) — not on every pan.
+  }, [routeNonce, hasView])
 
   // --- Pan (drag) and zoom (wheel, pinch) --------------------------------
   const zoomAt = useCallback(
@@ -387,9 +408,25 @@ export const FloorPlan = ({
               />
             )}
             {scene.node}
+            {routePoints && <RoutePath points={routePoints} k={view.k} />}
           </g>
         )}
       </svg>
+
+      {/* Where the way ends: a ring pulsing round the desk's chair. */}
+      {view && routePoints && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"
+          style={{
+            ...screen(...routePoints[routePoints.length - 1]),
+            width: avatarSize + 14,
+            height: avatarSize + 14,
+          }}
+        >
+          <span className="route-pulse absolute inset-0 rounded-full border-[3px] border-accent bg-accent/15 shadow-[0_0_16px_2px_var(--accent),inset_0_0_10px_var(--accent)]" />
+        </div>
+      )}
 
       {/* The spotlit desk: rings ripple out from it. */}
       {view &&
@@ -603,6 +640,76 @@ const VISIBLE_STEP = 16
  * the office stands on, then the lines of the tiles in view — turned with the
  * view, hairline at any zoom. Each tile's path is built once per turn.
  */
+/**
+ * The way to a desk on the plan: a glowing line — a blurred halo, a solid
+ * core with a light sheen — with streaks of light running toward the desk,
+ * and a glowing dot at the entrance. Plan units; strokes in screen pixels, and
+ * the blur sized from the zoom (`k`), so it looks the same at any zoom.
+ */
+const RoutePath = ({ points, k }: { points: [number, number][]; k: number }) => {
+  const d = points.map(([x, z], i) => `${i ? "L" : "M"}${x.toFixed(3)} ${z.toFixed(3)}`).join("")
+  const [sx, sz] = points[0]
+  // The filter's own box: the route's, with room for the glow.
+  const xs = points.map((p) => p[0])
+  const zs = points.map((p) => p[1])
+  const pad = 40 / k
+  const box = {
+    x: Math.min(...xs) - pad,
+    y: Math.min(...zs) - pad,
+    width: Math.max(...xs) - Math.min(...xs) + pad * 2,
+    height: Math.max(...zs) - Math.min(...zs) + pad * 2,
+  }
+  const line = {
+    d,
+    fill: "none",
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    vectorEffect: "non-scaling-stroke" as const,
+  }
+  return (
+    <g aria-hidden pointerEvents="none">
+      <defs>
+        <filter id="route-glow" filterUnits="userSpaceOnUse" {...box}>
+          <feGaussianBlur stdDeviation={6 / k} />
+        </filter>
+        <filter id="route-shine" filterUnits="userSpaceOnUse" {...box}>
+          <feGaussianBlur stdDeviation={2.5 / k} result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+      <path
+        {...line}
+        stroke="var(--accent)"
+        strokeOpacity={0.55}
+        strokeWidth={16}
+        filter="url(#route-glow)"
+      />
+      <path {...line} stroke="var(--accent)" strokeWidth={4.5} />
+      <path {...line} stroke="#ffffff" strokeOpacity={0.45} strokeWidth={1.5} />
+      <path
+        {...line}
+        className="route-flow"
+        stroke="#ffffff"
+        strokeWidth={4}
+        strokeDasharray="10 70"
+        filter="url(#route-shine)"
+      />
+      <circle
+        cx={sx}
+        cy={sz}
+        r={0.5}
+        fill="var(--accent)"
+        fillOpacity={0.45}
+        filter="url(#route-glow)"
+      />
+      <circle cx={sx} cy={sz} r={0.17} fill="var(--accent)" stroke="#ffffff" strokeWidth={0.05} />
+    </g>
+  )
+}
+
 /** The plan is about the office: its land is drawn quieter than in 3D. */
 const PLAN_CONTOUR_OPACITY = 0.5
 

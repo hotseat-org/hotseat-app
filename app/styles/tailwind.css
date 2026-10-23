@@ -477,6 +477,36 @@ input:-webkit-autofill:focus {
   }
 }
 
+/* Wayfinding on the plan: streaks of light run along the route; the end ring breathes. */
+@keyframes route-flow {
+  to {
+    stroke-dashoffset: -80;
+  }
+}
+.route-flow {
+  animation: route-flow 1.4s linear infinite;
+}
+@keyframes route-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.95;
+  }
+  50% {
+    transform: scale(1.18);
+    opacity: 0.6;
+  }
+}
+.route-pulse {
+  animation: route-pulse 1.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .route-flow,
+  .route-pulse {
+    animation: none;
+  }
+}
+
 /* In-scene desk card (SeatPopup): springs up out of the desk, eases out. */
 @keyframes seat-pop {
   from {

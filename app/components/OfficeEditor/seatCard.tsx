@@ -6,6 +6,7 @@ import {
   CalendarX,
   Check,
   ChevronRight,
+  Footprints,
   LogOut,
   Pin,
   Undo2,
@@ -51,6 +52,7 @@ export const useSeatCard = () => {
   const applyReserve = useEditorStore((s) => s.applyReserve)
   const applyCancel = useEditorStore((s) => s.applyCancel)
   const openCustomBooking = useEditorStore((s) => s.openCustomBooking)
+  const showRoute = useEditorStore((s) => s.showRoute)
   const people = usePeople()
   const [closing, setClosing] = useState(false)
   const seat = card ? objects.find((o) => o.id === card.id) : undefined
@@ -179,6 +181,7 @@ export const useSeatCard = () => {
       close()
     },
     onCustom: () => openCustomBooking(seat.id),
+    onShowWay: () => showRoute(seat.id),
     onCancel: () => {
       if (!me) return
       applyCancel(me, [day])
@@ -218,6 +221,8 @@ export interface BodyProps {
   onReserve: (days: Day[]) => void
   /** Open the calendar to pick any days (the "Custom…" choice). */
   onCustom: () => void
+  /** Show the way here from the entrance. */
+  onShowWay: () => void
   onCancel: () => void
   onRelease: (days: Day[]) => void
   onReclaim: () => void
@@ -248,6 +253,7 @@ export const SeatCardBody = ({
   onClose,
   onReserve,
   onCustom,
+  onShowWay,
   onCancel,
   onRelease,
   onReclaim,
@@ -310,11 +316,24 @@ export const SeatCardBody = ({
             <Armchair className={clsx("text-accent", isSheet ? "size-5" : "size-4")} />
             {title}
           </p>
-          <CloseButton
-            aria-label="Close"
-            onPress={onClose}
-            className={isSheet ? "size-10" : undefined}
-          />
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={onShowWay}
+              className={clsx(
+                "flex items-center gap-1 rounded-full px-2 font-bold text-accent transition-colors hover:bg-accent/10",
+                isSheet ? "h-10 text-sm" : "h-7 text-xs"
+              )}
+            >
+              <Footprints className={isSheet ? "size-4" : "size-3.5"} />
+              Show the way
+            </button>
+            <CloseButton
+              aria-label="Close"
+              onPress={onClose}
+              className={isSheet ? "size-10" : undefined}
+            />
+          </div>
         </div>
 
         {/* Who has it on the shown day. */}

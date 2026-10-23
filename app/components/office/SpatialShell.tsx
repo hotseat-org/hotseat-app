@@ -98,6 +98,7 @@ export const SpatialShell = ({
   const { open: openSettings } = useSettings()
   // Who sits where on the shown day: permanent residents + bookings.
   const day = useEditorStore((s) => s.booking.day)
+  const showRoute = useEditorStore((s) => s.showRoute)
   const today = useEditorStore((s) => s.booking.today)
   const { byPerson } = useDesksOnDay()
   const [bookingsOpen, setBookingsOpen] = useState(false)
@@ -204,13 +205,24 @@ export const SpatialShell = ({
                   </>
                 )}
               </p>
-              <button
-                type="button"
-                onClick={() => setBookingsOpen(true)}
-                className="mt-1 text-xs font-bold text-accent hover:underline"
-              >
-                All my bookings
-              </button>
+              <div className="mt-1 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setBookingsOpen(true)}
+                  className="text-xs font-bold text-accent hover:underline"
+                >
+                  All my bookings
+                </button>
+                {mine && (
+                  <button
+                    type="button"
+                    onClick={() => showRoute(mine.desk.id)}
+                    className="text-xs font-bold text-accent hover:underline"
+                  >
+                    Show the way
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>

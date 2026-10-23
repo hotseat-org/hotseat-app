@@ -7,6 +7,7 @@ import { edgeLength, footprintCells, runsAlongX } from "../layout"
 import { GRID, isEdgeType, isMarker } from "../types"
 import { WALL } from "../objects/dimensions"
 import { isTypingTarget } from "../keyboard"
+import { routeBounds, useRoute } from "../wayfinding"
 
 /** Share of the viewport the office fills (room for the floating panels). */
 const FILL = 0.78
@@ -33,6 +34,7 @@ interface Anim {
  * "Fit to office": frames the whole layout — re-centres the orbit target on
  * it and zooms so it fills the view, keeping the current viewing angle. Runs
  * instantly when the office opens, and animated on `requestFit()` (button / F).
+ * Showing the way to a desk frames that route instead (see wayfinding.ts).
  */
 export const CameraFit = ({ insets = NO_INSETS }: { insets?: FitInsets }) => {
   const nonce = useEditorStore((s) => s.fitNonce)
@@ -84,6 +86,21 @@ export const CameraFit = ({ insets = NO_INSETS }: { insets?: FitInsets }) => {
       box.expandByPoint(new Vector3(o.x - hx, 0, o.z - hz))
       box.expandByPoint(new Vector3(o.x + hx, WALL.height, o.z + hz))
     }
+    frame(box, instant)
+  }, [nonce, controls, hasObjects])
+
+  // The way to a desk: frame the route, from the entrance to the chair.
+  const route = useRoute()
+  const routeNonce = route?.path ? route.nonce : null
+  useEffect(() => {
+    if (!controls || !route?.path) return
+    const b = routeBounds(route.path.points)
+    frame(new Box3(new Vector3(b.x0, 0, b.z0), new Vector3(b.x1, 1, b.z1)), false)
+  }, [routeNonce, controls])
+
+  /** Move the view onto `box` (animated unless `instant`), keeping the angle. */
+  function frame(box: Box3, instant: boolean) {
+    if (!controls) return
     const center = box.getCenter(new Vector3()).setY(0)
 
     // Keep the viewing angle: move camera + target together onto the centre.
@@ -128,7 +145,7 @@ export const CameraFit = ({ insets = NO_INSETS }: { insets?: FitInsets }) => {
       to,
     }
     invalidate()
-  }, [nonce, controls, hasObjects])
+  }
 
   useFrame((_, dt) => {
     const a = anim.current

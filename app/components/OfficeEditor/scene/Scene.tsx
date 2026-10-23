@@ -28,6 +28,7 @@ import { StudioEnvironment } from "./StudioEnvironment"
 import { PostFx } from "./PostFx"
 import { Ground } from "./Ground"
 import { Contours } from "./Contours"
+import { RouteLine } from "./RouteLine"
 import { CAMERA_OFFSET } from "./viewCentre"
 import { InteriorFloor } from "./InteriorFloor"
 import { GhostObject } from "./GhostObject"
@@ -484,6 +485,7 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
 
             {/* The land round the office: its plateau and contour lines. */}
             <Contours isEditing={!readOnly} />
+            {readOnly && <RouteLine />}
 
             {/* Tint the floor enclosed by walls (the office interior). */}
             <InteriorFloor />
