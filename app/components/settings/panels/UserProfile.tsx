@@ -18,7 +18,7 @@ export function UserProfile() {
   const { email, displayName = "", photo } = useUser()
   const { dialog, openDialog } = useSettings()
   const fetcher = useFetcher()
-  const [theme] = useTheme()
+  const [theme, , themeMetadata] = useTheme()
 
   const [name, setName] = useState(displayName)
   useEffect(() => setName(displayName), [displayName])
@@ -71,7 +71,11 @@ export function UserProfile() {
         <div>
           <CardTitle>Appearance</CardTitle>
           <p className="mt-1 text-sm text-muted">
-            {theme === Theme.DARK ? "Dark mode" : "Light mode"} · saved on this device.
+            {/* Following the device: the server can't know which, so say so
+                (naming one would differ between server and browser). */}
+            {themeMetadata.definedBy === "SYSTEM"
+              ? "Same as your device."
+              : `${theme === Theme.DARK ? "Dark mode" : "Light mode"} · saved on this device.`}
           </p>
         </div>
         <ThemeSwitcher size="lg" />

@@ -9,7 +9,7 @@ import { FocusScope, useDialog, usePreventScroll } from "react-aria"
  * renders nothing on the server and appears only after hydration.)
  *
  * Accessibility comes from React Aria's primitives, which all run fine on the
- * server: focus is trapped inside and restored on close, the page behind
+ * server: focus moves to the dialog, is trapped inside and restored on close, the page behind
  * doesn't scroll, Escape and a click on the backdrop close it.
  */
 export function InlineModal({
@@ -49,7 +49,9 @@ export function InlineModal({
         if (started && e.target === e.currentTarget) onClose()
       }}
     >
-      <FocusScope contain restoreFocus autoFocus>
+      {/* No autoFocus: useDialog focuses the dialog itself, so opening it
+          doesn't paint a focus ring on its first button; Tab goes there next. */}
+      <FocusScope contain restoreFocus>
         <div
           {...dialogProps}
           ref={ref}

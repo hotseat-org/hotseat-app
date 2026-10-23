@@ -36,7 +36,7 @@ import {
   type Tool,
   type WallCell,
 } from "./types"
-import type { BookingsByDay, Day } from "~/utils/booking"
+import type { BookingsByDay, Day, DeskDays } from "~/utils/booking"
 
 const HALF_TURN = Math.PI / 2
 
@@ -122,7 +122,8 @@ export interface Booking {
   released: BookingsByDay
   /** A booking request is in flight. */
   pending: boolean
-  reserve: (deskId: string, dates: Day[]) => void
+  /** Book days on one or more desks (a custom booking can mix desks). */
+  reserve: (picks: DeskDays[]) => void
   cancel: (dates: Day[]) => void
   /** A resident gives their desk up on days away / takes it back. */
   release: (deskId: string, dates: Day[]) => void
@@ -193,6 +194,10 @@ export interface EditorState {
   seatCard: { id: string } | null
   openSeatCard: (id: string) => void
   closeSeatCard: () => void
+  /** The desk whose custom booking dialog is open (picking days on a calendar). */
+  customBooking: { id: string } | null
+  openCustomBooking: (id: string) => void
+  closeCustomBooking: () => void
   /** Plan: a desk to bring into view and highlight ("Show my desk", "Find"); the plan clears it once shown. */
   spotlight: { id: string } | null
   spotlightSeat: (id: string) => void
@@ -456,6 +461,9 @@ const makeInitializer =
       seatCard: null,
       openSeatCard: (id) => set({ seatCard: { id } }),
       closeSeatCard: () => set({ seatCard: null }),
+      customBooking: null,
+      openCustomBooking: (id) => set({ customBooking: { id }, seatCard: null }),
+      closeCustomBooking: () => set({ customBooking: null }),
       spotlight: null,
       spotlightSeat: (id) => set({ spotlight: { id }, seatCard: null }),
       resetSpotlight: () => set({ spotlight: null }),

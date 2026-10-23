@@ -26,7 +26,16 @@ import type { Profile } from "~/core/profile/types"
 import { OfficeLayoutError } from "~/core/office/saveLayout"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import type { ReservationActionData } from "~/routes/api.reservations.$slug.$officeSlug"
-import { addDays, formatShort, isDay, maxDay, todayIn, weekStart, type Day } from "~/utils/booking"
+import {
+  addDays,
+  formatShort,
+  isDay,
+  maxDay,
+  todayIn,
+  weekStart,
+  type Day,
+  type DeskDays,
+} from "~/utils/booking"
 
 // three / R3F are browser-only — keep them out of the server bundle.
 const OfficeEditor = lazy(() => import("~/components/OfficeEditor/OfficeEditor.client"))
@@ -217,9 +226,9 @@ export default function OfficeRoute() {
   const bookingSubmit = bookingFetcher.submit
   const bookingAction = `/api/reservations/${slug}/${officeSlug}`
   const onReserve = useCallback(
-    (deskId: string, dates: Day[]) =>
+    (picks: DeskDays[]) =>
       bookingSubmit(
-        { intent: "reserve", deskId, dates: JSON.stringify(dates) },
+        { intent: "reserve", picks: JSON.stringify(picks) },
         { method: "post", action: bookingAction }
       ),
     [bookingSubmit, bookingAction]

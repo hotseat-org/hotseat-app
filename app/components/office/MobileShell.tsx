@@ -75,7 +75,7 @@ export const MobileShell = ({ offices, me, members, empty = false }: Props) => {
 }
 
 /** Where you are (office switcher), what changed (bell) and who you are (account), edge to edge. */
-const TopBar = ({ offices }: { offices: ShellOffice[] }) => (
+export const TopBar = ({ offices }: { offices: ShellOffice[] }) => (
   <header
     className="pointer-events-auto absolute inset-x-0 top-0 grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-1 border-b border-chrome-border bg-chrome/95 px-3 shadow-[0_2px_10px_var(--chrome-shadow)] backdrop-blur-md"
     style={{ height: TOP_BAR_HEIGHT }}
@@ -208,7 +208,7 @@ const CalendarSheet = ({ onClose }: { onClose: () => void }) => {
         <span aria-hidden className="mx-auto h-1.5 w-10 rounded-full bg-border" />
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-extrabold text-foreground">Pick a day</h2>
-          <CloseButton aria-label="Close" onPress={close} />
+          <CloseButton aria-label="Close" onPress={close} className="size-10" />
         </div>
         <MonthCalendar
           className="w-full"
@@ -241,7 +241,9 @@ const DayStrip = () => {
   return (
     <nav
       aria-label="Days"
-      className="flex min-w-0 flex-1 snap-x gap-1.5 overflow-x-auto [scrollbar-width:none]"
+      // Fade the ends, so a day scrolled half out reads as "more this way",
+      // not as cut off.
+      className="flex min-w-0 flex-1 snap-x gap-1.5 overflow-x-auto [mask-image:linear-gradient(to_right,transparent,black_14px,black_calc(100%-14px),transparent)] [scrollbar-width:none]"
     >
       {days.map((d: Day) => {
         const isSelected = d === day

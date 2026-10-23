@@ -544,7 +544,8 @@ const Occupant = ({
       aria-label={name}
       title={name}
       onClick={onClick}
-      className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full"
+      // A finger-sized hit area round the small avatar.
+      className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full before:absolute before:-inset-2 before:rounded-full before:content-['']"
       style={style}
     >
       <SeatAvatar person={person} email={email} isMine={isMine} size={size} />
@@ -576,7 +577,8 @@ const DeskTag = ({
     )}
   >
     {label && <span className="opacity-80">{label}</span>}
-    {person && <span>{mine ? "You" : person.name}</span>}
+    {/* First name only: neighbouring desks' tags would collide. */}
+    {person && <span>{mine ? "You" : person.name.split(" ")[0]}</span>}
     {resident && <Pin className="size-3 opacity-70" aria-label="Permanent desk" />}
   </div>
 )

@@ -47,6 +47,13 @@ export const isWeekend = (day: Day) => {
 /** Monday of the day's week. */
 export const weekStart = (day: Day) => addDays(day, -((weekday(day) + 6) % 7))
 
+/** ISO 8601 week number: weeks start on Monday, week 1 holds the year's first Thursday. */
+export const weekNumber = (day: Day) => {
+  const thursday = addDays(weekStart(day), 3)
+  const yearStart = toUtcDate(`${thursday.slice(0, 4)}-01-01`)
+  return Math.floor((toUtcDate(thursday).getTime() - yearStart.getTime()) / (7 * 86_400_000)) + 1
+}
+
 export const minDay = (a: Day, b: Day) => (a < b ? a : b)
 export const maxDay = (a: Day, b: Day) => (a > b ? a : b)
 
@@ -78,6 +85,12 @@ export const formatMonth = (day: Day) => MONTH.format(toUtcDate(day))
 
 /** Bookings by day, then by desk id → the booker's email. */
 export type BookingsByDay = Record<Day, Record<string, string>>
+
+/** Days to book on one desk — a booking request is one or more of these. */
+export interface DeskDays {
+  deskId: string
+  dates: Day[]
+}
 
 export interface BookingRow {
   deskId: string

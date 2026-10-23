@@ -1,6 +1,15 @@
 import { Button, CloseButton } from "@heroui/react"
 import clsx from "clsx"
-import { Armchair, CalendarX, Check, LogOut, Pin, Undo2 } from "lucide-react"
+import {
+  Armchair,
+  CalendarDays,
+  CalendarX,
+  Check,
+  ChevronRight,
+  LogOut,
+  Pin,
+  Undo2,
+} from "lucide-react"
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { useEditorStore } from "./store"
 import { personByEmail, usePeople, type Person } from "./people"
@@ -41,6 +50,7 @@ export const useSeatCard = () => {
   const closeSeatCard = useEditorStore((s) => s.closeSeatCard)
   const applyReserve = useEditorStore((s) => s.applyReserve)
   const applyCancel = useEditorStore((s) => s.applyCancel)
+  const openCustomBooking = useEditorStore((s) => s.openCustomBooking)
   const people = usePeople()
   const [closing, setClosing] = useState(false)
   const seat = card ? objects.find((o) => o.id === card.id) : undefined
@@ -165,9 +175,10 @@ export const useSeatCard = () => {
     onReserve: (days) => {
       if (!me) return
       applyReserve(seat.id, me, days)
-      booking.reserve(seat.id, days)
+      booking.reserve([{ deskId: seat.id, dates: days }])
       close()
     },
+    onCustom: () => openCustomBooking(seat.id),
     onCancel: () => {
       if (!me) return
       applyCancel(me, [day])
@@ -205,6 +216,8 @@ export interface BodyProps {
   closing: boolean
   onClose: () => void
   onReserve: (days: Day[]) => void
+  /** Open the calendar to pick any days (the "Custom…" choice). */
+  onCustom: () => void
   onCancel: () => void
   onRelease: (days: Day[]) => void
   onReclaim: () => void
@@ -234,6 +247,7 @@ export const SeatCardBody = ({
   closing,
   onClose,
   onReserve,
+  onCustom,
   onCancel,
   onRelease,
   onReclaim,
@@ -296,7 +310,11 @@ export const SeatCardBody = ({
             <Armchair className={clsx("text-accent", isSheet ? "size-5" : "size-4")} />
             {title}
           </p>
-          <CloseButton aria-label="Close" onPress={onClose} />
+          <CloseButton
+            aria-label="Close"
+            onPress={onClose}
+            className={isSheet ? "size-10" : undefined}
+          />
         </div>
 
         {/* Who has it on the shown day. */}
@@ -380,6 +398,21 @@ export const SeatCardBody = ({
                 )
               })}
             </div>
+            <button
+              type="button"
+              onClick={onCustom}
+              className={clsx(
+                "flex items-center gap-2.5 rounded-xl border-[1.5px] border-dashed border-border px-2.5 text-left outline-none transition-colors hover:border-muted focus-visible:ring-2 focus-visible:ring-focus",
+                isSheet ? "py-3" : "py-2"
+              )}
+            >
+              <CalendarDays className="size-4 shrink-0 text-accent" />
+              <span className="min-w-0 flex-1">
+                <span className="block text-[0.8rem] font-bold leading-tight">Custom…</span>
+                <span className="block text-[0.7rem] text-muted">Pick any days on a calendar</span>
+              </span>
+              <ChevronRight className="size-4 shrink-0 text-muted" />
+            </button>
             <Button
               size={isSheet ? "lg" : "sm"}
               variant="primary"

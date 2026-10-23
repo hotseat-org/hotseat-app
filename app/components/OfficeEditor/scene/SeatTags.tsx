@@ -51,7 +51,8 @@ export const SeatTags = () => {
                 }
               >
                 {desk.label && <span className="opacity-80">{desk.label}</span>}
-                {person && <span>{mine ? "You" : person.name}</span>}
+                {/* First name only: neighbouring desks' tags would collide. */}
+                {person && <span>{mine ? "You" : person.name.split(" ")[0]}</span>}
                 {state.kind === "resident" && (
                   <Pin className="size-3 opacity-70" aria-label="Permanent desk" />
                 )}

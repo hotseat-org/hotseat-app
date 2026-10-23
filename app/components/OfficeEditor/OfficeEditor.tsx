@@ -31,11 +31,12 @@ import { PeopleContext, type People } from "./people"
 import { isTypingTarget } from "./keyboard"
 import { isEdgeType } from "./types"
 import { ControlsGuide } from "./ui/ControlsGuide"
+import { CustomBooking } from "./ui/CustomBooking"
 import { MOBILE_CHROME } from "~/components/office/mobile"
 import { useIsMobile } from "~/utils/hooks/useIsMobile"
 import { OfficeFloor } from "~/components/office/OfficeFloor"
 import { EmptyState } from "~/components/ui/EmptyState"
-import { groupBookings, type BookingRow, type Day } from "~/utils/booking"
+import { groupBookings, type BookingRow, type Day, type DeskDays } from "~/utils/booking"
 
 const NO_PEOPLE: People = { me: null, members: [] }
 // three.js + the whole scene load only when the 3D view is shown.
@@ -73,7 +74,8 @@ interface Props {
     /** Days permanent residents gave their desks up. */
     releases: BookingRow[]
     pending: boolean
-    onReserve: (deskId: string, dates: Day[]) => void
+    /** Book one or more desks (a custom booking can mix desks). */
+    onReserve: (picks: DeskDays[]) => void
     onCancel: (dates: Day[]) => void
     onRelease: (deskId: string, dates: Day[]) => void
     onReclaim: (deskId: string, dates: Day[]) => void
@@ -378,6 +380,8 @@ const OfficeEditorInner = ({
       {/* DOM overlay — panels re-enable pointer events individually. */}
       <div className="pointer-events-none absolute inset-0">
         <SelectionBox />
+        {/* Booking a desk on any days (the seat card's "Custom…"). */}
+        {readOnly && <CustomBooking />}
 
         {/* Perf HUD toggle + live FPS/frame-time readout (bottom-left). */}
         {!isEmpty && !flat && (

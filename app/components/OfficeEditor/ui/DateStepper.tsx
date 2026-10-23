@@ -209,7 +209,8 @@ export const MonthCalendar = ({
         <button
           type="button"
           onClick={() => onPick(today)}
-          className="font-bold text-accent hover:underline"
+          // A bigger hit area than the word, without moving it.
+          className="-m-2 p-2 font-bold text-accent hover:underline"
         >
           Today
         </button>

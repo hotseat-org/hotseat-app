@@ -6,6 +6,8 @@ import { requireProfile } from "~/utils/loader-helpers/requireProfile"
 import { ButtonLink } from "~/components/ButtonLink"
 import { WorkspaceSwitcher } from "~/components/office/WorkspaceSwitcher"
 import { AccountMenu } from "~/components/office/AccountMenu"
+import { TopBar } from "~/components/office/MobileShell"
+import { useIsMobile } from "~/utils/hooks/useIsMobile"
 import { OfficeFloor } from "~/components/office/OfficeFloor"
 import { EmptyState } from "~/components/ui/EmptyState"
 import { revalidateOn } from "~/utils/revalidation"
@@ -36,17 +38,25 @@ export const loader = async (args: LoaderFunctionArgs) => {
 
 const Offices = () => {
   const { canCreate } = useLoaderData<typeof loader>()
+  const isMobile = useIsMobile()
 
   return (
     <div className="fixed inset-0 z-30 overflow-hidden bg-background text-foreground">
       {/* Empty office floor with animated shine */}
       <OfficeFloor />
 
-      {/* Floating chrome — same as the office view, minus the scene */}
-      <WorkspaceSwitcher offices={[]} />
-      <div className="absolute right-5 top-5">
-        <AccountMenu />
-      </div>
+      {/* Chrome — same as the office view, minus the scene: the phone's top bar,
+          or the floating switcher and account on larger screens. */}
+      {isMobile ? (
+        <TopBar offices={[]} />
+      ) : (
+        <>
+          <WorkspaceSwitcher offices={[]} />
+          <div className="absolute right-5 top-5">
+            <AccountMenu />
+          </div>
+        </>
+      )}
 
       {/* Empty state (pointer-events-none so it never covers the corner chrome) */}
       <div className="pointer-events-none absolute inset-0 grid place-items-center p-6">
