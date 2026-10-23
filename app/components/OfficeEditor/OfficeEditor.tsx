@@ -34,7 +34,7 @@ import { ControlsGuide } from "./ui/ControlsGuide"
 import { CustomBooking } from "./ui/CustomBooking"
 import { MOBILE_CHROME } from "~/components/office/mobile"
 import { useIsMobile } from "~/utils/hooks/useIsMobile"
-import { OfficeFloor } from "~/components/office/OfficeFloor"
+import { ContourBackdrop } from "~/components/ui/ContourBackdrop"
 import { EmptyState } from "~/components/ui/EmptyState"
 import { groupBookings, type BookingRow, type Day, type DeskDays } from "~/utils/booking"
 
@@ -378,7 +378,7 @@ const OfficeEditorInner = ({
           as the empty-org screen (sits below the chrome + template card). */}
       {isEmpty && (
         <div className="pointer-events-none absolute inset-0 bg-background">
-          <OfficeFloor />
+          <ContourBackdrop />
         </div>
       )}
 

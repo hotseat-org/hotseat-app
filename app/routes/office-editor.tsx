@@ -6,7 +6,7 @@ import { EditorBoundary } from "~/components/OfficeEditor/EditorBoundary"
 // three / R3F are browser-only — keep them out of the server bundle.
 const OfficeEditor = lazy(() => import("~/components/OfficeEditor/OfficeEditor.client"))
 
-export const meta: MetaFunction = () => [{ title: "Office Editor · Hot Seat" }]
+export const meta: MetaFunction = () => [{ title: "Office Editor · Hotseat" }]
 
 const Fallback = () => (
   <div className="flex h-full w-full items-center justify-center bg-[#dfe4ec] dark:bg-[#20242e]">

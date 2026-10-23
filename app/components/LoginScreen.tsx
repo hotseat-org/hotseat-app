@@ -1,18 +1,148 @@
 import { GoogleStrategyDefaultName } from "@coji/remix-auth-google"
-import { Button } from "@heroui/react"
-import { CSSProperties } from "react"
+import clsx from "clsx"
+import { useEffect, useState, type CSSProperties } from "react"
 import { Form, useSearchParams } from "react-router"
-import HotseatLogo from "~/components/HotseatLogo"
+import { DUSK, HotseatLockup } from "~/components/HotseatMark"
+
+/** The page's night blue (a step darker than the mark's tile, so it stands on it). */
+const NIGHT = "#1f2850"
+
+/**
+ * The three horizon lines (the logo's, across the whole screen), each as the
+ * y's of one curve: start, three control points, the smooth join and the end.
+ * They slowly breathe between a few gentle shapes, out of step with each other.
+ */
+const HORIZON = [
+  { color: DUSK.lines[0], y: [650, 560, 540, 600, 700, 650], seconds: 19 },
+  { color: DUSK.lines[1], y: [742, 640, 618, 686, 800, 744], seconds: 23 },
+  { color: DUSK.lines[2], y: [834, 720, 696, 772, 900, 838], seconds: 27 },
+]
+/** How each breath bends a line: offsets for the control points, and a sideways sway. */
+const BREATHS = [
+  { dy: [0, 0, 0, 0, 0, 0], dx: 0 },
+  { dy: [6, -16, 10, -14, 10, 4], dx: 40 },
+  { dy: [-4, 12, -14, 10, -12, -6], dx: -30 },
+]
+const curve = (y: number[], { dy, dx }: (typeof BREATHS)[number]) =>
+  `M-40 ${y[0] + dy[0]}C${240 + dx} ${y[1] + dy[1]} ${520 + dx} ${y[2] + dy[2]} ${820 + dx} ${y[3] + dy[3]}S1300 ${y[4] + dy[4]} 1500 ${y[5] + dy[5]}`
+
+/** Faint contours higher up the slope, drifting very slowly. */
+const CONTOURS = [
+  "M-40 300C260 230 560 230 860 280S1320 360 1500 320",
+  "M-40 380C260 300 560 300 860 355S1320 440 1500 400",
+  "M-40 460C260 372 560 372 860 432S1320 520 1500 480",
+]
+const STARS = [
+  [180, 90, 1.4],
+  [420, 150, 1],
+  [690, 70, 1.6],
+  [980, 130, 1.1],
+  [1230, 80, 1.5],
+  [1340, 210, 1],
+  [90, 230, 1],
+  [560, 210, 0.9],
+]
+
+/** Motion unless the system asks for less (decided on the client; still on the server). */
+const useIsAnimated = () => {
+  const [isAnimated, setIsAnimated] = useState(false)
+  useEffect(() => {
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)")
+    const update = () => setIsAnimated(!query.matches)
+    update()
+    query.addEventListener("change", update)
+    return () => query.removeEventListener("change", update)
+  }, [])
+  return isAnimated
+}
+
+/** The night sky behind everything: stars and a faint slope of contours. */
+const NightSky = ({ isAnimated }: { isAnimated: boolean }) => (
+  <svg
+    aria-hidden
+    viewBox="0 0 1440 900"
+    preserveAspectRatio="xMidYMin slice"
+    fill="none"
+    className="pointer-events-none absolute inset-0 size-full"
+  >
+    <g stroke="#2e3a6c" strokeWidth={1.5}>
+      {isAnimated && (
+        <animateTransform
+          attributeName="transform"
+          type="translate"
+          values="0 0; -36 6; 0 0"
+          dur="60s"
+          repeatCount="indefinite"
+          calcMode="spline"
+          keySplines="0.45 0 0.55 1; 0.45 0 0.55 1"
+        />
+      )}
+      {CONTOURS.map((d) => (
+        <path key={d} d={d} />
+      ))}
+    </g>
+    <g fill="#f4efe6">
+      {STARS.map(([x, y, r], i) => (
+        <circle
+          key={i}
+          cx={x}
+          cy={y}
+          r={r}
+          className="opacity-60 motion-safe:animate-[twinkle_var(--duration)_ease-in-out_var(--delay)_infinite]"
+          style={
+            { "--duration": `${3 + (i % 4)}s`, "--delay": `${(i * 0.7) % 3}s` } as CSSProperties
+          }
+        />
+      ))}
+    </g>
+  </svg>
+)
+
+/**
+ * The three warm lines, as a band along the bottom of the page — in the flow,
+ * so whatever the screen's height they never run over the buttons above.
+ */
+const Horizon = ({ isAnimated }: { isAnimated: boolean }) => (
+  <svg
+    aria-hidden
+    viewBox="0 500 1440 400"
+    preserveAspectRatio="xMidYMin slice"
+    fill="none"
+    strokeLinecap="round"
+    className="pointer-events-none relative h-[clamp(170px,32vh,340px)] w-full shrink-0"
+  >
+    {HORIZON.map(({ color, y, seconds }, i) => (
+      <path key={color} d={curve(y, BREATHS[0])} stroke={color} strokeWidth={30}>
+        {isAnimated && (
+          <animate
+            attributeName="d"
+            values={[...BREATHS, BREATHS[0]].map((b) => curve(y, b)).join(";")}
+            keyTimes="0;0.33;0.66;1"
+            calcMode="spline"
+            keySplines="0.45 0 0.55 1; 0.45 0 0.55 1; 0.45 0 0.55 1"
+            dur={`${seconds}s`}
+            begin={`${-i * 5}s`}
+            repeatCount="indefinite"
+          />
+        )}
+      </path>
+    ))}
+  </svg>
+)
+
+const BUTTON =
+  "flex h-[52px] w-full cursor-pointer items-center justify-center gap-2.5 rounded-full text-base font-extrabold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f6c560]"
 
 /**
  * The sign-in screen — the /login page, and what the join pages show to
  * someone signed out. (A plain component: a route's default export is wrapped
  * by React Router and ignores props passed to it, so it can't be reused.)
+ * Always at dusk, whatever the theme: it's the brand's moment.
  */
 export function LoginScreen({
   redirectTo,
-  title = "Welcome to Hotseat",
-  subtitle = "Sign in, or create your account, to continue",
+  title = "Find your seat.",
+  subtitle = "Book a desk, see who's in, and walk into an office that's ready for you.",
 }: {
   redirectTo?: string
   /** E.g. "Join Acme" when signing in from an invitation. */
@@ -23,76 +153,53 @@ export function LoginScreen({
   // Where to land after auth: an explicit prop (e.g. from the invite screen),
   // else a ?redirectTo query, else the auth default ("/").
   const target = redirectTo ?? searchParams.get("redirectTo") ?? undefined
+  const isAnimated = useIsAnimated()
 
   return (
-    <div className="relative flex h-screen w-full flex-col items-center justify-center overflow-hidden bg-background text-foreground">
-      {/* Ambient warmth — soft office glows in light; a "hint of outrun" cyan
-          glow and a faint starfield give the editor's night feel in dark. */}
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-1/2 top-1/3 h-96 w-125 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/10 blur-3xl dark:bg-brand/10" />
-        <div className="absolute bottom-0 left-1/2 h-64 w-150 -translate-x-1/2 rounded-full bg-warning/15 blur-3xl dark:bg-accent/10" />
-        <div className="absolute inset-0 hidden motion-safe:dark:block">
-          {Array.from({ length: 12 }, (_, i) => {
-            const seed = i * 8 + 3
-            const top = ((seed * 13) % 27) + 2
-            const left = ((seed * 17) % 88) + 5
-            const duration = 3 + (i % 4) * 0.8
-            const delay = ((seed * 11) % 30) / 10
-            return (
-              <div
-                key={i}
-                className="absolute size-0.5 rounded-full bg-foreground animate-[twinkle_var(--duration,3s)_ease-in-out_var(--delay,0s)_infinite]"
-                style={
-                  {
-                    top: `${top}%`,
-                    left: `${left}%`,
-                    "--duration": `${duration}s`,
-                    "--delay": `${delay}s`,
-                  } as CSSProperties
-                }
-              />
-            )
-          })}
-        </div>
-      </div>
+    <main
+      className="relative flex min-h-dvh w-full flex-col overflow-hidden text-[#f4efe6]"
+      style={{ background: NIGHT }}
+    >
+      <NightSky isAnimated={isAnimated} />
 
-      <div className="relative z-10 mb-10">
-        <HotseatLogo size={240} />
-      </div>
+      <header className="relative z-10 mx-auto w-full max-w-6xl px-6 py-7">
+        <HotseatLockup size={40} />
+      </header>
 
-      <div className="relative z-10 flex min-w-80 flex-col items-center gap-6 rounded-2xl border border-border bg-surface/80 px-10 py-8 shadow-overlay backdrop-blur-xl dark:bg-surface/60">
-        <div className="flex flex-col items-center gap-1.5 text-center">
-          <h1 className="text-xl font-bold tracking-widest text-foreground">{title}</h1>
-          <p className="text-sm text-muted">{subtitle}</p>
-        </div>
-
-        <div className="flex w-full flex-col gap-3">
-          <Form method="get" action={`/auth/${GoogleStrategyDefaultName}`} className="w-full">
+      <section className="relative z-10 flex flex-1 flex-col items-center justify-center gap-5 px-6 py-6 text-center">
+        <h1 className="max-w-2xl text-[clamp(36px,6vw,56px)] leading-[1.05] font-black tracking-[-0.02em]">
+          {title}
+        </h1>
+        <p className="max-w-md text-lg text-[#c9cde0]">{subtitle}</p>
+        <div className="mt-2 flex w-full max-w-[360px] flex-col gap-3">
+          <Form method="get" action={`/auth/${GoogleStrategyDefaultName}`}>
             {target && <input type="hidden" name="redirectTo" value={target} />}
-            <Button
-              variant="tertiary"
+            <button
               type="submit"
-              className="w-full justify-center border border-border bg-surface transition-colors hover:border-accent"
+              className={clsx(BUTTON, "bg-[#fbf6ee] text-[#2c3866] hover:bg-white")}
             >
               <span className="iconify-color devicon--google" />
               Continue with Google
-            </Button>
+            </button>
           </Form>
-          <Form method="get" action="/auth/github" className="w-full">
+          <Form method="get" action="/auth/github">
             {target && <input type="hidden" name="redirectTo" value={target} />}
-            <Button
-              variant="tertiary"
+            <button
               type="submit"
-              className="w-full justify-center border border-border bg-surface transition-colors hover:border-accent"
+              className={clsx(
+                BUTTON,
+                "border-[1.5px] border-[#4a5688] bg-[#1f2850]/60 text-[#f4efe6] hover:border-[#7d88b8]"
+              )}
             >
-              <span className="iconify devicon--github text-foreground" />
+              <span className="iconify devicon--github" />
               Continue with GitHub
-            </Button>
+            </button>
           </Form>
         </div>
-      </div>
+        <p className="text-[13px] text-[#9aa1c0]">New here? Signing in creates your account.</p>
+      </section>
 
-      <p className="relative z-10 mt-8 text-xs text-muted">Find your seat. Own your space.</p>
-    </div>
+      <Horizon isAnimated={isAnimated} />
+    </main>
   )
 }

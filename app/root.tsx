@@ -34,7 +34,7 @@ export const links: LinksFunction = () => [
 ]
 
 export const meta: MetaFunction = () => {
-  return [{ title: "Hot Seat" }]
+  return [{ title: "Hotseat" }]
 }
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -114,7 +114,9 @@ export function ErrorBoundary() {
   const notFound = isRouteErrorResponse(error) && error.status === 404
   const title = notFound ? "Nothing here" : "Something went wrong"
   const message = notFound
-    ? typeof error.data === "string"
+    ? // A loader's own reason ("Organization not found") — not the router's
+      // raw "No route matches URL …" for an address that doesn't exist.
+      typeof error.data === "string" && !error.data.startsWith("Error: No route matches")
       ? `${error.data}. It may have been removed, or you don't have access to it.`
       : "This page doesn't exist, or you don't have access to it."
     : "An unexpected error happened. Try again in a moment."
@@ -147,7 +149,7 @@ export function ErrorBoundary() {
             }}
           />
         )}
-        <title>{`${title} · Hot Seat`}</title>
+        <title>{`${title} · Hotseat`}</title>
         <Meta />
         <Links />
       </head>

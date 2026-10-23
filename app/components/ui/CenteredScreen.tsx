@@ -1,10 +1,10 @@
 import type { ReactNode } from "react"
-import { AmbientGlow } from "./AmbientGlow"
+import { ContourBackdrop } from "./ContourBackdrop"
 
-/** Full-height, centered screen on the warm background with an ambient glow. */
+/** Full-height, centered screen on the app background, over its contour terrain. */
 export const CenteredScreen = ({ children }: { children: ReactNode }) => (
   <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-background p-6 text-foreground">
-    <AmbientGlow />
+    <ContourBackdrop />
     {children}
   </div>
 )

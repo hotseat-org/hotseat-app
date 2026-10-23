@@ -4,6 +4,7 @@ import { ArrowUpRight, Building2 } from "lucide-react"
 import { Route } from "./+types/app._index"
 import { requireUser } from "~/services/session.server"
 import { getCore } from "~/core/get-core"
+import { HotseatLockup } from "~/components/HotseatMark"
 import { CenteredScreen } from "~/components/ui/CenteredScreen"
 import { ThumbAvatar } from "~/components/office/shell-ui"
 import { revalidateOn } from "~/utils/revalidation"
@@ -55,14 +56,9 @@ const AppIndex = () => {
   return (
     <CenteredScreen>
       <div className="relative z-10 w-full max-w-xl text-center">
-        <div className="flex items-center justify-center gap-3">
-          <span className="grid size-11 place-items-center rounded-xl bg-gradient-to-br from-accent to-brand text-xl font-black text-white">
-            H
-          </span>
-          <span className="text-2xl font-black tracking-tight">Hotseat</span>
-        </div>
+        <HotseatLockup size={44} />
 
-        <h1 className="mt-5 text-3xl font-extrabold tracking-tight">Welcome, {firstName} 👋</h1>
+        <h1 className="mt-5 text-3xl font-extrabold tracking-tight">Welcome, {firstName}</h1>
         <p className="mt-1 text-muted">Let&apos;s find you a workspace. Where do you belong?</p>
 
         {/* Invitations waiting for this email: the quickest way in. */}

@@ -8,7 +8,7 @@ import { WorkspaceSwitcher } from "~/components/office/WorkspaceSwitcher"
 import { AccountMenu } from "~/components/office/AccountMenu"
 import { TopBar } from "~/components/office/MobileShell"
 import { useIsMobile } from "~/utils/hooks/useIsMobile"
-import { OfficeFloor } from "~/components/office/OfficeFloor"
+import { ContourBackdrop } from "~/components/ui/ContourBackdrop"
 import { EmptyState } from "~/components/ui/EmptyState"
 import { revalidateOn } from "~/utils/revalidation"
 
@@ -42,8 +42,8 @@ const Offices = () => {
 
   return (
     <div className="fixed inset-0 z-30 overflow-hidden bg-background text-foreground">
-      {/* Empty office floor with animated shine */}
-      <OfficeFloor />
+      {/* No offices yet: just the land they'll stand on. */}
+      <ContourBackdrop />
 
       {/* Chrome — same as the office view, minus the scene: the phone's top bar,
           or the floating switcher and account on larger screens. */}

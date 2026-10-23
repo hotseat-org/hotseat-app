@@ -14,7 +14,7 @@ const MODES: { id: Mode; label: string }[] = [
 ]
 
 /**
- * How Hot Seat looks on this device: light, dark or following the device, and
+ * How Hotseat looks on this device: light, dark or following the device, and
  * a colour scheme (each with a light and a dark half). Both are per device —
  * teammates keep their own.
  */

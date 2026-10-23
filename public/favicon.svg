@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- Hot Seat "Dusk": three contour lines across a slope, like the app's
+  <!-- Hotseat "Dusk": three contour lines across a slope, like the app's
        terrain — warm at dusk on a night-blue tile. Each rises gently mid-way
        and settles to the right; the lines fan out down the slope. -->
   <clipPath id="tile"><rect width="64" height="64" rx="14"/></clipPath>

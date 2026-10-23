@@ -261,7 +261,8 @@ const OfficeMenu = ({
       )}
       {d.isAdmin && (
         <>
-          <Divider />
+          {/* Only between offices and the action — not above it alone. */}
+          {(d.currentOffice || otherOffices.length > 0) && <Divider />}
           <CreateLink to="?modal=new-office" label="New office" onClick={onClose} />
         </>
       )}
@@ -299,7 +300,7 @@ const DropPanel = ({
         aria-label="Close"
         tabIndex={-1}
         onClick={onClose}
-        className="pointer-events-auto absolute inset-0 bg-foreground/25"
+        className="pointer-events-auto absolute inset-0 bg-scrim"
       />
       <div
         role="dialog"

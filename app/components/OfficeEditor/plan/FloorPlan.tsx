@@ -510,7 +510,7 @@ export const FloorPlan = ({
             <button
               type="button"
               aria-label="Close desk"
-              className="absolute inset-0 bg-foreground/25"
+              className="absolute inset-0 bg-scrim"
               onPointerDown={(e) => e.stopPropagation()}
               onClick={(e) => {
                 e.stopPropagation()

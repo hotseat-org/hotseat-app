@@ -97,9 +97,10 @@
 
   --scrollbar-thumb: color-mix(in oklch, var(--foreground) 18%, transparent);
 
-  /* The editor's lone "hint of outrun" cyan — for glow / selected states */
-  --brand: #3fd0ff;
-  --brand-foreground: #20242e;
+  /* What dims the page under a sheet or drop-down menu: always a shade, never
+     a wash — warm brown here, near-black in dark. */
+  --scrim: rgba(51, 40, 24, 0.3);
+
 }
 
 /* Dark — "lifted slate": the editor's cool night slate, with a real step
@@ -141,7 +142,7 @@
   /* Light-on-dark hairlines: they read on any surface, page or panel. */
   --border: rgba(255, 255, 255, 0.1);
   --separator: rgba(255, 255, 255, 0.07);
-  --focus: var(--brand); /* cyan glow reads great on dark */
+  --focus: var(--accent);
   --link: var(--accent);
 
   --field-background: var(--surface); /* raised, as in light */
@@ -166,8 +167,8 @@
 
   --scrollbar-thumb: color-mix(in oklch, var(--foreground) 22%, transparent);
 
-  --brand: #3fd0ff;
-  --brand-foreground: #151820;
+  --scrim: rgba(4, 6, 12, 0.6);
+
 }
 
 /* ============================================================
@@ -350,12 +351,11 @@
   --chrome-border: rgba(255, 255, 255, 0.1);
 }
 
-/* Expose the editor cyan to Tailwind utilities (bg-brand / text-brand). */
+/* Expose the phone chrome to Tailwind utilities (bg-chrome / border-chrome-border). */
 @theme inline {
   --color-chrome: var(--chrome);
   --color-chrome-border: var(--chrome-border);
-  --color-brand: var(--brand);
-  --color-brand-foreground: var(--brand-foreground);
+  --color-scrim: var(--scrim);
 }
 
 @theme {
@@ -477,20 +477,6 @@ input:-webkit-autofill:focus {
   }
 }
 
-/* Office-floor shine: small glowing dots that twinkle at random spots on the
-   grid (scale + fade), each on its own cadence. */
-@keyframes grid-shine {
-  0%,
-  100% {
-    opacity: 0;
-    transform: scale(0.4);
-  }
-  50% {
-    opacity: 0.9;
-    transform: scale(1);
-  }
-}
-
 /* In-scene desk card (SeatPopup): springs up out of the desk, eases out. */
 @keyframes seat-pop {
   from {
@@ -578,10 +564,6 @@ input:-webkit-autofill:focus {
   .seat-pop-out,
   .sheet-down {
     opacity: 0;
-  }
-  .grid-shine-dot {
-    animation: none !important;
-    opacity: 0.3;
   }
 }
 

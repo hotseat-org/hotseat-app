@@ -11,8 +11,8 @@ export function UserDanger() {
       <div className="flex-1">
         <p className="font-black text-foreground">Delete account</p>
         <p className="mt-1 text-sm text-muted">
-          Account deletion isn&apos;t available yet. To stop using Hot Seat, leave your
-          organizations under Organizations.
+          Account deletion isn&apos;t available yet. To stop using Hotseat, leave your organizations
+          under Organizations.
         </p>
       </div>
       <Button variant="danger" isDisabled>

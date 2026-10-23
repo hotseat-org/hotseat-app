@@ -195,7 +195,7 @@ const CalendarSheet = ({ onClose }: { onClose: () => void }) => {
       <button
         type="button"
         aria-label="Close the calendar"
-        className="absolute inset-0 bg-foreground/25"
+        className="absolute inset-0 bg-scrim"
         onClick={close}
       />
       <section

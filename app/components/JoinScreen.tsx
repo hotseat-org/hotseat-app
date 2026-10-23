@@ -25,7 +25,7 @@ const OrganizationBadge = ({ organization }: { organization: JoinOrganization })
       className="mx-auto size-14 rounded-2xl object-cover"
     />
   ) : (
-    <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-gradient-to-br from-accent to-brand text-xl font-black text-white">
+    <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-accent/15 text-xl font-black text-accent">
       {initials(organization.name) || <Building2 className="size-6" />}
     </div>
   )
