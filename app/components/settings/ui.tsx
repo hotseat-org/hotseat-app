@@ -6,7 +6,10 @@ import { useLocation } from "react-router"
 import type { useRename } from "./useRename"
 import { Button } from "~/components/Button"
 
-/** A settings section: one rounded, bordered card. */
+/**
+ * A settings section: one rounded, bordered card, set a step into the dialog
+ * (recessed) — so what sits on it (inputs, tiles, choice cards) stands up.
+ */
 export const SettingsCard = ({
   children,
   className,
@@ -14,7 +17,12 @@ export const SettingsCard = ({
   children: ReactNode
   className?: string
 }) => (
-  <section className={clsx("rounded-[20px] border border-border bg-surface p-4 md:p-6", className)}>
+  <section
+    className={clsx(
+      "rounded-[20px] border border-border bg-surface-secondary p-4 md:p-6",
+      className
+    )}
+  >
     {children}
   </section>
 )

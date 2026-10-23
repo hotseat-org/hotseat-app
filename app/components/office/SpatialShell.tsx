@@ -28,6 +28,7 @@ import {
 } from "~/components/OfficeEditor/useBooking"
 import { formatLong } from "~/utils/booking"
 import { useSettings } from "~/components/settings/useSettings"
+import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { useIsMobile } from "~/utils/hooks/useIsMobile"
 
 export type { ShellMember } from "./shell-ui"
@@ -145,7 +146,10 @@ export const SpatialShell = ({
           active={!bookingsOpen}
           onClick={() => setBookingsOpen(false)}
         />
-        <RailLink icon={Users} label="People" onClick={() => openSettings("org", "members")} />
+        {/* Members is an admin page; the roster on the right is everyone's. */}
+        {me.role === Role.ADMIN && (
+          <RailLink icon={Users} label="People" onClick={() => openSettings("org", "members")} />
+        )}
         <RailLink
           icon={Calendar}
           label="My bookings"
@@ -229,17 +233,22 @@ export const SpatialShell = ({
               </div>
               <div>
                 <p className="text-sm font-bold text-foreground">It&apos;s just you so far</p>
-                <p className="mt-0.5 text-xs text-muted">
-                  Invite your team so they can grab a seat.
-                </p>
+                {me.role === Role.ADMIN && (
+                  <p className="mt-0.5 text-xs text-muted">
+                    Invite your team so they can grab a seat.
+                  </p>
+                )}
               </div>
-              <button
-                type="button"
-                onClick={() => openSettings("org", "invitations")}
-                className="rounded-xl bg-accent/15 px-3.5 py-2 text-sm font-bold text-accent transition hover:bg-accent/25"
-              >
-                Invite teammates
-              </button>
+              {/* Inviting is an admin's. */}
+              {me.role === Role.ADMIN && (
+                <button
+                  type="button"
+                  onClick={() => openSettings("org", "invitations")}
+                  className="rounded-xl bg-accent/15 px-3.5 py-2 text-sm font-bold text-accent transition hover:bg-accent/25"
+                >
+                  Invite teammates
+                </button>
+              )}
             </div>
           ) : (
             <>

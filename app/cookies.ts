@@ -29,3 +29,12 @@ export const themeCookie = createCookie("theme", {
   secrets: [process.env.COOKIES_SECRET ?? ""],
   secure: process.env.NODE_ENV === "production",
 })
+
+/** The colour scheme picked in Settings › Appearance (per device, like the theme). */
+export const schemeCookie = createCookie("scheme", {
+  maxAge: dayjs.duration({ years: 1 }).asSeconds(),
+  sameSite: "lax",
+  path: "/",
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+})

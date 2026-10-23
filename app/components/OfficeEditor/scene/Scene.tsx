@@ -27,6 +27,8 @@ import { Lighting } from "./Lighting"
 import { StudioEnvironment } from "./StudioEnvironment"
 import { PostFx } from "./PostFx"
 import { Ground } from "./Ground"
+import { Contours } from "./Contours"
+import { CAMERA_OFFSET } from "./viewCentre"
 import { InteriorFloor } from "./InteriorFloor"
 import { GhostObject } from "./GhostObject"
 import { Posts } from "./Posts"
@@ -128,6 +130,21 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
   const timeOfDay = useEditorStore((s) => s.timeOfDay)
   const surfaces = dark ? SURFACES.dark : SURFACES.light
   const profile = daylight(timeOfDay, surfaces.nightDepth)
+  // Where the office stands (to whole metres): the sun and its shadows aim there.
+  const officeCentre = useMemo((): [number, number] => {
+    if (!objects.length) return [0, 0]
+    let x0 = Infinity
+    let z0 = Infinity
+    let x1 = -Infinity
+    let z1 = -Infinity
+    for (const o of objects) {
+      x0 = Math.min(x0, o.x)
+      z0 = Math.min(z0, o.z)
+      x1 = Math.max(x1, o.x)
+      z1 = Math.max(z1, o.z)
+    }
+    return [Math.round((x0 + x1) / 2), Math.round((z0 + z1) / 2)]
+  }, [objects])
   const addObject = useEditorStore((s) => s.addObject)
   const removeObject = useEditorStore((s) => s.removeObject)
   const select = useEditorStore((s) => s.select)
@@ -399,10 +416,10 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
           <DaylightContext.Provider value={profile.nightness}>
             <OrthographicCamera
               makeDefault
-              position={[22, 20, 22]}
+              position={CAMERA_OFFSET}
               zoom={46}
               near={0.1}
-              far={200}
+              far={800}
             />
             <OrbitControls
               makeDefault
@@ -441,7 +458,7 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
             />
             <CarryController carryId={readOnly ? null : dragId} grab={grab} />
 
-            <Lighting profile={profile} />
+            <Lighting profile={profile} centre={officeCentre} />
 
             {readOnly && <SeatTags />}
             {readOnly && <DeskPets />}
@@ -464,6 +481,9 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
               }
               showGrid={!readOnly}
             />
+
+            {/* The land round the office: its plateau and contour lines. */}
+            <Contours isEditing={!readOnly} />
 
             {/* Tint the floor enclosed by walls (the office interior). */}
             <InteriorFloor />

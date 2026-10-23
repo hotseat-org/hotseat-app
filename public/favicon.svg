@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Hot Seat: your spot — a dot held in nested seat curves, like a plateau on
+       the app's contour map. One centre (32,29) for curves and dot; lighter
+       toward the middle, so the eye lands on the dot. -->
+  <rect width="64" height="64" rx="14" fill="#3f63a8"/>
+  <g fill="none" stroke-linecap="round" stroke-width="5.5">
+    <path d="M11.5 15V29A20.5 20.5 0 0 0 52.5 29V15" stroke="#87a8e0"/>
+    <path d="M21 15V29A11 11 0 0 0 43 29V15" stroke="#c6d8f7"/>
+  </g>
+  <circle cx="32" cy="29" r="5" fill="#ffffff"/>
+</svg>

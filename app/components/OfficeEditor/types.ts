@@ -136,8 +136,11 @@ export const isObjectType = (tool: Tool): tool is ObjectType =>
 /** Size of one grid cell in world units. */
 export const CELL = 1
 
-/** Half-size of the buildable floor (world units, centred on the origin). */
-export const BUILD_HALF = 22
+/**
+ * Half-size of the buildable floor (world units, centred on the origin). The
+ * canvas is endless in practice: this only keeps placement within sane numbers.
+ */
+export const BUILD_HALF = 1000
 
 /**
  * An invisible data marker, not an object: a floor paint sits at a spot and

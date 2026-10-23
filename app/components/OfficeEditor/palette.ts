@@ -115,6 +115,18 @@ export const SWATCHES = [
  */
 export interface SurfacePalette {
   background: string | null
+  /**
+   * The 2D plan's backdrop: the 3D ground as it actually renders (its floor
+   * colour under the scene's midday light, averaged over its gentle shading),
+   * so switching between the views keeps the same ground around the building.
+   */
+  planBackdrop: string
+  /**
+   * The contour map round the office (see contours.ts): ordinary and index
+   * lines, the plateau it stands on — in the plan (flat colour) and in 3D
+   * (lit like the ground, so a base colour) — and the plateau's edge.
+   */
+  contour: { minor: string; major: string; plateau: string; plateau3d: string }
   floor: string
   floorInside: string
   wall: string
@@ -134,6 +146,8 @@ export interface SurfacePalette {
 export const SURFACES: Record<"light" | "dark", SurfacePalette> = {
   light: {
     background: null,
+    planBackdrop: "#e5dfd2",
+    contour: { minor: "#b9a684", major: "#957d52", plateau: "#ede8de", plateau3d: "#efe4d0" },
     floor: PALETTE.floor,
     floorInside: PALETTE.floorInside,
     wall: "#c9ced8",
@@ -142,7 +156,9 @@ export const SURFACES: Record<"light" | "dark", SurfacePalette> = {
   },
   dark: {
     // Matches the app's dark --background so the scene blends into the UI.
-    background: "#20242e",
+    background: "#151820",
+    planBackdrop: "#363941",
+    contour: { minor: "#4a5160", major: "#62809f", plateau: "#3e424c", plateau3d: "#363c4a" },
     floor: "#2e3441",
     floorInside: "#4a4135",
     wall: "#8f97a8",

@@ -14,6 +14,9 @@ import type { LinksFunction, LoaderFunctionArgs } from "react-router"
 import { PreventFlashOnWrongTheme, ThemeProvider, useTheme } from "remix-themes"
 import clsx from "clsx"
 import { themeSessionResolver } from "./services/theme.server"
+import { schemeCookie } from "./cookies"
+import { SchemeProvider, useScheme } from "./utils/hooks/useScheme"
+import { DEFAULT_SCHEME, isSchemeId } from "./utils/schemes"
 import { isAuthenticated } from "./services/session.server"
 import { CenteredScreen } from "~/components/ui/CenteredScreen"
 import { getCore } from "~/core/get-core"
@@ -22,9 +25,12 @@ import { revalidateOn } from "~/utils/revalidation"
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesheet },
-  // Explicit, so it's found under the app's base path (the browser's default
-  // /favicon.ico is the domain root, outside the app).
-  { rel: "icon", href: `${import.meta.env.BASE_URL}favicon.ico` },
+  // Explicit, so they're found under the app's base path (the browser's default
+  // /favicon.ico is the domain root, outside the app). The SVG for browsers
+  // that take it (sharp at any size), the .ico (16/32/48) for the rest.
+  { rel: "icon", href: `${import.meta.env.BASE_URL}favicon.svg`, type: "image/svg+xml" },
+  { rel: "icon", href: `${import.meta.env.BASE_URL}favicon.ico`, sizes: "48x48" },
+  { rel: "apple-touch-icon", href: `${import.meta.env.BASE_URL}apple-touch-icon.png` },
 ]
 
 export const meta: MetaFunction = () => {
@@ -43,22 +49,32 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     : undefined
   const { getTheme } = await themeSessionResolver(request)
   const theme = getTheme()
+  const savedScheme = await schemeCookie.parse(request.headers.get("Cookie"))
+  const scheme = isSchemeId(savedScheme) ? savedScheme : DEFAULT_SCHEME
 
-  return { user, theme }
+  return { user, theme, scheme }
 }
 
 export default function AppWithProvider() {
   const data = useLoaderData<typeof loader>()
 
   return (
-    <ThemeProvider specifiedTheme={data.theme} themeAction="/api/set-theme">
-      <App />
+    // The action path carries the app's base (/hotseat/): a bare /api/… would
+    // post outside the app.
+    <ThemeProvider
+      specifiedTheme={data.theme}
+      themeAction={`${import.meta.env.BASE_URL}api/set-theme`}
+    >
+      <SchemeProvider initialScheme={data.scheme}>
+        <App />
+      </SchemeProvider>
     </ThemeProvider>
   )
 }
 
 const App = () => {
   const [theme] = useTheme()
+  const [scheme] = useScheme()
   const data = useLoaderData<typeof loader>()
 
   return (
@@ -66,7 +82,11 @@ const App = () => {
     // APPENDS the system theme to the server's class ("h-full" → "h-full dark")
     // before hydration — the client must produce that exact string, or React
     // reports a hydration mismatch.
-    <html lang="en" className={clsx("h-full", theme)}>
+    <html
+      lang="en"
+      className={clsx("h-full", theme)}
+      data-scheme={scheme === DEFAULT_SCHEME ? undefined : scheme}
+    >
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -110,7 +130,12 @@ export function ErrorBoundary() {
   return (
     // No ThemeProvider here: with no theme cookie, follow the system theme via a
     // tiny pre-paint script (hence suppressHydrationWarning on the class).
-    <html lang="en" className={clsx("h-full", data?.theme)} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={clsx("h-full", data?.theme)}
+      data-scheme={data?.scheme === DEFAULT_SCHEME ? undefined : data?.scheme}
+      suppressHydrationWarning
+    >
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />

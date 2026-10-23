@@ -5,6 +5,7 @@ import {
   Building,
   Building2,
   Mail,
+  Palette,
   PawPrint,
   SlidersHorizontal,
   UserRound,
@@ -22,6 +23,7 @@ import { UserInvitations } from "./panels/UserInvitations"
 import { UserOrganizations } from "./panels/UserOrganizations"
 import { UserPet } from "./panels/UserPet"
 import { UserProfile } from "./panels/UserProfile"
+import { UserAppearance } from "./panels/UserAppearance"
 import { useSettings } from "./useSettings"
 import { useUser } from "~/utils/remix"
 import { useOrganizationContext } from "~/utils/hooks/useProfileData"
@@ -29,7 +31,13 @@ import { Role } from "~/repositories/main-repository/prisma/generated/prisma-cli
 import { ThumbAvatar } from "~/components/office/shell-ui"
 
 const userLinks: SettingsLink[] = [
-  { id: "profile", label: "Profile", icon: UserRound, description: "Your name, photo and theme." },
+  { id: "profile", label: "Profile", icon: UserRound, description: "Your name and photo." },
+  {
+    id: "appearance",
+    label: "Appearance",
+    icon: Palette,
+    description: "Light or dark, and your colour scheme.",
+  },
   {
     id: "pet",
     label: "Desk pet",
@@ -48,6 +56,7 @@ const userLinks: SettingsLink[] = [
 
 const userPanels: Record<string, ReactNode> = {
   profile: <UserProfile />,
+  appearance: <UserAppearance />,
   pet: <UserPet />,
   organizations: <UserOrganizations />,
   invitations: <UserInvitations />,
@@ -112,8 +121,10 @@ function OrgSettings({ section }: { section: string }) {
   const { organization, organizations, profile } = useOrganizationContext()
   const memberCount = organizations.find((o) => o.slug === organization.slug)?.memberCount
 
-  // Org settings only make sense over an org page (slug in the URL).
-  if (!slug) return null
+  // Org settings only make sense over an org page (slug in the URL), and are an
+  // admin's: a member following a ?settings=org/… link gets nothing (the server
+  // rejects their changes anyway).
+  if (!slug || profile.role !== Role.ADMIN) return null
 
   const links: SettingsLink[] = [
     {

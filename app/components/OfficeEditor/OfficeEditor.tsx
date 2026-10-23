@@ -223,6 +223,11 @@ const OfficeEditorInner = ({
     return () => window.removeEventListener("hotseat:edit-layout", enterEdit)
   }, [editable])
   const readOnly = mode === "display"
+  // The one way into the editor: never on a phone or without WebGL, whatever
+  // asks (the empty-office card, the shell, a settings button).
+  const enterEdit = useCallback(() => {
+    if (editable) setMode("edit")
+  }, [editable])
   // Display mode with an app shell: the shell owns the view toggle + time control.
   const shellMode = readOnly && !!displayShell
   // First-run helper for a brand-new (empty) office.
@@ -423,7 +428,7 @@ const OfficeEditorInner = ({
         {!shellMode && !isEmpty && (
           <TimeOfDay viewSwitch={readOnly}>
             {!editable ? null : readOnly ? (
-              <Button size="sm" variant="primary" onPress={() => setMode("edit")}>
+              <Button size="sm" variant="primary" onPress={enterEdit}>
                 <Pencil className="size-4" /> Edit layout
               </Button>
             ) : (
@@ -456,14 +461,15 @@ const OfficeEditorInner = ({
         )}
 
         {/* App chrome (floating panels) for the spatial display experience. */}
-        {shellMode && displayShell?.({ enterEdit: () => setMode("edit"), empty: isEmpty, guide })}
+        {shellMode && displayShell?.({ enterEdit, empty: isEmpty, guide })}
 
         {/* Empty-office first run: offer templates or a blank start (admins),
             or explain why there's nothing here yet (everyone else). */}
         {isEmpty && canEdit && (
           <EmptyOffice
             readOnly={readOnly}
-            onEnterEdit={() => setMode("edit")}
+            isEditable={editable}
+            onEnterEdit={enterEdit}
             onDismiss={() => setEmptyDismissed(true)}
           />
         )}

@@ -35,18 +35,17 @@ export async function loadUserSettings(request: Request, user: User) {
 /** Organization settings (`?settings=org/…`), owned by the org layout. */
 export async function loadOrgSettings(request: Request, profile: Profile) {
   const { scope, section = "general" } = parseSettings(request)
-  if (scope !== "org") return null
+  // Organization settings are an admin's (members aren't shown them at all).
+  if (scope !== "org" || profile.role !== Role.ADMIN) return null
   const core = getCore()
   const args = { userEmail: profile.userEmail, slug: profile.organizationSlug }
-  const isAdmin = profile.role === Role.ADMIN
   switch (section) {
     case "members":
-      // Members and invitations are admin pages.
-      return { section, members: isAdmin ? await core.organization.getMembers(args) : null }
+      return { section, members: await core.organization.getMembers(args) }
     case "invitations":
       return {
         section,
-        invites: isAdmin ? await core.organization.getInvites(args) : null,
+        invites: await core.organization.getInvites(args),
         origin: new URL(request.url).origin,
       }
     default:

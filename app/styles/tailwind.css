@@ -102,63 +102,252 @@
   --brand-foreground: #20242e;
 }
 
-/* Dark — the editor's deep-slate night environment */
+/* Dark — "lifted slate": the editor's cool night slate, with a real step
+   between the page and what sits on it (darker page, lighter panels), a
+   faint highlight along each panel's top edge and deeper shadows — so panels
+   stand off the floor instead of melting into it. */
 .dark,
 [data-theme="dark"] {
-  --background: #20242e; /* editor ENVIRONMENT.dark.background */
-  --foreground: #ece4d6;
+  --background: #151820;
+  --foreground: #f2ede4;
 
-  --surface: #2a2f3b;
+  --surface: #2a303c;
   --surface-foreground: var(--foreground);
-  --surface-secondary: #313745;
+  /* As in light: secondary/tertiary step down toward the page (recessed —
+     menu columns, wells, tiles), never up. */
+  --surface-secondary: #20252f;
   --surface-secondary-foreground: var(--foreground);
-  --surface-tertiary: #363d4d;
+  --surface-tertiary: #1b1f28;
   --surface-tertiary-foreground: var(--foreground);
 
-  --overlay: #2d3340;
+  --overlay: #2a303c;
   --overlay-foreground: var(--foreground);
 
-  --muted: #9c9484;
+  --muted: #a4abba;
 
-  --default: #333a49;
+  --default: #363d4c;
   --default-foreground: var(--foreground);
 
-  --accent: #7fa6df; /* lighter denim for the dark ground */
-  --accent-foreground: #20242e;
+  --accent: #8fb3f0; /* brighter denim for the dark ground */
+  --accent-foreground: #121620;
 
-  --success: #86b06a;
-  --success-foreground: #1b2015;
+  --success: #8fbd70;
+  --success-foreground: #16200f;
   --warning: #e8c07a;
   --warning-foreground: #3a2e10;
-  --danger: #d66a62;
-  --danger-foreground: #20242e;
+  --danger: #e8776e;
+  --danger-foreground: #151820;
 
-  --border: #3a4152;
-  --separator: #333a49;
+  /* Light-on-dark hairlines: they read on any surface, page or panel. */
+  --border: rgba(255, 255, 255, 0.1);
+  --separator: rgba(255, 255, 255, 0.07);
   --focus: var(--brand); /* cyan glow reads great on dark */
   --link: var(--accent);
 
-  --field-background: #262b36;
+  --field-background: var(--surface); /* raised, as in light */
   --field-foreground: var(--foreground);
   --field-placeholder: var(--muted);
-  --field-border: #3a4152;
+  --field-border: rgba(255, 255, 255, 0.12);
   --field-border-width: 1px;
 
-  --segment: #333a49;
+  --segment: #181c24; /* an inset track */
   --segment-foreground: var(--foreground);
 
-  --chrome: #3b4354;
-  --chrome-border: #4a5367;
-  --chrome-shadow: rgba(0, 0, 0, 0.45);
+  --chrome: #2a303c;
+  --chrome-border: rgba(255, 255, 255, 0.1);
+  --chrome-shadow: rgba(0, 0, 0, 0.55);
 
-  --surface-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
-  --overlay-shadow: 0 10px 34px -10px rgba(0, 0, 0, 0.6);
+  /* The lift: a 1px top highlight plus a deep, soft drop. */
+  --surface-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.45);
+  --overlay-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 20px 44px -14px rgba(0, 0, 0, 0.8),
+    0 2px 6px rgba(0, 0, 0, 0.4);
   --field-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.35);
 
   --scrollbar-thumb: color-mix(in oklch, var(--foreground) 22%, transparent);
 
   --brand: #3fd0ff;
-  --brand-foreground: #20242e;
+  --brand-foreground: #151820;
+}
+
+/* ============================================================
+   Colour schemes (Settings › Appearance): `data-scheme` on <html>.
+   "warm" is the theme above (no attribute needed). Each scheme sets the
+   base colours of its light and dark half; in-between shades are mixed
+   from them. `:root[…]` / `:root[…].dark` out-rank the base theme blocks,
+   so a scheme always wins. Swatches for the picker: app/utils/schemes.ts.
+   ============================================================ */
+
+/* sage */
+
+:root[data-scheme="sage"] {
+  --background: #ecefe6;
+  --foreground: #2e3a32;
+  --surface: #f8faf4;
+  --surface-secondary: color-mix(in oklab, var(--surface) 60%, var(--background));
+  --surface-tertiary: color-mix(in oklab, var(--background) 90%, var(--foreground));
+  --overlay: #f8faf4;
+  --muted: #5f6b60;
+  --default: color-mix(in oklab, var(--background) 88%, var(--foreground));
+  --accent: #4f7a5a;
+  --accent-foreground: #ffffff;
+  --border: #d5dccb;
+  --separator: color-mix(in oklab, var(--border) 70%, var(--surface));
+  --field-background: var(--surface);
+  --field-border: #d5dccb;
+  --segment: color-mix(in oklab, var(--background) 94%, var(--foreground));
+  --chrome: color-mix(in oklab, var(--surface) 60%, white);
+  --chrome-border: #d5dccb;
+}
+
+:root[data-scheme="sage"].dark,
+:root[data-scheme="sage"][data-theme="dark"] {
+  --background: #121612;
+  --foreground: #e9efe6;
+  --surface: #232b24;
+  --surface-secondary: color-mix(in oklab, var(--surface) 55%, var(--background));
+  --surface-tertiary: color-mix(in oklab, var(--surface) 25%, var(--background));
+  --overlay: #232b24;
+  --muted: #a2ae9f;
+  --default: color-mix(in oklab, var(--surface) 84%, var(--foreground));
+  --accent: #8cc29a;
+  --accent-foreground: #121612;
+  --border: rgba(255, 255, 255, 0.1);
+  --separator: rgba(255, 255, 255, 0.07);
+  --field-background: var(--surface);
+  --field-border: rgba(255, 255, 255, 0.12);
+  --segment: color-mix(in oklab, var(--background) 80%, var(--surface));
+  --chrome: var(--surface);
+  --chrome-border: rgba(255, 255, 255, 0.1);
+}
+
+/* terracotta */
+
+:root[data-scheme="terracotta"] {
+  --background: #f5ebe3;
+  --foreground: #3a2f2b;
+  --surface: #fdf7f2;
+  --surface-secondary: color-mix(in oklab, var(--surface) 60%, var(--background));
+  --surface-tertiary: color-mix(in oklab, var(--background) 90%, var(--foreground));
+  --overlay: #fdf7f2;
+  --muted: #7a665c;
+  --default: color-mix(in oklab, var(--background) 88%, var(--foreground));
+  --accent: #b5583a;
+  --accent-foreground: #ffffff;
+  --border: #ead6c8;
+  --separator: color-mix(in oklab, var(--border) 70%, var(--surface));
+  --field-background: var(--surface);
+  --field-border: #ead6c8;
+  --segment: color-mix(in oklab, var(--background) 94%, var(--foreground));
+  --chrome: color-mix(in oklab, var(--surface) 60%, white);
+  --chrome-border: #ead6c8;
+}
+
+:root[data-scheme="terracotta"].dark,
+:root[data-scheme="terracotta"][data-theme="dark"] {
+  --background: #1a1311;
+  --foreground: #f6e9e1;
+  --surface: #2e221d;
+  --surface-secondary: color-mix(in oklab, var(--surface) 55%, var(--background));
+  --surface-tertiary: color-mix(in oklab, var(--surface) 25%, var(--background));
+  --overlay: #2e221d;
+  --muted: #bba293;
+  --default: color-mix(in oklab, var(--surface) 84%, var(--foreground));
+  --accent: #e88d6c;
+  --accent-foreground: #1a1311;
+  --border: rgba(255, 255, 255, 0.1);
+  --separator: rgba(255, 255, 255, 0.07);
+  --field-background: var(--surface);
+  --field-border: rgba(255, 255, 255, 0.12);
+  --segment: color-mix(in oklab, var(--background) 80%, var(--surface));
+  --chrome: var(--surface);
+  --chrome-border: rgba(255, 255, 255, 0.1);
+}
+
+/* ocean */
+
+:root[data-scheme="ocean"] {
+  --background: #eaf0f4;
+  --foreground: #23313d;
+  --surface: #f8fbfd;
+  --surface-secondary: color-mix(in oklab, var(--surface) 60%, var(--background));
+  --surface-tertiary: color-mix(in oklab, var(--background) 90%, var(--foreground));
+  --overlay: #f8fbfd;
+  --muted: #5a6b79;
+  --default: color-mix(in oklab, var(--background) 88%, var(--foreground));
+  --accent: #2f6f9f;
+  --accent-foreground: #ffffff;
+  --border: #d3dde6;
+  --separator: color-mix(in oklab, var(--border) 70%, var(--surface));
+  --field-background: var(--surface);
+  --field-border: #d3dde6;
+  --segment: color-mix(in oklab, var(--background) 94%, var(--foreground));
+  --chrome: color-mix(in oklab, var(--surface) 60%, white);
+  --chrome-border: #d3dde6;
+}
+
+:root[data-scheme="ocean"].dark,
+:root[data-scheme="ocean"][data-theme="dark"] {
+  --background: #0e151d;
+  --foreground: #e6eef5;
+  --surface: #1b2633;
+  --surface-secondary: color-mix(in oklab, var(--surface) 55%, var(--background));
+  --surface-tertiary: color-mix(in oklab, var(--surface) 25%, var(--background));
+  --overlay: #1b2633;
+  --muted: #9aabbb;
+  --default: color-mix(in oklab, var(--surface) 84%, var(--foreground));
+  --accent: #6fb2e6;
+  --accent-foreground: #0e151d;
+  --border: rgba(255, 255, 255, 0.1);
+  --separator: rgba(255, 255, 255, 0.07);
+  --field-background: var(--surface);
+  --field-border: rgba(255, 255, 255, 0.12);
+  --segment: color-mix(in oklab, var(--background) 80%, var(--surface));
+  --chrome: var(--surface);
+  --chrome-border: rgba(255, 255, 255, 0.1);
+}
+
+/* plum */
+
+:root[data-scheme="plum"] {
+  --background: #f2ecf1;
+  --foreground: #36293a;
+  --surface: #fcf8fb;
+  --surface-secondary: color-mix(in oklab, var(--surface) 60%, var(--background));
+  --surface-tertiary: color-mix(in oklab, var(--background) 90%, var(--foreground));
+  --overlay: #fcf8fb;
+  --muted: #6f5f72;
+  --default: color-mix(in oklab, var(--background) 88%, var(--foreground));
+  --accent: #7a4f8a;
+  --accent-foreground: #ffffff;
+  --border: #e3d5e0;
+  --separator: color-mix(in oklab, var(--border) 70%, var(--surface));
+  --field-background: var(--surface);
+  --field-border: #e3d5e0;
+  --segment: color-mix(in oklab, var(--background) 94%, var(--foreground));
+  --chrome: color-mix(in oklab, var(--surface) 60%, white);
+  --chrome-border: #e3d5e0;
+}
+
+:root[data-scheme="plum"].dark,
+:root[data-scheme="plum"][data-theme="dark"] {
+  --background: #161117;
+  --foreground: #f2e8f3;
+  --surface: #28202a;
+  --surface-secondary: color-mix(in oklab, var(--surface) 55%, var(--background));
+  --surface-tertiary: color-mix(in oklab, var(--surface) 25%, var(--background));
+  --overlay: #28202a;
+  --muted: #b4a3b6;
+  --default: color-mix(in oklab, var(--surface) 84%, var(--foreground));
+  --accent: #c497d6;
+  --accent-foreground: #161117;
+  --border: rgba(255, 255, 255, 0.1);
+  --separator: rgba(255, 255, 255, 0.07);
+  --field-background: var(--surface);
+  --field-border: rgba(255, 255, 255, 0.12);
+  --segment: color-mix(in oklab, var(--background) 80%, var(--surface));
+  --chrome: var(--surface);
+  --chrome-border: rgba(255, 255, 255, 0.1);
 }
 
 /* Expose the editor cyan to Tailwind utilities (bg-brand / text-brand). */

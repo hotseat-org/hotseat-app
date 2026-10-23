@@ -122,7 +122,7 @@ export function OrgInvitations() {
             invitation first.
           </p>
         </div>
-        <div className="flex items-center gap-2 rounded-xl border border-border bg-surface-secondary px-4 py-2.5">
+        <div className="flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-2.5">
           <LinkIcon size={16} className="shrink-0 text-muted" />
           <span className="text-sm font-mono truncate">{joinUrl}</span>
           <Button

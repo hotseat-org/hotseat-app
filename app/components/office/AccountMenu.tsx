@@ -5,6 +5,7 @@ import { useNavigate } from "react-router"
 import { MemberAvatar, PANEL, PANEL_HOVER, nameOf, type ShellMember } from "./shell-ui"
 import { useProfile } from "~/utils/remix"
 import { useSettings } from "~/components/settings/useSettings"
+import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { ThemeSwitcher } from "~/components/ui/ThemeSwitcher"
 
 const item =
@@ -64,13 +65,16 @@ export const AccountMenu = ({ isFlat = false }: { isFlat?: boolean }) => {
             >
               User settings <Cog className="size-3.5 text-muted" />
             </button>
-            <button
-              type="button"
-              onClick={() => act(() => openSettings("org", "general"))}
-              className={item}
-            >
-              Organization <Users className="size-3.5 text-muted" />
-            </button>
+            {/* Organization settings are an admin's. */}
+            {profile.role === Role.ADMIN && (
+              <button
+                type="button"
+                onClick={() => act(() => openSettings("org", "general"))}
+                className={item}
+              >
+                Organization <Users className="size-3.5 text-muted" />
+              </button>
+            )}
             <button
               type="button"
               onClick={() => act(() => navigate("/logout"))}

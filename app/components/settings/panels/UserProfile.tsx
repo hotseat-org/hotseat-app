@@ -1,14 +1,12 @@
 import { Input, Label, TextField } from "@heroui/react"
 import { useEffect, useState } from "react"
 import { useFetcher } from "react-router"
-import { Theme, useTheme } from "remix-themes"
 import { DeleteAvatarDialog } from "../dialogs/DeleteAvatar"
 import { SetAvatarDialog } from "../dialogs/SetAvatar"
 import { CardTitle, SaveBar, SettingsCard } from "../ui"
 import { useSettings } from "../useSettings"
 import { Button } from "~/components/Button"
 import { ThumbAvatar } from "~/components/office/shell-ui"
-import { ThemeSwitcher } from "~/components/ui/ThemeSwitcher"
 import { useUser } from "~/utils/remix"
 
 const PROFILE_ACTION = "/api/settings/user/profile"
@@ -18,7 +16,6 @@ export function UserProfile() {
   const { email, displayName = "", photo } = useUser()
   const { dialog, openDialog } = useSettings()
   const fetcher = useFetcher()
-  const [theme, , themeMetadata] = useTheme()
 
   const [name, setName] = useState(displayName)
   useEffect(() => setName(displayName), [displayName])
@@ -65,20 +62,6 @@ export function UserProfile() {
             <p className="text-sm text-muted">{email}</p>
           </div>
         </fetcher.Form>
-      </SettingsCard>
-
-      <SettingsCard className="flex items-center justify-between gap-6">
-        <div>
-          <CardTitle>Appearance</CardTitle>
-          <p className="mt-1 text-sm text-muted">
-            {/* Following the device: the server can't know which, so say so
-                (naming one would differ between server and browser). */}
-            {themeMetadata.definedBy === "SYSTEM"
-              ? "Same as your device."
-              : `${theme === Theme.DARK ? "Dark mode" : "Light mode"} · saved on this device.`}
-          </p>
-        </div>
-        <ThemeSwitcher size="lg" />
       </SettingsCard>
 
       <SaveBar

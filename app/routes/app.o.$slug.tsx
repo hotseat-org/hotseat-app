@@ -1,6 +1,7 @@
-import { Outlet, useSearchParams, type LoaderFunctionArgs } from "react-router"
+import { Outlet, useLoaderData, useSearchParams, type LoaderFunctionArgs } from "react-router"
 import NewOffice from "./app.o.$slug.offices.new"
 import { getCore } from "~/core/get-core"
+import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { requireProfile } from "~/utils/loader-helpers/requireProfile"
 import { loadOrgSettings } from "~/utils/loader-helpers/settings.server"
 import { revalidateOn } from "~/utils/revalidation"
@@ -37,10 +38,13 @@ export default function OrgLayout() {
   // to live on the offices list, which redirects to the first office when there
   // are offices, dropping the param — so "New office" did nothing.)
   const [searchParams] = useSearchParams()
+  const { profile } = useLoaderData<typeof loader>()
+  // Only admins create offices: a member's ?modal=new-office shows nothing.
+  const isCreatingOffice = searchParams.get("modal") === "new-office" && profile.role === Role.ADMIN
   return (
     <>
       <Outlet />
-      {searchParams.get("modal") === "new-office" && <NewOffice />}
+      {isCreatingOffice && <NewOffice />}
     </>
   )
 }

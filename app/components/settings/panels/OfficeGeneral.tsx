@@ -73,7 +73,7 @@ export function OfficeGeneral() {
               type="button"
               disabled={!isAdmin}
               onClick={() => openDialog("set-cover")}
-              className="flex h-36 w-56 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-surface-secondary text-sm font-bold text-muted transition-colors enabled:hover:border-accent/50 enabled:hover:text-accent disabled:cursor-default"
+              className="flex h-36 w-56 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-surface text-sm font-bold text-muted transition-colors enabled:hover:border-accent/50 enabled:hover:text-accent disabled:cursor-default"
             >
               <ImagePlus className="size-6" />
               {isAdmin ? "Upload a cover" : "No cover"}
@@ -119,9 +119,11 @@ export function OfficeGeneral() {
       <SettingsCard className="flex flex-col gap-4">
         <div className="flex items-center justify-between gap-4">
           <CardTitle>At a glance</CardTitle>
+          {/* The editor is computer-only (CSS, not a hook: right in the first paint). */}
           <Button
             size="sm"
             variant="primary"
+            className="max-md:hidden"
             onPress={() => {
               close()
               window.dispatchEvent(new Event(EDIT_LAYOUT_EVENT))
@@ -129,10 +131,11 @@ export function OfficeGeneral() {
           >
             <Pencil className="size-4" /> Edit layout
           </Button>
+          <p className="text-right text-xs text-muted md:hidden">Edit the layout on a computer</p>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {stats.map((s) => (
-            <div key={s.label} className="rounded-2xl bg-surface-secondary px-4 py-3.5">
+            <div key={s.label} className="rounded-2xl bg-surface px-4 py-3.5">
               <p className="text-2xl font-black tabular-nums text-foreground">{s.value}</p>
               <p className="text-sm text-muted">{s.label}</p>
             </div>

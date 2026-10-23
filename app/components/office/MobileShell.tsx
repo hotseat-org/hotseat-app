@@ -21,6 +21,7 @@ import {
   useWeekPresence,
 } from "~/components/OfficeEditor/useBooking"
 import { useSettings } from "~/components/settings/useSettings"
+import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { daysBetween, formatDow, formatLong, isWeekend, type Day } from "~/utils/booking"
 
 type Tab = "office" | "bookings" | "people"
@@ -317,13 +318,16 @@ const People = ({
       {members.length <= 1 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
           <p className="text-sm font-bold text-foreground">It&apos;s just you so far</p>
-          <button
-            type="button"
-            onClick={() => openSettings("org", "invitations")}
-            className="min-h-11 rounded-xl bg-accent/15 px-4 text-sm font-bold text-accent"
-          >
-            Invite teammates
-          </button>
+          {/* Inviting is an admin's. */}
+          {me.role === Role.ADMIN && (
+            <button
+              type="button"
+              onClick={() => openSettings("org", "invitations")}
+              className="min-h-11 rounded-xl bg-accent/15 px-4 text-sm font-bold text-accent"
+            >
+              Invite teammates
+            </button>
+          )}
         </div>
       ) : (
         <ul className="-mx-1 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-1">

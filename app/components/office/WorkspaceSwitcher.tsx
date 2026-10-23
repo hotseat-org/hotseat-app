@@ -181,10 +181,15 @@ const OrgMenu = ({
       label={d.organization.name}
       sub={d.currentOrg && orgDetail(d.currentOrg)}
       settingsLabel="Organization settings"
-      onSettings={() => {
-        onClose()
-        d.openSettings("org", "general")
-      }}
+      // Settings are an admin's: members don't get the gear.
+      onSettings={
+        d.isAdmin
+          ? () => {
+              onClose()
+              d.openSettings("org", "general")
+            }
+          : undefined
+      }
     />
     {d.otherOrgs.length > 0 && (
       <>
@@ -226,10 +231,14 @@ const OfficeMenu = ({
           label={d.currentOffice.name}
           sub={occupancyDetail(d.currentOffice)}
           settingsLabel="Office settings"
-          onSettings={() => {
-            onClose()
-            d.openSettings("office", "general")
-          }}
+          onSettings={
+            d.isAdmin
+              ? () => {
+                  onClose()
+                  d.openSettings("office", "general")
+                }
+              : undefined
+          }
         />
       )}
       {otherOffices.length > 0 ? (
@@ -342,7 +351,7 @@ const occupancyDetail = (o: ShellOffice) => {
   return `${o.inToday} of ${o.seats} in today`
 }
 
-/** The current org/office atop its menu: highlighted, with a gear for its settings. */
+/** The current org/office atop its menu: highlighted, with a gear for its settings (admins). */
 const CurrentHeader = ({
   lead,
   label,
@@ -354,30 +363,33 @@ const CurrentHeader = ({
   label: string
   sub?: string
   settingsLabel: string
-  onSettings: () => void
+  /** Absent: no gear (the settings aren't yours to change). */
+  onSettings?: () => void
 }) => (
-  <div className="flex items-center gap-3 rounded-xl bg-accent/10 py-1 pl-2 pr-1">
+  <div className="flex min-h-[52px] items-center gap-3 rounded-xl bg-accent/10 py-1 pl-2 pr-1">
     {lead}
     <span className="min-w-0 flex-1">
       <span className="block truncate text-sm font-extrabold text-foreground">{label}</span>
       {sub && <span className="block truncate text-xs text-muted">{sub}</span>}
     </span>
-    <Tooltip delay={350}>
-      <button
-        type="button"
-        onClick={onSettings}
-        aria-label={settingsLabel}
-        className="grid size-11 shrink-0 place-items-center rounded-xl text-muted outline-none transition-colors hover:bg-foreground/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
-      >
-        <Settings className="size-[18px]" />
-      </button>
-      <Tooltip.Content
-        placement="right"
-        className="rounded-md border border-border bg-overlay px-2 py-1 text-xs text-foreground shadow-overlay"
-      >
-        {settingsLabel}
-      </Tooltip.Content>
-    </Tooltip>
+    {onSettings && (
+      <Tooltip delay={350}>
+        <button
+          type="button"
+          onClick={onSettings}
+          aria-label={settingsLabel}
+          className="grid size-11 shrink-0 place-items-center rounded-xl text-muted outline-none transition-colors hover:bg-foreground/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
+        >
+          <Settings className="size-[18px]" />
+        </button>
+        <Tooltip.Content
+          placement="right"
+          className="rounded-md border border-border bg-overlay px-2 py-1 text-xs text-foreground shadow-overlay"
+        >
+          {settingsLabel}
+        </Tooltip.Content>
+      </Tooltip>
+    )}
   </div>
 )
 

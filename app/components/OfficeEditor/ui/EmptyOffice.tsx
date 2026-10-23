@@ -7,6 +7,12 @@ import { EmptyState } from "~/components/ui/EmptyState"
 interface Props {
   /** True in display mode — picking anything drops into edit mode first. */
   readOnly: boolean
+  /**
+   * Whether the editor can open here. Not on a phone (or without WebGL): a
+   * template still lays the floor out — saved and bookable right away — but
+   * drawing from blank needs a computer.
+   */
+  isEditable: boolean
   /** Switch the editor into edit mode. */
   onEnterEdit: () => void
   /** Dismiss the overlay without adding anything (start from a blank floor). */
@@ -19,12 +25,12 @@ const TEMPLATE_ICONS = [Building2, LayoutGrid, Square]
  * Shown when the scene has no objects. Offers a running start — a template or a
  * blank floor — instead of an intimidating empty grid.
  */
-export const EmptyOffice = ({ readOnly, onEnterEdit, onDismiss }: Props) => {
+export const EmptyOffice = ({ readOnly, isEditable, onEnterEdit, onDismiss }: Props) => {
   const load = useEditorStore((s) => s.load)
 
   const pickTemplate = (template: OfficeTemplate) => {
     load(numberUnlabelledDesks(template.build())) // desks get names right away
-    if (readOnly) onEnterEdit()
+    if (readOnly && isEditable) onEnterEdit()
   }
 
   const startBlank = () => {
@@ -39,7 +45,11 @@ export const EmptyOffice = ({ readOnly, onEnterEdit, onDismiss }: Props) => {
           className="max-w-none"
           icon={PencilRuler}
           title="This office is empty"
-          description="Start from a template, or a blank floor and draw your first wall."
+          description={
+            isEditable
+              ? "Start from a template, or a blank floor and draw your first wall."
+              : "Pick a ready-made floor — desks are bookable right away."
+          }
         >
           <div className="grid grid-cols-2 gap-2.5">
             {TEMPLATES.map((t, i) => {
@@ -77,13 +87,19 @@ export const EmptyOffice = ({ readOnly, onEnterEdit, onDismiss }: Props) => {
             })}
           </div>
 
-          <button
-            type="button"
-            onClick={startBlank}
-            className="mt-3 text-sm font-semibold text-muted transition-colors hover:text-foreground"
-          >
-            Start from blank →
-          </button>
+          {isEditable ? (
+            <button
+              type="button"
+              onClick={startBlank}
+              className="mt-3 text-sm font-semibold text-muted transition-colors hover:text-foreground"
+            >
+              Start from blank →
+            </button>
+          ) : (
+            <p className="mt-3 text-xs text-muted">
+              To draw your own layout or change it later, open the office on a computer.
+            </p>
+          )}
         </EmptyState>
       </div>
     </div>

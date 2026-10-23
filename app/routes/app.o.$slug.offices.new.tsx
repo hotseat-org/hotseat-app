@@ -4,6 +4,7 @@ import {
   useNavigate,
   useSearchParams,
   ActionFunctionArgs,
+  LoaderFunctionArgs,
   redirect,
   useParams,
 } from "react-router"
@@ -15,6 +16,7 @@ import { Button } from "~/components/Button"
 import { ImageUploadInput } from "~/components/Inputs/ImageUpload"
 import { getCore } from "~/core/get-core"
 import { requireProfile } from "~/utils/loader-helpers/requireProfile"
+import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 
 type Availability = "available" | "not-available" | "unknown" | "checking"
 
@@ -30,8 +32,14 @@ const availabilityToLabelMap: Record<Availability, string> = {
   unknown: "Start typing to check availability",
 }
 
+// Creating offices is an admin's: anyone else is sent back to the organization.
+export const loader = async (args: LoaderFunctionArgs) => {
+  await requireProfile(args, { requiredRole: Role.ADMIN })
+  return null
+}
+
 export const action = async (args: ActionFunctionArgs) => {
-  const profile = await requireProfile(args)
+  const profile = await requireProfile(args, { requiredRole: Role.ADMIN })
 
   const formData = await args.request.formData()
   const name = z.string().parse(formData.get("name"))

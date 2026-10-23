@@ -35,7 +35,7 @@ export function UserPet() {
   return (
     <>
       <SettingsCard className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-6 sm:!py-[18px] sm:!pl-[18px]">
-        <div className="relative h-[124px] w-[150px] shrink-0 overflow-hidden rounded-2xl bg-surface-secondary">
+        <div className="relative h-[124px] w-[150px] shrink-0 overflow-hidden rounded-2xl bg-surface">
           <div className="absolute inset-x-6 bottom-3.5 h-6 rounded-full bg-foreground/[0.07]" />
           <img
             src={petThumb(current.id)}
@@ -50,7 +50,7 @@ export function UserPet() {
           <div className="flex items-baseline gap-2.5">
             <h2 className="text-[22px] font-black text-foreground">{current.label}</h2>
             {!picked && (
-              <span className="rounded-full bg-surface-secondary px-2 py-0.5 text-xs font-extrabold text-muted">
+              <span className="rounded-full bg-surface px-2 py-0.5 text-xs font-extrabold text-muted">
                 Picked for you
               </span>
             )}
@@ -97,7 +97,7 @@ export function UserPet() {
                     "relative flex flex-col items-center gap-0.5 rounded-[14px] border-2 px-1 py-2 transition-[background-color,border-color,transform] hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus",
                     selected
                       ? "border-accent bg-accent/10"
-                      : "border-transparent bg-surface-secondary/60 hover:bg-surface-secondary"
+                      : "border-transparent bg-surface/60 hover:bg-surface"
                   )}
                 >
                   <img src={petThumb(m.id)} alt="" className="size-[58px]" loading="lazy" />
