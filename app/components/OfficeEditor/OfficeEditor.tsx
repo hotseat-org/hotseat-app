@@ -37,6 +37,7 @@ import { ControlsGuide } from "./ui/ControlsGuide"
 import { CustomBooking } from "./ui/CustomBooking"
 import { RoutePill } from "./ui/RoutePill"
 import { HeatmapPill } from "./ui/HeatmapPill"
+import { SceneLoading } from "./ui/SceneLoading"
 import { MOBILE_CHROME } from "~/components/office/mobile"
 import { useIsMobile } from "~/utils/hooks/useIsMobile"
 import { ContourBackdrop } from "~/components/ui/ContourBackdrop"
@@ -232,14 +233,38 @@ const OfficeEditorInner = ({
   useEffect(() => {
     if (isMobile) setMode("display")
   }, [isMobile])
+  const readOnly = mode === "display"
+
+  // The 3D scene's busy moments, shown instead of an unexplained freeze: while
+  // it first builds the office, and while it switches to or from editing.
+  // `readyFor`: the mode the scene last finished drawing (null: not yet).
+  const [readyFor, setReadyFor] = useState<Mode | null>(null)
+  const [pendingMode, setPendingMode] = useState<Mode | null>(null)
+  const handleSceneReady = useCallback((isReadOnly: boolean) => {
+    setReadyFor(isReadOnly ? "display" : "edit")
+    setPendingMode(null)
+  }, [])
+  /**
+   * Switch mode with the busy indicator up first: the switch itself can freeze
+   * the page for a moment, so it waits until the indicator has been painted
+   * (two frames). Without the 3D scene there's nothing to wait for.
+   */
+  const switchMode = useCallback(
+    (next: Mode) => {
+      if (next === mode) return
+      if (readyFor === null) return setMode(next)
+      setPendingMode(next)
+      requestAnimationFrame(() => requestAnimationFrame(() => setMode(next)))
+    },
+    [mode, readyFor]
+  )
   // "Edit layout" from the office settings (outside this tree) → edit mode.
   useEffect(() => {
     if (!editable) return
-    const enterEdit = () => setMode("edit")
+    const enterEdit = () => switchMode("edit")
     window.addEventListener("hotseat:edit-layout", enterEdit)
     return () => window.removeEventListener("hotseat:edit-layout", enterEdit)
-  }, [editable])
-  const readOnly = mode === "display"
+  }, [editable, switchMode])
 
   // Wayfinding: a shared link (?to=<desk>) opens with the way to that desk
   // shown; the URL then follows whatever way is shown, so "Copy link" is just
@@ -267,8 +292,8 @@ const OfficeEditorInner = ({
   // The one way into the editor: never on a phone or without WebGL, whatever
   // asks (the empty-office card, the shell, a settings button).
   const enterEdit = useCallback(() => {
-    if (editable) setMode("edit")
-  }, [editable])
+    if (editable) switchMode("edit")
+  }, [editable, switchMode])
   // Display mode with an app shell: the shell owns the view toggle + time control.
   const shellMode = readOnly && !!displayShell
   // First-run helper for a brand-new (empty) office.
@@ -276,6 +301,10 @@ const OfficeEditorInner = ({
   // Simple mode: the 2D floor plan instead of the 3D scene (view mode only).
   const view = useEditorStore((s) => s.view)
   const flat = readOnly && (view === "2d" || !webglOk || isMobile)
+  // Leaving the 3D scene (for the plan) unmounts it: it builds afresh next time.
+  useEffect(() => {
+    if (flat) setReadyFor(null)
+  }, [flat])
   // Mouse / trackpad controls: no use on a touch phone.
   const guide = isMobile ? null : (
     <ControlsGuide view={flat ? "plan" : readOnly ? "view" : "edit"} />
@@ -286,6 +315,18 @@ const OfficeEditorInner = ({
   // that on-demand rendering happens to produce.
   const [showStats, setShowStats] = useState(false)
   const { t, tn } = useI18n()
+  const busyMode = pendingMode ?? (readyFor !== null && readyFor !== mode ? mode : null)
+  const currentBusyLabel =
+    readyFor === null
+      ? t("Building the office…")
+      : busyMode === "edit"
+        ? t("Opening the editor…")
+        : busyMode === "display"
+          ? t("Back to the office…")
+          : null
+  // Keep the last words while the indicator fades out.
+  const lastBusyLabel = useRef(currentBusyLabel)
+  if (currentBusyLabel) lastBusyLabel.current = currentBusyLabel
   const [stats, setStats] = useState<FrameStats | null>(null)
   const dbMode = !!onSave
   // What's already persisted, so autosave doesn't re-save the freshly-loaded scene.
@@ -414,10 +455,19 @@ const OfficeEditorInner = ({
               fitInsets={shellMode && !isMobile ? SHELL_INSETS : undefined}
               showStats={showStats}
               onStats={setStats}
+              onReady={handleSceneReady}
             />
           </Suspense>
         )}
       </div>
+      {/* Above the scene layer (its desk labels too), below the panels. */}
+      {!isEmpty && !flat && (
+        <SceneLoading
+          isVisible={!!currentBusyLabel}
+          label={lastBusyLabel.current}
+          isFirstLoad={readyFor === null}
+        />
+      )}
 
       {/* Empty office: cover the bare 3D scene with the same grid+dots backdrop
           as the empty-org screen (sits below the chrome + template card). */}
@@ -501,7 +551,7 @@ const OfficeEditorInner = ({
                 size="sm"
                 variant="primary"
                 className="min-w-32"
-                onPress={() => setMode("display")}
+                onPress={() => switchMode("display")}
               >
                 <Check className="size-4" strokeWidth={2.5} /> Done
               </Button>

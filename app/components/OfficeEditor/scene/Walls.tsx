@@ -1,12 +1,12 @@
 import { useEffect, useMemo } from "react"
-import { BoxGeometry, Vector3 } from "three"
+import { BoxGeometry, Matrix4, Vector3, type BufferGeometry } from "three"
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js"
 import { useEditorStore } from "../store"
 import { useSurfaces } from "../sceneTheme"
 import { Surface } from "../objects/Surface"
 import { SEG } from "../layout"
 import { WALL } from "../objects/dimensions"
-import { GlassRun } from "../objects/GlassWall"
+import { GlassFrameSurface, GlassSurface, getGlassRunParts } from "../objects/GlassWall"
 import { DEFAULT_COLOR } from "../palette"
 import { type SceneObject } from "../types"
 import { CutawayContext, setCutAttributes } from "./cutaway"
@@ -100,15 +100,7 @@ export const Walls = () => {
     <group>
       <WallRuns runs={runs} />
 
-      {glassRuns.map((r) => (
-        <group
-          key={r.key}
-          position={r.axis === "x" ? [r.center, 0, r.fixed] : [r.fixed, 0, r.center]}
-          rotation={[0, r.axis === "x" ? 0 : Math.PI / 2, 0]}
-        >
-          <GlassRun length={r.length} color={r.color} />
-        </group>
-      ))}
+      <GlassRuns runs={glassRuns} />
     </group>
   )
 }
@@ -154,4 +146,63 @@ const runGeometry = (r: Run) => {
     r.axis === "x" ? new Vector3(r.center, 0, r.fixed) : new Vector3(r.fixed, 0, r.center)
   box.translate(anchor.x, 0, anchor.z)
   return setCutAttributes(box, anchor, r.axis === "x" ? 0 : 1)
+}
+
+/**
+ * Every glass run as a handful of meshes: the frames (tracks, rails,
+ * mullions) of one colour as one, and all the panes as one — a few draw calls
+ * for a whole office's meeting rooms, not one per box.
+ */
+const GlassRuns = ({ runs }: { runs: Run[] }) => {
+  const meshes = useMemo(() => {
+    const frames = new Map<string, BufferGeometry[]>()
+    const panes: BufferGeometry[] = []
+    const place = new Matrix4()
+    for (const r of runs) {
+      // The run's place: along X, or turned to lie along Z.
+      place
+        .makeRotationY(r.axis === "x" ? 0 : Math.PI / 2)
+        .setPosition(r.axis === "x" ? r.center : r.fixed, 0, r.axis === "x" ? r.fixed : r.center)
+      for (const part of getGlassRunParts(r.length)) {
+        const box = new BoxGeometry(...part.args)
+        box.translate(...part.position).applyMatrix4(place)
+        if (part.isPane) panes.push(box)
+        else frames.set(r.color, [...(frames.get(r.color) ?? []), box])
+      }
+    }
+    const merge = (parts: BufferGeometry[]) => {
+      const geometry = parts.length ? mergeGeometries(parts, false) : null
+      parts.forEach((p) => p.dispose())
+      return geometry
+    }
+    return {
+      frames: [...frames].map(([color, parts]) => ({ color, geometry: merge(parts) })),
+      panes: merge(panes),
+    }
+  }, [runs])
+  useEffect(
+    () => () => {
+      meshes.frames.forEach((f) => f.geometry?.dispose())
+      meshes.panes?.dispose()
+    },
+    [meshes]
+  )
+  return (
+    <>
+      {meshes.frames.map(
+        (f) =>
+          f.geometry && (
+            <mesh key={f.color} geometry={f.geometry} castShadow receiveShadow>
+              <GlassFrameSurface color={f.color} />
+            </mesh>
+          )
+      )}
+      {/* Light falls through the panes: no shadow. */}
+      {meshes.panes && (
+        <mesh geometry={meshes.panes}>
+          <GlassSurface />
+        </mesh>
+      )}
+    </>
+  )
 }

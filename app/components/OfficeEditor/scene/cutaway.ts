@@ -167,7 +167,11 @@ export const useCutaway = () => useContext(CutawayContext)
 export const setCutAttributes = (geometry: BufferGeometry, anchor: Vector3, axis: 0 | 1) => {
   const count = geometry.getAttribute("position").count
   const anchors = new Float32Array(count * 3)
-  for (let i = 0; i < count; i++) anchors.set([anchor.x, anchor.y, anchor.z], i * 3)
+  for (let i = 0; i < count * 3; i += 3) {
+    anchors[i] = anchor.x
+    anchors[i + 1] = anchor.y
+    anchors[i + 2] = anchor.z
+  }
   geometry.setAttribute("cutAnchor", new BufferAttribute(anchors, 3))
   geometry.setAttribute("cutAxis", new BufferAttribute(new Float32Array(count).fill(axis), 1))
   return geometry

@@ -45,7 +45,11 @@ const cutawayOf = (material: Material) =>
 const withColor = (geometry: BufferGeometry, color: Color) => {
   const count = geometry.getAttribute("position").count
   const colors = new Float32Array(count * 3)
-  for (let i = 0; i < count; i++) colors.set([color.r, color.g, color.b], i * 3)
+  for (let i = 0; i < count * 3; i += 3) {
+    colors[i] = color.r
+    colors[i + 1] = color.g
+    colors[i + 2] = color.b
+  }
   geometry.setAttribute("color", new BufferAttribute(colors, 3))
   return geometry
 }

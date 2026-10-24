@@ -11,7 +11,12 @@ const MULLION = 0.04
 /** Mullions stand this far apart along a run. */
 export const GLASS_BAY = 1
 
-/** The see-through pane: tinted, glossy, casts no shadow (light falls through). */
+/** The see-through pane's look: tinted, glossy. */
+export const GlassSurface = () => (
+  <Surface color="#bfe0ee" roughness={0.05} metalness={0.2} opacity={0.28} />
+)
+
+/** The see-through pane: casts no shadow (light falls through). */
 export const Glass = ({
   args,
   position,
@@ -21,46 +26,71 @@ export const Glass = ({
 }) => (
   <mesh position={position}>
     <boxGeometry args={args} />
-    <Surface color="#bfe0ee" roughness={0.05} metalness={0.2} opacity={0.28} />
+    <GlassSurface />
   </mesh>
 )
+
+/** One box of a glass run, in the run's own space (along X, centred). */
+export interface GlassPart {
+  args: [number, number, number]
+  position: [number, number, number]
+  isPane: boolean
+}
 
 /**
  * A straight run of glass partition along X, centred on the origin: a slim
  * metal base track and head rail, one continuous pane, and mullions at both
  * ends and every GLASS_BAY between (from the run's start, so bays line up).
  */
+export const getGlassRunParts = (length: number): GlassPart[] => {
+  const paneH = WALL.height - BASE - HEAD
+  const mullions: number[] = []
+  for (let a = 0; a < length - 1e-6; a += GLASS_BAY) mullions.push(-length / 2 + a)
+  mullions.push(length / 2)
+  return [
+    {
+      args: [length, BASE + WALL.sink, RAIL_D],
+      position: [0, (BASE - WALL.sink) / 2, 0],
+      isPane: false,
+    },
+    { args: [length, HEAD, RAIL_D], position: [0, WALL.height - HEAD / 2, 0], isPane: false },
+    ...mullions.map(
+      (x): GlassPart => ({
+        args: [MULLION, paneH, RAIL_D - 0.02],
+        position: [x, BASE + paneH / 2, 0],
+        isPane: false,
+      })
+    ),
+    { args: [length, paneH, 0.02], position: [0, BASE + paneH / 2, 0], isPane: true },
+  ]
+}
+
+/** The metal of a glass partition's frame. */
+export const GlassFrameSurface = ({ color }: { color: string }) => (
+  <Surface color={color} roughness={0.4} metalness={0.4} />
+)
+
+/** A run of glass partition as separate meshes (previews; placed runs merge, see scene/Walls). */
 export const GlassRun = ({
   length,
   color = PALETTE.seatLeg,
 }: {
   length: number
   color?: string
-}) => {
-  const paneH = WALL.height - BASE - HEAD
-  const mullions: number[] = []
-  for (let a = 0; a < length - 1e-6; a += GLASS_BAY) mullions.push(-length / 2 + a)
-  mullions.push(length / 2)
-  return (
-    <group>
-      <mesh position={[0, (BASE - WALL.sink) / 2, 0]} castShadow receiveShadow>
-        <boxGeometry args={[length, BASE + WALL.sink, RAIL_D]} />
-        <Surface color={color} roughness={0.4} metalness={0.4} />
-      </mesh>
-      <mesh position={[0, WALL.height - HEAD / 2, 0]} castShadow>
-        <boxGeometry args={[length, HEAD, RAIL_D]} />
-        <Surface color={color} roughness={0.4} metalness={0.4} />
-      </mesh>
-      {mullions.map((x) => (
-        <mesh key={x} position={[x, BASE + paneH / 2, 0]} castShadow>
-          <boxGeometry args={[MULLION, paneH, RAIL_D - 0.02]} />
-          <Surface color={color} roughness={0.4} metalness={0.4} />
+}) => (
+  <group>
+    {getGlassRunParts(length).map((part, i) =>
+      part.isPane ? (
+        <Glass key={i} args={part.args} position={part.position} />
+      ) : (
+        <mesh key={i} position={part.position} castShadow receiveShadow={i === 0}>
+          <boxGeometry args={part.args} />
+          <GlassFrameSurface color={color} />
         </mesh>
-      ))}
-      <Glass args={[length, paneH, 0.02]} position={[0, BASE + paneH / 2, 0]} />
-    </group>
-  )
-}
+      )
+    )}
+  </group>
+)
 
 interface Props {
   /** Frame colour. */
