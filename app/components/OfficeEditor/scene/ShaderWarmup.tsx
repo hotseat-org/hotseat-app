@@ -1,6 +1,14 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useState,
+  type ReactNode,
+} from "react"
 import { useThree } from "@react-three/fiber"
 import { DaylightContext } from "../daylight"
+import { markShadowsDirty } from "./shadows"
 
 /** How dark it must be before lamps switch on (shared by every lamp). */
 export const LAMPS_ON = 0.02
@@ -13,11 +21,20 @@ const DELAY = 1200
  */
 const WarmupContext = createContext<boolean | null>(null)
 
-/** Whether a lamp's light is mounted: on at dusk, or flipped while warming up. */
+/**
+ * Whether a lamp's light is mounted: on at dusk, or flipped while warming up.
+ * A light coming or going changes what the cached shadow maps must hold — and
+ * a shadow-casting light whose map was never drawn breaks every lit surface
+ * (the GPU refuses to draw with a missing shadow map) — so it marks them dirty.
+ */
 export const useLampsOn = () => {
   const nightness = useContext(DaylightContext)
   const forced = useContext(WarmupContext)
-  return forced ?? nightness > LAMPS_ON
+  const isOn = forced ?? nightness > LAMPS_ON
+  const gl = useThree((s) => s.gl)
+  const invalidate = useThree((s) => s.invalidate)
+  useLayoutEffect(() => markShadowsDirty(gl, invalidate), [isOn, gl, invalidate])
+  return isOn
 }
 
 /**
@@ -56,7 +73,8 @@ export const ShaderWarmup = ({ children }: { children: ReactNode }) => {
         isDone = true
         setFrameloop(frameloop)
         setForced(null)
-        invalidate()
+        // The lamps flip back: their shadows must be drawn afresh.
+        markShadowsDirty(gl, invalidate)
       })
     return () => {
       // Left mid-way (unmounted): don't leave rendering paused.
