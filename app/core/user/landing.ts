@@ -1,14 +1,23 @@
 import type { CoreContext } from "../types"
 
 /**
- * Where someone lands when they open the app: their first organization's
- * favourite office, else its first office — one redirect straight there, not
- * a chain (/ → /app → /app/o/… → …/offices → the office), each hop of which
- * ran every layout's loader. No organization yet: the welcome page.
+ * Where someone lands when they open the app: their favourite office (the one
+ * chosen last, if they have one in several organizations), else their first
+ * organization's first office — one redirect straight there, not a chain
+ * (/ → /app → /app/o/… → …/offices → the office), each hop of which ran every
+ * layout's loader. No organization yet: the welcome page.
  */
 export const getUserLanding =
   ({ mainRepository }: CoreContext) =>
   async (userEmail: string): Promise<string> => {
+    const favorites = await mainRepository.profile.findMany({
+      filter: { userEmail, hasFavoriteOffice: true },
+      order: "updated",
+      pagination: { take: 1, skip: 0 },
+    })
+    const [favorite] = favorites.data
+    if (favorite?.favoriteOfficeSlug)
+      return `/app/o/${favorite.organizationSlug}/offices/${favorite.favoriteOfficeSlug}`
     const [organization] = await mainRepository.organization.findMany({ filter: { userEmail } })
     if (!organization) return "/app"
     return organizationLanding(mainRepository, userEmail, organization.slug)

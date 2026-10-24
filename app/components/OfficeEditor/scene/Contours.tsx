@@ -18,9 +18,16 @@ const REACH = 3
 /** Where unlit lines head at night, so they dim with the lit ground around them. */
 const NIGHT = new THREE.Color("#2a2f3a")
 
+/** Contour line width, in device pixels. */
+const LINE_WIDTH = 1
+
 /**
  * Plain coloured lines that, while editing, give way to the build area (where
  * the grid shows, see buildArea.ts) and fade back in beyond it.
+ *
+ * Each segment is a thin screen-space strip (see segmentsGeometry), not a GL
+ * line: its shader works out how much of each pixel the line covers, so the
+ * edges are smooth on any GPU and browser, with or without multisampling.
  */
 const lineMaterial = () =>
   new THREE.ShaderMaterial({
@@ -28,22 +35,48 @@ const lineMaterial = () =>
       ...createBuildAreaUniforms(),
       color: { value: new THREE.Color() },
       isEditing: { value: false },
+      /** The drawing buffer's size (device pixels). */
+      resolution: { value: new THREE.Vector2(1, 1) },
     },
     vertexShader: /* glsl */ `
+      attribute vec3 other;
+      attribute float side;
+      attribute float isEnd;
+      uniform vec2 resolution;
       varying vec3 vWorld;
+      varying float vEdge;
       void main() {
         vec4 world = modelMatrix * vec4(position, 1.0);
         vWorld = world.xyz;
-        gl_Position = projectionMatrix * viewMatrix * world;
+        vec4 clip = projectionMatrix * viewMatrix * world;
+        vec4 otherClip = projectionMatrix * viewMatrix * modelMatrix * vec4(other, 1.0);
+        // Both ends on screen (px), then out sideways by half the width plus a
+        // pixel for the smoothed edge, and a half pixel past the end so
+        // consecutive segments join without a gap.
+        vec2 halfSize = 0.5 * resolution;
+        vec2 here = clip.xy / clip.w * halfSize;
+        vec2 there = otherClip.xy / otherClip.w * halfSize;
+        // Start → end, whichever end this corner is at.
+        vec2 along = (there - here) * (isEnd > 0.5 ? -1.0 : 1.0);
+        along = dot(along, along) > 0.0 ? normalize(along) : vec2(1.0, 0.0);
+        float outward = isEnd > 0.5 ? 0.5 : -0.5;
+        float reach = ${LINE_WIDTH.toFixed(1)} * 0.5 + 1.0;
+        vec2 offset = vec2(-along.y, along.x) * side * reach + along * outward;
+        clip.xy += offset / halfSize * clip.w;
+        vEdge = side * reach;
+        gl_Position = clip;
       }
     `,
     fragmentShader: /* glsl */ `
       uniform vec3 color;
       uniform bool isEditing;
       varying vec3 vWorld;
+      varying float vEdge;
       ${BUILD_AREA_GLSL}
       void main() {
-        float a = isEditing ? 1.0 - buildArea(vWorld.xz) : 1.0;
+        // How much of this pixel the line covers (px from its centre line).
+        float coverage = clamp(${LINE_WIDTH.toFixed(1)} * 0.5 + 0.5 - abs(vEdge), 0.0, 1.0);
+        float a = coverage * (isEditing ? 1.0 - buildArea(vWorld.xz) : 1.0);
         if (a <= 0.01) discard;
         gl_FragColor = vec4(color, a);
         #include <tonemapping_fragment>
@@ -52,6 +85,7 @@ const lineMaterial = () =>
     `,
     transparent: true,
     depthWrite: false,
+    side: THREE.DoubleSide,
   })
 
 /**
@@ -119,18 +153,43 @@ const starsGeometry = (stars: Float32Array) => {
   return geometry
 }
 
+/**
+ * Segments (x0, z0, x1, z1 …) as strips of two triangles: each corner knows
+ * its own end, the other end, which end it is and which side it's on; the line shader spreads
+ * them a fixed number of pixels apart on screen.
+ */
 const segmentsGeometry = (segments: Float32Array) => {
-  const positions = new Float32Array((segments.length / 4) * 6)
-  for (let i = 0, j = 0; i < segments.length; i += 4, j += 6) {
-    positions[j] = segments[i]
-    positions[j + 1] = LINE_Y
-    positions[j + 2] = segments[i + 1]
-    positions[j + 3] = segments[i + 2]
-    positions[j + 4] = LINE_Y
-    positions[j + 5] = segments[i + 3]
+  const count = segments.length / 4
+  const positions = new Float32Array(count * 12)
+  const others = new Float32Array(count * 12)
+  const sides = new Float32Array(count * 4)
+  const ends = new Float32Array(count * 4)
+  const indices = new Uint32Array(count * 6)
+  for (let i = 0; i < count; i++) {
+    const [x0, z0, x1, z1] = segments.subarray(i * 4, i * 4 + 4)
+    // Corners: start left, start right, end left, end right.
+    const corners = [
+      [x0, z0, x1, z1, 1, 0],
+      [x0, z0, x1, z1, -1, 0],
+      [x1, z1, x0, z0, 1, 1],
+      [x1, z1, x0, z0, -1, 1],
+    ]
+    corners.forEach(([x, z, ox, oz, side, isEnd], k) => {
+      const v = i * 4 + k
+      positions.set([x, LINE_Y, z], v * 3)
+      others.set([ox, LINE_Y, oz], v * 3)
+      sides[v] = side
+      ends[v] = isEnd
+    })
+    const v = i * 4
+    indices.set([v, v + 1, v + 2, v + 1, v + 3, v + 2], i * 6)
   }
   const geometry = new THREE.BufferGeometry()
   geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3))
+  geometry.setAttribute("other", new THREE.BufferAttribute(others, 3))
+  geometry.setAttribute("side", new THREE.BufferAttribute(sides, 1))
+  geometry.setAttribute("isEnd", new THREE.BufferAttribute(ends, 1))
+  geometry.setIndex(new THREE.BufferAttribute(indices, 1))
   return geometry
 }
 
@@ -207,11 +266,14 @@ export const Contours = ({ isEditing = false }: { isEditing?: boolean }) => {
   const majorMaterial = useMemo(lineMaterial, [])
   const starsMaterial = useMemo(starMaterial, [])
   const pixelRatio = useThree((s) => s.viewport.dpr)
+  const size = useThree((s) => s.size)
   const applyBuildArea = useBuildArea()
   for (const m of [minorMaterial, majorMaterial, starsMaterial]) {
     m.uniforms.isEditing.value = isEditing
     applyBuildArea(m.uniforms)
   }
+  for (const m of [minorMaterial, majorMaterial])
+    m.uniforms.resolution.value.set(size.width * pixelRatio, size.height * pixelRatio)
   useFrame(({ camera }) => {
     if (!getViewCentre(camera, viewCentre)) return
     const tx = Math.floor(viewCentre.x / TILE)
@@ -291,8 +353,8 @@ export const Contours = ({ isEditing = false }: { isEditing?: boolean }) => {
       </mesh>
       {tiles.map((t) => (
         <group key={t.key}>
-          <lineSegments geometry={t.minor} material={minorMaterial} raycast={() => null} />
-          <lineSegments geometry={t.major} material={majorMaterial} raycast={() => null} />
+          <mesh geometry={t.minor} material={minorMaterial} raycast={() => null} />
+          <mesh geometry={t.major} material={majorMaterial} raycast={() => null} />
           <points geometry={t.stars} material={starsMaterial} raycast={() => null} />
         </group>
       ))}

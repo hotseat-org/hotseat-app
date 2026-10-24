@@ -16,7 +16,7 @@ export const findProfile: FindProfileFn = async ({ userEmail, organizationSlug }
         organizationSlug,
       },
     },
-    include: { user: true, favoriteOffice: true },
+    include: { user: true },
   })
 
   if (!profile) return null

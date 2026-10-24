@@ -1,8 +1,8 @@
 import { Popover, Tooltip } from "@heroui/react"
-import { Building2, ChevronDown, Plus, Settings } from "lucide-react"
+import { Building2, ChevronDown, Plus, Settings, Star } from "lucide-react"
 import { useEffect, useState, type ReactNode } from "react"
 import { createPortal } from "react-dom"
-import { Link, useNavigate, useParams } from "react-router"
+import { Link, useFetcher, useNavigate, useParams } from "react-router"
 import { MOBILE_CHROME } from "./mobile"
 import { PANEL, ThumbAvatar, type ShellOffice } from "./shell-ui"
 import { useSettings } from "~/components/settings/useSettings"
@@ -231,6 +231,7 @@ const OfficeMenu = ({
 }) => {
   const otherOffices = offices.filter((o) => o.slug !== d.officeSlug)
   const { t } = d.i18n
+  const favorite = useFavoriteOffice(d.slug)
   return (
     <>
       {d.currentOffice && (
@@ -238,6 +239,14 @@ const OfficeMenu = ({
           lead={<OfficeThumb o={d.currentOffice} />}
           label={d.currentOffice.name}
           sub={occupancyDetail(d.i18n, d.currentOffice)}
+          action={
+            <FavoriteButton
+              isFavorite={favorite.slug === d.currentOffice.slug}
+              onToggle={() =>
+                favorite.set(favorite.slug === d.officeSlug ? null : (d.officeSlug ?? null))
+              }
+            />
+          }
           settingsLabel={t("Office settings")}
           onSettings={
             d.isAdmin
@@ -259,6 +268,14 @@ const OfficeMenu = ({
                 lead={<OfficeThumb o={o} />}
                 label={o.name}
                 sub={occupancyDetail(d.i18n, o)}
+                trail={
+                  favorite.slug === o.slug && (
+                    <Star
+                      aria-label={t("Favourite office")}
+                      className="mr-1 size-4 shrink-0 fill-accent text-accent"
+                    />
+                  )
+                }
                 onClick={() => onGo(`/app/o/${d.slug}/offices/${o.slug}`)}
               />
             ))}
@@ -368,12 +385,15 @@ const CurrentHeader = ({
   lead,
   label,
   sub,
+  action,
   settingsLabel,
   onSettings,
 }: {
   lead: ReactNode
   label: string
   sub?: string
+  /** A button before the gear (the office's favourite star). */
+  action?: ReactNode
   settingsLabel: string
   /** Absent: no gear (the settings aren't yours to change). */
   onSettings?: () => void
@@ -384,26 +404,85 @@ const CurrentHeader = ({
       <span className="block truncate text-sm font-extrabold text-foreground">{label}</span>
       {sub && <span className="block truncate text-xs text-muted">{sub}</span>}
     </span>
+    {action}
     {onSettings && (
-      <Tooltip delay={350}>
-        <button
-          type="button"
-          onClick={onSettings}
-          aria-label={settingsLabel}
-          className="grid size-11 shrink-0 place-items-center rounded-xl text-muted outline-none transition-colors hover:bg-foreground/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
-        >
-          <Settings className="size-[18px]" />
-        </button>
-        <Tooltip.Content
-          placement="right"
-          className="rounded-md border border-border bg-overlay px-2 py-1 text-xs text-foreground shadow-overlay"
-        >
-          {settingsLabel}
-        </Tooltip.Content>
-      </Tooltip>
+      <HeaderButton label={settingsLabel} onClick={onSettings}>
+        <Settings className="size-[18px]" />
+      </HeaderButton>
     )}
   </div>
 )
+
+/** An icon button on the current org/office header, with its label as a tooltip. */
+const HeaderButton = ({
+  label,
+  isPressed,
+  onClick,
+  children,
+}: {
+  label: string
+  isPressed?: boolean
+  onClick: () => void
+  children: ReactNode
+}) => (
+  <Tooltip delay={350}>
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      aria-pressed={isPressed}
+      className="grid size-11 shrink-0 place-items-center rounded-xl text-muted outline-none transition-colors hover:bg-foreground/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
+    >
+      {children}
+    </button>
+    <Tooltip.Content
+      placement="right"
+      className="rounded-md border border-border bg-overlay px-2 py-1 text-xs text-foreground shadow-overlay"
+    >
+      {label}
+    </Tooltip.Content>
+  </Tooltip>
+)
+
+/**
+ * Your favourite office in this organization — where the app opens for you —
+ * shown at once while it saves.
+ */
+const useFavoriteOffice = (organizationSlug?: string) => {
+  const fetcher = useFetcher()
+  const saved = useProfile().favoriteOfficeSlug ?? null
+  const pending = fetcher.formData?.get("officeSlug")
+  return {
+    slug: typeof pending === "string" ? pending || null : saved,
+    set: (officeSlug: string | null) =>
+      fetcher.submit(
+        { officeSlug: officeSlug ?? "" },
+        { method: "post", action: `/api/favorite-office/${organizationSlug}` }
+      ),
+  }
+}
+
+/** The star on the current office: make it the one the app opens to. */
+const FavoriteButton = ({
+  isFavorite,
+  onToggle,
+}: {
+  isFavorite: boolean
+  onToggle: () => void
+}) => {
+  const { t } = useI18n()
+  return (
+    <HeaderButton
+      label={
+        isFavorite ? t("Your favourite office: the app opens here") : t("Always open the app here")
+      }
+      isPressed={isFavorite}
+      onClick={onToggle}
+    >
+      <Star className={`size-[18px] ${isFavorite ? "fill-accent text-accent" : ""}`} />
+    </HeaderButton>
+  )
+}
 
 const Divider = () => <div className="mx-1 my-1.5 h-px bg-separator" />
 

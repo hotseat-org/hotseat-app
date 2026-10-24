@@ -6,23 +6,35 @@ type FindProfilesFn = MainRepository["profile"]["findMany"]
 
 export interface FindProfilesArgs {
   filter?: {
-    organizationSlug: string
+    organizationSlug?: string
+    userEmail?: string
     role?: Role
+    /** Only memberships with a favourite office. */
+    hasFavoriteOffice?: boolean
   }
+  /** "role": admins first (default); "updated": most recently changed first. */
+  order?: "role" | "updated"
   pagination?: {
     take: number
     skip: number
   }
 }
 
-export const findProfiles: FindProfilesFn = async ({ filter, pagination }) => {
+export const findProfiles: FindProfilesFn = async ({ filter, order = "role", pagination }) => {
+  const { hasFavoriteOffice, ...fields } = filter ?? {}
+  const where = {
+    ...fields,
+    ...(hasFavoriteOffice !== undefined && {
+      favoriteOfficeSlug: hasFavoriteOffice ? { not: null } : null,
+    }),
+  }
   const [totalCount, profiles] = await Promise.all([
-    prisma.profile.count({ where: filter }),
+    prisma.profile.count({ where }),
     prisma.profile.findMany({
-      where: filter,
+      where,
       take: pagination?.take,
       skip: pagination?.skip,
-      orderBy: { role: "desc" },
+      orderBy: order === "updated" ? { updatedAt: "desc" } : { role: "desc" },
       include: { user: true },
     }),
   ])

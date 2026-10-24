@@ -27,7 +27,7 @@ export const updateProfile: UpdateProfileFn = async ({
       role,
       favoriteOfficeSlug,
     },
-    include: { user: true, favoriteOffice: true },
+    include: { user: true },
   })
 
   return {

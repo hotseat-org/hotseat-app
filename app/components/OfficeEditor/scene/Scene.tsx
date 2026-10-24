@@ -134,9 +134,10 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
   const timeOfDay = useEditorStore((s) => s.timeOfDay)
   const surfaces = dark ? SURFACES.dark : SURFACES.light
   const profile = daylight(timeOfDay, surfaces.nightDepth)
-  // Where the office stands (to whole metres): the sun and its shadows aim there.
-  const officeCentre = useMemo((): [number, number] => {
-    if (!objects.length) return [0, 0]
+  // Where the office stands and how far it reaches from there (both to whole
+  // metres, so small edits don't refit): the sun and its shadows aim there.
+  const officeArea = useMemo((): { centre: [number, number]; reach: number } => {
+    if (!objects.length) return { centre: [0, 0], reach: 0 }
     let x0 = Infinity
     let z0 = Infinity
     let x1 = -Infinity
@@ -147,7 +148,10 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
       x1 = Math.max(x1, o.x)
       z1 = Math.max(z1, o.z)
     }
-    return [Math.round((x0 + x1) / 2), Math.round((z0 + z1) / 2)]
+    return {
+      centre: [Math.round((x0 + x1) / 2), Math.round((z0 + z1) / 2)],
+      reach: Math.ceil(Math.hypot(x1 - x0, z1 - z0) / 2),
+    }
   }, [objects])
   const addObject = useEditorStore((s) => s.addObject)
   const removeObject = useEditorStore((s) => s.removeObject)
@@ -462,7 +466,7 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
             />
             <CarryController carryId={readOnly ? null : dragId} grab={grab} />
 
-            <Lighting profile={profile} centre={officeCentre} />
+            <Lighting profile={profile} centre={officeArea.centre} reach={officeArea.reach} />
 
             {readOnly && <SeatTags />}
             {readOnly && <DeskPets />}

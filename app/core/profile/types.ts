@@ -1,4 +1,3 @@
-import { Office } from "../office/types"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 
 export interface Profile {
@@ -8,6 +7,7 @@ export interface Profile {
   displayName?: string
   avatarUrl?: string
   pet?: string
-  favoriteOffice?: Office
+  /** Their favourite office in this organization: where they land. */
+  favoriteOfficeSlug?: string | null
   createdAt: Date
 }
