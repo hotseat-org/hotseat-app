@@ -22,6 +22,8 @@ export interface Category {
   /** The rail icon: a little illustration of the category's most recognisable piece. */
   icon: CategoryIcon
   types: CatalogItem[]
+  /** A line under the title: what to know before placing these. */
+  hint?: string
 }
 
 export const CATEGORIES: Category[] = [
@@ -35,13 +37,17 @@ export const CATEGORIES: Category[] = [
     id: "desks",
     label: msg("Desks"),
     icon: DesksIcon,
-    types: ["desk", "workstation", "deskmate"],
+    // One bookable desk, always with its chair: what people book is a seat,
+    // and a desk and chair placed apart read as one but book as neither.
+    types: ["workstation"],
+    hint: msg("Bookable — each desk comes with its chair."),
   },
   {
     id: "seating",
     label: msg("Seating"),
     icon: SeatingIcon,
     types: ["seat", "sofa", "armchair", "barStool"],
+    hint: msg("Not bookable — for meeting tables and lounges."),
   },
   {
     id: "tables",

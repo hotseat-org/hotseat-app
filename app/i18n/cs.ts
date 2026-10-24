@@ -69,6 +69,18 @@ export const cs: Messages = {
   "Remove from favourites": "Odebrat z oblíbených",
   "Add to favourites": "Přidat do oblíbených",
   "Favourite office": "Oblíbená kancelář",
+  "Desk with chair": "Stůl se židlí",
+  "Desk without chair": "Stůl bez židle",
+  "Desk with pet": "Stůl se zvířátkem",
+  "Bookable — each desk comes with its chair.": "Lze rezervovat — každý stůl má svou židli.",
+  "Not bookable — for meeting tables and lounges.":
+    "Nelze rezervovat — k jednacím stolům a do odpočinkových zón.",
+  "Place a bookable desk": "Umístit stůl k rezervaci",
+  "Its pet sits there whoever books it — pets now show only who's booked a desk.":
+    "Zvířátko tu sedí, ať stůl rezervuje kdokoli — zvířátka teď ukazují jen to, kdo má stůl zarezervovaný.",
+  "A desk without its chair: people book a seat, so desks now come with one.":
+    "Stůl bez židle: lidé si rezervují místo k sezení, a tak stoly teď mají židli.",
+  "Switch to desk with chair": "Změnit na stůl se židlí",
   "CPU {ms} ms": "CPU {ms} ms",
   "{n} draw call": {
     one: "{n} vykreslení",
@@ -101,8 +113,6 @@ export const cs: Messages = {
   Window: "Okno",
   "Glass wall": "Skleněná stěna",
   "Glass door": "Skleněné dveře",
-  Workstation: "Pracovní místo",
-  Deskmate: "Stůl s parťákem",
   Chair: "Židle",
   Sofa: "Pohovka",
   Plant: "Rostlina",

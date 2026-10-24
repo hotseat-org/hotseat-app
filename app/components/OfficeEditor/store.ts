@@ -36,6 +36,7 @@ import {
   type Tool,
   type WallCell,
 } from "./types"
+import { findDeskChair, toWorld } from "./seatSpot"
 import type { BookingsByDay, Day, DeskDays } from "~/utils/booking"
 
 const HALF_TURN = Math.PI / 2
@@ -314,6 +315,12 @@ export interface EditorState {
   placeOpening: (o: SceneObject, px: number, pz: number) => boolean
   /** Moves a piece; wall items also turn to face out from their new wall. */
   moveObject: (id: string, x: number, z: number, rotation?: number) => void
+  /**
+   * An older layout's desk without a chair, or with a pet, becomes the bookable
+   * desk with its chair: same id (so its bookings, label, resident and features
+   * stay), the desk where it was; a loose chair in front of it goes.
+   */
+  replaceWithWorkstation: (id: string) => void
   rotateObject: (id: string) => void
   setColor: (id: string, color: string) => void
   /** Gives each piece its next look (props, cushions…). */
@@ -722,6 +729,31 @@ const makeInitializer =
             o.id === id ? { ...o, x, z, rotation: rotation ?? o.rotation } : o
           ),
         })),
+
+      replaceWithWorkstation: (id) =>
+        set((s) => {
+          const desk = s.objects.find((o) => o.id === id)
+          if (!desk || (desk.type !== "desk" && desk.type !== "deskmate")) return s
+          // A workstation's desk sits 0.25 m back from its centre; a deskmate's 0.35.
+          const shift = desk.type === "desk" ? 0.25 : 0.1
+          const centre = toWorld(desk, 0, shift)
+          const p = snapToFootprint("workstation", desk.rotation, centre.x, centre.z)
+          const chair =
+            desk.type === "desk"
+              ? findDeskChair(
+                  desk,
+                  s.objects.filter((o) => o.type === "seat")
+                )
+              : undefined
+          return {
+            objects: s.objects
+              .filter((o) => o.id !== chair?.id)
+              .map((o) =>
+                o.id === id ? { ...o, type: "workstation" as const, ...p, model: undefined } : o
+              ),
+            selection: s.selection.filter((selected) => selected !== chair?.id),
+          }
+        }),
 
       shuffleLook: (ids) =>
         set((s) => ({

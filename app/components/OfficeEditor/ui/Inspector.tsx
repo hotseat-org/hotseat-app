@@ -1,10 +1,17 @@
 import { Button, CloseButton, ColorSwatchPicker } from "@heroui/react"
 import clsx from "clsx"
 import { useMemo, useState } from "react"
-import { Copy, Dices, RotateCw, Trash2 } from "lucide-react"
+import { ArrowRightLeft, Copy, Dices, RotateCw, Trash2 } from "lucide-react"
 import { useEditorStore } from "../store"
 import { SWATCHES, DEFAULT_COLOR } from "../palette"
-import { DESK_FEATURES, hasLooks, isEdgeType, isSeatable, isWallMounted } from "../types"
+import {
+  DESK_FEATURES,
+  hasLooks,
+  isEdgeType,
+  isRetiredDesk,
+  isSeatable,
+  isWallMounted,
+} from "../types"
 import { usePeople } from "../people"
 import { TOOLS } from "./tools"
 import type { Day } from "~/utils/booking"
@@ -25,6 +32,13 @@ export const Inspector = () => {
   const select = useEditorStore((s) => s.select)
   const shuffleLook = useEditorStore((s) => s.shuffleLook)
   const selection = useEditorStore((s) => s.selection)
+  // Retired desks aren't copied: a copy would place one anew.
+  const hasRetiredDesk = useEditorStore((s) =>
+    s.selection.some((id) => {
+      const o = s.objects.find((x) => x.id === id)
+      return !!o && isRetiredDesk(o.type)
+    })
+  )
   // Shuffle when every selected piece comes in several looks.
   const shufflable = useEditorStore((s) =>
     s.selection.every((id) => {
@@ -40,7 +54,8 @@ export const Inspector = () => {
   const edge = isEdgeType(obj.type)
 
   const canRotate = !edge && !isWallMounted(obj.type)
-  const otherActionCount = [canRotate, shufflable, !edge].filter(Boolean).length
+  const canCopy = !edge && !hasRetiredDesk
+  const otherActionCount = [canRotate, shufflable, canCopy].filter(Boolean).length
 
   return (
     <div className="pointer-events-auto w-64 rounded-2xl border border-border bg-overlay/90 p-4 text-foreground shadow-overlay backdrop-blur-md">
@@ -67,6 +82,7 @@ export const Inspector = () => {
         ))}
       </ColorSwatchPicker>
 
+      {count === 1 && isRetiredDesk(obj.type) && <RetiredDeskNote id={obj.id} type={obj.type} />}
       {count === 1 && isSeatable(obj.type) && <SeatSection key={obj.id} id={obj.id} />}
 
       {/* Two columns (four labelled buttons don't fit one row); Delete spans
@@ -91,7 +107,7 @@ export const Inspector = () => {
             {t("Look")}
           </Button>
         )}
-        {!edge && (
+        {canCopy && (
           <Button size="sm" fullWidth variant="tertiary" onPress={duplicateSelection}>
             <Copy className="size-4" />
             {t("Copy")}
@@ -275,6 +291,34 @@ const SeatSection = ({ id }: { id: string }) => {
           )}
         </>
       )}
+    </div>
+  )
+}
+
+/**
+ * An older layout's desk that can't be placed any more: why, and a one-click
+ * switch to the bookable desk with its chair (bookings and details stay).
+ */
+const RetiredDeskNote = ({ id, type }: { id: string; type: string }) => {
+  const { t } = useI18n()
+  const replaceWithWorkstation = useEditorStore((s) => s.replaceWithWorkstation)
+  return (
+    <div className="mb-4 rounded-xl bg-warning/10 p-3 text-xs leading-snug text-foreground">
+      <p>
+        {type === "deskmate"
+          ? t("Its pet sits there whoever books it — pets now show only who's booked a desk.")
+          : t("A desk without its chair: people book a seat, so desks now come with one.")}
+      </p>
+      <Button
+        size="sm"
+        fullWidth
+        variant="secondary"
+        className="mt-2"
+        onPress={() => replaceWithWorkstation(id)}
+      >
+        <ArrowRightLeft className="size-4" />
+        {t("Switch to desk with chair")}
+      </Button>
     </div>
   )
 }

@@ -70,9 +70,12 @@ export const TOOLS: ToolMeta[] = [
   { tool: "window", label: msg("Window"), icon: AppWindow, key: "" },
   { tool: "glassWall", label: msg("Glass wall"), icon: Columns2, key: "" },
   { tool: "glassDoor", label: msg("Glass door"), icon: DoorClosed, key: "" },
-  { tool: "desk", label: msg("Desk"), icon: Table2, key: "4" },
-  { tool: "workstation", label: msg("Workstation"), icon: LampDesk, key: "5" },
-  { tool: "deskmate", label: msg("Deskmate"), icon: PawPrint, key: "6" },
+  // The one bookable desk: a desk with its chair (what people book is a seat).
+  { tool: "workstation", label: msg("Desk with chair"), icon: LampDesk, key: "4" },
+  // Older layouts' desks: no longer placed (no shortcut, not in the catalog),
+  // only named — a desk without a chair, and one with a pet always in it.
+  { tool: "desk", label: msg("Desk without chair"), icon: Table2, key: "" },
+  { tool: "deskmate", label: msg("Desk with pet"), icon: PawPrint, key: "" },
   { tool: "seat", label: msg("Chair"), icon: Armchair, key: "7" },
   { tool: "sofa", label: msg("Sofa"), icon: Sofa, key: "8" },
   { tool: "plant", label: msg("Plant"), icon: Sprout, key: "9" },

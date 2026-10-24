@@ -162,6 +162,12 @@ export const BUILD_HALF = 1000
  */
 export const isMarker = (type: ObjectType) => type === "floorPaint"
 
+/**
+ * Desks no longer placed: one without a chair, and one with a pet always in its
+ * chair (a pet means someone's booked it). Older layouts still have them.
+ */
+export const isRetiredDesk = (type: ObjectType) => type === "desk" || type === "deskmate"
+
 /** Desks people sit at — they carry a seat label and an assignee. */
 export const isSeatable = (type: ObjectType) =>
   type === "desk" || type === "workstation" || type === "deskmate"

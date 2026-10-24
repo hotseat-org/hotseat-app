@@ -159,9 +159,32 @@ export const Catalog = () => {
           style={panelStyle}
           className="pointer-events-auto absolute left-full top-0 ml-2 flex w-60 flex-col rounded-2xl border border-border bg-overlay/90 p-3 shadow-overlay backdrop-blur-md"
         >
-          <h2 className="mb-2 shrink-0 px-1 text-sm font-semibold text-foreground">
+          <h2
+            className={clsx(
+              "shrink-0 px-1 text-sm font-semibold text-foreground",
+              category.hint ? "mb-0.5" : "mb-2"
+            )}
+          >
             {t(category.label)}
           </h2>
+          {category.hint && (
+            <p className="mb-2 shrink-0 px-1 text-[11px] leading-snug text-muted">
+              {t(category.hint)}
+              {/* Chairs aren't bookable: point at the desk that is. */}
+              {category.id === "seating" && (
+                <>
+                  {" "}
+                  <button
+                    type="button"
+                    onClick={() => setTool("workstation")}
+                    className="font-semibold text-accent hover:underline"
+                  >
+                    {t("Place a bookable desk")}
+                  </button>
+                </>
+              )}
+            </p>
+          )}
 
           <div className="-mr-2 grid min-h-0 flex-1 grid-cols-2 content-start gap-2 overflow-y-auto overscroll-contain pr-2 [scrollbar-width:thin]">
             {category.types.map((type) => {

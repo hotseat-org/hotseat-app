@@ -74,11 +74,11 @@ const withOpenings = (
   )
 }
 
-/** A desk with a chair tucked in front of it (facing +Z). */
-const workstation = (x: number, z: number): SceneObject[] => [
-  make("desk", x, z, 0),
-  make("seat", x, z + 1, 0),
-]
+/**
+ * A bookable desk, its chair in front (facing +Z), the desk itself at (x, z):
+ * a workstation's desk sits 0.25 m back from its centre.
+ */
+const deskWithChair = (x: number, z: number): SceneObject[] => [make("workstation", x, z + 0.25, 0)]
 
 /**
  * A desk pod: `pairs` workstations side by side (2 m apart, from `x`), each
@@ -237,12 +237,12 @@ export const TEMPLATES: OfficeTemplate[] = [
       ])
       return [
         ...walls,
-        ...workstation(2, 1),
-        ...workstation(4, 1),
-        ...workstation(6, 1),
-        ...workstation(2, 4),
-        ...workstation(4, 4),
-        ...workstation(6, 4),
+        ...deskWithChair(2, 1),
+        ...deskWithChair(4, 1),
+        ...deskWithChair(6, 1),
+        ...deskWithChair(2, 4),
+        ...deskWithChair(4, 4),
+        ...deskWithChair(6, 4),
         make("plant", 8.75, 1.25),
         make("plant", 8.75, 5.25),
         make("cooler", 1.25, 5.75),
