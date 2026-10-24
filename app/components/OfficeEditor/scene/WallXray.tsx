@@ -1,11 +1,10 @@
 import { useFrame, useThree } from "@react-three/fiber"
 import { useEffect, useMemo, useRef } from "react"
-import { Box3, Matrix4, Vector3 } from "three"
+import { Box3, Vector3 } from "three"
 import { useEditorStoreApi } from "../store"
 import { GRID, isEdgeType, isWallMounted } from "../types"
 import { WALL } from "../objects/dimensions"
 import { edgeLength, footprintCells } from "../layout"
-import { hasMatrixMoved } from "./cameraMotion"
 import { cutawayUniform, MAX_CUTS } from "./cutaway"
 
 const runsAlongX = (rotation: number) =>
@@ -24,11 +23,6 @@ const RATE_GLIDE = 22
 const SLACK = 0.12
 /** Wall items hang above this height (a pointer lower down is at the wall). */
 const MOUNT_BOTTOM = 0.4
-/**
- * After the camera stops (ms), the cutaway follows the cursor again. While it
- * moves the cut holds still, so sweeping across walls doesn't flicker cuts.
- */
-const CAMERA_SETTLE = 150
 
 /** A wall line being cut (or easing back): see cutawayUniform. */
 interface Cut {
@@ -63,11 +57,7 @@ export const WallXray = ({ enabled, isEditing }: Props) => {
   const max = useMemo(() => new Vector3(), [])
   const hitPoint = useMemo(() => new Vector3(), [])
   const inside = useRef(false)
-  const lastView = useRef({ matrix: new Matrix4(), zoom: 0, movedAt: -Infinity })
-  const held = useRef<Aim[]>([])
   const cuts = useRef<Cut[]>([])
-  const settleTimer = useRef(0)
-  useEffect(() => () => window.clearTimeout(settleTimer.current), [])
 
   // Track whether the cursor is over the canvas (clear when it leaves), and
   // redraw on move so the cutaway follows under frameloop="demand".
@@ -144,20 +134,10 @@ export const WallXray = ({ enabled, isEditing }: Props) => {
   }
 
   // Ease the cuts toward where the cursor points; write them to the shader.
+  // It follows the cursor while the camera moves too: a ray test and a few
+  // numbers per frame, nothing rebuilt.
   useFrame((_, dt) => {
-    const now = performance.now()
-    const view = lastView.current
-    if (hasMatrixMoved(view.matrix, camera.matrixWorld) || view.zoom !== camera.zoom) {
-      view.matrix.copy(camera.matrixWorld)
-      view.zoom = camera.zoom
-      view.movedAt = now
-      // Re-aim once the camera has settled (frameloop="demand" won't on its own).
-      window.clearTimeout(settleTimer.current)
-      settleTimer.current = window.setTimeout(invalidate, CAMERA_SETTLE)
-    }
-    const isCameraMoving = now - view.movedAt < CAMERA_SETTLE
-    const aims = isCameraMoving && enabled ? held.current : getAims()
-    held.current = aims
+    const aims = getAims()
 
     const list = cuts.current
     for (const cut of list) cut.target = 0
