@@ -11,6 +11,7 @@ import {
   isWallMounted,
   type SceneObject,
 } from "./types"
+import type { Translator } from "~/i18n/translate"
 
 /**
  * The way to a desk: from the nearest entrance (a door with the outdoors on one
@@ -361,7 +362,8 @@ export const getRoute = (
 }
 
 /** "1 min walk", "2 min walk" — at an easy indoor pace. */
-export const walkTime = (metres: number) => `${Math.max(1, Math.round(metres / 1.1 / 60))} min walk`
+export const walkTime = ({ t }: Translator, metres: number) =>
+  t("{n} min walk", { n: Math.max(1, Math.round(metres / 1.1 / 60)) })
 
 /**
  * The route being shown (store `route`), worked out for the current layout:

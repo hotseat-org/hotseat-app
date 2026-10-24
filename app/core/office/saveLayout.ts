@@ -1,10 +1,12 @@
-import { daysPhrase, deskPhrase, groupBookings, officeLink } from "../notification"
+import { groupBookings, officeLink } from "../notification"
 import type { CoreContext } from "../types"
 import type { Office } from "./types"
 import { layoutSchema } from "~/components/OfficeEditor/schema"
 import { isSeatable, type ObjectType } from "~/components/OfficeEditor/types"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { todayIn } from "~/utils/booking"
+import { LocalizedError } from "~/i18n/errors"
+import { encodeNotification } from "~/i18n/notifications"
 
 export interface SaveOfficeLayoutArgs {
   slug: string
@@ -14,7 +16,7 @@ export interface SaveOfficeLayoutArgs {
 }
 
 /** A layout that can't be saved as-is — the message is shown in the editor. */
-export class OfficeLayoutError extends Error {}
+export class OfficeLayoutError extends LocalizedError {}
 
 /**
  * Save an office layout (admins only — it also decides who has a permanent
@@ -44,9 +46,15 @@ export const saveOfficeLayout =
       const members = await mainRepository.profile.findMany({ filter: { organizationSlug } })
       const emails = new Set(members.data.map((m) => m.userEmail))
       const outsider = residents.find((e) => !emails.has(e))
-      if (outsider) throw new OfficeLayoutError(`${outsider} isn't a member of this organization.`)
+      if (outsider)
+        throw new OfficeLayoutError("{email} isn't a member of this organization.", {
+          email: outsider,
+        })
       const twice = residents.find((e, i) => residents.indexOf(e) !== i)
-      if (twice) throw new OfficeLayoutError(`${twice} is the permanent resident of two desks.`)
+      if (twice)
+        throw new OfficeLayoutError("{email} is the permanent resident of two desks.", {
+          email: twice,
+        })
     }
 
     const today = todayIn(current.timezone)
@@ -133,21 +141,34 @@ const notifyLayoutChange = async (
   for (const { userEmail, deskId, days } of groupBookings(lost)) {
     const desk = current.get(deskId) ?? previous.get(deskId)
     const ownDesk = after.find((d) => d.assignee === userEmail)
-    const reason = ownDesk
-      ? `you have a permanent desk here now (${deskPhrase(ownDesk.label)})`
-      : current.get(deskId)?.assignee
-        ? `it's now ${nameOf(current.get(deskId)!.assignee!)}'s permanent desk`
-        : "the desk was removed"
+    const booking = { desk: { desk: desk?.label ?? null }, office: office.name, days: { days } }
+    const resident = current.get(deskId)?.assignee
     notes.push({
       userEmail,
-      message: `Your booking of ${deskPhrase(desk?.label)} in ${office.name} on ${daysPhrase(days)} was cancelled: ${reason}.`,
+      message: ownDesk
+        ? encodeNotification(
+            "Your booking of {desk} in {office} on {days} was cancelled: you have a permanent desk here now ({own}).",
+            { ...booking, own: { desk: ownDesk.label ?? null } }
+          )
+        : resident
+          ? encodeNotification(
+              "Your booking of {desk} in {office} on {days} was cancelled: it's now {name}'s permanent desk.",
+              { ...booking, name: nameOf(resident) }
+            )
+          : encodeNotification(
+              "Your booking of {desk} in {office} on {days} was cancelled: the desk was removed.",
+              booking
+            ),
     })
   }
   for (const desk of after) {
     if (desk.assignee && previous.get(desk.id)?.assignee !== desk.assignee)
       notes.push({
         userEmail: desk.assignee,
-        message: `${deskPhrase(desk.label).replace(/^d/, "D")} in ${office.name} is now your permanent desk.`,
+        message: encodeNotification("You now have a permanent desk in {office}: {desk}.", {
+          office: office.name,
+          desk: { desk: desk.label ?? null },
+        }),
       })
   }
   const stillResident = new Set(after.flatMap((d) => (d.assignee ? [d.assignee] : [])))
@@ -159,7 +180,10 @@ const notifyLayoutChange = async (
     )
       notes.push({
         userEmail: desk.assignee,
-        message: `Your permanent ${deskPhrase(desk.label)} in ${office.name} was released — book a desk on the days you come in.`,
+        message: encodeNotification(
+          "Your permanent desk in {office} ({desk}) was released — book a desk on the days you come in.",
+          { office: office.name, desk: { desk: desk.label ?? null } }
+        ),
       })
   }
 

@@ -2,6 +2,8 @@ import { data, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-ro
 import { z } from "zod"
 import { getCore } from "~/core/get-core"
 import { requireUser } from "~/services/session.server"
+import { translateError } from "~/i18n/errors"
+import { getTranslator } from "~/i18n/locale.server"
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await requireUser(request)
@@ -24,7 +26,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       await core.organization.leave({ organizationSlug: slug, email: user.email })
       return data({ ok: true })
     } catch (error) {
-      if (error instanceof Error) return data({ error: error.message }, { status: 400 })
+      if (error instanceof Error)
+        return data(
+          { error: translateError(await getTranslator(request), error, "Something went wrong") },
+          { status: 400 }
+        )
       throw error
     }
   }

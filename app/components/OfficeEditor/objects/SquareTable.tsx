@@ -1,5 +1,5 @@
-import { RoundedBox } from "@react-three/drei"
 import { PALETTE } from "../palette"
+import { RoundedBox } from "./RoundedBox"
 import { Croissant, Glass, Laptop, Magazine, Mug, Plate, Succulent } from "./props"
 import { look } from "./looks"
 import { Surface } from "./Surface"

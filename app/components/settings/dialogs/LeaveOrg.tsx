@@ -3,9 +3,11 @@ import { useEffect } from "react"
 import { useFetcher } from "react-router"
 import { useSettings } from "../useSettings"
 import { Button } from "~/components/Button"
+import { Rich, useI18n } from "~/i18n/I18nProvider"
 
 export function LeaveOrgDialog({ slug }: { slug: string }) {
   const { closeDialog } = useSettings()
+  const { t } = useI18n()
   const fetcher = useFetcher<{ ok?: boolean; error?: string }>()
   const error = fetcher.data?.error
 
@@ -26,23 +28,26 @@ export function LeaveOrgDialog({ slug }: { slug: string }) {
             <AlertDialog.Header>
               <AlertDialog.Icon status="danger" />
               <AlertDialog.Heading>
-                Are you sure you want to leave this organization?
+                {t("Are you sure you want to leave this organization?")}
               </AlertDialog.Heading>
             </AlertDialog.Header>
             <AlertDialog.Body>
               <p>
-                This will permanently <strong>delete</strong> your data in the organization.
+                <Rich
+                  text={t("This will permanently {delete} your data in the organization.")}
+                  values={{ delete: <strong>{t("delete")}</strong> }}
+                />
               </p>
             </AlertDialog.Body>
             <AlertDialog.Footer>
               <Button slot="close" variant="tertiary" onPress={closeDialog}>
-                Close
+                {t("Close")}
               </Button>
               <fetcher.Form method="POST" action="/api/settings/user/organizations">
                 <input type="hidden" name="intent" value="leave" />
                 <input type="hidden" name="slug" value={slug} />
                 <Button isPending={fetcher.state === "submitting"} type="submit" variant="danger">
-                  Leave
+                  {t("Leave")}
                 </Button>
               </fetcher.Form>
             </AlertDialog.Footer>

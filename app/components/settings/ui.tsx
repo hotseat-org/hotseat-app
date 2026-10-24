@@ -5,6 +5,7 @@ import type { ReactNode } from "react"
 import { useLocation } from "react-router"
 import type { useRename } from "./useRename"
 import { Button } from "~/components/Button"
+import { useI18n } from "~/i18n/I18nProvider"
 
 /**
  * A settings section: one rounded, bordered card, set a step into the dialog
@@ -49,16 +50,17 @@ export const SaveBar = ({
   isPending: boolean
   isDisabled?: boolean
   onDiscard: () => void
-}) =>
-  dirty ? (
+}) => {
+  const { t } = useI18n()
+  return dirty ? (
     <div className="sticky bottom-0 z-10 -mx-4 -mb-6 mt-auto flex items-center gap-3 border-t border-separator bg-surface-secondary px-4 py-3 md:-mx-9 md:-mb-8 md:px-9 md:py-4">
       <span className="size-2 shrink-0 rounded-full bg-warning" aria-hidden />
       <span className="min-w-0 flex-1 text-sm font-bold text-foreground">
-        <span className="hidden sm:inline">You have unsaved changes</span>
-        <span className="sm:hidden">Unsaved changes</span>
+        <span className="hidden sm:inline">{t("You have unsaved changes")}</span>
+        <span className="sm:hidden">{t("Unsaved changes")}</span>
       </span>
       <Button type="button" variant="ghost" onPress={onDiscard} isDisabled={isPending}>
-        Discard
+        {t("Discard")}
       </Button>
       <Button
         type="submit"
@@ -67,10 +69,11 @@ export const SaveBar = ({
         isPending={isPending}
         isDisabled={isDisabled}
       >
-        Save changes
+        {t("Save changes")}
       </Button>
     </div>
   ) : null
+}
 
 /**
  * Name input whose URL follows it (see useRename): the field, a live URL
@@ -88,6 +91,7 @@ export const NameField = ({
   warning: string
 }) => {
   const location = useLocation()
+  const { t } = useI18n()
   return (
     <div className="flex flex-col gap-2">
       {/* Where to come back to if the rename moves the URL (see redirectToRenamed). */}
@@ -99,7 +103,7 @@ export const NameField = ({
         onChange={rename.setName}
         isInvalid={rename.taken}
       >
-        <Label>Name</Label>
+        <Label>{t("Name")}</Label>
         <Input />
       </TextField>
       <p className="flex min-w-0 items-center gap-1.5 text-xs text-muted">
@@ -110,11 +114,11 @@ export const NameField = ({
         </span>
         {rename.taken ? (
           <span className="flex shrink-0 items-center gap-1 font-bold text-danger">
-            <X className="size-3.5" /> Taken
+            <X className="size-3.5" /> {t("Taken")}
           </span>
         ) : rename.available ? (
           <span className="flex shrink-0 items-center gap-1 font-bold text-success">
-            <Check className="size-3.5" /> Available
+            <Check className="size-3.5" /> {t("Available")}
           </span>
         ) : null}
       </p>

@@ -1,9 +1,11 @@
 import { Html } from "@react-three/drei"
 import { Pin } from "lucide-react"
+import { heatBarTop } from "../heatmap"
 import { useEditorStore } from "../store"
 import { personByEmail, usePeople } from "../people"
 import { SeatAvatar } from "../SeatAvatar"
-import { useDesksOnDay } from "../useBooking"
+import { useDeskFilter, useDesksOnDay } from "../useBooking"
+import { useI18n } from "~/i18n/I18nProvider"
 
 /**
  * View mode: a floating tag over every desk for the shown day: who sits there
@@ -12,12 +14,40 @@ import { useDesksOnDay } from "../useBooking"
  * resident desks get a tag.
  */
 export const SeatTags = () => {
+  // Bridged into the canvas; the tags' text is made here, outside <Html>'s own root.
+  const { t } = useI18n()
   const people = usePeople()
   const { desks } = useDesksOnDay()
+  const matchesFilter = useDeskFilter()
   const booking = useEditorStore((s) => s.booking.enabled)
   const past = useEditorStore((s) => s.booking.day < s.booking.today)
   // The open desk's card replaces its tag.
   const openId = useEditorStore((s) => s.seatCard?.id)
+  // Insights' heatmap: every desk's share of days in use, instead of who's in.
+  const heatmap = useEditorStore((s) => s.heatmap)
+  if (heatmap)
+    return (
+      <>
+        {desks.map(({ desk }) =>
+          desk.id in heatmap.ratios ? (
+            <Html
+              key={desk.id}
+              position={[desk.x, heatBarTop(heatmap.ratios[desk.id]) + 0.22, desk.z]}
+              center
+              zIndexRange={[20, 0]}
+            >
+              {/* Just the share (many desks, close together); the desk on hover. */}
+              <div className="group flex cursor-default select-none items-center gap-1 whitespace-nowrap rounded-full border border-border bg-overlay/95 px-1.5 text-[10px] font-extrabold leading-4 text-foreground shadow-overlay hover:relative hover:z-10 hover:text-[11px]">
+                {desk.label && (
+                  <span className="hidden opacity-70 group-hover:inline">{desk.label}</span>
+                )}
+                <span>{Math.round(heatmap.ratios[desk.id] * 100)}%</span>
+              </div>
+            </Html>
+          ) : null
+        )}
+      </>
+    )
 
   return (
     <>
@@ -25,6 +55,8 @@ export const SeatTags = () => {
         if (desk.id === openId) return null
         const person = state.kind === "free" ? null : personByEmail(people, state.email)
         const free = state.kind === "free" && booking && !past
+        // Filtered out: a free desk gets no tag (its taker still shows).
+        if (free && !matchesFilter(desk)) return null
         if (!person && !free && !desk.label) return null
         const mine = !!person && person.email === people.me?.email
         return (
@@ -52,11 +84,11 @@ export const SeatTags = () => {
               >
                 {desk.label && <span className="opacity-80">{desk.label}</span>}
                 {/* First name only: neighbouring desks' tags would collide. */}
-                {person && <span>{mine ? "You" : person.name.split(" ")[0]}</span>}
+                {person && <span>{mine ? t("You") : person.name.split(" ")[0]}</span>}
                 {state.kind === "resident" && (
-                  <Pin className="size-3 opacity-70" aria-label="Permanent desk" />
+                  <Pin className="size-3 opacity-70" aria-label={t("Permanent desk")} />
                 )}
-                {free && <span>Free</span>}
+                {free && <span>{t("Free")}</span>}
               </div>
             </div>
           </Html>

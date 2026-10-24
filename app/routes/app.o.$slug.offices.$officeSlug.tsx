@@ -20,15 +20,18 @@ import { revalidateOn } from "~/utils/revalidation"
 import { layoutSchema } from "~/components/OfficeEditor/schema"
 import { EditorBoundary } from "~/components/OfficeEditor/EditorBoundary"
 import type { SceneObject } from "~/components/OfficeEditor/types"
+import type { PreferenceChange } from "~/components/OfficeEditor/store"
 import { SpatialShell, type ShellMember } from "~/components/office/SpatialShell"
 import { nameOf } from "~/components/office/shell-ui"
 import type { Profile } from "~/core/profile/types"
 import { OfficeLayoutError } from "~/core/office/saveLayout"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import type { ReservationActionData } from "~/routes/api.reservations.$slug.$officeSlug"
+import { useI18n } from "~/i18n/I18nProvider"
+import { getTranslator } from "~/i18n/locale.server"
+import { translateError } from "~/i18n/errors"
 import {
   addDays,
-  formatShort,
   isDay,
   maxDay,
   todayIn,
@@ -91,7 +94,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const lastDay = addDays(today, office.bookingWindowDays)
   const asked = new URL(args.request.url).searchParams.get("day")
   const day: Day = isDay(asked) && asked >= from && asked <= lastDay ? asked : today
-  const [{ reservations, releases }, occupancy] = await Promise.all([
+  const [{ reservations, releases }, occupancy, preferences] = await Promise.all([
     core.reservation.listForOffice({
       organizationSlug,
       officeSlug: office.slug,
@@ -100,6 +103,13 @@ export const loader = async (args: LoaderFunctionArgs) => {
     }),
     // "5 of 9 in today" for each office in the switcher.
     core.office.occupancyToday(organizationSlug, offices.data),
+    // Your favourites, usual desk and waitlist days here.
+    core.reservation.preferences({
+      organizationSlug,
+      officeSlug: office.slug,
+      userEmail: profile.userEmail,
+      from: today,
+    }),
   ])
 
   return {
@@ -121,7 +131,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
     members: members.data.map(toMember),
     // Only admins edit the layout (it also sets who has a permanent desk).
     canEdit: profile.role === Role.ADMIN,
-    booking: { today, day, from, lastDay, reservations, releases },
+    booking: { today, day, from, lastDay, reservations, releases, preferences },
   }
 }
 
@@ -149,15 +159,16 @@ export const action = async (args: ActionFunctionArgs) => {
     })
     return data<LayoutActionData>({ ok: true, cancelled })
   } catch (error) {
+    const translator = await getTranslator(args.request)
     // Nothing a retry would fix: say why and stop.
     if (error instanceof OfficeLayoutError)
       return data<LayoutActionData>(
-        { ok: false, error: error.message, retry: false },
+        { ok: false, error: translateError(translator, error, "Couldn't save"), retry: false },
         { status: 400 }
       )
     if (error instanceof Error && error.message === "Forbidden")
       return data<LayoutActionData>(
-        { ok: false, error: "Only admins can change the layout.", retry: false },
+        { ok: false, error: translator.t("Only admins can change the layout."), retry: false },
         { status: 403 }
       )
     console.error("Saving office layout failed", error)
@@ -165,14 +176,18 @@ export const action = async (args: ActionFunctionArgs) => {
   }
 }
 
-const Fallback = () => (
-  <div className="flex h-full w-full items-center justify-center bg-background text-sm text-muted">
-    Loading the studio…
-  </div>
-)
+const Fallback = () => {
+  const { t } = useI18n()
+  return (
+    <div className="flex h-full w-full items-center justify-center bg-background text-sm text-muted">
+      {t("Loading the studio…")}
+    </div>
+  )
+}
 
 export default function OfficeRoute() {
   const { initialObjects, offices, me, members, canEdit, booking } = useLoaderData<typeof loader>()
+  const { t, tn, format } = useI18n()
   // Members as the editor's seat model sees them (email = stable seat id).
   const people = useMemo(() => {
     const toPerson = (m: ShellMember) => ({
@@ -216,7 +231,11 @@ export default function OfficeRoute() {
     if (!d.ok && d.error) toast.danger(d.error)
     if (d.ok && d.cancelled > 0)
       toast.info(
-        `${d.cancelled} upcoming ${d.cancelled === 1 ? "booking was" : "bookings were"} cancelled on removed or permanent desks.`
+        tn(
+          d.cancelled,
+          "{n} upcoming booking was cancelled on removed or permanent desks.",
+          "{n} upcoming bookings were cancelled on removed or permanent desks."
+        )
       )
   }, [fetcher.data])
 
@@ -258,6 +277,12 @@ export default function OfficeRoute() {
       ),
     [bookingSubmit, bookingAction]
   )
+  // Favourites, your usual desk, the waitlist.
+  const onPreference = useCallback(
+    (change: PreferenceChange) =>
+      bookingSubmit(change as Record<string, string>, { method: "post", action: bookingAction }),
+    [bookingSubmit, bookingAction]
+  )
   const nameByEmail = useMemo(
     () => new Map(members.map((m) => [m.userEmail, nameOf(m)])),
     [members]
@@ -273,19 +298,42 @@ export default function OfficeRoute() {
     }
     if (d.intent === "reserve" && d.conflicts.length) {
       const taken = d.conflicts
-        .map((c) => `${formatShort(c.date)} (${nameByEmail.get(c.userEmail) ?? "someone"})`)
+        .map((c) => `${format.short(c.date)} (${nameByEmail.get(c.userEmail) ?? t("someone")})`)
         .join(", ")
       toast.warning(
         d.booked.length
-          ? `Booked ${d.booked.map(formatShort).join(", ")}. Already taken: ${taken}.`
-          : `Already taken: ${taken}.`
+          ? t("Booked {days}. Already taken: {taken}.", {
+              days: d.booked.map(format.short).join(", "),
+              taken,
+            })
+          : t("Already taken: {taken}.", { taken })
       )
     }
+    if (d.intent === "usual") {
+      const parts = [
+        d.booked.length
+          ? t("Booked {days}", { days: d.booked.map(format.short).join(", ") })
+          : t("Nothing new to book yet"),
+        d.moved.length
+          ? t("your usual desk was taken on {days}, so you're at another desk then", {
+              days: d.moved.map((m) => format.short(m.date)).join(", "),
+            })
+          : "",
+        d.waiting.length
+          ? t("the office is full on {days} — you're on the waitlist", {
+              days: d.waiting.map(format.short).join(", "),
+            })
+          : "",
+      ].filter(Boolean)
+      toast.success(t("Usual desk set. {details}.", { details: parts.join("; ") }))
+    }
+    if (d.intent === "waitlist-join")
+      toast.success(t("You're on the waitlist — you'll get the first desk that frees up."))
     if (d.intent === "reclaim" && d.taken.length) {
       const taken = d.taken
-        .map((t) => `${formatShort(t.date)} (${nameByEmail.get(t.userEmail) ?? "someone"})`)
+        .map((x) => `${format.short(x.date)} (${nameByEmail.get(x.userEmail) ?? t("someone")})`)
         .join(", ")
-      toast.warning(`Already booked by someone, so still given up: ${taken}.`)
+      toast.warning(t("Already booked by someone, so still given up: {taken}.", { taken }))
     }
     // Only react to a new result.
   }, [bookingFetcher.data])
@@ -314,6 +362,7 @@ export default function OfficeRoute() {
                   onCancel,
                   onRelease,
                   onReclaim,
+                  onPreference,
                 }}
                 displayShell={({ enterEdit, empty, guide }) => (
                   <SpatialShell

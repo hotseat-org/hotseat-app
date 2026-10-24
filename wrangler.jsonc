@@ -8,6 +8,8 @@
   "routes": [{ "pattern": "alpha.vidlak.net/hotseat*", "zone_name": "vidlak.net" }],
   "workers_dev": false,
   "observability": { "enabled": true },
+  // Booking jobs (usual desks, waitlist) — see workers/app.ts `scheduled`.
+  "triggers": { "crons": ["7 * * * *"] },
   "vars": {
     "BASE_URL": "https://alpha.vidlak.net/hotseat",
   },

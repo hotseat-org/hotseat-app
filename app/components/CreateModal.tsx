@@ -5,6 +5,7 @@ import { Check, X } from "lucide-react"
 import { useEffect, useState, type ReactNode } from "react"
 import { useFetcher } from "react-router"
 import { uploadImage } from "~/components/Inputs/ImageUpload"
+import { useI18n } from "~/i18n/I18nProvider"
 
 /**
  * Shared pieces of the "create" modals (new office, new organization): a
@@ -123,16 +124,19 @@ export const ContourBanner = ({
 )
 
 /** Round "×" over the banner. */
-export const BannerClose = ({ onPress }: { onPress: () => void }) => (
-  <button
-    type="button"
-    aria-label="Close"
-    onClick={onPress}
-    className="absolute top-3.5 right-3.5 z-10 flex size-9 cursor-pointer items-center justify-center rounded-full bg-overlay/85 text-foreground transition-colors hover:bg-overlay"
-  >
-    <X size={16} strokeWidth={2.4} />
-  </button>
-)
+export const BannerClose = ({ onPress }: { onPress: () => void }) => {
+  const { t } = useI18n()
+  return (
+    <button
+      type="button"
+      aria-label={t("Close")}
+      onClick={onPress}
+      className="absolute top-3.5 right-3.5 z-10 flex size-9 cursor-pointer items-center justify-center rounded-full bg-overlay/85 text-foreground transition-colors hover:bg-overlay"
+    >
+      <X size={16} strokeWidth={2.4} />
+    </button>
+  )
+}
 
 /**
  * The name, typed big like a title (an underline, not a box), with its small
@@ -157,45 +161,48 @@ export const TitleNameField = ({
   slug: string
   availability: Availability
   isCentered?: boolean
-}) => (
-  <div className={clsx("flex w-full flex-col gap-1.5", isCentered && "items-center")}>
-    <label
-      htmlFor="create-name"
-      className="text-xs font-extrabold tracking-[0.06em] text-muted uppercase"
-    >
-      {label}
-    </label>
-    <input
-      id="create-name"
-      name="name"
-      value={name}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      autoComplete="off"
-      autoFocus
-      required
-      className={clsx(
-        "w-full border-0 border-b-2 border-border bg-transparent pt-1 pb-2 text-[28px] font-black text-foreground outline-none transition-colors",
-        "placeholder:text-muted/50",
-        availability === "taken" ? "border-danger" : "focus:border-accent",
-        isCentered && "text-center"
-      )}
-    />
-    {/* Fixed height: the line changes, the modal doesn't move. */}
-    <p className="flex h-5 items-center gap-1.5 text-[13px] text-muted">
-      {availability === "checking" && <Spinner size="sm" className="size-3.5 shrink-0" />}
-      {availability === "available" && (
-        <Check size={14} strokeWidth={3} className="shrink-0 animate-icon-pop text-success" />
-      )}
-      {availability === "taken" && (
-        <X size={14} strokeWidth={3} className="shrink-0 animate-icon-pop text-danger" />
-      )}
-      <span className="truncate">
-        {path}
-        <strong className="font-bold text-foreground">{slug || "…"}</strong>
-        {availability === "available" && " is free"}
-        {availability === "taken" && <span className="text-danger"> is taken</span>}
-      </span>
-    </p>
-  </div>
-)
+}) => {
+  const { t } = useI18n()
+  return (
+    <div className={clsx("flex w-full flex-col gap-1.5", isCentered && "items-center")}>
+      <label
+        htmlFor="create-name"
+        className="text-xs font-extrabold tracking-[0.06em] text-muted uppercase"
+      >
+        {label}
+      </label>
+      <input
+        id="create-name"
+        name="name"
+        value={name}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        autoComplete="off"
+        autoFocus
+        required
+        className={clsx(
+          "w-full border-0 border-b-2 border-border bg-transparent pt-1 pb-2 text-[28px] font-black text-foreground outline-none transition-colors",
+          "placeholder:text-muted/50",
+          availability === "taken" ? "border-danger" : "focus:border-accent",
+          isCentered && "text-center"
+        )}
+      />
+      {/* Fixed height: the line changes, the modal doesn't move. */}
+      <p className="flex h-5 items-center gap-1.5 text-[13px] text-muted">
+        {availability === "checking" && <Spinner size="sm" className="size-3.5 shrink-0" />}
+        {availability === "available" && (
+          <Check size={14} strokeWidth={3} className="shrink-0 animate-icon-pop text-success" />
+        )}
+        {availability === "taken" && (
+          <X size={14} strokeWidth={3} className="shrink-0 animate-icon-pop text-danger" />
+        )}
+        <span className="truncate">
+          {path}
+          <strong className="font-bold text-foreground">{slug || "…"}</strong>
+          {availability === "available" && ` ${t("is free")}`}
+          {availability === "taken" && <span className="text-danger"> {t("is taken")}</span>}
+        </span>
+      </p>
+    </div>
+  )
+}

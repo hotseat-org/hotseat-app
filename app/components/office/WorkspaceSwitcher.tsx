@@ -9,6 +9,8 @@ import { useSettings } from "~/components/settings/useSettings"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { useOrganizationContext } from "~/utils/hooks/useProfileData"
 import { useProfile } from "~/utils/remix"
+import { useI18n } from "~/i18n/I18nProvider"
+import type { Translator } from "~/i18n/translate"
 
 interface Props {
   /** Offices in the current org (empty on the no-office screen). */
@@ -36,6 +38,7 @@ export const WorkspaceSwitcher = ({
   className = "absolute left-5 top-5",
 }: Props) => {
   const d = useSwitcher(offices)
+  const { t } = d.i18n
   const [open, setOpen] = useState<"org" | "office" | null>(null)
   const close = () => setOpen(null)
   const toggle = (menu: "org" | "office") => setOpen((current) => (current === menu ? null : menu))
@@ -77,7 +80,7 @@ export const WorkspaceSwitcher = ({
       <span
         className={`min-w-0 truncate text-sm font-semibold text-foreground ${isCompact ? "" : "max-w-36"}`}
       >
-        {d.currentOffice?.name ?? (offices.length ? "Select office" : "No offices")}
+        {d.currentOffice?.name ?? (offices.length ? t("Select office") : t("No offices"))}
       </span>
       <ChevronDown className="size-3.5 shrink-0 text-muted" />
     </>
@@ -90,7 +93,7 @@ export const WorkspaceSwitcher = ({
       >
         <button
           type="button"
-          aria-label="Switch organization"
+          aria-label={t("Switch organization")}
           aria-expanded={open === "org"}
           onClick={() => toggle("org")}
           className={`${TRIGGER} shrink-0 ${open === "org" ? "bg-surface-secondary" : ""}`}
@@ -100,7 +103,7 @@ export const WorkspaceSwitcher = ({
         <span className="shrink-0 px-0.5 text-lg font-light text-muted/50">/</span>
         <button
           type="button"
-          aria-label="Switch office"
+          aria-label={t("Switch office")}
           aria-expanded={open === "office"}
           onClick={() => toggle("office")}
           className={`${TRIGGER} min-w-0 ${open === "office" ? "bg-surface-secondary" : ""}`}
@@ -108,7 +111,7 @@ export const WorkspaceSwitcher = ({
           {officeTrigger}
         </button>
         {open && (
-          <DropPanel label={open === "org" ? "Organizations" : "Offices"} onClose={close}>
+          <DropPanel label={open === "org" ? t("Organizations") : t("Offices")} onClose={close}>
             {open === "org" ? orgMenu : officeMenu}
           </DropPanel>
         )}
@@ -141,7 +144,7 @@ export const WorkspaceSwitcher = ({
           <div
             role="button"
             tabIndex={0}
-            aria-label="Switch office"
+            aria-label={t("Switch office")}
             className={`${TRIGGER} min-w-0`}
           >
             {officeTrigger}
@@ -179,8 +182,8 @@ const OrgMenu = ({
         />
       }
       label={d.organization.name}
-      sub={d.currentOrg && orgDetail(d.currentOrg)}
-      settingsLabel="Organization settings"
+      sub={d.currentOrg && orgDetail(d.i18n, d.currentOrg)}
+      settingsLabel={d.i18n.t("Organization settings")}
       // Settings are an admin's: members don't get the gear.
       onSettings={
         d.isAdmin
@@ -193,20 +196,24 @@ const OrgMenu = ({
     />
     {d.otherOrgs.length > 0 && (
       <>
-        <SectionLabel>Other organizations</SectionLabel>
+        <SectionLabel>{d.i18n.t("Other organizations")}</SectionLabel>
         {d.otherOrgs.map((o) => (
           <Row
             key={o.slug}
             lead={<OrgLogo src={o.thumbnailUrl} name={o.name} className="size-9 rounded-xl" />}
             label={o.name}
-            sub={orgDetail(o)}
+            sub={orgDetail(d.i18n, o)}
             onClick={() => onGo(`/app/o/${o.slug}`)}
           />
         ))}
       </>
     )}
     <Divider />
-    <CreateLink to="?modal=new-organization" label="New organization" onClick={onClose} />
+    <CreateLink
+      to="?modal=new-organization"
+      label={d.i18n.t("New organization")}
+      onClick={onClose}
+    />
   </>
 )
 
@@ -223,14 +230,15 @@ const OfficeMenu = ({
   onGo: (to: string) => void
 }) => {
   const otherOffices = offices.filter((o) => o.slug !== d.officeSlug)
+  const { t } = d.i18n
   return (
     <>
       {d.currentOffice && (
         <CurrentHeader
           lead={<OfficeThumb o={d.currentOffice} />}
           label={d.currentOffice.name}
-          sub={occupancyDetail(d.currentOffice)}
-          settingsLabel="Office settings"
+          sub={occupancyDetail(d.i18n, d.currentOffice)}
+          settingsLabel={t("Office settings")}
           onSettings={
             d.isAdmin
               ? () => {
@@ -243,27 +251,27 @@ const OfficeMenu = ({
       )}
       {otherOffices.length > 0 ? (
         <>
-          <SectionLabel>{d.currentOffice ? "Other offices" : "Offices"}</SectionLabel>
+          <SectionLabel>{d.currentOffice ? t("Other offices") : t("Offices")}</SectionLabel>
           <div className="flex max-h-72 flex-col gap-0.5 overflow-y-auto">
             {otherOffices.map((o) => (
               <Row
                 key={o.slug}
                 lead={<OfficeThumb o={o} />}
                 label={o.name}
-                sub={occupancyDetail(o)}
+                sub={occupancyDetail(d.i18n, o)}
                 onClick={() => onGo(`/app/o/${d.slug}/offices/${o.slug}`)}
               />
             ))}
           </div>
         </>
       ) : (
-        !d.isAdmin && <p className="px-2 py-2 text-sm text-muted">No other offices.</p>
+        !d.isAdmin && <p className="px-2 py-2 text-sm text-muted">{t("No other offices.")}</p>
       )}
       {d.isAdmin && (
         <>
           {/* Only between offices and the action — not above it alone. */}
           {(d.currentOffice || otherOffices.length > 0) && <Divider />}
-          <CreateLink to="?modal=new-office" label="New office" onClick={onClose} />
+          <CreateLink to="?modal=new-office" label={t("New office")} onClick={onClose} />
         </>
       )}
     </>
@@ -285,6 +293,7 @@ const DropPanel = ({
   onClose: () => void
   children: ReactNode
 }) => {
+  const { t } = useI18n()
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose()
     window.addEventListener("keydown", onKey)
@@ -297,7 +306,7 @@ const DropPanel = ({
     >
       <button
         type="button"
-        aria-label="Close"
+        aria-label={t("Close")}
         tabIndex={-1}
         onClick={onClose}
         className="pointer-events-auto absolute inset-0 bg-scrim"
@@ -325,7 +334,9 @@ const useSwitcher = (offices: ShellOffice[]) => {
   const { open: openSettings } = useSettings()
   const navigate = useNavigate()
   const { slug, officeSlug } = useParams()
+  const i18n = useI18n()
   return {
+    i18n,
     organization,
     organizations,
     currentOrg: organizations.find((o) => o.slug === organization.slug),
@@ -341,15 +352,15 @@ const useSwitcher = (offices: ShellOffice[]) => {
 type Org = ReturnType<typeof useOrganizationContext>["organizations"][number]
 
 /** "Admin · 4 members" */
-const orgDetail = (org: Org) =>
-  `${org.role === Role.ADMIN ? "Admin" : "Member"} · ${org.memberCount} member${org.memberCount === 1 ? "" : "s"}`
+const orgDetail = ({ t, tn }: Translator, org: Org) =>
+  `${org.role === Role.ADMIN ? t("Admin") : t("Member")} · ${tn(org.memberCount, "{n} member", "{n} members")}`
 
 /** "5 of 9 in today", "Nobody in today", "No desks yet". */
-const occupancyDetail = (o: ShellOffice) => {
+const occupancyDetail = ({ t }: Translator, o: ShellOffice) => {
   if (o.seats === undefined || o.inToday === undefined) return undefined
-  if (o.seats === 0) return "No desks yet"
-  if (o.inToday === 0) return "Nobody in today"
-  return `${o.inToday} of ${o.seats} in today`
+  if (o.seats === 0) return t("No desks yet")
+  if (o.inToday === 0) return t("Nobody in today")
+  return t("{in} of {total} in today", { in: o.inToday, total: o.seats })
 }
 
 /** The current org/office atop its menu: highlighted, with a gear for its settings (admins). */

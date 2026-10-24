@@ -1,5 +1,6 @@
 import type { CoreContext } from "../types"
 import { bookingContext } from "./context"
+import { fillWaitlist } from "./preferences"
 import { MAX_DAYS_PER_REQUEST, ReservationError } from "./types"
 import { isDay, type Day } from "~/utils/booking"
 
@@ -12,7 +13,10 @@ export interface CancelArgs {
   forEmail?: string
 }
 
-/** Cancel your bookings in an office on the given days (not past ones). */
+/**
+ * Cancel your bookings in an office on the given days (not past ones). The
+ * desks freed go to whoever's waiting for those days.
+ */
 export const cancelReservations =
   (context: CoreContext) =>
   async (args: CancelArgs): Promise<{ cancelled: number }> => {
@@ -31,5 +35,6 @@ export const cancelReservations =
       userEmail: targetEmail,
       dates,
     })
+    if (cancelled) await fillWaitlist(context)({ organizationSlug, officeSlug, dates })
     return { cancelled }
   }

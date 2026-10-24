@@ -20,6 +20,7 @@ import {
   useNameCheck,
 } from "~/components/CreateModal"
 import { officeSlugForName } from "~/core/office/slug"
+import { useI18n } from "~/i18n/I18nProvider"
 import { getCore } from "~/core/get-core"
 import { requireProfile } from "~/utils/loader-helpers/requireProfile"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
@@ -67,6 +68,7 @@ export const action = async (args: ActionFunctionArgs) => {
 
 export const NewOffice = () => {
   const { slug } = useParams()
+  const { t } = useI18n()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   // Opened as `?modal=new-office` over a page → just remove the param (stay on
@@ -111,14 +113,14 @@ export const NewOffice = () => {
                   />
                   <span className="inline-flex h-[38px] items-center gap-2 rounded-full border border-border bg-overlay/90 px-4 text-[13px] font-extrabold text-foreground shadow-sm">
                     {cover.isUploading ? <Spinner size="sm" /> : <ImagePlus size={16} />}
-                    {cover.preview ? "Change cover photo" : "Add a cover photo"}
+                    {cover.preview ? t("Change cover photo") : t("Add a cover photo")}
                   </span>
                 </label>
               </ContourBanner>
               <div className="flex flex-col gap-5 px-[30px] pt-[26px] pb-7">
                 <TitleNameField
-                  label="New office"
-                  placeholder="Name your office"
+                  label={t("New office")}
+                  placeholder={t("Name your office")}
                   name={name}
                   onChange={setName}
                   path="…/offices/"
@@ -126,11 +128,11 @@ export const NewOffice = () => {
                   availability={availability}
                 />
                 <p className="text-[13px] leading-normal text-muted">
-                  Next you&apos;ll lay out its floor, from a template or a blank plan.
+                  {t("Next you'll lay out its floor, from a template or a blank plan.")}
                 </p>
                 <div className="flex justify-end gap-2.5">
                   <Button variant="ghost" type="button" onPress={close}>
-                    Cancel
+                    {t("Cancel")}
                   </Button>
                   <Button
                     type="submit"
@@ -140,7 +142,7 @@ export const NewOffice = () => {
                     isPending={isCreating}
                     variant="primary"
                   >
-                    Create office
+                    {t("Create office")}
                   </Button>
                 </div>
               </div>

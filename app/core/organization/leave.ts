@@ -1,5 +1,7 @@
 import type { CoreContext } from "../types"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
+import { LocalizedError } from "~/i18n/errors"
+import { encodeNotification } from "~/i18n/notifications"
 
 export interface LeaveOrganizationArgs {
   email: string
@@ -29,7 +31,9 @@ export const leaveOrganization =
     // * TLDR: if you are the only admin, you can't demote yourself to user
     if (currentRole === Role.ADMIN) {
       if (members.data.length < 2) {
-        throw new Error("There always needs to be at least one admin. Create a new admin first.")
+        throw new LocalizedError(
+          "There always needs to be at least one admin. Create a new admin first."
+        )
       }
     }
 
@@ -47,7 +51,7 @@ export interface RemoveOrganizationMemberArgs {
 }
 
 /** A removal that can't happen as asked — the message is shown to the admin. */
-export class MemberRemovalError extends Error {}
+export class MemberRemovalError extends LocalizedError {}
 
 /**
  * An admin removes someone from the organization: like them leaving — their
@@ -72,7 +76,10 @@ export const removeOrganizationMember =
         {
           userEmail: memberEmail,
           organizationSlug,
-          message: `You were removed from ${organization?.name ?? organizationSlug}. Your bookings there were cancelled.`,
+          message: encodeNotification(
+            "You were removed from {organization}. Your bookings there were cancelled.",
+            { organization: organization?.name ?? organizationSlug }
+          ),
         },
       ],
     })

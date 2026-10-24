@@ -8,6 +8,7 @@ import { HotseatLockup } from "~/components/HotseatMark"
 import { CenteredScreen } from "~/components/ui/CenteredScreen"
 import { ThumbAvatar } from "~/components/office/shell-ui"
 import { revalidateOn } from "~/utils/revalidation"
+import { useI18n } from "~/i18n/I18nProvider"
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const user = await requireUser(request)
@@ -36,6 +37,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 const AppIndex = () => {
   const { firstName, email, invitations } = useLoaderData<typeof loader>()
   const navigate = useNavigate()
+  const { t } = useI18n()
   const [code, setCode] = useState("")
 
   // Accept either a pasted invite link or a bare org slug / slug-hash.
@@ -58,8 +60,10 @@ const AppIndex = () => {
       <div className="relative z-10 w-full max-w-xl text-center">
         <HotseatLockup size={44} />
 
-        <h1 className="mt-5 text-3xl font-extrabold tracking-tight">Welcome, {firstName}</h1>
-        <p className="mt-1 text-muted">Let&apos;s find you a workspace. Where do you belong?</p>
+        <h1 className="mt-5 text-3xl font-extrabold tracking-tight">
+          {t("Welcome, {name}", { name: firstName })}
+        </h1>
+        <p className="mt-1 text-muted">{t("Let's find you a workspace. Where do you belong?")}</p>
 
         {/* Invitations waiting for this email: the quickest way in. */}
         {invitations.length > 0 && (
@@ -75,14 +79,14 @@ const AppIndex = () => {
                   className="size-11 shrink-0 rounded-xl"
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold text-accent">You&apos;re invited</p>
+                  <p className="text-xs font-bold text-accent">{t("You're invited")}</p>
                   <p className="truncate font-extrabold">{invitation.name}</p>
                 </div>
                 <Link
                   to={`/join/${invitation.slug}`}
                   className="shrink-0 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-accent-foreground transition hover:brightness-105"
                 >
-                  View invite
+                  {t("View invite")}
                 </Link>
               </li>
             ))}
@@ -95,15 +99,15 @@ const AppIndex = () => {
             <div className="grid size-10 place-items-center rounded-xl bg-accent/15 text-accent">
               <Building2 className="size-5" />
             </div>
-            <h2 className="mt-3 text-base font-extrabold">Create an organization</h2>
+            <h2 className="mt-3 text-base font-extrabold">{t("Create an organization")}</h2>
             <p className="mt-0.5 text-sm text-muted">
-              Start fresh, design your office, and invite your team.
+              {t("Start fresh, design your office, and invite your team.")}
             </p>
             <Link
               to="?modal=new-organization"
               className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-accent-foreground transition hover:brightness-105"
             >
-              Create organization
+              {t("Create organization")}
             </Link>
           </div>
 
@@ -112,35 +116,35 @@ const AppIndex = () => {
             <div className="grid size-10 place-items-center rounded-xl bg-success/15 text-success">
               <ArrowUpRight className="size-5" />
             </div>
-            <h2 className="mt-3 text-base font-extrabold">Join with an invite</h2>
+            <h2 className="mt-3 text-base font-extrabold">{t("Join with an invite")}</h2>
             <p className="mt-0.5 text-sm text-muted">
-              Paste an invite link or code from a teammate.
+              {t("Paste an invite link or code from a teammate.")}
             </p>
             <form onSubmit={join} className="mt-4 flex gap-2">
               <input
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                placeholder="Invite link or code"
+                placeholder={t("Invite link or code")}
                 className="min-w-0 flex-1 rounded-xl border border-border bg-surface px-3 py-2.5 text-sm outline-none placeholder:text-muted focus-visible:border-accent"
               />
               <button
                 type="submit"
                 className="shrink-0 rounded-xl bg-accent/15 px-4 py-2.5 text-sm font-bold text-accent transition hover:bg-accent/25"
               >
-                Join
+                {t("Join")}
               </button>
             </form>
           </div>
         </div>
 
         <div className="mt-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-muted">
-          <span>Signed in as {email}</span>
+          <span>{t("Signed in as {email}", { email })}</span>
           <Link to="?settings=user/profile" className="font-bold text-accent hover:underline">
-            Account settings
+            {t("Account settings")}
           </Link>
           <Form method="post" action="/logout">
             <button type="submit" className="font-bold text-accent hover:underline">
-              Sign out
+              {t("Sign out")}
             </button>
           </Form>
         </div>

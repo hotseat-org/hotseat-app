@@ -1,4 +1,5 @@
 import type { Day } from "~/utils/booking"
+import { LocalizedError } from "~/i18n/errors"
 
 export interface Reservation {
   deskId: string
@@ -7,10 +8,10 @@ export interface Reservation {
 }
 
 /** A booking request that can't be honoured — the message is shown to the person. */
-export class ReservationError extends Error {}
+export class ReservationError extends LocalizedError {}
 
 /** Someone booked the same desk and day a moment earlier. */
-export class ReservationRaceError extends Error {
+export class ReservationRaceError extends LocalizedError {
   constructor() {
     super("Someone just booked this desk. The map has been refreshed.")
   }

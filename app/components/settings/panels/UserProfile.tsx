@@ -8,6 +8,7 @@ import { useSettings } from "../useSettings"
 import { Button } from "~/components/Button"
 import { ThumbAvatar } from "~/components/office/shell-ui"
 import { useUser } from "~/utils/remix"
+import { useI18n } from "~/i18n/I18nProvider"
 
 const PROFILE_ACTION = "/api/settings/user/profile"
 const FORM = "user-profile"
@@ -15,6 +16,7 @@ const FORM = "user-profile"
 export function UserProfile() {
   const { email, displayName = "", photo } = useUser()
   const { dialog, openDialog } = useSettings()
+  const { t } = useI18n()
   const fetcher = useFetcher()
 
   const [name, setName] = useState(displayName)
@@ -30,15 +32,17 @@ export function UserProfile() {
           className="size-21 shrink-0 rounded-full text-3xl"
         />
         <div className="flex flex-col gap-2">
-          <CardTitle>Photo</CardTitle>
-          <p className="text-sm text-muted">Shown to your teammates, on desks and in the office.</p>
+          <CardTitle>{t("Photo")}</CardTitle>
+          <p className="text-sm text-muted">
+            {t("Shown to your teammates, on desks and in the office.")}
+          </p>
           <div className="flex flex-wrap gap-2">
             <Button size="sm" variant="secondary" onPress={() => openDialog("set-avatar")}>
-              Upload new
+              {t("Upload new")}
             </Button>
             {photo && (
               <Button size="sm" variant="danger-soft" onPress={() => openDialog("delete-avatar")}>
-                Remove
+                {t("Remove")}
               </Button>
             )}
           </div>
@@ -54,11 +58,11 @@ export function UserProfile() {
         >
           <input type="hidden" name="intent" value="update-profile" />
           <TextField name="displayName" value={name} onChange={setName}>
-            <Label>Display name</Label>
-            <Input placeholder="How teammates see you" />
+            <Label>{t("Display name")}</Label>
+            <Input placeholder={t("How teammates see you")} />
           </TextField>
           <div className="flex flex-col gap-1">
-            <p className="text-sm font-medium text-foreground">Email</p>
+            <p className="text-sm font-medium text-foreground">{t("Email")}</p>
             <p className="text-sm text-muted">{email}</p>
           </div>
         </fetcher.Form>

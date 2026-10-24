@@ -21,6 +21,7 @@ import { organizationIsAvailable } from "./organization/isAvailable"
 import { joinOrganizationWithHash } from "./organization/joinWithHash"
 import { listNotifications, markNotificationsRead } from "./notification"
 import { getOfficesOccupancy } from "./office/occupancy"
+import { getOfficeInsights } from "./office/insights"
 import { getOrganizationLanding, getUserLanding } from "./user/landing"
 import { listUserOrganizations } from "./user/listOrganizations"
 import { listDeskReleases, reclaimDesk, releaseDesk } from "./reservation/release"
@@ -32,6 +33,15 @@ import { cancelReservations } from "./reservation/cancel"
 import { listOfficeBookings, listReservations } from "./reservation/list"
 import { getMyBookings } from "./reservation/mine"
 import { reserveDesk } from "./reservation/reserve"
+import {
+  getDeskPreferences,
+  joinWaitlist,
+  leaveWaitlist,
+  removeUsualDesk,
+  runBookingJobs,
+  setFavoriteDesk,
+  setUsualDesk,
+} from "./reservation/preferences"
 import type { CoreContext } from "./types"
 import { createUser } from "./user/create"
 import { getUser } from "./user/get"
@@ -88,6 +98,7 @@ export const createCore = (context: CoreContext) => ({
     update: updateOffice(context),
     delete: deleteOffice(context),
     occupancyToday: getOfficesOccupancy(context),
+    insights: getOfficeInsights(context),
     renamedTo: (organizationSlug: string, oldSlug: string) =>
       context.mainRepository.slugRedirect.findOffice(organizationSlug, oldSlug),
   },
@@ -95,6 +106,13 @@ export const createCore = (context: CoreContext) => ({
     list: listReservations(context),
     listForOffice: listOfficeBookings(context),
     reserve: reserveDesk(context),
+    preferences: getDeskPreferences(context),
+    setFavorite: setFavoriteDesk(context),
+    setUsual: setUsualDesk(context),
+    removeUsual: removeUsualDesk(context),
+    joinWaitlist: joinWaitlist(context),
+    leaveWaitlist: leaveWaitlist(context),
+    runJobs: runBookingJobs(context),
     cancel: cancelReservations(context),
     mine: getMyBookings(context),
     release: releaseDesk(context),

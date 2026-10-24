@@ -9,6 +9,7 @@ import { useSettings } from "../useSettings"
 import { Button } from "~/components/Button"
 import { ThumbAvatar } from "~/components/office/shell-ui"
 import { useOrganizationContext } from "~/utils/hooks/useProfileData"
+import { useI18n } from "~/i18n/I18nProvider"
 
 const FORM = "org-general"
 
@@ -16,6 +17,7 @@ export function OrgGeneral() {
   const { slug = "" } = useParams()
   const { organization } = useOrganizationContext()
   const { dialog, openDialog } = useSettings()
+  const { t } = useI18n()
   const fetcher = useFetcher<{ ok: boolean; slug?: string; error?: string }>()
   const action = `/api/settings/org/${slug}/general`
 
@@ -35,17 +37,17 @@ export function OrgGeneral() {
           className="size-21 shrink-0 rounded-3xl text-3xl"
         />
         <div className="flex flex-col gap-2">
-          <CardTitle>Logo</CardTitle>
+          <CardTitle>{t("Logo")}</CardTitle>
           <p className="text-sm text-muted">
-            Square image, at least 256 × 256. Shown in the switcher and on invites.
+            {t("Square image, at least 256 × 256. Shown in the switcher and on invites.")}
           </p>
           <div className="flex flex-wrap gap-2">
             <Button size="sm" variant="secondary" onPress={() => openDialog("set-logo")}>
-              Upload new
+              {t("Upload new")}
             </Button>
             {organization.thumbnailUrl && (
               <Button size="sm" variant="danger-soft" onPress={() => openDialog("delete-logo")}>
-                Remove
+                {t("Remove")}
               </Button>
             )}
           </div>
@@ -58,11 +60,13 @@ export function OrgGeneral() {
           <NameField
             rename={rename}
             urlPrefix="/app/o/"
-            warning="Renaming changes the URL. Old links and invite links keep working — they forward to the new one."
+            warning={t(
+              "Renaming changes the URL. Old links and invite links keep working — they forward to the new one."
+            )}
           />
           <TextField name="description" value={description} onChange={setDescription}>
-            <Label>Description</Label>
-            <Input placeholder="What your organization is about (optional)" />
+            <Label>{t("Description")}</Label>
+            <Input placeholder={t("What your organization is about (optional)")} />
           </TextField>
           {fetcher.data?.ok === false && fetcher.data.error && (
             <p className="text-sm font-bold text-danger">{fetcher.data.error}</p>

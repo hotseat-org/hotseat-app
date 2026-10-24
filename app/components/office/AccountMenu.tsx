@@ -7,6 +7,7 @@ import { useProfile } from "~/utils/remix"
 import { useSettings } from "~/components/settings/useSettings"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { ThemeSwitcher } from "~/components/ui/ThemeSwitcher"
+import { useI18n } from "~/i18n/I18nProvider"
 
 const item =
   "flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-foreground/5"
@@ -17,6 +18,7 @@ const item =
  */
 export const AccountMenu = ({ isFlat = false }: { isFlat?: boolean }) => {
   const profile = useProfile()
+  const { t } = useI18n()
   const me: ShellMember = {
     userEmail: profile.userEmail,
     displayName: profile.displayName,
@@ -38,7 +40,7 @@ export const AccountMenu = ({ isFlat = false }: { isFlat?: boolean }) => {
         <div
           role="button"
           tabIndex={0}
-          aria-label="Account menu"
+          aria-label={t("Account menu")}
           className={`${isFlat ? "pointer-events-auto rounded-xl" : `${PANEL} ${PANEL_HOVER} p-1.5`} flex cursor-pointer items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-focus`}
         >
           <MemberAvatar m={me} className="size-9 rounded-xl" />
@@ -54,7 +56,7 @@ export const AccountMenu = ({ isFlat = false }: { isFlat?: boolean }) => {
             </div>
           </div>
           <div className="flex items-center justify-between gap-2 border-t border-separator px-2 py-2">
-            <span className="text-sm">Dark mode</span>
+            <span className="text-sm">{t("Dark mode")}</span>
             <ThemeSwitcher />
           </div>
           <div className="flex flex-col border-t border-separator pt-1">
@@ -63,7 +65,7 @@ export const AccountMenu = ({ isFlat = false }: { isFlat?: boolean }) => {
               onClick={() => act(() => openSettings("user", "profile"))}
               className={item}
             >
-              User settings <Cog className="size-3.5 text-muted" />
+              {t("User settings")} <Cog className="size-3.5 text-muted" />
             </button>
             {/* Organization settings are an admin's. */}
             {profile.role === Role.ADMIN && (
@@ -72,7 +74,7 @@ export const AccountMenu = ({ isFlat = false }: { isFlat?: boolean }) => {
                 onClick={() => act(() => openSettings("org", "general"))}
                 className={item}
               >
-                Organization <Users className="size-3.5 text-muted" />
+                {t("Organization")} <Users className="size-3.5 text-muted" />
               </button>
             )}
             <button
@@ -80,7 +82,7 @@ export const AccountMenu = ({ isFlat = false }: { isFlat?: boolean }) => {
               onClick={() => act(() => navigate("/logout"))}
               className={`${item} text-danger`}
             >
-              Log out <LogOut className="size-3.5" />
+              {t("Log out")} <LogOut className="size-3.5" />
             </button>
           </div>
         </Popover.Dialog>

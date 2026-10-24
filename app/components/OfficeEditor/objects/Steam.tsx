@@ -1,34 +1,8 @@
 import { useEffect, useRef } from "react"
 import { useFrame, useThree } from "@react-three/fiber"
 import type { Mesh, MeshStandardMaterial } from "three"
+import { prefersReducedMotion, subscribeAmbient } from "../ambient"
 import { NO_BAKE } from "./Baked"
-
-/**
- * Steam needs frames even though the canvas renders on demand. One shared
- * ticker asks every canvas showing steam for a frame ~24 times a second (a
- * gentle rate: the wisps are slow and soft), and stops once no steam is left
- * or the tab is hidden.
- */
-const FPS = 24
-const canvases = new Map<() => void, number>()
-let timer: ReturnType<typeof setInterval> | null = null
-
-const subscribe = (invalidate: () => void) => {
-  canvases.set(invalidate, (canvases.get(invalidate) ?? 0) + 1)
-  timer ??= setInterval(() => {
-    if (document.hidden) return
-    for (const inv of canvases.keys()) inv()
-  }, 1000 / FPS)
-  return () => {
-    const n = (canvases.get(invalidate) ?? 1) - 1
-    if (n > 0) canvases.set(invalidate, n)
-    else canvases.delete(invalidate)
-    if (!canvases.size && timer) {
-      clearInterval(timer)
-      timer = null
-    }
-  }
-}
 
 const PUFFS = 4
 const PERIOD = 2.6 // seconds for a puff to rise and fade
@@ -53,13 +27,13 @@ export const Steam = ({ position, size = 1 }: Props) => {
   const reduced = useRef(false)
 
   useEffect(() => {
-    reduced.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    reduced.current = prefersReducedMotion()
     // Reduced motion: a still, faint plume (set once by the first frame below).
     if (reduced.current) {
       invalidate()
       return
     }
-    return subscribe(invalidate)
+    return subscribeAmbient(invalidate)
   }, [invalidate])
 
   useFrame(({ clock }) => {

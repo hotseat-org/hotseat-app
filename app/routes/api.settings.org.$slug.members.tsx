@@ -2,6 +2,8 @@ import { data, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-ro
 import { z } from "zod"
 import { getCore } from "~/core/get-core"
 import { MemberRemovalError } from "~/core/organization/leave"
+import { getTranslator } from "~/i18n/locale.server"
+import { translateError } from "~/i18n/errors"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { requireProfile } from "~/utils/loader-helpers/requireProfile"
 
@@ -30,7 +32,13 @@ export const action = async (args: ActionFunctionArgs) => {
       })
     } catch (error) {
       if (error instanceof MemberRemovalError)
-        return data({ ok: false as const, error: error.message }, { status: 400 })
+        return data(
+          {
+            ok: false as const,
+            error: translateError(await getTranslator(args.request), error, "Something went wrong"),
+          },
+          { status: 400 }
+        )
       throw error
     }
     return data({ ok: true as const })

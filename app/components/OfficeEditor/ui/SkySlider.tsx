@@ -2,6 +2,7 @@ import clsx from "clsx"
 import { Moon, Sun } from "lucide-react"
 import type { CSSProperties } from "react"
 import { daylight } from "../daylight"
+import { useI18n } from "~/i18n/I18nProvider"
 
 /** The track: the sky across 24 h (night → dawn → day → dusk → night). */
 const SKY = [
@@ -55,6 +56,7 @@ export const SkySlider = ({
   className?: string
 }) => {
   const night = daylight(value).nightness
+  const { t } = useI18n()
   return (
     <div
       className={clsx("sky-slider", className)}
@@ -90,7 +92,7 @@ export const SkySlider = ({
         step={0.25}
         value={value}
         onChange={(e) => onChange(Number(e.currentTarget.value))}
-        aria-label="Time of day"
+        aria-label={t("Time of day")}
         aria-valuetext={fmt(value)}
         className="ss-input"
       />

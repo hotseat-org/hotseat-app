@@ -11,16 +11,22 @@ import { getCore } from "~/core/get-core"
 import { isAuthenticated, requireUser } from "~/services/session.server"
 import { JoinCard, JoinProblem } from "~/components/JoinScreen"
 import { LoginScreen } from "~/components/LoginScreen"
+import { useI18n } from "~/i18n/I18nProvider"
+import { metaTranslator } from "~/i18n/translate"
 
-export const meta: MetaFunction<typeof loader> = ({ loaderData }) => [
-  { title: `Join ${loaderData?.org?.name ?? loaderData?.slug}` },
-  { property: "og:title", content: `Join ${loaderData?.org?.name ?? loaderData?.slug}` },
-  { property: "og:description", content: "You've been invited to a Hotseat workspace." },
-  {
-    property: "og:image",
-    content: `${loaderData?.baseUrl}${import.meta.env.BASE_URL}images/og/join-organization/${loaderData?.slug}`,
-  },
-]
+export const meta: MetaFunction<typeof loader> = ({ loaderData, matches }) => {
+  const { t } = metaTranslator(matches)
+  const title = t("Join {name}", { name: loaderData?.org?.name ?? loaderData?.slug ?? "" })
+  return [
+    { title },
+    { property: "og:title", content: title },
+    { property: "og:description", content: t("You've been invited to a Hotseat workspace.") },
+    {
+      property: "og:image",
+      content: `${loaderData?.baseUrl}${import.meta.env.BASE_URL}images/og/join-organization/${loaderData?.slug}`,
+    },
+  ]
+}
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const { slug, hash } = params
@@ -68,21 +74,22 @@ export default function JoinInvite() {
   const { org, authed } = useLoaderData<typeof loader>()
   const [searchParams] = useSearchParams()
   const location = useLocation()
+  const { t } = useI18n()
 
   // Not signed in yet — show the auth screen, returning here after login.
   if (!authed)
     return (
       <LoginScreen
         redirectTo={location.pathname}
-        title={org ? `Join ${org.name}` : undefined}
-        subtitle={org ? "Sign in to accept the invitation" : undefined}
+        title={org ? t("Join {name}", { name: org.name }) : undefined}
+        subtitle={org ? t("Sign in to accept the invitation") : undefined}
       />
     )
 
   if (!org || searchParams.get("error") === "invalid")
     return (
-      <JoinProblem title="Invite not valid">
-        This invite link is invalid or has expired. Ask a teammate for a fresh one.
+      <JoinProblem title={t("Invite not valid")}>
+        {t("This invite link is invalid or has expired. Ask a teammate for a fresh one.")}
       </JoinProblem>
     )
 

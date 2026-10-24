@@ -3,10 +3,12 @@ import { useEffect } from "react"
 import { useFetcher, useParams } from "react-router"
 import { useSettings } from "../useSettings"
 import { Button } from "~/components/Button"
+import { useI18n } from "~/i18n/I18nProvider"
 
 export function GenerateLinkDialog() {
   const { slug } = useParams()
   const { closeDialog } = useSettings()
+  const { t } = useI18n()
   const fetcher = useFetcher()
 
   useEffect(() => {
@@ -21,17 +23,19 @@ export function GenerateLinkDialog() {
             <fetcher.Form method="POST" action={`/api/settings/org/${slug}/invitations`}>
               <input type="hidden" name="intent" value="generate" />
               <Modal.Header>
-                <p>Are you sure you want to generate a new invite link?</p>
+                <p>{t("Are you sure you want to generate a new invite link?")}</p>
               </Modal.Header>
               <Modal.Body>
-                <p className="text-sm text-foreground/60">The current link will no longer work.</p>
+                <p className="text-sm text-foreground/60">
+                  {t("The current link will no longer work.")}
+                </p>
               </Modal.Body>
               <Modal.Footer>
                 <Button type="button" variant="secondary" onPress={closeDialog}>
-                  Cancel
+                  {t("Cancel")}
                 </Button>
                 <Button type="submit" variant="primary" isPending={fetcher.state !== "idle"}>
-                  Generate
+                  {t("Generate")}
                 </Button>
               </Modal.Footer>
             </fetcher.Form>

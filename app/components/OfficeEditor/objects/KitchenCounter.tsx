@@ -1,5 +1,5 @@
-import { RoundedBox } from "@react-three/drei"
 import { ACCENT, PALETTE } from "../palette"
+import { RoundedBox } from "./RoundedBox"
 import { FruitBowl } from "./props"
 import { Surface } from "./Surface"
 

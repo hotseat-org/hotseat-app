@@ -16,7 +16,9 @@ import {
   createEditorStore,
   useEditorStore,
   useEditorStoreApi,
+  type DeskPreferences,
   type EditorStore,
+  type PreferenceChange,
 } from "./store"
 import type { SceneObject } from "./types"
 import { Catalog } from "./ui/Catalog"
@@ -33,10 +35,12 @@ import { isEdgeType } from "./types"
 import { ControlsGuide } from "./ui/ControlsGuide"
 import { CustomBooking } from "./ui/CustomBooking"
 import { RoutePill } from "./ui/RoutePill"
+import { HeatmapPill } from "./ui/HeatmapPill"
 import { MOBILE_CHROME } from "~/components/office/mobile"
 import { useIsMobile } from "~/utils/hooks/useIsMobile"
 import { ContourBackdrop } from "~/components/ui/ContourBackdrop"
 import { EmptyState } from "~/components/ui/EmptyState"
+import { useI18n } from "~/i18n/I18nProvider"
 import { groupBookings, type BookingRow, type Day, type DeskDays } from "~/utils/booking"
 
 const NO_PEOPLE: People = { me: null, members: [] }
@@ -80,6 +84,9 @@ interface Props {
     onCancel: (dates: Day[]) => void
     onRelease: (deskId: string, dates: Day[]) => void
     onReclaim: (deskId: string, dates: Day[]) => void
+    /** Your favourites, usual desk and waitlist days. */
+    preferences: DeskPreferences
+    onPreference: (change: PreferenceChange) => void
   }
   /**
    * In display mode, render floating app chrome instead of the built-in view
@@ -151,6 +158,14 @@ const OfficeEditorInner = ({
   useLayoutEffect(() => {
     if (releases) store.getState().setBooking({ released: groupBookings(releases) })
   }, [releases, store])
+  const preferences = booking?.preferences
+  const onPreference = booking?.onPreference
+  useLayoutEffect(() => {
+    if (preferences) store.getState().setBooking({ preferences })
+  }, [preferences, store])
+  useLayoutEffect(() => {
+    if (onPreference) store.getState().setBooking({ setPreference: onPreference })
+  }, [onPreference, store])
   const { today, from, lastDay, pending, onReserve, onCancel, onRelease, onReclaim } = booking ?? {}
   const firstDay = booking?.day
   useLayoutEffect(() => {
@@ -269,6 +284,7 @@ const OfficeEditorInner = ({
   // so the reading reflects a true, comparable FPS instead of only the frames
   // that on-demand rendering happens to produce.
   const [showStats, setShowStats] = useState(false)
+  const { t } = useI18n()
   const [stats, setStats] = useState({ fps: 0, ms: 0 })
   const onStats = useCallback((fps: number, ms: number) => setStats({ fps, ms }), [])
   const dbMode = !!onSave
@@ -417,13 +433,15 @@ const OfficeEditorInner = ({
         {/* Booking a desk on any days (the seat card's "Custom…"). */}
         {readOnly && <CustomBooking />}
 
-        {/* The way to a desk: where to, how far, share, close. */}
+        {/* The way to a desk (where to, how far, share, close) and the
+            Insights heatmap's legend. */}
         {readOnly && (
           <div
-            className="absolute inset-x-0 flex justify-center px-4"
+            className="absolute inset-x-0 flex flex-col items-center gap-2 px-4"
             style={{ top: isMobile ? MOBILE_CHROME.top + 12 : 84 }}
           >
             <RoutePill className="max-w-full" />
+            <HeatmapPill isDark={isDark} className="max-w-full" />
           </div>
         )}
 
@@ -432,7 +450,7 @@ const OfficeEditorInner = ({
           <button
             type="button"
             onClick={() => setShowStats((v) => !v)}
-            title={showStats ? "Hide FPS counter" : "Show FPS counter"}
+            title={showStats ? t("Hide FPS counter") : t("Show FPS counter")}
             className={`pointer-events-auto absolute bottom-4 left-4 flex items-center gap-2 rounded-xl border border-border px-3 py-2 font-mono text-sm shadow-overlay backdrop-blur-md ${
               showStats
                 ? "bg-overlay/95 text-foreground"
@@ -467,11 +485,16 @@ const OfficeEditorInner = ({
         {!shellMode && !isEmpty && (
           <TimeOfDay viewSwitch={readOnly}>
             {!editable ? null : readOnly ? (
-              <Button size="sm" variant="primary" onPress={enterEdit}>
+              <Button size="sm" variant="primary" className="min-w-32" onPress={enterEdit}>
                 <Pencil className="size-4" /> Edit layout
               </Button>
             ) : (
-              <Button size="sm" variant="primary" onPress={() => setMode("display")}>
+              <Button
+                size="sm"
+                variant="primary"
+                className="min-w-32"
+                onPress={() => setMode("display")}
+              >
                 <Check className="size-4" strokeWidth={2.5} /> Done
               </Button>
             )}
@@ -518,8 +541,8 @@ const OfficeEditorInner = ({
               <EmptyState
                 className="max-w-none"
                 icon={PencilRuler}
-                title="This office isn't set up yet"
-                description="An admin needs to lay out the floor before desks can be booked."
+                title={t("This office isn't set up yet")}
+                description={t("An admin needs to lay out the floor before desks can be booked.")}
               />
             </div>
           </div>

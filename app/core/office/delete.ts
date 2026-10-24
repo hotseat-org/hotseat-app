@@ -1,7 +1,7 @@
-import { daysPhrase } from "../notification"
 import type { CoreContext } from "../types"
 import { todayIn, type Day } from "~/utils/booking"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
+import { encodeNotification } from "~/i18n/notifications"
 
 export interface DeleteOfficeArgs {
   slug: string
@@ -32,7 +32,10 @@ export const deleteOffice =
         .map(([email, days]) => ({
           userEmail: email,
           organizationSlug,
-          message: `${office.name} was deleted, with your booking on ${daysPhrase(days)}.`,
+          message: encodeNotification("{office} was deleted, with your booking on {days}.", {
+            office: office.name,
+            days: { days },
+          }),
           link: `/app/o/${organizationSlug}`,
         })),
     })

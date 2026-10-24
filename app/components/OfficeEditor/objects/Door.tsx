@@ -1,6 +1,6 @@
-import { RoundedBox } from "@react-three/drei"
 import { PALETTE } from "../palette"
 import { useSurfaces } from "../sceneTheme"
+import { RoundedBox } from "./RoundedBox"
 import { Surface } from "./Surface"
 import { WALL, FLUSH_INSET } from "./dimensions"
 
@@ -58,7 +58,7 @@ export const Door = ({ color = PALETTE.door }: Props) => {
         </RoundedBox>
         {/* Handle */}
         <mesh position={[OPENING - 0.12, WALL.height / 2 - 0.1, 0.12]} castShadow>
-          <sphereGeometry args={[0.045, 16, 16]} />
+          <sphereGeometry args={[0.045, 10, 8]} />
           <Surface color={PALETTE.doorHandle} roughness={0.4} metalness={0.3} />
         </mesh>
       </group>

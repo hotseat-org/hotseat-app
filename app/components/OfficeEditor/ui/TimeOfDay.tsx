@@ -6,12 +6,14 @@ import { hasWebGL } from "../webgl"
 import { SkySlider } from "./SkySlider"
 import { FitButton } from "./FitButton"
 import { DateStepper } from "./DateStepper"
+import { useI18n } from "~/i18n/I18nProvider"
 
 /**
  * Toggle that makes the scene follow the real local time. Dragging the slider
  * switches it off; pressing it again jumps back to "now".
  */
 export const SyncTimeToggle = () => {
+  const { t } = useI18n()
   const syncTime = useEditorStore((s) => s.syncTime)
   const setSyncTime = useEditorStore((s) => s.setSyncTime)
   return (
@@ -20,7 +22,7 @@ export const SyncTimeToggle = () => {
         isIconOnly
         size="sm"
         variant="ghost"
-        aria-label="Sync with real time"
+        aria-label={t("Sync with real time")}
         isSelected={syncTime}
         onChange={setSyncTime}
         className={
@@ -31,7 +33,9 @@ export const SyncTimeToggle = () => {
       >
         <Clock className="size-4" />
       </ToggleButton>
-      <Tooltip.Content>{syncTime ? "Following real time" : "Sync with real time"}</Tooltip.Content>
+      <Tooltip.Content>
+        {syncTime ? t("Following real time") : t("Sync with real time")}
+      </Tooltip.Content>
     </Tooltip>
   )
 }
@@ -70,8 +74,9 @@ export const TimeOfDay = ({
       {children && (
         <>
           <span className="mx-1 h-6 w-px bg-separator" aria-hidden />
-          {/* Fixed width: swapping Done ⇄ Edit layout must not resize the bar. */}
-          <div className="flex w-32 *:w-full">{children}</div>
+          {/* Edit layout ⇄ Done share a least width (min-w-32), so swapping them
+              barely resizes the bar — and a longer translation still fits. */}
+          <div className="flex items-center gap-2">{children}</div>
         </>
       )}
     </div>
@@ -88,33 +93,36 @@ const ViewSwitch = ({
 }: {
   view: OfficeView
   onChange: (view: OfficeView) => void
-}) => (
-  <div role="radiogroup" aria-label="View" className="flex rounded-xl bg-foreground/5 p-0.5">
-    {(
-      [
-        ["3d", "3D view", Box, "3D"],
-        ["2d", "Simple view — lighter, for slower devices", Feather, "Simple"],
-      ] as const
-    ).map(([value, label, Icon, short]) => (
-      <Tooltip key={value} delay={350}>
-        <button
-          type="button"
-          role="radio"
-          aria-checked={view === value}
-          aria-label={label}
-          onClick={() => onChange(value)}
-          className={
-            "flex h-8 items-center gap-1 rounded-[10px] px-2 text-xs font-bold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus " +
-            (view === value
-              ? "bg-overlay text-foreground shadow-sm"
-              : "text-muted hover:text-foreground")
-          }
-        >
-          <Icon className="size-3.5" />
-          {short}
-        </button>
-        <Tooltip.Content>{label}</Tooltip.Content>
-      </Tooltip>
-    ))}
-  </div>
-)
+}) => {
+  const { t } = useI18n()
+  return (
+    <div role="radiogroup" aria-label={t("View")} className="flex rounded-xl bg-foreground/5 p-0.5">
+      {(
+        [
+          ["3d", t("3D view"), Box, "3D"],
+          ["2d", t("Simple view — lighter, for slower devices"), Feather, t("Simple")],
+        ] as const
+      ).map(([value, label, Icon, short]) => (
+        <Tooltip key={value} delay={350}>
+          <button
+            type="button"
+            role="radio"
+            aria-checked={view === value}
+            aria-label={label}
+            onClick={() => onChange(value)}
+            className={
+              "flex h-8 items-center gap-1 rounded-[10px] px-2 text-xs font-bold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus " +
+              (view === value
+                ? "bg-overlay text-foreground shadow-sm"
+                : "text-muted hover:text-foreground")
+            }
+          >
+            <Icon className="size-3.5" />
+            {short}
+          </button>
+          <Tooltip.Content>{label}</Tooltip.Content>
+        </Tooltip>
+      ))}
+    </div>
+  )
+}

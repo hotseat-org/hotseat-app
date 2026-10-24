@@ -20,6 +20,7 @@ import {
   type SceneObject,
 } from "../types"
 import { ObjectRenderer } from "../objects/ObjectRenderer"
+import { StaticBatch } from "../objects/StaticBatch"
 import { CURSORS, CursorHintContext, getToolCursor, type CursorHint } from "../cursors"
 import { PlacementHighlight } from "./PlacementHighlight"
 import { markShadowsDirty } from "./shadows"
@@ -29,6 +30,8 @@ import { PostFx } from "./PostFx"
 import { Ground } from "./Ground"
 import { Contours } from "./Contours"
 import { RouteLine } from "./RouteLine"
+import { HeatBars } from "./HeatBars"
+import { HeatPads } from "./HeatPads"
 import { CAMERA_OFFSET } from "./viewCentre"
 import { InteriorFloor } from "./InteriorFloor"
 import { GhostObject } from "./GhostObject"
@@ -486,33 +489,37 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
             {/* The land round the office: its plateau and contour lines. */}
             <Contours isEditing={!readOnly} />
             {readOnly && <RouteLine />}
+            {readOnly && <HeatPads />}
+            {readOnly && <HeatBars />}
 
             {/* Tint the floor enclosed by walls (the office interior). */}
             <InteriorFloor />
 
             {/* Walls render as merged runs (seamless); everything else individually. */}
             <Walls />
-            {objects
-              .filter((obj) => !isWall(obj.type) && !isMarker(obj.type))
-              .map((obj) => (
-                <ObjectRenderer
-                  key={obj.id}
-                  obj={obj}
-                  selected={!readOnly && selection.includes(obj.id)}
-                  carried={!readOnly && obj.id === dragId}
-                  blockedAt={obj.id === dragId ? blockedAt : 0}
-                  tool={tool}
-                  interactive={!readOnly}
-                  onSelect={select}
-                  onDelete={removeObject}
-                  onStartDrag={onStartDrag}
-                  onPickOpening={onPickOpening}
-                  onToggleSelect={toggleSelect}
-                  onSeatClick={readOnly ? openSeatCard : undefined}
-                  occupied={isSeatable(obj.type) ? occupied?.get(obj.id) : undefined}
-                  mountedOn={mounts.get(obj.id)}
-                />
-              ))}
+            <StaticBatch enabled={readOnly}>
+              {objects
+                .filter((obj) => !isWall(obj.type) && !isMarker(obj.type))
+                .map((obj) => (
+                  <ObjectRenderer
+                    key={obj.id}
+                    obj={obj}
+                    selected={!readOnly && selection.includes(obj.id)}
+                    carried={!readOnly && obj.id === dragId}
+                    blockedAt={obj.id === dragId ? blockedAt : 0}
+                    tool={tool}
+                    interactive={!readOnly}
+                    onSelect={select}
+                    onDelete={removeObject}
+                    onStartDrag={onStartDrag}
+                    onPickOpening={onPickOpening}
+                    onToggleSelect={toggleSelect}
+                    onSeatClick={readOnly ? openSeatCard : undefined}
+                    occupied={isSeatable(obj.type) ? occupied?.get(obj.id) : undefined}
+                    mountedOn={mounts.get(obj.id)}
+                  />
+                ))}
+            </StaticBatch>
 
             {/* Corner posts finishing wall joints */}
             <Posts />

@@ -4,6 +4,7 @@ import { X } from "lucide-react"
 import type { ReactNode } from "react"
 import { useEffect, useRef } from "react"
 import { InlineModal } from "~/components/ui/InlineModal"
+import { useI18n } from "~/i18n/I18nProvider"
 
 export type SettingsLink = {
   id: string
@@ -48,6 +49,7 @@ export function SettingsShell({
   onClose,
   children,
 }: SettingsShellProps) {
+  const { t } = useI18n()
   const active = links.find((l) => l.id === activeSection) ?? links[0]
   const main = links.filter((l) => !l.danger)
   const danger = links.filter((l) => l.danger)
@@ -84,7 +86,7 @@ export function SettingsShell({
         )}
       >
         <Icon className={clsx("size-[18px] shrink-0", isActive && !l.danger && "text-accent")} />
-        <span className="min-w-0 flex-1 truncate">{l.label}</span>
+        <span className="min-w-0 flex-1 truncate">{t(l.label)}</span>
         {l.count !== undefined && (
           <span className="text-xs font-bold tabular-nums text-muted">{l.count}</span>
         )}
@@ -127,18 +129,18 @@ export function SettingsShell({
         <header className="flex items-start justify-between gap-4 px-4 pb-3 pt-4 md:px-9 md:pb-5 md:pt-8">
           <div className="min-w-0">
             <h1 className="text-xl font-black tracking-tight text-foreground md:text-2xl">
-              {active.label}
+              {t(active.label)}
             </h1>
             {/* Not on phones: the tabs name the section, and every header stays one height. */}
             {active.description && (
-              <p className="mt-1 hidden text-sm text-muted md:block">{active.description}</p>
+              <p className="mt-1 hidden text-sm text-muted md:block">{t(active.description)}</p>
             )}
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close settings"
-            title="Close (Esc)"
+            aria-label={t("Close settings")}
+            title={t("Close (Esc)")}
             className="grid size-10 shrink-0 place-items-center rounded-full border border-border text-muted transition-colors hover:bg-surface-secondary hover:text-foreground"
           >
             <X className="size-[18px]" />
@@ -168,7 +170,7 @@ export function SettingsShell({
                 )}
               >
                 <l.icon className="size-4" />
-                {l.label}
+                {t(l.label)}
               </button>
             )
           })}

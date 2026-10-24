@@ -11,6 +11,7 @@ import { MyBookings } from "./MyBookings"
 import { NotificationsBell } from "./Notifications"
 import { WeekDots } from "./WeekDots"
 import { MOBILE_CHROME } from "./mobile"
+import { DeskFilter } from "./DeskFilter"
 import { MonthCalendar } from "~/components/OfficeEditor/ui/DateStepper"
 import { useEditorStore } from "~/components/OfficeEditor/store"
 import {
@@ -18,11 +19,14 @@ import {
   deskName,
   useDesksOnDay,
   useGivenUpDesk,
+  useWaitlist,
   useWeekPresence,
 } from "~/components/OfficeEditor/useBooking"
 import { useSettings } from "~/components/settings/useSettings"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
-import { daysBetween, formatDow, formatLong, isWeekend, type Day } from "~/utils/booking"
+import { daysBetween, isWeekend, type Day } from "~/utils/booking"
+import { useI18n } from "~/i18n/I18nProvider"
+import { msg } from "~/i18n/msg"
 
 type Tab = "office" | "bookings" | "people"
 
@@ -98,6 +102,8 @@ export const TopBar = ({ offices }: { offices: ShellOffice[] }) => (
  * calendar and the strip of days.
  */
 const DayDock = ({ me }: { me: ShellMember }) => {
+  const i18n = useI18n()
+  const { t } = i18n
   const day = useEditorStore((s) => s.booking.day)
   const today = useEditorStore((s) => s.booking.today)
   const setDay = useEditorStore((s) => s.setBookingDay)
@@ -105,11 +111,12 @@ const DayDock = ({ me }: { me: ShellMember }) => {
   const { byPerson } = useDesksOnDay()
   const mine = byPerson.get(me.userEmail)
   const givenUp = useGivenUpDesk(me.userEmail)
+  const waitlist = useWaitlist()
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
 
   return (
     <section
-      aria-label="Day"
+      aria-label={t("Day")}
       className="pointer-events-auto absolute inset-x-0 flex flex-col gap-1.5 border-t border-chrome-border bg-chrome px-3 py-2 shadow-[0_-2px_10px_var(--chrome-shadow)]"
       style={{ bottom: TAB_BAR_HEIGHT, height: DAY_DOCK_HEIGHT }}
     >
@@ -118,24 +125,38 @@ const DayDock = ({ me }: { me: ShellMember }) => {
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-extrabold text-foreground">
             {mine
-              ? deskName(mine.desk)
+              ? deskName(i18n, mine.desk)
               : givenUp
-                ? `Away ${dayPhrase(day, today)}`
-                : `No desk ${dayPhrase(day, today)}`}
+                ? t("Away {when}", { when: dayPhrase(i18n, day, today) })
+                : t("No desk {when}", { when: dayPhrase(i18n, day, today) })}
           </p>
           <p className="flex items-center gap-1 truncate text-xs text-muted">
             {mine?.state.kind === "resident" ? (
               <>
-                <Pin className="size-3" /> Your permanent desk
+                <Pin className="size-3" /> {t("Your permanent desk")}
               </>
             ) : mine ? (
-              `Yours ${dayPhrase(day, today)}`
+              t("Yours {when}", { when: dayPhrase(i18n, day, today) })
             ) : givenUp ? (
-              `You gave ${deskName(givenUp)} up — others can book it`
+              t("You gave {desk} up — others can book it", { desk: deskName(i18n, givenUp) })
             ) : day < today ? (
-              "Past days can't be booked"
+              t("Past days can't be booked")
+            ) : waitlist.isWaiting ? (
+              <>
+                {t("On the waitlist")} ·{" "}
+                <button type="button" onClick={waitlist.leave} className="font-bold text-accent">
+                  {t("Leave")}
+                </button>
+              </>
+            ) : waitlist.canWait ? (
+              <>
+                {t("Office full")} ·{" "}
+                <button type="button" onClick={waitlist.join} className="font-bold text-accent">
+                  {t("Join the waitlist")}
+                </button>
+              </>
             ) : (
-              "Tap a free + on the plan to book one"
+              t("Tap a free + on the plan to book one")
             )}
           </p>
         </div>
@@ -145,7 +166,7 @@ const DayDock = ({ me }: { me: ShellMember }) => {
             onClick={() => spotlightSeat(mine.desk.id)}
             className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl bg-foreground/[0.07] px-3 text-sm font-bold text-foreground"
           >
-            <MapPin className="size-4" /> Show
+            <MapPin className="size-4" /> {t("Show")}
           </button>
         )}
         <button
@@ -154,19 +175,20 @@ const DayDock = ({ me }: { me: ShellMember }) => {
           disabled={day === today}
           className="flex min-h-11 shrink-0 items-center rounded-xl px-2.5 text-sm font-extrabold text-accent transition-opacity disabled:opacity-35"
         >
-          Today
+          {t("Today")}
         </button>
       </div>
       <div className="flex min-w-0 items-center gap-1.5">
         <button
           type="button"
-          aria-label="Pick a day from the calendar"
+          aria-label={t("Pick a day from the calendar")}
           aria-expanded={isCalendarOpen}
           onClick={() => setIsCalendarOpen(true)}
           className="grid h-12 w-11 shrink-0 place-items-center rounded-xl bg-foreground/[0.07] text-foreground"
         >
           <CalendarDays className="size-5" />
         </button>
+        <DeskFilter isCompact />
         <DayStrip />
       </div>
       {isCalendarOpen && <CalendarSheet onClose={() => setIsCalendarOpen(false)} />}
@@ -177,6 +199,7 @@ const DayDock = ({ me }: { me: ShellMember }) => {
 /** The month calendar (as on the desktop) as a bottom sheet; picking a day closes it. */
 const CalendarSheet = ({ onClose }: { onClose: () => void }) => {
   const setDay = useEditorStore((s) => s.setBookingDay)
+  const { t } = useI18n()
   const [isClosing, setIsClosing] = useState(false)
   const close = () => {
     setIsClosing(true)
@@ -194,13 +217,13 @@ const CalendarSheet = ({ onClose }: { onClose: () => void }) => {
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
       <button
         type="button"
-        aria-label="Close the calendar"
+        aria-label={t("Close the calendar")}
         className="absolute inset-0 bg-scrim"
         onClick={close}
       />
       <section
         role="dialog"
-        aria-label="Pick a day"
+        aria-label={t("Pick a day")}
         className={clsx(
           "relative flex flex-col gap-3 rounded-t-3xl border-t border-border bg-overlay px-5 pb-7 pt-2.5 shadow-overlay",
           isClosing ? "sheet-down" : "sheet-up"
@@ -208,8 +231,8 @@ const CalendarSheet = ({ onClose }: { onClose: () => void }) => {
       >
         <span aria-hidden className="mx-auto h-1.5 w-10 rounded-full bg-border" />
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-extrabold text-foreground">Pick a day</h2>
-          <CloseButton aria-label="Close" onPress={close} className="size-10" />
+          <h2 className="text-lg font-extrabold text-foreground">{t("Pick a day")}</h2>
+          <CloseButton aria-label={t("Close")} onPress={close} className="size-10" />
         </div>
         <MonthCalendar
           className="w-full"
@@ -232,6 +255,7 @@ const DayStrip = () => {
   const lastDay = useEditorStore((s) => s.booking.lastDay)
   const setDay = useEditorStore((s) => s.setBookingDay)
   const days = useMemo(() => (from && lastDay ? daysBetween(from, lastDay) : []), [from, lastDay])
+  const { t, format } = useI18n()
 
   // Keep the shown day in view (centred) as it changes.
   const selected = useRef<HTMLButtonElement>(null)
@@ -241,7 +265,7 @@ const DayStrip = () => {
 
   return (
     <nav
-      aria-label="Days"
+      aria-label={t("Days")}
       // Fade the ends, so a day scrolled half out reads as "more this way",
       // not as cut off.
       className="flex min-w-0 flex-1 snap-x gap-1.5 overflow-x-auto [mask-image:linear-gradient(to_right,transparent,black_14px,black_calc(100%-14px),transparent)] [scrollbar-width:none]"
@@ -254,7 +278,7 @@ const DayStrip = () => {
             ref={isSelected ? selected : undefined}
             type="button"
             aria-pressed={isSelected}
-            aria-label={formatLong(d) + (d === today ? ", today" : "")}
+            aria-label={format.long(d) + (d === today ? `, ${t("today")}` : "")}
             onClick={() => setDay(d)}
             className={clsx(
               "flex h-12 w-11 shrink-0 snap-center flex-col items-center justify-center gap-0.5 rounded-xl transition-colors",
@@ -268,7 +292,7 @@ const DayStrip = () => {
             )}
           >
             <span className="text-[0.62rem] font-bold uppercase tracking-wide">
-              {d === today ? "Today" : formatDow(d)}
+              {d === today ? t("Today") : format.dow(d)}
             </span>
             <span className="text-base font-extrabold leading-none">{Number(d.slice(8, 10))}</span>
           </button>
@@ -291,6 +315,8 @@ const People = ({
   const day = useEditorStore((s) => s.booking.day)
   const today = useEditorStore((s) => s.booking.today)
   const spotlightSeat = useEditorStore((s) => s.spotlightSeat)
+  const i18n = useI18n()
+  const { t } = i18n
   const { open: openSettings } = useSettings()
   const { byPerson } = useDesksOnDay()
   const week = useWeekPresence()
@@ -305,19 +331,20 @@ const People = ({
 
   return (
     <section
-      aria-label="Who's in"
+      aria-label={t("Who's in")}
       className={`${PANEL} absolute inset-x-3 flex flex-col p-4`}
       style={SCREEN_INSETS}
     >
       <header className="mb-3">
-        <h2 className="text-lg font-extrabold text-foreground">Who&apos;s in</h2>
+        <h2 className="text-lg font-extrabold text-foreground">{t("Who's in")}</h2>
         <p className="text-xs text-muted">
-          {day === today ? "Today" : formatLong(day)} · {inCount} of {members.length} in the office
+          {day === today ? t("Today") : i18n.format.long(day)} ·{" "}
+          {t("{in} of {total} in the office", { in: inCount, total: members.length })}
         </p>
       </header>
       {members.length <= 1 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
-          <p className="text-sm font-bold text-foreground">It&apos;s just you so far</p>
+          <p className="text-sm font-bold text-foreground">{t("It's just you so far")}</p>
           {/* Inviting is an admin's. */}
           {me.role === Role.ADMIN && (
             <button
@@ -325,7 +352,7 @@ const People = ({
               onClick={() => openSettings("org", "invitations")}
               className="min-h-11 rounded-xl bg-accent/15 px-4 text-sm font-bold text-accent"
             >
-              Invite teammates
+              {t("Invite teammates")}
             </button>
           )}
         </div>
@@ -336,12 +363,12 @@ const People = ({
               <MemberAvatar m={m} className="size-10 shrink-0 rounded-xl" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-bold text-foreground">
-                  {m.userEmail === me.userEmail ? "You" : nameOf(m)}
+                  {m.userEmail === me.userEmail ? t("You") : nameOf(m)}
                 </p>
                 <p className="flex items-center gap-2 text-xs text-muted">
                   {/* Fixed width: every row's dots start at the same spot. */}
                   <span className="w-16 shrink-0 truncate">
-                    {at ? deskName(at.desk) : "Not in"}
+                    {at ? deskName(i18n, at.desk) : t("Not in")}
                   </span>
                   <WeekDots email={m.userEmail} presence={week} />
                 </p>
@@ -349,14 +376,14 @@ const People = ({
               {at && (
                 <button
                   type="button"
-                  aria-label={`Show ${nameOf(m)}'s desk on the plan`}
+                  aria-label={t("Show {name}'s desk on the plan", { name: nameOf(m) })}
                   onClick={() => {
                     spotlightSeat(at.desk.id)
                     onFind()
                   }}
                   className="flex min-h-11 items-center gap-1.5 rounded-xl bg-default px-3 text-sm font-bold text-foreground"
                 >
-                  <MapPin className="size-4" /> Find
+                  <MapPin className="size-4" /> {t("Find")}
                 </button>
               )}
             </li>
@@ -368,31 +395,34 @@ const People = ({
 }
 
 const TABS: [Tab, string, LucideIcon][] = [
-  ["office", "Office", Building2],
-  ["bookings", "Bookings", CalendarDays],
-  ["people", "People", Users],
+  ["office", msg("Office"), Building2],
+  ["bookings", msg("Bookings"), CalendarDays],
+  ["people", msg("People"), Users],
 ]
 
-const TabBar = ({ tab, onChange }: { tab: Tab; onChange: (tab: Tab) => void }) => (
-  <nav
-    aria-label="Main"
-    className="pointer-events-auto absolute inset-x-0 bottom-0 grid grid-cols-3 border-t border-foreground/[0.08] bg-chrome px-2 pb-3 pt-1.5"
-    style={{ height: TAB_BAR_HEIGHT }}
-  >
-    {TABS.map(([id, label, Icon]) => (
-      <button
-        key={id}
-        type="button"
-        aria-current={tab === id ? "page" : undefined}
-        onClick={() => onChange(id)}
-        className={clsx(
-          "flex min-h-12 flex-col items-center justify-center gap-0.5 text-[0.7rem]",
-          tab === id ? "font-extrabold text-accent" : "font-bold text-muted"
-        )}
-      >
-        <Icon className="size-6" strokeWidth={tab === id ? 2.2 : 1.8} />
-        {label}
-      </button>
-    ))}
-  </nav>
-)
+const TabBar = ({ tab, onChange }: { tab: Tab; onChange: (tab: Tab) => void }) => {
+  const { t } = useI18n()
+  return (
+    <nav
+      aria-label={t("Main")}
+      className="pointer-events-auto absolute inset-x-0 bottom-0 grid grid-cols-3 border-t border-foreground/[0.08] bg-chrome px-2 pb-3 pt-1.5"
+      style={{ height: TAB_BAR_HEIGHT }}
+    >
+      {TABS.map(([id, label, Icon]) => (
+        <button
+          key={id}
+          type="button"
+          aria-current={tab === id ? "page" : undefined}
+          onClick={() => onChange(id)}
+          className={clsx(
+            "flex min-h-12 flex-col items-center justify-center gap-0.5 text-[0.7rem]",
+            tab === id ? "font-extrabold text-accent" : "font-bold text-muted"
+          )}
+        >
+          <Icon className="size-6" strokeWidth={tab === id ? 2.2 : 1.8} />
+          {t(label)}
+        </button>
+      ))}
+    </nav>
+  )
+}

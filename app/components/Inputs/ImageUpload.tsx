@@ -2,6 +2,7 @@ import { Avatar, Spinner } from "@heroui/react"
 import clsx from "clsx"
 import { UploadCloud } from "lucide-react"
 import { useEffect, useState } from "react"
+import { Rich, useI18n } from "~/i18n/I18nProvider"
 
 /** Upload an image (direct to the image service); resolves to its id. */
 export const uploadImage = async (file: File): Promise<string> => {
@@ -22,6 +23,7 @@ interface Props {
 }
 
 export const ImageUploadInput = ({ onChange, name }: Props) => {
+  const { t } = useI18n()
   const [file, setFile] = useState<File | undefined>()
   const [thumbnail, setThumbnail] = useState<string | undefined>()
 
@@ -72,7 +74,10 @@ export const ImageUploadInput = ({ onChange, name }: Props) => {
             <div className="flex flex-col items-center justify-center pt-5 pb-6">
               <UploadCloud />
               <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
-                <span className="font-semibold">Click to upload</span> or drag and drop
+                <Rich
+                  text={t("{click} or drag and drop")}
+                  values={{ click: <span className="font-semibold">{t("Click to upload")}</span> }}
+                />
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 SVG, PNG, JPG, WEBP, or GIF

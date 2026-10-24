@@ -3,6 +3,7 @@ import type { CoreContext } from "../types"
 import { organizationMapper } from "./mapper"
 import type { Organization } from "./types"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
+import { LocalizedError } from "~/i18n/errors"
 
 export interface UpdateOrganizationArgs {
   slug: string
@@ -18,9 +19,9 @@ export interface UpdateOrganizationArgs {
 export const slugForName = (name: string) => slugify(name, { lower: true, trim: true })
 
 /** Renaming to a name whose slug belongs to another organization. */
-export class OrganizationNameTakenError extends Error {
+export class OrganizationNameTakenError extends LocalizedError {
   constructor(name: string) {
-    super(`An organization named "${name}" already exists`)
+    super("An organization named “{name}” already exists", { name })
   }
 }
 

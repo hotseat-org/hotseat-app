@@ -4,6 +4,7 @@ import { ImageResponse } from "workers-og"
 import { GifReader } from "omggif"
 import { PNG } from "pngjs"
 import { getCore } from "~/core/get-core"
+import { getTranslator } from "~/i18n/locale.server"
 
 const md5 = (value: string) => createHash("md5").update(value).digest("hex")
 
@@ -15,9 +16,11 @@ export const loader = async ({ request, params: { slug } }: LoaderFunctionArgs) 
 
   if (!organization) return redirect("/")
 
+  // In the reader's language (a link preview usually asks without one: English).
+  const { t, locale } = await getTranslator(request)
   const requestEtag = request.headers.get("if-none-match")
   const dataHash = md5(
-    `${organization.name}.${organization.thumbnailUrl}.${organization.description}`
+    `${locale}.${organization.name}.${organization.thumbnailUrl}.${organization.description}`
   )
 
   if (requestEtag === dataHash) {
@@ -173,7 +176,7 @@ export const loader = async ({ request, params: { slug } }: LoaderFunctionArgs) 
 
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             <div style={{ color: "rgba(255,255,255,0.45)", fontSize: "26px", fontWeight: 400 }}>
-              Join the workspace
+              {t("Join the workspace")}
             </div>
             <div
               style={{

@@ -2,6 +2,8 @@ import { data, redirect, type ActionFunctionArgs } from "react-router"
 import { z } from "zod"
 import { getCore } from "~/core/get-core"
 import { OfficeNameTakenError, officeSlugForName } from "~/core/office/update"
+import { getTranslator } from "~/i18n/locale.server"
+import { translateError } from "~/i18n/errors"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { redirectToRenamed } from "~/utils/loader-helpers/redirectToRenamed"
 import { requireProfile } from "~/utils/loader-helpers/requireProfile"
@@ -48,7 +50,18 @@ export const action = async (args: ActionFunctionArgs) => {
         return data({ ok: true as const, intent, slug: office.slug })
       } catch (error) {
         if (error instanceof OfficeNameTakenError)
-          return data({ ok: false as const, intent, error: error.message }, { status: 409 })
+          return data(
+            {
+              ok: false as const,
+              intent,
+              error: translateError(
+                await getTranslator(args.request),
+                error,
+                "Something went wrong"
+              ),
+            },
+            { status: 409 }
+          )
         throw error
       }
     }

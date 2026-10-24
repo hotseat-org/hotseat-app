@@ -14,6 +14,8 @@ import { useMemo, useState } from "react"
 import { numberUnlabelledDesks, useEditorStore } from "../store"
 import { TEMPLATES, type OfficeTemplate } from "../templates"
 import { isSeatable } from "../types"
+import { useI18n } from "~/i18n/I18nProvider"
+import type { Translator } from "~/i18n/translate"
 import { Button } from "~/components/Button"
 import { EmptyState } from "~/components/ui/EmptyState"
 
@@ -46,9 +48,9 @@ const ORDER = ["full-office", "studio", "team-floor", "headquarters", "open-plan
 const PICKS = [...TEMPLATES].sort((a, b) => ORDER.indexOf(a.id) - ORDER.indexOf(b.id))
 
 /** "24 desks" — or, for a layout without any, what it is instead. */
-const sizeOf = (template: OfficeTemplate) => {
+const sizeOf = ({ t, tn }: Translator, template: OfficeTemplate) => {
   const desks = template.build().filter((o) => isSeatable(o.type)).length
-  return desks ? `${desks} desks` : "Meeting rooms only"
+  return desks ? tn(desks, "{n} desk", "{n} desks") : t("Meeting rooms only")
 }
 
 /**
@@ -58,7 +60,9 @@ const sizeOf = (template: OfficeTemplate) => {
  */
 export const EmptyOffice = ({ readOnly, isEditable, onEnterEdit, onDismiss }: Props) => {
   const load = useEditorStore((s) => s.load)
-  const sizes = useMemo(() => PICKS.map(sizeOf), [])
+  const i18n = useI18n()
+  const { t } = i18n
+  const sizes = useMemo(() => PICKS.map((p) => sizeOf(i18n, p)), [i18n])
   const [isShowingTemplates, setIsShowingTemplates] = useState(!isEditable)
 
   const pickTemplate = (template: OfficeTemplate) => {
@@ -73,21 +77,23 @@ export const EmptyOffice = ({ readOnly, isEditable, onEnterEdit, onDismiss }: Pr
 
   const templates = (
     <div className="grid grid-cols-2 gap-2.5">
-      {PICKS.map((t, i) => {
-        const Icon = TEMPLATE_ICONS[t.id] ?? LayoutGrid
+      {PICKS.map((template, i) => {
+        const Icon = TEMPLATE_ICONS[template.id] ?? LayoutGrid
         return (
           <button
-            key={t.id}
+            key={template.id}
             type="button"
-            title={t.description}
-            onClick={() => pickTemplate(t)}
+            title={template.description && t(template.description)}
+            onClick={() => pickTemplate(template)}
             className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3 text-left transition-colors hover:border-accent/50 hover:bg-foreground/5"
           >
             <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-foreground/5 text-muted">
               <Icon className="size-5" />
             </span>
             <span className="min-w-0">
-              <span className="block truncate text-sm font-bold text-foreground">{t.label}</span>
+              <span className="block truncate text-sm font-bold text-foreground">
+                {t(template.label)}
+              </span>
               <span className="block truncate text-xs text-muted">{sizes[i]}</span>
             </span>
           </button>
@@ -104,17 +110,17 @@ export const EmptyOffice = ({ readOnly, isEditable, onEnterEdit, onDismiss }: Pr
         <EmptyState
           className="max-w-none"
           icon={PencilRuler}
-          title="This office is empty"
+          title={t("This office is empty")}
           description={
             isEditable
-              ? "Draw its walls and place the desks — or start from a ready-made layout."
-              : "Pick a ready-made floor — desks are bookable right away."
+              ? t("Draw its walls and place the desks — or start from a ready-made layout.")
+              : t("Pick a ready-made floor — desks are bookable right away.")
           }
         >
           {isEditable ? (
             <>
               <Button variant="primary" fullWidth onPress={startBlank}>
-                Start from a blank floor
+                {t("Start from a blank floor")}
               </Button>
               <button
                 type="button"
@@ -122,7 +128,7 @@ export const EmptyOffice = ({ readOnly, isEditable, onEnterEdit, onDismiss }: Pr
                 onClick={() => setIsShowingTemplates((isShowing) => !isShowing)}
                 className="mx-auto mt-4 flex items-center gap-1 text-sm font-semibold text-muted transition-colors hover:text-foreground"
               >
-                Or start from a template
+                {t("Or start from a template")}
                 <ChevronDown
                   className={clsx(
                     "size-4 transition-transform",
@@ -136,7 +142,7 @@ export const EmptyOffice = ({ readOnly, isEditable, onEnterEdit, onDismiss }: Pr
             <>
               {templates}
               <p className="mt-3 text-xs text-muted">
-                To draw your own layout or change it later, open the office on a computer.
+                {t("To draw your own layout or change it later, open the office on a computer.")}
               </p>
             </>
           )}

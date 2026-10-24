@@ -13,6 +13,7 @@ import {
   type CategoryIcon,
 } from "./categoryIcons"
 import { TOOLS } from "./tools"
+import { msg } from "~/i18n/msg"
 
 /** A Sims-style build category grouping related asset types. */
 export interface Category {
@@ -26,25 +27,25 @@ export interface Category {
 export const CATEGORIES: Category[] = [
   {
     id: "structure",
-    label: "Structure",
+    label: msg("Structure"),
     icon: StructureIcon,
     types: ["room", "wall", "door", "window", "glassWall", "glassDoor"],
   },
   {
     id: "desks",
-    label: "Desks",
+    label: msg("Desks"),
     icon: DesksIcon,
     types: ["desk", "workstation", "deskmate"],
   },
   {
     id: "seating",
-    label: "Seating",
+    label: msg("Seating"),
     icon: SeatingIcon,
     types: ["seat", "sofa", "armchair", "barStool"],
   },
   {
     id: "tables",
-    label: "Tables",
+    label: msg("Tables"),
     icon: TablesIcon,
     types: [
       "coffeeTable",
@@ -58,37 +59,37 @@ export const CATEGORIES: Category[] = [
   },
   {
     id: "storage",
-    label: "Storage",
+    label: msg("Storage"),
     icon: StorageIcon,
     types: ["bookshelf", "shelvingUnit", "filingCabinet", "lockers", "wardrobe"],
   },
   {
     id: "equipment",
-    label: "Equipment",
+    label: msg("Equipment"),
     icon: EquipmentIcon,
     types: ["printer", "tvScreen", "whiteboard", "serverRack"],
   },
   {
     id: "kitchen",
-    label: "Kitchen",
+    label: msg("Kitchen"),
     icon: KitchenIcon,
     types: ["kitchenCounter", "fridge", "cooler", "vendingMachine"],
   },
   {
     id: "wall",
-    label: "On the wall",
+    label: msg("On the wall"),
     icon: OnTheWallIcon,
     types: ["wallTv", "wallArt", "wallClock", "wallShelf"],
   },
   {
     id: "bathroom",
-    label: "Bathroom",
+    label: msg("Bathroom"),
     icon: BathroomIcon,
     types: ["toilet", "bathroomSink", "shower"],
   },
   {
     id: "decor",
-    label: "Decor",
+    label: msg("Decor"),
     icon: DecorIcon,
     types: [
       "plant",

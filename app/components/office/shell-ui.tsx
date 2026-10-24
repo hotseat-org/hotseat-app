@@ -1,4 +1,5 @@
 import { Avatar } from "@heroui/react"
+import type { Translator } from "~/i18n/translate"
 
 export interface ShellMember {
   userEmail: string
@@ -38,6 +39,10 @@ const AVATAR_COLORS = [
   "#b96f6f",
   "#c99a2e",
 ]
+
+/** "admin" / "user" in the reader's language (shown capitalised). */
+export const roleLabel = ({ t }: Translator, role: string) =>
+  role === "ADMIN" ? t("admin") : t("user")
 
 export const nameOf = (m: ShellMember) => m.displayName?.trim() || m.userEmail.split("@")[0]
 

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { MemberAvatar, PANEL, PANEL_HOVER, nameOf, type ShellMember } from "./shell-ui"
 import { useEditorStore } from "~/components/OfficeEditor/store"
 import { isSeatable } from "~/components/OfficeEditor/types"
+import { useI18n } from "~/i18n/I18nProvider"
 
 interface Result {
   key: string
@@ -20,6 +21,7 @@ interface Result {
  * scene (the same card as clicking the desk).
  */
 export const ShellSearch = ({ members }: { members: ShellMember[] }) => {
+  const { t } = useI18n()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("")
   const objects = useEditorStore((s) => s.objects)
@@ -48,7 +50,11 @@ export const ShellSearch = ({ members }: { members: ShellMember[] }) => {
       return {
         key: `p:${m.userEmail}`,
         title: nameOf(m),
-        subtitle: desk ? `Desk ${desk.label ?? "assigned"}` : "No desk in this office",
+        subtitle: desk
+          ? desk.label
+            ? t("Desk {label}", { label: desk.label })
+            : t("Desk assigned")
+          : t("No desk in this office"),
         deskId: desk?.id,
         member: m,
       }
@@ -59,8 +65,8 @@ export const ShellSearch = ({ members }: { members: ShellMember[] }) => {
         const who = members.find((m) => m.userEmail === d.assignee)
         return {
           key: `d:${d.id}`,
-          title: `Desk ${d.label}`,
-          subtitle: who ? nameOf(who) : "Free",
+          title: t("Desk {label}", { label: d.label ?? "" }),
+          subtitle: who ? nameOf(who) : t("Free"),
           deskId: d.id,
         }
       })
@@ -71,7 +77,7 @@ export const ShellSearch = ({ members }: { members: ShellMember[] }) => {
         `${r.title} ${r.subtitle} ${r.member?.userEmail ?? ""}`.toLowerCase().includes(q)
       )
       .slice(0, 8)
-  }, [query, objects, members])
+  }, [query, objects, members, t])
 
   const pick = (r: Result) => {
     if (!r.deskId) return
@@ -85,11 +91,11 @@ export const ShellSearch = ({ members }: { members: ShellMember[] }) => {
         <div
           role="button"
           tabIndex={0}
-          aria-label="Find a person or seat (⌘K)"
+          aria-label={t("Find a person or seat (⌘K)")}
           className={`${PANEL} ${PANEL_HOVER} flex cursor-pointer items-center gap-2 px-3.5 py-2.5 text-sm text-muted outline-none focus-visible:ring-2 focus-visible:ring-focus`}
         >
           <Search className="size-4" />
-          <span className="hidden sm:inline">Find a person or seat…</span>
+          <span className="hidden sm:inline">{t("Find a person or seat…")}</span>
           <kbd className="ml-1 hidden rounded border border-border px-1.5 text-[0.65rem] sm:inline">
             ⌘K
           </kbd>
@@ -104,12 +110,14 @@ export const ShellSearch = ({ members }: { members: ShellMember[] }) => {
             onKeyDown={(e) => {
               if (e.key === "Enter" && results[0]) pick(results[0])
             }}
-            placeholder="Name, email or desk…"
-            aria-label="Search people and desks"
+            placeholder={t("Name, email or desk…")}
+            aria-label={t("Search people and desks")}
             className="mb-2 h-9 w-full rounded-lg border border-border bg-surface px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-focus"
           />
           {results.length === 0 ? (
-            <p className="px-2 py-6 text-center text-sm text-muted">No people or desks match.</p>
+            <p className="px-2 py-6 text-center text-sm text-muted">
+              {t("No people or desks match.")}
+            </p>
           ) : (
             <ul className="flex flex-col gap-0.5">
               {results.map((r) => (

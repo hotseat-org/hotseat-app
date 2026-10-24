@@ -1,5 +1,5 @@
 import type { CoreContext } from "../types"
-import { formatLong, type Day } from "~/utils/booking"
+import type { Day } from "~/utils/booking"
 
 /** Someone's recent notifications (newest first) and how many are unread. */
 export const listNotifications =
@@ -13,17 +13,6 @@ export const markNotificationsRead =
     mainRepository.notification.markRead({ userEmail })
 
 // ---- Wording, shared by everything that notifies ---------------------------
-
-/** "desk D-5", or "a desk" when it has no label. */
-export const deskPhrase = (label?: string) => (label ? `desk ${label}` : "a desk")
-
-/** "Thu 22 Oct", "Thu 22 Oct and Fri 23 Oct", "3 days from Thu 22 Oct". */
-export const daysPhrase = (days: Day[]) => {
-  const sorted = [...days].sort()
-  if (sorted.length === 1) return formatLong(sorted[0])
-  if (sorted.length === 2) return `${formatLong(sorted[0])} and ${formatLong(sorted[1])}`
-  return `${sorted.length} days from ${formatLong(sorted[0])}`
-}
 
 export const officeLink = (organizationSlug: string, officeSlug: string) =>
   `/app/o/${organizationSlug}/offices/${officeSlug}`

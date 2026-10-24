@@ -1,31 +1,26 @@
 import { Button, CloseButton } from "@heroui/react"
 import clsx from "clsx"
 import {
-  Armchair,
   CalendarDays,
   CalendarX,
   Check,
+  ChevronLeft,
   ChevronRight,
   Footprints,
   LogOut,
-  Pin,
+  Repeat,
+  Star,
   Undo2,
 } from "lucide-react"
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { useEditorStore } from "./store"
 import { personByEmail, usePeople, type Person } from "./people"
 import { deskName } from "./useBooking"
+import { DESK_FEATURES } from "./types"
 import { MemberAvatar } from "~/components/office/shell-ui"
-import {
-  bookingPresets,
-  deskState,
-  formatDow,
-  formatLong,
-  formatShort,
-  formatWeekday,
-  type BookingPreset,
-  type Day,
-} from "~/utils/booking"
+import { bookingPresets, deskState, type BookingPreset, type Day } from "~/utils/booking"
+import { useI18n } from "~/i18n/I18nProvider"
+import type { Translator } from "~/i18n/translate"
 
 /** Must match the `seat-pop-out` animation duration in tailwind.css. */
 const EXIT_MS = 140
@@ -53,7 +48,10 @@ export const useSeatCard = () => {
   const applyCancel = useEditorStore((s) => s.applyCancel)
   const openCustomBooking = useEditorStore((s) => s.openCustomBooking)
   const showRoute = useEditorStore((s) => s.showRoute)
+  const applyFavorite = useEditorStore((s) => s.applyFavorite)
   const people = usePeople()
+  const i18n = useI18n()
+  const { t, tn, format } = i18n
   const [closing, setClosing] = useState(false)
   const seat = card ? objects.find((o) => o.id === card.id) : undefined
 
@@ -95,8 +93,11 @@ export const useSeatCard = () => {
     else {
       const presets = bookingPresets(day, today, lastDay)
       releaseChoices = [
-        { label: `Just ${formatShort(day)}`, days: presets.one },
-        { label: `Rest of the week (${formatDow(day)}–Fri)`, days: presets.week },
+        { label: t("Just {day}", { day: format.short(day) }), days: presets.one },
+        {
+          label: t("Rest of the week ({from}–Fri)", { from: format.dow(day) }),
+          days: presets.week,
+        },
       ]
         .map((c) => ({ ...c, days: c.days.filter((d) => !isGivenUp(d)) }))
         .filter((c, i) => c.days.length > 0 && (i === 0 || c.days.length > 1))
@@ -107,13 +108,19 @@ export const useSeatCard = () => {
   let options: Option[] = []
   let note: string | undefined
   if (isMyDesk) {
-    if (state.kind === "booked") note = `You gave ${formatShort(day)} up, and it's been booked.`
-    else if (state.kind === "free") note = `You gave ${formatShort(day)} up — others can book it.`
+    if (state.kind === "booked")
+      note = t("You gave {day} up, and it's been booked.", { day: format.short(day) })
+    else if (state.kind === "free")
+      note = t("You gave {day} up — others can book it.", { day: format.short(day) })
   } else if (booking.enabled && me && state.kind !== "resident" && !past && !mine) {
     if (seat.assignee)
-      note = `${personByEmail(people, seat.assignee)?.name ?? "Someone"}'s permanent desk — free on the days they're away.`
+      note = t("{name}'s permanent desk — free on the days they're away.", {
+        name: personByEmail(people, seat.assignee)?.name ?? t("Someone"),
+      })
     if (myResidentDesk)
-      note = `You have a permanent desk here (${deskName(myResidentDesk)}), so you can't book another.`
+      note = t("You have a permanent desk here ({desk}), so you can't book another.", {
+        desk: deskName(i18n, myResidentDesk),
+      })
     else {
       const presets = bookingPresets(day, today, lastDay)
       const describe = (days: Day[]) => {
@@ -121,24 +128,26 @@ export const useSeatCard = () => {
         const taken = days.flatMap((d) => {
           const st = deskState(seat, d, byDay, released)
           return st.kind === "booked" && st.email !== me
-            ? [`${formatDow(d)} ${personByEmail(people, st.email)?.name.split(" ")[0] ?? "taken"}`]
+            ? [
+                `${format.dow(d)} ${personByEmail(people, st.email)?.name.split(" ")[0] ?? t("taken")}`,
+              ]
             : []
         })
         const detail = taken.length
-          ? `${free.length} of ${days.length} free · ${taken.join(", ")}`
+          ? `${t("{free} of {total} free", { free: free.length, total: days.length })} · ${taken.join(", ")}`
           : free.length === days.length
             ? days.length === 1
-              ? "Free"
-              : `All ${days.length} days free`
-            : "Some are already yours"
+              ? t("Free")
+              : tn(days.length, "All {n} day free", "All {n} days free")
+            : t("Some are already yours")
         // Booking moves you: say so when you already sit elsewhere on those days.
         const moves = free.some((d) => Object.values(byDay[d] ?? {}).includes(me))
-        return { free, detail: moves ? `${detail} · moves you here` : detail }
+        return { free, detail: moves ? t("{detail} · moves you here", { detail }) : detail }
       }
       const all: [BookingPreset, string][] = [
-        ["one", `Just ${formatShort(day)}`],
-        ["week", `Rest of the week (${formatDow(day)}–Fri)`],
-        ["every", `Every ${formatWeekday(day)}`],
+        ["one", t("Just {day}", { day: format.short(day) })],
+        ["week", t("Rest of the week ({from}–Fri)", { from: format.dow(day) })],
+        ["every", format.everyWeekday(day)],
       ]
       options = all
         // A preset that's the same as a shorter one adds nothing.
@@ -150,7 +159,10 @@ export const useSeatCard = () => {
             title,
             detail:
               key === "every"
-                ? `Until ${formatLong(presets.every[presets.every.length - 1])} · ${detail}`
+                ? t("Until {day} · {detail}", {
+                    day: { day: presets.every[presets.every.length - 1] },
+                    detail,
+                  })
                 : detail,
             free,
           }
@@ -159,9 +171,46 @@ export const useSeatCard = () => {
     }
   }
 
+  // Favourite, features, and your usual desk.
+  const { favorites, usual } = booking.preferences
+  const isFavorite = favorites.includes(seat.id)
+  const isMyUsual = usual?.deskId === seat.id
+  const iAmResident = !!me && objects.some((o) => o.assignee === me)
+  const usualElsewhere =
+    usual && !isMyUsual ? objects.find((o) => o.id === usual.deskId) : undefined
   const body: BodyProps = {
-    title: deskName(seat),
-    dayLabel: booking.enabled ? formatLong(day) : undefined,
+    i18n,
+    title: deskName(i18n, seat),
+    features: DESK_FEATURES.filter((f) => seat.features?.includes(f.id)).map((f) => t(f.label)),
+    canFavorite: booking.enabled && !!me,
+    isFavorite,
+    onToggleFavorite: () => {
+      applyFavorite(seat.id, !isFavorite)
+      booking.setPreference({
+        intent: "favorite",
+        deskId: seat.id,
+        isFavorite: isFavorite ? "false" : "true",
+      })
+    },
+    usual:
+      booking.enabled && me && !seat.assignee && !iAmResident
+        ? {
+            weekdays: isMyUsual ? (usual?.weekdays ?? []) : null,
+            replaces: usualElsewhere ? deskName(i18n, usualElsewhere) : undefined,
+            // A new one starts on the shown day's weekday (Monday–Friday).
+            suggested: [((new Date(`${day}T00:00:00Z`).getUTCDay() + 6) % 7) + 1].filter(
+              (w) => w <= 5
+            ),
+          }
+        : null,
+    onSetUsual: (weekdays) =>
+      booking.setPreference({
+        intent: "usual",
+        deskId: seat.id,
+        weekdays: JSON.stringify(weekdays),
+      }),
+    onClearUsual: () => booking.setPreference({ intent: "usual-clear" }),
+    dayLabel: booking.enabled ? format.long(day) : undefined,
     state: state.kind,
     person,
     mine,
@@ -201,7 +250,21 @@ export const useSeatCard = () => {
 }
 
 export interface BodyProps {
+  /** The reader's language (the 3D card renders in drei's own root: no context there). */
+  i18n: Translator
   title: string
+  /** What it offers ("Standing desk"). */
+  features: string[]
+  canFavorite: boolean
+  isFavorite: boolean
+  onToggleFavorite: () => void
+  /**
+   * Your usual desk (booked for you on chosen weekdays): null when this desk
+   * can't be one for you; `weekdays` set when it already is.
+   */
+  usual: { weekdays: number[] | null; replaces?: string; suggested: number[] } | null
+  onSetUsual: (weekdays: number[]) => void
+  onClearUsual: () => void
   /** The shown day ("Wed 23 Sep"); absent without booking. */
   dayLabel?: string
   state: "resident" | "booked" | "free"
@@ -230,14 +293,113 @@ export interface BodyProps {
 
 const stop = (e: { stopPropagation: () => void }) => e.stopPropagation()
 
+/** ISO weekdays (1 = Monday) as short names: "Mon, Wed". */
+const weekdayNames = ({ format }: Translator, weekdays: number[]) =>
+  weekdays
+    .filter((w) => w <= 5)
+    .map((w) => format.workdays()[w - 1])
+    .join(", ")
+
+/** One of the card's actions: an icon, a label (and maybe a detail), a step on (chevron). */
+const Row = ({
+  icon: Icon,
+  label,
+  detail,
+  onPress,
+  isPrimary = false,
+  isDanger = false,
+  hasStep = false,
+  isDisabled = false,
+  isSheet,
+}: {
+  icon: typeof Check
+  label: string
+  detail?: string
+  onPress: () => void
+  isPrimary?: boolean
+  isDanger?: boolean
+  hasStep?: boolean
+  isDisabled?: boolean
+  isSheet: boolean
+}) => (
+  <button
+    type="button"
+    disabled={isDisabled}
+    onClick={onPress}
+    className={clsx(
+      "flex w-full items-center gap-2.5 rounded-xl px-3 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50",
+      isSheet ? "min-h-12 py-2.5" : detail ? "min-h-11 py-1.5" : "h-10",
+      isPrimary
+        ? "mb-1 bg-accent font-extrabold text-accent-foreground hover:brightness-105"
+        : clsx("font-bold hover:bg-foreground/5", isDanger ? "text-danger" : "text-foreground")
+    )}
+  >
+    <Icon
+      className={clsx("size-4 shrink-0", !isPrimary && !isDanger && "text-accent")}
+      strokeWidth={isPrimary ? 2.6 : 2}
+    />
+    <span className="min-w-0 flex-1">
+      <span className={clsx("block leading-tight", isSheet ? "text-[0.95rem]" : "text-[0.82rem]")}>
+        {label}
+      </span>
+      {detail && (
+        <span
+          className={clsx(
+            "block truncate text-[0.7rem] font-semibold",
+            isPrimary ? "text-accent-foreground/80" : "text-muted"
+          )}
+        >
+          {detail}
+        </span>
+      )}
+    </span>
+    {hasStep && <ChevronRight className="size-4 shrink-0 text-muted" />}
+  </button>
+)
+
+/** A step's title bar: back to the card's main list. */
+const StepHeader = ({
+  i18n: { t },
+  title,
+  onBack,
+}: {
+  i18n: Translator
+  title: string
+  onBack: () => void
+}) => (
+  <div className="flex items-center gap-1.5">
+    <button
+      type="button"
+      aria-label={t("Back")}
+      onClick={onBack}
+      className="grid size-8 shrink-0 place-items-center rounded-full text-foreground hover:bg-foreground/5"
+    >
+      <ChevronLeft className="size-4" strokeWidth={2.5} />
+    </button>
+    <p className="text-sm font-extrabold">{title}</p>
+  </div>
+)
+
 /**
  * The card itself — plain props only (the 3D view renders it in drei's separate
  * root). Anchored over its desk, or on phones a bottom sheet (`layout="sheet"`):
  * the same content, full width, with bigger targets.
+ *
+ * A short list of actions: the one that matters most filled (Reserve the shown
+ * day; on your own desk, the way there), the rest as labelled rows — those with
+ * a chevron open their own step in the card (more days, your usual desk).
  */
 export const SeatCardBody = ({
   layout = "anchored",
+  i18n,
   title,
+  features,
+  canFavorite,
+  isFavorite,
+  onToggleFavorite,
+  usual,
+  onSetUsual,
+  onClearUsual,
   dayLabel,
   state,
   person,
@@ -259,10 +421,8 @@ export const SeatCardBody = ({
   onReclaim,
 }: BodyProps & { layout?: "anchored" | "sheet" }) => {
   const isSheet = layout === "sheet"
-  const [choice, setChoice] = useState<BookingPreset | undefined>(
-    () => options.find((o) => o.free.length > 0)?.key
-  )
-  const picked = options.find((o) => o.key === choice && o.free.length > 0)
+  const { t } = i18n
+  const [step, setStep] = useState<"main" | "days" | "usual">("main")
 
   // Above the desk by default; a desk near the top of the screen gets the card
   // below it instead, so it's never cut off. Decided once, before paint.
@@ -272,6 +432,130 @@ export const SeatCardBody = ({
     const top = ref.current?.getBoundingClientRect().top ?? 0
     if (!isSheet && top < 8) setBelow(true)
   }, [isSheet])
+
+  // The shown day alone, and the longer choices (for "Book more days").
+  const one = options.find((o) => o.key === "one" && o.free.length > 0)
+  const more = options.filter((o) => o.key !== "one")
+  const showWayFirst = mine && !one
+  const shortDay = dayLabel?.split(" ").slice(0, 2).join(" ")
+  const status = past
+    ? t("{day} · past", { day: dayLabel ?? "" })
+    : mine
+      ? t("Yours · {day}", { day: dayLabel ?? "" })
+      : state === "free"
+        ? t("Free · {day}", { day: dayLabel ?? "" })
+        : state === "resident"
+          ? t("{name}'s permanent desk", { name: person?.name ?? t("Someone") })
+          : `${person?.name ?? t("Taken")} · ${dayLabel ?? ""}`
+
+  const main = (
+    <>
+      {one && (
+        <Row
+          isSheet={isSheet}
+          isPrimary
+          icon={Check}
+          label={shortDay ? t("Reserve {day}", { day: shortDay }) : t("Reserve this day")}
+          isDisabled={pending}
+          onPress={() => onReserve(one.free)}
+        />
+      )}
+      {showWayFirst && (
+        <Row
+          isSheet={isSheet}
+          isPrimary
+          icon={Footprints}
+          label={t("Show the way")}
+          onPress={onShowWay}
+        />
+      )}
+      {more.length > 0 && (
+        <Row
+          isSheet={isSheet}
+          icon={CalendarDays}
+          label={one ? t("Book more days") : t("Book it on other days")}
+          hasStep
+          onPress={() => setStep("days")}
+        />
+      )}
+      {usual && (
+        <Row
+          isSheet={isSheet}
+          icon={Repeat}
+          label={
+            usual.weekdays
+              ? t("Usual desk · {days}", { days: weekdayNames(i18n, usual.weekdays) })
+              : t("Make it my usual desk")
+          }
+          hasStep
+          onPress={() => setStep("usual")}
+        />
+      )}
+      {!showWayFirst && (
+        <Row isSheet={isSheet} icon={Footprints} label={t("Show the way")} onPress={onShowWay} />
+      )}
+      {releaseChoices.map((c) => (
+        <Row
+          key={c.label}
+          isSheet={isSheet}
+          icon={CalendarX}
+          label={t("Away? Give it up · {choice}", { choice: c.label })}
+          isDisabled={pending}
+          onPress={() => onRelease(c.days)}
+        />
+      ))}
+      {canReclaim && (
+        <Row
+          isSheet={isSheet}
+          icon={Undo2}
+          label={shortDay ? t("Take {day} back", { day: shortDay }) : t("Take it back")}
+          isDisabled={pending}
+          onPress={onReclaim}
+        />
+      )}
+      {canCancel && (
+        <>
+          <div className="mx-3 my-1 h-px bg-separator" />
+          <Row
+            isSheet={isSheet}
+            isDanger
+            icon={LogOut}
+            label={shortDay ? t("Cancel {day}", { day: shortDay }) : t("Cancel booking")}
+            isDisabled={pending}
+            onPress={onCancel}
+          />
+        </>
+      )}
+    </>
+  )
+
+  const days = (
+    <>
+      <StepHeader
+        i18n={i18n}
+        title={one ? t("Book more days") : t("Book it on other days")}
+        onBack={() => setStep("main")}
+      />
+      {more.map((o) => (
+        <Row
+          key={o.key}
+          isSheet={isSheet}
+          icon={CalendarDays}
+          label={o.title}
+          detail={o.detail}
+          isDisabled={pending || o.free.length === 0}
+          onPress={() => onReserve(o.free)}
+        />
+      ))}
+      <Row
+        isSheet={isSheet}
+        icon={CalendarDays}
+        label={t("Pick days on a calendar")}
+        hasStep
+        onPress={onCustom}
+      />
+    </>
+  )
 
   return (
     // Centred on the anchor, lifted a little; the inner box animates.
@@ -295,55 +579,21 @@ export const SeatCardBody = ({
           "relative flex flex-col text-foreground [&_button]:pointer-events-auto",
           isSheet
             ? clsx(
-                "w-full gap-3.5 rounded-t-3xl border-t border-border bg-overlay px-5 pb-7 pt-2.5 shadow-overlay",
+                "w-full gap-2 rounded-t-3xl border-t border-border bg-overlay px-4 pb-7 pt-2.5 shadow-overlay",
                 closing ? "sheet-down" : "sheet-up"
               )
             : clsx(
-                "w-64 gap-2.5 rounded-2xl border border-border bg-overlay/95 p-3 shadow-overlay backdrop-blur-md",
+                "w-72 gap-0.5 rounded-2xl border border-border bg-overlay/95 p-2.5 shadow-overlay backdrop-blur-md",
                 below ? "origin-top" : "origin-bottom",
                 closing ? "seat-pop-out" : "seat-pop"
               )
         )}
       >
-        {isSheet && <span aria-hidden className="mx-auto h-1.5 w-10 rounded-full bg-border" />}
-        <div className="flex items-center justify-between">
-          <p
-            className={clsx(
-              "flex items-center gap-1.5 font-extrabold",
-              isSheet ? "text-lg" : "text-sm"
-            )}
-          >
-            <Armchair className={clsx("text-accent", isSheet ? "size-5" : "size-4")} />
-            {title}
-          </p>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={onShowWay}
-              className={clsx(
-                "flex items-center gap-1 rounded-full px-2 font-bold text-accent transition-colors hover:bg-accent/10",
-                isSheet ? "h-10 text-sm" : "h-7 text-xs"
-              )}
-            >
-              <Footprints className={isSheet ? "size-4" : "size-3.5"} />
-              Show the way
-            </button>
-            <CloseButton
-              aria-label="Close"
-              onPress={onClose}
-              className={isSheet ? "size-10" : undefined}
-            />
-          </div>
-        </div>
+        {isSheet && <span aria-hidden className="mx-auto mb-1 h-1.5 w-10 rounded-full bg-border" />}
 
-        {/* Who has it on the shown day. */}
-        <div
-          className={clsx(
-            "flex items-center gap-2.5 rounded-xl p-2",
-            mine ? "bg-accent/12" : state === "free" ? "bg-success/12" : "bg-surface-secondary"
-          )}
-        >
-          {person ? (
+        {/* Who has it, when, what it offers — and your star. */}
+        <div className="mb-1.5 flex items-center gap-2.5 px-1 pt-0.5">
+          {person && (
             <MemberAvatar
               m={{
                 userEmail: person.email,
@@ -351,146 +601,72 @@ export const SeatCardBody = ({
                 avatarUrl: person.avatarUrl,
                 role: "",
               }}
-              className="size-9 shrink-0 rounded-full"
+              className={clsx("shrink-0 rounded-full", isSheet ? "size-10" : "size-9")}
             />
-          ) : (
-            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-success text-success-foreground">
-              <Check className="size-4" strokeWidth={3} />
-            </span>
           )}
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold">
-              {person ? (mine ? "You" : person.name) : "Free"}
-            </p>
-            <p className="flex items-center gap-1 truncate text-xs text-muted">
-              {state === "resident" ? (
-                <>
-                  <Pin className="size-3" /> Permanent desk
-                </>
-              ) : (
-                (dayLabel ?? "Free desk")
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1">
+              <p className={clsx("truncate font-black", isSheet ? "text-lg" : "text-base")}>
+                {title}
+              </p>
+              {canFavorite && (
+                <button
+                  type="button"
+                  aria-label={isFavorite ? t("Remove from favourites") : t("Add to favourites")}
+                  aria-pressed={isFavorite}
+                  onClick={onToggleFavorite}
+                  className={clsx(
+                    "grid size-7 shrink-0 place-items-center rounded-full transition-colors hover:bg-warning/15",
+                    isFavorite ? "text-warning" : "text-muted"
+                  )}
+                >
+                  <Star className="size-4" fill={isFavorite ? "currentColor" : "none"} />
+                </button>
               )}
+            </div>
+            <p className="truncate text-xs text-muted">
+              <span
+                className={clsx(
+                  "font-bold",
+                  mine ? "text-accent" : state === "free" && !past ? "text-success" : undefined
+                )}
+              >
+                {status}
+              </span>
+              {features.length > 0 && ` · ${features.join(", ")}`}
             </p>
           </div>
+          <CloseButton
+            aria-label={t("Close")}
+            onPress={onClose}
+            className={clsx("shrink-0", isSheet && "size-10")}
+          />
         </div>
 
-        {past && <p className="text-xs text-muted">Past days can&apos;t be changed.</p>}
-        {note && <p className="text-xs text-muted">{note}</p>}
-
-        {options.length > 0 && (
-          <>
-            {state === "booked" && !mine && (
-              <p className="text-[0.64rem] font-black uppercase tracking-wider text-muted">
-                Book it on other days
-              </p>
-            )}
-            <div role="radiogroup" aria-label="Which days" className="flex flex-col gap-1.5">
-              {options.map((o) => {
-                const on = o.key === choice
-                const disabled = o.free.length === 0
-                return (
-                  <button
-                    key={o.key}
-                    type="button"
-                    role="radio"
-                    aria-checked={on}
-                    disabled={disabled}
-                    onClick={() => setChoice(o.key)}
-                    className={clsx(
-                      "flex items-start gap-2.5 rounded-xl border-[1.5px] px-2.5 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus",
-                      isSheet ? "py-3" : "py-2",
-                      on ? "border-accent bg-accent/10" : "border-border bg-surface",
-                      disabled ? "opacity-50" : !on && "hover:border-muted"
-                    )}
-                  >
-                    <span
-                      className={clsx(
-                        "mt-0.5 size-4 shrink-0 rounded-full",
-                        on ? "border-[5px] border-accent" : "border-2 border-muted"
-                      )}
-                    />
-                    <span className="min-w-0">
-                      <span className="block text-[0.8rem] font-bold leading-tight">{o.title}</span>
-                      <span className="block text-[0.7rem] text-muted">{o.detail}</span>
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-            <button
-              type="button"
-              onClick={onCustom}
-              className={clsx(
-                "flex items-center gap-2.5 rounded-xl border-[1.5px] border-dashed border-border px-2.5 text-left outline-none transition-colors hover:border-muted focus-visible:ring-2 focus-visible:ring-focus",
-                isSheet ? "py-3" : "py-2"
-              )}
-            >
-              <CalendarDays className="size-4 shrink-0 text-accent" />
-              <span className="min-w-0 flex-1">
-                <span className="block text-[0.8rem] font-bold leading-tight">Custom…</span>
-                <span className="block text-[0.7rem] text-muted">Pick any days on a calendar</span>
-              </span>
-              <ChevronRight className="size-4 shrink-0 text-muted" />
-            </button>
-            <Button
-              size={isSheet ? "lg" : "sm"}
-              variant="primary"
-              className="w-full"
-              isDisabled={!picked || pending}
-              onPress={() => picked && onReserve(picked.free)}
-            >
-              <Check className="size-4" strokeWidth={2.5} />
-              {picked
-                ? `Reserve ${picked.free.length} ${picked.free.length === 1 ? "day" : "days"}`
-                : "Reserve"}
-            </Button>
-          </>
+        {(note || past) && step === "main" && (
+          <p className="px-1 pb-1.5 text-xs leading-snug text-muted">
+            {past ? t("Past days can't be changed.") : note}
+          </p>
         )}
 
-        {canCancel && (
-          <Button
-            size={isSheet ? "lg" : "sm"}
-            variant="secondary"
-            className="w-full"
-            isDisabled={pending}
-            onPress={onCancel}
-          >
-            <LogOut className="size-4" /> Cancel {dayLabel}
-          </Button>
-        )}
-
-        {releaseChoices.length > 0 && (
-          <>
-            <p className="text-[0.64rem] font-black uppercase tracking-wider text-muted">
-              Away? Let others book it
-            </p>
-            <div className="flex flex-col gap-1.5">
-              {releaseChoices.map((c) => (
-                <Button
-                  key={c.label}
-                  size={isSheet ? "lg" : "sm"}
-                  variant="secondary"
-                  className="w-full justify-start"
-                  isDisabled={pending}
-                  onPress={() => onRelease(c.days)}
-                >
-                  <CalendarX className="size-4" /> {c.label}
-                </Button>
-              ))}
-            </div>
-          </>
-        )}
-
-        {canReclaim && (
-          <Button
-            size={isSheet ? "lg" : "sm"}
-            variant="secondary"
-            className="w-full"
-            isDisabled={pending}
-            onPress={onReclaim}
-          >
-            <Undo2 className="size-4" /> Take {dayLabel} back
-          </Button>
+        {step === "main" && main}
+        {step === "days" && days}
+        {step === "usual" && usual && (
+          <UsualStep
+            i18n={i18n}
+            usual={usual}
+            pending={pending}
+            isSheet={isSheet}
+            onBack={() => setStep("main")}
+            onSet={(weekdays) => {
+              onSetUsual(weekdays)
+              setStep("main")
+            }}
+            onClear={() => {
+              onClearUsual()
+              setStep("main")
+            }}
+          />
         )}
 
         {/* Pointer to the desk */}
@@ -502,6 +678,90 @@ export const SeatCardBody = ({
             )}
           />
         )}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Your usual desk: booked for you on the weekdays picked, as each opens up for
+ * booking (a taken day gets a similar desk; a full day, the waitlist).
+ */
+const UsualStep = ({
+  i18n,
+  usual,
+  pending,
+  isSheet,
+  onBack,
+  onSet,
+  onClear,
+}: {
+  i18n: Translator
+  usual: NonNullable<BodyProps["usual"]>
+  pending: boolean
+  isSheet: boolean
+  onBack: () => void
+  onSet: (weekdays: number[]) => void
+  onClear: () => void
+}) => {
+  const [days, setDays] = useState<number[]>(usual.weekdays ?? usual.suggested)
+  const isUsual = !!usual.weekdays
+  const { t, format } = i18n
+  return (
+    <div className="flex flex-col gap-2.5">
+      <StepHeader i18n={i18n} title={t("Your usual desk")} onBack={onBack} />
+      <div className="flex gap-1 px-1">
+        {format.workdays().map((name, i) => {
+          const w = i + 1
+          const on = days.includes(w)
+          return (
+            <button
+              key={name}
+              type="button"
+              aria-pressed={on}
+              onClick={() =>
+                setDays(on ? days.filter((d) => d !== w) : [...days, w].sort((a, b) => a - b))
+              }
+              className={clsx(
+                "flex-1 rounded-lg border text-xs font-bold transition-colors",
+                isSheet ? "h-11" : "h-9",
+                on
+                  ? "border-accent bg-accent text-accent-foreground"
+                  : "border-border text-muted hover:border-muted"
+              )}
+            >
+              {name.slice(0, 2)}
+            </button>
+          )
+        })}
+      </div>
+      <p className="px-1 text-[0.72rem] leading-snug text-muted">
+        {t(
+          "Booked for you as each day opens up. If it's taken, you get a similar desk; if the office is full, a place on the waitlist."
+        )}
+        {usual.replaces && ` ${t("Replaces your usual {desk}.", { desk: usual.replaces })}`}
+      </p>
+      <div className="flex items-center justify-between gap-2 px-1">
+        {isUsual ? (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={onClear}
+            className="text-xs font-bold text-danger hover:underline"
+          >
+            {t("Stop booking it")}
+          </button>
+        ) : (
+          <span />
+        )}
+        <Button
+          size={isSheet ? "md" : "sm"}
+          variant="primary"
+          isDisabled={!days.length || pending}
+          onPress={() => onSet(days)}
+        >
+          {isUsual ? t("Save days") : t("Make it my usual desk")}
+        </Button>
       </div>
     </div>
   )

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useEditorStore } from "../store"
 import { deskName } from "../useBooking"
 import { useRoute, walkTime } from "../wayfinding"
+import { useI18n } from "~/i18n/I18nProvider"
 
 /**
  * While a way to a desk is shown: where to, from where (your desk, or the
@@ -12,6 +13,8 @@ import { useRoute, walkTime } from "../wayfinding"
  * the way from their own desk), and a close. Floats at the top, centred.
  */
 export const RoutePill = ({ className }: { className?: string }) => {
+  const i18n = useI18n()
+  const { t } = i18n
   const route = useRoute()
   const clearRoute = useEditorStore((s) => s.clearRoute)
   const setRouteFrom = useEditorStore((s) => s.setRouteFrom)
@@ -48,7 +51,7 @@ export const RoutePill = ({ className }: { className?: string }) => {
       </span>
       <span className="min-w-0">
         <span className="block truncate text-sm font-extrabold text-foreground">
-          Way to {deskName(route.desk)}
+          {t("Way to {desk}", { desk: deskName(i18n, route.desk) })}
         </span>
         <span className="flex items-center gap-1 truncate text-xs text-muted">
           {route.myDesk ? (
@@ -56,40 +59,44 @@ export const RoutePill = ({ className }: { className?: string }) => {
               type="button"
               onClick={() => setRouteFrom(route.fromMyDesk ? "entrance" : "desk")}
               title={
-                route.fromMyDesk ? "Start at the entrance instead" : "Start at your desk instead"
+                route.fromMyDesk
+                  ? t("Start at the entrance instead")
+                  : t("Start at your desk instead")
               }
               className="inline-flex shrink-0 items-center gap-1 rounded-full font-semibold text-accent hover:underline"
             >
               {route.fromMyDesk
-                ? `From your desk${route.myDesk.label ? ` ${route.myDesk.label}` : ""}`
-                : "From the nearest entrance"}
+                ? route.myDesk.label
+                  ? t("From your desk {label}", { label: route.myDesk.label })
+                  : t("From your desk")
+                : t("From the nearest entrance")}
               <ArrowLeftRight className="size-3" />
             </button>
           ) : (
-            route.path && <span className="shrink-0">From the nearest entrance</span>
+            route.path && <span className="shrink-0">{t("From the nearest entrance")}</span>
           )}
           {route.path ? (
             <span className="truncate">
               · {Math.round(route.path.length)} m
-              <span className="hidden sm:inline"> · {walkTime(route.path.length)}</span>
+              <span className="hidden sm:inline"> · {walkTime(i18n, route.path.length)}</span>
             </span>
           ) : (
-            !route.myDesk && "No outside door to start from"
+            !route.myDesk && t("No outside door to start from")
           )}
         </span>
       </span>
       <button
         type="button"
         onClick={copyLink}
-        aria-label={isCopied ? "Link copied" : "Copy link to this way"}
+        aria-label={isCopied ? t("Link copied") : t("Copy link to this way")}
         className="flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-xs font-bold text-accent transition-colors hover:bg-accent/10"
       >
         {isCopied ? <Check className="size-4" /> : <Link2 className="size-4" />}
-        <span className="hidden sm:inline">{isCopied ? "Copied" : "Copy link"}</span>
+        <span className="hidden sm:inline">{isCopied ? t("Copied") : t("Copy link")}</span>
       </button>
       <button
         type="button"
-        aria-label="Close the way"
+        aria-label={t("Close the way")}
         onClick={clearRoute}
         className="grid size-9 shrink-0 place-items-center rounded-full text-muted transition-colors hover:bg-foreground/5 hover:text-foreground"
       >

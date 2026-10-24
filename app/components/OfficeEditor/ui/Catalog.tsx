@@ -13,6 +13,7 @@ import {
   type Category,
 } from "./categories"
 import { PREVIEW_SIZE, requestThumbnail } from "./thumbnails"
+import { useI18n } from "~/i18n/I18nProvider"
 
 // Tile previews (stills + a live canvas on hover) and the studio rendering the
 // stills — three.js, so loaded with the catalog (edit mode), not with the
@@ -35,6 +36,7 @@ type PreviewModule = typeof import("./PreviewView")
 const PANEL_MIN_HEIGHT = 560
 
 export const Catalog = () => {
+  const { t } = useI18n()
   const tool = useEditorStore((s) => s.tool)
   const setTool = useEditorStore((s) => s.setTool)
   const placementColors = useEditorStore((s) => s.placementColors)
@@ -44,7 +46,7 @@ export const Catalog = () => {
   // instantly (tiles on screen jump the queue).
   useEffect(() => {
     for (const c of CATEGORIES)
-      for (const t of c.types) requestThumbnail(t, placementColors[colorKey(t)])
+      for (const type of c.types) requestThumbnail(type, placementColors[colorKey(type)])
     // Once, with the colours as they are on opening the editor.
   }, [])
 
@@ -105,7 +107,7 @@ export const Catalog = () => {
       >
         <div className="flex justify-around">
           <RailButton
-            label="Select"
+            label={t("Select")}
             shortcut="1"
             active={tool === "select" && !category}
             onClick={() => pickMode("select")}
@@ -113,7 +115,7 @@ export const Catalog = () => {
             <MousePointer2 className="size-5" strokeWidth={2} />
           </RailButton>
           <RailButton
-            label="Erase"
+            label={t("Erase")}
             shortcut="0"
             active={tool === "delete"}
             danger
@@ -121,7 +123,11 @@ export const Catalog = () => {
           >
             <Eraser className="size-5" strokeWidth={2} />
           </RailButton>
-          <RailButton label="Paint" active={tool === "paint"} onClick={() => pickMode("paint")}>
+          <RailButton
+            label={t("Paint")}
+            active={tool === "paint"}
+            onClick={() => pickMode("paint")}
+          >
             <PaintBucket className="size-5" strokeWidth={2} />
           </RailButton>
         </div>
@@ -133,6 +139,7 @@ export const Catalog = () => {
             <CategoryButton
               key={c.id}
               category={c}
+              label={t(c.label)}
               active={openId === c.id}
               onClick={() => toggleCategory(c.id)}
             />
@@ -153,19 +160,20 @@ export const Catalog = () => {
           className="pointer-events-auto absolute left-full top-0 ml-2 flex w-60 flex-col rounded-2xl border border-border bg-overlay/90 p-3 shadow-overlay backdrop-blur-md"
         >
           <h2 className="mb-2 shrink-0 px-1 text-sm font-semibold text-foreground">
-            {category.label}
+            {t(category.label)}
           </h2>
 
           <div className="-mr-2 grid min-h-0 flex-1 grid-cols-2 content-start gap-2 overflow-y-auto overscroll-contain pr-2 [scrollbar-width:thin]">
-            {category.types.map((t) => {
-              const meta = TOOL_META.get(t)
-              const active = tool === t
+            {category.types.map((type) => {
+              const meta = TOOL_META.get(type)
+              const label = meta ? t(meta.label) : type
+              const active = tool === type
               return (
                 <button
-                  key={t}
+                  key={type}
                   type="button"
-                  onClick={() => setTool(t)}
-                  title={meta?.label}
+                  onClick={() => setTool(type)}
+                  title={label}
                   className={clsx(
                     "group flex flex-col items-center gap-1 rounded-xl border p-1.5 transition-colors",
                     active
@@ -177,8 +185,8 @@ export const Catalog = () => {
                     {/* Each tile reflects its own per-type colour. */}
                     {preview && (
                       <preview.PreviewTile
-                        type={t}
-                        color={placementColors[colorKey(t)]}
+                        type={type}
+                        color={placementColors[colorKey(type)]}
                         active={active}
                       />
                     )}
@@ -189,7 +197,7 @@ export const Catalog = () => {
                       active ? "text-foreground" : "text-muted"
                     )}
                   >
-                    {meta?.label ?? t}
+                    {label}
                   </span>
                 </button>
               )
@@ -209,11 +217,11 @@ export const Catalog = () => {
             aria-disabled={!armed}
           >
             <div className="mb-1.5 px-1 text-[11px] font-medium text-muted">
-              {armed ? "Colour" : "Colour — pick an item"}
+              {armed ? t("Colour") : t("Colour — pick an item")}
             </div>
             <div className="flex flex-wrap gap-1.5 px-1">
               <Swatch
-                title="Default"
+                title={t("Default")}
                 selected={!!armed && activeColor === null}
                 onClick={() => colorType && setPlacementColor(colorType, null)}
               >
@@ -269,10 +277,12 @@ const Swatch = ({ title, selected, onClick, children }: SwatchProps) => (
  */
 const CategoryButton = ({
   category,
+  label,
   active,
   onClick,
 }: {
   category: Category
+  label: string
   active: boolean
   onClick: () => void
 }) => (
@@ -289,7 +299,7 @@ const CategoryButton = ({
   >
     <category.icon className="size-10 transition-transform duration-150 group-hover:scale-110" />
     <span className="w-full truncate text-center text-[11px] font-semibold leading-tight">
-      {category.label}
+      {label}
     </span>
   </ToggleButton>
 )
@@ -339,6 +349,7 @@ const RailButton = ({ label, shortcut, active, danger, onClick, children }: Rail
  * one segment) or a room's floor. "Default" returns it to the theme colour.
  */
 const PaintPanel = ({ style }: { style?: React.CSSProperties }) => {
+  const { t } = useI18n()
   const paintColor = useEditorStore((s) => s.paintColor)
   const setPaintColor = useEditorStore((s) => s.setPaintColor)
   return (
@@ -346,26 +357,35 @@ const PaintPanel = ({ style }: { style?: React.CSSProperties }) => {
       style={style}
       className="pointer-events-auto absolute left-full top-0 ml-2 flex w-60 flex-col rounded-2xl border border-border bg-overlay/90 p-3 shadow-overlay backdrop-blur-md"
     >
-      <h2 className="mb-1 shrink-0 px-1 text-sm font-semibold text-foreground">Paint</h2>
+      <h2 className="mb-1 shrink-0 px-1 text-sm font-semibold text-foreground">{t("Paint")}</h2>
       <p className="mb-3 shrink-0 px-1 text-xs leading-snug text-muted">
-        Click a wall to paint its whole line (⇧ for one segment), or a room&apos;s floor.
+        {t("Click a wall to paint its whole line (⇧ for one segment), or a room's floor.")}
       </p>
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-width:thin]">
-        <SwatchGroup title="Walls" colors={SWATCHES} value={paintColor} onPick={setPaintColor} />
         <SwatchGroup
-          title="Floors"
+          title={t("Walls")}
+          colors={SWATCHES}
+          value={paintColor}
+          onPick={setPaintColor}
+        />
+        <SwatchGroup
+          title={t("Floors")}
           colors={FLOOR_SWATCHES}
           value={paintColor}
           onPick={setPaintColor}
         />
       </div>
       <div className="mt-3 shrink-0 border-t border-separator px-1 pt-2.5">
-        <Swatch title="Default" selected={paintColor === null} onClick={() => setPaintColor(null)}>
+        <Swatch
+          title={t("Default")}
+          selected={paintColor === null}
+          onClick={() => setPaintColor(null)}
+        >
           <span className="flex size-full items-center justify-center rounded-md bg-foreground/10">
             <Ban className="size-3.5 text-muted" strokeWidth={2.5} />
           </span>
         </Swatch>
-        <span className="ml-2 align-middle text-[11px] text-muted">Reset to default</span>
+        <span className="ml-2 align-middle text-[11px] text-muted">{t("Reset to default")}</span>
       </div>
     </div>
   )

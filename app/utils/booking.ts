@@ -64,24 +64,7 @@ export const daysBetween = (from: Day, to: Day): Day[] => {
   return out
 }
 
-const fmt = (options: Intl.DateTimeFormatOptions) =>
-  new Intl.DateTimeFormat("en-US", { ...options, timeZone: "UTC" })
-const DOW = fmt({ weekday: "short" })
-const WEEKDAY = fmt({ weekday: "long" })
-const MON = fmt({ month: "short" })
-const MONTH = fmt({ month: "long", year: "numeric" })
-const dayOfMonth = (day: Day) => Number(day.slice(8, 10))
-
-/** "Wed" */
-export const formatDow = (day: Day) => DOW.format(toUtcDate(day))
-/** "Wed 23" */
-export const formatShort = (day: Day) => `${formatDow(day)} ${dayOfMonth(day)}`
-/** "Wed 23 Sep" */
-export const formatLong = (day: Day) => `${formatShort(day)} ${MON.format(toUtcDate(day))}`
-/** "Wednesday" */
-export const formatWeekday = (day: Day) => WEEKDAY.format(toUtcDate(day))
-/** "September 2026" */
-export const formatMonth = (day: Day) => MONTH.format(toUtcDate(day))
+// Dates as text (in the reader's language): see ~/i18n/translate (`format`).
 
 /** Bookings by day, then by desk id → the booker's email. */
 export type BookingsByDay = Record<Day, Record<string, string>>

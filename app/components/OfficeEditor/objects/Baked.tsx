@@ -3,6 +3,7 @@ import { useThree } from "@react-three/fiber"
 import { BufferGeometry, Matrix4, Mesh, type Group, type Material, type Object3D } from "three"
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js"
 import { markShadowsDirty } from "../scene/shadows"
+import { BATCH_PART, materialKey, useBatchChanged, type AnyMaterial } from "./batching"
 
 /** Mark a subtree (e.g. an animated model) to be left out of baking. */
 export const NO_BAKE = { noBake: true }
@@ -14,35 +15,6 @@ interface Part {
   castShadow: boolean
   receiveShadow: boolean
 }
-
-type AnyMaterial = Material & {
-  color?: { getHexString(): string }
-  emissive?: { getHexString(): string }
-  roughness?: number
-  metalness?: number
-  emissiveIntensity?: number
-  flatShading?: boolean
-  clippingPlanes?: unknown[] | null
-}
-
-/**
- * How a material LOOKS — materials that render identically share a batch. Not
- * opacity: the wall/door cutaway animates it per frame on the material itself.
- */
-const materialKey = (m: AnyMaterial) =>
-  [
-    m.type,
-    m.color?.getHexString(),
-    m.roughness,
-    m.metalness,
-    m.emissive?.getHexString(),
-    m.emissiveIntensity,
-    m.flatShading,
-    m.transparent,
-    m.depthWrite,
-    m.side,
-    m.clippingPlanes?.length ?? 0,
-  ].join("|")
 
 /** The meshes to bake (skipping NO_BAKE subtrees and our own merged output). */
 const collect = (root: Object3D, skip: Object3D | null): Mesh[] => {
@@ -67,7 +39,14 @@ const collect = (root: Object3D, skip: Object3D | null): Mesh[] => {
  * animation moves an ancestor group. Merged meshes don't raycast. Re-baking
  * only happens when a cheap fingerprint of the parts actually changes.
  */
-export const Baked = ({ children }: { children: ReactNode }) => {
+export const Baked = ({
+  children,
+  isBatchable = false,
+}: {
+  children: ReactNode
+  /** May join the office-wide batch (see StaticBatch): it never changes on its own. */
+  isBatchable?: boolean
+}) => {
   const root = useRef<Group>(null)
   const output = useRef<Group>(null)
   const [parts, setParts] = useState<Part[]>([])
@@ -79,6 +58,8 @@ export const Baked = ({ children }: { children: ReactNode }) => {
   const shapeChanged = useRef(false)
   const gl = useThree((s) => s.gl)
   const invalidate = useThree((s) => s.invalidate)
+  const handleBatchChanged = useBatchChanged()
+  const shouldBatch = isBatchable && !!handleBatchChanged
 
   useLayoutEffect(() => {
     const g = root.current
@@ -152,8 +133,9 @@ export const Baked = ({ children }: { children: ReactNode }) => {
       shapeChanged.current = false
       markShadowsDirty(gl, invalidate)
     } else invalidate()
+    handleBatchChanged?.()
     return () => parts.forEach((p) => p.geometry.dispose())
-  }, [parts, gl, invalidate])
+  }, [parts, gl, invalidate, handleBatchChanged, shouldBatch])
 
   return (
     <group ref={root}>
@@ -167,6 +149,7 @@ export const Baked = ({ children }: { children: ReactNode }) => {
             castShadow={p.castShadow}
             receiveShadow={p.receiveShadow}
             raycast={() => null}
+            userData={shouldBatch ? { [BATCH_PART]: true } : {}}
           />
         ))}
       </group>

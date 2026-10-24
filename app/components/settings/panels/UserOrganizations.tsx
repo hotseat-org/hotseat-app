@@ -1,7 +1,5 @@
 import { Avatar, AvatarFallback, Spinner } from "@heroui/react"
-import dayjs from "dayjs"
 import { Crown, SquareArrowRightExit } from "lucide-react"
-import pluralize from "pluralize"
 import { LeaveOrgDialog } from "../dialogs/LeaveOrg"
 import { SettingsCard } from "../ui"
 import { useSettings } from "../useSettings"
@@ -10,10 +8,12 @@ import { ButtonLink } from "~/components/ButtonLink"
 import { ThumbAvatar } from "~/components/office/shell-ui"
 import { Button } from "~/components/Button"
 import type { Profile } from "~/core/profile/types"
+import { useI18n } from "~/i18n/I18nProvider"
+import { msg } from "~/i18n/msg"
 
 const roleLabels: Record<Profile["role"], string> = {
-  ADMIN: "Admin",
-  USER: "Member",
+  ADMIN: msg("Admin"),
+  USER: msg("Member"),
 }
 
 const getInitials = (name?: string) =>
@@ -25,6 +25,7 @@ const getInitials = (name?: string) =>
 
 export function UserOrganizations() {
   const { dialog, openDialog } = useSettings()
+  const { t, tn, format } = useI18n()
   // Loaded on the server with the page; refreshed after leaving one.
   const organizations = useUserSettingsData("organizations")?.organizations
   const leaveSlug = dialog?.startsWith("leave:") ? dialog.slice("leave:".length) : undefined
@@ -37,7 +38,7 @@ export function UserOrganizations() {
         </div>
       ) : organizations.length === 0 ? (
         <SettingsCard className="py-10 text-center text-sm text-muted">
-          You&apos;re not a member of any organization yet.
+          {t("You're not a member of any organization yet.")}
         </SettingsCard>
       ) : (
         organizations.map((organization) => {
@@ -61,7 +62,7 @@ export function UserOrganizations() {
                     }
                   >
                     {isAdmin && <Crown className="size-3" />}
-                    {roleLabels[organization.profile.role]}
+                    {t(roleLabels[organization.profile.role])}
                   </span>
                 </div>
                 <div className="mt-1.5 flex items-center gap-2">
@@ -80,20 +81,19 @@ export function UserOrganizations() {
                     ))}
                   </div>
                   <span className="text-xs text-muted">
-                    {organization.members.totalCount}{" "}
-                    {pluralize("member", organization.members.totalCount)} · joined{" "}
-                    {dayjs(organization.profile.createdAt).format("MMM D, YYYY")}
+                    {tn(organization.members.totalCount, "{n} member", "{n} members")} ·{" "}
+                    {t("joined {date}", { date: format.date(organization.profile.createdAt) })}
                   </span>
                 </div>
                 {isOnlyAdmin && (
                   <p className="mt-1.5 text-xs text-muted">
-                    You&apos;re its only admin — make someone else an admin before leaving.
+                    {t("You're its only admin — make someone else an admin before leaving.")}
                   </p>
                 )}
               </div>
               <div className="flex w-full shrink-0 justify-end gap-2 sm:w-auto">
                 <ButtonLink to={`/app/o/${organization.slug}`} variant="secondary" size="sm">
-                  Open
+                  {t("Open")}
                 </ButtonLink>
                 <Button
                   onPress={() => openDialog(`leave:${organization.slug}`)}
@@ -102,7 +102,7 @@ export function UserOrganizations() {
                   isDisabled={isOnlyAdmin}
                 >
                   <SquareArrowRightExit size={16} />
-                  Leave
+                  {t("Leave")}
                 </Button>
               </div>
             </SettingsCard>

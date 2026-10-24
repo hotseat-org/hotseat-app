@@ -2,7 +2,8 @@ import { randomUUID } from "node:crypto"
 import type { CoreContext } from "../types"
 import { bookingContext } from "./context"
 import { MAX_DAYS_PER_REQUEST, ReservationError, ReservationRaceError } from "./types"
-import { formatLong, isDay, type Day } from "~/utils/booking"
+import { isDay, type Day } from "~/utils/booking"
+import { msg } from "~/i18n/msg"
 
 export interface ReserveArgs {
   organizationSlug: string
@@ -22,7 +23,8 @@ export interface ReserveResult {
 /**
  * Book one desk for one or more days. Days someone else already has are
  * skipped and reported back ("Thu is taken by Eva"), the rest are booked.
- * Booking moves the person: their other desk on those days is released.
+ * Booking moves the person: their other desk on those days is released. Having
+ * a desk, they leave the waitlist for those days.
  */
 export const reserveDesk =
   (context: CoreContext) =>
@@ -36,7 +38,7 @@ export const reserveDesk =
       throw new ReservationError("Pick between 1 and 31 days.")
     if (dates[0] < today) throw new ReservationError("Days in the past can't be booked.")
     if (dates[dates.length - 1] > lastDay)
-      throw new ReservationError(`Desks can be booked up to ${formatLong(lastDay)}.`)
+      throw new ReservationError("Desks can be booked up to {day}.", { day: { day: lastDay } })
 
     const desk = desks.find((d) => d.id === deskId)
     if (!desk) throw new ReservationError("This desk no longer exists.")
@@ -52,7 +54,10 @@ export const reserveDesk =
           organizationSlug,
         })
         throw new ReservationError(
-          `This is ${resident?.displayName ?? "someone"}'s permanent desk, so it can't be booked.`
+          resident?.displayName
+            ? msg("This is {name}'s permanent desk, so it can't be booked.")
+            : msg("This is someone's permanent desk, so it can't be booked."),
+          { name: resident?.displayName ?? "" }
         )
       }
     }
@@ -73,6 +78,12 @@ export const reserveDesk =
         dates: free,
         seriesId: free.length > 1 ? randomUUID() : null,
       })
+      if (result.booked.length)
+        await mainRepository.waitlist.remove({
+          organizationSlug,
+          userEmail: targetEmail,
+          dates: result.booked,
+        })
       // Days the resident kept come back as taken by them.
       return { ...result, conflicts: [...result.conflicts, ...kept] }
     } catch (error) {

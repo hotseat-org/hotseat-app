@@ -1,4 +1,4 @@
-import { RoundedBox } from "@react-three/drei"
+import { RoundedBox } from "./RoundedBox"
 import { Surface } from "./Surface"
 
 interface Props {

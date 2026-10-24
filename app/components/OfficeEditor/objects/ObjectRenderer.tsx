@@ -241,8 +241,10 @@ export const ObjectRenderer = memo(function ObjectRenderer({
       {/* Lifted/tilted while carried (the placement highlight marks the drop spot). */}
       <group ref={lifted}>
         <GhostContext.Provider value={ghost}>
-          {/* Batched: the object's parts merge into one mesh per material. */}
-          <Baked>
+          {/* Batched: the object's parts merge into one mesh per material — and,
+              viewing, with the whole office's (not openings or wall items:
+              they fade with the wall cutaway). */}
+          <Baked isBatchable={!isOpening(obj.type) && !isWallMounted(obj.type)}>
             <ObjectMesh
               type={obj.type}
               color={obj.color}

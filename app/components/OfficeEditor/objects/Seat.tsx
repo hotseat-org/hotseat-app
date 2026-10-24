@@ -1,5 +1,5 @@
-import { RoundedBox } from "@react-three/drei"
 import { PALETTE } from "../palette"
+import { RoundedBox } from "./RoundedBox"
 import { Surface } from "./Surface"
 import { SEAT } from "./dimensions"
 
@@ -51,7 +51,7 @@ export const Seat = ({ color = PALETTE.seat }: Props) => {
       {/* Wheeled base */}
       {feet.map(([x, z]) => (
         <mesh key={`${x},${z}`} position={[x, 0.05, z]} castShadow>
-          <sphereGeometry args={[0.06, 12, 12]} />
+          <sphereGeometry args={[0.06, 10, 8]} />
           <Surface color={PALETTE.seatLeg} roughness={0.5} metalness={0.2} />
         </mesh>
       ))}

@@ -1,7 +1,8 @@
 import type { CoreContext } from "../types"
 import { bookingContext } from "./context"
+import { fillWaitlist } from "./preferences"
 import { MAX_DAYS_PER_REQUEST, ReservationError } from "./types"
-import { formatLong, isDay, type Day } from "~/utils/booking"
+import { isDay, type Day } from "~/utils/booking"
 
 export interface ReleaseArgs {
   organizationSlug: string
@@ -22,16 +23,20 @@ const residentDays = async (context: CoreContext, args: ReleaseArgs) => {
     throw new ReservationError("Pick between 1 and 31 days.")
   if (dates[0] < today) throw new ReservationError("Days in the past can't be changed.")
   if (dates[dates.length - 1] > lastDay)
-    throw new ReservationError(`Days up to ${formatLong(lastDay)} can be changed.`)
+    throw new ReservationError("Days up to {day} can be changed.", { day: { day: lastDay } })
   return { dates, isReleased }
 }
 
-/** A resident gives their desk up on days they're away: others can book it then. */
+/**
+ * A resident gives their desk up on days they're away: others can book it
+ * then — first whoever's waiting for those days.
+ */
 export const releaseDesk =
   (context: CoreContext) =>
   async (args: ReleaseArgs): Promise<{ released: Day[] }> => {
     const { dates } = await residentDays(context, args)
     await context.mainRepository.deskRelease.create({ ...args, dates })
+    await fillWaitlist(context)({ ...args, dates })
     return { released: dates }
   }
 

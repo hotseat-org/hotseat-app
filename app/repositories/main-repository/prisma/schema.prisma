@@ -44,8 +44,11 @@ model Profile {
 
   role Role
 
-  reservations Reservation[]
-  deskReleases DeskRelease[]
+  reservations  Reservation[]
+  deskReleases  DeskRelease[]
+  favoriteDesks FavoriteDesk[]
+  usualDesks    UsualDesk[]
+  waitlist      WaitlistEntry[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -110,6 +113,9 @@ model Office {
   bookingWindowDays Int           @default(14)
   reservations      Reservation[]
   deskReleases      DeskRelease[]
+  favoriteDesks     FavoriteDesk[]
+  usualDesks        UsualDesk[]
+  waitlist          WaitlistEntry[]
   renamedFrom       OfficeSlugRedirect[]
 
   createdAt DateTime @default(now())
@@ -211,4 +217,58 @@ model DeskRelease {
   createdAt DateTime @default(now())
 
   @@id([organizationSlug, officeSlug, deskId, date])
+}
+
+// A desk someone likes: shown first to them, and tried first when a desk is
+// booked for them automatically (usual desk taken, waitlist).
+model FavoriteDesk {
+  organizationSlug String
+  officeSlug       String
+  office           Office  @relation(fields: [organizationSlug, officeSlug], references: [organizationSlug, slug], onDelete: Cascade, onUpdate: Cascade)
+  // SceneObject.id inside Office.layout.
+  deskId           String
+  userEmail        String
+  profile          Profile @relation(fields: [userEmail, organizationSlug], references: [userEmail, organizationSlug], onDelete: Cascade, onUpdate: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@id([organizationSlug, officeSlug, userEmail, deskId])
+}
+
+// "My usual desk every Tue and Thu": booked automatically as those days open
+// up for booking (a daily job). One per person per office.
+model UsualDesk {
+  organizationSlug String
+  officeSlug       String
+  office           Office  @relation(fields: [organizationSlug, officeSlug], references: [organizationSlug, slug], onDelete: Cascade, onUpdate: Cascade)
+  userEmail        String
+  profile          Profile @relation(fields: [userEmail, organizationSlug], references: [userEmail, organizationSlug], onDelete: Cascade, onUpdate: Cascade)
+  deskId           String
+  // ISO weekdays: 1 = Monday … 7 = Sunday.
+  weekdays         Int[]
+  // Days up to here have been booked (or tried): later runs only book days
+  // that newly opened up, so a day you cancelled stays cancelled.
+  bookedThrough    DateTime? @db.Date
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([organizationSlug, officeSlug, userEmail])
+}
+
+// Waiting for any desk on a full day: when one frees up, the first in line
+// gets it booked for them.
+model WaitlistEntry {
+  organizationSlug String
+  officeSlug       String
+  office           Office   @relation(fields: [organizationSlug, officeSlug], references: [organizationSlug, slug], onDelete: Cascade, onUpdate: Cascade)
+  userEmail        String
+  profile          Profile  @relation(fields: [userEmail, organizationSlug], references: [userEmail, organizationSlug], onDelete: Cascade, onUpdate: Cascade)
+  // The office's local calendar day.
+  date             DateTime @db.Date
+
+  createdAt DateTime @default(now())
+
+  @@id([organizationSlug, officeSlug, userEmail, date])
+  @@index([organizationSlug, officeSlug, date, createdAt])
 }

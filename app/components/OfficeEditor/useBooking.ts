@@ -1,14 +1,8 @@
-import { useMemo } from "react"
+import { useCallback, useMemo } from "react"
 import { useEditorStore } from "./store"
 import { isSeatable, type SceneObject } from "./types"
-import {
-  addDays,
-  deskState,
-  formatShort,
-  weekStart,
-  type Day,
-  type DeskState,
-} from "~/utils/booking"
+import { addDays, deskState, weekStart, type Day, type DeskState } from "~/utils/booking"
+import type { Translator } from "~/i18n/translate"
 
 export interface DeskOnDay {
   desk: SceneObject
@@ -16,12 +10,12 @@ export interface DeskOnDay {
 }
 
 /** "Desk B2", or just "Desk" for an unlabelled one. */
-export const deskName = (desk: Pick<SceneObject, "label">) =>
-  desk.label ? `Desk ${desk.label}` : "Desk"
+export const deskName = ({ t }: Translator, desk: Pick<SceneObject, "label">) =>
+  desk.label ? t("Desk {label}", { label: desk.label }) : t("Desk")
 
-/** "today", or "on Wed 23". */
-export const dayPhrase = (day: string, today: string) =>
-  day === today ? "today" : `on ${formatShort(day)}`
+/** "today", or "on Wed 23 Sep". */
+export const dayPhrase = ({ t, format }: Translator, day: string, today: string) =>
+  day === today ? t("today") : format.onDay(day)
 
 /**
  * Every desk with who has it on the shown day (resident, booking or free),
@@ -41,6 +35,18 @@ export const useDesksOnDay = () => {
     for (const d of desks) if (d.state.kind !== "free") byPerson.set(d.state.email, d)
     return { desks, byPerson }
   }, [objects, day, byDay, released])
+}
+
+/**
+ * The map's desk filter (DESK_FEATURES ids): whether a desk has them all. No
+ * filter: every desk matches.
+ */
+export const useDeskFilter = () => {
+  const filter = useEditorStore((s) => s.deskFilter)
+  return useCallback(
+    (desk: Pick<SceneObject, "features">) => filter.every((f) => desk.features?.includes(f)),
+    [filter]
+  )
 }
 
 /** Your permanent desk, when you gave it up on the shown day (you're away). */
@@ -78,4 +84,31 @@ export const useWeekPresence = () => {
     )
     return { days, isIn: (email: string, d: Day) => present.get(d)?.has(email) ?? false }
   }, [objects, day, byDay, released])
+}
+
+/**
+ * The waitlist for the shown day: is the office full (no free desk), are you
+ * without a desk and could wait, are you waiting, and how many are — plus
+ * join / leave. Nothing to wait for in the past or with a permanent desk.
+ */
+export const useWaitlist = () => {
+  const { desks, byPerson } = useDesksOnDay()
+  const enabled = useEditorStore((s) => s.booking.enabled)
+  const me = useEditorStore((s) => s.booking.me)
+  const day = useEditorStore((s) => s.booking.day)
+  const today = useEditorStore((s) => s.booking.today)
+  const preferences = useEditorStore((s) => s.booking.preferences)
+  const setPreference = useEditorStore((s) => s.booking.setPreference)
+  const objects = useEditorStore((s) => s.objects)
+  const isResident = !!me && objects.some((o) => o.assignee === me)
+  const isFull =
+    enabled && day >= today && desks.length > 0 && !desks.some((d) => d.state.kind === "free")
+  const isWaiting = preferences.waiting.includes(day)
+  return {
+    canWait: isFull && !!me && !byPerson.has(me) && !isResident && !isWaiting,
+    isWaiting,
+    count: preferences.waitingByDay[day] ?? 0,
+    join: () => setPreference({ intent: "waitlist-join", dates: JSON.stringify([day]) }),
+    leave: () => setPreference({ intent: "waitlist-leave", dates: JSON.stringify([day]) }),
+  }
 }

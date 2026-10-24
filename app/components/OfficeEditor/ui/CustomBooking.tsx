@@ -10,8 +10,6 @@ import { useIsMobile } from "~/utils/hooks/useIsMobile"
 import {
   addDays,
   deskState,
-  formatLong,
-  formatWeekday,
   isWeekend,
   weekNumber,
   weekStart,
@@ -19,8 +17,11 @@ import {
   type Day,
   type DeskDays,
 } from "~/utils/booking"
+import { useI18n } from "~/i18n/I18nProvider"
+import type { Translator } from "~/i18n/translate"
 
-const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+/** "Every Wednesday" in a sentence: "every Wednesday" / "každou středu". */
+const lowerFirst = (text: string) => text.charAt(0).toLowerCase() + text.slice(1)
 
 /** What one calendar day means for the desk being booked. */
 type Cell =
@@ -93,13 +94,15 @@ const CustomBookingBody = ({
   const booking = useEditorStore((s) => s.booking)
   const applyReserve = useEditorStore((s) => s.applyReserve)
   const people = usePeople()
+  const i18n = useI18n()
+  const { t, tn, format } = i18n
   const { me, today, lastDay, byDay, released } = booking
 
   const weeks = useMemo(() => {
     const desks = objects.filter((o) => isSeatable(o.type))
     const describe = (day: Day): Cell => {
       if (day < today) return { kind: "closed", day, label: "" }
-      if (day > lastDay) return { kind: "closed", day, label: "Not open" }
+      if (day > lastDay) return { kind: "closed", day, label: t("Not open") }
       const state = deskState(desk, day, byDay, released)
       if (state.kind !== "free" && state.email === me) return { kind: "yours", day }
       // Where you already sit that day (booking here moves you).
@@ -109,7 +112,7 @@ const CustomBookingBody = ({
       })
       if (state.kind === "free")
         return { kind: "free", day, isWeekend: isWeekend(day), currentDesk }
-      const holder = personByEmail(people, state.email)?.name.split(" ")[0] ?? "Someone"
+      const holder = personByEmail(people, state.email)?.name.split(" ")[0] ?? t("Someone")
       // Already seated elsewhere: nothing to move you to.
       const alternative = currentDesk
         ? undefined
@@ -124,7 +127,7 @@ const CustomBookingBody = ({
         cells: [0, 1, 2, 3, 4, 5, 6].map((i) => describe(addDays(start, i))),
       })
     return out
-  }, [objects, desk, today, lastDay, byDay, released, me, people])
+  }, [objects, desk, today, lastDay, byDay, released, me, people, t])
 
   const cells = weeks.flatMap((w) => w.cells)
   // Days you can pick: free ones, and taken ones with a desk to move to.
@@ -156,9 +159,9 @@ const CustomBookingBody = ({
     })
 
   // A weekday's heading picks that day in every week (Mon–Fri only).
-  const columns = WEEKDAYS.map((short, i) => ({
+  const columns = format.weekShort().map((short, i) => ({
     short,
-    name: formatWeekday(addDays(weekStart(today), i)),
+    every: format.everyWeekday(addDays(weekStart(today), i)),
     days: i < 5 ? weeks.map((w) => w.cells[i]).filter(isWorkday) : [],
   }))
   const pickedCells = cells.filter((c) => picked.has(c.day))
@@ -176,12 +179,13 @@ const CustomBookingBody = ({
     onClose()
   }
   const reserveLabel = picked.size
-    ? `Reserve ${picked.size} ${picked.size === 1 ? "day" : "days"}`
-    : "Reserve"
+    ? tn(picked.size, "Reserve {n} day", "Reserve {n} days")
+    : t("Reserve")
 
   if (isPhone)
     return (
       <PhoneLayout
+        i18n={i18n}
         desk={desk}
         lastDay={lastDay}
         weeks={weeks}
@@ -207,13 +211,15 @@ const CustomBookingBody = ({
         </span>
         <div className="min-w-0 flex-1">
           <Modal.Heading className="block truncate text-lg font-black text-foreground">
-            Book {deskName(desk)}
+            {t("Book {desk}", { desk: deskName(i18n, desk) })}
           </Modal.Heading>
-          <p className="truncate text-[13px] text-muted">Bookable until {formatLong(lastDay)}</p>
+          <p className="truncate text-[13px] text-muted">
+            {t("Bookable until {day}", { day: { day: lastDay } })}
+          </p>
         </div>
         <button
           type="button"
-          aria-label="Close"
+          aria-label={t("Close")}
           onClick={onClose}
           className="grid size-10 shrink-0 place-items-center rounded-full text-muted outline-none transition-colors hover:bg-foreground/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
         >
@@ -228,7 +234,9 @@ const CustomBookingBody = ({
               <span />
               {columns.map((c) => {
                 const isFull = c.days.length > 0 && c.days.every((d) => picked.has(d.day))
-                const tip = isFull ? `Clear every ${c.name}` : `Pick every ${c.name}`
+                const tip = isFull
+                  ? t("Clear {every}", { every: lowerFirst(c.every) })
+                  : t("Pick {every}", { every: lowerFirst(c.every) })
                 return c.days.length ? (
                   <WithTooltip key={c.short} tip={tip}>
                     <button
@@ -260,7 +268,9 @@ const CustomBookingBody = ({
             {weeks.map((w) => {
               const workdays = w.cells.filter(isWorkday)
               const isFull = workdays.length > 0 && workdays.every((c) => picked.has(c.day))
-              const tip = isFull ? `Clear week ${w.number}` : `Pick all of week ${w.number}`
+              const tip = isFull
+                ? t("Clear week {n}", { n: w.number })
+                : t("Pick all of week {n}", { n: w.number })
               return (
                 <div key={w.start} className={GRID}>
                   <WithTooltip tip={workdays.length ? tip : undefined}>
@@ -275,13 +285,14 @@ const CustomBookingBody = ({
                         isFull ? PICK_ALL_ON : PICK_ALL_OFF
                       )}
                     >
-                      W{w.number}
+                      {t("W{n}", { n: w.number })}
                       <ArrowRight className="size-3 shrink-0" strokeWidth={2.6} />
                     </button>
                   </WithTooltip>
                   {w.cells.map((c) => (
                     <DayCell
                       key={c.day}
+                      i18n={i18n}
                       cell={c}
                       isPicked={picked.has(c.day)}
                       isPickable={isPickable(c)}
@@ -294,7 +305,7 @@ const CustomBookingBody = ({
           </div>
 
           <div className="flex min-w-0 flex-1 flex-col gap-2">
-            <Legend />
+            <Legend i18n={i18n} />
           </div>
         </div>
       </div>
@@ -306,7 +317,7 @@ const CustomBookingBody = ({
           onClick={() => setPicked(new Set())}
           className={clsx(FOOTER_BUTTON, "px-4 text-accent enabled:hover:bg-accent/10")}
         >
-          Clear
+          {t("Clear")}
         </button>
         <button
           type="button"
@@ -316,7 +327,7 @@ const CustomBookingBody = ({
             "bg-default px-5 text-default-foreground hover:brightness-95"
           )}
         >
-          Cancel
+          {t("Cancel")}
         </button>
         <button
           type="button"
@@ -369,8 +380,9 @@ const WithTooltip = ({ tip, children }: { tip?: string; children: ReactNode }) =
   )
 
 /** How a day reads: its label, tooltip/explanation, colours and corner mark. */
-const getDayLook = (cell: Cell, isPicked: boolean) => {
-  const when = formatLong(cell.day)
+const getDayLook = (i18n: Translator, cell: Cell, isPicked: boolean) => {
+  const { t, format } = i18n
+  const when = format.onDay(cell.day)
   const isMove = cell.kind === "free" && !!cell.currentDesk
   const isElsewhere = cell.kind === "taken" && isPicked
   let label: string
@@ -380,28 +392,35 @@ const getDayLook = (cell: Cell, isPicked: boolean) => {
     label = cell.label
     tone = "border-transparent text-muted/60"
   } else if (cell.kind === "yours") {
-    label = "Yours"
-    tip = `You already have this desk on ${when}.`
+    label = t("Yours")
+    tip = t("You already have this desk {when}.", { when })
     tone = "border-dashed border-accent bg-accent/8 text-accent"
   } else if (cell.kind === "taken") {
-    const alternative = cell.alternative ? deskName(cell.alternative) : undefined
-    label = isPicked && alternative ? alternative : cell.holder
+    const alternative = cell.alternative ? deskName(i18n, cell.alternative) : undefined
+    const holder = cell.holder
+    label = isPicked && alternative ? alternative : holder
     tip = !alternative
-      ? `${cell.holder} has this desk on ${when}.`
+      ? t("{holder} has this desk {when}.", { holder, when })
       : isPicked
-        ? `${cell.holder} has this desk on ${when}, so you get ${alternative}, the nearest free desk. Tap to drop the day.`
-        : `${cell.holder} has this desk on ${when}. Tap to book ${alternative}, the nearest free desk, instead.`
+        ? t(
+            "{holder} has this desk {when}, so you get {alternative}, the nearest free desk. Tap to drop the day.",
+            { holder, when, alternative }
+          )
+        : t(
+            "{holder} has this desk {when}. Tap to book {alternative}, the nearest free desk, instead.",
+            { holder, when, alternative }
+          )
     tone = isPicked
       ? "border-transparent bg-accent/55 text-foreground"
       : "border-transparent bg-surface-tertiary text-muted"
   } else {
-    const current = cell.currentDesk ? deskName(cell.currentDesk) : undefined
+    const current = cell.currentDesk ? deskName(i18n, cell.currentDesk) : undefined
     // Plain days need no words: the colour (and a check when picked) says it.
-    label = isPicked ? (isMove ? "Moves you" : "") : (current ?? "")
+    label = isPicked ? (isMove ? t("Moves you") : "") : (current ?? "")
     if (current)
       tip = isPicked
-        ? `You sit at ${current} on ${when}. Booking moves you here.`
-        : `You sit at ${current} on ${when}. Picking it moves you here.`
+        ? t("You sit at {desk} {when}. Booking moves you here.", { desk: current, when })
+        : t("You sit at {desk} {when}. Picking it moves you here.", { desk: current, when })
     tone = isPicked
       ? isMove
         ? "border-transparent bg-[color-mix(in_oklab,var(--accent)_72%,black)] text-accent-foreground"
@@ -410,13 +429,17 @@ const getDayLook = (cell: Cell, isPicked: boolean) => {
         ? "border-warning bg-warning/15 text-foreground"
         : clsx("border-border bg-surface", cell.isWeekend && "text-muted")
   }
-  const aria = `${when}, ${label || (cell.kind === "free" ? "free" : "")}`.replace(/, $/, "")
+  const aria =
+    `${format.long(cell.day)}, ${label || (cell.kind === "free" ? t("free") : "")}`.replace(
+      /, $/,
+      ""
+    )
   return { label, tip, tone, aria, isMove, isElsewhere }
 }
 
 /** The small icon in a day's corner: picked, moves you, or another desk. */
-const DayMark = ({ cell, isPicked }: { cell: Cell; isPicked: boolean }) => {
-  const { isMove, isElsewhere } = getDayLook(cell, isPicked)
+const DayMark = ({ i18n, cell, isPicked }: { i18n: Translator; cell: Cell; isPicked: boolean }) => {
+  const { isMove, isElsewhere } = getDayLook(i18n, cell, isPicked)
   if (isMove)
     return (
       <ArrowLeftRight
@@ -431,11 +454,13 @@ const DayMark = ({ cell, isPicked }: { cell: Cell; isPicked: boolean }) => {
 }
 
 const DayCell = ({
+  i18n,
   cell,
   isPicked,
   isPickable,
   onToggle,
 }: {
+  i18n: Translator
   cell: Cell
   isPicked: boolean
   isPickable: boolean
@@ -443,8 +468,8 @@ const DayCell = ({
 }) => {
   const date = Number(cell.day.slice(8, 10))
   // "1 Nov" on the first of a month.
-  const number = date === 1 ? formatLong(cell.day).split(" ").slice(1).join(" ") : String(date)
-  const { label, tip, tone, aria } = getDayLook(cell, isPicked)
+  const number = date === 1 ? i18n.format.dayMonth(cell.day) : String(date)
+  const { label, tip, tone, aria } = getDayLook(i18n, cell, isPicked)
 
   return (
     <WithTooltip tip={tip}>
@@ -464,7 +489,7 @@ const DayCell = ({
       >
         <span className="flex w-full items-center justify-between gap-1">
           <span className="truncate text-[15px] font-extrabold">{number}</span>
-          <DayMark cell={cell} isPicked={isPicked} />
+          <DayMark i18n={i18n} cell={cell} isPicked={isPicked} />
         </span>
         <span className="w-full truncate text-[11px] font-bold">{label}</span>
       </button>
@@ -484,6 +509,7 @@ interface Week {
  * weekday in every week. Clear + one big Reserve at the bottom.
  */
 const PhoneLayout = ({
+  i18n,
   desk,
   lastDay,
   weeks,
@@ -499,10 +525,11 @@ const PhoneLayout = ({
   isPending,
   onClose,
 }: {
+  i18n: Translator
   desk: SceneObject
   lastDay: Day
   weeks: Week[]
-  columns: { short: string; name: string; days: Cell[] }[]
+  columns: { short: string; every: string; days: Cell[] }[]
   picked: Set<Day>
   isPickable: (c: Cell) => boolean
   isWorkday: (c: Cell) => boolean
@@ -515,19 +542,22 @@ const PhoneLayout = ({
   onClose: () => void
 }) => {
   const isAllPicked = (group: Cell[]) => group.length > 0 && group.every((c) => picked.has(c.day))
+  const { t, format } = i18n
   return (
     <>
       <span aria-hidden className="mx-auto mt-2.5 h-1.5 w-10 shrink-0 rounded-full bg-border" />
       <div className="flex shrink-0 items-center gap-2.5 pb-2.5 pl-5 pr-2 pt-1.5">
         <div className="min-w-0 flex-1">
           <Modal.Heading className="block truncate text-lg font-black text-foreground">
-            Book {deskName(desk)}
+            {t("Book {desk}", { desk: deskName(i18n, desk) })}
           </Modal.Heading>
-          <p className="truncate text-[13px] text-muted">Bookable until {formatLong(lastDay)}</p>
+          <p className="truncate text-[13px] text-muted">
+            {t("Bookable until {day}", { day: { day: lastDay } })}
+          </p>
         </div>
         <button
           type="button"
-          aria-label="Close"
+          aria-label={t("Close")}
           onClick={onClose}
           className="grid size-11 shrink-0 place-items-center rounded-full text-muted outline-none focus-visible:ring-2 focus-visible:ring-focus"
         >
@@ -537,7 +567,7 @@ const PhoneLayout = ({
 
       <div className="flex shrink-0 items-center gap-1.5 overflow-x-auto border-b border-border px-4 pb-3">
         <span className="mr-0.5 shrink-0 text-[11px] font-extrabold uppercase tracking-[0.08em] text-muted">
-          Every
+          {t("Every")}
         </span>
         {columns.map((c) => {
           const isOn = isAllPicked(c.days)
@@ -546,7 +576,7 @@ const PhoneLayout = ({
               key={c.short}
               type="button"
               aria-pressed={isOn}
-              aria-label={`Every ${c.name}`}
+              aria-label={c.every}
               onClick={() => onToggleAll(c.days)}
               className={clsx(
                 PICK_ALL,
@@ -567,13 +597,16 @@ const PhoneLayout = ({
           const first = w.cells[0].day
           const last = w.cells[6].day
           return (
-            <section key={w.start} aria-label={`Week ${w.number}`} className="flex flex-col gap-2">
+            <section
+              key={w.start}
+              aria-label={t("Week {n}", { n: w.number })}
+              className="flex flex-col gap-2"
+            >
               <div className="flex items-center justify-between gap-2">
                 <p className="truncate text-sm font-extrabold">
-                  W{w.number}{" "}
+                  {t("W{n}", { n: w.number })}{" "}
                   <span className="font-semibold text-muted">
-                    · {formatLong(first).split(" ").slice(1).join(" ")} –{" "}
-                    {formatLong(last).split(" ").slice(1).join(" ")}
+                    · {format.dayMonth(first)} – {format.dayMonth(last)}
                   </span>
                 </p>
                 {workdays.length > 0 && (
@@ -587,7 +620,7 @@ const PhoneLayout = ({
                       isOn ? PICK_ALL_ON : PICK_ALL_OFF
                     )}
                   >
-                    Whole week
+                    {t("Whole week")}
                   </button>
                 )}
               </div>
@@ -595,8 +628,9 @@ const PhoneLayout = ({
                 {w.cells.map((c, i) => (
                   <PhoneDayCell
                     key={c.day}
+                    i18n={i18n}
                     cell={c}
-                    weekday={WEEKDAYS[i]}
+                    weekday={format.weekShort()[i]}
                     isNarrow={i >= 5}
                     isPicked={picked.has(c.day)}
                     isPickable={isPickable(c)}
@@ -616,7 +650,7 @@ const PhoneLayout = ({
           onClick={onClear}
           className="h-[52px] rounded-full px-4 text-[15px] font-bold text-accent outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50"
         >
-          Clear
+          {t("Clear")}
         </button>
         <button
           type="button"
@@ -634,6 +668,7 @@ const PhoneLayout = ({
 
 /** A phone day: weekday and date stacked, a mark in the corner. */
 const PhoneDayCell = ({
+  i18n,
   cell,
   weekday,
   isNarrow,
@@ -641,6 +676,7 @@ const PhoneDayCell = ({
   isPickable,
   onToggle,
 }: {
+  i18n: Translator
   cell: Cell
   weekday: string
   /** Sat/Sun's slim column: always the two-letter name. */
@@ -649,7 +685,7 @@ const PhoneDayCell = ({
   isPickable: boolean
   onToggle: () => void
 }) => {
-  const { tone, aria, isMove, isElsewhere } = getDayLook(cell, isPicked)
+  const { tone, aria, isMove, isElsewhere } = getDayLook(i18n, cell, isPicked)
   // The corner badge — sits on the corner, clear of the weekday and date.
   const badge = isMove
     ? { look: "bg-warning text-warning-foreground", mark: <ArrowLeftRight strokeWidth={2.6} /> }
@@ -699,28 +735,30 @@ const PhoneDayCell = ({
   )
 }
 
-const Legend = () => (
+const Legend = ({ i18n: { t } }: { i18n: Translator }) => (
   <ul className="flex flex-col gap-2 pt-9 text-xs text-muted">
-    <li className="mb-1 leading-snug">Tap a weekday or a week number to pick all of it at once.</li>
+    <li className="mb-1 leading-snug">
+      {t("Tap a weekday or a week number to pick all of it at once.")}
+    </li>
     <LegendItem
       swatch="bg-accent text-accent-foreground"
       icon={<Check className="size-2.5" strokeWidth={3.5} />}
     >
-      Picked
+      {t("Picked")}
     </LegendItem>
-    <LegendItem swatch="border-[1.5px] border-border bg-surface">Free</LegendItem>
-    <LegendItem swatch="bg-surface-tertiary">Taken · tap for another desk</LegendItem>
+    <LegendItem swatch="border-[1.5px] border-border bg-surface">{t("Free")}</LegendItem>
+    <LegendItem swatch="bg-surface-tertiary">{t("Taken · tap for another desk")}</LegendItem>
     <LegendItem swatch="border-[1.5px] border-dashed border-accent bg-accent/8">
-      Already yours
+      {t("Already yours")}
     </LegendItem>
     <LegendItem
       swatch="bg-[color-mix(in_oklab,var(--accent)_72%,black)] text-warning"
       icon={<ArrowLeftRight className="size-2.5" strokeWidth={2.6} />}
     >
-      Moves you from another desk
+      {t("Moves you from another desk")}
     </LegendItem>
     <LegendItem swatch="bg-accent/55 text-foreground" icon={<Armchair className="size-2.5" />}>
-      Another desk on a taken day
+      {t("Another desk on a taken day")}
     </LegendItem>
   </ul>
 )

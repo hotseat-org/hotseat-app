@@ -1,6 +1,6 @@
-import { RoundedBox } from "@react-three/drei"
 import type { ReactNode } from "react"
 import { ACCENT, PALETTE } from "../palette"
+import { RoundedBox } from "./RoundedBox"
 import { FLUSH_INSET } from "./dimensions"
 import { Steam } from "./Steam"
 import { Surface } from "./Surface"

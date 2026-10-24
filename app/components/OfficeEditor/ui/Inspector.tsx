@@ -4,14 +4,16 @@ import { useMemo, useState } from "react"
 import { Copy, Dices, RotateCw, Trash2 } from "lucide-react"
 import { useEditorStore } from "../store"
 import { SWATCHES, DEFAULT_COLOR } from "../palette"
-import { hasLooks, isEdgeType, isSeatable, isWallMounted } from "../types"
+import { DESK_FEATURES, hasLooks, isEdgeType, isSeatable, isWallMounted } from "../types"
 import { usePeople } from "../people"
 import { TOOLS } from "./tools"
-import { formatShort, type Day } from "~/utils/booking"
+import type { Day } from "~/utils/booking"
+import { useI18n } from "~/i18n/I18nProvider"
 
 const TYPE_LABEL = new Map<string, string>(TOOLS.map((t) => [t.tool, t.label]))
 
 export const Inspector = () => {
+  const { t, tn } = useI18n()
   const selectedId = useEditorStore((s) => s.selectedId)
   const obj = useEditorStore((s) => s.objects.find((o) => o.id === s.selectedId) ?? null)
   const count = useEditorStore((s) => s.selection.length)
@@ -44,14 +46,14 @@ export const Inspector = () => {
     <div className="pointer-events-auto w-64 rounded-2xl border border-border bg-overlay/90 p-4 text-foreground shadow-overlay backdrop-blur-md">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-semibold">
-          {count > 1 ? `${count} items` : (TYPE_LABEL.get(obj.type) ?? obj.type)}
+          {count > 1 ? tn(count, "{n} item", "{n} items") : t(TYPE_LABEL.get(obj.type) ?? obj.type)}
         </h3>
-        <CloseButton aria-label="Deselect" onPress={() => select(null)} />
+        <CloseButton aria-label={t("Deselect")} onPress={() => select(null)} />
       </div>
 
-      <p className="mb-1 text-xs font-medium text-muted">Colour</p>
+      <p className="mb-1 text-xs font-medium text-muted">{t("Colour")}</p>
       <ColorSwatchPicker
-        aria-label="Colour"
+        aria-label={t("Colour")}
         value={current}
         onChange={(c) => colorSelection(c.toString("hex").toLowerCase())}
         className="mb-4 grid grid-cols-5 justify-items-center gap-1.5"
@@ -74,7 +76,7 @@ export const Inspector = () => {
         {canRotate && (
           <Button size="sm" fullWidth variant="tertiary" onPress={rotateSelection}>
             <RotateCw className="size-4" />
-            Rotate
+            {t("Rotate")}
           </Button>
         )}
         {shufflable && (
@@ -83,16 +85,16 @@ export const Inspector = () => {
             fullWidth
             variant="tertiary"
             onPress={() => shuffleLook(selection)}
-            aria-label="Shuffle look"
+            aria-label={t("Shuffle look")}
           >
             <Dices className="size-4" />
-            Look
+            {t("Look")}
           </Button>
         )}
         {!edge && (
           <Button size="sm" fullWidth variant="tertiary" onPress={duplicateSelection}>
             <Copy className="size-4" />
-            Copy
+            {t("Copy")}
           </Button>
         )}
         <Button
@@ -103,7 +105,7 @@ export const Inspector = () => {
           className={clsx(otherActionCount % 2 === 0 && "col-span-2")}
         >
           <Trash2 className="size-4" />
-          Delete
+          {t("Delete")}
         </Button>
       </div>
     </div>
@@ -119,7 +121,9 @@ const SeatSection = ({ id }: { id: string }) => {
   const setSeatLabel = useEditorStore((s) => s.setSeatLabel)
   const assignSeat = useEditorStore((s) => s.assignSeat)
   const numberDesks = useEditorStore((s) => s.numberDesks)
+  const toggleDeskFeature = useEditorStore((s) => s.toggleDeskFeature)
   const people = usePeople()
+  const { t, format } = useI18n()
   // Upcoming bookings on this desk: giving it a resident (or deleting it)
   // cancels them — said before it happens, not after.
   const byDay = useEditorStore((s) => s.booking.byDay)
@@ -151,41 +155,67 @@ const SeatSection = ({ id }: { id: string }) => {
     [
       lostTo(resident).length ? describe(lostTo(resident)) : null,
       ownDays(resident).length
-        ? `${nameOf(resident)}'s own bookings (${ownDays(resident).map(formatShort).join(", ")})`
+        ? t("{name}'s own bookings ({days})", {
+            name: nameOf(resident),
+            days: ownDays(resident).map(format.short).join(", "),
+          })
         : null,
     ]
       .filter(Boolean)
-      .join(" and ")
+      .join(t(" and "))
   const describe = (list: typeof bookings) =>
-    list.map((b) => `${nameOf(b.email)} (${formatShort(b.day)})`).join(", ")
+    list.map((b) => `${nameOf(b.email)} (${format.short(b.day)})`).join(", ")
   if (!seat) return null
   return (
     <div className="mb-4 flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-medium text-muted">Seat</p>
+        <p className="text-xs font-medium text-muted">{t("Seat")}</p>
         <button
           type="button"
           onClick={numberDesks}
           className="text-[11px] font-semibold text-accent hover:underline"
-          title="Label every unlabelled desk D-1, D-2…"
+          title={t("Label every unlabelled desk D-1, D-2…")}
         >
-          Number all desks
+          {t("Number all desks")}
         </button>
       </div>
       <input
         // Keyed by desk so switching selection resets the draft.
         key={seat.id}
         defaultValue={seat.label ?? ""}
-        placeholder="Label, e.g. D-12"
+        placeholder={t("Label, e.g. D-12")}
         maxLength={24}
         onBlur={(e) => setSeatLabel(seat.id, e.currentTarget.value)}
         onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
         className="h-8 rounded-lg border border-border bg-surface px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-focus"
       />
+      {/* What it offers — people can filter the map by these. */}
+      <p className="mt-1 text-xs font-medium text-muted">{t("Features")}</p>
+      <div className="flex flex-wrap gap-1.5">
+        {DESK_FEATURES.map((f) => {
+          const on = !!seat.features?.includes(f.id)
+          return (
+            <button
+              key={f.id}
+              type="button"
+              aria-pressed={on}
+              onClick={() => toggleDeskFeature(seat.id, f.id)}
+              className={clsx(
+                "h-7 rounded-full border px-2.5 text-xs font-bold transition-colors",
+                on
+                  ? "border-accent bg-accent/15 text-accent"
+                  : "border-border text-muted hover:border-muted hover:text-foreground"
+              )}
+            >
+              {t(f.label)}
+            </button>
+          )
+        })}
+      </div>
       {people.members.length > 0 && (
         <>
           <label htmlFor={`resident-${seat.id}`} className="mt-1 text-xs font-medium text-muted">
-            Permanent resident
+            {t("Permanent resident")}
           </label>
           <select
             id={`resident-${seat.id}`}
@@ -198,7 +228,7 @@ const SeatSection = ({ id }: { id: string }) => {
             }}
             className="h-8 rounded-lg border border-border bg-surface px-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-focus"
           >
-            <option value="">None (anyone can book it)</option>
+            <option value="">{t("None (anyone can book it)")}</option>
             {people.members.map((p) => (
               <option key={p.email} value={p.email}>
                 {p.name}
@@ -208,7 +238,10 @@ const SeatSection = ({ id }: { id: string }) => {
           {pendingResident ? (
             <div className="flex flex-col gap-2 rounded-lg bg-warning/15 px-2.5 py-2 text-xs text-foreground">
               <p>
-                Making {nameOf(pendingResident)} its resident cancels {cancels(pendingResident)}.
+                {t("Making {name} its resident cancels {bookings}.", {
+                  name: nameOf(pendingResident),
+                  bookings: cancels(pendingResident),
+                })}
               </p>
               <div className="flex justify-end gap-1.5">
                 <button
@@ -216,7 +249,7 @@ const SeatSection = ({ id }: { id: string }) => {
                   onClick={() => setPendingResident(null)}
                   className="rounded-md px-2 py-1 font-bold hover:bg-foreground/5"
                 >
-                  Keep bookings
+                  {t("Keep bookings")}
                 </button>
                 <button
                   type="button"
@@ -226,7 +259,7 @@ const SeatSection = ({ id }: { id: string }) => {
                   }}
                   className="rounded-md bg-warning px-2 py-1 font-bold text-warning-foreground"
                 >
-                  Assign anyway
+                  {t("Assign anyway")}
                 </button>
               </div>
             </div>
@@ -234,7 +267,9 @@ const SeatSection = ({ id }: { id: string }) => {
             !seat.assignee &&
             bookings.length > 0 && (
               <p className="rounded-lg bg-foreground/5 px-2.5 py-2 text-xs text-muted">
-                Booked: {describe(bookings)}. Giving it a resident or deleting it cancels these.
+                {t("Booked: {bookings}. Giving it a resident or deleting it cancels these.", {
+                  bookings: describe(bookings),
+                })}
               </p>
             )
           )}

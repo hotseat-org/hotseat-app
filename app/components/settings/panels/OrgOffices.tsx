@@ -7,11 +7,13 @@ import { useOrgSettingsData } from "../data"
 import { DeleteOfficeDialog } from "./OfficeDanger"
 import { Button } from "~/components/Button"
 import { ThumbAvatar } from "~/components/office/shell-ui"
+import { useI18n } from "~/i18n/I18nProvider"
 
 /** The organization's offices: open one, or delete it. */
 export function OrgOffices() {
   const { slug, officeSlug } = useParams()
   const { dialog, openDialog, closeDialog, close } = useSettings()
+  const { t } = useI18n()
 
   // Loaded on the server with the page; refreshed after a delete.
   const offices = useOrgSettingsData("offices")?.offices
@@ -35,10 +37,10 @@ export function OrgOffices() {
   return (
     <div className="flex flex-col gap-4">
       {offices.length === 0 ? (
-        <p className="text-sm text-muted">No offices yet.</p>
+        <p className="text-sm text-muted">{t("No offices yet.")}</p>
       ) : (
         <ul
-          aria-label="Offices"
+          aria-label={t("Offices")}
           className="flex flex-col divide-y divide-separator rounded-2xl border border-border bg-surface"
         >
           {offices.map((office) => (
@@ -56,14 +58,14 @@ export function OrgOffices() {
                 <p className="truncate text-sm font-semibold text-foreground">{office.name}</p>
                 <p className="truncate text-xs text-muted">
                   /{office.slug}
-                  {office.slug === officeSlug && " · open now"}
+                  {office.slug === officeSlug && ` · ${t("open now")}`}
                 </p>
               </Link>
               <Button
                 variant="ghost"
                 size="sm"
                 isIconOnly
-                aria-label={`Delete ${office.name}`}
+                aria-label={t("Delete {name}", { name: office.name })}
                 className="text-danger"
                 onPress={() => openDialog(`delete-office:${office.slug}`)}
               >

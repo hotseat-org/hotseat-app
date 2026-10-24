@@ -1,3 +1,5 @@
+import { msg } from "~/i18n/msg"
+
 export type ObjectType =
   | "wall"
   | "door"
@@ -72,12 +74,23 @@ export interface SceneObject {
   label?: string
   /** Desks: who sits here (the member's email). */
   assignee?: string
+  /** Desks: what it offers (DESK_FEATURES ids, e.g. "standing") — set by admins, filtered on. */
+  features?: string[]
   /**
    * Which "look" of the piece to show (its props, cushions…) — so copies don't
    * all look the same. Unset → derived from the id (see `variantOf`).
    */
   variant?: number
 }
+
+/**
+ * What a desk can offer, for admins to tag and people to filter the map by.
+ * Add one here and it shows up in the editor and the filters.
+ */
+export const DESK_FEATURES = [
+  { id: "standing", label: msg("Standing desk"), labelPlural: msg("Standing desks") },
+] as const
+export type DeskFeature = (typeof DESK_FEATURES)[number]["id"]
 
 /** The set of build tools (everything that isn't select/delete places an object). */
 export const OBJECT_TYPES: ObjectType[] = [

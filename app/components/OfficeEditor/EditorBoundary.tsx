@@ -1,4 +1,22 @@
 import { Component, type ReactNode } from "react"
+import { useI18n } from "~/i18n/I18nProvider"
+
+/** What shows instead of the editor (a function component: it needs the language). */
+const LoadFailed = () => {
+  const { t } = useI18n()
+  return (
+    <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-[#dfe4ec] text-slate-600 dark:bg-[#20242e] dark:text-slate-300">
+      <p className="text-sm">{t("The 3D editor failed to load.")}</p>
+      <button
+        type="button"
+        onClick={() => window.location.reload()}
+        className="rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600"
+      >
+        {t("Reload")}
+      </button>
+    </div>
+  )
+}
 
 interface Props {
   children: ReactNode
@@ -44,18 +62,7 @@ export class EditorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.error) {
-      return (
-        <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-[#dfe4ec] text-slate-600 dark:bg-[#20242e] dark:text-slate-300">
-          <p className="text-sm">The 3D editor failed to load.</p>
-          <button
-            type="button"
-            onClick={() => window.location.reload()}
-            className="rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600"
-          >
-            Reload
-          </button>
-        </div>
-      )
+      return <LoadFailed />
     }
     return this.props.children
   }

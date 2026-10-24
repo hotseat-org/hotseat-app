@@ -1,5 +1,6 @@
 import { wallRun } from "./layout"
 import type { ObjectType, SceneObject } from "./types"
+import { msg } from "~/i18n/msg"
 
 const HALF = Math.PI / 2
 
@@ -132,8 +133,8 @@ const FACE_W = -HALF // front toward −X
 export const TEMPLATES: OfficeTemplate[] = [
   {
     id: "full-office",
-    label: "Full office",
-    description: "Desks, meeting room, kitchen & lounge",
+    label: msg("Full office"),
+    description: msg("Desks, meeting room, kitchen & lounge"),
     build: () => {
       seq = 0
       // 16 × 11 shell with the entrance on the south wall. A meeting room sits in
@@ -222,7 +223,7 @@ export const TEMPLATES: OfficeTemplate[] = [
   },
   {
     id: "open-plan",
-    label: "Open plan",
+    label: msg("Open plan"),
     build: () => {
       seq = 0
       // Entrance door on the bottom edge, windows on the other three sides.
@@ -250,7 +251,7 @@ export const TEMPLATES: OfficeTemplate[] = [
   },
   {
     id: "meeting-rooms",
-    label: "Meeting rooms",
+    label: msg("Meeting rooms"),
     build: () => {
       seq = 0
       // Entrance door on the bottom edge, plus an interior partition at x = 5
@@ -280,8 +281,8 @@ export const TEMPLATES: OfficeTemplate[] = [
   },
   {
     id: "team-floor",
-    label: "Team floor",
-    description: "24 desks, meeting & focus rooms, kitchen, restrooms",
+    label: msg("Team floor"),
+    description: msg("24 desks, meeting & focus rooms, kitchen, restrooms"),
     build: () => {
       seq = 0
       // 24 × 14 m. Open workspace (west); a meeting room and two focus rooms
@@ -396,8 +397,8 @@ export const TEMPLATES: OfficeTemplate[] = [
   },
   {
     id: "headquarters",
-    label: "Headquarters",
-    description: "36 desks, boardroom, booths, kitchen, two restrooms",
+    label: msg("Headquarters"),
+    description: msg("36 desks, boardroom, booths, kitchen, two restrooms"),
     build: () => {
       seq = 0
       // 32 × 20 m. North: boardroom, two meeting rooms, phone booths and the
@@ -537,8 +538,8 @@ export const TEMPLATES: OfficeTemplate[] = [
   },
   {
     id: "studio",
-    label: "Studio",
-    description: "20 desks, glass meeting room & booths, coffee bar",
+    label: msg("Studio"),
+    description: msg("20 desks, glass meeting room & booths, coffee bar"),
     build: () => {
       seq = 0
       // 20 × 12 m. Two benches of desks; glass meeting room and two glass

@@ -2,6 +2,7 @@ import type { CoreContext } from "../types"
 import { officeSlugForName } from "./slug"
 import type { Office } from "./types"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
+import { LocalizedError } from "~/i18n/errors"
 
 export interface UpdateOfficeArgs {
   slug: string
@@ -17,9 +18,9 @@ export interface UpdateOfficeArgs {
 export { officeSlugForName }
 
 /** Renaming to a name whose slug another office in the org already has. */
-export class OfficeNameTakenError extends Error {
+export class OfficeNameTakenError extends LocalizedError {
   constructor(name: string) {
-    super(`An office named "${name}" already exists`)
+    super("An office named “{name}” already exists", { name })
   }
 }
 

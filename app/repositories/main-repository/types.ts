@@ -23,6 +23,15 @@ import type { DeleteReservationsArgs } from "./methods/reservation/deleteMany"
 import type { FindReservationsArgs } from "./methods/reservation/findMany"
 import type { CreateNotificationsArgs, FindNotificationsArgs } from "./methods/notification"
 import type { ChangeDeskReleasesArgs, FindDeskReleasesArgs } from "./methods/desk-release"
+import type {
+  ChangeWaitlistArgs,
+  DeskPreferenceScope,
+  FavoriteDesk,
+  FindWaitlistArgs,
+  UsualDesk,
+  UsualDeskKey,
+  WaitlistEntry,
+} from "./methods/desk-preference"
 import type { FindUserArgs } from "./methods/user/find"
 import { UpdateUserArgs } from "./methods/user/update"
 import type { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/client"
@@ -166,6 +175,24 @@ export interface MainRepository {
     update: (args: UpdateOfficeArgs) => Promise<Office>
     delete: (args: DeleteOfficeArgs) => Promise<Office>
     saveLayout: (args: SaveOfficeLayoutArgs) => Promise<{ office: Office; cancelled: number }>
+  }
+  favoriteDesk: {
+    findMany: (scope: DeskPreferenceScope) => Promise<FavoriteDesk[]>
+    add: (favorite: FavoriteDesk) => Promise<void>
+    remove: (favorite: FavoriteDesk) => Promise<void>
+  }
+  usualDesk: {
+    findMany: (scope?: Partial<DeskPreferenceScope>) => Promise<UsualDesk[]>
+    set: (usual: Omit<UsualDesk, "bookedThrough">) => Promise<void>
+    markBooked: (key: UsualDeskKey, through: string) => Promise<void>
+    remove: (key: UsualDeskKey) => Promise<void>
+  }
+  waitlist: {
+    findMany: (args: FindWaitlistArgs) => Promise<WaitlistEntry[]>
+    add: (args: ChangeWaitlistArgs) => Promise<void>
+    remove: (
+      args: Omit<ChangeWaitlistArgs, "officeSlug"> & { officeSlug?: string }
+    ) => Promise<void>
   }
   deskRelease: {
     findMany: (args: FindDeskReleasesArgs) => Promise<DeskRelease[]>

@@ -11,6 +11,7 @@ import { useIsMobile } from "~/utils/hooks/useIsMobile"
 import { ContourBackdrop } from "~/components/ui/ContourBackdrop"
 import { EmptyState } from "~/components/ui/EmptyState"
 import { revalidateOn } from "~/utils/revalidation"
+import { useI18n } from "~/i18n/I18nProvider"
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const core = getCore()
@@ -38,6 +39,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
 
 const Offices = () => {
   const { canCreate } = useLoaderData<typeof loader>()
+  const { t } = useI18n()
   const isMobile = useIsMobile()
 
   return (
@@ -63,17 +65,21 @@ const Offices = () => {
         <EmptyState
           className="pointer-events-auto"
           icon={Building2}
-          title="No offices yet"
+          title={t("No offices yet")}
           description={
             canCreate
-              ? "Design your first office in the 3D editor — draw walls, drop desks and seats, then invite the team to find their spot."
-              : "This organization doesn’t have any offices yet. Ask an admin to create the first one."
+              ? t(
+                  "Design your first office in the 3D editor — draw walls, drop desks and seats, then invite the team to find their spot."
+                )
+              : t(
+                  "This organization doesn't have any offices yet. Ask an admin to create the first one."
+                )
           }
         >
           {canCreate && (
             <ButtonLink to="?modal=new-office" variant="primary">
               <Building2 className="size-4" />
-              <span>Create office</span>
+              <span>{t("Create office")}</span>
             </ButtonLink>
           )}
         </EmptyState>

@@ -106,6 +106,32 @@ interface NewObject {
 }
 
 /** Desk booking state for the office view (see ~/utils/booking). */
+/** Your desk preferences in this office (see core/reservation/preferences). */
+export interface DeskPreferences {
+  /** Desks you starred, in the order you starred them. */
+  favorites: string[]
+  /** Booked for you automatically on these ISO weekdays (1 = Monday). */
+  usual: { deskId: string; weekdays: number[] } | null
+  /** Days you're waiting for a desk. */
+  waiting: Day[]
+  /** How many wait for a desk on each day. */
+  waitingByDay: Record<Day, number>
+}
+
+export const NO_PREFERENCES: DeskPreferences = {
+  favorites: [],
+  usual: null,
+  waiting: [],
+  waitingByDay: {},
+}
+
+/** Preference changes, sent as they are to the reservations API (see its intents). */
+export type PreferenceChange =
+  | { intent: "favorite"; deskId: string; isFavorite: "true" | "false" }
+  | { intent: "usual"; deskId: string; weekdays: string }
+  | { intent: "usual-clear" }
+  | { intent: "waitlist-join" | "waitlist-leave"; dates: string }
+
 export interface Booking {
   enabled: boolean
   /** Your email (who books). */
@@ -128,6 +154,9 @@ export interface Booking {
   /** A resident gives their desk up on days away / takes it back. */
   release: (deskId: string, dates: Day[]) => void
   reclaim: (deskId: string, dates: Day[]) => void
+  preferences: DeskPreferences
+  /** Star a desk, set your usual desk, join or leave a waitlist. */
+  setPreference: (change: PreferenceChange) => void
 }
 
 const NO_BOOKING: Booking = {
@@ -144,6 +173,8 @@ const NO_BOOKING: Booking = {
   cancel: () => {},
   release: () => {},
   reclaim: () => {},
+  preferences: NO_PREFERENCES,
+  setPreference: () => {},
 }
 
 export interface EditorState {
@@ -181,6 +212,21 @@ export interface EditorState {
   assignSeat: (id: string, email: string | null) => void
   /** Label every unlabelled desk D-1, D-2… in reading order (rows, then x). */
   numberDesks: () => void
+  /** Desks: give or take a feature (DESK_FEATURES id). */
+  toggleDeskFeature: (id: string, feature: string) => void
+  /** View: show only desks with all these features (others dimmed). */
+  deskFilter: string[]
+  toggleDeskFilter: (feature: string) => void
+  /** Optimistic: star / unstar a desk before the server confirms. */
+  applyFavorite: (deskId: string, isFavorite: boolean) => void
+  /**
+   * Insights (admins): the dashboard's open state, and the heatmap shown over
+   * the office — each desk's share of working days in use, for a period.
+   */
+  isInsightsOpen: boolean
+  setInsightsOpen: (isOpen: boolean) => void
+  heatmap: { period: "4w" | "12w" | "next"; ratios: Record<string, number> } | null
+  setHeatmap: (heatmap: EditorState["heatmap"]) => void
   /** Desk booking for a real office (disabled in the standalone editor). */
   booking: Booking
   /** Replace the booking data/callbacks (from the route). Keeps the chosen day. */
@@ -429,6 +475,34 @@ const makeInitializer =
             o.id === id ? { ...o, label: label.trim() || undefined } : o
           ),
         })),
+      toggleDeskFeature: (id, feature) =>
+        set((s) => ({
+          objects: s.objects.map((o) => {
+            if (o.id !== id) return o
+            const has = o.features?.includes(feature)
+            const features = has
+              ? (o.features ?? []).filter((f) => f !== feature)
+              : [...(o.features ?? []), feature]
+            return { ...o, features: features.length ? features : undefined }
+          }),
+        })),
+      deskFilter: [],
+      toggleDeskFilter: (feature) =>
+        set((s) => ({
+          deskFilter: s.deskFilter.includes(feature)
+            ? s.deskFilter.filter((f) => f !== feature)
+            : [...s.deskFilter, feature],
+        })),
+      isInsightsOpen: false,
+      setInsightsOpen: (isInsightsOpen) => set({ isInsightsOpen }),
+      heatmap: null,
+      setHeatmap: (heatmap) => set({ heatmap, seatCard: null }),
+      applyFavorite: (deskId, isFavorite) =>
+        set((s) => {
+          const favorites = s.booking.preferences.favorites.filter((id) => id !== deskId)
+          if (isFavorite) favorites.push(deskId)
+          return { booking: { ...s.booking, preferences: { ...s.booking.preferences, favorites } } }
+        }),
       assignSeat: (id, email) =>
         set((s) => ({
           objects: s.objects.map((o) => {

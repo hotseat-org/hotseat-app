@@ -1,7 +1,6 @@
 import { Chip, Spinner, Table } from "@heroui/react"
 import dayjs from "dayjs"
 import { Copy, ExternalLink, Link as LinkIcon, Mail, RefreshCcw, Trash } from "lucide-react"
-import pluralize from "pluralize"
 import { useFetcher, useParams } from "react-router"
 import { GenerateLinkDialog } from "../dialogs/GenerateLink"
 import { InviteMemberDialog } from "../dialogs/InviteMember"
@@ -10,6 +9,10 @@ import { useSettings } from "../useSettings"
 import { useOrgSettingsData } from "../data"
 import { Button } from "~/components/Button"
 import { useOrganizationContext } from "~/utils/hooks/useProfileData"
+import { useI18n } from "~/i18n/I18nProvider"
+import { msg } from "~/i18n/msg"
+
+const STATUS_LABEL: Record<string, string> = { pending: msg("pending"), expired: msg("expired") }
 
 const copyToClipboard = (text: string) => navigator.clipboard.writeText(text)
 
@@ -17,6 +20,7 @@ export function OrgInvitations() {
   const { slug } = useParams()
   const { organization } = useOrganizationContext()
   const { dialog, openDialog } = useSettings()
+  const { t, tn, format } = useI18n()
   const url = `/api/settings/org/${slug}/invitations`
 
   const deleteFetcher = useFetcher()
@@ -28,7 +32,7 @@ export function OrgInvitations() {
     : undefined
 
   if (settings && settings.invites === null)
-    return <p className="text-sm text-muted">Only admins can invite people.</p>
+    return <p className="text-sm text-muted">{t("Only admins can invite people.")}</p>
 
   if (data === undefined)
     return (
@@ -48,14 +52,15 @@ export function OrgInvitations() {
       <SettingsCard className="flex flex-col gap-4">
         <div className="flex flex-col items-start gap-3 sm:flex-row sm:justify-between sm:gap-4">
           <div>
-            <CardTitle>Direct invitations</CardTitle>
+            <CardTitle>{t("Direct invitations")}</CardTitle>
             <p className="mt-1 text-sm text-muted">
-              Add someone's email and they'll see the invitation when they sign in with it. No email
-              is sent — share the invite link below with them.
+              {t(
+                "Add someone's email and they'll see the invitation when they sign in with it. No email is sent — share the invite link below with them."
+              )}
             </p>
           </div>
           <Button variant="primary" size="sm" onPress={() => openDialog("invite")}>
-            <Mail size={16} /> Invite member
+            <Mail size={16} /> {t("Invite member")}
           </Button>
         </div>
 
@@ -63,30 +68,30 @@ export function OrgInvitations() {
           <Table>
             <Table.ScrollContainer>
               {/* Wide enough to read: on a phone the table scrolls sideways. */}
-              <Table.Content aria-label="Invitations table" className="min-w-[560px]">
+              <Table.Content aria-label={t("Invitations table")} className="min-w-[560px]">
                 <Table.Header>
-                  <Table.Column isRowHeader>EMAIL</Table.Column>
-                  <Table.Column>SENT</Table.Column>
-                  <Table.Column>EXPIRES</Table.Column>
-                  <Table.Column>STATUS</Table.Column>
+                  <Table.Column isRowHeader>{t("EMAIL")}</Table.Column>
+                  <Table.Column>{t("SENT")}</Table.Column>
+                  <Table.Column>{t("EXPIRES")}</Table.Column>
+                  <Table.Column>{t("STATUS")}</Table.Column>
                   <Table.Column width={80} className="text-center">
-                    ACTIONS
+                    {t("ACTIONS")}
                   </Table.Column>
                 </Table.Header>
                 <Table.Body>
                   {invites.map((invite) => (
                     <Table.Row key={invite.email}>
                       <Table.Cell>{invite.email}</Table.Cell>
-                      <Table.Cell>{dayjs(invite.createdAt).format("D.M.YYYY")}</Table.Cell>
+                      <Table.Cell>{format.date(invite.createdAt)}</Table.Cell>
                       <Table.Cell>
-                        {pluralize(
-                          "day",
+                        {tn(
                           Math.ceil(dayjs(invite.expiresAt).diff(dayjs(), "days", true)),
-                          true
+                          "{n} day",
+                          "{n} days"
                         )}
                       </Table.Cell>
                       <Table.Cell>
-                        <Chip size="sm">{invite.status}</Chip>
+                        <Chip size="sm">{t(STATUS_LABEL[invite.status] ?? invite.status)}</Chip>
                       </Table.Cell>
                       <Table.Cell>
                         <deleteFetcher.Form
@@ -109,17 +114,18 @@ export function OrgInvitations() {
           </Table>
         ) : (
           <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted">
-            No pending invitations
+            {t("No pending invitations")}
           </div>
         )}
       </SettingsCard>
 
       <SettingsCard className="flex flex-col gap-4">
         <div>
-          <CardTitle>Invite link</CardTitle>
+          <CardTitle>{t("Invite link")}</CardTitle>
           <p className="mt-1 text-sm text-muted">
-            For people you've invited above: it takes them straight in. Anyone else needs an
-            invitation first.
+            {t(
+              "For people you've invited above: it takes them straight in. Anyone else needs an invitation first."
+            )}
           </p>
         </div>
         <div className="flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-2.5">
@@ -141,16 +147,16 @@ export function OrgInvitations() {
         <SettingsCard className="flex flex-col gap-4">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <CardTitle>Universal invite link</CardTitle>
+              <CardTitle>{t("Universal invite link")}</CardTitle>
               <p className="mt-1 text-sm text-muted">
-                Anyone with this link can join without a direct invitation.
+                {t("Anyone with this link can join without a direct invitation.")}
               </p>
             </div>
             <Button
               variant="ghost"
               isIconOnly
               size="sm"
-              aria-label="Regenerate link"
+              aria-label={t("Regenerate link")}
               onPress={() => openDialog("generate")}
             >
               <RefreshCcw size={16} />
@@ -170,7 +176,9 @@ export function OrgInvitations() {
             </Button>
           </div>
           <p className="text-xs text-muted">
-            Be careful sharing this link — regenerate it to revoke access for anyone who has it.
+            {t(
+              "Be careful sharing this link — regenerate it to revoke access for anyone who has it."
+            )}
           </p>
         </SettingsCard>
       )}

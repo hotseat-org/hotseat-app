@@ -63,6 +63,7 @@ export const sceneObjectSchema = z.object({
   model: z.string().optional(),
   label: z.string().max(24).optional(),
   assignee: z.string().optional(),
+  features: z.array(z.string().max(24)).max(8).optional(),
   variant: z.number().int().min(0).optional(),
 })
 

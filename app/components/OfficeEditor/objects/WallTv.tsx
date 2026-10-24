@@ -1,5 +1,5 @@
-import { RoundedBox } from "@react-three/drei"
 import { ACCENT } from "../palette"
+import { RoundedBox } from "./RoundedBox"
 import { Surface } from "./Surface"
 import { look } from "./looks"
 import { WALL_FACE } from "./wallItem"

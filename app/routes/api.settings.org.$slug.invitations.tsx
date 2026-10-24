@@ -2,6 +2,8 @@ import { data, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-ro
 import { z } from "zod"
 import { getCore } from "~/core/get-core"
 import { OrganizationInviteError } from "~/core/organization/inviteMember"
+import { getTranslator } from "~/i18n/locale.server"
+import { translateError } from "~/i18n/errors"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { requireProfile } from "~/utils/loader-helpers/requireProfile"
 
@@ -32,7 +34,12 @@ export const action = async (args: ActionFunctionArgs) => {
       const email = z.email().safeParse(String(formData.get("email") ?? "").trim())
       if (!email.success)
         return data(
-          { ok: false as const, error: "That doesn't look like an email address." },
+          {
+            ok: false as const,
+            error: (await getTranslator(args.request)).t(
+              "That doesn't look like an email address."
+            ),
+          },
           { status: 400 }
         )
       try {
@@ -43,7 +50,17 @@ export const action = async (args: ActionFunctionArgs) => {
         })
       } catch (error) {
         if (error instanceof OrganizationInviteError)
-          return data({ ok: false as const, error: error.message }, { status: 409 })
+          return data(
+            {
+              ok: false as const,
+              error: translateError(
+                await getTranslator(args.request),
+                error,
+                "Something went wrong"
+              ),
+            },
+            { status: 409 }
+          )
         throw error
       }
       break

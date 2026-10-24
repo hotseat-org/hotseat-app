@@ -4,6 +4,7 @@ import { getCore } from "~/core/get-core"
 import { isAuthenticated, requireUser } from "~/services/session.server"
 import { JoinCard, JoinProblem } from "~/components/JoinScreen"
 import { LoginScreen } from "~/components/LoginScreen"
+import { useI18n } from "~/i18n/I18nProvider"
 
 /**
  * An email invitation's link (and what a pasted invite code lands on): the
@@ -54,27 +55,31 @@ export default function JoinByInvitation() {
   const { authed, org, email, hasInvite } = useLoaderData<typeof loader>()
   const [searchParams] = useSearchParams()
   const location = useLocation()
+  const { t } = useI18n()
 
   if (!authed)
     return (
       <LoginScreen
         redirectTo={location.pathname}
-        title={org ? `Join ${org.name}` : undefined}
-        subtitle={org ? "Sign in with the email you were invited at" : undefined}
+        title={org ? t("Join {name}", { name: org.name }) : undefined}
+        subtitle={org ? t("Sign in with the email you were invited at") : undefined}
       />
     )
   if (!org)
     return (
-      <JoinProblem title="Organization not found">
-        There&apos;s no organization behind this link or code. Check it with the teammate who sent
-        it.
+      <JoinProblem title={t("Organization not found")}>
+        {t(
+          "There's no organization behind this link or code. Check it with the teammate who sent it."
+        )}
       </JoinProblem>
     )
   if (!hasInvite || searchParams.get("error") === "invalid")
     return (
-      <JoinProblem title={`No invitation to ${org.name}`}>
-        There&apos;s no open invitation for {email} — it may have expired. Ask an admin of{" "}
-        {org.name} to invite this email, or to send you their universal invite link.
+      <JoinProblem title={t("No invitation to {name}", { name: org.name })}>
+        {t(
+          "There's no open invitation for {email} — it may have expired. Ask an admin of {name} to invite this email, or to send you their universal invite link.",
+          { email: email ?? "", name: org.name }
+        )}
       </JoinProblem>
     )
   return <JoinCard organization={org} />

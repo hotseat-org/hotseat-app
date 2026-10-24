@@ -1,3 +1,4 @@
+import { msg } from "~/i18n/msg"
 /**
  * Registry of external GLB models (Kenney-style animal pack in public/models/).
  * These are LOADED and available, but intentionally NOT exposed in the toolbar —
@@ -51,11 +52,37 @@ const ANIMALS = [
   "tiger",
 ] as const
 
-const LABELS: Record<string, string> = { polar: "Polar Bear" }
+/** Each animal's name (translated where shown: `t(model.label)`). */
+const LABELS: Record<(typeof ANIMALS)[number], string> = {
+  beaver: msg("Beaver"),
+  bee: msg("Bee"),
+  bunny: msg("Bunny"),
+  cat: msg("Cat"),
+  caterpillar: msg("Caterpillar"),
+  chick: msg("Chick"),
+  cow: msg("Cow"),
+  crab: msg("Crab"),
+  deer: msg("Deer"),
+  dog: msg("Dog"),
+  elephant: msg("Elephant"),
+  fish: msg("Fish"),
+  fox: msg("Fox"),
+  giraffe: msg("Giraffe"),
+  hog: msg("Hog"),
+  koala: msg("Koala"),
+  lion: msg("Lion"),
+  monkey: msg("Monkey"),
+  panda: msg("Panda"),
+  parrot: msg("Parrot"),
+  penguin: msg("Penguin"),
+  pig: msg("Pig"),
+  polar: msg("Polar Bear"),
+  tiger: msg("Tiger"),
+}
 
 export const MODELS: ModelDef[] = ANIMALS.map((name) => ({
   id: name,
-  label: LABELS[name] ?? name[0].toUpperCase() + name.slice(1),
+  label: LABELS[name],
   url: `${import.meta.env.BASE_URL}models/animal-${name}.glb`,
   footprint: [2, 2],
   scale: 0.5,

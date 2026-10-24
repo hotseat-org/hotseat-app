@@ -2,6 +2,7 @@ import clsx from "clsx"
 import type { CSSProperties, MouseEvent } from "react"
 import { flushSync } from "react-dom"
 import { Theme, useTheme } from "remix-themes"
+import { useI18n } from "~/i18n/I18nProvider"
 
 const SIZES = {
   // track width / height, thumb size, inner padding (px)
@@ -35,6 +36,7 @@ export const ThemeSwitcher = ({
   className?: string
 }) => {
   const [theme, setTheme] = useTheme()
+  const { t } = useI18n()
   const dark = theme === Theme.DARK
   const s = SIZES[size]
 
@@ -70,7 +72,7 @@ export const ThemeSwitcher = ({
       type="button"
       role="switch"
       aria-checked={dark}
-      aria-label="Dark mode"
+      aria-label={t("Dark mode")}
       onClick={toggle}
       data-dark={dark}
       className={clsx("theme-switch", className)}

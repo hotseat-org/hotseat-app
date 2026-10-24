@@ -4,15 +4,8 @@ import { Bell } from "lucide-react"
 import { useState } from "react"
 import { Link, useFetcher } from "react-router"
 import { useOrganizationContext } from "~/utils/hooks/useProfileData"
-
-/** "just now", "5 min ago", "3 h ago", "2 d ago". */
-const ago = (when: Date | string) => {
-  const minutes = Math.round((Date.now() - new Date(when).getTime()) / 60_000)
-  if (minutes < 1) return "just now"
-  if (minutes < 60) return `${minutes} min ago`
-  if (minutes < 60 * 24) return `${Math.round(minutes / 60)} h ago`
-  return `${Math.round(minutes / 60 / 24)} d ago`
-}
+import { useI18n } from "~/i18n/I18nProvider"
+import { readNotification } from "~/i18n/notifications"
 
 /**
  * The bell: what other people's changes did to you (a cancelled booking, a
@@ -21,6 +14,8 @@ const ago = (when: Date | string) => {
  */
 export const NotificationsBell = ({ triggerClassName }: { triggerClassName: string }) => {
   const { notifications } = useOrganizationContext()
+  const i18n = useI18n()
+  const { t, format } = i18n
   const markRead = useFetcher()
   // Unread at the moment it opened (the list refreshes as read meanwhile).
   const [wasUnread, setWasUnread] = useState<Set<string>>(new Set())
@@ -35,7 +30,11 @@ export const NotificationsBell = ({ triggerClassName }: { triggerClassName: stri
   return (
     <Popover onOpenChange={handleOpenChange}>
       <Popover.Trigger
-        aria-label={hasUnread ? `Notifications, ${notifications.unread} unread` : "Notifications"}
+        aria-label={
+          hasUnread
+            ? t("Notifications, {n} unread", { n: notifications.unread })
+            : t("Notifications")
+        }
         className={clsx("relative", triggerClassName)}
       >
         <Bell className="size-5" />
@@ -47,9 +46,9 @@ export const NotificationsBell = ({ triggerClassName }: { triggerClassName: stri
         <Popover.Dialog className="w-80 max-w-[calc(100vw-24px)] p-1.5 outline-none">
           {notifications.items.length === 0 ? (
             <div className="p-3 text-center">
-              <p className="text-sm font-semibold text-foreground">You&apos;re all caught up</p>
+              <p className="text-sm font-semibold text-foreground">{t("You're all caught up")}</p>
               <p className="mt-0.5 text-xs text-muted">
-                Changes to your bookings or desk show up here.
+                {t("Changes to your bookings or desk show up here.")}
               </p>
             </div>
           ) : (
@@ -57,8 +56,8 @@ export const NotificationsBell = ({ triggerClassName }: { triggerClassName: stri
               {notifications.items.map((n) => {
                 const body = (
                   <>
-                    <p className="text-sm text-foreground">{n.message}</p>
-                    <p className="mt-0.5 text-xs text-muted">{ago(n.createdAt)}</p>
+                    <p className="text-sm text-foreground">{readNotification(i18n, n.message)}</p>
+                    <p className="mt-0.5 text-xs text-muted">{format.ago(n.createdAt)}</p>
                   </>
                 )
                 const className = clsx(

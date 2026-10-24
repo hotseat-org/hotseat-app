@@ -4,7 +4,8 @@ import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react"
 import { useMemo, useState } from "react"
 import { useEditorStore } from "../store"
 import { isSeatable } from "../types"
-import { addDays, formatLong, formatMonth, weekStart, type Day } from "~/utils/booking"
+import { addDays, weekStart, type Day } from "~/utils/booking"
+import { useI18n } from "~/i18n/I18nProvider"
 
 /**
  * The day being shown in the office: ‹ Wed 23 Sep › in the bottom bar, with a
@@ -13,6 +14,7 @@ import { addDays, formatLong, formatMonth, weekStart, type Day } from "~/utils/b
  * disabled. Fixed widths throughout, so nothing shifts as the date changes.
  */
 export const DateStepper = () => {
+  const { t, format } = useI18n()
   const day = useEditorStore((s) => s.booking.day)
   const today = useEditorStore((s) => s.booking.today)
   const from = useEditorStore((s) => s.booking.from)
@@ -31,7 +33,7 @@ export const DateStepper = () => {
         isIconOnly
         size="sm"
         variant="ghost"
-        aria-label="Previous day"
+        aria-label={t("Previous day")}
         isDisabled={day <= from}
         onPress={() => step(-1)}
       >
@@ -40,19 +42,19 @@ export const DateStepper = () => {
       <Popover isOpen={open} onOpenChange={setOpen}>
         {/* The trigger is itself the (focusable, pressable) button. */}
         <Popover.Trigger
-          aria-label={`Showing ${formatLong(day)}. Pick another day`}
+          aria-label={t("Showing {day}. Pick another day", { day: { day } })}
           className="flex h-8 w-44 cursor-pointer items-center justify-center gap-2 rounded-[10px] bg-surface text-sm font-extrabold tabular-nums text-foreground shadow-surface outline-none focus-visible:ring-2 focus-visible:ring-focus"
         >
           <CalendarDays className="size-4 text-accent" />
-          {formatLong(day)}
+          {format.long(day)}
           {day === today && (
             <span className="text-[0.64rem] font-black uppercase tracking-wider text-accent">
-              Today
+              {t("Today")}
             </span>
           )}
         </Popover.Trigger>
         <Popover.Content placement="top" offset={14} className="rounded-2xl">
-          <Popover.Dialog aria-label="Pick a day" className="p-4 outline-none">
+          <Popover.Dialog aria-label={t("Pick a day")} className="p-4 outline-none">
             <MonthCalendar
               onPick={(d) => {
                 setDay(d)
@@ -66,7 +68,7 @@ export const DateStepper = () => {
         isIconOnly
         size="sm"
         variant="ghost"
-        aria-label="Next day"
+        aria-label={t("Next day")}
         isDisabled={day >= lastDay}
         onPress={() => step(1)}
       >
@@ -75,8 +77,6 @@ export const DateStepper = () => {
     </div>
   )
 }
-
-const WEEKDAYS = ["M", "T", "W", "T", "F", "S", "S"]
 
 /** First day of the day's month. */
 const monthOf = (day: Day) => `${day.slice(0, 8)}01`
@@ -104,6 +104,7 @@ export const MonthCalendar = ({
   const byDay = useEditorStore((s) => s.booking.byDay)
   const objects = useEditorStore((s) => s.objects)
   const me = useEditorStore((s) => s.booking.me)
+  const { t, format } = useI18n()
   const [month, setMonth] = useState(() => monthOf(day))
 
   // How full each day is: permanent residents every day + bookings on the rest.
@@ -136,18 +137,18 @@ export const MonthCalendar = ({
           isIconOnly
           size="sm"
           variant="ghost"
-          aria-label="Previous month"
+          aria-label={t("Previous month")}
           isDisabled={!canPrev}
           onPress={() => setMonth(shiftMonth(month, -1))}
         >
           <ChevronLeft className="size-4" />
         </Button>
-        <p className="text-sm font-black text-foreground">{formatMonth(month)}</p>
+        <p className="text-sm font-black text-foreground">{format.month(month)}</p>
         <Button
           isIconOnly
           size="sm"
           variant="ghost"
-          aria-label="Next month"
+          aria-label={t("Next month")}
           isDisabled={!canNext}
           onPress={() => setMonth(shiftMonth(month, 1))}
         >
@@ -155,7 +156,7 @@ export const MonthCalendar = ({
         </Button>
       </div>
       <div className="grid grid-cols-7 gap-0.5 text-center">
-        {WEEKDAYS.map((w, i) => (
+        {format.weekLetters().map((w, i) => (
           <span key={i} className="pb-1 text-[0.64rem] font-black text-muted">
             {w}
           </span>
@@ -171,7 +172,7 @@ export const MonthCalendar = ({
               type="button"
               disabled={!enabled}
               onClick={() => onPick(d)}
-              aria-label={formatLong(d)}
+              aria-label={format.long(d)}
               aria-pressed={selected}
               className={clsx(
                 "flex h-10 flex-col items-center justify-center gap-1 rounded-lg text-[0.8rem] font-extrabold tabular-nums outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus",
@@ -205,17 +206,19 @@ export const MonthCalendar = ({
         })}
       </div>
       <div className="mt-3 flex items-center justify-between text-xs text-muted">
-        <span>Bookable until {formatLong(lastDay)}</span>
+        <span>{t("Bookable until {day}", { day: { day: lastDay } })}</span>
         <button
           type="button"
           onClick={() => onPick(today)}
           // A bigger hit area than the word, without moving it.
           className="-m-2 p-2 font-bold text-accent hover:underline"
         >
-          Today
+          {t("Today")}
         </button>
       </div>
-      <p className="mt-1.5 text-[0.7rem] text-muted">Bar: how full · blue: you have a desk</p>
+      <p className="mt-1.5 text-[0.7rem] text-muted">
+        {t("Bar: how full · blue: you have a desk")}
+      </p>
     </div>
   )
 }

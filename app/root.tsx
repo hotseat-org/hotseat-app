@@ -22,6 +22,10 @@ import { CenteredScreen } from "~/components/ui/CenteredScreen"
 import { getCore } from "~/core/get-core"
 import stylesheet from "~/styles/tailwind.css?url"
 import { revalidateOn } from "~/utils/revalidation"
+import { LocaleProvider } from "~/i18n/useLocale"
+import { getLocale } from "~/i18n/locale.server"
+import { useI18n } from "~/i18n/I18nProvider"
+import { createTranslator } from "~/i18n/translate"
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesheet },
@@ -51,8 +55,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const theme = getTheme()
   const savedScheme = await schemeCookie.parse(request.headers.get("Cookie"))
   const scheme = isSchemeId(savedScheme) ? savedScheme : DEFAULT_SCHEME
+  const locale = await getLocale(request)
 
-  return { user, theme, scheme }
+  return { user, theme, scheme, locale }
 }
 
 export default function AppWithProvider() {
@@ -66,7 +71,9 @@ export default function AppWithProvider() {
       themeAction={`${import.meta.env.BASE_URL}api/set-theme`}
     >
       <SchemeProvider initialScheme={data.scheme}>
-        <App />
+        <LocaleProvider initialLocale={data.locale}>
+          <App />
+        </LocaleProvider>
       </SchemeProvider>
     </ThemeProvider>
   )
@@ -75,6 +82,7 @@ export default function AppWithProvider() {
 const App = () => {
   const [theme] = useTheme()
   const [scheme] = useScheme()
+  const { locale } = useI18n()
   const data = useLoaderData<typeof loader>()
 
   return (
@@ -83,7 +91,7 @@ const App = () => {
     // before hydration — the client must produce that exact string, or React
     // reports a hydration mismatch.
     <html
-      lang="en"
+      lang={locale}
       className={clsx("h-full", theme)}
       data-scheme={scheme === DEFAULT_SCHEME ? undefined : scheme}
     >
@@ -111,15 +119,19 @@ const App = () => {
 export function ErrorBoundary() {
   const error = useRouteError()
   const data = useRouteLoaderData<typeof loader>("root")
+  // Outside the providers: a translator of its own.
+  const { t } = createTranslator(data?.locale)
   const notFound = isRouteErrorResponse(error) && error.status === 404
-  const title = notFound ? "Nothing here" : "Something went wrong"
+  const title = notFound ? t("Nothing here") : t("Something went wrong")
   const message = notFound
     ? // A loader's own reason ("Organization not found") — not the router's
       // raw "No route matches URL …" for an address that doesn't exist.
       typeof error.data === "string" && !error.data.startsWith("Error: No route matches")
-      ? `${error.data}. It may have been removed, or you don't have access to it.`
-      : "This page doesn't exist, or you don't have access to it."
-    : "An unexpected error happened. Try again in a moment."
+      ? t("{reason}. It may have been removed, or you don't have access to it.", {
+          reason: t(error.data),
+        })
+      : t("This page doesn't exist, or you don't have access to it.")
+    : t("An unexpected error happened. Try again in a moment.")
   const detail =
     import.meta.env.DEV && !notFound
       ? error instanceof Error
@@ -133,7 +145,7 @@ export function ErrorBoundary() {
     // No ThemeProvider here: with no theme cookie, follow the system theme via a
     // tiny pre-paint script (hence suppressHydrationWarning on the class).
     <html
-      lang="en"
+      lang={data?.locale ?? "en"}
       className={clsx("h-full", data?.theme)}
       data-scheme={data?.scheme === DEFAULT_SCHEME ? undefined : data?.scheme}
       suppressHydrationWarning
@@ -170,7 +182,7 @@ export function ErrorBoundary() {
               href={`${import.meta.env.BASE_URL}app`}
               className="mt-6 inline-flex rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-accent-foreground transition hover:brightness-105"
             >
-              Back to your offices
+              {t("Back to your offices")}
             </a>
           </div>
         </CenteredScreen>

@@ -3,6 +3,33 @@ import clsx from "clsx"
 import { useEffect, useState, type CSSProperties } from "react"
 import { Form, useSearchParams } from "react-router"
 import { DUSK, HotseatLockup } from "~/components/HotseatMark"
+import { useI18n } from "~/i18n/I18nProvider"
+import { LOCALES, LOCALE_NAMES } from "~/i18n/locales"
+import { useLocale } from "~/i18n/useLocale"
+
+/** The languages, each in itself — for someone not signed in yet. */
+const LanguageSwitch = () => {
+  const [locale, pickLocale] = useLocale()
+  return (
+    <div className="flex gap-1 text-[13px] font-bold">
+      {LOCALES.map((l) => (
+        <button
+          key={l}
+          type="button"
+          lang={l}
+          aria-pressed={l === locale}
+          onClick={() => pickLocale(l)}
+          className={clsx(
+            "rounded-full px-3 py-1.5 transition-colors",
+            l === locale ? "bg-[#fbf6ee]/15 text-[#f4efe6]" : "text-[#9aa1c0] hover:text-[#f4efe6]"
+          )}
+        >
+          {LOCALE_NAMES[l]}
+        </button>
+      ))}
+    </div>
+  )
+}
 
 /** The page's night blue (a step darker than the mark's tile, so it stands on it). */
 const NIGHT = "#1f2850"
@@ -141,8 +168,8 @@ const BUTTON =
  */
 export function LoginScreen({
   redirectTo,
-  title = "Find your seat.",
-  subtitle = "Book a desk, see who's in, and walk into an office that's ready for you.",
+  title,
+  subtitle,
 }: {
   redirectTo?: string
   /** E.g. "Join Acme" when signing in from an invitation. */
@@ -154,6 +181,7 @@ export function LoginScreen({
   // else a ?redirectTo query, else the auth default ("/").
   const target = redirectTo ?? searchParams.get("redirectTo") ?? undefined
   const isAnimated = useIsAnimated()
+  const { t } = useI18n()
 
   return (
     <main
@@ -162,15 +190,19 @@ export function LoginScreen({
     >
       <NightSky isAnimated={isAnimated} />
 
-      <header className="relative z-10 mx-auto w-full max-w-6xl px-6 py-7">
+      <header className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-6 py-7">
         <HotseatLockup size={40} />
+        <LanguageSwitch />
       </header>
 
       <section className="relative z-10 flex flex-1 flex-col items-center justify-center gap-5 px-6 py-6 text-center">
         <h1 className="max-w-2xl text-[clamp(36px,6vw,56px)] leading-[1.05] font-black tracking-[-0.02em]">
-          {title}
+          {title ?? t("Find your seat.")}
         </h1>
-        <p className="max-w-md text-lg text-[#c9cde0]">{subtitle}</p>
+        <p className="max-w-md text-lg text-[#c9cde0]">
+          {subtitle ??
+            t("Book a desk, see who's in, and walk into an office that's ready for you.")}
+        </p>
         <div className="mt-2 flex w-full max-w-[360px] flex-col gap-3">
           <Form method="get" action={`/auth/${GoogleStrategyDefaultName}`}>
             {target && <input type="hidden" name="redirectTo" value={target} />}
@@ -179,7 +211,7 @@ export function LoginScreen({
               className={clsx(BUTTON, "bg-[#fbf6ee] text-[#2c3866] hover:bg-white")}
             >
               <span className="iconify-color devicon--google" />
-              Continue with Google
+              {t("Continue with Google")}
             </button>
           </Form>
           <Form method="get" action="/auth/github">
@@ -192,11 +224,13 @@ export function LoginScreen({
               )}
             >
               <span className="iconify devicon--github" />
-              Continue with GitHub
+              {t("Continue with GitHub")}
             </button>
           </Form>
         </div>
-        <p className="text-[13px] text-[#9aa1c0]">New here? Signing in creates your account.</p>
+        <p className="text-[13px] text-[#9aa1c0]">
+          {t("New here? Signing in creates your account.")}
+        </p>
       </section>
 
       <Horizon isAnimated={isAnimated} />

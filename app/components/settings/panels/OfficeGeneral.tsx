@@ -13,6 +13,8 @@ import { enclosedRegions } from "~/components/OfficeEditor/layout"
 import { isSeatable, type SceneObject } from "~/components/OfficeEditor/types"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { useProfile } from "~/utils/remix"
+import { useI18n } from "~/i18n/I18nProvider"
+import { msg } from "~/i18n/msg"
 
 interface OfficeRouteData {
   office: { name: string; slug: string; description?: string; thumbnail?: string }
@@ -34,6 +36,7 @@ export function OfficeGeneral() {
   const office = data?.office
   const isAdmin = useProfile().role === Role.ADMIN
   const { dialog, openDialog, close } = useSettings()
+  const { t } = useI18n()
   const fetcher = useFetcher<{ ok: boolean; slug?: string; error?: string }>()
   const action = `/api/settings/office/${slug}/${officeSlug}/general`
 
@@ -55,10 +58,10 @@ export function OfficeGeneral() {
     const desks = objects.filter((o) => isSeatable(o.type))
     const assigned = desks.filter((o) => o.assignee).length
     return [
-      { label: "Desks", value: desks.length },
-      { label: "Assigned", value: assigned },
-      { label: "Free desks", value: desks.length - assigned },
-      { label: "Rooms", value: enclosedRegions(objects).length },
+      { label: msg("Desks"), value: desks.length },
+      { label: msg("Assigned"), value: assigned },
+      { label: msg("Free desks"), value: desks.length - assigned },
+      { label: msg("Rooms"), value: enclosedRegions(objects).length },
     ]
   }, [data?.initialObjects])
 
@@ -82,16 +85,16 @@ export function OfficeGeneral() {
               className="flex h-36 w-56 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-surface text-sm font-bold text-muted transition-colors enabled:hover:border-accent/50 enabled:hover:text-accent disabled:cursor-default"
             >
               <ImagePlus className="size-6" />
-              {isAdmin ? "Upload a cover" : "No cover"}
+              {isAdmin ? t("Upload a cover") : t("No cover")}
             </button>
           )}
           {isAdmin && office.thumbnail && (
             <div className="flex gap-2">
               <Button size="sm" variant="secondary" onPress={() => openDialog("set-cover")}>
-                Change
+                {t("Change")}
               </Button>
               <Button size="sm" variant="danger-soft" onPress={() => openDialog("delete-cover")}>
-                Remove
+                {t("Remove")}
               </Button>
             </div>
           )}
@@ -108,14 +111,18 @@ export function OfficeGeneral() {
             <NameField
               rename={rename}
               urlPrefix={`/app/o/${slug}/offices/`}
-              warning="Renaming changes this office's URL. Old links to it keep working — they forward to the new one."
+              warning={t(
+                "Renaming changes this office's URL. Old links to it keep working — they forward to the new one."
+              )}
             />
             <TextField name="description" value={description} onChange={setDescription}>
-              <Label>Description</Label>
-              <Input placeholder="e.g. 3rd floor, entrance from the courtyard (optional)" />
+              <Label>{t("Description")}</Label>
+              <Input placeholder={t("e.g. 3rd floor, entrance from the courtyard (optional)")} />
             </TextField>
           </fieldset>
-          {!isAdmin && <p className="text-xs text-muted">Only admins can edit office details.</p>}
+          {!isAdmin && (
+            <p className="text-xs text-muted">{t("Only admins can edit office details.")}</p>
+          )}
           {fetcher.data?.ok === false && fetcher.data.error && (
             <p className="text-sm font-bold text-danger">{fetcher.data.error}</p>
           )}
@@ -124,7 +131,7 @@ export function OfficeGeneral() {
 
       <SettingsCard className="flex flex-col gap-4">
         <div className="flex items-center justify-between gap-4">
-          <CardTitle>At a glance</CardTitle>
+          <CardTitle>{t("At a glance")}</CardTitle>
           {/* The editor is computer-only (CSS, not a hook: right in the first paint). */}
           <Button
             size="sm"
@@ -135,15 +142,17 @@ export function OfficeGeneral() {
               window.dispatchEvent(new Event(EDIT_LAYOUT_EVENT))
             }}
           >
-            <Pencil className="size-4" /> Edit layout
+            <Pencil className="size-4" /> {t("Edit layout")}
           </Button>
-          <p className="text-right text-xs text-muted md:hidden">Edit the layout on a computer</p>
+          <p className="text-right text-xs text-muted md:hidden">
+            {t("Edit the layout on a computer")}
+          </p>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {stats.map((s) => (
             <div key={s.label} className="rounded-2xl bg-surface px-4 py-3.5">
               <p className="text-2xl font-black tabular-nums text-foreground">{s.value}</p>
-              <p className="text-sm text-muted">{s.label}</p>
+              <p className="text-sm text-muted">{t(s.label)}</p>
             </div>
           ))}
         </div>
@@ -163,13 +172,13 @@ export function OfficeGeneral() {
       )}
 
       {dialog === "set-cover" && (
-        <SetLogoDialog action={action} intent="set-cover" title="Office cover" />
+        <SetLogoDialog action={action} intent="set-cover" title={t("Office cover")} />
       )}
       {dialog === "delete-cover" && (
         <DeleteLogoDialog
           action={action}
           intent="delete-cover"
-          title="Remove this office's cover?"
+          title={t("Remove this office's cover?")}
         />
       )}
     </>

@@ -14,6 +14,7 @@ import {
   useNameCheck,
 } from "~/components/CreateModal"
 import { getCore } from "~/core/get-core"
+import { useI18n } from "~/i18n/I18nProvider"
 import { requireUser } from "~/services/session.server"
 
 enum Intent {
@@ -51,6 +52,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 export const NewOrganization = () => {
   const [_, setSearchParams] = useSearchParams()
+  const { t } = useI18n()
   const { name, setName, availability } = useNameCheck({
     action: "/api/new-organization",
     intent: Intent.CHECK_AVAILABILITY,
@@ -74,7 +76,7 @@ export const NewOrganization = () => {
               <div className="relative -mt-12 flex flex-col items-center gap-[18px] px-[30px] pb-7">
                 {/* The logo overlaps the banner, like a profile picture. */}
                 <label
-                  aria-label={logo.preview ? "Change logo" : "Add a logo"}
+                  aria-label={logo.preview ? t("Change logo") : t("Add a logo")}
                   className="relative flex size-24 cursor-pointer flex-col items-center justify-center gap-0.5 overflow-hidden rounded-full border-4 border-overlay bg-surface-secondary text-[11px] font-extrabold text-muted shadow-md"
                 >
                   <input
@@ -92,7 +94,7 @@ export const NewOrganization = () => {
                   ) : (
                     <>
                       <ImagePlus size={22} />
-                      Logo
+                      {t("Logo")}
                     </>
                   )}
                   {logo.isUploading && (
@@ -102,8 +104,8 @@ export const NewOrganization = () => {
                   )}
                 </label>
                 <TitleNameField
-                  label="New organization"
-                  placeholder="Name your team"
+                  label={t("New organization")}
+                  placeholder={t("Name your team")}
                   name={name}
                   onChange={setName}
                   path="…/o/"
@@ -112,7 +114,7 @@ export const NewOrganization = () => {
                   isCentered
                 />
                 <p className="text-center text-[13px] leading-normal text-muted">
-                  You&apos;ll be its admin. Invite your team once it&apos;s set up.
+                  {t("You'll be its admin. Invite your team once it's set up.")}
                 </p>
                 <div className="flex w-full flex-col gap-2">
                   <Button
@@ -125,10 +127,10 @@ export const NewOrganization = () => {
                     size="lg"
                     fullWidth
                   >
-                    Create organization
+                    {t("Create organization")}
                   </Button>
                   <Button type="button" variant="ghost" fullWidth onPress={close}>
-                    Cancel
+                    {t("Cancel")}
                   </Button>
                 </div>
               </div>

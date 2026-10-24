@@ -1,5 +1,5 @@
-import { RoundedBox } from "@react-three/drei"
 import { PALETTE } from "../palette"
+import { RoundedBox } from "./RoundedBox"
 import { Cushion, Throw } from "./props"
 import { look } from "./looks"
 import { FLUSH_INSET } from "./dimensions"

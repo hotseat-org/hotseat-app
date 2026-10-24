@@ -5,6 +5,7 @@ import { PeopleContext, type People } from "../people"
 import { Scene } from "./Scene"
 import { FpsMeter } from "./FpsMeter"
 import type { FitInsets } from "./CameraFit"
+import { I18nBridge, useI18n } from "~/i18n/I18nProvider"
 
 interface Props {
   store: EditorStore
@@ -24,6 +25,7 @@ interface Props {
  * simple (top-down SVG) view never downloads them.
  */
 const SceneCanvas = ({ store, people, readOnly, dark, fitInsets, showStats, onStats }: Props) => {
+  const i18n = useI18n()
   return (
     <Canvas
       shadows
@@ -38,7 +40,9 @@ const SceneCanvas = ({ store, people, readOnly, dark, fitInsets, showStats, onSt
         {/* Bridge the store into the R3F tree — context doesn't cross the Canvas. */}
         <EditorStoreContextProvider value={store}>
           <PeopleContext.Provider value={people}>
-            <Scene readOnly={readOnly} dark={dark} fitInsets={fitInsets} />
+            <I18nBridge value={i18n}>
+              <Scene readOnly={readOnly} dark={dark} fitInsets={fitInsets} />
+            </I18nBridge>
           </PeopleContext.Provider>
         </EditorStoreContextProvider>
         {showStats && <FpsMeter onSample={onStats} />}

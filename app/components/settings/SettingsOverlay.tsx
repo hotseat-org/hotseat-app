@@ -30,29 +30,41 @@ import { useUser } from "~/utils/remix"
 import { useOrganizationContext } from "~/utils/hooks/useProfileData"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { ThumbAvatar } from "~/components/office/shell-ui"
+import { useI18n } from "~/i18n/I18nProvider"
+import { msg } from "~/i18n/msg"
 
 const userLinks: SettingsLink[] = [
-  { id: "profile", label: "Profile", icon: UserRound, description: "Your name and photo." },
+  {
+    id: "profile",
+    label: msg("Profile"),
+    icon: UserRound,
+    description: msg("Your name and photo."),
+  },
   {
     id: "appearance",
-    label: "Appearance",
+    label: msg("Appearance"),
     icon: Palette,
-    description: "Light or dark, and your colour scheme.",
+    description: msg("Language, light or dark, and your colour scheme."),
   },
   {
     id: "pet",
-    label: "Desk pet",
+    label: msg("Desk pet"),
     icon: PawPrint,
-    description: "Who sits at your desk on the days you book it.",
+    description: msg("Who sits at your desk on the days you book it."),
   },
   {
     id: "organizations",
-    label: "Organizations",
+    label: msg("Organizations"),
     icon: Building,
-    description: "The organizations you belong to.",
+    description: msg("The organizations you belong to."),
   },
-  { id: "invitations", label: "Invitations", icon: Mail, description: "Invites waiting for you." },
-  { id: "danger", label: "Danger zone", icon: AlertTriangle, danger: true },
+  {
+    id: "invitations",
+    label: msg("Invitations"),
+    icon: Mail,
+    description: msg("Invites waiting for you."),
+  },
+  { id: "danger", label: msg("Danger zone"), icon: AlertTriangle, danger: true },
 ]
 
 const userPanels: Record<string, ReactNode> = {
@@ -75,11 +87,11 @@ const orgPanels: Record<string, ReactNode> = {
 const officeLinks: SettingsLink[] = [
   {
     id: "general",
-    label: "General",
+    label: msg("General"),
     icon: SlidersHorizontal,
-    description: "Name, cover and a quick look at this office.",
+    description: msg("Name, cover and a quick look at this office."),
   },
-  { id: "danger", label: "Danger zone", icon: AlertTriangle, danger: true },
+  { id: "danger", label: msg("Danger zone"), icon: AlertTriangle, danger: true },
 ]
 
 const officePanels: Record<string, ReactNode> = {
@@ -90,11 +102,12 @@ const officePanels: Record<string, ReactNode> = {
 function UserSettings({ section }: { section: string }) {
   const { selectSection, close } = useSettings()
   const user = useUser()
+  const { t } = useI18n()
   const name = user.displayName || user.email.split("@")[0]
 
   return (
     <SettingsShell
-      title="User settings"
+      title={t("User settings")}
       identity={{
         visual: (
           <ThumbAvatar
@@ -106,7 +119,7 @@ function UserSettings({ section }: { section: string }) {
         name,
         sub: user.email,
       }}
-      groupLabel="Account"
+      groupLabel={t("Account")}
       links={userLinks}
       activeSection={section}
       onSelect={selectSection}
@@ -122,6 +135,7 @@ function OrgSettings({ section }: { section: string }) {
   const { selectSection, close } = useSettings()
   const { organization, organizations, profile } = useOrganizationContext()
   const memberCount = organizations.find((o) => o.slug === organization.slug)?.memberCount
+  const { t, tn } = useI18n()
 
   // Org settings only make sense over an org page (slug in the URL), and are an
   // admin's: a member following a ?settings=org/… link gets nothing (the server
@@ -131,35 +145,35 @@ function OrgSettings({ section }: { section: string }) {
   const links: SettingsLink[] = [
     {
       id: "general",
-      label: "General",
+      label: msg("General"),
       icon: SlidersHorizontal,
-      description: "How your organization appears to its members.",
+      description: msg("How your organization appears to its members."),
     },
     {
       id: "members",
-      label: "Members",
+      label: msg("Members"),
       icon: Users,
       count: memberCount,
-      description: "Who's in the organization, and their roles.",
+      description: msg("Who's in the organization, and their roles."),
     },
     {
       id: "invitations",
-      label: "Invitations",
+      label: msg("Invitations"),
       icon: Mail,
-      description: "Invite people by email or with a link.",
+      description: msg("Invite people by email or with a link."),
     },
     {
       id: "offices",
-      label: "Offices",
+      label: msg("Offices"),
       icon: Building2,
-      description: "The organization's offices. Deleting one removes its layout and bookings.",
+      description: msg("The organization's offices. Deleting one removes its layout and bookings."),
     },
-    { id: "danger", label: "Danger zone", icon: AlertTriangle, danger: true },
+    { id: "danger", label: msg("Danger zone"), icon: AlertTriangle, danger: true },
   ]
 
   return (
     <SettingsShell
-      title="Organization settings"
+      title={t("Organization settings")}
       identity={{
         visual: (
           <ThumbAvatar
@@ -169,11 +183,11 @@ function OrgSettings({ section }: { section: string }) {
           />
         ),
         name: organization.name,
-        sub: `${profile.role === Role.ADMIN ? "Admin" : "Member"}${
-          memberCount !== undefined ? ` · ${memberCount} member${memberCount === 1 ? "" : "s"}` : ""
+        sub: `${profile.role === Role.ADMIN ? t("Admin") : t("Member")}${
+          memberCount !== undefined ? ` · ${tn(memberCount, "{n} member", "{n} members")}` : ""
         }`,
       }}
-      groupLabel="Organization"
+      groupLabel={t("Organization")}
       links={links}
       activeSection={section}
       onSelect={selectSection}
@@ -194,23 +208,24 @@ export function OfficeSettings({ section }: { section: string }) {
   const { selectSection, close } = useSettings()
   const { organization } = useOrganizationContext()
   const office = useOfficeData()?.office
+  const { t } = useI18n()
 
   // Office settings only make sense over an office page.
   if (!officeSlug) return null
 
   return (
     <SettingsShell
-      title="Office settings"
+      title={t("Office settings")}
       identity={{
         visual: (
           <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-accent/15 text-accent">
             <Building2 className="size-[22px]" />
           </span>
         ),
-        name: office?.name ?? "Office",
-        sub: `${organization.name} · office`,
+        name: office?.name ?? t("Office"),
+        sub: `${organization.name} · ${t("office")}`,
       }}
-      groupLabel="Office"
+      groupLabel={t("Office")}
       links={officeLinks}
       activeSection={section}
       onSelect={selectSection}

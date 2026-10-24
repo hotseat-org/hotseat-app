@@ -1,6 +1,6 @@
 import { Button, CloseButton, toast } from "@heroui/react"
 import clsx from "clsx"
-import { CalendarDays, MapPin, Pin } from "lucide-react"
+import { CalendarDays, MapPin, Pin, Repeat, Star } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useFetcher, useNavigate, useParams } from "react-router"
 import { PANEL } from "./shell-ui"
@@ -8,9 +8,12 @@ import { useEditorStore } from "~/components/OfficeEditor/store"
 import type { MyBooking } from "~/core/reservation/mine"
 import type { MyBookingsData } from "~/routes/api.my-bookings.$slug"
 import type { ReservationActionData } from "~/routes/api.reservations.$slug.$officeSlug"
-import { formatLong, formatShort, type Day } from "~/utils/booking"
+import type { Day } from "~/utils/booking"
+import { useI18n } from "~/i18n/I18nProvider"
+import type { Translator } from "~/i18n/translate"
 
-const deskText = (label?: string) => (label ? `Desk ${label}` : "A desk")
+const deskText = ({ t }: Translator, label?: string) =>
+  label ? t("Desk {label}", { label }) : t("A desk")
 
 /**
  * "My bookings": your upcoming days in every office of the organization, and
@@ -35,6 +38,8 @@ export const MyBookings = ({
   style?: React.CSSProperties
 }) => {
   const { slug, officeSlug } = useParams()
+  const i18n = useI18n()
+  const { t, tn, format } = i18n
   const navigate = useNavigate()
   const list = useFetcher<MyBookingsData>()
   const cancel = useFetcher<ReservationActionData>()
@@ -112,7 +117,7 @@ export const MyBookings = ({
 
   return (
     <section
-      aria-label="My bookings"
+      aria-label={t("My bookings")}
       className={clsx(
         PANEL,
         "absolute flex flex-col p-4",
@@ -122,19 +127,20 @@ export const MyBookings = ({
     >
       <header className="mb-3 flex items-start justify-between">
         <div>
-          <h2 className="text-lg font-extrabold text-foreground">My bookings</h2>
+          <h2 className="text-lg font-extrabold text-foreground">{t("My bookings")}</h2>
           <p className="text-xs text-muted">
             {data
               ? count
-                ? `${count} upcoming ${count === 1 ? "day" : "days"}`
-                : "Nothing booked yet"
-              : "Loading…"}
+                ? tn(count, "{n} upcoming day", "{n} upcoming days")
+                : t("Nothing booked yet")
+              : t("Loading…")}
           </p>
         </div>
-        {!isScreen && <CloseButton aria-label="Close my bookings" onPress={onClose} />}
+        {!isScreen && <CloseButton aria-label={t("Close my bookings")} onPress={onClose} />}
       </header>
 
       <div className="-mx-1 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-1">
+        <HereSection onShow={onShow} />
         {data?.permanent.map((p) => (
           <button
             key={p.deskId}
@@ -147,9 +153,11 @@ export const MyBookings = ({
             </span>
             <span className="min-w-0">
               <span className="block text-sm font-bold text-foreground">
-                Permanent: {deskText(p.deskLabel)}
+                {t("Permanent: {desk}", { desk: deskText(i18n, p.deskLabel) })}
               </span>
-              <span className="block truncate text-xs text-muted">{p.officeName} · every day</span>
+              <span className="block truncate text-xs text-muted">
+                {p.officeName} · {t("every day")}
+              </span>
             </span>
           </button>
         ))}
@@ -169,11 +177,11 @@ export const MyBookings = ({
               <CalendarDays className="size-5" />
             </div>
             <div>
-              <p className="text-sm font-bold text-foreground">No upcoming bookings</p>
+              <p className="text-sm font-bold text-foreground">{t("No upcoming bookings")}</p>
               <p className="mt-0.5 text-xs text-muted">
                 {isScreen
-                  ? "Pick a day at the bottom of the Office tab, then tap a free desk."
-                  : "Pick a day at the bottom, then click a free desk on the map."}
+                  ? t("Pick a day at the bottom of the Office tab, then tap a free desk.")
+                  : t("Pick a day at the bottom, then click a free desk on the map.")}
               </p>
             </div>
           </div>
@@ -182,8 +190,10 @@ export const MyBookings = ({
         {days.map(([date, bookings]) => (
           <div key={date} className="flex flex-col gap-1.5">
             <p className="text-[0.64rem] font-extrabold uppercase tracking-wider text-muted">
-              {formatLong(date)}
-              {date === bookings[0].today && <span className="ml-1.5 text-accent">Today</span>}
+              {format.long(date)}
+              {date === bookings[0].today && (
+                <span className="ml-1.5 text-accent">{t("Today")}</span>
+              )}
             </p>
             {bookings.map((b) => {
               const key = keyOf(b)
@@ -200,25 +210,25 @@ export const MyBookings = ({
                   {asking ? (
                     <>
                       <p className="min-w-0 flex-1 text-sm font-semibold text-foreground">
-                        Cancel {formatShort(b.date)}?
+                        {t("Cancel {day}?", { day: format.short(b.date) })}
                       </p>
                       <Button size="sm" variant="ghost" onPress={() => setConfirming(null)}>
-                        Keep
+                        {t("Keep")}
                       </Button>
                       <Button size="sm" variant="danger" onPress={() => doCancel(b)}>
-                        Cancel it
+                        {t("Cancel it")}
                       </Button>
                     </>
                   ) : (
                     <>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-bold text-foreground">
-                          {deskText(b.deskLabel)}
+                          {deskText(i18n, b.deskLabel)}
                         </p>
                         <p className="truncate text-xs text-muted">{b.officeName}</p>
                       </div>
                       <Button size="sm" variant="ghost" onPress={() => show(b)}>
-                        <MapPin className="size-4" /> Show
+                        <MapPin className="size-4" /> {t("Show")}
                       </Button>
                       <Button
                         size="sm"
@@ -226,7 +236,7 @@ export const MyBookings = ({
                         className="text-danger"
                         onPress={() => setConfirming(key)}
                       >
-                        Cancel
+                        {t("Cancel")}
                       </Button>
                     </>
                   )}
@@ -237,5 +247,90 @@ export const MyBookings = ({
         ))}
       </div>
     </section>
+  )
+}
+
+/**
+ * In this office: your usual desk (booked for you on its weekdays) and your
+ * favourite desks — Show finds one on the map; the star takes it off the list.
+ */
+const HereSection = ({ onShow }: { onShow?: () => void }) => {
+  const objects = useEditorStore((s) => s.objects)
+  const { favorites, usual } = useEditorStore((s) => s.booking.preferences)
+  const setPreference = useEditorStore((s) => s.booking.setPreference)
+  const applyFavorite = useEditorStore((s) => s.applyFavorite)
+  const spotlightSeat = useEditorStore((s) => s.spotlightSeat)
+  const i18n = useI18n()
+  const { t, format } = i18n
+  const deskOf = (id: string) => objects.find((o) => o.id === id)
+  const usualDesk = usual && deskOf(usual.deskId)
+  const starred = favorites.map(deskOf).filter((d) => !!d)
+  if (!usualDesk && !starred.length) return null
+  const show = (id: string) => {
+    spotlightSeat(id)
+    onShow?.()
+  }
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="text-[0.64rem] font-black uppercase tracking-wider text-muted">
+        {t("In this office")}
+      </p>
+      {usualDesk && usual && (
+        <div className="flex items-center gap-3 rounded-xl bg-accent/12 p-3">
+          <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent text-accent-foreground">
+            <Repeat className="size-4" />
+          </span>
+          <button
+            type="button"
+            onClick={() => show(usualDesk.id)}
+            className="min-w-0 flex-1 text-left"
+          >
+            <span className="block text-sm font-bold text-foreground">
+              {t("Usual: {desk}", { desk: deskText(i18n, usualDesk.label) })}
+            </span>
+            <span className="block truncate text-xs text-muted">
+              {t("Booked for you every {days}", {
+                days: usual.weekdays.map((w) => format.weekShort()[w - 1]).join(", "),
+              })}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setPreference({ intent: "usual-clear" })}
+            className="text-xs font-bold text-muted hover:text-foreground"
+          >
+            {t("Remove")}
+          </button>
+        </div>
+      )}
+      {starred.map((desk) => (
+        <div
+          key={desk.id}
+          className="flex items-center gap-3 rounded-xl bg-surface-secondary p-2.5"
+        >
+          <button
+            type="button"
+            aria-label={t("Remove {desk} from favourites", { desk: deskText(i18n, desk.label) })}
+            onClick={() => {
+              applyFavorite(desk.id, false)
+              setPreference({ intent: "favorite", deskId: desk.id, isFavorite: "false" })
+            }}
+            className="grid size-8 shrink-0 place-items-center rounded-lg text-warning hover:bg-warning/15"
+          >
+            <Star className="size-4" fill="currentColor" />
+          </button>
+          <span className="min-w-0 flex-1 truncate text-sm font-bold text-foreground">
+            {deskText(i18n, desk.label)}
+          </span>
+          <button
+            type="button"
+            onClick={() => show(desk.id)}
+            className="flex items-center gap-1 text-xs font-bold text-accent hover:underline"
+          >
+            <MapPin className="size-3.5" /> {t("Show")}
+          </button>
+        </div>
+      ))}
+    </div>
   )
 }

@@ -1,13 +1,13 @@
 import { Spinner } from "@heroui/react"
-import dayjs from "dayjs"
 import { Mail } from "lucide-react"
-import pluralize from "pluralize"
 import { SettingsCard } from "../ui"
 import { useUserSettingsData } from "../data"
 import { ButtonLink } from "~/components/ButtonLink"
 import { ThumbAvatar } from "~/components/office/shell-ui"
+import { useI18n } from "~/i18n/I18nProvider"
 
 export function UserInvitations() {
+  const { t, tn, format } = useI18n()
   // Loaded on the server with the page.
   const invitations = useUserSettingsData("invitations")?.invitations
 
@@ -24,9 +24,9 @@ export function UserInvitations() {
         <span className="grid size-12 place-items-center rounded-2xl bg-accent/12 text-accent">
           <Mail className="size-6" />
         </span>
-        <p className="font-black text-foreground">No invitations</p>
+        <p className="font-black text-foreground">{t("No invitations")}</p>
         <p className="max-w-xs text-sm text-muted">
-          When someone invites you to their organization, it shows up here.
+          {t("When someone invites you to their organization, it shows up here.")}
         </p>
       </SettingsCard>
     )
@@ -45,13 +45,13 @@ export function UserInvitations() {
             <div className="min-w-0 flex-1">
               <p className="truncate font-black text-foreground">{org.name}</p>
               <p className="text-sm text-muted">
-                {org.members.totalCount} {pluralize("member", org.members.totalCount)} · expires{" "}
-                {dayjs(invitation.expiresAt).format("MMM D")}
+                {tn(org.members.totalCount, "{n} member", "{n} members")} ·{" "}
+                {t("expires {date}", { date: format.dateShort(invitation.expiresAt) })}
               </p>
             </div>
             {/* Accepting = the email-invite confirm route (joins, then opens the org). */}
             <ButtonLink to={`/join/${invitation.organizationSlug}`} variant="primary" size="sm">
-              Accept
+              {t("Accept")}
             </ButtonLink>
           </SettingsCard>
         )

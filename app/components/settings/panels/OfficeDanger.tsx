@@ -7,28 +7,32 @@ import { useOfficeData } from "./OfficeGeneral"
 import { Button } from "~/components/Button"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { useProfile } from "~/utils/remix"
+import { useI18n } from "~/i18n/I18nProvider"
 
 export function OfficeDanger() {
   const { dialog, openDialog } = useSettings()
   const { officeSlug } = useParams()
   const isAdmin = useProfile().role === Role.ADMIN
-  const name = useOfficeData()?.office.name ?? "this office"
+  const { t } = useI18n()
+  const name = useOfficeData()?.office.name ?? t("this office")
 
   return (
     <>
       <SettingsCard className="flex flex-col gap-4 border-danger/40 sm:flex-row sm:items-center">
         <div className="flex-1">
-          <p className="font-black text-foreground">Delete this office</p>
+          <p className="font-black text-foreground">{t("Delete this office")}</p>
           <p className="mt-1 text-sm text-muted">
-            Removes {name}, its layout and all desk assignments. There is no going back.
+            {t("Removes {name}, its layout and all desk assignments. There is no going back.", {
+              name,
+            })}
           </p>
         </div>
         {isAdmin ? (
           <Button variant="danger" onPress={() => openDialog("delete-office")}>
-            Delete office
+            {t("Delete office")}
           </Button>
         ) : (
-          <p className="text-xs text-muted">Only admins can delete offices.</p>
+          <p className="text-xs text-muted">{t("Only admins can delete offices.")}</p>
         )}
       </SettingsCard>
       {dialog === "delete-office" && (
@@ -55,6 +59,7 @@ export function DeleteOfficeDialog({
   const { closeDialog } = useSettings()
   const fetcher = useFetcher<{ ok?: boolean }>()
   const [typed, setTyped] = useState("")
+  const { t } = useI18n()
   // Deleted without leaving the page: close (the list has already refreshed).
   useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data?.ok) closeDialog()
@@ -74,21 +79,22 @@ export function DeleteOfficeDialog({
               <input type="hidden" name="intent" value="delete-office" />
               {from && <input type="hidden" name="from" value={from} />}
               <Modal.Header>
-                <p>Delete {name}?</p>
+                <p>{t("Delete {name}?", { name })}</p>
               </Modal.Header>
               <Modal.Body className="flex flex-col gap-3">
                 <p className="text-sm text-muted">
-                  Its layout, every permanent desk and everyone&apos;s upcoming bookings in it are
-                  deleted. There is no going back.
+                  {t(
+                    "Its layout, every permanent desk and everyone's upcoming bookings in it are deleted. There is no going back."
+                  )}
                 </p>
                 <TextField value={typed} onChange={setTyped} autoFocus>
-                  <Label>Type {name} to confirm</Label>
+                  <Label>{t("Type {name} to confirm", { name })}</Label>
                   <Input autoComplete="off" />
                 </TextField>
               </Modal.Body>
               <Modal.Footer>
                 <Button type="button" variant="secondary" onPress={closeDialog}>
-                  Cancel
+                  {t("Cancel")}
                 </Button>
                 <Button
                   type="submit"
@@ -96,7 +102,7 @@ export function DeleteOfficeDialog({
                   isDisabled={!isConfirmed}
                   isPending={fetcher.state !== "idle"}
                 >
-                  Delete office
+                  {t("Delete office")}
                 </Button>
               </Modal.Footer>
             </fetcher.Form>

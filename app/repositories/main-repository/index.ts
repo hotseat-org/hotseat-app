@@ -1,4 +1,16 @@
 import {
+  addFavoriteDesk,
+  addToWaitlist,
+  findFavoriteDesks,
+  findUsualDesks,
+  findWaitlist,
+  markUsualDeskBooked,
+  removeFavoriteDesk,
+  removeFromWaitlist,
+  removeUsualDesk,
+  setUsualDesk,
+} from "./methods/desk-preference"
+import {
   createDeskReleases,
   deleteDeskReleases,
   deleteStaleDeskReleases,
@@ -79,6 +91,14 @@ export const createMainMysqlRepository = (): MainRepository => {
       delete: deleteOffice,
       saveLayout: saveOfficeLayout,
     },
+    favoriteDesk: { findMany: findFavoriteDesks, add: addFavoriteDesk, remove: removeFavoriteDesk },
+    usualDesk: {
+      findMany: findUsualDesks,
+      set: setUsualDesk,
+      markBooked: markUsualDeskBooked,
+      remove: removeUsualDesk,
+    },
+    waitlist: { findMany: findWaitlist, add: addToWaitlist, remove: removeFromWaitlist },
     deskRelease: {
       findMany: findDeskReleases,
       create: createDeskReleases,

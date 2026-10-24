@@ -1,7 +1,7 @@
 import clsx from "clsx"
 import { useEditorStore } from "~/components/OfficeEditor/store"
 import type { useWeekPresence } from "~/components/OfficeEditor/useBooking"
-import { formatLong } from "~/utils/booking"
+import { useI18n } from "~/i18n/I18nProvider"
 
 /**
  * Someone's week at a glance: Mon–Fri, filled on the days they have a desk
@@ -15,12 +15,15 @@ export const WeekDots = ({
   presence: ReturnType<typeof useWeekPresence>
 }) => {
   const day = useEditorStore((s) => s.booking.day)
+  const { t, format } = useI18n()
   const inDays = presence.days.filter((d) => presence.isIn(email, d))
   return (
     <span
       className="flex gap-0.5"
       aria-label={
-        inDays.length ? `In this week: ${inDays.map(formatLong).join(", ")}` : "Not in this week"
+        inDays.length
+          ? t("In this week: {days}", { days: inDays.map(format.long).join(", ") })
+          : t("Not in this week")
       }
     >
       {presence.days.map((d) => (

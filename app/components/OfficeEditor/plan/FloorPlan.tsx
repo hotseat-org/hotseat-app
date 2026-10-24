@@ -1,5 +1,6 @@
 import { Button } from "@heroui/react"
 import clsx from "clsx"
+import { createPortal } from "react-dom"
 import { Pin, RotateCcw, RotateCw, Scan } from "lucide-react"
 import {
   useCallback,
@@ -20,13 +21,15 @@ import { personByEmail, usePeople, type Person } from "../people"
 import { SeatAvatar } from "../SeatAvatar"
 import { spotFor } from "../seatSpot"
 import { SeatCardBody, useSeatCard } from "../seatCard"
-import { useDesksOnDay, type DeskOnDay } from "../useBooking"
+import { heatColor } from "../heatmap"
+import { useDeskFilter, useDesksOnDay, type DeskOnDay } from "../useBooking"
 import { GRID, isEdgeType, isMarker, isSeatable, type SceneObject } from "../types"
 import { isTypingTarget } from "../keyboard"
 import { createWheelReader, getSmoothZoomFactor, getStepZoomFactor } from "../wheel"
 import { WALL } from "../objects/dimensions"
 import { floorRect, mix, shade, sortBottomToTop, type Drawable, type Extent } from "./shapes"
 import { drawPiece, WINDOW_GLASS } from "./kits"
+import { useI18n } from "~/i18n/I18nProvider"
 
 /** Screen pixels per plan unit: the zoom range. */
 const MIN_K = 8
@@ -132,6 +135,7 @@ export const FloorPlan = ({
   padRight?: number
   phoneChrome?: { top: number; bottom: number }
 }) => {
+  const { t } = useI18n()
   const layout = useEditorStore((s) => s.objects)
   const fitNonce = useEditorStore((s) => s.fitNonce)
   const requestFit = useEditorStore((s) => s.requestFit)
@@ -140,6 +144,9 @@ export const FloorPlan = ({
   const bookingOn = useEditorStore((s) => s.booking.enabled)
   const past = useEditorStore((s) => s.booking.day < s.booking.today)
   const { desks: deskStates } = useDesksOnDay()
+  const matchesFilter = useDeskFilter()
+  // Insights' heatmap: desks on coloured pads, tagged with their share of days.
+  const heatmap = useEditorStore((s) => s.heatmap)
   const people = usePeople()
   const card = useSeatCard()
   const surfaces = dark ? SURFACES.dark : SURFACES.light
@@ -175,12 +182,27 @@ export const FloorPlan = ({
         desks,
         wall: surfaces.wall,
         floorInside: surfaces.floorInside,
-        bookable: bookingOn && !past,
+        bookable: bookingOn && !past && !heatmap,
+        matches: matchesFilter,
+        heat: heatmap ? { ratios: heatmap.ratios, isDark: dark } : undefined,
+        freeTitle: t("Free — tap to book"),
         onDesk: (id) => {
           if (!moved.current) openSeatCard(id)
         },
       }),
-    [objects, desks, surfaces.wall, surfaces.floorInside, bookingOn, past, openSeatCard]
+    [
+      objects,
+      desks,
+      surfaces.wall,
+      surfaces.floorInside,
+      bookingOn,
+      past,
+      openSeatCard,
+      matchesFilter,
+      heatmap,
+      dark,
+      t,
+    ]
   )
 
   useLayoutEffect(() => {
@@ -450,6 +472,7 @@ export const FloorPlan = ({
 
       {/* Who sits where — HTML, at least MIN_AVATAR_PX at any zoom. */}
       {view &&
+        !heatmap &&
         [...scene.occupants.values()].map((o) =>
           o.id === openId ? null : (
             <Occupant
@@ -468,12 +491,49 @@ export const FloorPlan = ({
         )}
 
       {/* Name tags — HTML, so they stay legible at any zoom. */}
+      {/* Heatmap: every desk's share of days in use. */}
       {view &&
+        heatmap &&
+        desks.map(({ desk }) =>
+          desk.id in heatmap.ratios ? (
+            <div
+              key={desk.id}
+              className="group absolute -translate-x-1/2 -translate-y-1/2 hover:z-10"
+              style={screen(desk.x, desk.z)}
+            >
+              {/* Just the share (desks sit close together); the desk on hover. */}
+              <span className="flex cursor-default items-center gap-1 whitespace-nowrap rounded-full border border-border bg-overlay/95 px-1.5 text-[10px] font-extrabold leading-4 text-foreground shadow-overlay">
+                {desk.label && (
+                  <span className="hidden opacity-70 group-hover:inline">{desk.label}</span>
+                )}
+                {/* The bar chart, flat: as full as the desk's share of days. */}
+                <span
+                  aria-hidden
+                  className="h-1.5 w-5 overflow-hidden rounded-full bg-foreground/10"
+                >
+                  <span
+                    className="block h-full rounded-full"
+                    style={{
+                      width: `${Math.max(4, heatmap.ratios[desk.id] * 100)}%`,
+                      background: heatColor(heatmap.ratios[desk.id], dark),
+                    }}
+                  />
+                </span>
+                {Math.round(heatmap.ratios[desk.id] * 100)}%
+              </span>
+            </div>
+          ) : null
+        )}
+
+      {view &&
+        !heatmap &&
         view.k >= TAG_ZOOM &&
         desks.map(({ desk, state }) => {
           if (desk.id === openId) return null
           const person = state.kind === "free" ? null : personByEmail(people, state.email)
           const free = state.kind === "free" && bookingOn && !past
+          // Filtered out: no tag for a free desk (its taker still shows).
+          if (free && !matchesFilter(desk)) return null
           // A free desk already shows its "+" ring: a tag only for its label.
           if (!person && !desk.label) return null
           const mine = !!person && person.email === people.me?.email
@@ -513,7 +573,7 @@ export const FloorPlan = ({
           isIconOnly
           size={phoneChrome ? "md" : "sm"}
           variant="ghost"
-          aria-label="Turn view left"
+          aria-label={t("Turn view left")}
           onPress={() => turnBy(1)}
         >
           <RotateCcw className="size-4" />
@@ -522,7 +582,7 @@ export const FloorPlan = ({
           isIconOnly
           size={phoneChrome ? "md" : "sm"}
           variant="ghost"
-          aria-label="Turn view right"
+          aria-label={t("Turn view right")}
           onPress={() => turnBy(-1)}
         >
           <RotateCw className="size-4" />
@@ -532,7 +592,7 @@ export const FloorPlan = ({
             isIconOnly
             size="md"
             variant="ghost"
-            aria-label="Fit the office"
+            aria-label={t("Fit the office")}
             onPress={requestFit}
           >
             <Scan className="size-4" />
@@ -541,31 +601,34 @@ export const FloorPlan = ({
       </div>
 
       {card &&
-        (phoneChrome ? (
-          // A bottom sheet over the shell; tapping the dimmed plan closes it.
-          <div className="fixed inset-0 z-50 flex flex-col justify-end">
-            <button
-              type="button"
-              aria-label="Close desk"
-              className="absolute inset-0 bg-scrim"
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => {
-                e.stopPropagation()
-                card.body.onClose()
-              }}
-            />
-            <div className="relative">
-              <SeatCardBody key={card.key} layout="sheet" {...card.body} />
-            </div>
-          </div>
-        ) : (
-          cardAt &&
-          view && (
-            <div className="absolute" style={screen(cardAt[0], cardAt[1])}>
-              <SeatCardBody key={card.key} {...card.body} />
-            </div>
-          )
-        ))}
+        (phoneChrome
+          ? // A bottom sheet over the shell; tapping the dimmed plan closes it.
+            // Portalled: the plan sits in its own (isolated) layer under the
+            // shell, and the sheet must cover the shell's dock and tabs.
+            createPortal(
+              <div className="fixed inset-0 z-50 flex flex-col justify-end">
+                <button
+                  type="button"
+                  aria-label={t("Close desk")}
+                  className="absolute inset-0 bg-scrim"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    card.body.onClose()
+                  }}
+                />
+                <div className="relative">
+                  <SeatCardBody key={card.key} layout="sheet" {...card.body} />
+                </div>
+              </div>,
+              document.body
+            )
+          : cardAt &&
+            view && (
+              <div className="absolute" style={screen(cardAt[0], cardAt[1])}>
+                <SeatCardBody key={card.key} {...card.body} />
+              </div>
+            ))}
     </div>
   )
 }
@@ -586,7 +649,8 @@ const Occupant = ({
   style: CSSProperties
   onClick: (e: React.MouseEvent) => void
 }) => {
-  const name = person ? (isMine ? "You" : person.name) : "Taken"
+  const { t } = useI18n()
+  const name = person ? (isMine ? t("You") : person.name) : t("Taken")
   return (
     <button
       type="button"
@@ -614,23 +678,26 @@ const DeskTag = ({
   mine: boolean
   free: boolean
   resident: boolean
-}) => (
-  <div
-    className={clsx(
-      "flex items-center gap-1.5 whitespace-nowrap rounded-full border px-1.5 py-0.5 text-[11px] font-bold shadow-overlay",
-      mine
-        ? "border-accent bg-accent text-accent-foreground"
-        : free
-          ? "border-success bg-success text-success-foreground"
-          : "border-border bg-overlay/95 text-foreground"
-    )}
-  >
-    {label && <span className="opacity-80">{label}</span>}
-    {/* First name only: neighbouring desks' tags would collide. */}
-    {person && <span>{mine ? "You" : person.name.split(" ")[0]}</span>}
-    {resident && <Pin className="size-3 opacity-70" aria-label="Permanent desk" />}
-  </div>
-)
+}) => {
+  const { t } = useI18n()
+  return (
+    <div
+      className={clsx(
+        "flex items-center gap-1.5 whitespace-nowrap rounded-full border px-1.5 py-0.5 text-[11px] font-bold shadow-overlay",
+        mine
+          ? "border-accent bg-accent text-accent-foreground"
+          : free
+            ? "border-success bg-success text-success-foreground"
+            : "border-border bg-overlay/95 text-foreground"
+      )}
+    >
+      {label && <span className="opacity-80">{label}</span>}
+      {/* First name only: neighbouring desks' tags would collide. */}
+      {person && <span>{mine ? t("You") : person.name.split(" ")[0]}</span>}
+      {resident && <Pin className="size-3 opacity-70" aria-label={t("Permanent desk")} />}
+    </div>
+  )
+}
 
 /** A rough tile, for grouping: the visible world bounds snap to this (m). */
 const VISIBLE_STEP = 16
@@ -826,7 +893,13 @@ interface SceneInput {
   wall: string
   floorInside: string
   bookable: boolean
+  /** Does a desk pass the map's desk filter? */
+  matches: (desk: SceneObject) => boolean
   onDesk: (id: string) => void
+  /** Insights' heatmap: each desk's share of days in use (pads under them). */
+  heat?: { ratios: Record<string, number>; isDark: boolean }
+  /** A free desk's tooltip (translated). */
+  freeTitle: string
 }
 
 /**
@@ -834,7 +907,17 @@ interface SceneInput {
  * doors and furniture layered bottom to top, then desk markers for the shown
  * day — and the drawing's bounds (for fitting).
  */
-const buildScene = ({ objects, desks, wall, floorInside, bookable, onDesk }: SceneInput) => {
+const buildScene = ({
+  objects,
+  desks,
+  wall,
+  floorInside,
+  bookable,
+  matches,
+  heat,
+  freeTitle,
+  onDesk,
+}: SceneInput) => {
   // Panning reuses this whole element (memoized), so React skips it entirely.
   const paints = objects.filter((o) => o.type === "floorPaint" && o.color)
   const byId = new Map(desks.map((d) => [d.desk.id, d]))
@@ -847,6 +930,8 @@ const buildScene = ({ objects, desks, wall, floorInside, bookable, onDesk }: Sce
   const shadows: ReactNode[] = []
   /** Drawn over everything: which desks are free. */
   const markers: ReactNode[] = []
+  /** The heatmap's pads, on the floor under the desks. */
+  const heatPads: ReactNode[] = []
   /** Who sits where: their chair's spot (plan units), for the HTML layer. */
   const occupants = new Map<string, { id: string; x: number; z: number; email: string }>()
   const t = WALL.depth / 2
@@ -980,6 +1065,25 @@ const buildScene = ({ objects, desks, wall, floorInside, bookable, onDesk }: Sce
     const on = byId.get(o.id)
     const seatable = isSeatable(o.type)
     const taken = !!on && on.state.kind !== "free"
+    // Filtered out (the map's desk filter): faded, and no "+" to book it.
+    const isDimmed = seatable && !matches(o)
+    if (seatable && heat && o.id in heat.ratios) {
+      const [hx, hz] = footprintCells(o.type, o.rotation)
+      const w = hx * GRID + 0.16
+      const d = hz * GRID + 0.16
+      heatPads.push(
+        <rect
+          key={`heat-${o.id}`}
+          x={o.x - w / 2}
+          y={o.z - d / 2}
+          width={w}
+          height={d}
+          rx={0.25}
+          fill={heatColor(heat.ratios[o.id], heat.isDark)}
+          opacity={0.9}
+        />
+      )
+    }
     // Can't be tapped: muted toward the floor, so desks stand out.
     const piece = seatable
       ? drawPiece(o, { occupied: bookable || taken ? taken : undefined })
@@ -1007,6 +1111,7 @@ const buildScene = ({ objects, desks, wall, floorInside, bookable, onDesk }: Sce
         transform={`translate(${o.x} ${o.z}) rotate(${turn})`}
         className={seatable ? "cursor-pointer" : undefined}
         onClick={seatable ? open : undefined}
+        opacity={isDimmed ? 0.3 : undefined}
       >
         {piece.node}
       </g>
@@ -1020,12 +1125,12 @@ const buildScene = ({ objects, desks, wall, floorInside, bookable, onDesk }: Sce
     if (!seatable || !on) continue
     const spot = spotFor(o, seats)
     if (on.state.kind === "free") {
-      if (!bookable) continue
+      if (!bookable || isDimmed) continue
       // Free to book: the "+" ring on the seat.
       const r = FREE_MARK
       markers.push(
         <g key={o.id} className="cursor-pointer" onClick={open}>
-          <title>Free — tap to book</title>
+          <title>{freeTitle}</title>
           <circle
             cx={spot.x}
             cy={spot.z}
@@ -1107,6 +1212,7 @@ const buildScene = ({ objects, desks, wall, floorInside, bookable, onDesk }: Sce
             {list}
           </g>
         ))}
+        {heatPads}
         {layered
           .filter((d) => d.ext.y1 <= FLAT)
           .map((d, i) => (

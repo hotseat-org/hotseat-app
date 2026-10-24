@@ -1,25 +1,27 @@
 import { Button, CloseButton } from "@heroui/react"
 import { Mouse } from "lucide-react"
 import { useState } from "react"
+import { useI18n } from "~/i18n/I18nProvider"
+import { msg } from "~/i18n/msg"
 
 export type GuideView = "edit" | "view" | "plan"
 
 // Mouse first, then trackpad, then keys — see CameraControls / FloorPlan.
 const ROWS: Record<GuideView, [string, string[]][]> = {
   edit: [
-    ["Orbit", ["Right-drag", "⌥ scroll", "Q E"]],
-    ["Move", ["Drag floor", "Space-drag", "W A S D"]],
-    ["Zoom", ["Scroll", "Pinch", "+ −"]],
+    [msg("Orbit"), [msg("Right-drag"), msg("⌥ scroll"), "Q E"]],
+    [msg("Move"), [msg("Drag floor"), msg("Space-drag"), "W A S D"]],
+    [msg("Zoom"), [msg("Scroll"), msg("Pinch"), "+ −"]],
   ],
   view: [
-    ["Orbit", ["Right-drag", "⌥ scroll", "Q E"]],
-    ["Move", ["Drag", "W A S D"]],
-    ["Zoom", ["Scroll", "Pinch", "+ −"]],
+    [msg("Orbit"), [msg("Right-drag"), msg("⌥ scroll"), "Q E"]],
+    [msg("Move"), [msg("Drag"), "W A S D"]],
+    [msg("Zoom"), [msg("Scroll"), msg("Pinch"), "+ −"]],
   ],
   plan: [
-    ["Turn", ["Q E"]],
-    ["Move", ["Drag"]],
-    ["Zoom", ["Scroll", "Pinch", "+ −"]],
+    [msg("Turn"), ["Q E"]],
+    [msg("Move"), [msg("Drag")]],
+    [msg("Zoom"), [msg("Scroll"), msg("Pinch"), "+ −"]],
   ],
 }
 
@@ -34,6 +36,7 @@ const readHidden = () => {
 
 /** Camera controls at a glance (bottom-right); folds into a button, remembered. */
 export const ControlsGuide = ({ view }: { view: GuideView }) => {
+  const { t } = useI18n()
   const [isHidden, setIsHidden] = useState(readHidden)
   const setHidden = (next: boolean) => {
     setIsHidden(next)
@@ -52,7 +55,7 @@ export const ControlsGuide = ({ view }: { view: GuideView }) => {
         className="pointer-events-auto shadow-overlay backdrop-blur-md"
         onPress={() => setHidden(false)}
       >
-        <Mouse className="size-4" /> Controls
+        <Mouse className="size-4" /> {t("Controls")}
       </Button>
     )
   }
@@ -60,14 +63,14 @@ export const ControlsGuide = ({ view }: { view: GuideView }) => {
   return (
     <div className="pointer-events-auto relative rounded-2xl border border-border bg-overlay/90 py-2.5 pl-3 pr-9 text-xs text-foreground shadow-overlay backdrop-blur-md">
       <CloseButton
-        aria-label="Hide controls"
+        aria-label={t("Hide controls")}
         className="absolute right-1.5 top-1.5"
         onPress={() => setHidden(true)}
       />
       <dl className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1.5">
         {ROWS[view].map(([action, inputs]) => (
           <div key={action} className="contents">
-            <dt className="font-semibold text-muted">{action}</dt>
+            <dt className="font-semibold text-muted">{t(action)}</dt>
             <dd className="flex flex-wrap gap-1">
               {/* Plain tags, not HeroUI's Kbd: it collapses spaces and swaps
                   "+ −" for an arrow glyph ("Q E" → "QE", "+ −" → "←"). */}
@@ -76,7 +79,7 @@ export const ControlsGuide = ({ view }: { view: GuideView }) => {
                   key={input}
                   className="whitespace-pre rounded-md bg-default px-1.5 py-0.5 text-[11px] font-medium text-foreground/80"
                 >
-                  {input}
+                  {t(input)}
                 </span>
               ))}
             </dd>
