@@ -21,23 +21,22 @@ const SHADOW_MARGIN = 3
 const MIN_SHADOW_HALF = 6
 const MAX_SHADOW_HALF = 30
 
-/**
- * The sun's shadow square, fitted to the office: half its size, and a map
- * resolution that keeps texels about as fine as 2048 px over ±18 m (~1.8 cm).
- * Small offices need only 1024 px (a quarter of the memory and fill); big ones
- * are covered whole instead of clipped, slightly softer.
- */
-const getShadowArea = (reach: number) => {
-  const half = Math.min(MAX_SHADOW_HALF, Math.max(MIN_SHADOW_HALF, reach + SHADOW_MARGIN))
-  return { half, mapSize: half <= 9 ? 1024 : 2048 }
-}
+/** Shadow texel size to aim for (m): crisp contact edges when zoomed in. */
+const SHADOW_TEXEL = 0.012
 
 /**
- * Scene lighting driven by the time of day: a sun key that rises, warms and sets,
- * pastel bounce that dims into night, coloured background & fog, plus a faint
- * neon accent rim (the hint of outrun). Built-in PCF soft shadows (NOT drei
- * <SoftShadows>, whose PCSS shader patch fails on r0.185).
+ * The sun's shadow square, fitted to the office: half its size, and a map
+ * resolution for ~1.2 cm texels — up to 4096 px where the GPU has room (desktop
+ * GPUs and Apple Silicon; 2048 elsewhere). Shadows are cached (redrawn only
+ * when the layout or time changes), so a bigger map costs memory and a little
+ * per-pixel lookup, not a redraw every frame.
  */
+const getShadowArea = (reach: number, maxMapSize: number) => {
+  const half = Math.min(MAX_SHADOW_HALF, Math.max(MIN_SHADOW_HALF, reach + SHADOW_MARGIN))
+  const wanted = 2 ** Math.ceil(Math.log2((2 * half) / SHADOW_TEXEL))
+  return { half, mapSize: Math.min(maxMapSize, Math.max(1024, wanted)) }
+}
+
 export const Lighting = ({ profile: p, centre = [0, 0], reach = 0 }: Props) => {
   // Dark theme swaps the sky for the app background; lighting is unchanged.
   const bg = useSurfaces().background
@@ -53,7 +52,8 @@ export const Lighting = ({ profile: p, centre = [0, 0], reach = 0 }: Props) => {
   }, [cx, cz])
   const gl = useThree((s) => s.gl)
   const invalidate = useThree((s) => s.invalidate)
-  const { half, mapSize } = getShadowArea(reach)
+  const maxMapSize = gl.capabilities.maxTextureSize >= 16384 ? 4096 : 2048
+  const { half, mapSize } = getShadowArea(reach, maxMapSize)
   useLayoutEffect(() => {
     const light = sun.current
     if (!light) return
@@ -84,7 +84,8 @@ export const Lighting = ({ profile: p, centre = [0, 0], reach = 0 }: Props) => {
         intensity={p.sunIntensity}
         color={p.sunColor}
         castShadow
-        shadow-radius={2}
+        // Soft PCF edges: a few texels of penumbra (~3.5 cm).
+        shadow-radius={3}
         shadow-bias={-0.0006}
         shadow-normalBias={0.001}
       >

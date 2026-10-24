@@ -3,7 +3,7 @@ import { Suspense } from "react"
 import { EditorStoreContextProvider, type EditorStore } from "../store"
 import { PeopleContext, type People } from "../people"
 import { Scene } from "./Scene"
-import { FpsMeter } from "./FpsMeter"
+import { FpsMeter, type FrameStats } from "./FpsMeter"
 import type { FitInsets } from "./CameraFit"
 import { I18nBridge, useI18n } from "~/i18n/I18nProvider"
 
@@ -16,7 +16,7 @@ interface Props {
   fitInsets?: FitInsets
   /** Perf HUD on: render continuously so the FPS reading is comparable. */
   showStats: boolean
-  onStats: (fps: number, ms: number) => void
+  onStats: (stats: FrameStats) => void
 }
 
 /**
@@ -28,7 +28,10 @@ const SceneCanvas = ({ store, people, readOnly, dark, fitInsets, showStats, onSt
   const i18n = useI18n()
   return (
     <Canvas
-      shadows
+      // PCF, which three.js uses anyway: asking for PCFSoft (`shadows`), it
+      // falls back to PCF — and R3F, seeing the type "change" back on every
+      // re-render, redrew the (cached) shadow maps each time.
+      shadows="percentage"
       // Capped at 1.5× — on retina, 2× is ~1.8× the pixels (and post-fx cost)
       // for a barely visible sharpness gain on this soft, rounded style.
       dpr={[1, 1.5]}

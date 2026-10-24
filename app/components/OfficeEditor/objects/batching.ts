@@ -12,13 +12,18 @@ export type AnyMaterial = Material & {
 }
 
 /**
- * How a material LOOKS — materials that render identically share a batch. Not
- * opacity: the wall/door cutaway animates it per frame on the material itself.
+ * How a material LOOKS — materials that render identically share a batch.
+ * Not opacity: StaticBatch adds it (two pieces' glass can differ).
  */
-export const materialKey = (m: AnyMaterial) =>
+export const materialKey = (m: AnyMaterial) => `${m.color?.getHexString()}|${surfaceKey(m)}`
+
+/**
+ * How a material looks apart from its colour: surfaces that differ only in
+ * colour can share one mesh, their colours carried per vertex (see StaticBatch).
+ */
+export const surfaceKey = (m: AnyMaterial) =>
   [
     m.type,
-    m.color?.getHexString(),
     m.roughness,
     m.metalness,
     m.emissive?.getHexString(),

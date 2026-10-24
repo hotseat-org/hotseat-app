@@ -1,9 +1,20 @@
 import { useCallback, useLayoutEffect, useReducer, useRef, useState, type ReactNode } from "react"
 import { useThree } from "@react-three/fiber"
-import { Matrix4, type BufferGeometry, type Group, type Material, type Mesh } from "three"
+import {
+  BufferAttribute,
+  Matrix4,
+  Vector3,
+  type BufferGeometry,
+  type Color,
+  type Group,
+  type Material,
+  type Mesh,
+} from "three"
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js"
 import { markShadowsDirty } from "../scene/shadows"
-import { BATCH_PART, BatchContext, materialKey } from "./batching"
+import { MERGED_KIND, setCutAttributes } from "../scene/cutaway"
+import { getSurfaceShader } from "./surfaceShader"
+import { BATCH_PART, BatchContext, surfaceKey } from "./batching"
 
 interface Part {
   key: string
@@ -17,15 +28,28 @@ interface Part {
  * Office-wide draw-call batching (view mode). Each piece of furniture already
  * merges its own meshes (see Baked) — but a big office still has hundreds of
  * pieces, each drawn separately. This merges every piece's baked meshes into
- * ONE mesh per material look across the whole office (~900 draws → ~160) and
- * hides theirs.
+ * ONE mesh per kind of surface across the whole office and hides theirs.
+ * Colour isn't a kind: it's carried per vertex, so a red chair and a blue one
+ * share a mesh (and a draw call).
  *
- * Only for what never changes on its own while viewing: doors, windows and
- * wall items fade with the wall cutaway, so they stay out (the renderer
- * decides, per piece). Rebuilt in the same commit whenever any piece re-bakes
+ * Doors, windows and wall items join too: the wall cutaway slices them in its
+ * shader, reading each one's anchor from its vertices (see cutaway.ts). Rebuilt in the same commit whenever any piece re-bakes
  * (a chair pulled out on another day, a layout change), so it never shows
  * stale furniture.
  */
+/** The cutaway a material is sliced by, if any (marked by Surface). */
+const cutawayOf = (material: Material) =>
+  material.userData.cutaway as keyof typeof MERGED_KIND | undefined
+
+/** The geometry with every vertex in one colour (linear, as the material holds it). */
+const withColor = (geometry: BufferGeometry, color: Color) => {
+  const count = geometry.getAttribute("position").count
+  const colors = new Float32Array(count * 3)
+  for (let i = 0; i < count; i++) colors.set([color.r, color.g, color.b], i * 3)
+  geometry.setAttribute("color", new BufferAttribute(colors, 3))
+  return geometry
+}
+
 export const StaticBatch = ({ enabled, children }: { enabled: boolean; children: ReactNode }) => {
   const root = useRef<Group>(null)
   const output = useRef<Group>(null)
@@ -57,23 +81,41 @@ export const StaticBatch = ({ enabled, children }: { enabled: boolean; children:
     for (const m of sources) {
       // Opacity too: unlike within one piece, two pieces' glass can differ.
       const material = m.material as Material
-      const key = `${materialKey(material)}|${material.opacity}|${m.castShadow}|${m.receiveShadow}`
+      const key = `${surfaceKey(material)}|${material.opacity}|${m.castShadow}|${m.receiveShadow}|${cutawayOf(material) ?? ""}`
       groups.set(key, [...(groups.get(key) ?? []), m])
     }
     const next: Part[] = []
     for (const [key, meshes] of groups) {
-      const geometries = meshes.map((m) =>
-        m.geometry.clone().applyMatrix4(new Matrix4().multiplyMatrices(inverse, m.matrixWorld))
-      )
+      const cutaway = cutawayOf(meshes[0].material as Material)
+      const geometries = meshes.map((m) => {
+        const toBatch = new Matrix4().multiplyMatrices(inverse, m.matrixWorld)
+        const geometry = withColor(
+          m.geometry.clone().applyMatrix4(toBatch),
+          (m.material as Material & { color: Color }).color
+        )
+        if (!cutaway) return geometry
+        // Cut by the wall cutaway: each vertex keeps its piece's anchor (its
+        // origin) and the way it runs (its local X), as its own mesh gave them.
+        const e = toBatch.elements
+        const axis = Math.abs(e[0]) >= Math.abs(e[2]) ? 0 : 1
+        return setCutAttributes(geometry, new Vector3().setFromMatrixPosition(toBatch), axis)
+      })
       const merged = mergeGeometries(geometries, false)
       geometries.forEach((x) => x.dispose())
       if (!merged) continue // couldn't merge: those keep drawing themselves
       meshes.forEach((m) => (m.visible = false))
       hidden.current.push(...meshes)
+      // The look of the first, in white: the colours come from the vertices.
+      const material = (meshes[0].material as Material & { color: Color }).clone()
+      material.color.set(0xffffff)
+      material.vertexColors = true
+      // A clone loses its shader patch: the shading, and the cutaway's merged variant.
+      if (material.type === "MeshStandardMaterial")
+        Object.assign(material, getSurfaceShader(cutaway ? MERGED_KIND[cutaway] : null))
       next.push({
         key,
         geometry: merged,
-        material: meshes[0].material as Material,
+        material,
         castShadow: meshes[0].castShadow,
         receiveShadow: meshes[0].receiveShadow,
       })
@@ -84,7 +126,11 @@ export const StaticBatch = ({ enabled, children }: { enabled: boolean; children:
   // New batch → the cached shadow maps must include it; free the old one.
   useLayoutEffect(() => {
     markShadowsDirty(gl, invalidate)
-    return () => parts.forEach((p) => p.geometry.dispose())
+    return () =>
+      parts.forEach((p) => {
+        p.geometry.dispose()
+        p.material.dispose()
+      })
   }, [parts, gl, invalidate])
 
   return (

@@ -5,13 +5,14 @@ import type { Mesh } from "three"
 type Props = ComponentProps<typeof DreiRoundedBox>
 
 /**
- * drei's RoundedBox, with its edges as round as its corners. drei rounds the
- * edges along the depth with `bevelSegments × 2` steps (8 by default) whatever
- * the `smoothness` of the corners (2–4 here): ~1,300 triangles even for a
- * mouse. Matching the two looks the same and costs a half to a fifth.
+ * drei's RoundedBox, its depth edges rounded in `bevelSegments × 2` steps:
+ * twice the corners' `smoothness` (2–4 here), so long edges catch the light as
+ * smooth curves rather than facets. (Was half that for speed — but furniture
+ * is merged into a few meshes now, and triangles there cost little next to
+ * the draw calls that merging saved.)
  */
 export const RoundedBox = forwardRef<Mesh, Props>(function RoundedBox(
-  { smoothness = 4, bevelSegments = Math.ceil(smoothness / 2), ...props },
+  { smoothness = 4, bevelSegments = smoothness, ...props },
   ref
 ) {
   return (

@@ -5,29 +5,20 @@ import { useEditorStoreApi } from "../store"
 import { GRID, isEdgeType, isWallMounted } from "../types"
 import { WALL } from "../objects/dimensions"
 import { edgeLength, footprintCells } from "../layout"
+import { hasMatrixMoved } from "./cameraMotion"
+import { cutawayUniform, MAX_CUTS } from "./cutaway"
 
 const runsAlongX = (rotation: number) =>
   Math.abs(((rotation % Math.PI) + Math.PI) % Math.PI) < Math.PI / 4
 
 /**
- * The cut-away section around the pointed-at segment (world units, centre to
- * centre along the wall): fully cut within FULL, then easing back up to full
- * height by REACH — a ramp, not a hard-edged notch.
- */
-const FULL = 0.75
-const REACH = 3.25
-/** Cut depth (0…1) for a segment `d` units along the wall from the cursor's. */
-const depthAt = (d: number) => {
-  if (d <= FULL) return 1
-  const s = Math.min(1, (d - FULL) / (REACH - FULL))
-  return 1 - s * s * (3 - 2 * s) // smoothstep down to 0
-}
-/**
- * Fade speeds (1/s). Cutting away is quick so it keeps up with the cursor
- * (~0.1s); restoring is a touch softer (~0.15s) so it doesn't flicker back.
+ * Speeds (1/s). Cutting away is quick so it keeps up with the cursor (~0.1s);
+ * restoring is a touch softer (~0.15s) so it doesn't flicker back. Along one
+ * wall the cut glides after the cursor rather than jumping segment to segment.
  */
 const RATE_IN = 32
 const RATE_OUT = 20
+const RATE_GLIDE = 22
 
 /** A little slack across the wall's thickness so grazing the top edge counts. */
 const SLACK = 0.12
@@ -35,37 +26,46 @@ const SLACK = 0.12
 const MOUNT_BOTTOM = 0.4
 /**
  * After the camera stops (ms), the cutaway follows the cursor again. While it
- * moves the cut holds still: the cursor sweeping across walls would otherwise
- * split and re-merge wall runs every few frames (geometry rebuilds, a stutter —
- * badly so in Firefox).
+ * moves the cut holds still, so sweeping across walls doesn't flicker cuts.
  */
 const CAMERA_SETTLE = 150
 
+/** A wall line being cut (or easing back): see cutawayUniform. */
+interface Cut {
+  axis: 0 | 1
+  line: number
+  centre: number
+  targetCentre: number
+  amount: number
+  target: number
+}
+/** Where the cursor wants a cut: the line of the wall it points at, and where along it. */
+type Aim = Pick<Cut, "axis" | "line" | "centre">
+
 interface Props {
   enabled: boolean
-  /** Per-segment fade (0…1), written here every frame and read by the renderers. */
-  fades: Map<string, number>
-  /** Called with the ids of segments that are fading/faded (only on change). */
-  onChange: (ids: Set<string>) => void
+  /** Editing: pointing at a door/window keeps it solid, to pick it up. */
+  isEditing: boolean
 }
 
 /**
- * X-ray cutaway: every frame, finds the wall/door segments the cursor ray passes
- * through (plus a short section either side) so they can be cut down,
- * revealing — and letting you click/place — what's behind. Walls carry no
- * pointer handlers, so clicks already pass through them; this is the visual.
- * Holds still while the camera moves (see CAMERA_SETTLE).
+ * X-ray cutaway: every frame, finds the wall the cursor ray passes through and
+ * cuts it down round that spot (plus a ramp either side), revealing — and
+ * letting you click/place — what's behind. Walls carry no pointer handlers, so
+ * clicks already pass through them; this is the visual. It only eases a few
+ * numbers that the walls' shader reads (see cutaway.ts): nothing re-renders.
  */
-export const WallXray = ({ enabled, fades, onChange }: Props) => {
+export const WallXray = ({ enabled, isEditing }: Props) => {
   const { camera, raycaster, pointer, gl, invalidate } = useThree()
   const store = useEditorStoreApi()
   const box = useMemo(() => new Box3(), [])
   const min = useMemo(() => new Vector3(), [])
   const max = useMemo(() => new Vector3(), [])
-  const lastKey = useRef("")
+  const hitPoint = useMemo(() => new Vector3(), [])
   const inside = useRef(false)
   const lastView = useRef({ matrix: new Matrix4(), zoom: 0, movedAt: -Infinity })
-  const held = useRef<Map<string, number>>(new Map())
+  const held = useRef<Aim[]>([])
+  const cuts = useRef<Cut[]>([])
   const settleTimer = useRef(0)
   useEffect(() => () => window.clearTimeout(settleTimer.current), [])
 
@@ -89,32 +89,17 @@ export const WallXray = ({ enabled, fades, onChange }: Props) => {
     }
   }, [gl, invalidate])
 
-  // The cutaway slices walls with per-material clipping planes.
-  useEffect(() => {
-    gl.localClippingEnabled = true
-  }, [gl])
-
-  // Switching tools on/off: kick a frame so the section eases out (or in).
+  // Switching tools on/off: kick a frame so the cut eases out (or in).
   useEffect(() => invalidate(), [enabled, invalidate])
+  // Unmounted (leaving the office): no cut left behind for the next scene.
+  useEffect(() => () => cutawayUniform.value.forEach((v) => v.set(0, 0, 0, 0)), [])
 
-  const emit = () => {
-    const ids = [...fades.keys()].sort()
-    const key = ids.join(",")
-    if (key === lastKey.current) return
-    lastKey.current = key
-    onChange(new Set(ids))
-  }
-
-  /**
-   * How deep each segment should be cut: the segments the cursor ray passes
-   * through, widened to a section that ramps back up towards its ends.
-   */
-  const targets = (): Map<string, number> => {
-    if (!enabled || !inside.current) return new Map()
+  /** The wall lines the cursor ray passes through, nearest first (one per line). */
+  const getAims = (): Aim[] => {
+    if (!enabled || !inside.current) return []
     raycaster.setFromCamera(pointer, camera)
     const ray = raycaster.ray
     const objects = store.getState().objects
-    const segments = objects.filter((o) => isEdgeType(o.type))
 
     // Pointing at a wall item (a TV, a picture…) keeps its wall up, so it can
     // be seen and picked — like pointing at a door.
@@ -123,47 +108,46 @@ export const WallXray = ({ enabled, fades, onChange }: Props) => {
       const [cx, cz] = footprintCells(o.type, o.rotation)
       min.set(o.x - (cx * GRID) / 2, MOUNT_BOTTOM, o.z - (cz * GRID) / 2)
       max.set(o.x + (cx * GRID) / 2, WALL.height, o.z + (cz * GRID) / 2)
-      if (ray.intersectsBox(box.set(min, max))) return new Map()
+      if (ray.intersectsBox(box.set(min, max))) return []
     }
 
-    // Only walls trigger the cutaway: pointing straight at a door/window keeps
-    // it solid (so it can be picked up); it still fades with a hovered section.
-    const hit = segments.filter((o) => {
-      if (o.type !== "wall") return false
+    // While editing only walls cut: pointing straight at a door/window keeps it
+    // solid (so it can be picked up); it's still cut with a section round it.
+    // Viewing, there's nothing to pick up: doors and windows cut too. Glass
+    // partitions never do — you can see through them already.
+    const hits: (Aim & { distance: number })[] = []
+    for (const o of objects) {
+      if (!isEdgeType(o.type) || o.type === "glassWall") continue
+      if (isEditing && o.type !== "wall") continue
       const alongX = runsAlongX(o.rotation)
       const half = edgeLength(o) / 2
       const hx = alongX ? half : WALL.depth / 2 + SLACK
       const hz = alongX ? WALL.depth / 2 + SLACK : half
       min.set(o.x - hx, -WALL.sink, o.z - hz)
       max.set(o.x + hx, WALL.height + SLACK, o.z + hz)
-      return ray.intersectsBox(box.set(min, max))
-    })
-    if (hit.length === 0) return new Map()
-
-    const want = new Map<string, number>()
-    for (const o of segments) {
-      let depth = 0
-      for (const h of hit) {
-        const d = runsAlongX(h.rotation)
-          ? runsAlongX(o.rotation) && o.z === h.z
-            ? Math.abs(o.x - h.x)
-            : Infinity
-          : !runsAlongX(o.rotation) && o.x === h.x
-            ? Math.abs(o.z - h.z)
-            : Infinity
-        depth = Math.max(depth, depthAt(d))
-      }
-      if (depth > 0.02) want.set(o.id, depth)
+      if (!ray.intersectBox(box.set(min, max), hitPoint)) continue
+      hits.push({
+        axis: alongX ? 0 : 1,
+        line: alongX ? o.z : o.x,
+        // Where the ray meets the wall, clamped to this segment.
+        centre: alongX
+          ? Math.min(o.x + half, Math.max(o.x - half, hitPoint.x))
+          : Math.min(o.z + half, Math.max(o.z - half, hitPoint.z)),
+        distance: hitPoint.distanceTo(ray.origin),
+      })
     }
-    return want
+    hits.sort((a, b) => a.distance - b.distance)
+    const aims: Aim[] = []
+    for (const h of hits)
+      if (!aims.some((a) => a.axis === h.axis && a.line === h.line)) aims.push(h)
+    return aims.slice(0, MAX_CUTS)
   }
 
-  // Ease each segment's fade toward its target depth (0 once out of the
-  // section); fully-solid segments drop out so they rejoin their merged wall run.
+  // Ease the cuts toward where the cursor points; write them to the shader.
   useFrame((_, dt) => {
     const now = performance.now()
     const view = lastView.current
-    if (!view.matrix.equals(camera.matrixWorld) || view.zoom !== camera.zoom) {
+    if (hasMatrixMoved(view.matrix, camera.matrixWorld) || view.zoom !== camera.zoom) {
       view.matrix.copy(camera.matrixWorld)
       view.zoom = camera.zoom
       view.movedAt = now
@@ -172,25 +156,39 @@ export const WallXray = ({ enabled, fades, onChange }: Props) => {
       settleTimer.current = window.setTimeout(invalidate, CAMERA_SETTLE)
     }
     const isCameraMoving = now - view.movedAt < CAMERA_SETTLE
-    const want = isCameraMoving ? held.current : targets()
-    held.current = want
+    const aims = isCameraMoving && enabled ? held.current : getAims()
+    held.current = aims
+
+    const list = cuts.current
+    for (const cut of list) cut.target = 0
+    for (const aim of aims) {
+      const cut = list.find((c) => c.axis === aim.axis && c.line === aim.line)
+      if (cut) {
+        cut.target = 1
+        cut.targetCentre = aim.centre
+        // Back from (nearly) nothing: start where it's wanted, don't glide there.
+        if (cut.amount < 0.05) cut.centre = aim.centre
+      } else list.push({ ...aim, targetCentre: aim.centre, amount: 0, target: 1 })
+    }
     const kIn = 1 - Math.exp(-dt * RATE_IN)
     const kOut = 1 - Math.exp(-dt * RATE_OUT)
-    const existing = new Set(store.getState().objects.map((o) => o.id))
-    let animating = false
-    for (const id of new Set([...fades.keys(), ...want.keys()])) {
-      const target = want.get(id) ?? 0
-      const cur = fades.get(id) ?? 0
-      const f = cur + (target - cur) * (target > cur ? kIn : kOut)
-      if (!existing.has(id) || (target === 0 && f < 0.01)) {
-        fades.delete(id)
-        continue
-      }
-      fades.set(id, Math.abs(target - f) < 0.005 ? target : f)
-      if (Math.abs(target - f) > 0.01) animating = true
+    const kGlide = 1 - Math.exp(-dt * RATE_GLIDE)
+    let isAnimating = false
+    for (const cut of list) {
+      cut.amount += (cut.target - cut.amount) * (cut.target > cut.amount ? kIn : kOut)
+      cut.centre += (cut.targetCentre - cut.centre) * kGlide
+      if (Math.abs(cut.target - cut.amount) < 0.005) cut.amount = cut.target
+      if (Math.abs(cut.targetCentre - cut.centre) < 0.002) cut.centre = cut.targetCentre
+      if (cut.amount !== cut.target || cut.centre !== cut.targetCentre) isAnimating = true
     }
-    emit()
-    if (animating) invalidate() // keep easing under frameloop="demand"
+    // Gone once fully restored; the newest win if there are too many.
+    cuts.current = list.filter((c) => c.target > 0 || c.amount > 0).slice(-MAX_CUTS)
+    cutawayUniform.value.forEach((v, i) => {
+      const cut = cuts.current[i]
+      if (cut) v.set(cut.axis, cut.line, cut.centre, cut.amount)
+      else v.set(0, 0, 0, 0)
+    })
+    if (isAnimating) invalidate() // keep easing under frameloop="demand"
   })
 
   return null

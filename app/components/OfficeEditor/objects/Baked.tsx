@@ -16,6 +16,27 @@ interface Part {
   receiveShadow: boolean
 }
 
+const noRaycast = () => {}
+const meshRaycast = Mesh.prototype.raycast
+
+/** Stop (or restart) three.js recomputing a mesh's matrices every frame. */
+const freeze = (m: Mesh) => {
+  m.matrixAutoUpdate = false
+  m.matrixWorldAutoUpdate = false
+}
+const thaw = (m: Mesh) => {
+  m.matrixAutoUpdate = true
+  m.matrixWorldAutoUpdate = true
+}
+
+/** An original merged into the baked meshes: hidden, not hit, frozen — or back to normal. */
+const setOriginal = (m: Mesh, isMerged: boolean) => {
+  m.visible = !isMerged
+  m.raycast = isMerged ? noRaycast : meshRaycast
+  if (isMerged) freeze(m)
+  else thaw(m)
+}
+
 /** The meshes to bake (skipping NO_BAKE subtrees and our own merged output). */
 const collect = (root: Object3D, skip: Object3D | null): Mesh[] => {
   const out: Mesh[] = []
@@ -34,10 +55,14 @@ const collect = (root: Object3D, skip: Object3D | null): Mesh[] => {
  * the originals are hidden.
  *
  * The originals stay mounted, so everything keyed to them keeps working:
- * recolouring and the cutaway swap their materials (→ re-bake), pointer events
- * still raycast them (three ignores `visible` when raycasting), and the carry
- * animation moves an ancestor group. Merged meshes don't raycast. Re-baking
- * only happens when a cheap fingerprint of the parts actually changes.
+ * recolouring swaps their materials (→ re-bake), and the carry animation moves
+ * an ancestor group. Re-baking only happens when a cheap fingerprint of the
+ * parts actually changes.
+ *
+ * Between bakes the originals are inert: pointer events hit the merged meshes
+ * instead (the same triangles, in far fewer meshes), and their matrices are
+ * frozen — three.js would otherwise recompute every hidden part's matrices
+ * every frame (thousands of them across an office).
  */
 export const Baked = ({
   children,
@@ -72,8 +97,8 @@ export const Baked = ({
           `${m.geometry.uuid}:${(m.material as Material).uuid}:${materialKey(m.material as AnyMaterial)}:${m.position.toArray()}:${m.rotation.toArray()}:${m.scale.toArray()}`
       )
       .join(";")
-    // Hide originals every time (newly mounted ones included); cheap.
-    for (const m of meshes) m.visible = false
+    // Hide and freeze originals every time (newly mounted ones included); cheap.
+    for (const m of meshes) setOriginal(m, true)
     if (fp === fingerprint.current) return
     fingerprint.current = fp
     const shape = meshes
@@ -87,7 +112,10 @@ export const Baked = ({
       shapeChanged.current = true
     }
 
+    // Fresh matrices for the merge (frozen again below).
+    for (const m of meshes) thaw(m)
     g.updateWorldMatrix(true, true)
+    for (const m of meshes) freeze(m)
     const inv = new Matrix4().copy(g.matrixWorld).invert()
     const groups = new Map<string, { meshes: Mesh[]; material: Material }>()
     for (const m of meshes) {
@@ -113,7 +141,7 @@ export const Baked = ({
       const merged = mergeGeometries(geoms, false)
       geoms.forEach((x) => x.dispose())
       if (!merged) {
-        ms.forEach((m) => (m.visible = true)) // couldn't merge: leave them as-is
+        ms.forEach((m) => setOriginal(m, false)) // couldn't merge: leave them as-is
         continue
       }
       next.push({
@@ -133,7 +161,10 @@ export const Baked = ({
       shapeChanged.current = false
       markShadowsDirty(gl, invalidate)
     } else invalidate()
-    handleBatchChanged?.()
+    // Only a piece in the office-wide batch changes it: doors and windows
+    // re-bake all the time in the wall cutaway, and each call re-merges the
+    // whole office.
+    if (shouldBatch) handleBatchChanged?.()
     return () => parts.forEach((p) => p.geometry.dispose())
   }, [parts, gl, invalidate, handleBatchChanged, shouldBatch])
 
@@ -148,7 +179,6 @@ export const Baked = ({
             material={p.material}
             castShadow={p.castShadow}
             receiveShadow={p.receiveShadow}
-            raycast={() => null}
             userData={shouldBatch ? { [BATCH_PART]: true } : {}}
           />
         ))}

@@ -33,7 +33,8 @@ const lineMaterial = () =>
   new THREE.ShaderMaterial({
     uniforms: {
       ...createBuildAreaUniforms(),
-      color: { value: new THREE.Color() },
+      minorColor: { value: new THREE.Color() },
+      majorColor: { value: new THREE.Color() },
       isEditing: { value: false },
       /** The drawing buffer's size (device pixels). */
       resolution: { value: new THREE.Vector2(1, 1) },
@@ -42,6 +43,8 @@ const lineMaterial = () =>
       attribute vec3 other;
       attribute float side;
       attribute float isEnd;
+      attribute float isMajor;
+      varying float vMajor;
       uniform vec2 resolution;
       varying vec3 vWorld;
       varying float vEdge;
@@ -64,21 +67,24 @@ const lineMaterial = () =>
         vec2 offset = vec2(-along.y, along.x) * side * reach + along * outward;
         clip.xy += offset / halfSize * clip.w;
         vEdge = side * reach;
+        vMajor = isMajor;
         gl_Position = clip;
       }
     `,
     fragmentShader: /* glsl */ `
-      uniform vec3 color;
+      uniform vec3 minorColor;
+      uniform vec3 majorColor;
       uniform bool isEditing;
       varying vec3 vWorld;
       varying float vEdge;
+      varying float vMajor;
       ${BUILD_AREA_GLSL}
       void main() {
         // How much of this pixel the line covers (px from its centre line).
         float coverage = clamp(${LINE_WIDTH.toFixed(1)} * 0.5 + 0.5 - abs(vEdge), 0.0, 1.0);
         float a = coverage * (isEditing ? 1.0 - buildArea(vWorld.xz) : 1.0);
         if (a <= 0.01) discard;
-        gl_FragColor = vec4(color, a);
+        gl_FragColor = vec4(vMajor > 0.5 ? majorColor : minorColor, a);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
       }
@@ -154,19 +160,24 @@ const starsGeometry = (stars: Float32Array) => {
 }
 
 /**
- * Segments (x0, z0, x1, z1 …) as strips of two triangles: each corner knows
+ * Minor and major segments (x0, z0, x1, z1 …) as one geometry (one draw call
+ * per tile; each vertex knows which it is, for its colour), drawn as strips of two triangles: each corner knows
  * its own end, the other end, which end it is and which side it's on; the line shader spreads
  * them a fixed number of pixels apart on screen.
  */
-const segmentsGeometry = (segments: Float32Array) => {
-  const count = segments.length / 4
+const segmentsGeometry = (minor: Float32Array, major: Float32Array) => {
+  const minorCount = minor.length / 4
+  const count = minorCount + major.length / 4
   const positions = new Float32Array(count * 12)
   const others = new Float32Array(count * 12)
   const sides = new Float32Array(count * 4)
   const ends = new Float32Array(count * 4)
+  const majors = new Float32Array(count * 4)
   const indices = new Uint32Array(count * 6)
   for (let i = 0; i < count; i++) {
-    const [x0, z0, x1, z1] = segments.subarray(i * 4, i * 4 + 4)
+    const isMajor = i >= minorCount
+    const j = isMajor ? i - minorCount : i
+    const [x0, z0, x1, z1] = (isMajor ? major : minor).subarray(j * 4, j * 4 + 4)
     // Corners: start left, start right, end left, end right.
     const corners = [
       [x0, z0, x1, z1, 1, 0],
@@ -180,6 +191,7 @@ const segmentsGeometry = (segments: Float32Array) => {
       others.set([ox, LINE_Y, oz], v * 3)
       sides[v] = side
       ends[v] = isEnd
+      majors[v] = isMajor ? 1 : 0
     })
     const v = i * 4
     indices.set([v, v + 1, v + 2, v + 1, v + 3, v + 2], i * 6)
@@ -189,6 +201,7 @@ const segmentsGeometry = (segments: Float32Array) => {
   geometry.setAttribute("other", new THREE.BufferAttribute(others, 3))
   geometry.setAttribute("side", new THREE.BufferAttribute(sides, 1))
   geometry.setAttribute("isEnd", new THREE.BufferAttribute(ends, 1))
+  geometry.setAttribute("isMajor", new THREE.BufferAttribute(majors, 1))
   geometry.setIndex(new THREE.BufferAttribute(indices, 1))
   return geometry
 }
@@ -231,18 +244,15 @@ const plateauGeometry = (loops: [number, number][][]) => {
 
 /** One tile's lines as geometry, kept while it's in reach. */
 type TileGeometry = {
-  minor: THREE.BufferGeometry
-  major: THREE.BufferGeometry
+  lines: THREE.BufferGeometry
   stars: THREE.BufferGeometry
 }
 const toGeometry = (t: ContourTile): TileGeometry => ({
-  minor: segmentsGeometry(t.minor),
-  major: segmentsGeometry(t.major),
+  lines: segmentsGeometry(t.minor, t.major),
   stars: starsGeometry(t.stars),
 })
 const disposeGeometry = (g: TileGeometry) => {
-  g.minor.dispose()
-  g.major.dispose()
+  g.lines.dispose()
   g.stars.dispose()
 }
 
@@ -262,18 +272,16 @@ export const Contours = ({ isEditing = false }: { isEditing?: boolean }) => {
 
   // The tile under the view centre: re-chosen as the camera pans.
   const [centreTile, setCentreTile] = useState<[number, number]>([0, 0])
-  const minorMaterial = useMemo(lineMaterial, [])
-  const majorMaterial = useMemo(lineMaterial, [])
+  const linesMaterial = useMemo(lineMaterial, [])
   const starsMaterial = useMemo(starMaterial, [])
   const pixelRatio = useThree((s) => s.viewport.dpr)
   const size = useThree((s) => s.size)
   const applyBuildArea = useBuildArea()
-  for (const m of [minorMaterial, majorMaterial, starsMaterial]) {
+  for (const m of [linesMaterial, starsMaterial]) {
     m.uniforms.isEditing.value = isEditing
     applyBuildArea(m.uniforms)
   }
-  for (const m of [minorMaterial, majorMaterial])
-    m.uniforms.resolution.value.set(size.width * pixelRatio, size.height * pixelRatio)
+  linesMaterial.uniforms.resolution.value.set(size.width * pixelRatio, size.height * pixelRatio)
   useFrame(({ camera }) => {
     if (!getViewCentre(camera, viewCentre)) return
     const tx = Math.floor(viewCentre.x / TILE)
@@ -315,11 +323,10 @@ export const Contours = ({ isEditing = false }: { isEditing?: boolean }) => {
   })
   useEffect(
     () => () => {
-      minorMaterial.dispose()
-      majorMaterial.dispose()
+      linesMaterial.dispose()
       starsMaterial.dispose()
     },
-    [minorMaterial, majorMaterial, starsMaterial]
+    [linesMaterial, starsMaterial]
   )
 
   const plateau = useMemo(() => plateauGeometry(land.plateau), [land])
@@ -327,10 +334,11 @@ export const Contours = ({ isEditing = false }: { isEditing?: boolean }) => {
 
   // Lines aren't lit: in a theme whose night gets dark, dim them with the dusk.
   const dim = surfaces.nightDepth > 0 ? Math.min(1, nightness * 0.85) : 0
-  minorMaterial.uniforms.color.value.set(surfaces.contour.minor).lerp(NIGHT, dim)
-  majorMaterial.uniforms.color.value.set(surfaces.contour.major).lerp(NIGHT, dim)
-  // Stars come out once it's properly dark (none by day).
-  starsMaterial.uniforms.amount.value = THREE.MathUtils.smoothstep(nightness, 0.55, 0.95)
+  linesMaterial.uniforms.minorColor.value.set(surfaces.contour.minor).lerp(NIGHT, dim)
+  linesMaterial.uniforms.majorColor.value.set(surfaces.contour.major).lerp(NIGHT, dim)
+  // Stars come out once it's properly dark (none by day — not even drawn).
+  const starAmount = THREE.MathUtils.smoothstep(nightness, 0.55, 0.95)
+  starsMaterial.uniforms.amount.value = starAmount
   starsMaterial.uniforms.pixelRatio.value = pixelRatio
 
   return (
@@ -353,9 +361,13 @@ export const Contours = ({ isEditing = false }: { isEditing?: boolean }) => {
       </mesh>
       {tiles.map((t) => (
         <group key={t.key}>
-          <mesh geometry={t.minor} material={minorMaterial} raycast={() => null} />
-          <mesh geometry={t.major} material={majorMaterial} raycast={() => null} />
-          <points geometry={t.stars} material={starsMaterial} raycast={() => null} />
+          <mesh geometry={t.lines} material={linesMaterial} raycast={() => null} />
+          <points
+            geometry={t.stars}
+            material={starsMaterial}
+            visible={starAmount > 0}
+            raycast={() => null}
+          />
         </group>
       ))}
     </group>

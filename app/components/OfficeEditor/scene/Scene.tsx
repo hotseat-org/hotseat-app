@@ -3,7 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useThree, type ThreeEvent } from "@react-three/fiber"
 import { MOUSE, Plane, Vector3 } from "three"
 import { useEditorStore, useEditorStoreApi } from "../store"
-import { clampToFloor, furnitureCollides, mountWalls, snapToFootprint, wallMount } from "../layout"
+import { clampToFloor, furnitureCollides, snapToFootprint, wallMount } from "../layout"
 import { randomModelId } from "../models"
 import { daylight, DaylightContext } from "../daylight"
 import { SURFACES } from "../palette"
@@ -27,6 +27,7 @@ import { markShadowsDirty } from "./shadows"
 import { Lighting } from "./Lighting"
 import { StudioEnvironment } from "./StudioEnvironment"
 import { PostFx } from "./PostFx"
+import { ShaderWarmup } from "./ShaderWarmup"
 import { Ground } from "./Ground"
 import { Contours } from "./Contours"
 import { RouteLine } from "./RouteLine"
@@ -34,6 +35,9 @@ import { HeatBars } from "./HeatBars"
 import { HeatPads } from "./HeatPads"
 import { CAMERA_OFFSET } from "./viewCentre"
 import { InteriorFloor } from "./InteriorFloor"
+import { ContactBlobs } from "./ContactBlobs"
+import { WindowLight } from "./WindowLight"
+import { Halos } from "./Halos"
 import { GhostObject } from "./GhostObject"
 import { Posts } from "./Posts"
 import { Walls } from "./Walls"
@@ -48,12 +52,9 @@ import { BoxSelect } from "./BoxSelect"
 import { PaintController } from "./PaintController"
 import { NudgeKeys } from "./NudgeKeys"
 import { OpeningCarry } from "./OpeningCarry"
-import { NO_XRAY, XrayContext } from "./xray"
 import { DeskPets } from "./DeskPets"
 import { MeasureHints } from "./MeasureHints"
 import { aimAtWallHeight } from "./wallAim"
-
-const NO_ACTIVE = new Set<string>()
 
 interface Props {
   /** Display mode: render the office but disable all editing interaction. */
@@ -159,8 +160,10 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
   const toggleSelect = useEditorStore((s) => s.toggleSelect)
   const openSeatCard = useEditorStore((s) => s.openSeatCard)
 
-  // Cached shadows (see shadows.ts): redraw the shadow maps only when the scene
-  // changes — any store update (objects, time of day), theme or mode switch.
+  // Cached shadows (see shadows.ts): redraw the shadow maps only when what casts
+  // them changes — the layout, the time of day, the theme or the mode. (Pieces
+  // that move or re-shape on their own mark them too.) Not on every store
+  // update: a desk card or a route is no reason to redraw every shadow.
   const gl = useThree((s) => s.gl)
   const raycaster = useThree((s) => s.raycaster)
   const pointer = useThree((s) => s.pointer)
@@ -175,7 +178,10 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
   useLayoutEffect(() => {
     gl.shadowMap.autoUpdate = false
     markShadowsDirty(gl, invalidate)
-    return storeApi.subscribe(() => markShadowsDirty(gl, invalidate))
+    return storeApi.subscribe((state, prev) => {
+      if (state.objects !== prev.objects || state.timeOfDay !== prev.timeOfDay)
+        markShadowsDirty(gl, invalidate)
+    })
   }, [gl, invalidate, storeApi])
   useLayoutEffect(() => markShadowsDirty(gl, invalidate), [gl, invalidate, dark, readOnly])
 
@@ -212,17 +218,6 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
   }, [carriedOpening])
-  // Wall/door segments under the cursor, shown see-through (edit mode only).
-  const [xrayActive, setXrayActive] = useState<Set<string>>(NO_ACTIVE)
-  const fades = useRef(new Map<string, number>())
-  const xray = useMemo(
-    () =>
-      xrayActive.size
-        ? { active: xrayActive, fade: (id: string) => fades.current.get(id) ?? 0 }
-        : NO_XRAY,
-    [xrayActive]
-  )
-
   const isFurniture = FURNITURE.has(tool)
 
   // Leaving edit mode puts back whatever was being dragged (it'd keep
@@ -249,21 +244,6 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
     () => (readOnly ? new Map(desks.map((d) => [d.desk.id, d.state.kind !== "free"])) : null),
     [readOnly, desks]
   )
-  // Wall items are cut away with the wall segments they hang on. Unchanged
-  // lists keep their identity, so those pieces don't re-render (they're memoized).
-  const mountsCache = useRef(new Map<string, string[]>())
-  const mounts = useMemo(() => {
-    const map = new Map<string, string[]>()
-    for (const o of objects) {
-      if (!isWallMounted(o.type)) continue
-      const ids = mountWalls(objects, o.type, o.x, o.z, o.rotation) ?? []
-      const prev = mountsCache.current.get(o.id)
-      map.set(o.id, prev && prev.join() === ids.join() ? prev : ids)
-    }
-    mountsCache.current = map
-    return map
-  }, [objects])
-
   // Last refused drop (a timestamp) — the carried object shakes "no".
   const [blockedAt, setBlockedAt] = useState(0)
   // Tell the store what's being carried (R then rotates it freely).
@@ -420,8 +400,8 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
   return (
     <SceneThemeContext.Provider value={surfaces}>
       <CursorHintContext.Provider value={setCursorHint}>
-        <XrayContext.Provider value={xray}>
-          <DaylightContext.Provider value={profile.nightness}>
+        <DaylightContext.Provider value={profile.nightness}>
+          <ShaderWarmup>
             <OrthographicCamera
               makeDefault
               position={CAMERA_OFFSET}
@@ -453,6 +433,7 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
             mode; in edit mode while selecting or placing furniture (the wall,
             door and erase tools target walls directly). */}
             <WallXray
+              isEditing={!readOnly}
               // Off while hanging or carrying a wall item — you're pointing at
               // the very wall it goes on.
               enabled={
@@ -461,8 +442,6 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
                 !isWallMounted(tool as ObjectType) &&
                 !(carried && isWallMounted(carried.type))
               }
-              fades={fades.current}
-              onChange={setXrayActive}
             />
             <CarryController carryId={readOnly ? null : dragId} grab={grab} />
 
@@ -498,6 +477,11 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
 
             {/* Tint the floor enclosed by walls (the office interior). */}
             <InteriorFloor />
+            {/* Soft shadows grounding each piece on the floor. */}
+            <ContactBlobs />
+            {/* Sunlight through the windows, and glows on screens and lamps. */}
+            <WindowLight profile={profile} />
+            <Halos occupied={occupied} />
 
             {/* Walls render as merged runs (seamless); everything else individually. */}
             <Walls />
@@ -520,7 +504,6 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
                     onToggleSelect={toggleSelect}
                     onSeatClick={readOnly ? openSeatCard : undefined}
                     occupied={isSeatable(obj.type) ? occupied?.get(obj.id) : undefined}
-                    mountedOn={mounts.get(obj.id)}
                   />
                 ))}
             </StaticBatch>
@@ -626,8 +609,8 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
           R3F render so previews update live (the EffectComposer takes over the
           render loop, and reconfiguring it on mode-toggle can stall it). */}
             {readOnly && <PostFx highQuality />}
-          </DaylightContext.Provider>
-        </XrayContext.Provider>
+          </ShaderWarmup>
+        </DaylightContext.Provider>
       </CursorHintContext.Provider>
     </SceneThemeContext.Provider>
   )

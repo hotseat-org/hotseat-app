@@ -21,6 +21,7 @@ import {
   type PreferenceChange,
 } from "./store"
 import type { SceneObject } from "./types"
+import type { FrameStats } from "./scene/FpsMeter"
 import { Catalog } from "./ui/Catalog"
 import { Inspector } from "./ui/Inspector"
 import { TopBar } from "./ui/TopBar"
@@ -284,9 +285,8 @@ const OfficeEditorInner = ({
   // so the reading reflects a true, comparable FPS instead of only the frames
   // that on-demand rendering happens to produce.
   const [showStats, setShowStats] = useState(false)
-  const { t } = useI18n()
-  const [stats, setStats] = useState({ fps: 0, ms: 0 })
-  const onStats = useCallback((fps: number, ms: number) => setStats({ fps, ms }), [])
+  const { t, tn } = useI18n()
+  const [stats, setStats] = useState<FrameStats | null>(null)
   const dbMode = !!onSave
   // What's already persisted, so autosave doesn't re-save the freshly-loaded scene.
   const lastSaved = useRef<string>(JSON.stringify(initialObjects ?? []))
@@ -413,7 +413,7 @@ const OfficeEditorInner = ({
               dark={isDark}
               fitInsets={shellMode && !isMobile ? SHELL_INSETS : undefined}
               showStats={showStats}
-              onStats={onStats}
+              onStats={setStats}
             />
           </Suspense>
         )}
@@ -451,14 +451,14 @@ const OfficeEditorInner = ({
             type="button"
             onClick={() => setShowStats((v) => !v)}
             title={showStats ? t("Hide FPS counter") : t("Show FPS counter")}
-            className={`pointer-events-auto absolute bottom-4 left-4 flex items-center gap-2 rounded-xl border border-border px-3 py-2 font-mono text-sm shadow-overlay backdrop-blur-md ${
+            className={`pointer-events-auto absolute bottom-4 left-4 flex items-start gap-2 rounded-xl border border-border px-3 py-2 text-left font-mono text-sm shadow-overlay backdrop-blur-md ${
               showStats
                 ? "bg-overlay/95 text-foreground"
                 : "bg-overlay/90 text-muted hover:bg-surface-secondary hover:text-foreground"
             }`}
           >
-            <Gauge className="size-4" />
-            {showStats ? (
+            <Gauge className="mt-0.5 size-4" />
+            {showStats && stats ? (
               <span className="tabular-nums">
                 <span
                   className={
@@ -473,6 +473,14 @@ const OfficeEditorInner = ({
                 </span>{" "}
                 FPS
                 <span className="ml-2 text-muted">{stats.ms.toFixed(1)} ms</span>
+                {/* One per line: a narrow column stays clear of the centred bottom bar. */}
+                <span className="block text-xs leading-5 text-muted">
+                  <span className="block">{t("CPU {ms} ms", { ms: stats.cpuMs.toFixed(1) })}</span>
+                  <span className="block">
+                    {tn(stats.drawCalls, "{n} draw call", "{n} draw calls")}
+                  </span>
+                  <span className="block">{tn(stats.objects, "{n} object", "{n} objects")}</span>
+                </span>
               </span>
             ) : (
               <span>FPS</span>

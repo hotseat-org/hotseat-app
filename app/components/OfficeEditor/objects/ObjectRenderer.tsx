@@ -16,11 +16,10 @@ import {
 import { GhostObject } from "../scene/GhostObject"
 import { edgeLength } from "../layout"
 import { markShadowsDirty } from "../scene/shadows"
-import { useXray } from "../scene/xray"
+import { CutawayContext } from "../scene/cutaway"
 import { CursorHintContext } from "../cursors"
 import { ObjectMesh } from "./ObjectMesh"
 import { WALL } from "./dimensions"
-import { GhostContext } from "./Surface"
 import { FootprintOutline } from "./FootprintOutline"
 import { Baked } from "./Baked"
 
@@ -48,8 +47,6 @@ interface Props {
   onPickOpening?: (id: string) => void
   /** Desks in view mode: whether someone sits here on the shown day. */
   occupied?: boolean
-  /** Wall items: the wall segments behind them (they're cut away with them). */
-  mountedOn?: string[]
 }
 
 const isFurniture = (o: SceneObject) => !isEdgeType(o.type)
@@ -83,7 +80,6 @@ export const ObjectRenderer = memo(function ObjectRenderer({
   onToggleSelect,
   onSeatClick,
   occupied,
-  mountedOn,
 }: Props) {
   const [hovered, setHovered] = useState(false)
   // View mode: desks are clickable (seat card).
@@ -100,11 +96,9 @@ export const ObjectRenderer = memo(function ObjectRenderer({
     setCursorHint(obj.id, selectable ? "grab" : "point")
     return () => setCursorHint(obj.id, null)
   }, [hoverable, hovered, selectable, obj.id, setCursorHint])
-  // A door in the cursor's wall cutaway fades with its wall section.
-  const xray = useXray()
-  // A wall item goes with its wall's cutaway.
-  const cutBy = [obj.id, ...(mountedOn ?? [])].filter((id) => xray.active.has(id))
-  const ghost = cutBy.length ? { xray: () => Math.max(...cutBy.map(xray.fade)) } : null
+  // Doors, windows and wall items are sliced with their wall by the cursor
+  // cutaway (see cutaway.ts).
+  const cutaway = isOpening(obj.type) ? "wall" : isWallMounted(obj.type) ? "item" : null
 
   // Rotation swings round quickly instead of jumping: the group's angle is
   // driven here (not as a prop), easing along the shortest way to the target.
@@ -240,11 +234,10 @@ export const ObjectRenderer = memo(function ObjectRenderer({
     >
       {/* Lifted/tilted while carried (the placement highlight marks the drop spot). */}
       <group ref={lifted}>
-        <GhostContext.Provider value={ghost}>
+        <CutawayContext.Provider value={cutaway}>
           {/* Batched: the object's parts merge into one mesh per material — and,
-              viewing, with the whole office's (not openings or wall items:
-              they fade with the wall cutaway). */}
-          <Baked isBatchable={!isOpening(obj.type) && !isWallMounted(obj.type)}>
+              viewing, with the whole office's. */}
+          <Baked isBatchable>
             <ObjectMesh
               type={obj.type}
               color={obj.color}
@@ -253,7 +246,7 @@ export const ObjectRenderer = memo(function ObjectRenderer({
               occupied={occupied}
             />
           </Baked>
-        </GhostContext.Provider>
+        </CutawayContext.Provider>
         {showErase && <GhostObject type={obj.type} tint={ERASE} scale={1.06} />}
       </group>
       {/* The whole footprint is clickable, not just the mesh: an invisible

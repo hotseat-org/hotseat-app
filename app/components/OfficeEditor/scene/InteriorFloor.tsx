@@ -1,12 +1,69 @@
 import { useLayoutEffect, useMemo, useRef } from "react"
 import { useThree } from "@react-three/fiber"
-import { Object3D, type InstancedMesh } from "three"
+import { Object3D, type InstancedMesh, type WebGLProgramParametersWithUniforms } from "three"
 import { useEditorStore, useEditorStoreApi } from "../store"
 import { SEG, enclosedRegions } from "../layout"
 import { isEdgeType, type Cell } from "../types"
 import { useSurfaces } from "../sceneTheme"
 
 const dummy = new Object3D()
+
+/** Plank width and length (m), and the seams' darkening. */
+const PLANK_WIDTH = 0.18
+const PLANK_LENGTH = 1.2
+const SEAM = 0.1
+/** Each plank's tone varies by up to this much either way. */
+const TONE = 0.035
+
+const glsl = (n: number) => n.toFixed(4)
+
+/**
+ * Faint planks on the interior floor, computed in its shader (no texture): rows
+ * along X with staggered joints, each plank a slightly different tone, thin
+ * darker seams. Seams fade out as the view zooms out, before they're thin
+ * enough to shimmer.
+ */
+const patchPlanks = (shader: WebGLProgramParametersWithUniforms) => {
+  shader.vertexShader = shader.vertexShader
+    .replace("#include <common>", "#include <common>\nvarying vec2 vFloor;")
+    .replace(
+      "#include <project_vertex>",
+      `#include <project_vertex>
+      #ifdef USE_INSTANCING
+        vFloor = (modelMatrix * instanceMatrix * vec4(transformed, 1.0)).xz;
+      #else
+        vFloor = (modelMatrix * vec4(transformed, 1.0)).xz;
+      #endif`
+    )
+  shader.fragmentShader = shader.fragmentShader
+    .replace(
+      "#include <common>",
+      `#include <common>
+      varying vec2 vFloor;
+      float plankHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }`
+    )
+    .replace(
+      "#include <color_fragment>",
+      /* glsl */ `#include <color_fragment>
+      {
+        float row = floor(vFloor.y / ${glsl(PLANK_WIDTH)});
+        float along = vFloor.x / ${glsl(PLANK_LENGTH)} + plankHash(vec2(row, 7.0));
+        float plank = floor(along);
+        float tone = (plankHash(vec2(row, plank)) - 0.5) * ${glsl(TONE * 2)};
+        // Distance to the nearest seam across and along, in metres.
+        float across = abs(fract(vFloor.y / ${glsl(PLANK_WIDTH)}) - 0.5) * ${glsl(PLANK_WIDTH)};
+        float end = abs(fract(along) - 0.5) * ${glsl(PLANK_LENGTH)};
+        vec2 pixel = fwidth(vFloor);
+        float seamAcross = smoothstep(${glsl(PLANK_WIDTH / 2)} - pixel.y * 1.5, ${glsl(PLANK_WIDTH / 2)}, across);
+        float seamEnd = smoothstep(${glsl(PLANK_LENGTH / 2)} - pixel.x * 1.5, ${glsl(PLANK_LENGTH / 2)}, end);
+        // Gone once a pixel covers more than ~2 cm of floor.
+        float visible = 1.0 - smoothstep(0.008, 0.02, max(pixel.x, pixel.y));
+        float seam = max(seamAcross, seamEnd) * visible;
+        diffuseColor.rgb *= (1.0 + tone) * (1.0 - ${glsl(SEAM)} * seam);
+      }`
+    )
+}
+const planksKey = () => "interior-planks"
 
 /**
  * Tints the floor inside the walls a different colour from the exterior — per
@@ -81,7 +138,12 @@ const FloorTiles = ({ color, cells }: { color: string; cells: Cell[] }) => {
       receiveShadow
     >
       <planeGeometry args={[SEG, SEG]} />
-      <meshStandardMaterial color={color} roughness={0.92} />
+      <meshStandardMaterial
+        color={color}
+        roughness={0.92}
+        onBeforeCompile={patchPlanks}
+        customProgramCacheKey={planksKey}
+      />
     </instancedMesh>
   )
 }

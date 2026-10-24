@@ -1,6 +1,7 @@
 import { useContext } from "react"
 import { DaylightContext } from "../daylight"
 import { PALETTE } from "../palette"
+import { useLampsOn } from "../scene/ShaderWarmup"
 import { Surface } from "./Surface"
 
 interface Props {
@@ -20,9 +21,10 @@ const CORD = 0.9
  */
 export const CeilingLight = ({ color = "#3d4657" }: Props) => {
   const nightness = useContext(DaylightContext)
+  const isLampOn = useLampsOn()
   return (
     <group>
-      {nightness > 0.02 && (
+      {isLampOn && (
         <pointLight
           position={[0, Y - 0.15, 0]}
           color="#ffe2b8"

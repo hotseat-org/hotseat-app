@@ -1,6 +1,7 @@
 import { useContext } from "react"
 import { PALETTE } from "../palette"
 import { DaylightContext } from "../daylight"
+import { useLampsOn } from "../scene/ShaderWarmup"
 import { Surface } from "./Surface"
 
 interface Props {
@@ -13,12 +14,13 @@ const H = 1.6
  *  casts light — brightening as the scene darkens toward night. */
 export const FloorLamp = ({ color = "#f0e2c0" }: Props) => {
   const nightness = useContext(DaylightContext)
+  const isLampOn = useLampsOn()
   return (
     <group>
       {/* Warm pool of light, on only as it gets dark. Casts shadows and sits just
         below the wall top (1.4) so walls occlude it instead of it spilling through
         or over them. */}
-      {nightness > 0.02 && (
+      {isLampOn && (
         <pointLight
           position={[0, 1.2, 0]}
           color="#ffd9a0"
