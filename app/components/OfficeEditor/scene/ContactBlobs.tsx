@@ -2,8 +2,14 @@ import { useEffect, useLayoutEffect, useMemo, useRef } from "react"
 import { useThree } from "@react-three/fiber"
 import { CanvasTexture, Object3D, type InstancedMesh } from "three"
 import { useEditorStore } from "../store"
-import { footprintCells } from "../layout"
-import { GRID, isEdgeType, isMarker, isWallMounted, type ObjectType } from "../types"
+import {
+  FOOTPRINT_CELLS,
+  GRID,
+  isEdgeType,
+  isMarker,
+  isWallMounted,
+  type ObjectType,
+} from "../types"
 
 /** Just above rugs (their top is 0.014), so a piece on a rug shades it too. */
 const Y = 0.016
@@ -69,9 +75,10 @@ export const ContactBlobs = () => {
     const mesh = ref.current
     if (!mesh) return
     pieces.forEach((o, i) => {
-      const [cx, cz] = footprintCells(o.type, o.rotation)
+      // The piece's own footprint, turned with it (on the diagonal too).
+      const [cx, cz] = FOOTPRINT_CELLS[o.type]
       dummy.position.set(o.x, Y, o.z)
-      dummy.rotation.set(-Math.PI / 2, 0, 0)
+      dummy.rotation.set(-Math.PI / 2, 0, o.rotation, "YXZ")
       dummy.scale.set(cx * GRID * SPREAD, cz * GRID * SPREAD, 1)
       dummy.updateMatrix()
       mesh.setMatrixAt(i, dummy.matrix)

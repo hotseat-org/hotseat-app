@@ -4,40 +4,53 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
 import { useEditorStore } from "../store"
 import { useSurfaces } from "../sceneTheme"
 import { Surface } from "../objects/Surface"
-import { SEG } from "../layout"
+import { EDGE_ROTATION, SEG, edgeDirection, edgeLength, type EdgeDirection } from "../layout"
 import { WALL } from "../objects/dimensions"
 import { GlassFrameSurface, GlassSurface, getGlassRunParts } from "../objects/GlassWall"
 import { DEFAULT_COLOR } from "../palette"
 import { type SceneObject } from "../types"
-import { CutawayContext, setCutAttributes } from "./cutaway"
+import { CUT_DIRECTION, CutawayContext, setCutAttributes } from "./cutaway"
 
 interface Run {
   key: string
-  axis: "x" | "z"
+  direction: EdgeDirection
+  /** The rotation its pieces are built with (see EDGE_ROTATION). */
+  rotation: number
   color: string
-  /** Centre along the run axis. */
-  center: number
-  /** The perpendicular (fixed) coordinate. */
-  fixed: number
+  /** Its middle. */
+  x: number
+  z: number
   length: number
   /** The segments merged into this run. */
   ids: string[]
 }
 
-const isXWall = (o: SceneObject) =>
-  Math.abs(((o.rotation % Math.PI) + Math.PI) % Math.PI) < Math.PI / 4
+/**
+ * The line a wall segment lies on (fixed along it) and where along it it is —
+ * for walls along X, along Z, or diagonal (their lines keep x − z or x + z).
+ */
+const lineOf = (w: SceneObject) => {
+  switch (edgeDirection(w.rotation)) {
+    case "x":
+      return { line: w.z, along: w.x }
+    case "z":
+      return { line: w.x, along: w.z }
+    case "rising":
+      return { line: w.x - w.z, along: w.x }
+    case "falling":
+      return { line: w.x + w.z, along: w.x }
+  }
+}
 
 /**
- * Merge wall segments into maximal straight runs of the same orientation and
+ * Merge wall segments into maximal straight runs of the same direction and
  * colour, so a run renders as ONE continuous mesh (no per-segment seams).
  */
 const buildRuns = (walls: SceneObject[], defaultColor: string): Run[] => {
   const groups = new Map<string, SceneObject[]>()
   for (const w of walls) {
-    const axis = isXWall(w) ? "x" : "z"
-    const fixed = axis === "x" ? w.z : w.x
     const color = w.color ?? defaultColor
-    const gk = `${axis}|${fixed}|${color}`
+    const gk = `${edgeDirection(w.rotation)}|${lineOf(w).line}|${color}`
     const arr = groups.get(gk)
     if (arr) arr.push(w)
     else groups.set(gk, [w])
@@ -45,24 +58,27 @@ const buildRuns = (walls: SceneObject[], defaultColor: string): Run[] => {
 
   const runs: Run[] = []
   for (const [gk, segs] of groups) {
-    const [axis, fixedStr, color] = gk.split("|")
-    const fixed = Number(fixedStr)
-    const along = (w: SceneObject) => (axis === "x" ? w.x : w.z)
+    const direction = edgeDirection(segs[0].rotation)
+    const color = segs[0].color ?? defaultColor
+    const along = (w: SceneObject) => lineOf(w).along
     segs.sort((a, b) => along(a) - along(b))
+    const unit = edgeLength({ type: "wall", rotation: segs[0].rotation })
 
     let start = 0
     for (let i = 1; i <= segs.length; i++) {
+      // Consecutive segments are one grid step apart along the run.
       const contiguous = i < segs.length && along(segs[i]) - along(segs[i - 1]) === SEG
       if (!contiguous) {
-        const first = along(segs[start])
-        const last = along(segs[i - 1])
+        const first = segs[start]
+        const last = segs[i - 1]
         runs.push({
-          key: `${gk}|${first}`,
-          axis: axis as "x" | "z",
+          key: `${gk}|${along(first)}`,
+          direction,
+          rotation: EDGE_ROTATION[direction],
           color,
-          center: (first + last) / 2,
-          fixed,
-          length: last - first + SEG,
+          x: (first.x + last.x) / 2,
+          z: (first.z + last.z) / 2,
+          length: (i - start) * unit,
           ids: segs.slice(start, i).map((w) => w.id),
         })
         start = i
@@ -141,11 +157,10 @@ const runGeometry = (r: Run) => {
   // Sink the base slightly below the floor so there's no bright contact gap.
   const box = new BoxGeometry(r.length, WALL.height + WALL.sink, WALL.depth)
   box.translate(0, (WALL.height - WALL.sink) / 2, 0)
-  if (r.axis === "z") box.rotateY(-Math.PI / 2)
-  const anchor =
-    r.axis === "x" ? new Vector3(r.center, 0, r.fixed) : new Vector3(r.fixed, 0, r.center)
+  box.rotateY(r.rotation)
+  const anchor = new Vector3(r.x, 0, r.z)
   box.translate(anchor.x, 0, anchor.z)
-  return setCutAttributes(box, anchor, r.axis === "x" ? 0 : 1)
+  return setCutAttributes(box, anchor, CUT_DIRECTION[r.direction])
 }
 
 /**
@@ -159,10 +174,8 @@ const GlassRuns = ({ runs }: { runs: Run[] }) => {
     const panes: BufferGeometry[] = []
     const place = new Matrix4()
     for (const r of runs) {
-      // The run's place: along X, or turned to lie along Z.
-      place
-        .makeRotationY(r.axis === "x" ? 0 : Math.PI / 2)
-        .setPosition(r.axis === "x" ? r.center : r.fixed, 0, r.axis === "x" ? r.fixed : r.center)
+      // The run's place: turned to run its way, at its middle.
+      place.makeRotationY(r.rotation).setPosition(r.x, 0, r.z)
       for (const part of getGlassRunParts(r.length)) {
         const box = new BoxGeometry(...part.args)
         box.translate(...part.position).applyMatrix4(place)

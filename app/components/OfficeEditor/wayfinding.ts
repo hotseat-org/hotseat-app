@@ -1,4 +1,12 @@
-import { enclosedCells, footprintCells, runsAlongX, unitEdges } from "./layout"
+import {
+  enclosedCells,
+  footprintCells,
+  footprintOverlapsSquare,
+  isDiagonal,
+  isDiagonalEdge,
+  runsAlongX,
+  unitEdges,
+} from "./layout"
 import { spotFor } from "./seatSpot"
 import { useEditorStore } from "./store"
 import { useDesksOnDay } from "./useBooking"
@@ -45,6 +53,8 @@ interface Floor {
   occupied: Set<string>
   /** Wall/window edges: `h:i,j` blocks (i,j−1)↔(i,j); `v:i,j` blocks (i−1,j)↔(i,j). */
   blocked: Set<string>
+  /** Squares a diagonal wall runs through: walls, even for a walls-only check. */
+  walled: Set<string>
   /** Inside squares next to each outside door, and the door's own centre. */
   entrances: { cells: [number, number][]; door: [number, number] }[]
   bounds: { i0: number; i1: number; j0: number; j1: number }
@@ -57,16 +67,35 @@ const readFloor = (objects: SceneObject[]): Floor | null => {
     const [cx, cz] = footprintCells(o.type, o.rotation)
     const i0 = Math.round((o.x - (cx * GRID) / 2) / GRID)
     const j0 = Math.round((o.z - (cz * GRID) / 2) / GRID)
-    for (let i = i0; i < i0 + cx; i++) for (let j = j0; j < j0 + cz; j++) occupied.add(key(i, j))
+    // A piece on the diagonal blocks only the squares its turned shape covers,
+    // not the whole square it fits in (aisles between angled desks stay open).
+    const isTurned = isDiagonal(o.rotation)
+    for (let i = i0; i < i0 + cx; i++)
+      for (let j = j0; j < j0 + cz; j++)
+        if (!isTurned || footprintOverlapsSquare(o, ...centre(i, j))) occupied.add(key(i, j))
   }
 
   const blocked = new Set<string>()
+  const walled = new Set<string>()
   let bounds = { i0: Infinity, i1: -Infinity, j0: Infinity, j1: -Infinity }
   const doors: SceneObject[] = []
   for (const o of objects) {
     if (!isEdgeType(o.type)) continue
     if (o.type === "door" || o.type === "glassDoor") doors.push(o)
     for (const e of unitEdges(o)) {
+      if (isDiagonalEdge(e.rotation)) {
+        // A diagonal wall runs corner to corner through a square: the square
+        // isn't walked through (a door in one is).
+        const [i, j] = cellOf(e.x, e.z)
+        bounds = {
+          i0: Math.min(bounds.i0, i - 2),
+          i1: Math.max(bounds.i1, i + 2),
+          j0: Math.min(bounds.j0, j - 2),
+          j1: Math.max(bounds.j1, j + 2),
+        }
+        if (!isOpening(o.type) || o.type === "window") walled.add(key(i, j))
+        continue
+      }
       const alongX = runsAlongX(e.rotation)
       const i = Math.round((alongX ? e.x - GRID / 2 : e.x) / GRID)
       const j = Math.round((alongX ? e.z : e.z - GRID / 2) / GRID)
@@ -86,6 +115,27 @@ const readFloor = (objects: SceneObject[]): Floor | null => {
   const inside = new Set(enclosedCells(objects).map((c) => key(...cellOf(c.x + 0.01, c.z + 0.01))))
   const entrances: Floor["entrances"] = []
   for (const d of doors) {
+    if (isDiagonalEdge(d.rotation)) {
+      // A door in a diagonal wall stands in the squares it crosses: the way in
+      // is through them, to their inside neighbours; outdoors lies beyond.
+      const cells: [number, number][] = []
+      let outdoors = false
+      for (const e of unitEdges(d)) {
+        const [i, j] = cellOf(e.x, e.z)
+        cells.push([i, j])
+        for (const n of [
+          [i + 1, j],
+          [i - 1, j],
+          [i, j + 1],
+          [i, j - 1],
+        ] as [number, number][]) {
+          if (!inside.has(key(...n))) outdoors = true
+          else if (!walled.has(key(...n))) cells.push(n)
+        }
+      }
+      if (outdoors) entrances.push({ cells, door: [d.x, d.z] })
+      continue
+    }
     const cells: [number, number][] = []
     let outdoors = false
     for (const e of unitEdges(d)) {
@@ -108,7 +158,8 @@ const readFloor = (objects: SceneObject[]): Floor | null => {
     }
     if (outdoors && cells.length) entrances.push({ cells, door: [d.x, d.z] })
   }
-  return { occupied, blocked, entrances, bounds }
+  for (const k of walled) occupied.add(k)
+  return { occupied, blocked, walled, entrances, bounds }
 }
 
 /**
@@ -121,6 +172,7 @@ const canStep = (
   [bi, bj]: [number, number],
   wallsOnly = false
 ) => {
+  if (floor.walled.has(key(bi, bj))) return false
   if (!wallsOnly && floor.occupied.has(key(bi, bj))) return false
   if (bi !== ai) return !floor.blocked.has(`v:${Math.max(ai, bi)},${aj}`)
   return !floor.blocked.has(`h:${ai},${Math.max(aj, bj)}`)

@@ -1,7 +1,6 @@
 import { useMemo } from "react"
 import { Edges } from "@react-three/drei"
 import { DoubleSide, Shape } from "three"
-import { footprintCells } from "../layout"
 import { FOOTPRINT_CELLS, GRID, type ObjectType } from "../types"
 
 interface Props {
@@ -27,17 +26,15 @@ const chevron = () => {
 }
 
 /**
- * Highlights the grid squares an object will occupy when placed/dropped, and
+ * Highlights the floor an object will occupy when placed/dropped (its
+ * footprint, turned with it — on the diagonal too), and
  * marks its FRONT: a bright bar along the front edge and a chevron pointing
  * out — the side people use (a desk's chair side, a sofa's seat, a TV's
  * screen), so it's clear which way it faces before rotating.
  */
 export const PlacementHighlight = ({ type, x, z, rotation, valid = true }: Props) => {
-  const [cx, cz] = footprintCells(type, rotation)
-  const w = cx * GRID
-  const d = cz * GRID
   const color = valid ? "#22c55e" : "#ef4444"
-  // Front marker in the piece's own (unrotated) frame: front = +Z.
+  // Footprint and front marker in the piece's own (unrotated) frame: front = +Z.
   const [fw, fd] = FOOTPRINT_CELLS[type]
   const width = fw * GRID
   const halfDepth = (fd * GRID) / 2
@@ -45,11 +42,13 @@ export const PlacementHighlight = ({ type, x, z, rotation, valid = true }: Props
 
   return (
     <>
-      <mesh position={[x, 0.02, z]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[w, d]} />
-        <meshBasicMaterial color={color} transparent opacity={0.22} toneMapped={false} />
-        <Edges color={color} />
-      </mesh>
+      <group position={[x, 0.02, z]} rotation={[0, rotation, 0]}>
+        <mesh rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[width, halfDepth * 2]} />
+          <meshBasicMaterial color={color} transparent opacity={0.22} toneMapped={false} />
+          <Edges color={color} />
+        </mesh>
+      </group>
       <group position={[x, 0.024, z]} rotation={[0, rotation, 0]}>
         <mesh position={[0, 0, halfDepth - 0.03]} rotation={[-Math.PI / 2, 0, 0]}>
           <planeGeometry args={[width - 0.04, 0.06]} />

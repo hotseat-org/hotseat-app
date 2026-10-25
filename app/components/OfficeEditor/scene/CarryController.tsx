@@ -2,7 +2,7 @@ import { useFrame, useThree } from "@react-three/fiber"
 import { useMemo } from "react"
 import { Plane, Vector3 } from "three"
 import { useEditorStore, useEditorStoreApi } from "../store"
-import { clampToFloor, snapToFootprint, wallMount } from "../layout"
+import { snapPlacement, wallMount } from "../layout"
 import { isWallMounted } from "../types"
 import { aimAtWallHeight } from "./wallAim"
 
@@ -38,10 +38,13 @@ export const CarryController = ({
     const all = store.getState().objects
     const aim = isWallMounted(o.type) ? aimAtWallHeight(raycaster, pointer, camera) : null
     const p = (aim && wallMount(all, o.type, aim.x, aim.z)) || {
-      ...clampToFloor(
+      // Flush against a diagonal wall when turned beside one (see snapPlacement).
+      ...snapPlacement(
+        all.filter((other) => other.id !== o.id),
         o.type,
         o.rotation,
-        snapToFootprint(o.type, o.rotation, hit.x + grab.dx, hit.z + grab.dz)
+        hit.x + grab.dx,
+        hit.z + grab.dz
       ),
       rotation: o.rotation,
     }

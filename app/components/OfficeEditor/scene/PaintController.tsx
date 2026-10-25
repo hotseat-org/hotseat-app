@@ -1,11 +1,11 @@
 import { useFrame, useThree } from "@react-three/fiber"
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
-import { Box3, Object3D, Plane, Vector3, type InstancedMesh } from "three"
+import { Object3D, Plane, Vector3, type InstancedMesh } from "three"
 import { useEditorStore, useEditorStoreApi } from "../store"
-import { SEG, edgeLength, enclosedRegions, runsAlongX, wallLine } from "../layout"
+import { SEG, enclosedRegions, wallLine } from "../layout"
 import { isEdgeType, type Cell } from "../types"
-import { WALL } from "../objects/dimensions"
 import { useSurfaces } from "../sceneTheme"
+import { intersectEdge } from "./wallHit"
 import { GhostObject } from "./GhostObject"
 
 const GROUND = new Plane(new Vector3(0, 1, 0), 0)
@@ -55,7 +55,6 @@ export const PaintController = () => {
     }
   }, [gl, invalidate, store])
 
-  const box = useMemo(() => new Box3(), [])
   const hit = useMemo(() => new Vector3(), [])
 
   useFrame(() => {
@@ -67,12 +66,7 @@ export const PaintController = () => {
     let best: { id: string; d: number } | null = null
     for (const o of all) {
       if (!isEdgeType(o.type)) continue
-      const alongX = runsAlongX(o.rotation)
-      const half = edgeLength(o) / 2
-      const [hx, hz] = alongX ? [half, WALL.depth / 2] : [WALL.depth / 2, half]
-      box.min.set(o.x - hx, -WALL.sink, o.z - hz)
-      box.max.set(o.x + hx, WALL.height, o.z + hz)
-      if (!ray.intersectBox(box, hit)) continue
+      if (!intersectEdge(ray, o, hit)) continue
       const d = hit.distanceTo(ray.origin)
       if (!best || d < best.d) best = { id: o.id, d }
     }

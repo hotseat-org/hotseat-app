@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react"
 import { Box3, Vector3, type OrthographicCamera } from "three"
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib"
 import { useEditorStore, useEditorStoreApi } from "../store"
-import { edgeLength, footprintCells, runsAlongX } from "../layout"
+import { edgeNodes, footprintCells } from "../layout"
 import { GRID, isEdgeType, isMarker } from "../types"
 import { WALL } from "../objects/dimensions"
 import { isTypingTarget } from "../keyboard"
@@ -76,9 +76,12 @@ export const CameraFit = ({ insets = NO_INSETS }: { insets?: FitInsets }) => {
       let hx: number
       let hz: number
       if (isEdgeType(o.type)) {
-        const along = edgeLength(o) / 2
-        const across = WALL.depth / 2
-        ;[hx, hz] = runsAlongX(o.rotation) ? [along, across] : [across, along]
+        // Its two ends (any direction, diagonals too), and the wall's thickness.
+        for (const n of edgeNodes(o)) {
+          box.expandByPoint(new Vector3(n.x - WALL.depth / 2, 0, n.z - WALL.depth / 2))
+          box.expandByPoint(new Vector3(n.x + WALL.depth / 2, WALL.height, n.z + WALL.depth / 2))
+        }
+        continue
       } else {
         const [cx, cz] = footprintCells(o.type, o.rotation)
         ;[hx, hz] = [(cx * GRID) / 2, (cz * GRID) / 2]

@@ -1,9 +1,15 @@
-import { useLayoutEffect, useMemo, useRef } from "react"
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react"
 import { useThree } from "@react-three/fiber"
-import { Object3D, type InstancedMesh, type WebGLProgramParametersWithUniforms } from "three"
+import {
+  BufferGeometry,
+  Float32BufferAttribute,
+  Object3D,
+  type InstancedMesh,
+  type WebGLProgramParametersWithUniforms,
+} from "three"
 import { useEditorStore, useEditorStoreApi } from "../store"
-import { SEG, enclosedRegions } from "../layout"
-import { isEdgeType, type Cell } from "../types"
+import { FLOOR_PART, SEG, enclosedRegions, type FloorCell } from "../layout"
+import { isEdgeType } from "../types"
 import { useSurfaces } from "../sceneTheme"
 
 const dummy = new Object3D()
@@ -86,7 +92,7 @@ export const InteriorFloor = () => {
     void key // recompute exactly when the rooms can have changed
     const objects = store.getState().objects
     const paints = objects.filter((o) => o.type === "floorPaint" && o.color)
-    const byColor = new Map<string, Cell[]>()
+    const byColor = new Map<string, FloorCell[]>()
     for (const region of enclosedRegions(objects)) {
       // Last paint inside the room wins.
       const paint = [...paints]
@@ -109,10 +115,12 @@ export const InteriorFloor = () => {
   )
 }
 
-/** One colour's worth of interior floor tiles. */
-const FloorTiles = ({ color, cells }: { color: string; cells: Cell[] }) => {
+/** One colour's worth of interior floor: whole squares as tiles, cut ones as triangles. */
+const FloorTiles = ({ color, cells: all }: { color: string; cells: FloorCell[] }) => {
   const invalidate = useThree((s) => s.invalidate)
   const ref = useRef<InstancedMesh>(null)
+  const cells = useMemo(() => all.filter((c) => c.parts === undefined), [all])
+  const cutCells = useMemo(() => all.filter((c) => c.parts !== undefined), [all])
 
   useLayoutEffect(() => {
     const mesh = ref.current
@@ -128,22 +136,64 @@ const FloorTiles = ({ color, cells }: { color: string; cells: Cell[] }) => {
     invalidate() // redraw under frameloop="demand"
   }, [cells, invalidate])
 
-  if (cells.length === 0) return null
   return (
-    // Keyed by count so the instance buffer is re-sized when the room grows/shrinks.
-    <instancedMesh
-      key={cells.length}
-      ref={ref}
-      args={[undefined, undefined, cells.length]}
-      receiveShadow
-    >
-      <planeGeometry args={[SEG, SEG]} />
-      <meshStandardMaterial
-        color={color}
-        roughness={0.92}
-        onBeforeCompile={patchPlanks}
-        customProgramCacheKey={planksKey}
-      />
-    </instancedMesh>
+    <>
+      {cells.length > 0 && (
+        // Keyed by count so the instance buffer is re-sized when the room grows/shrinks.
+        <instancedMesh
+          key={cells.length}
+          ref={ref}
+          args={[undefined, undefined, cells.length]}
+          receiveShadow
+        >
+          <planeGeometry args={[SEG, SEG]} />
+          <FloorSurface color={color} />
+        </instancedMesh>
+      )}
+      {cutCells.length > 0 && <CutFloor color={color} cells={cutCells} />}
+    </>
+  )
+}
+
+const FloorSurface = ({ color }: { color: string }) => (
+  <meshStandardMaterial
+    color={color}
+    roughness={0.92}
+    onBeforeCompile={patchPlanks}
+    customProgramCacheKey={planksKey}
+  />
+)
+
+/**
+ * The squares a diagonal wall cuts: only their triangles inside the room (a
+ * square's quarters between its diagonals, see FLOOR_PART), as one mesh.
+ */
+const CutFloor = ({ color, cells }: { color: string; cells: FloorCell[] }) => {
+  const geometry = useMemo(() => {
+    const positions: number[] = []
+    const y = 0.006
+    for (const c of cells) {
+      const [x0, z0, x1, z1] = [c.x, c.z, c.x + SEG, c.z + SEG]
+      const [cx, cz] = [c.x + SEG / 2, c.z + SEG / 2]
+      // Each quarter: its outer side, wound so the face looks up.
+      const quarters: [number, [number, number], [number, number]][] = [
+        [FLOOR_PART.south, [x0, z0], [x1, z0]],
+        [FLOOR_PART.east, [x1, z0], [x1, z1]],
+        [FLOOR_PART.north, [x1, z1], [x0, z1]],
+        [FLOOR_PART.west, [x0, z1], [x0, z0]],
+      ]
+      for (const [part, a, b] of quarters)
+        if ((c.parts ?? 0) & part) positions.push(a[0], y, a[1], cx, y, cz, b[0], y, b[1])
+    }
+    const g = new BufferGeometry()
+    g.setAttribute("position", new Float32BufferAttribute(positions, 3))
+    g.computeVertexNormals()
+    return g
+  }, [cells])
+  useEffect(() => () => geometry.dispose(), [geometry])
+  return (
+    <mesh geometry={geometry} receiveShadow>
+      <FloorSurface color={color} />
+    </mesh>
   )
 }

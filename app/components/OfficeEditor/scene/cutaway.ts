@@ -20,9 +20,10 @@ import { WALL } from "../objects/dimensions"
 export const MAX_CUTS = 4
 
 /**
- * Each cut: (axis, line, centre, amount). `axis` 0 = a wall running along X
- * (`line` is its z), 1 = along Z (`line` is its x); `centre` is the cut's
- * middle along the wall; `amount` 0…1 how far it's cut down (0 = not at all).
+ * Each cut: (direction, line, centre, amount). `direction` is which way the cut
+ * wall runs (CUT_DIRECTION); `line` is where it lies across that direction and
+ * `centre` the cut's middle along it (both measured with cutAxes); `amount`
+ * 0…1 how far it's cut down (0 = not at all).
  */
 export const cutawayUniform = {
   value: Array.from({ length: MAX_CUTS }, () => new Vector4()),
@@ -50,6 +51,54 @@ const CAP_LIGHT = 1.6
  */
 export const CUT_BAND = { wall: 0.05, item: WALL.depth / 2 + 0.4 }
 
+/** Wall directions as the shader numbers them. */
+export const CUT_DIRECTION = { x: 0, z: 1, rising: 2, falling: 3 } as const
+type CutDirection = (typeof CUT_DIRECTION)[keyof typeof CUT_DIRECTION]
+
+/** A direction's unit vectors on the floor (x, z): along the wall, and across it. */
+export const cutAxes = (
+  direction: number
+): { along: [number, number]; across: [number, number] } => {
+  const h = Math.SQRT1_2
+  switch (direction) {
+    case CUT_DIRECTION.z:
+      return { along: [0, 1], across: [1, 0] }
+    case CUT_DIRECTION.rising:
+      return { along: [h, h], across: [-h, h] }
+    case CUT_DIRECTION.falling:
+      return { along: [h, -h], across: [h, h] }
+    default:
+      return { along: [1, 0], across: [0, 1] }
+  }
+}
+
+/** The direction a piece runs, from its local X axis in the world (x, z). */
+export const cutDirectionOf = (ax: number, az: number): CutDirection => {
+  const length = Math.hypot(ax, az) || 1
+  const x = ax / length
+  const z = az / length
+  if (Math.abs(x) > 0.92) return CUT_DIRECTION.x
+  if (Math.abs(z) > 0.92) return CUT_DIRECTION.z
+  return x * z > 0 ? CUT_DIRECTION.rising : CUT_DIRECTION.falling
+}
+
+/** The same in GLSL, and a direction's axes. */
+const CUT_DIRECTION_GLSL = /* glsl */ `
+  float cutDirectionOf(vec2 d) {
+    d = normalize(d);
+    if (abs(d.x) > 0.92) return 0.0;
+    if (abs(d.y) > 0.92) return 1.0;
+    return d.x * d.y > 0.0 ? 2.0 : 3.0;
+  }`
+const CUT_AXES_GLSL = /* glsl */ `
+  void cutAxes(float direction, out vec2 along, out vec2 across) {
+    float h = 0.70710678;
+    if (direction < 0.5) { along = vec2(1.0, 0.0); across = vec2(0.0, 1.0); }
+    else if (direction < 1.5) { along = vec2(0.0, 1.0); across = vec2(1.0, 0.0); }
+    else if (direction < 2.5) { along = vec2(h, h); across = vec2(-h, h); }
+    else { along = vec2(h, -h); across = vec2(h, h); }
+  }`
+
 const glsl = (n: number) => n.toFixed(4)
 
 /**
@@ -60,8 +109,7 @@ const glsl = (n: number) => n.toFixed(4)
 const ANCHOR_FROM_MATRIX = /* glsl */ `
   vCutAnchor = (modelMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
   // Which way the piece runs: its local X (along its wall) in the world.
-  vec3 cutAlong = (modelMatrix * vec4(1.0, 0.0, 0.0, 0.0)).xyz;
-  vCutAxis = abs(cutAlong.x) >= abs(cutAlong.z) ? 0.0 : 1.0;`
+  vCutAxis = cutDirectionOf((modelMatrix * vec4(1.0, 0.0, 0.0, 0.0)).xz);`
 const ANCHOR_FROM_ATTRIBUTES = /* glsl */ `
   vCutAnchor = (modelMatrix * vec4(cutAnchor, 1.0)).xyz;
   vCutAxis = cutAxis;`
@@ -76,7 +124,7 @@ const createPatch =
       varying vec3 vCutWorld;
       varying vec3 vCutAnchor;
       varying float vCutAxis;
-      ${isMerged ? "attribute vec3 cutAnchor;\nattribute float cutAxis;" : ""}`
+      ${isMerged ? "attribute vec3 cutAnchor;\nattribute float cutAxis;" : CUT_DIRECTION_GLSL}`
       )
       .replace(
         "#include <project_vertex>",
@@ -92,19 +140,22 @@ const createPatch =
       varying vec3 vCutWorld;
       varying vec3 vCutAnchor;
       varying float vCutAxis;
+      ${CUT_AXES_GLSL}
       float cutawayDepth(vec3 p) {
         float depth = 0.0;
         for (int i = 0; i < ${MAX_CUTS}; i++) {
           vec4 cut = cutaways[i];
           if (cut.w <= 0.0) continue;
-          bool alongX = cut.x < 0.5;
-          float along = alongX ? p.x : p.z;
-          float across = alongX ? p.z : p.x;
+          vec2 alongAxis;
+          vec2 acrossAxis;
+          cutAxes(cut.x, alongAxis, acrossAxis);
+          float along = dot(p.xz, alongAxis);
+          float across = dot(p.xz, acrossAxis);
           float cutAlong = 1.0 - smoothstep(${glsl(FULL)}, ${glsl(REACH)}, abs(along - cut.z));
           float k;
-          if ((vCutAxis < 0.5) == alongX) {
+          if (abs(vCutAxis - cut.x) < 0.5) {
             // Along the cut wall: on its line (by the anchor), or not at all.
-            float anchorAcross = alongX ? vCutAnchor.z : vCutAnchor.x;
+            float anchorAcross = dot(vCutAnchor.xz, acrossAxis);
             k = abs(anchorAcross - cut.y) <= ${glsl(band)} ? cutAlong : 0.0;
           } else {
             // Crossing it: cut down at the junction, back up along its length.
@@ -162,9 +213,9 @@ export const useCutaway = () => useContext(CutawayContext)
 /**
  * Give every vertex of one piece's geometry the piece's anchor (in the merged
  * mesh's space) and the way it runs (0 = along X, 1 = along Z), before merging
- * it with others into a "merged…" cutaway mesh.
+ * it with others into a "merged…" cutaway mesh. `axis`: a CUT_DIRECTION.
  */
-export const setCutAttributes = (geometry: BufferGeometry, anchor: Vector3, axis: 0 | 1) => {
+export const setCutAttributes = (geometry: BufferGeometry, anchor: Vector3, axis: number) => {
   const count = geometry.getAttribute("position").count
   const anchors = new Float32Array(count * 3)
   for (let i = 0; i < count * 3; i += 3) {

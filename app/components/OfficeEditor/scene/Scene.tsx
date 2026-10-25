@@ -3,7 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useThree, type ThreeEvent } from "@react-three/fiber"
 import { MOUSE, Plane, Vector3 } from "three"
 import { useEditorStore, useEditorStoreApi } from "../store"
-import { clampToFloor, furnitureCollides, snapToFootprint, wallMount } from "../layout"
+import { furnitureCollides, snapPlacement, wallMount } from "../layout"
 import { randomModelId } from "../models"
 import { daylight, DaylightContext } from "../daylight"
 import { SURFACES } from "../palette"
@@ -235,7 +235,7 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
       const m = wallMount(objects, type, aim.x, aim.z)
       if (m) return m
     }
-    return clampToFloor(type, placementRotation, snapToFootprint(type, placementRotation, x, z))
+    return snapPlacement(objects, type, placementRotation, x, z)
   }
 
   // View mode: who's in at each desk on the shown day (clutter, monitor, pet).

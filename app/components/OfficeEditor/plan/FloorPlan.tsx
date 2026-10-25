@@ -14,7 +14,18 @@ import {
 } from "react"
 import { routeBounds, useRoute } from "../wayfinding"
 import { useEditorStore } from "../store"
-import { edgeNodes, enclosedRegions, footprintCells, runsAlongX, SEG } from "../layout"
+import {
+  FLOOR_PART,
+  edgeDirection,
+  edgeNodes,
+  enclosedRegions,
+  footprintCells,
+  isDiagonalEdge,
+  runsAlongX,
+  SEG,
+  toRotationStep,
+  type FloorCell,
+} from "../layout"
 import { SURFACES, type SurfacePalette } from "../palette"
 import { tilesCovering, useLandscape } from "../contours"
 import { personByEmail, usePeople, type Person } from "../people"
@@ -23,7 +34,7 @@ import { spotFor } from "../seatSpot"
 import { SeatCardBody, useSeatCard } from "../seatCard"
 import { heatColor } from "../heatmap"
 import { useDeskFilter, useDesksOnDay, type DeskOnDay } from "../useBooking"
-import { GRID, isEdgeType, isMarker, isSeatable, type SceneObject } from "../types"
+import { GRID, isEdgeType, isMarker, isSeatable, type Cell, type SceneObject } from "../types"
 import { isTypingTarget } from "../keyboard"
 import { createWheelReader, getSmoothZoomFactor, getStepZoomFactor } from "../wheel"
 import { WALL } from "../objects/dimensions"
@@ -86,9 +97,13 @@ const turnPoint = (x: number, z: number, q: number): [number, number] => {
 const turnObject = (o: SceneObject, q: number): SceneObject => {
   if (!q) return o
   const [x, z] = turnPoint(o.x, o.z, q)
-  // Snapped to an exact quarter turn: helpers like runsAlongX expect clean values.
-  const quarters = (Math.round(o.rotation / (Math.PI / 2)) + q) & 3
-  return { ...o, x, z, rotation: (quarters * Math.PI) / 2 }
+  // Exact steps: helpers like runsAlongX expect clean values. Furniture keeps
+  // its eighth (a desk at 45° stays at 45°); walls and openings, quarters.
+  if (isEdgeType(o.type)) {
+    const quarters = (Math.round(o.rotation / (Math.PI / 2)) + q) & 3
+    return { ...o, x, z, rotation: (quarters * Math.PI) / 2 }
+  }
+  return { ...o, x, z, rotation: toRotationStep(o.rotation + (q * Math.PI) / 2) }
 }
 
 interface View {
@@ -969,14 +984,66 @@ const buildScene = ({
     )
   }
 
+  /** A wall piece on a diagonal, from node `a` to `b`: a turned bar, its ends overlapping corners. */
+  const diagonalWallPiece = (
+    a: Cell,
+    b: Cell,
+    color: string,
+    { opacity = 1, extend = t, across = t, y1 = WALL.height } = {}
+  ) => {
+    const length = Math.hypot(b.x - a.x, b.z - a.z)
+    const [ux, uz] = [(b.x - a.x) / length, (b.z - a.z) / length]
+    const [nx, nz] = [-uz * across, ux * across]
+    const [ax, az] = [a.x - ux * extend, a.z - uz * extend]
+    const [bx, bz] = [b.x + ux * extend, b.z + uz * extend]
+    const corners = [
+      [ax + nx, az + nz],
+      [bx + nx, bz + nz],
+      [bx - nx, bz - nz],
+      [ax - nx, az - nz],
+    ]
+    const xs = corners.map((c) => c[0])
+    const zs = corners.map((c) => c[1])
+    push(
+      {
+        x0: Math.min(...xs),
+        x1: Math.max(...xs),
+        z0: Math.min(...zs),
+        z1: Math.max(...zs),
+        y0: 0,
+        y1,
+      },
+      <polygon
+        points={corners.map((c) => c.join(",")).join(" ")}
+        fill={color}
+        opacity={opacity < 1 ? opacity : undefined}
+      />
+    )
+  }
+
   // Plain and glass walls merge into straight runs of the same colour — one
   // piece per run, so no seams between half-metre segments.
   const runs = new Map<
     string,
     { alongX: boolean; fixed: number; at: number[]; color: string; glass: boolean }
   >()
+  const diagonalRuns = new Map<
+    string,
+    { rotation: number; at: SceneObject[]; color: string; glass: boolean }
+  >()
   for (const o of objects) {
     if (o.type !== "wall" && o.type !== "glassWall") continue
+    if (isDiagonalEdge(o.rotation)) {
+      // Diagonal: runs on the lines where x − z (rising) or x + z (falling) holds.
+      const glass = o.type === "glassWall"
+      const color = glass ? WINDOW_GLASS : (o.color ?? wall)
+      const isRising = edgeDirection(o.rotation) === "rising"
+      const key = `${isRising}|${isRising ? o.x - o.z : o.x + o.z}|${glass}|${color}`
+      const run = diagonalRuns.get(key) ?? { rotation: o.rotation, at: [], color, glass }
+      run.at.push(o)
+      diagonalRuns.set(key, run)
+      continue
+    }
     const alongX = runsAlongX(o.rotation)
     const glass = o.type === "glassWall"
     const color = glass ? WINDOW_GLASS : (o.color ?? wall)
@@ -1006,11 +1073,80 @@ const buildScene = ({
     flush()
   }
 
+  for (const r of diagonalRuns.values()) {
+    r.at.sort((p, q) => p.x - q.x)
+    let start = r.at[0]
+    let prev = r.at[0]
+    const flush = () => {
+      const [a] = edgeNodes(start)
+      const [, b] = edgeNodes(prev)
+      diagonalWallPiece(a, b, r.color, {
+        opacity: r.glass ? 0.8 : 1,
+        across: r.glass ? t * 0.5 : t,
+      })
+    }
+    for (const o of r.at.slice(1)) {
+      if (Math.abs(o.x - prev.x - SEG) > 1e-6) {
+        flush()
+        start = o
+      }
+      prev = o
+    }
+    flush()
+  }
+
   // Windows: the wall with a pane of glass along its middle. Doors: the gap
   // between two jambs, the leaf standing open and its swing — a plan's door.
   for (const o of objects) {
     if (o.type !== "window" && o.type !== "door" && o.type !== "glassDoor") continue
     const [a, b] = edgeNodes(o)
+    if (isDiagonalEdge(o.rotation)) {
+      // On a diagonal: a window is wall with glass down its middle; a door, its
+      // two jambs, and its leaf standing open with its swing, as straight ones.
+      if (o.type === "window") {
+        diagonalWallPiece(a, b, o.color ?? wall, {})
+        diagonalWallPiece(a, b, WINDOW_GLASS, { extend: -0.06, across: t * 0.35 })
+        continue
+      }
+      const post = 0.1
+      const span = Math.hypot(b.x - a.x, b.z - a.z)
+      const along = { x: (b.x - a.x) / span, z: (b.z - a.z) / span }
+      const lerp = (d: number) => ({ x: a.x + along.x * d, z: a.z + along.z * d })
+      const frame = o.type === "glassDoor" ? "#5b6577" : (o.color ?? wall)
+      diagonalWallPiece(a, lerp(post), frame, { extend: 0 })
+      diagonalWallPiece(lerp(span - post), b, frame, { extend: 0 })
+      // Hinged at the first jamb, the leaf opens to the door's front (its +Z);
+      // the swing runs from where it shuts to where it stands.
+      const front = { x: Math.sin(o.rotation), z: Math.cos(o.rotation) }
+      const len = span - post * 2
+      const hinge = lerp(post)
+      const shut = lerp(post + len)
+      const open = { x: hinge.x + front.x * len, z: hinge.z + front.z * len }
+      const sweep = along.x * front.z - along.z * front.x > 0 ? 1 : 0
+      const leafColor = o.type === "glassDoor" ? WINDOW_GLASS : (o.color ?? "#d98a63")
+      push(
+        { x0: hinge.x, x1: hinge.x, z0: hinge.z, z1: hinge.z, y0: 0, y1: 0.02 },
+        <g>
+          <path
+            d={`M${shut.x} ${shut.z} A${len} ${len} 0 0 ${sweep} ${open.x} ${open.z}`}
+            fill="none"
+            stroke={shade(wall, 0.7)}
+            strokeWidth={0.02}
+            strokeDasharray="0.06 0.05"
+          />
+          <line
+            x1={hinge.x}
+            y1={hinge.z}
+            x2={open.x}
+            y2={open.z}
+            stroke={leafColor}
+            strokeWidth={0.06}
+            strokeLinecap="round"
+          />
+        </g>
+      )
+      continue
+    }
     const alongX = runsAlongX(o.rotation)
     const fixed = alongX ? a.z : a.x
     const [from, to] = alongX
@@ -1154,15 +1290,25 @@ const buildScene = ({
 
   // --- The floor: rooms (each in its floor paint) as row-merged strips.
   const colorOf = new Map<string, string>()
+  const rooms = new Map<string, ReactNode[]>()
   for (const region of enclosedRegions(objects)) {
     const paint = [...paints]
       .reverse()
       .find((p) =>
         region.some((c) => c.x <= p.x && p.x < c.x + SEG && c.z <= p.z && p.z < c.z + SEG)
       )
-    for (const c of region) colorOf.set(`${c.x},${c.z}`, paint?.color ?? floorInside)
+    const color = paint?.color ?? floorInside
+    for (const c of region) {
+      if (c.parts === undefined) {
+        colorOf.set(`${c.x},${c.z}`, color)
+        continue
+      }
+      // A square a diagonal wall cuts: just its quarters inside the room.
+      const list = rooms.get(color) ?? []
+      list.push(<path key={`cut ${c.x},${c.z}`} d={cutSquarePath(c)} />)
+      rooms.set(color, list)
+    }
   }
-  const rooms = new Map<string, ReactNode[]>()
   const rows = new Map<number, number[]>()
   for (const key of colorOf.keys()) {
     const [x, z] = key.split(",").map(Number)
@@ -1230,4 +1376,20 @@ const buildScene = ({
       </>
     ),
   }
+}
+
+/** The quarters of a cut square that are inside (FLOOR_PART bits), as one SVG path. */
+const cutSquarePath = (c: FloorCell) => {
+  const [x0, z0, x1, z1] = [c.x, c.z, c.x + SEG, c.z + SEG]
+  const [cx, cz] = [c.x + SEG / 2, c.z + SEG / 2]
+  const quarters: [number, [number, number], [number, number]][] = [
+    [FLOOR_PART.south, [x0, z0], [x1, z0]],
+    [FLOOR_PART.east, [x1, z0], [x1, z1]],
+    [FLOOR_PART.north, [x1, z1], [x0, z1]],
+    [FLOOR_PART.west, [x0, z1], [x0, z0]],
+  ]
+  return quarters
+    .filter(([part]) => (c.parts ?? 0) & part)
+    .map(([, a, b]) => `M${a[0]} ${a[1]}L${b[0]} ${b[1]}L${cx} ${cz}Z`)
+    .join("")
 }

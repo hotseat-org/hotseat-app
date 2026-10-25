@@ -4,11 +4,9 @@ import { Box3, Vector3 } from "three"
 import { useEditorStoreApi } from "../store"
 import { GRID, isEdgeType, isWallMounted } from "../types"
 import { WALL } from "../objects/dimensions"
-import { edgeLength, footprintCells } from "../layout"
-import { cutawayUniform, MAX_CUTS } from "./cutaway"
-
-const runsAlongX = (rotation: number) =>
-  Math.abs(((rotation % Math.PI) + Math.PI) % Math.PI) < Math.PI / 4
+import { edgeDirection, edgeLength, footprintCells } from "../layout"
+import { CUT_DIRECTION, cutAxes, cutawayUniform, MAX_CUTS } from "./cutaway"
+import { intersectEdge } from "./wallHit"
 
 /**
  * Speeds (1/s). Cutting away is quick so it keeps up with the cursor (~0.1s);
@@ -26,7 +24,8 @@ const MOUNT_BOTTOM = 0.4
 
 /** A wall line being cut (or easing back): see cutawayUniform. */
 interface Cut {
-  axis: 0 | 1
+  /** Which way the cut wall runs: a CUT_DIRECTION. */
+  axis: number
   line: number
   centre: number
   targetCentre: number
@@ -109,20 +108,19 @@ export const WallXray = ({ enabled, isEditing }: Props) => {
     for (const o of objects) {
       if (!isEdgeType(o.type) || o.type === "glassWall") continue
       if (isEditing && o.type !== "wall") continue
-      const alongX = runsAlongX(o.rotation)
+      if (!intersectEdge(ray, o, hitPoint, SLACK)) continue
       const half = edgeLength(o) / 2
-      const hx = alongX ? half : WALL.depth / 2 + SLACK
-      const hz = alongX ? WALL.depth / 2 + SLACK : half
-      min.set(o.x - hx, -WALL.sink, o.z - hz)
-      max.set(o.x + hx, WALL.height + SLACK, o.z + hz)
-      if (!ray.intersectBox(box.set(min, max), hitPoint)) continue
+      const axis = CUT_DIRECTION[edgeDirection(o.rotation)]
+      const { along, across } = cutAxes(axis)
+      const middle = o.x * along[0] + o.z * along[1]
       hits.push({
-        axis: alongX ? 0 : 1,
-        line: alongX ? o.z : o.x,
+        axis,
+        line: o.x * across[0] + o.z * across[1],
         // Where the ray meets the wall, clamped to this segment.
-        centre: alongX
-          ? Math.min(o.x + half, Math.max(o.x - half, hitPoint.x))
-          : Math.min(o.z + half, Math.max(o.z - half, hitPoint.z)),
+        centre: Math.min(
+          middle + half,
+          Math.max(middle - half, hitPoint.x * along[0] + hitPoint.z * along[1])
+        ),
         distance: hitPoint.distanceTo(ray.origin),
       })
     }

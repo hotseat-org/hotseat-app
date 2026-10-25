@@ -12,7 +12,7 @@ import {
 } from "three"
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js"
 import { markShadowsDirty } from "../scene/shadows"
-import { MERGED_KIND, setCutAttributes } from "../scene/cutaway"
+import { MERGED_KIND, cutDirectionOf, setCutAttributes } from "../scene/cutaway"
 import { getSurfaceShader } from "./surfaceShader"
 import { BATCH_PART, BatchContext, surfaceKey } from "./batching"
 
@@ -101,7 +101,7 @@ export const StaticBatch = ({ enabled, children }: { enabled: boolean; children:
         // Cut by the wall cutaway: each vertex keeps its piece's anchor (its
         // origin) and the way it runs (its local X), as its own mesh gave them.
         const e = toBatch.elements
-        const axis = Math.abs(e[0]) >= Math.abs(e[2]) ? 0 : 1
+        const axis = cutDirectionOf(e[0], e[2])
         return setCutAttributes(geometry, new Vector3().setFromMatrixPosition(toBatch), axis)
       })
       const merged = mergeGeometries(geometries, false)

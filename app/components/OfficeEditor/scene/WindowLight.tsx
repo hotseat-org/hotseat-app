@@ -9,7 +9,7 @@ import {
   type InstancedMesh,
 } from "three"
 import { useEditorStore } from "../store"
-import { SEG, enclosedRegions } from "../layout"
+import { SEG, edgeStep, enclosedRegions, isDiagonalEdge } from "../layout"
 import type { DayProfile } from "../daylight"
 
 /** Just above the blobs under furniture. */
@@ -77,17 +77,23 @@ export const WindowLight = ({ profile }: Props) => {
     return objects
       .filter((o) => o.type === "window")
       .flatMap((o) => {
-        const alongX = Math.abs(((o.rotation % Math.PI) + Math.PI) % Math.PI) < Math.PI / 4
-        // Across the wall: ±z for a wall along x, ±x for one along z.
-        const [nx, nz] = alongX ? [0, 1] : [1, 0]
-        const step = SEG / 2
+        // Along the wall (any direction, diagonals too), and across it.
+        const [sx, sz] = edgeStep(o.rotation)
+        const unit = Math.hypot(sx, sz)
+        const along = [sx / unit, sz / unit] as const
+        const [nx, nz] = [-along[1], along[0]]
+        // Sample a little either side: far enough to leave the squares a
+        // diagonal wall runs through.
+        const step = isDiagonalEdge(o.rotation) ? SEG * 1.6 : SEG / 2
         const sign = isInside(o.x + nx * step, o.z + nz * step)
           ? 1
           : isInside(o.x - nx * step, o.z - nz * step)
             ? -1
             : 0
         if (!sign) return [] // between two outsides (or two rooms' worth of glass): skip
-        return [{ x: o.x, z: o.z, alongX, inward: [nx * sign, nz * sign] as const }]
+        // Its glass is as much wider as a diagonal window is longer.
+        const width = WIDTH * (isDiagonalEdge(o.rotation) ? Math.SQRT2 : 1)
+        return [{ x: o.x, z: o.z, along, width, inward: [nx * sign, nz * sign] as const }]
       })
   }, [objects])
 
@@ -109,7 +115,7 @@ export const WindowLight = ({ profile }: Props) => {
         const near = SILL * reachPerMetre
         const length = Math.min(MAX_LENGTH, (HEAD - SILL) * reachPerMetre)
         const mid = near + length / 2
-        const [ax, az] = w.alongX ? [WIDTH, 0] : [0, WIDTH]
+        const [ax, az] = [w.along[0] * w.width, w.along[1] * w.width]
         // Columns: across the window, along the light, up; then where.
         // prettier-ignore
         matrix.set(

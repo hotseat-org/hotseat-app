@@ -1,5 +1,6 @@
 import { useLayoutEffect, useMemo, useRef } from "react"
 import type { Group } from "three"
+import { edgeStretch } from "../layout"
 import { ObjectMesh } from "../objects/ObjectMesh"
 import { GhostContext, type GhostMode } from "../objects/Surface"
 import type { ObjectType } from "../types"
@@ -43,7 +44,10 @@ export const GhostObject = ({
   return (
     <GhostContext.Provider value={mode}>
       <group ref={ref} position={[x, 0, z]} rotation={[0, rotation, 0]} scale={scale}>
-        <ObjectMesh type={type} color={color} />
+        {/* A diagonal wall/door is longer than a straight one. */}
+        <group scale={edgeStretch(type, rotation)}>
+          <ObjectMesh type={type} color={color} />
+        </group>
       </group>
     </GhostContext.Provider>
   )

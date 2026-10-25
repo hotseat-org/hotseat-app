@@ -1,7 +1,7 @@
 import { useLayoutEffect, useMemo } from "react"
 import { Html } from "@react-three/drei"
 import { DataTexture, NearestFilter, RepeatWrapping, RGBAFormat } from "three"
-import { edgeLength, footprintCells, runsAlongX } from "../layout"
+import { edgeLength, footprintCells, isDiagonalEdge, runsAlongX } from "../layout"
 import {
   GRID,
   isEdgeType,
@@ -126,6 +126,8 @@ const measure = (objects: SceneObject[], r: Rect, ignoreId?: string): (Measure |
   for (const o of objects) {
     if (o.id === ignoreId || isMarker(o.type)) continue
     if (isEdgeType(o.type)) {
+      // Distances are measured straight along X and Z: diagonal walls don't count.
+      if (isDiagonalEdge(o.rotation)) continue
       const h = edgeLength(o) / 2
       if (runsAlongX(o.rotation)) {
         // A horizontal line at z = o.z blocks ±Z when it spans our x range.

@@ -19,7 +19,9 @@ import {
   groupCollides,
   normalizeEdges,
   snapToFootprint,
+  toRotationStep,
   unitEdges,
+  ROTATION_STEP,
 } from "./layout"
 import {
   isEdgeType,
@@ -38,8 +40,6 @@ import {
 } from "./types"
 import { findDeskChair, toWorld } from "./seatSpot"
 import type { BookingsByDay, Day, DeskDays } from "~/utils/booking"
-
-const HALF_TURN = Math.PI / 2
 
 /** The viewer's local wall-clock time in hours [0,24), minute precision. */
 
@@ -612,7 +612,7 @@ const makeInitializer =
       setTool: (tool) => set({ tool, selectedId: tool === "select" ? get().selectedId : null }),
       select: (selectedId) => set({ selectedId }),
       rotatePlacement: () =>
-        set((s) => ({ placementRotation: (s.placementRotation + HALF_TURN) % (Math.PI * 2) })),
+        set((s) => ({ placementRotation: toRotationStep(s.placementRotation + ROTATION_STEP) })),
       setPlacementColor: (type, color) =>
         set((s) => {
           const placementColors = { ...s.placementColors }
@@ -768,7 +768,7 @@ const makeInitializer =
           // Walls/doors live on grid edges — turning one in place would leave it
           // off the edge grid, so they don't rotate.
           if (!o || isEdgeType(o.type)) return s
-          const rotation = (o.rotation + HALF_TURN) % (Math.PI * 2)
+          const rotation = toRotationStep(o.rotation + ROTATION_STEP)
           // An odd×even footprint changes parity when turned; re-snap so it still
           // sits on whole grid squares, and refuse a turn into other furniture —
           // unless it's being carried (the overlap is checked on drop).
@@ -804,7 +804,7 @@ const makeInitializer =
         if (group.length === 1) return get().rotateObject(group[0].id)
         // Each piece turns in place (re-snapped); refused if any would collide.
         const turned = group.map((o) => {
-          const rotation = (o.rotation + HALF_TURN) % (Math.PI * 2)
+          const rotation = toRotationStep(o.rotation + ROTATION_STEP)
           return { ...o, ...snapToFootprint(o.type, rotation, o.x, o.z), rotation }
         })
         if (groupCollides(get().objects, turned)) return

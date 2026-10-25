@@ -14,7 +14,7 @@ import {
   type Tool,
 } from "../types"
 import { GhostObject } from "../scene/GhostObject"
-import { edgeLength } from "../layout"
+import { edgeLength, edgeStretch } from "../layout"
 import { markShadowsDirty } from "../scene/shadows"
 import { CutawayContext } from "../scene/cutaway"
 import { CursorHintContext } from "../cursors"
@@ -233,7 +233,8 @@ export const ObjectRenderer = memo(function ObjectRenderer({
       }
     >
       {/* Lifted/tilted while carried (the placement highlight marks the drop spot). */}
-      <group ref={lifted}>
+      {/* A diagonal door/window is longer than a straight one. */}
+      <group ref={lifted} scale={edgeStretch(obj.type, obj.rotation)}>
         <CutawayContext.Provider value={cutaway}>
           {/* Batched: the object's parts merge into one mesh per material — and,
               viewing, with the whole office's. */}
