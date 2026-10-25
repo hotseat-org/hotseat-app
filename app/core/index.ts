@@ -22,6 +22,7 @@ import { joinOrganizationWithHash } from "./organization/joinWithHash"
 import { listNotifications, markNotificationsRead } from "./notification"
 import { getOfficesOccupancy } from "./office/occupancy"
 import { getOfficeInsights } from "./office/insights"
+import { deleteRoomKit, listRoomKits, saveRoomKit } from "./office/roomKits"
 import { getOrganizationLanding, getUserLanding } from "./user/landing"
 import { listUserOrganizations } from "./user/listOrganizations"
 import { listDeskReleases, reclaimDesk, releaseDesk } from "./reservation/release"
@@ -99,6 +100,9 @@ export const createCore = (context: CoreContext) => ({
     delete: deleteOffice(context),
     occupancyToday: getOfficesOccupancy(context),
     insights: getOfficeInsights(context),
+    listKits: listRoomKits(context),
+    saveKit: saveRoomKit(context),
+    deleteKit: deleteRoomKit(context),
     renamedTo: (organizationSlug: string, oldSlug: string) =>
       context.mainRepository.slugRedirect.findOffice(organizationSlug, oldSlug),
   },

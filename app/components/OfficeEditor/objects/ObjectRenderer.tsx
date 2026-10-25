@@ -43,6 +43,8 @@ interface Props {
   onSeatClick?: (id: string) => void
   /** Shift-click: toggle this piece in the multi-selection. */
   onToggleSelect?: (id: string) => void
+  /** A right-press on furniture: the right-click menu, if it's let go in place. */
+  onMenuPress?: (id: string, e: ThreeEvent<PointerEvent>) => void
   /** Lift a door/window to move it along the walls. */
   onPickOpening?: (id: string) => void
   /** Desks in view mode: whether someone sits here on the shown day. */
@@ -78,6 +80,7 @@ export const ObjectRenderer = memo(function ObjectRenderer({
   onStartDrag,
   onPickOpening,
   onToggleSelect,
+  onMenuPress,
   onSeatClick,
   occupied,
 }: Props) {
@@ -174,6 +177,10 @@ export const ObjectRenderer = memo(function ObjectRenderer({
   })
 
   const handlePointerDown = (e: ThreeEvent<PointerEvent>) => {
+    if (e.button === 2 && onMenuPress && isFurniture(obj)) {
+      e.stopPropagation() // the floor beneath would open its own menu
+      return onMenuPress(obj.id, e)
+    }
     if (e.button !== 0) return
     if (tool === "delete") {
       // Walls/doors are erased by BuildController (single click or drag-run);

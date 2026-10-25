@@ -67,6 +67,57 @@ export const snapToFootprint = (type: ObjectType, rotation: number, x: number, z
   return { x: snapAxis(x, cx), z: snapAxis(z, cz) }
 }
 
+/** How a furniture tool places: one piece, a row of copies, or a back-to-back pod of two rows. */
+export type PlacementPattern = "single" | "row" | "pod"
+
+/** Most copies one drag lays (a row across a big floor, not a runaway). */
+const MAX_REPEAT = 40
+
+/**
+ * The copies a Row/Pod drag lays from `start` to `end`: side by side, flush,
+ * along whichever of the piece's own directions (its width or its depth) the
+ * drag follows more — a turned piece's too. A pod adds a second row back to
+ * back with the first, turned to face the other way (desks facing across).
+ */
+export const composeRepeat = (
+  type: ObjectType,
+  rotation: number,
+  start: Cell,
+  end: Cell,
+  pattern: Exclude<PlacementPattern, "single">
+): { x: number; z: number; rotation: number }[] => {
+  const [w, d] = FOOTPRINT_CELLS[type]
+  // The piece's own axes in the world: X (its width) and Z (its depth, front +Z).
+  const ax = { x: Math.cos(rotation), z: -Math.sin(rotation) }
+  const az = { x: Math.sin(rotation), z: Math.cos(rotation) }
+  const dx = end.x - start.x
+  const dz = end.z - start.z
+  const alongWidth = (dx * ax.x + dz * ax.z) / (w * GRID)
+  const alongDepth = (dx * az.x + dz * az.z) / (d * GRID)
+  // Rows run along the width unless the drag goes clearly more along the depth.
+  const isAlongWidth = Math.abs(alongWidth) >= Math.abs(alongDepth) || pattern === "pod"
+  const steps = isAlongWidth ? alongWidth : alongDepth
+  const count = Math.min(MAX_REPEAT, Math.floor(Math.abs(steps) + 0.5) + 1)
+  const axis = isAlongWidth ? ax : az
+  const stride = (isAlongWidth ? w : d) * GRID * Math.sign(steps || 1)
+  const row = Array.from({ length: count }, (_, i) => ({
+    x: start.x + axis.x * stride * i,
+    z: start.z + axis.z * stride * i,
+    rotation,
+  }))
+  if (pattern === "row") return row
+  // Back to back: the second row behind the first (its −Z side), facing away.
+  const behind = d * GRID
+  return [
+    ...row,
+    ...row.map((p) => ({
+      x: p.x - az.x * behind,
+      z: p.z - az.z * behind,
+      rotation: toRotationStep(rotation + Math.PI),
+    })),
+  ]
+}
+
 /** How far (m) beyond touching a diagonal wall a turned piece is pulled flush against it. */
 const FLUSH_REACH = 0.6
 
@@ -870,4 +921,24 @@ export const wallJointNodes = (objects: SceneObject[]): Cell[] => {
     }
   }
   return [...map.values()].filter((e) => e.directions.size > 1).map((e) => e.cell)
+}
+
+/**
+ * The furniture standing in the room that contains (x, z) — every piece whose
+ * centre is on that room's floor. Empty when the point isn't inside a room.
+ */
+export const furnitureInRoomAt = (objects: SceneObject[], x: number, z: number): string[] => {
+  const room = enclosedRegions(objects).find((r) =>
+    r.some((c) => c.x <= x && x < c.x + SEG && c.z <= z && z < c.z + SEG)
+  )
+  if (!room) return []
+  const cells = new Set(room.map((c) => `${c.x},${c.z}`))
+  return objects
+    .filter(
+      (o) =>
+        !isEdgeType(o.type) &&
+        !isMarker(o.type) &&
+        cells.has(`${Math.floor(o.x / SEG) * SEG},${Math.floor(o.z / SEG) * SEG}`)
+    )
+    .map((o) => o.id)
 }

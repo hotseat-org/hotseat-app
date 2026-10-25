@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from "react"
-import { Button, Chip, Tooltip } from "@heroui/react"
+import { Button, Chip } from "@heroui/react"
 import { BarChart3, Building2, Calendar, Hourglass, MapPin, Pencil, Pin, Users } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import {
@@ -18,8 +18,8 @@ import { MyBookings } from "./MyBookings"
 import { MobileShell } from "./MobileShell"
 import { NotificationsBell } from "./Notifications"
 import { WeekDots } from "./WeekDots"
-import { DeskFilter } from "./DeskFilter"
 import { InsightsDashboard } from "./InsightsDashboard"
+import { REVEAL_LABEL } from "~/components/OfficeEditor/ui/revealLabel"
 import { useEditorStore } from "~/components/OfficeEditor/store"
 import { TimeOfDay } from "~/components/OfficeEditor/ui/TimeOfDay"
 import { hasWebGL } from "~/components/OfficeEditor/webgl"
@@ -62,7 +62,7 @@ interface RailItem {
 }
 
 const RailLink = ({ icon: Icon, label, onClick, active, disabled }: RailItem) => {
-  const cls = `flex size-11 items-center justify-center rounded-xl transition-colors outline-none focus-visible:ring-2 focus-visible:ring-focus ${
+  const cls = `flex h-11 items-center rounded-xl px-3 text-sm font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-focus ${
     active
       ? "bg-accent text-accent-foreground"
       : disabled
@@ -70,23 +70,17 @@ const RailLink = ({ icon: Icon, label, onClick, active, disabled }: RailItem) =>
         : "text-muted hover:bg-foreground/10 hover:text-foreground"
   }`
   return (
-    <Tooltip delay={350}>
-      <button
-        type="button"
-        onClick={disabled ? undefined : onClick}
-        aria-disabled={disabled || undefined}
-        className={cls}
-        aria-label={label}
-      >
-        <Icon className="size-5" />
-      </button>
-      <Tooltip.Content
-        placement="right"
-        className="rounded-md border border-border bg-overlay px-2 py-1 text-xs text-foreground shadow-overlay"
-      >
-        {label}
-      </Tooltip.Content>
-    </Tooltip>
+    <button
+      type="button"
+      onClick={disabled ? undefined : onClick}
+      aria-disabled={disabled || undefined}
+      aria-current={active ? "page" : undefined}
+      aria-label={label}
+      className={cls}
+    >
+      <Icon className="size-5 shrink-0" />
+      <span className={REVEAL_LABEL}>{label}</span>
+    </button>
   )
 }
 
@@ -148,7 +142,7 @@ export const SpatialShell = ({
 
       {/* Left rail */}
       <nav
-        className={`${PANEL} absolute left-5 top-1/2 flex -translate-y-1/2 flex-col gap-1.5 p-2`}
+        className={`${PANEL} group/bar absolute left-5 top-1/2 flex -translate-y-1/2 flex-col gap-1.5 p-2`}
         aria-label={t("Primary")}
       >
         <RailLink
@@ -167,7 +161,7 @@ export const SpatialShell = ({
         )}
         <RailLink
           icon={Calendar}
-          label={t("My bookings")}
+          label={t("Bookings")}
           active={bookingsOpen}
           onClick={() => setBookingsOpen((o) => !o)}
         />
@@ -359,8 +353,7 @@ export const SpatialShell = ({
       </div>
 
       {/* Bottom dock: real-time sync + time-of-day + edit */}
-      <TimeOfDay viewSwitch>
-        <DeskFilter />
+      <TimeOfDay isViewing>
         {/* Editing is 3D-only (no WebGL → view-only). */}
         {canEdit && hasWebGL() && (
           <Button variant="primary" size="sm" className="min-w-32" onPress={enterEdit}>

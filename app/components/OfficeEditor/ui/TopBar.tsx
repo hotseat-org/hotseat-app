@@ -6,13 +6,13 @@ import {
   Info,
   LayoutGrid,
   Redo2,
-  Ruler,
+  Search,
   Trash2,
   Undo2,
 } from "lucide-react"
-import clsx from "clsx"
 import { useEditorStore } from "../store"
 import { isMarker } from "../types"
+import { REVEAL_LABEL } from "./revealLabel"
 import { useI18n } from "~/i18n/I18nProvider"
 import { msg } from "~/i18n/msg"
 
@@ -32,6 +32,8 @@ const SHORTCUTS: [string, string][] = [
   [msg("⇧ Click / drag box"), msg("Multi-select")],
   ["← ↑ → ↓", msg("Nudge selection")],
   ["⌘C / ⌘V / ⌘D", msg("Copy / paste / duplicate")],
+  ["⌘K", msg("Search commands")],
+  [msg("Right-click"), msg("Menu for a piece or the floor")],
 ]
 
 interface Props {
@@ -46,11 +48,10 @@ interface Props {
 
 export const TopBar = ({ dbMode, saving, saveFailed, onRetrySave }: Props) => {
   const { t, tn } = useI18n()
+  const setCommandSearchOpen = useEditorStore((s) => s.setCommandSearchOpen)
   const canUndo = useEditorStore((s) => s.past.length > 0)
   const canRedo = useEditorStore((s) => s.future.length > 0)
   const undo = useEditorStore((s) => s.undo)
-  const measureHints = useEditorStore((s) => s.measureHints)
-  const toggleMeasureHints = useEditorStore((s) => s.toggleMeasureHints)
   const redo = useEditorStore((s) => s.redo)
   const count = useEditorStore((s) => s.objects.filter((o) => !isMarker(o.type)).length)
   const clear = useEditorStore((s) => s.clear)
@@ -92,42 +93,41 @@ export const TopBar = ({ dbMode, saving, saveFailed, onRetrySave }: Props) => {
         </div>
       </div>
 
-      <div className="pointer-events-auto absolute right-4 top-4 flex items-center gap-2">
+      <div className="group/bar pointer-events-auto absolute right-4 top-4 flex items-center gap-2">
+        {/* The command search — also ⌘K. */}
+        <button
+          type="button"
+          data-tour="search"
+          aria-label={t("Search commands (⌘K)")}
+          onClick={() => setCommandSearchOpen(true)}
+          className="flex h-10 items-center rounded-xl border border-border bg-overlay/90 px-[11px] text-sm font-semibold text-muted shadow-overlay backdrop-blur-md outline-none transition-colors hover:bg-surface-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
+        >
+          <Search className="size-[18px] shrink-0" />
+          <span className={`${REVEAL_LABEL} flex items-center gap-2`}>
+            {t("Search")}
+            <Kbd className="text-[11px]">⌘K</Kbd>
+          </span>
+        </button>
+
         {/* Undo / redo — also ⌘Z / ⇧⌘Z. */}
         <div className="flex overflow-hidden rounded-xl border border-border bg-overlay/90 shadow-overlay backdrop-blur-md">
           <HistoryButton label={t("Undo (⌘Z)")} disabled={!canUndo} onClick={undo}>
-            <Undo2 className="size-5" />
+            <Undo2 className="size-[18px] shrink-0" />
+            <span className={REVEAL_LABEL}>{t("Undo")}</span>
           </HistoryButton>
+          <span className="my-2 w-px bg-separator" aria-hidden />
           <HistoryButton label={t("Redo (⇧⌘Z)")} disabled={!canRedo} onClick={redo}>
-            <Redo2 className="size-5" />
+            <Redo2 className="size-[18px] shrink-0" />
+            <span className={REVEAL_LABEL}>{t("Redo")}</span>
           </HistoryButton>
         </div>
-
-        {/* Measuring hints (gaps + alignment guides while placing) — also M. */}
-        <button
-          type="button"
-          aria-pressed={measureHints}
-          aria-label={t("Measuring hints (M)")}
-          title={measureHints ? t("Measuring hints on (M)") : t("Measuring hints off (M)")}
-          onClick={toggleMeasureHints}
-          className={clsx(
-            "flex size-10 items-center justify-center rounded-xl border shadow-overlay backdrop-blur-md outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus",
-            measureHints
-              ? "border-accent/40 bg-accent/15 text-accent hover:bg-accent/25"
-              : "border-border bg-overlay/90 text-muted hover:bg-surface-secondary hover:text-foreground"
-          )}
-        >
-          <Ruler className="size-5" />
-        </button>
 
         {/* Shortcuts — a real Popover (focus-managed, dismissable) with Kbd keycaps. */}
         <Popover>
           <Popover.Trigger>
-            <span
-              className="flex size-10 cursor-pointer items-center justify-center rounded-xl border border-border bg-overlay/90 text-muted shadow-overlay backdrop-blur-md outline-none transition-colors hover:bg-surface-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
-              title={t("Shortcuts")}
-            >
-              <Info className="size-5" />
+            <span className="cursor-pointer flex h-10 items-center rounded-xl border border-border bg-overlay/90 px-[11px] text-sm font-semibold text-muted shadow-overlay backdrop-blur-md outline-none transition-colors hover:bg-surface-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus">
+              <Info className="size-[18px] shrink-0" />
+              <span className={REVEAL_LABEL}>{t("Shortcuts")}</span>
             </span>
           </Popover.Trigger>
           <Popover.Content placement="bottom end" className="w-64">
@@ -229,7 +229,7 @@ const HistoryButton = ({
     aria-label={label}
     disabled={disabled}
     onClick={onClick}
-    className="flex size-10 items-center justify-center text-muted transition-colors hover:bg-surface-secondary hover:text-foreground disabled:pointer-events-none disabled:opacity-35"
+    className="flex h-10 items-center px-[11px] text-sm font-semibold text-muted transition-colors hover:bg-surface-secondary hover:text-foreground disabled:pointer-events-none disabled:opacity-35"
   >
     {children}
   </button>

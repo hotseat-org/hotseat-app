@@ -2,9 +2,9 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider      = "prisma-client"
-  output        = "./generated/prisma-client"
-  runtime       = "workerd"
+  provider = "prisma-client"
+  output   = "./generated/prisma-client"
+  runtime  = "workerd"
 }
 
 datasource db {
@@ -66,6 +66,7 @@ model Organization {
   invitationHash String? @unique
 
   renamedFrom OrganizationSlugRedirect[]
+  roomKits    RoomKit[]
 
   description String?
   thumbnail   String?
@@ -109,8 +110,8 @@ model Office {
 
   // Desk booking. "Today" and "past" are judged in this IANA timezone; people
   // can book up to `bookingWindowDays` ahead.
-  timezone          String        @default("Europe/Prague")
-  bookingWindowDays Int           @default(14)
+  timezone          String               @default("Europe/Prague")
+  bookingWindowDays Int                  @default(14)
   reservations      Reservation[]
   deskReleases      DeskRelease[]
   favoriteDesks     FavoriteDesk[]
@@ -160,8 +161,8 @@ model Reservation {
 model Notification {
   id String @id @default(cuid())
 
-  userEmail String
-  user      User   @relation(fields: [userEmail], references: [email], onDelete: Cascade, onUpdate: Cascade)
+  userEmail        String
+  user             User    @relation(fields: [userEmail], references: [email], onDelete: Cascade, onUpdate: Cascade)
   // Where it happened (for the link); no FK, so it outlives a deleted org.
   organizationSlug String?
 
@@ -206,7 +207,7 @@ model OfficeSlugRedirect {
 model DeskRelease {
   organizationSlug String
   officeSlug       String
-  office           Office @relation(fields: [organizationSlug, officeSlug], references: [organizationSlug, slug], onDelete: Cascade, onUpdate: Cascade)
+  office           Office   @relation(fields: [organizationSlug, officeSlug], references: [organizationSlug, slug], onDelete: Cascade, onUpdate: Cascade)
   deskId           String
   // The office's local calendar day.
   date             DateTime @db.Date
@@ -240,9 +241,9 @@ model FavoriteDesk {
 model UsualDesk {
   organizationSlug String
   officeSlug       String
-  office           Office  @relation(fields: [organizationSlug, officeSlug], references: [organizationSlug, slug], onDelete: Cascade, onUpdate: Cascade)
+  office           Office    @relation(fields: [organizationSlug, officeSlug], references: [organizationSlug, slug], onDelete: Cascade, onUpdate: Cascade)
   userEmail        String
-  profile          Profile @relation(fields: [userEmail, organizationSlug], references: [userEmail, organizationSlug], onDelete: Cascade, onUpdate: Cascade)
+  profile          Profile   @relation(fields: [userEmail, organizationSlug], references: [userEmail, organizationSlug], onDelete: Cascade, onUpdate: Cascade)
   deskId           String
   // ISO weekdays: 1 = Monday … 7 = Sunday.
   weekdays         Int[]
@@ -271,4 +272,22 @@ model WaitlistEntry {
 
   @@id([organizationSlug, officeSlug, userEmail, date])
   @@index([organizationSlug, officeSlug, date, createdAt])
+}
+
+// A saved room ("kit"): its walls, doors and windows and the furniture in it,
+// to place again whole in any of the organization's offices. `objects` are
+// Office.layout objects, positioned relative to the room's middle.
+model RoomKit {
+  id               String       @id
+  organizationSlug String
+  organization     Organization @relation(fields: [organizationSlug], references: [slug], onDelete: Cascade)
+  name             String
+  // Floor area, m².
+  area             Float
+  objects          Json
+  createdBy        String
+
+  createdAt DateTime @default(now())
+
+  @@index([organizationSlug])
 }

@@ -105,6 +105,18 @@ export interface Office {
   updatedAt: Date
 }
 
+export interface RoomKit {
+  id: string
+  organizationSlug: string
+  name: string
+  /** Floor area, m². */
+  area: number
+  /** Office.layout objects, relative to the room's middle (unvalidated JSON). */
+  objects: unknown
+  createdBy: string
+  createdAt: Date
+}
+
 export interface DeskRelease {
   organizationSlug: string
   officeSlug: string
@@ -193,6 +205,11 @@ export interface MainRepository {
     remove: (
       args: Omit<ChangeWaitlistArgs, "officeSlug"> & { officeSlug?: string }
     ) => Promise<void>
+  }
+  roomKit: {
+    findMany: (organizationSlug: string) => Promise<RoomKit[]>
+    create: (kit: Omit<RoomKit, "createdAt">) => Promise<void>
+    delete: (args: { organizationSlug: string; id: string }) => Promise<void>
   }
   deskRelease: {
     findMany: (args: FindDeskReleasesArgs) => Promise<DeskRelease[]>

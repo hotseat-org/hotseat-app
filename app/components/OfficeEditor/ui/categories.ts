@@ -1,4 +1,4 @@
-import type { CatalogItem, ObjectType } from "../types"
+import { isEdgeType, isMarker, isWallMounted, type CatalogItem, type ObjectType } from "../types"
 import {
   BathroomIcon,
   DecorIcon,
@@ -123,3 +123,10 @@ export const isCatalogItem = (tool: string): tool is CatalogItem =>
 
 /** The object type whose placement colour an item uses (a Room builds walls). */
 export const colorKey = (item: CatalogItem): ObjectType => (item === "room" ? "wall" : item)
+
+/** Furniture that stands on the floor (not structure, not wall items or paint). */
+export const isRepeatable = (item: CatalogItem) =>
+  item !== "room" &&
+  !isEdgeType(item as ObjectType) &&
+  !isWallMounted(item as ObjectType) &&
+  !isMarker(item as ObjectType)

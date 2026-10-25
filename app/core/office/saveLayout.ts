@@ -1,6 +1,7 @@
 import { groupBookings, officeLink } from "../notification"
 import type { CoreContext } from "../types"
 import type { Office } from "./types"
+import { getLostBookings, planRehoming } from "./layoutImpact"
 import { layoutSchema } from "~/components/OfficeEditor/schema"
 import { isSeatable, type ObjectType } from "~/components/OfficeEditor/types"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
@@ -13,6 +14,11 @@ export interface SaveOfficeLayoutArgs {
   organizationSlug: string
   userEmail: string
   layout: unknown
+  /**
+   * Bookings the new layout takes away are moved to the nearest free desk that
+   * day instead of just cancelled (where one is free) — see planRehoming.
+   */
+  shouldRehome?: boolean
 }
 
 /** A layout that can't be saved as-is — the message is shown in the editor. */
@@ -21,7 +27,8 @@ export class OfficeLayoutError extends LocalizedError {}
 /**
  * Save an office layout (admins only — it also decides who has a permanent
  * desk). Upcoming bookings on desks that were removed, or that now have a
- * permanent resident, are cancelled in the same transaction.
+ * permanent resident, are cancelled in the same transaction — or, asked to
+ * (`shouldRehome`), moved to the nearest free desk that day where there is one.
  */
 export const saveOfficeLayout =
   ({ mainRepository, mappers }: CoreContext) =>
@@ -30,7 +37,8 @@ export const saveOfficeLayout =
     organizationSlug,
     userEmail,
     layout,
-  }: SaveOfficeLayoutArgs): Promise<{ office: Office; cancelled: number }> => {
+    shouldRehome = false,
+  }: SaveOfficeLayoutArgs): Promise<{ office: Office; cancelled: number; moved: number }> => {
     const profile = await mainRepository.profile.find({ organizationSlug, userEmail })
     if (!profile || profile.role !== Role.ADMIN) throw new Error("Forbidden")
 
@@ -58,7 +66,6 @@ export const saveOfficeLayout =
     }
 
     const today = todayIn(current.timezone)
-    const byId = new Map(desks.map((d) => [d.id, d]))
     // A booking survives on a desk that still exists and is free — or on a
     // permanent desk its (unchanged) resident gave up that day.
     const [upcoming, releases] = await Promise.all([
@@ -68,15 +75,20 @@ export const saveOfficeLayout =
       mainRepository.deskRelease.findMany({ organizationSlug, officeSlug: slug, from: today }),
     ])
     const releasedBy = new Map(releases.map((r) => [`${r.deskId}|${r.date}`, r.userEmail]))
-    // A permanent resident books nothing else here: their own desk is theirs.
-    const residentEmails = new Set(residents)
-    const keeps = (r: { deskId: string; date: string; userEmail: string }) => {
-      const desk = byId.get(r.deskId)
-      if (!desk || residentEmails.has(r.userEmail)) return false
-      return !desk.assignee || releasedBy.get(`${r.deskId}|${r.date}`) === desk.assignee
-    }
     // Who loses what (read before the save deletes it) — they're told below.
-    const lost = upcoming.filter((r) => !keeps(r))
+    const lost = getLostBookings(desks, upcoming, releasedBy)
+    const before = Array.isArray(current.layout) ? (current.layout as Desk[]) : []
+    const moves = shouldRehome
+      ? planRehoming({
+          before: before
+            .filter((d) => isSeatable(d.type as ObjectType))
+            .map((d) => ({ ...d, x: d.x ?? 0, z: d.z ?? 0 })),
+          after: desks,
+          bookings: upcoming,
+          lost,
+          releasedBy,
+        }).filter((m) => m.to)
+      : []
 
     const { office, cancelled } = await mainRepository.office.saveLayout({
       organizationSlug,
@@ -84,6 +96,23 @@ export const saveOfficeLayout =
       layout: objects,
       cancelIds: lost.map((r) => r.id),
     })
+    // The moves: each to its new desk (the old booking went with the save).
+    // A desk taken meanwhile leaves that one simply cancelled.
+    const movedTo = new Map<string, Desk>() // reservation id → its new desk
+    for (const { booking, to } of moves) {
+      if (!to) continue
+      const result = await mainRepository.reservation.book({
+        organizationSlug,
+        officeSlug: slug,
+        deskId: to.id,
+        userEmail: booking.userEmail,
+        createdByEmail: userEmail,
+        dates: [booking.date],
+        seriesId: null,
+      })
+      if (result.booked.length)
+        movedTo.set(booking.id, { id: to.id, type: "workstation", label: to.label })
+    }
     // Releases by someone who no longer has that desk mean nothing now.
     await mainRepository.deskRelease.deleteStale({
       organizationSlug,
@@ -95,15 +124,20 @@ export const saveOfficeLayout =
       admin: userEmail,
       organizationSlug,
       office: { slug, name: current.name },
-      before: Array.isArray(current.layout) ? (current.layout as Desk[]) : [],
+      before,
       after: desks,
       lost,
+      movedTo,
     })
 
-    return { office: await mappers.office.fromRepository(office), cancelled }
+    return {
+      office: await mappers.office.fromRepository(office),
+      cancelled: cancelled - movedTo.size,
+      moved: movedTo.size,
+    }
   }
 
-type Desk = { id: string; type: string; label?: string; assignee?: string }
+type Desk = { id: string; type: string; x?: number; z?: number; label?: string; assignee?: string }
 
 /**
  * Tell people what an admin's layout change did to them (never the admin):
@@ -119,13 +153,16 @@ const notifyLayoutChange = async (
     before,
     after,
     lost,
+    movedTo,
   }: {
     admin: string
     organizationSlug: string
     office: { slug: string; name: string }
     before: Desk[]
     after: Desk[]
-    lost: { userEmail: string; deskId: string; date: string }[]
+    lost: { id: string; userEmail: string; deskId: string; date: string }[]
+    /** Lost bookings moved to another desk instead (reservation id → its new desk). */
+    movedTo: Map<string, Desk>
   }
 ) => {
   const link = officeLink(organizationSlug, office.slug)
@@ -138,7 +175,39 @@ const notifyLayoutChange = async (
   const current = new Map(after.map((d) => [d.id, d]))
   const notes: { userEmail: string; message: string }[] = []
 
-  for (const { userEmail, deskId, days } of groupBookings(lost)) {
+  // Moved: one note per person and new desk.
+  const moves = new Map<
+    string,
+    { userEmail: string; from: Desk | undefined; to: Desk; days: string[] }
+  >()
+  for (const r of lost) {
+    const to = movedTo.get(r.id)
+    if (!to) continue
+    const k = `${r.userEmail}|${to.id}`
+    const entry = moves.get(k) ?? {
+      userEmail: r.userEmail,
+      from: current.get(r.deskId) ?? previous.get(r.deskId),
+      to,
+      days: [],
+    }
+    entry.days.push(r.date)
+    moves.set(k, entry)
+  }
+  for (const m of moves.values())
+    notes.push({
+      userEmail: m.userEmail,
+      message: encodeNotification(
+        "Your booking of {desk} in {office} on {days} moved to {newDesk}: the layout changed.",
+        {
+          desk: { desk: m.from?.label ?? null },
+          office: office.name,
+          days: { days: [...m.days].sort() },
+          newDesk: { desk: m.to.label ?? null },
+        }
+      ),
+    })
+
+  for (const { userEmail, deskId, days } of groupBookings(lost.filter((r) => !movedTo.has(r.id)))) {
     const desk = current.get(deskId) ?? previous.get(deskId)
     const ownDesk = after.find((d) => d.assignee === userEmail)
     const booking = { desk: { desk: desk?.label ?? null }, office: office.name, days: { days } }

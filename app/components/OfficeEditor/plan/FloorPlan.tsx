@@ -5,6 +5,7 @@ import { Pin, RotateCcw, RotateCw, Scan } from "lucide-react"
 import {
   useCallback,
   useEffect,
+  useId,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -38,6 +39,7 @@ import { GRID, isEdgeType, isMarker, isSeatable, type Cell, type SceneObject } f
 import { isTypingTarget } from "../keyboard"
 import { createWheelReader, getSmoothZoomFactor, getStepZoomFactor } from "../wheel"
 import { WALL } from "../objects/dimensions"
+import { composeZoneAreas, composeZoneOutline, type ZoneArea } from "../zones"
 import { floorRect, mix, shade, sortBottomToTop, type Drawable, type Extent } from "./shapes"
 import { drawPiece, WINDOW_GLASS } from "./kits"
 import { useI18n } from "~/i18n/I18nProvider"
@@ -50,6 +52,8 @@ const FIT_PAD = { top: 96, bottom: 112, left: 112 }
 
 /** Screen space (px) kept clear around the office when fitting it. */
 type Insets = { top: number; bottom: number; left: number; right: number }
+/** A zone's outline, inside its edge: this wide on screen (px), at any zoom. */
+const ZONE_LINE_PX = 2
 /** Name tags show once desks are big enough to tell apart. */
 const TAG_ZOOM = 22
 /** Bringing a desk into view: at least this zoom (px per plan unit)… */
@@ -71,16 +75,6 @@ const FREE_MARK = 0.2
 const MUTED = 0.55
 /** Up to this height (m) a piece lies flat on the floor (rugs): under the shadows. */
 const FLAT = 0.02
-
-/** The viewer's last view angle (quarter turns), remembered per browser. */
-const TURN_KEY = "office-editor:plan-turn"
-const readTurn = () => {
-  try {
-    return Number(localStorage.getItem(TURN_KEY)) & 3
-  } catch {
-    return 0
-  }
-}
 
 /**
  * The layout turned by `q` quarter turns about the origin (the same Y-rotation
@@ -162,26 +156,23 @@ export const FloorPlan = ({
   const matchesFilter = useDeskFilter()
   // Insights' heatmap: desks on coloured pads, tagged with their share of days.
   const heatmap = useEditorStore((s) => s.heatmap)
+  const layers = useEditorStore((s) => s.layers)
+  const zoneClipId = useId()
   const people = usePeople()
   const card = useSeatCard()
   const surfaces = dark ? SURFACES.dark : SURFACES.light
 
   // View angle: the whole layout turned by quarter turns (see turnObject).
-  const [turn, setTurn] = useState(readTurn)
-  const turnBy = (d: number) =>
-    setTurn((q) => {
-      const next = (q + d) & 3
-      try {
-        localStorage.setItem(TURN_KEY, String(next))
-      } catch {
-        // Not remembered — fine.
-      }
-      return next
-    })
+  const turn = useEditorStore((s) => s.planTurn)
+  const turnBy = useEditorStore((s) => s.turnPlan)
   const objects = useMemo(() => layout.map((o) => turnObject(o, turn)), [layout, turn])
   const desks = useMemo(
     () => deskStates.map((d) => ({ ...d, desk: turnObject(d.desk, turn) })),
     [deskStates, turn]
+  )
+  const zoneAreas = useMemo(
+    () => (layers.zones ? composeZoneAreas(objects) : []),
+    [layers.zones, objects]
   )
 
   const box = useRef<HTMLDivElement>(null)
@@ -201,6 +192,7 @@ export const FloorPlan = ({
         matches: matchesFilter,
         heat: heatmap ? { ratios: heatmap.ratios, isDark: dark } : undefined,
         freeTitle: t("Free — tap to book"),
+        zones: { areas: zoneAreas, isDark: dark, clipId: zoneClipId.replace(/:/g, "") },
         onDesk: (id) => {
           if (!moved.current) openSeatCard(id)
         },
@@ -217,6 +209,8 @@ export const FloorPlan = ({
       heatmap,
       dark,
       t,
+      zoneAreas,
+      zoneClipId,
     ]
   )
 
@@ -540,8 +534,24 @@ export const FloorPlan = ({
           ) : null
         )}
 
+      {/* Zone names, on their floor. */}
+      {view &&
+        zoneAreas.map(({ zone, label }) => (
+          <div
+            key={zone.name}
+            className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"
+            style={screen(label.x, label.z)}
+          >
+            <span className="flex items-center gap-1.5 whitespace-nowrap rounded-full bg-overlay/85 px-2 py-0.5 text-[11px] font-bold text-foreground shadow-sm backdrop-blur-sm">
+              <span className="size-2 rounded-full" style={{ background: zone.color }} />
+              {zone.name}
+            </span>
+          </div>
+        ))}
+
       {view &&
         !heatmap &&
+        layers.deskTags &&
         view.k >= TAG_ZOOM &&
         desks.map(({ desk, state }) => {
           if (desk.id === openId) return null
@@ -573,36 +583,33 @@ export const FloorPlan = ({
           )
         })}
 
-      {/* Turn the view: bottom-left (where the 3D view keeps its FPS toggle);
-          on a phone bottom-right above the shell, with Fit (no dock there). */}
-      <div
-        className={clsx(
-          "absolute flex gap-1 rounded-xl border border-chrome-border bg-chrome/95 p-1 shadow-overlay backdrop-blur-md",
-          phoneChrome ? "right-4" : "bottom-4 left-4"
-        )}
-        style={phoneChrome ? { bottom: phoneChrome.bottom + 12 } : undefined}
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <Button
-          isIconOnly
-          size={phoneChrome ? "md" : "sm"}
-          variant="ghost"
-          aria-label={t("Turn view left")}
-          onPress={() => turnBy(1)}
+      {/* A phone: turn and fit, bottom-right above the shell (no dock there).
+          Elsewhere they're in the map controls, bottom-left. */}
+      {phoneChrome && (
+        <div
+          className="absolute right-4 flex gap-1 rounded-xl border border-chrome-border bg-chrome/95 p-1 shadow-overlay backdrop-blur-md"
+          style={{ bottom: phoneChrome.bottom + 12 }}
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
         >
-          <RotateCcw className="size-4" />
-        </Button>
-        <Button
-          isIconOnly
-          size={phoneChrome ? "md" : "sm"}
-          variant="ghost"
-          aria-label={t("Turn view right")}
-          onPress={() => turnBy(-1)}
-        >
-          <RotateCw className="size-4" />
-        </Button>
-        {phoneChrome && (
+          <Button
+            isIconOnly
+            size="md"
+            variant="ghost"
+            aria-label={t("Turn view left")}
+            onPress={() => turnBy(1)}
+          >
+            <RotateCcw className="size-4" />
+          </Button>
+          <Button
+            isIconOnly
+            size="md"
+            variant="ghost"
+            aria-label={t("Turn view right")}
+            onPress={() => turnBy(-1)}
+          >
+            <RotateCw className="size-4" />
+          </Button>
           <Button
             isIconOnly
             size="md"
@@ -612,8 +619,8 @@ export const FloorPlan = ({
           >
             <Scan className="size-4" />
           </Button>
-        )}
-      </div>
+        </div>
+      )}
 
       {card &&
         (phoneChrome
@@ -915,6 +922,8 @@ interface SceneInput {
   heat?: { ratios: Record<string, number>; isDark: boolean }
   /** A free desk's tooltip (translated). */
   freeTitle: string
+  /** Team zones (the Zones layer), on the floor under the furniture. */
+  zones?: { areas: ZoneArea[]; isDark: boolean; clipId: string }
 }
 
 /**
@@ -932,6 +941,7 @@ const buildScene = ({
   heat,
   freeTitle,
   onDesk,
+  zones,
 }: SceneInput) => {
   // Panning reuses this whole element (memoized), so React skips it entirely.
   const paints = objects.filter((o) => o.type === "floorPaint" && o.color)
@@ -1358,6 +1368,31 @@ const buildScene = ({
             {list}
           </g>
         ))}
+        {zones?.areas.map(({ zone, cells }, i) => {
+          const d = composeZoneOutline(cells)
+          const clipId = `${zones.clipId}-${i}`
+          // The light floor washes a pale tint out: a deeper shade there.
+          const color = zones.isDark ? zone.color : shade(zone.color, 0.65)
+          return (
+            <g key={zone.name}>
+              <clipPath id={clipId}>
+                <path d={d} />
+              </clipPath>
+              <path d={d} fill={color} fillOpacity={zones.isDark ? 0.1 : 0.16} />
+              {/* A line just inside its edge (clipped), so zones that meet keep apart. */}
+              <path
+                d={d}
+                fill="none"
+                stroke={color}
+                strokeOpacity={zones.isDark ? 0.55 : 0.85}
+                // Twice as wide, half of it clipped away outside the zone.
+                strokeWidth={ZONE_LINE_PX * 2}
+                vectorEffect="non-scaling-stroke"
+                clipPath={`url(#${clipId})`}
+              />
+            </g>
+          )
+        })}
         {heatPads}
         {layered
           .filter((d) => d.ext.y1 <= FLAT)

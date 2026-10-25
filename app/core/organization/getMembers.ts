@@ -17,10 +17,8 @@ export const getOrganizationMembers =
 
     if (!profile) throw new Error("Forbidden")
 
-    const profiles = await mainRepository.profile.findMany({
-      filter: { organizationSlug: slug },
-      pagination: { skip: 0, take: 60 }, // TODO: Add pagination from the outside
-    })
+    // Everyone: names, avatars and counts need the whole organization.
+    const profiles = await mainRepository.profile.findMany({ filter: { organizationSlug: slug } })
 
     return {
       ...profiles,
@@ -32,10 +30,9 @@ export const getOrganizationMembers =
 export const listOrganizationMembers =
   ({ mainRepository, mappers }: CoreContext) =>
   async (slug: string): Promise<PaginatedResult<Profile>> => {
-    const profiles = await mainRepository.profile.findMany({
-      filter: { organizationSlug: slug },
-      pagination: { skip: 0, take: 60 },
-    })
+    // Everyone: the office shows anyone's name, avatar and desk ("19 of 60"
+    // was 60 members out of hundreds).
+    const profiles = await mainRepository.profile.findMany({ filter: { organizationSlug: slug } })
     return {
       ...profiles,
       data: await Promise.all(profiles.data.map(mappers.profile.fromRepository)),

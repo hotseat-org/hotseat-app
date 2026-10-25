@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from "react"
 import { useEditorStore } from "./store"
 import { isSeatable, type SceneObject } from "./types"
+import { ZONE_FILTER_PREFIX } from "./zones"
 import { addDays, deskState, weekStart, type Day, type DeskState } from "~/utils/booking"
 import type { Translator } from "~/i18n/translate"
 
@@ -38,13 +39,20 @@ export const useDesksOnDay = () => {
 }
 
 /**
- * The map's desk filter (DESK_FEATURES ids): whether a desk has them all. No
+ * The map's desk filter: whether a desk has every feature asked for
+ * (DESK_FEATURES ids) and, when zones are picked, is in one of them. No
  * filter: every desk matches.
  */
 export const useDeskFilter = () => {
   const filter = useEditorStore((s) => s.deskFilter)
   return useCallback(
-    (desk: Pick<SceneObject, "features">) => filter.every((f) => desk.features?.includes(f)),
+    (desk: Pick<SceneObject, "features" | "zone">) => {
+      const zones = filter.filter((f) => f.startsWith(ZONE_FILTER_PREFIX))
+      if (zones.length && !zones.includes(`${ZONE_FILTER_PREFIX}${desk.zone}`)) return false
+      return filter
+        .filter((f) => !f.startsWith(ZONE_FILTER_PREFIX))
+        .every((f) => desk.features?.includes(f))
+    },
     [filter]
   )
 }

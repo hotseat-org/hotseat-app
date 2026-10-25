@@ -1,18 +1,31 @@
 import { ToggleButton, Tooltip } from "@heroui/react"
 import clsx from "clsx"
 import { useEffect, useRef, useState } from "react"
-import { Ban, Eraser, MousePointer2, PaintBucket } from "lucide-react"
+import {
+  Ban,
+  Eraser,
+  LayoutGrid,
+  LayoutTemplate,
+  MousePointer2,
+  PaintBucket,
+  Rows3,
+  Square,
+  type LucideIcon,
+} from "lucide-react"
 import { useEditorStore } from "../store"
 import { DEFAULT_COLOR, FLOOR_SWATCHES, SWATCHES } from "../palette"
+import type { PlacementPattern } from "../layout"
 import {
   CATEGORIES,
   TOOL_META,
   categoryOf,
   colorKey,
   isCatalogItem,
+  isRepeatable,
   type Category,
 } from "./categories"
 import { PREVIEW_SIZE, requestThumbnail } from "./thumbnails"
+import { KitsPanel } from "./KitsPanel"
 import { useI18n } from "~/i18n/I18nProvider"
 
 // Tile previews (stills + a live canvas on hover) and the studio rendering the
@@ -32,6 +45,9 @@ type PreviewModule = typeof import("./PreviewView")
  * category (or closing this one) disarms it, and arming an asset by shortcut
  * opens its category. Select/Erase (which place nothing) collapse the panel.
  */
+/** The rail's own "category": the saved rooms (kits). */
+const KITS_ID = "kits"
+
 /** The item panel's least height (px), so a few rows of tiles always show. */
 const PANEL_MIN_HEIGHT = 560
 
@@ -39,6 +55,7 @@ export const Catalog = () => {
   const { t } = useI18n()
   const tool = useEditorStore((s) => s.tool)
   const setTool = useEditorStore((s) => s.setTool)
+  const armedKit = useEditorStore((s) => s.armedKit)
   const placementColors = useEditorStore((s) => s.placementColors)
   const setPlacementColor = useEditorStore((s) => s.setPlacementColor)
 
@@ -71,7 +88,7 @@ export const Catalog = () => {
 
   const toggleCategory = (id: string) => {
     // Don't leave an asset from another (or the closing) category armed.
-    if (isCatalogItem(tool)) setTool("select")
+    if (isCatalogItem(tool) || armedKit) setTool("select")
     setOpenId((cur) => (cur === id ? null : id))
   }
   // The panel is as tall as the tray — but at least PANEL_MIN_HEIGHT (the
@@ -103,13 +120,14 @@ export const Catalog = () => {
           two-column grid of illustrated, named tiles. */}
       <div
         ref={railRef}
+        data-tour="catalog"
         className="pointer-events-auto flex max-h-[calc(100dvh-10rem)] w-42 flex-col gap-1.5 overflow-y-auto rounded-2xl border border-border bg-overlay/90 p-2 shadow-overlay backdrop-blur-md [scrollbar-width:none]"
       >
-        <div className="flex justify-around">
+        <div className="grid grid-cols-3 gap-1">
           <RailButton
             label={t("Select")}
             shortcut="1"
-            active={tool === "select" && !category}
+            active={tool === "select" && !category && !armedKit}
             onClick={() => pickMode("select")}
           >
             <MousePointer2 className="size-5" strokeWidth={2} />
@@ -145,7 +163,25 @@ export const Catalog = () => {
             />
           ))}
         </div>
+
+        <div className="h-px shrink-0 bg-separator" />
+        <ToggleButton
+          variant="ghost"
+          isSelected={openId === KITS_ID}
+          onPress={() => toggleCategory(KITS_ID)}
+          className={clsx(
+            "flex h-auto w-full items-center justify-start gap-2 rounded-xl px-2 py-2 text-[11px] font-semibold transition-colors",
+            openId === KITS_ID
+              ? "bg-accent/15 text-foreground ring-2 ring-inset ring-accent"
+              : "text-muted hover:bg-foreground/10 hover:text-foreground"
+          )}
+        >
+          <LayoutTemplate className="size-5 shrink-0" />
+          {t("Saved rooms")}
+        </ToggleButton>
       </div>
+
+      {openId === KITS_ID && <KitsPanel style={panelStyle} />}
 
       {/* Paint: colour choice + how-to, in the same slot/size as a category. */}
       {tool === "paint" && !category && <PaintPanel style={panelStyle} />}
@@ -226,6 +262,9 @@ export const Catalog = () => {
               )
             })}
           </div>
+
+          {/* Floor furniture: one per click, or a row / pod per drag. */}
+          {armed && isRepeatable(armed) && <PatternSwitch />}
 
           {/* Colour picker for the armed asset — sets the colour of what you place
             next. Always present (reserved space, so nothing jumps); disabled until
@@ -341,13 +380,11 @@ const RailButton = ({ label, shortcut, active, danger, onClick, children }: Rail
     {/* Controlled isSelected + onPress: re-pressing an armed tool re-selects it
         (never toggles off), matching the old click-to-arm behaviour. */}
     <ToggleButton
-      isIconOnly
       variant="ghost"
-      aria-label={label}
       isSelected={active}
       onPress={onClick}
       className={clsx(
-        "flex size-11 items-center justify-center rounded-xl transition-colors",
+        "flex h-auto w-full min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl px-0.5 pb-1 pt-1.5 transition-colors",
         active
           ? danger
             ? "bg-danger text-danger-foreground"
@@ -356,7 +393,11 @@ const RailButton = ({ label, shortcut, active, danger, onClick, children }: Rail
       )}
     >
       {children}
+      <span className="w-full truncate text-center text-[11px] font-semibold leading-tight">
+        {label}
+      </span>
     </ToggleButton>
+    {/* The name is on the button; the tooltip adds its key. */}
     <Tooltip.Content
       placement="right"
       className="rounded-md border border-border bg-overlay px-2 py-1 text-xs text-foreground shadow-overlay"
@@ -436,3 +477,52 @@ const SwatchGroup = ({
     </div>
   </div>
 )
+
+/**
+ * One piece per click, or — dragged on the floor — a row of copies side by
+ * side, or a pod: two rows back to back (desks facing each other).
+ */
+const PatternSwitch = () => {
+  const { t } = useI18n()
+  const pattern = useEditorStore((s) => s.placementPattern)
+  const setPattern = useEditorStore((s) => s.setPlacementPattern)
+  const options: { id: PlacementPattern; label: string; icon: LucideIcon }[] = [
+    { id: "single", label: t("Single"), icon: Square },
+    { id: "row", label: t("Row"), icon: Rows3 },
+    { id: "pod", label: t("Pod"), icon: LayoutGrid },
+  ]
+  const hint = {
+    single: t("Click to place one."),
+    row: t("Drag along the floor to lay a row."),
+    pod: t("Drag to lay two rows back to back."),
+  }[pattern]
+  return (
+    <div className="mt-3 shrink-0 border-t border-separator pt-2.5">
+      <div
+        role="radiogroup"
+        aria-label={t("Placing")}
+        className="flex gap-1 rounded-xl bg-foreground/[0.05] p-1"
+      >
+        {options.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            type="button"
+            role="radio"
+            aria-checked={pattern === id}
+            onClick={() => setPattern(id)}
+            className={clsx(
+              "flex flex-1 items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-semibold transition-colors",
+              pattern === id
+                ? "bg-surface text-foreground shadow-sm"
+                : "text-muted hover:text-foreground"
+            )}
+          >
+            <Icon className="size-3.5" />
+            {label}
+          </button>
+        ))}
+      </div>
+      <p className="mt-1.5 px-1 text-[11px] text-muted">{hint}</p>
+    </div>
+  )
+}

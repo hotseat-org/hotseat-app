@@ -49,6 +49,12 @@ const MOVE_ARROWS =
   "M3 12 L5.5 9.5 M3 12 L5.5 14.5 M21 12 L18.5 9.5 M21 12 L18.5 14.5"
 const LENS = "M10 4 A6 6 0 1 1 9.99 4 Z M14.5 14.5 L20 20"
 
+/** A double-headed arrow, turned `degrees` clockwise from horizontal. */
+function resizeCursor(degrees: number) {
+  const arrow = line("M4 12 H20 M4 12 L7.5 8.5 M4 12 L7.5 15.5 M20 12 L16.5 8.5 M20 12 L16.5 15.5")
+  return compose(`<g transform="rotate(${degrees} 12 12)">${arrow}</g>`, 12, 12, "move")
+}
+
 export const CURSORS = {
   select: compose(shape(ARROW), 5, 3, "default"),
   /** Furniture tools: the arrow with a "+" badge. */
@@ -117,6 +123,11 @@ export const CURSORS = {
     12,
     "move"
   ),
+  /** Over a wall's foot (Select): drag it sideways — the arrow across the wall, as seen. */
+  resize0: resizeCursor(0),
+  resize45: resizeCursor(45),
+  resize90: resizeCursor(90),
+  resize135: resizeCursor(135),
   zoomIn: compose(line(LENS) + line("M7.5 10 H12.5 M10 7.5 V12.5", ACCENT), 10, 10, "zoom-in"),
   zoomOut: compose(line(LENS) + line("M7.5 10 H12.5", ACCENT), 10, 10, "zoom-out"),
 }
@@ -130,8 +141,8 @@ export const getToolCursor = (tool: Tool, isFurniture: boolean) => {
   return isFurniture ? CURSORS.place : CURSORS.select
 }
 
-/** What a click on the hovered piece would do: pick it up, or open it (a desk in view mode). */
-export type CursorHint = "grab" | "point"
+/** What a click on the hovered thing would do: pick it up, open it (a desk in view mode), or drag a wall. */
+export type CursorHint = "grab" | "point" | "resize0" | "resize45" | "resize90" | "resize135"
 
 /**
  * Hovered pieces report their hint here (by id; null when the hover ends).

@@ -11,7 +11,7 @@ import { MyBookings } from "./MyBookings"
 import { NotificationsBell } from "./Notifications"
 import { WeekDots } from "./WeekDots"
 import { MOBILE_CHROME } from "./mobile"
-import { DeskFilter } from "./DeskFilter"
+import { MapMenu } from "~/components/OfficeEditor/ui/MapMenu"
 import { MonthCalendar } from "~/components/OfficeEditor/ui/DateStepper"
 import { useEditorStore } from "~/components/OfficeEditor/store"
 import {
@@ -188,7 +188,8 @@ const DayDock = ({ me }: { me: ShellMember }) => {
         >
           <CalendarDays className="size-5" />
         </button>
-        <DeskFilter isCompact />
+        {/* A phone always shows the plan: no 3D-only rows. */}
+        <MapMenu variant="compact" is3d={false} />
         <DayStrip />
       </div>
       {isCalendarOpen && <CalendarSheet onClose={() => setIsCalendarOpen(false)} />}

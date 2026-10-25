@@ -13,6 +13,7 @@ import {
   isWallMounted,
 } from "../types"
 import { usePeople } from "../people"
+import { getZones } from "../zones"
 import { TOOLS } from "./tools"
 import type { Day } from "~/utils/booking"
 import { useI18n } from "~/i18n/I18nProvider"
@@ -83,6 +84,7 @@ export const Inspector = () => {
       </ColorSwatchPicker>
 
       {count === 1 && isRetiredDesk(obj.type) && <RetiredDeskNote id={obj.id} type={obj.type} />}
+      <ZoneSection />
       {count === 1 && isSeatable(obj.type) && <SeatSection key={obj.id} id={obj.id} />}
 
       {/* Two columns (four labelled buttons don't fit one row); Delete spans
@@ -319,6 +321,84 @@ const RetiredDeskNote = ({ id, type }: { id: string; type: string }) => {
         <ArrowRightLeft className="size-4" />
         {t("Switch to desk with chair")}
       </Button>
+    </div>
+  )
+}
+
+/**
+ * The selected desks' zone (team neighbourhood): pick one of the office's
+ * zones, start a new one by name, or take them out. Zones colour their part
+ * of the floor and can number their desks (ENG-1…).
+ */
+const ZoneSection = () => {
+  const { t, tn } = useI18n()
+  const objects = useEditorStore((s) => s.objects)
+  const selection = useEditorStore((s) => s.selection)
+  const setZone = useEditorStore((s) => s.setZone)
+  const numberDesksByZone = useEditorStore((s) => s.numberDesksByZone)
+  const zones = useMemo(() => getZones(objects), [objects])
+  const desks = useMemo(() => {
+    const ids = new Set(selection)
+    return objects.filter((o) => ids.has(o.id) && isSeatable(o.type))
+  }, [objects, selection])
+  const [draft, setDraft] = useState("")
+  if (desks.length === 0) return null
+  const ids = desks.map((d) => d.id)
+  const zoneNames = new Set(desks.map((d) => d.zone ?? ""))
+  const current = zoneNames.size === 1 ? [...zoneNames][0] : null
+
+  return (
+    <div className="mb-4 flex flex-col gap-1.5">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-medium text-muted">
+          {desks.length > 1 ? tn(desks.length, "Zone of {n} desk", "Zone of {n} desks") : t("Zone")}
+        </p>
+        {zones.length > 0 && (
+          <button
+            type="button"
+            onClick={numberDesksByZone}
+            className="text-[11px] font-semibold text-accent hover:underline"
+            title={t("Number every desk after its zone: ENG-1, ENG-2… (the rest D-1…)")}
+          >
+            {t("Number by zone")}
+          </button>
+        )}
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {zones.map((zone) => {
+          const isOn = current === zone.name
+          return (
+            <button
+              key={zone.name}
+              type="button"
+              aria-pressed={isOn}
+              onClick={() => setZone(ids, isOn ? null : zone.name)}
+              className={clsx(
+                "flex h-7 max-w-full items-center gap-1.5 rounded-full border px-2.5 text-xs font-bold transition-colors",
+                isOn
+                  ? "border-accent bg-accent/15 text-foreground"
+                  : "border-border text-muted hover:border-muted hover:text-foreground"
+              )}
+            >
+              <span className="size-2.5 shrink-0 rounded-full" style={{ background: zone.color }} />
+              <span className="truncate">{zone.name}</span>
+            </button>
+          )
+        })}
+      </div>
+      <input
+        value={draft}
+        onChange={(e) => setDraft(e.currentTarget.value)}
+        onKeyDown={(e) => {
+          if (e.key !== "Enter" || !draft.trim()) return
+          setZone(ids, draft)
+          setDraft("")
+        }}
+        placeholder={zones.length ? t("New zone, e.g. Marketing") : t("Zone, e.g. Marketing")}
+        aria-label={t("New zone")}
+        maxLength={32}
+        className="h-8 rounded-lg border border-border bg-surface px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-focus"
+      />
     </div>
   )
 }

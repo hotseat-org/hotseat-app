@@ -64,9 +64,18 @@ export const sceneObjectSchema = z.object({
   label: z.string().max(24).optional(),
   assignee: z.string().optional(),
   features: z.array(z.string().max(24)).max(8).optional(),
+  zone: z.string().max(32).optional(),
   variant: z.number().int().min(0).optional(),
 })
 
 export const layoutSchema = z.array(sceneObjectSchema)
+
+/** A saved room (kit), as the editor sends it and the database keeps it. */
+export const roomKitSchema = z.object({
+  id: z.string().min(1).max(32),
+  name: z.string().trim().min(1).max(60),
+  area: z.number().nonnegative(),
+  objects: layoutSchema.max(2000),
+})
 
 export type LayoutObject = z.infer<typeof sceneObjectSchema>

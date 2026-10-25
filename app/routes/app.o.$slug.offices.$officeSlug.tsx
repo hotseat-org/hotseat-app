@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef } from "react"
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "@heroui/react"
 import { ClientOnly } from "remix-utils/client-only"
 import {
@@ -20,6 +20,7 @@ import { revalidateOn } from "~/utils/revalidation"
 import { layoutSchema } from "~/components/OfficeEditor/schema"
 import { EditorBoundary } from "~/components/OfficeEditor/EditorBoundary"
 import type { SceneObject } from "~/components/OfficeEditor/types"
+import type { Kit, KitLibrary } from "~/components/OfficeEditor/kits"
 import type { PreferenceChange } from "~/components/OfficeEditor/store"
 import { SpatialShell, type ShellMember } from "~/components/office/SpatialShell"
 import { nameOf } from "~/components/office/shell-ui"
@@ -94,7 +95,8 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const lastDay = addDays(today, office.bookingWindowDays)
   const asked = new URL(args.request.url).searchParams.get("day")
   const day: Day = isDay(asked) && asked >= from && asked <= lastDay ? asked : today
-  const [{ reservations, releases }, occupancy, preferences] = await Promise.all([
+  const isAdmin = profile.role === Role.ADMIN
+  const [{ reservations, releases }, occupancy, preferences, kits] = await Promise.all([
     core.reservation.listForOffice({
       organizationSlug,
       officeSlug: office.slug,
@@ -110,6 +112,8 @@ export const loader = async (args: LoaderFunctionArgs) => {
       userEmail: profile.userEmail,
       from: today,
     }),
+    // Saved rooms are for editing the layout: admins only.
+    isAdmin ? core.office.listKits(organizationSlug) : [],
   ])
 
   return {
@@ -130,7 +134,8 @@ export const loader = async (args: LoaderFunctionArgs) => {
     me: toMember(profile),
     members: members.data.map(toMember),
     // Only admins edit the layout (it also sets who has a permanent desk).
-    canEdit: profile.role === Role.ADMIN,
+    canEdit: isAdmin,
+    kits,
     booking: { today, day, from, lastDay, reservations, releases, preferences },
   }
 }
@@ -139,25 +144,47 @@ export const loader = async (args: LoaderFunctionArgs) => {
 export const shouldRevalidate = revalidateOn({ params: ["slug", "officeSlug"] })
 
 export type LayoutActionData =
-  | { ok: true; cancelled: number }
+  | { ok: true; cancelled: number; moved: number }
   | { ok: false; error?: string; retry: boolean }
+
+export type KitActionData = { ok: boolean }
 
 export const action = async (args: ActionFunctionArgs) => {
   const profile = await requireProfile(args)
   const slug = z.string().parse(args.params.officeSlug)
+  const form = await args.request.formData()
+
+  // Saved rooms (kits): kept for the whole organization.
+  const intent = form.get("intent")
+  if (intent === "kit-save" || intent === "kit-delete") {
+    try {
+      const scope = { organizationSlug: profile.organizationSlug, userEmail: profile.userEmail }
+      if (intent === "kit-save")
+        await getCore().office.saveKit({
+          ...scope,
+          kit: JSON.parse(z.string().parse(form.get("kit"))),
+        })
+      else await getCore().office.deleteKit({ ...scope, id: z.string().parse(form.get("id")) })
+      return data<KitActionData>({ ok: true })
+    } catch (error) {
+      console.error("Saving a room kit failed", error)
+      return data<KitActionData>({ ok: false }, { status: 400 })
+    }
+  }
 
   // Report failures as data (not a thrown error) so the editor can show
   // "Couldn't save" and retry, instead of the route error boundary taking over.
   try {
-    const form = await args.request.formData()
     const layout = layoutSchema.parse(JSON.parse(z.string().parse(form.get("layout"))))
-    const { cancelled } = await getCore().office.saveLayout({
+    const { cancelled, moved } = await getCore().office.saveLayout({
       slug,
       organizationSlug: profile.organizationSlug,
       userEmail: profile.userEmail,
       layout,
+      // The admin chose to move the bookings this change takes away.
+      shouldRehome: form.get("rehome") === "1",
     })
-    return data<LayoutActionData>({ ok: true, cancelled })
+    return data<LayoutActionData>({ ok: true, cancelled, moved })
   } catch (error) {
     const translator = await getTranslator(args.request)
     // Nothing a retry would fix: say why and stop.
@@ -186,7 +213,8 @@ const Fallback = () => {
 }
 
 export default function OfficeRoute() {
-  const { initialObjects, offices, me, members, canEdit, booking } = useLoaderData<typeof loader>()
+  const { initialObjects, offices, me, members, canEdit, booking, kits } =
+    useLoaderData<typeof loader>()
   const { t, tn, format } = useI18n()
   // Members as the editor's seat model sees them (email = stable seat id).
   const people = useMemo(() => {
@@ -206,9 +234,12 @@ export default function OfficeRoute() {
   const latest = useRef<SceneObject[] | null>(null)
   const submit = fetcher.submit
   const onSave = useCallback(
-    (objects: SceneObject[]) => {
+    (objects: SceneObject[], options?: { shouldRehome?: boolean }) => {
       latest.current = objects
-      submit({ layout: JSON.stringify(objects) }, { method: "post", action: officeUrl })
+      submit(
+        { layout: JSON.stringify(objects), ...(options?.shouldRehome && { rehome: "1" }) },
+        { method: "post", action: officeUrl }
+      )
     },
     [submit, officeUrl]
   )
@@ -229,6 +260,14 @@ export default function OfficeRoute() {
     const d = fetcher.data
     if (!d) return
     if (!d.ok && d.error) toast.danger(d.error)
+    if (d.ok && d.moved > 0)
+      toast.success(
+        tn(
+          d.moved,
+          "{n} booking moved to another desk — they've been told.",
+          "{n} bookings moved to other desks — they've been told."
+        )
+      )
     if (d.ok && d.cancelled > 0)
       toast.info(
         tn(
@@ -238,6 +277,33 @@ export default function OfficeRoute() {
         )
       )
   }, [fetcher.data])
+
+  // Saved rooms: changed here at once, saved for the organization meanwhile.
+  const [kitList, setKitList] = useState<Kit[]>(kits as Kit[])
+  useEffect(() => setKitList(kits as Kit[]), [kits])
+  const kitFetcher = useFetcher<KitActionData>()
+  const kitSubmit = kitFetcher.submit
+  const kitLibrary = useMemo<KitLibrary>(
+    () => ({
+      kits: kitList,
+      addKit: (kit) => {
+        setKitList((list) => [kit, ...list])
+        kitSubmit(
+          { intent: "kit-save", kit: JSON.stringify(kit) },
+          { method: "post", action: officeUrl }
+        )
+      },
+      deleteKit: (id) => {
+        setKitList((list) => list.filter((k) => k.id !== id))
+        kitSubmit({ intent: "kit-delete", id }, { method: "post", action: officeUrl })
+      },
+    }),
+    [kitList, kitSubmit, officeUrl]
+  )
+  useEffect(() => {
+    if (kitFetcher.state === "idle" && kitFetcher.data?.ok === false)
+      toast.danger(t("Couldn't save the room. Try again."))
+  }, [kitFetcher.state, kitFetcher.data])
 
   // Desk bookings.
   const bookingFetcher = useFetcher<ReservationActionData>()
@@ -349,6 +415,7 @@ export default function OfficeRoute() {
                 key={officeSlug}
                 initialObjects={initialObjects as SceneObject[]}
                 onSave={onSave}
+                kitLibrary={kitLibrary}
                 saving={fetcher.state !== "idle"}
                 saveFailed={saveFailed}
                 onRetrySave={retrySave}

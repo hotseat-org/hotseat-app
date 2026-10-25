@@ -76,6 +76,8 @@ export interface SceneObject {
   assignee?: string
   /** Desks: what it offers (DESK_FEATURES ids, e.g. "standing") — set by admins, filtered on. */
   features?: string[]
+  /** Desks: the zone (team neighbourhood) it belongs to, by name. */
+  zone?: string
   /**
    * Which "look" of the piece to show (its props, cushions…) — so copies don't
    * all look the same. Unset → derived from the id (see `variantOf`).

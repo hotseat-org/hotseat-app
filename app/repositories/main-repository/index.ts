@@ -22,6 +22,7 @@ import {
   markNotificationsRead,
 } from "./methods/notification"
 import { createOffice } from "./methods/office/create"
+import { createRoomKit, deleteRoomKit, findRoomKits } from "./methods/room-kit"
 import {
   addOfficeSlugRedirect,
   addOrganizationSlugRedirect,
@@ -99,6 +100,7 @@ export const createMainMysqlRepository = (): MainRepository => {
       remove: removeUsualDesk,
     },
     waitlist: { findMany: findWaitlist, add: addToWaitlist, remove: removeFromWaitlist },
+    roomKit: { findMany: findRoomKits, create: createRoomKit, delete: deleteRoomKit },
     deskRelease: {
       findMany: findDeskReleases,
       create: createDeskReleases,

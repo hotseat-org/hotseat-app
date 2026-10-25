@@ -22,6 +22,7 @@ import {
   toRotationStep,
   unitEdges,
   ROTATION_STEP,
+  type PlacementPattern,
 } from "./layout"
 import {
   isEdgeType,
@@ -31,6 +32,7 @@ import {
   isWall,
   isWallMounted,
   variantOf,
+  type Cell,
   type WallType,
   type ObjectType,
   type OpeningType,
@@ -39,6 +41,8 @@ import {
   type WallCell,
 } from "./types"
 import { findDeskChair, toWorld } from "./seatSpot"
+import type { Kit } from "./kits"
+import { numberDesksByZone } from "./zones"
 import type { BookingsByDay, Day, DeskDays } from "~/utils/booking"
 
 /** The viewer's local wall-clock time in hours [0,24), minute precision. */
@@ -53,6 +57,37 @@ const readMeasurePref = () => {
   }
 }
 const writeMeasurePref = (on: boolean) => writePref(MEASURE_KEY, on ? "on" : "off")
+
+/** What the map shows on top of the office — each can be hidden (Layers). */
+export interface Layers {
+  /** Team zones: their floor and names. */
+  zones: boolean
+  /** Viewing: who sits where, and which desks are free. */
+  deskTags: boolean
+  /** Editing: each room's floor area and desk count. */
+  roomSizes: boolean
+  /** Editing: the build grid. */
+  grid: boolean
+}
+/** The simple (2D) view's angle, in quarter turns — remembered per browser. */
+const PLAN_TURN_KEY = "office-editor:plan-turn"
+const readPlanTurn = () => {
+  try {
+    return Number(localStorage.getItem(PLAN_TURN_KEY)) & 3
+  } catch {
+    return 0
+  }
+}
+
+const DEFAULT_LAYERS: Layers = { zones: true, deskTags: true, roomSizes: true, grid: true }
+const LAYERS_KEY = "office-editor:layers"
+const readLayers = (): Layers => {
+  try {
+    return { ...DEFAULT_LAYERS, ...JSON.parse(localStorage.getItem(LAYERS_KEY) ?? "{}") }
+  } catch {
+    return DEFAULT_LAYERS
+  }
+}
 const writePref = (key: string, value: string) => {
   try {
     localStorage.setItem(key, value)
@@ -200,6 +235,15 @@ export interface EditorState {
   syncTime: boolean
   /** Distance labels + alignment guides while placing/carrying (a per-viewer preference). */
   measureHints: boolean
+  layers: Layers
+  toggleLayer: (layer: keyof Layers) => void
+  /** The simple view turned by this many quarter turns. */
+  planTurn: number
+  /** Turn the simple view a quarter (1: left, −1: right). */
+  turnPlan: (quarters: number) => void
+  /** The frame-rate readout (3D). */
+  isFrameRateShown: boolean
+  toggleFrameRate: () => void
   toggleMeasureHints: () => void
   /**
    * How the office is shown in view mode: the 3D scene, or the simple 2D
@@ -213,6 +257,10 @@ export interface EditorState {
   assignSeat: (id: string, email: string | null) => void
   /** Label every unlabelled desk D-1, D-2… in reading order (rows, then x). */
   numberDesks: () => void
+  /** Put desks in a zone (by name), or out of any (null). */
+  setZone: (ids: string[], zone: string | null) => void
+  /** Number every desk again, after its zone (ENG-1…) — the rest D-1… */
+  numberDesksByZone: () => void
   /** Desks: give or take a feature (DESK_FEATURES id). */
   toggleDeskFeature: (id: string, feature: string) => void
   /** View: show only desks with all these features (others dimmed). */
@@ -279,6 +327,27 @@ export interface EditorState {
   setTool: (tool: Tool) => void
   select: (id: string | null) => void
   rotatePlacement: () => void
+  /**
+   * The right-click menu: where it opens (screen px), on which piece (null:
+   * the floor), and the floor point under the pointer.
+   */
+  contextMenu: { x: number; y: number; targetId: string | null; point: Cell } | null
+  openContextMenu: (menu: NonNullable<EditorState["contextMenu"]>) => void
+  closeContextMenu: () => void
+  /** A saved room being placed (the Select tool, with its ghost on the cursor). */
+  armedKit: Kit | null
+  armKit: (kit: Kit | null) => void
+  /** Add a placed kit's pieces (walls it shares with the office aren't doubled): one undo step. */
+  placeKit: (placed: SceneObject[]) => void
+  /** The guided tour of the editor (first run, or asked for). */
+  isTourOpen: boolean
+  setTourOpen: (isOpen: boolean) => void
+  /** The command search (⌘K). */
+  isCommandSearchOpen: boolean
+  setCommandSearchOpen: (isOpen: boolean) => void
+  /** One piece per click, or a row / back-to-back pod per drag (furniture tools). */
+  placementPattern: PlacementPattern
+  setPlacementPattern: (pattern: PlacementPattern) => void
   /** Set (or clear, with null) the placement colour for one object type. */
   setPlacementColor: (type: ObjectType, color: string | null) => void
   /** Manually set the time of day — this stops following the real clock. */
@@ -291,6 +360,8 @@ export interface EditorState {
   load: (objects: SceneObject[]) => void
 
   addObject: (obj: NewObject) => string
+  /** Several pieces in one step (one undo): any that would collide are skipped. */
+  addObjects: (objs: NewObject[]) => number
   /** Add a run of wall edges, skipping edges that already exist. */
   /** Builds wall segments (solid by default, or glass) on free edges. */
   addWalls: (cells: WallCell[], type?: WallType) => void
@@ -471,6 +542,22 @@ const makeInitializer =
         set({ view })
       },
       measureHints: readMeasurePref(),
+      layers: readLayers(),
+      planTurn: readPlanTurn(),
+      turnPlan: (quarters) =>
+        set((s) => {
+          const planTurn = (s.planTurn + quarters) & 3
+          writePref(PLAN_TURN_KEY, String(planTurn))
+          return { planTurn }
+        }),
+      isFrameRateShown: false,
+      toggleFrameRate: () => set((s) => ({ isFrameRateShown: !s.isFrameRateShown })),
+      toggleLayer: (layer) =>
+        set((s) => {
+          const layers = { ...s.layers, [layer]: !s.layers[layer] }
+          writePref(LAYERS_KEY, JSON.stringify(layers))
+          return { layers }
+        }),
       toggleMeasureHints: () =>
         set((s) => {
           writeMeasurePref(!s.measureHints)
@@ -524,6 +611,17 @@ const makeInitializer =
           const objects = numberUnlabelledDesks(s.objects)
           return objects === s.objects ? s : { objects }
         }),
+      setZone: (ids, zone) =>
+        set((s) => {
+          const targets = new Set(ids)
+          const name = zone?.trim().slice(0, 32) || undefined
+          return {
+            objects: s.objects.map((o) =>
+              targets.has(o.id) && isSeatable(o.type) ? { ...o, zone: name } : o
+            ),
+          }
+        }),
+      numberDesksByZone: () => set((s) => ({ objects: numberDesksByZone(s.objects) })),
       booking: NO_BOOKING,
       setBooking: (patch) => set((s) => ({ booking: { ...s.booking, ...patch } })),
       setBookingDay: (day) => set((s) => ({ booking: { ...s.booking, day } })),
@@ -609,8 +707,38 @@ const makeInitializer =
       fitNonce: 0,
       requestFit: () => set((s) => ({ fitNonce: s.fitNonce + 1 })),
 
-      setTool: (tool) => set({ tool, selectedId: tool === "select" ? get().selectedId : null }),
+      setTool: (tool) =>
+        set({ tool, selectedId: tool === "select" ? get().selectedId : null, armedKit: null }),
       select: (selectedId) => set({ selectedId }),
+      contextMenu: null,
+      openContextMenu: (contextMenu) => set({ contextMenu }),
+      closeContextMenu: () => set({ contextMenu: null }),
+      armedKit: null,
+      armKit: (armedKit) => set({ armedKit, tool: "select", selectedId: null }),
+      placeKit: (placed) =>
+        set((s) => {
+          const taken = new Set(
+            s.objects
+              .filter((o) => isEdgeType(o.type))
+              .flatMap(unitEdges)
+              .map(edgeKey)
+          )
+          const edges = placed.filter(
+            (o) => isEdgeType(o.type) && !unitEdges(o).some((e) => taken.has(edgeKey(e)))
+          )
+          const furniture = asNewDesks(
+            s.objects,
+            placed.filter((o) => !isEdgeType(o.type))
+          )
+          return { objects: [...s.objects, ...edges, ...furniture] }
+        }),
+      isTourOpen: false,
+      setTourOpen: (isTourOpen) => set({ isTourOpen }),
+      isCommandSearchOpen: false,
+      setCommandSearchOpen: (isCommandSearchOpen) =>
+        set({ isCommandSearchOpen, contextMenu: null }),
+      placementPattern: "single",
+      setPlacementPattern: (placementPattern) => set({ placementPattern }),
       rotatePlacement: () =>
         set((s) => ({ placementRotation: toRotationStep(s.placementRotation + ROTATION_STEP) })),
       setPlacementColor: (type, color) =>
@@ -639,6 +767,17 @@ const makeInitializer =
           ],
         }))
         return id
+      },
+
+      addObjects: (objs) => {
+        const placed: SceneObject[] = []
+        for (const { type, x, z, rotation = 0, color, model } of objs) {
+          if (furnitureCollides([...get().objects, ...placed], type, x, z, rotation)) continue
+          placed.push({ id: nanoid(8), type, x, z, rotation, color, model })
+        }
+        if (placed.length)
+          set((s) => ({ objects: [...s.objects, ...asNewDesks(s.objects, placed)] }))
+        return placed.length
       },
 
       addWalls: (cells, type = "wall") =>

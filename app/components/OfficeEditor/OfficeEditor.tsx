@@ -5,12 +5,13 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
 } from "react"
 import { useTheme } from "remix-themes"
-import { Check, Gauge, Pencil, PencilRuler } from "lucide-react"
+import { Check, Pencil, PencilRuler } from "lucide-react"
 import {
   EditorStoreContextProvider,
   createEditorStore,
@@ -32,13 +33,21 @@ import { EmptyOffice } from "./ui/EmptyOffice"
 import { TOOLS } from "./ui/tools"
 import { PeopleContext, type People } from "./people"
 import { isTypingTarget } from "./keyboard"
-import { isEdgeType } from "./types"
+import { isEdgeType, isSeatable } from "./types"
 import { ControlsGuide } from "./ui/ControlsGuide"
 import { CustomBooking } from "./ui/CustomBooking"
 import { RoutePill } from "./ui/RoutePill"
 import { HeatmapPill } from "./ui/HeatmapPill"
 import { SceneLoading } from "./ui/SceneLoading"
+import { LayoutImpact } from "./ui/LayoutImpact"
+import { CommandSearch } from "./ui/CommandSearch"
+import { composeCommands } from "./ui/commands"
+import { ContextMenu } from "./ui/ContextMenu"
+import { GuidedTour, isTourDone } from "./ui/GuidedTour"
+import { MapControls } from "./ui/MapControls"
+import { KitLibraryContext, type KitLibrary } from "./kits"
 import { MOBILE_CHROME } from "~/components/office/mobile"
+import { getLostBookings, planRehoming, type ReleasedBy } from "~/core/office/layoutImpact"
 import { useIsMobile } from "~/utils/hooks/useIsMobile"
 import { ContourBackdrop } from "~/components/ui/ContourBackdrop"
 import { EmptyState } from "~/components/ui/EmptyState"
@@ -56,8 +65,13 @@ type Mode = "edit" | "display"
 interface Props {
   /** When provided, the editor loads/saves this office's layout instead of localStorage. */
   initialObjects?: SceneObject[]
-  /** Called (debounced) with the current scene whenever it changes. */
-  onSave?: (objects: SceneObject[]) => void
+  /**
+   * Called (debounced) with the current scene whenever it changes. With
+   * `shouldRehome`, bookings the change takes away move to free desks.
+   */
+  onSave?: (objects: SceneObject[], options?: { shouldRehome?: boolean }) => void
+  /** The organization's saved rooms (a real office); without it, this browser's. */
+  kitLibrary?: KitLibrary
   /** Whether a save is currently in flight (for the indicator). */
   saving?: boolean
   /** The last save failed (shown in the top bar; the route retries). */
@@ -126,7 +140,9 @@ export const OfficeEditor = (props: Props) => {
   return (
     <EditorStoreContextProvider value={storeRef.current}>
       <PeopleContext.Provider value={props.people ?? NO_PEOPLE}>
-        <OfficeEditorInner {...props} />
+        <KitLibraryContext.Provider value={props.kitLibrary ?? null}>
+          <OfficeEditorInner {...props} />
+        </KitLibraryContext.Provider>
       </PeopleContext.Provider>
     </EditorStoreContextProvider>
   )
@@ -258,6 +274,14 @@ const OfficeEditorInner = ({
     },
     [mode, readyFor]
   )
+  const commands = useMemo(() => composeCommands(() => switchMode("display")), [switchMode])
+  // Leaving editing closes its menus (and the tour); the first time in, the tour.
+  useEffect(() => {
+    if (readOnly)
+      store.setState({ contextMenu: null, isCommandSearchOpen: false, isTourOpen: false })
+    else if (!isTourDone()) store.setState({ isTourOpen: true })
+  }, [readOnly, store])
+
   // "Edit layout" from the office settings (outside this tree) → edit mode.
   useEffect(() => {
     if (!editable) return
@@ -313,7 +337,7 @@ const OfficeEditorInner = ({
   // Perf HUD. While on, the Canvas renders continuously (`frameloop="always"`)
   // so the reading reflects a true, comparable FPS instead of only the frames
   // that on-demand rendering happens to produce.
-  const [showStats, setShowStats] = useState(false)
+  const isFrameRateShown = useEditorStore((s) => s.isFrameRateShown)
   const { t, tn } = useI18n()
   const busyMode = pendingMode ?? (readyFor !== null && readyFor !== mode ? mode : null)
   const currentBusyLabel =
@@ -339,8 +363,60 @@ const OfficeEditorInner = ({
   const isEmpty = objects.length === 0 && !emptyDismissed
   const onSaveRef = useRef(onSave)
   onSaveRef.current = onSave
+
+  // What an unsaved change would do to upcoming bookings (desks removed or
+  // made permanent): nothing is saved until the admin chooses (LayoutImpact).
+  const bookingState = useEditorStore((s) => s.booking)
+  const impact = useMemo(() => {
+    const booking = bookingState
+    if (!onSave || !booking.enabled || !booking.today) return null
+    const bookings = Object.entries(booking.byDay).flatMap(([date, desks]) =>
+      date >= booking.today
+        ? Object.entries(desks).map(([deskId, userEmail]) => ({ deskId, date, userEmail }))
+        : []
+    )
+    if (bookings.length === 0) return null
+    const releasedBy: ReleasedBy = new Map(
+      Object.entries(booking.released).flatMap(([date, desks]) =>
+        Object.entries(desks).map(([deskId, email]): [string, string] => [
+          `${deskId}|${date}`,
+          email,
+        ])
+      )
+    )
+    const after = objects.filter((o) => isSeatable(o.type))
+    const lost = getLostBookings(after, bookings, releasedBy)
+    if (lost.length === 0) return null
+    const before = (JSON.parse(lastSaved.current || "[]") as SceneObject[]).filter((o) =>
+      isSeatable(o.type)
+    )
+    return { before, moves: planRehoming({ before, after, bookings, lost, releasedBy }) }
+  }, [objects, bookingState, onSave])
+  // Bookings the admin has already decided about: hidden while that saves and
+  // the bookings refresh (the panel comes back only for bookings not yet
+  // decided — a further change that takes more).
+  const [resolvedKeys, setResolvedKeys] = useState<Set<string>>(() => new Set())
+  const bookingKey = (b: { deskId: string; date: string; userEmail: string }) =>
+    `${b.deskId}|${b.date}|${b.userEmail}`
+  const serializedObjects = useMemo(() => JSON.stringify(objects), [objects])
+  const isImpactPending =
+    !!impact && impact.moves.some((m) => !resolvedKeys.has(bookingKey(m.booking)))
+  const impactRef = useRef(isImpactPending)
+  impactRef.current = isImpactPending
+  const resolveImpact = (choice: "move" | "cancel" | "undo") => {
+    if (choice === "undo") {
+      store.getState().load(JSON.parse(lastSaved.current || "[]"))
+      return
+    }
+    setResolvedKeys(
+      (keys) => new Set([...keys, ...(impact?.moves ?? []).map((m) => bookingKey(m.booking))])
+    )
+    lastSaved.current = serializedObjects
+    onSave?.(objects, { shouldRehome: choice === "move" })
+  }
+
   useEffect(() => {
-    if (!onSave) return
+    if (!onSave || isImpactPending) return // waiting on the admin's choice
     const serialized = JSON.stringify(objects)
     if (serialized === lastSaved.current) return
     const t = setTimeout(() => {
@@ -348,7 +424,7 @@ const OfficeEditorInner = ({
       onSave(objects)
     }, 800)
     return () => clearTimeout(t)
-  }, [objects, onSave])
+  }, [objects, onSave, isImpactPending])
 
   // A failed save means what's on screen isn't persisted: forget the "saved"
   // snapshot so leaving warns (and unmount flushes) until a save succeeds.
@@ -366,7 +442,10 @@ const OfficeEditorInner = ({
     window.addEventListener("beforeunload", onBeforeUnload)
     return () => {
       window.removeEventListener("beforeunload", onBeforeUnload)
-      if (onSaveRef.current && unsaved()) onSaveRef.current(store.getState().objects)
+      // Not a change that would take people's bookings away: that waits for
+      // the admin's choice, and leaving drops it rather than decide for them.
+      if (onSaveRef.current && unsaved() && !impactRef.current)
+        onSaveRef.current(store.getState().objects)
     }
   }, [store])
 
@@ -377,6 +456,11 @@ const OfficeEditorInner = ({
       // Undo / redo: ⌘Z / ⇧⌘Z (Ctrl on Windows/Linux), plus ⌘Y.
       if ((e.metaKey || e.ctrlKey) && !e.altKey && !isTypingTarget(e.target)) {
         const k = e.key.toLowerCase()
+        // The command search: ⌘K (Ctrl+K).
+        if (k === "k") {
+          e.preventDefault()
+          return store.getState().setCommandSearchOpen(true)
+        }
         if (k === "z" || k === "y") {
           e.preventDefault()
           if (k === "y" || e.shiftKey) store.getState().redo()
@@ -453,7 +537,7 @@ const OfficeEditorInner = ({
               readOnly={readOnly}
               dark={isDark}
               fitInsets={shellMode && !isMobile ? SHELL_INSETS : undefined}
-              showStats={showStats}
+              showStats={isFrameRateShown}
               onStats={setStats}
               onReady={handleSceneReady}
             />
@@ -483,6 +567,28 @@ const OfficeEditorInner = ({
         {/* Booking a desk on any days (the seat card's "Custom…"). */}
         {readOnly && <CustomBooking />}
 
+        {/* Right-click menu and the command search (⌘K). */}
+        {!readOnly && (
+          <>
+            <ContextMenu />
+            <CommandSearch commands={commands} />
+            {!isEmpty && <GuidedTour />}
+          </>
+        )}
+
+        {/* An unsaved change that would take bookings away: the admin decides. */}
+        {!readOnly && isImpactPending && impact && (
+          <div className="absolute inset-x-0 flex justify-center px-4" style={{ top: 84 }}>
+            <LayoutImpact
+              moves={impact.moves}
+              labelOf={(id) => impact.before.find((d) => d.id === id)?.label}
+              onMove={() => resolveImpact("move")}
+              onCancel={() => resolveImpact("cancel")}
+              onUndo={() => resolveImpact("undo")}
+            />
+          </div>
+        )}
+
         {/* The way to a desk (where to, how far, share, close) and the
             Insights heatmap's legend. */}
         {readOnly && (
@@ -495,53 +601,41 @@ const OfficeEditorInner = ({
           </div>
         )}
 
-        {/* Perf HUD toggle + live FPS/frame-time readout (bottom-left). */}
-        {!isEmpty && !flat && (
-          <button
-            type="button"
-            onClick={() => setShowStats((v) => !v)}
-            title={showStats ? t("Hide FPS counter") : t("Show FPS counter")}
-            className={`pointer-events-auto absolute bottom-4 left-4 flex items-start gap-2 rounded-xl border border-border px-3 py-2 text-left font-mono text-sm shadow-overlay backdrop-blur-md ${
-              showStats
-                ? "bg-overlay/95 text-foreground"
-                : "bg-overlay/90 text-muted hover:bg-surface-secondary hover:text-foreground"
-            }`}
-          >
-            <Gauge className="mt-0.5 size-4" />
-            {showStats && stats ? (
-              <span className="tabular-nums">
-                <span
-                  className={
-                    stats.fps >= 55
-                      ? "text-success"
-                      : stats.fps >= 30
-                        ? "text-warning"
-                        : "text-danger"
-                  }
-                >
-                  {stats.fps.toFixed(0)}
-                </span>{" "}
-                FPS
-                <span className="ml-2 text-muted">{stats.ms.toFixed(1)} ms</span>
-                {/* One per line: a narrow column stays clear of the centred bottom bar. */}
-                <span className="block text-xs leading-5 text-muted">
-                  <span className="block">{t("CPU {ms} ms", { ms: stats.cpuMs.toFixed(1) })}</span>
-                  <span className="block">
-                    {tn(stats.drawCalls, "{n} draw call", "{n} draw calls")}
-                  </span>
-                  <span className="block">{tn(stats.objects, "{n} object", "{n} objects")}</span>
+        {/* The map's controls (fit, view, Map menu), bottom-left — the phone
+            shell has its own. Beside them, the frame-rate readout when on. */}
+        {!isEmpty && !(shellMode && isMobile) && <MapControls isEditing={!readOnly} />}
+        {!isEmpty && !flat && isFrameRateShown && stats && (
+          <div className="pointer-events-none absolute bottom-4 left-[4.5rem] rounded-xl border border-border bg-overlay/95 px-3 py-2 font-mono text-sm text-foreground shadow-overlay backdrop-blur-md">
+            <span className="tabular-nums">
+              <span
+                className={
+                  stats.fps >= 55
+                    ? "text-success"
+                    : stats.fps >= 30
+                      ? "text-warning"
+                      : "text-danger"
+                }
+              >
+                {stats.fps.toFixed(0)}
+              </span>{" "}
+              FPS
+              <span className="ml-2 text-muted">{stats.ms.toFixed(1)} ms</span>
+              {/* One per line: a narrow column stays clear of the centred bottom bar. */}
+              <span className="block text-xs leading-5 text-muted">
+                <span className="block">{t("CPU {ms} ms", { ms: stats.cpuMs.toFixed(1) })}</span>
+                <span className="block">
+                  {tn(stats.drawCalls, "{n} draw call", "{n} draw calls")}
                 </span>
+                <span className="block">{tn(stats.objects, "{n} object", "{n} objects")}</span>
               </span>
-            ) : (
-              <span>FPS</span>
-            )}
-          </button>
+            </span>
+          </div>
         )}
 
         {/* Bottom bar: time of day + leave/enter editing. The app shell
             provides its own in display mode. */}
         {!shellMode && !isEmpty && (
-          <TimeOfDay viewSwitch={readOnly}>
+          <TimeOfDay isViewing={readOnly}>
             {!editable ? null : readOnly ? (
               <Button size="sm" variant="primary" className="min-w-32" onPress={enterEdit}>
                 <Pencil className="size-4" /> Edit layout

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useThree, type ThreeEvent } from "@react-three/fiber"
 import { MOUSE, Plane, Vector3 } from "three"
 import { useEditorStore, useEditorStoreApi } from "../store"
-import { furnitureCollides, snapPlacement, wallMount } from "../layout"
+import { composeRepeat, furnitureCollides, snapPlacement, wallMount } from "../layout"
 import { randomModelId } from "../models"
 import { daylight, DaylightContext } from "../daylight"
 import { SURFACES } from "../palette"
@@ -22,6 +22,7 @@ import {
 import { ObjectRenderer } from "../objects/ObjectRenderer"
 import { StaticBatch } from "../objects/StaticBatch"
 import { CURSORS, CursorHintContext, getToolCursor, type CursorHint } from "../cursors"
+import { canPlaceKit, composeKitAt } from "../kits"
 import { PlacementHighlight } from "./PlacementHighlight"
 import { markShadowsDirty } from "./shadows"
 import { Lighting } from "./Lighting"
@@ -45,6 +46,9 @@ import { BuildController } from "./BuildController"
 import { CarryController } from "./CarryController"
 import { CameraControls, type FloorPan } from "./CameraControls"
 import { WallXray } from "./WallXray"
+import { WallResize, type WallResizeHandle } from "./WallResize"
+import { RoomLabels } from "./RoomLabels"
+import { ZoneFloor } from "./ZoneFloor"
 import { CameraFit, type FitInsets } from "./CameraFit"
 import { SeatTags } from "./SeatTags"
 import { SeatPopup } from "./SeatPopup"
@@ -54,6 +58,7 @@ import { NudgeKeys } from "./NudgeKeys"
 import { OpeningCarry } from "./OpeningCarry"
 import { DeskPets } from "./DeskPets"
 import { MeasureHints } from "./MeasureHints"
+import { AlignmentGuides } from "./AlignmentGuides"
 import { aimAtWallHeight } from "./wallAim"
 
 interface Props {
@@ -123,6 +128,8 @@ const FURNITURE = new Set([
 const GROUND = new Plane(new Vector3(0, 1, 0), 0)
 /** A press that travels further than this (px) drags the piece; less is a click. */
 const DRAG_PX = 4
+/** A right-press that moves more than this (px) orbits: no menu. */
+const MENU_SLOP = 6
 
 export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
   const objects = useEditorStore((s) => s.objects)
@@ -131,6 +138,7 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
   const placementRotation = useEditorStore((s) => s.placementRotation)
   const placementColors = useEditorStore((s) => s.placementColors)
   const measureHints = useEditorStore((s) => s.measureHints)
+  const layers = useEditorStore((s) => s.layers)
   const placementColor = isObjectType(tool) ? placementColors[tool] : undefined
   const timeOfDay = useEditorStore((s) => s.timeOfDay)
   const surfaces = dark ? SURFACES.dark : SURFACES.light
@@ -187,6 +195,18 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
 
   // Where the armed piece would go (wall items also carry the way they face).
   const [hover, setHover] = useState<(Cell & { rotation?: number }) | null>(null)
+  // A saved room on the cursor: where it'd land, and whether it fits there.
+  const armedKit = useEditorStore((s) => s.armedKit)
+  const kitPlan = useMemo(
+    () => (armedKit && hover ? composeKitAt(armedKit, hover.x, hover.z) : null),
+    [armedKit, hover]
+  )
+  const doesKitFit = useMemo(() => !!kitPlan && canPlaceKit(objects, kitPlan), [kitPlan, objects])
+  // Row / Pod placement: where the drag began and where it is now.
+  const placementPattern = useEditorStore((s) => s.placementPattern)
+  const [repeat, setRepeat] = useState<{ start: Cell & { rotation?: number }; end: Cell } | null>(
+    null
+  )
   const [dragId, setDragId] = useState<string | null>(null)
   // A door/window lifted out of its wall, being carried to a new spot.
   const [carriedOpening, setCarriedOpening] = useState<SceneObject | null>(null)
@@ -219,6 +239,35 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
     return () => window.removeEventListener("keydown", onKey)
   }, [carriedOpening])
   const isFurniture = FURNITURE.has(tool)
+  // Row / Pod placement (wall items hang one at a time).
+  const isRepeating =
+    isFurniture && placementPattern !== "single" && !isWallMounted(tool as ObjectType)
+  // The copies the current drag would lay, each blocked or not (as addObjects
+  // would decide: against the office and the copies before it).
+  const repeatPlan = useMemo(() => {
+    if (!repeat || placementPattern === "single") return []
+    return composeRepeat(
+      tool as ObjectType,
+      repeat.start.rotation ?? placementRotation,
+      repeat.start,
+      repeat.end,
+      placementPattern
+    )
+  }, [repeat, placementPattern, tool, placementRotation])
+  const repeatBlocked = useMemo(() => {
+    const placed: SceneObject[] = []
+    return repeatPlan.map((p) => {
+      const isBlocked = furnitureCollides(
+        [...objects, ...placed],
+        tool as ObjectType,
+        p.x,
+        p.z,
+        p.rotation
+      )
+      if (!isBlocked) placed.push({ id: `plan-${placed.length}`, type: tool as ObjectType, ...p })
+      return isBlocked
+    })
+  }, [repeatPlan, objects, tool])
 
   // Leaving edit mode puts back whatever was being dragged (it'd keep
   // following the cursor in the read-only view otherwise).
@@ -328,7 +377,53 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
   )
   const onPickOpening = useCallback((id: string) => handlers.current.pickOpening(id), [])
 
+  // Right-click menu. A right-drag orbits the camera, so the menu opens on the
+  // release, only when the pointer barely moved — and a press on a piece the
+  // selection doesn't hold selects it first.
+  const menuPress = useRef<{ targetId: string | null; point: Cell; x: number; y: number } | null>(
+    null
+  )
+  const pressMenu = useCallback((targetId: string | null, point: Cell, e: PointerEvent) => {
+    menuPress.current = { targetId, point, x: e.clientX, y: e.clientY }
+  }, [])
+  const onMenuPress = useCallback(
+    (id: string, e: ThreeEvent<PointerEvent>) =>
+      pressMenu(id, { x: e.point.x, z: e.point.z }, e.nativeEvent),
+    [pressMenu]
+  )
+  useEffect(() => {
+    if (readOnly) return
+    const handleMove = (e: PointerEvent) => {
+      const press = menuPress.current
+      if (press && Math.hypot(e.clientX - press.x, e.clientY - press.y) > MENU_SLOP)
+        menuPress.current = null
+    }
+    const handleUp = (e: PointerEvent) => {
+      const press = menuPress.current
+      menuPress.current = null
+      if (!press || e.button !== 2) return
+      const s = storeApi.getState()
+      if (press.targetId && !s.selection.includes(press.targetId)) {
+        s.setTool("select")
+        s.select(press.targetId)
+      }
+      s.openContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        targetId: press.targetId,
+        point: press.point,
+      })
+    }
+    window.addEventListener("pointermove", handleMove)
+    window.addEventListener("pointerup", handleUp)
+    return () => {
+      window.removeEventListener("pointermove", handleMove)
+      window.removeEventListener("pointerup", handleUp)
+    }
+  }, [readOnly, storeApi])
+
   const floorPan = useRef<FloorPan | null>(null)
+  const wallResize = useRef<WallResizeHandle>(null)
   // Hovered pieces' cursor hints, forwarded to CameraControls (a stable
   // callback, so hovering never re-renders the scene).
   const cursorHintRef = useRef<((id: string, hint: CursorHint | null) => void) | null>(null)
@@ -347,10 +442,18 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
   }, [])
   // Wall + Erase tools are owned by BuildController; here we handle select and
   // furniture placement only. All no-ops in display mode.
-  const handleDown = (_x: number, _z: number, button: number, e: PointerEvent) => {
+  const handleDown = (x: number, z: number, button: number, e: PointerEvent) => {
+    if (!readOnly && button === 2) return pressMenu(null, { x, z }, e)
     if (readOnly || button !== 0) return
     if (dragId) return // mid-drag (another button/finger): the release decides
     if (carriedOpening) return
+    // Row / Pod: the drag lays copies (instead of panning).
+    if (isRepeating) {
+      const start = placeAt(tool as ObjectType, x, z)
+      setRepeat({ start, end: start })
+      isFloorPress.current = true
+      return
+    }
     // Bare floor, Select tool + Shift: a box selection, added to the current
     // one — BoxSelect takes over the drag.
     if (tool === "select" && e.shiftKey) {
@@ -359,6 +462,14 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
         .setBox({ x0: e.clientX, y0: e.clientY, x1: e.clientX, y1: e.clientY, additive: true })
       return
     }
+    // A saved room on the cursor: a click places it, a drag pans.
+    if (armedKit) {
+      isFloorPress.current = true
+      floorPan.current?.start(e)
+      return
+    }
+    // Select, at a wall's foot: drag the wall sideways.
+    if (tool === "select" && wallResize.current?.press(x, z)) return
     // Otherwise a drag pans (Select, furniture); a click acts on pointerup.
     isFloorPress.current = true
     if (tool === "select" || isFurniture) floorPan.current?.start(e)
@@ -366,13 +477,30 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
 
   const handleMove = (x: number, z: number) => {
     if (readOnly || dragId) return // carrying is handled by CarryController (plane raycast)
+    wallResize.current?.hover(x, z)
+    if (repeat) setRepeat({ ...repeat, end: { x, z } })
     if (isFurniture) setHover(placeAt(tool as ObjectType, x, z))
     else setHover({ x, z })
   }
 
   const handleUp = (x: number, z: number, button: number) => {
     if (readOnly || button !== 0 || dragId) return
+    if (repeat) {
+      storeApi.getState().addObjects(
+        repeatPlan.map((p) => ({
+          type: tool as ObjectType,
+          ...p,
+          color: placementColor ?? undefined,
+        }))
+      )
+      setRepeat(null)
+      return
+    }
     if (floorPan.current?.hasMoved()) return // that was a pan, not a click
+    if (armedKit) {
+      if (isFloorPress.current && kitPlan && doesKitFit) storeApi.getState().placeKit(kitPlan)
+      return
+    }
     if (tool === "select" && isFloorPress.current) select(null) // click on bare floor
     if (isFurniture) {
       const p = placeAt(tool as ObjectType, x, z)
@@ -395,7 +523,9 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
     ? CURSORS.select
     : carried || carriedOpening
       ? "grabbing"
-      : getToolCursor(tool, isFurniture)
+      : armedKit
+        ? CURSORS.place
+        : getToolCursor(tool, isFurniture)
 
   return (
     <SceneThemeContext.Provider value={surfaces}>
@@ -428,6 +558,7 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
               readOnly={readOnly}
             />
             <CameraFit insets={fitInsets} />
+            {!readOnly && <WallResize ref={wallResize} setCursorHint={setCursorHint} />}
 
             {/* See-through, cut-down wall section under the cursor — always in view
             mode; in edit mode while selecting or placing furniture (the wall,
@@ -447,7 +578,7 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
 
             <Lighting profile={profile} centre={officeArea.centre} reach={officeArea.reach} />
 
-            {readOnly && <SeatTags />}
+            {readOnly && layers.deskTags && <SeatTags />}
             {readOnly && <DeskPets />}
             {readOnly && <SeatPopup />}
             {readOnly && <StudioEnvironment intensity={profile.envIntensity} />}
@@ -456,7 +587,10 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
               onDown={handleDown}
               onMove={handleMove}
               onUp={handleUp}
-              onLeave={() => setHover(null)}
+              onLeave={() => {
+                setHover(null)
+                wallResize.current?.hover(Infinity, Infinity)
+              }}
               // View mode: a click on bare floor closes the desk card (a drag that
               // pans the camera doesn't). Desk clicks stop propagation first.
               onClick={
@@ -466,7 +600,7 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
                     }
                   : undefined
               }
-              showGrid={!readOnly}
+              showGrid={!readOnly && layers.grid}
             />
 
             {/* The land round the office: its plateau and contour lines. */}
@@ -477,6 +611,22 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
 
             {/* Tint the floor enclosed by walls (the office interior). */}
             <InteriorFloor />
+            {/* Team zones: their floor tinted, their names. */}
+            {layers.zones && <ZoneFloor isEditing={!readOnly} isDark={dark} />}
+            {/* Editing: each room's area and desks. */}
+            {!readOnly && layers.roomSizes && <RoomLabels />}
+            {!readOnly &&
+              kitPlan?.map((o, i) => (
+                <GhostObject
+                  key={i}
+                  type={o.type}
+                  x={o.x}
+                  z={o.z}
+                  rotation={o.rotation}
+                  color={o.color}
+                  tint={doesKitFit ? undefined : "#ef4444"}
+                />
+              ))}
             {/* Soft shadows grounding each piece on the floor. */}
             <ContactBlobs />
             {/* Sunlight through the windows, and glows on screens and lamps. */}
@@ -502,6 +652,7 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
                     onStartDrag={onStartDrag}
                     onPickOpening={onPickOpening}
                     onToggleSelect={toggleSelect}
+                    onMenuPress={readOnly ? undefined : onMenuPress}
                     onSeatClick={readOnly ? openSeatCard : undefined}
                     occupied={isSeatable(obj.type) ? occupied?.get(obj.id) : undefined}
                   />
@@ -530,10 +681,25 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
                   />
                 )}
 
+                {/* Row / Pod: every copy the drag would lay — red where blocked. */}
+                {repeat &&
+                  repeatPlan.map((p, i) => (
+                    <GhostObject
+                      key={i}
+                      type={tool as ObjectType}
+                      x={p.x}
+                      z={p.z}
+                      rotation={p.rotation}
+                      tint={repeatBlocked[i] ? "#ef4444" : undefined}
+                      color={placementColor ?? undefined}
+                    />
+                  ))}
+
                 {/* Furniture build preview — red when it would overlap something */}
                 {isFurniture &&
                   hover &&
                   !dragId &&
+                  !repeat &&
                   (() => {
                     const rot = hover.rotation ?? placementRotation
                     const blocked = furnitureCollides(
@@ -551,6 +717,13 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
                           z={hover.z}
                           rotation={rot}
                           valid={!blocked}
+                        />
+                        <AlignmentGuides
+                          objects={objects}
+                          type={tool as ObjectType}
+                          x={hover.x}
+                          z={hover.z}
+                          rotation={rot}
                         />
                         {measureHints && (
                           <MeasureHints
@@ -573,6 +746,17 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
                     )
                   })()}
 
+                {/* Lines where the carried piece lines up with others. */}
+                {carried && !isWallMounted(carried.type) && (
+                  <AlignmentGuides
+                    objects={objects}
+                    type={carried.type}
+                    x={carried.x}
+                    z={carried.z}
+                    rotation={carried.rotation}
+                    ignoreId={carried.id}
+                  />
+                )}
                 {/* Target-square highlight for the object being carried */}
                 {carried && measureHints && (
                   <MeasureHints

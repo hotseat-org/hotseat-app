@@ -1,76 +1,59 @@
-import { ToggleButton, Tooltip } from "@heroui/react"
-import { Box, Clock, Feather } from "lucide-react"
+import clsx from "clsx"
 import type { ReactNode } from "react"
-import { useEditorStore, type OfficeView } from "../store"
+import { useEditorStore } from "../store"
 import { hasWebGL } from "../webgl"
 import { SkySlider } from "./SkySlider"
-import { FitButton } from "./FitButton"
 import { DateStepper } from "./DateStepper"
 import { useI18n } from "~/i18n/I18nProvider"
 
 /**
- * Toggle that makes the scene follow the real local time. Dragging the slider
- * switches it off; pressing it again jumps back to "now".
- */
-export const SyncTimeToggle = () => {
-  const { t } = useI18n()
-  const syncTime = useEditorStore((s) => s.syncTime)
-  const setSyncTime = useEditorStore((s) => s.setSyncTime)
-  return (
-    <Tooltip delay={350}>
-      <ToggleButton
-        isIconOnly
-        size="sm"
-        variant="ghost"
-        aria-label={t("Sync with real time")}
-        isSelected={syncTime}
-        onChange={setSyncTime}
-        className={
-          syncTime
-            ? "bg-accent/15 text-accent"
-            : "text-muted hover:bg-foreground/10 hover:text-foreground"
-        }
-      >
-        <Clock className="size-4" />
-      </ToggleButton>
-      <Tooltip.Content>
-        {syncTime ? t("Following real time") : t("Sync with real time")}
-      </Tooltip.Content>
-    </Tooltip>
-  )
-}
-
-/**
- * The bottom bar: fit view, real-time sync and the time-of-day slider that
- * drives the scene lighting (day → night), plus an optional trailing action
- * (Done while editing, Edit layout otherwise). Shared by the editor and the
- * office view dock so switching modes doesn't move or resize the bar.
+ * The bottom bar — when: the day shown (a real office books one day at a
+ * time) and the time of day that lights the scene, which follows the real
+ * clock until it's dragged ("Now" goes back to it) — plus the main action
+ * (Done while editing, Edit layout otherwise). The camera and what the map
+ * shows live in the map controls (bottom-left). Shared by the editor and the
+ * office view dock, so switching modes doesn't move or resize the bar.
  */
 export const TimeOfDay = ({
   children,
-  viewSwitch = false,
+  isViewing = false,
 }: {
   children?: ReactNode
-  /** Viewing (not editing): offer the 3D ⇄ 2D switch. */
-  viewSwitch?: boolean
+  /** Viewing (not editing): the simple view may be on, with no lighting to set. */
+  isViewing?: boolean
 }) => {
+  const { t } = useI18n()
   const timeOfDay = useEditorStore((s) => s.timeOfDay)
   const setTimeOfDay = useEditorStore((s) => s.setTimeOfDay)
-  // A real office shows (and books) one day at a time — pick it here.
+  const syncTime = useEditorStore((s) => s.syncTime)
+  const setSyncTime = useEditorStore((s) => s.setSyncTime)
   const booking = useEditorStore((s) => s.booking.enabled)
   const view = useEditorStore((s) => s.view)
-  const setView = useEditorStore((s) => s.setView)
-  const webgl = hasWebGL()
-  // The flat plan has no lighting: no time-of-day controls there.
-  const flat = viewSwitch && (view === "2d" || !webgl)
+  // The flat plan has no lighting: no time-of-day there.
+  const flat = isViewing && (view === "2d" || !hasWebGL())
 
   return (
     <div className="pointer-events-auto absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-2xl border border-border bg-overlay/90 p-2 text-foreground shadow-overlay backdrop-blur-md">
-      <FitButton />
-      {viewSwitch && webgl && <ViewSwitch view={view} onChange={setView} />}
-      {!flat && <SyncTimeToggle />}
       {booking && <DateStepper />}
-      {!flat && <SkySlider value={timeOfDay} onChange={setTimeOfDay} className="mx-1 w-56" />}
+      {!flat && (
+        <div className="flex items-center gap-1.5">
+          <SkySlider value={timeOfDay} onChange={setTimeOfDay} className="mx-1 w-56" />
+          {/* Back to the real time — its room kept while following it, so the
+              bar never changes width. */}
+          <button
+            type="button"
+            onClick={() => setSyncTime(true)}
+            aria-hidden={syncTime}
+            tabIndex={syncTime ? -1 : undefined}
+            className={clsx(
+              "h-7 rounded-lg px-2 text-xs font-bold text-accent transition-opacity hover:bg-accent/10",
+              syncTime && "pointer-events-none opacity-0"
+            )}
+          >
+            {t("Now")}
+          </button>
+        </div>
+      )}
       {children && (
         <>
           <span className="mx-1 h-6 w-px bg-separator" aria-hidden />
@@ -79,50 +62,6 @@ export const TimeOfDay = ({
           <div className="flex items-center gap-2">{children}</div>
         </>
       )}
-    </div>
-  )
-}
-
-/**
- * 3D scene ⇄ simple view (a light top-down plan, for devices that
- * struggle with 3D). The choice is remembered per browser.
- */
-const ViewSwitch = ({
-  view,
-  onChange,
-}: {
-  view: OfficeView
-  onChange: (view: OfficeView) => void
-}) => {
-  const { t } = useI18n()
-  return (
-    <div role="radiogroup" aria-label={t("View")} className="flex rounded-xl bg-foreground/5 p-0.5">
-      {(
-        [
-          ["3d", t("3D view"), Box, "3D"],
-          ["2d", t("Simple view — lighter, for slower devices"), Feather, t("Simple")],
-        ] as const
-      ).map(([value, label, Icon, short]) => (
-        <Tooltip key={value} delay={350}>
-          <button
-            type="button"
-            role="radio"
-            aria-checked={view === value}
-            aria-label={label}
-            onClick={() => onChange(value)}
-            className={
-              "flex h-8 items-center gap-1 rounded-[10px] px-2 text-xs font-bold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus " +
-              (view === value
-                ? "bg-overlay text-foreground shadow-sm"
-                : "text-muted hover:text-foreground")
-            }
-          >
-            <Icon className="size-3.5" />
-            {short}
-          </button>
-          <Tooltip.Content>{label}</Tooltip.Content>
-        </Tooltip>
-      ))}
     </div>
   )
 }
