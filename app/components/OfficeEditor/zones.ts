@@ -1,5 +1,5 @@
-import { footprintCells } from "./layout"
-import { GRID, isSeatable, type SceneObject } from "./types"
+import { edgeDirection, footprintCells, unitEdges } from "./layout"
+import { GRID, isEdgeType, isSeatable, type SceneObject } from "./types"
 
 /**
  * Zones (neighbourhoods): a team's part of the office — a name on its desks.
@@ -113,11 +113,43 @@ export interface ZoneArea {
 }
 
 /**
- * Each zone's floor: the squares within ZONE_MARGIN of its desks. A square
- * goes to the nearest desk — any desk, so a zone never spreads under a desk
- * outside it, and neighbouring zones meet instead of overlapping.
+ * The grid lines walls stand on, as the square sides they close: "x:i,j" is the
+ * side along X under square (i, j) (z = j), "z:i,j" the side along Z left of it
+ * (x = i). Doors and glass close them too: a zone stays in its room. (Diagonal
+ * walls cross squares, not their sides, and don't close any.)
+ */
+const getClosedSides = (objects: SceneObject[]) => {
+  const sides = new Set<string>()
+  for (const o of objects) {
+    if (!isEdgeType(o.type)) continue
+    const direction = edgeDirection(o.rotation)
+    if (direction !== "x" && direction !== "z") continue
+    for (const e of unitEdges(o)) {
+      const i = Math.round(e.x / ZONE_CELL - (direction === "x" ? 0.5 : 0))
+      const j = Math.round(e.z / ZONE_CELL - (direction === "z" ? 0.5 : 0))
+      sides.add(`${direction}:${i},${j}`)
+    }
+  }
+  return sides
+}
+
+/** The four neighbours of a square, each with the side crossed to reach it. */
+const getNeighbours = (i: number, j: number) =>
+  [
+    [i, j + 1, `x:${i},${j + 1}`],
+    [i, j - 1, `x:${i},${j}`],
+    [i + 1, j, `z:${i + 1},${j}`],
+    [i - 1, j, `z:${i},${j}`],
+  ] as const
+
+/**
+ * Each zone's floor: the squares within ZONE_MARGIN of its desks that can be
+ * reached from the desk without crossing a wall. A square goes to the nearest
+ * desk — any desk, so a zone never spreads under a desk outside it, and
+ * neighbouring zones meet instead of overlapping.
  */
 export const composeZoneAreas = (objects: SceneObject[]): ZoneArea[] => {
+  const closedSides = getClosedSides(objects)
   const owners = new Map<
     string,
     { zone?: string; distance: number; toMiddle: number; cell: [number, number] }
@@ -131,23 +163,42 @@ export const composeZoneAreas = (objects: SceneObject[]): ZoneArea[] => {
     const i1 = Math.ceil((x1 + ZONE_MARGIN) / ZONE_CELL - 1e-6)
     const j0 = Math.floor((z0 - ZONE_MARGIN) / ZONE_CELL + 1e-6)
     const j1 = Math.ceil((z1 + ZONE_MARGIN) / ZONE_CELL - 1e-6)
+    /** From a square's middle to the desk's footprint (0: under it). */
+    const distanceOf = (i: number, j: number) => {
+      const cx = (i + 0.5) * ZONE_CELL
+      const cz = (j + 0.5) * ZONE_CELL
+      return Math.hypot(Math.max(x0 - cx, 0, cx - x1), Math.max(z0 - cz, 0, cz - z1))
+    }
+    // Spread from the squares under the desk (or, a small one, its middle's)
+    // to its margin, never through a wall.
+    const isInMargin = (i: number, j: number) => i >= i0 && i < i1 && j >= j0 && j < j1
+    const under: [number, number][] = []
     for (let i = i0; i < i1; i++)
-      for (let j = j0; j < j1; j++) {
-        // From the square's middle to the desk's footprint (0: under it)…
-        const cx = (i + 0.5) * ZONE_CELL
-        const cz = (j + 0.5) * ZONE_CELL
-        const distance = Math.hypot(Math.max(x0 - cx, 0, cx - x1), Math.max(z0 - cz, 0, cz - z1))
-        // …equally near two desks: the one whose middle is nearer.
-        const toMiddle = Math.hypot(cx - desk.x, cz - desk.z)
-        const key = `${i},${j}`
-        const owner = owners.get(key)
-        if (
-          !owner ||
-          distance < owner.distance ||
-          (distance === owner.distance && toMiddle < owner.toMiddle)
-        )
-          owners.set(key, { zone: desk.zone, distance, toMiddle, cell: [i, j] })
+      for (let j = j0; j < j1; j++) if (distanceOf(i, j) === 0) under.push([i, j])
+    if (under.length === 0)
+      under.push([Math.floor(desk.x / ZONE_CELL), Math.floor(desk.z / ZONE_CELL)])
+    const reached = new Set(under.map(([i, j]) => `${i},${j}`))
+    const queue = [...under]
+    while (queue.length > 0) {
+      const [i, j] = queue.pop() as [number, number]
+      // …equally near two desks: the one whose middle is nearer.
+      const distance = distanceOf(i, j)
+      const toMiddle = Math.hypot((i + 0.5) * ZONE_CELL - desk.x, (j + 0.5) * ZONE_CELL - desk.z)
+      const key = `${i},${j}`
+      const owner = owners.get(key)
+      if (
+        !owner ||
+        distance < owner.distance ||
+        (distance === owner.distance && toMiddle < owner.toMiddle)
+      )
+        owners.set(key, { zone: desk.zone, distance, toMiddle, cell: [i, j] })
+      for (const [ni, nj, side] of getNeighbours(i, j)) {
+        const next = `${ni},${nj}`
+        if (reached.has(next) || !isInMargin(ni, nj) || closedSides.has(side)) continue
+        reached.add(next)
+        queue.push([ni, nj])
       }
+    }
   }
   return getZones(objects).flatMap((zone) => {
     const cells = [...owners.values()].filter((o) => o.zone === zone.name).map((o) => o.cell)

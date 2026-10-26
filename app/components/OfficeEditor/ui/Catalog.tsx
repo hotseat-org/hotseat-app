@@ -409,8 +409,8 @@ const RailButton = ({ label, shortcut, active, danger, onClick, children }: Rail
 )
 
 /**
- * Paint tool panel: pick a colour, then click a wall (its whole line; Shift for
- * one segment) or a room's floor. "Default" returns it to the theme colour.
+ * Paint tool panel: pick a colour, then click a wall (corner to corner; Shift
+ * for the whole room's) or a room's floor. "Default" returns it to the theme colour.
  */
 const PaintPanel = ({ style }: { style?: React.CSSProperties }) => {
   const { t } = useI18n()
@@ -423,7 +423,7 @@ const PaintPanel = ({ style }: { style?: React.CSSProperties }) => {
     >
       <h2 className="mb-1 shrink-0 px-1 text-sm font-semibold text-foreground">{t("Paint")}</h2>
       <p className="mb-3 shrink-0 px-1 text-xs leading-snug text-muted">
-        {t("Click a wall to paint its whole line (⇧ for one segment), or a room's floor.")}
+        {t("Click a wall to paint it (⇧ for the inside of the whole room), or a room's floor.")}
       </p>
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-width:thin]">
         <SwatchGroup

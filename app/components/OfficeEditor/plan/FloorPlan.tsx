@@ -17,7 +17,10 @@ import { routeBounds, useRoute } from "../wayfinding"
 import { useEditorStore } from "../store"
 import {
   FLOOR_PART,
+  EDGE_ROTATION,
+  composeWallColors,
   edgeDirection,
+  getWallFacesFrom,
   edgeNodes,
   enclosedRegions,
   footprintCells,
@@ -1031,35 +1034,78 @@ const buildScene = ({
     )
   }
 
+  /**
+   * A wall piece whose faces may be painted apart: then two half-thick strips,
+   * the front one on the line's +Z (along X) or +X (along Z) side.
+   */
+  const facedWallPiece = (
+    alongX: boolean,
+    fixed: number,
+    from: number,
+    to: number,
+    [front, back]: [string, string],
+    options: { opacity?: number; across?: number } = {}
+  ) => {
+    if (front === back) return wallPiece(alongX, fixed, from, to, front, options)
+    const half = (options.across ?? t) / 2
+    wallPiece(alongX, fixed + half, from, to, front, { ...options, across: half })
+    wallPiece(alongX, fixed - half, from, to, back, { ...options, across: half })
+  }
+  /** The same on a diagonal, built at `rotation` (its front: +Z turned by it). */
+  const facedDiagonalWallPiece = (
+    a: Cell,
+    b: Cell,
+    rotation: number,
+    [front, back]: [string, string],
+    options: { opacity?: number; across?: number } = {}
+  ) => {
+    if (front === back) return diagonalWallPiece(a, b, front, options)
+    const half = (options.across ?? t) / 2
+    const [nx, nz] = [Math.sin(rotation) * half, Math.cos(rotation) * half]
+    for (const [color, side] of [
+      [front, 1],
+      [back, -1],
+    ] as const) {
+      const shift = (c: Cell) => ({ x: c.x + nx * side, z: c.z + nz * side })
+      diagonalWallPiece(shift(a), shift(b), color, { ...options, across: half })
+    }
+  }
+
   // Plain and glass walls merge into straight runs of the same colour — one
   // piece per run, so no seams between half-metre segments.
   const runs = new Map<
     string,
-    { alongX: boolean; fixed: number; at: number[]; color: string; glass: boolean }
+    { alongX: boolean; fixed: number; at: number[]; color: string; back: string; glass: boolean }
   >()
   const diagonalRuns = new Map<
     string,
-    { rotation: number; at: SceneObject[]; color: string; glass: boolean }
+    { rotation: number; at: SceneObject[]; color: string; back: string; glass: boolean }
   >()
   for (const o of objects) {
     if (o.type !== "wall" && o.type !== "glassWall") continue
+    const glass = o.type === "glassWall"
+    // Each face's paint, seen the run's way round (its line's +Z / +X side first).
+    const faces = getWallFacesFrom(o, { rotation: EDGE_ROTATION[edgeDirection(o.rotation)] })
+    const [color, back] = glass ? [WINDOW_GLASS, WINDOW_GLASS] : faces.map((c) => c ?? wall)
     if (isDiagonalEdge(o.rotation)) {
       // Diagonal: runs on the lines where x − z (rising) or x + z (falling) holds.
-      const glass = o.type === "glassWall"
-      const color = glass ? WINDOW_GLASS : (o.color ?? wall)
       const isRising = edgeDirection(o.rotation) === "rising"
-      const key = `${isRising}|${isRising ? o.x - o.z : o.x + o.z}|${glass}|${color}`
-      const run = diagonalRuns.get(key) ?? { rotation: o.rotation, at: [], color, glass }
+      const key = `${isRising}|${isRising ? o.x - o.z : o.x + o.z}|${glass}|${color}|${back}`
+      const run = diagonalRuns.get(key) ?? {
+        rotation: EDGE_ROTATION[edgeDirection(o.rotation)],
+        at: [],
+        color,
+        back,
+        glass,
+      }
       run.at.push(o)
       diagonalRuns.set(key, run)
       continue
     }
     const alongX = runsAlongX(o.rotation)
-    const glass = o.type === "glassWall"
-    const color = glass ? WINDOW_GLASS : (o.color ?? wall)
     const fixed = alongX ? o.z : o.x
-    const key = `${alongX}|${fixed}|${glass}|${color}`
-    const run = runs.get(key) ?? { alongX, fixed, at: [], color, glass }
+    const key = `${alongX}|${fixed}|${glass}|${color}|${back}`
+    const run = runs.get(key) ?? { alongX, fixed, at: [], color, back, glass }
     run.at.push(alongX ? o.x : o.z)
     runs.set(key, run)
   }
@@ -1068,7 +1114,7 @@ const buildScene = ({
     let start = r.at[0]
     let prev = r.at[0]
     const flush = () =>
-      wallPiece(r.alongX, r.fixed, start - SEG / 2, prev + SEG / 2, r.color, {
+      facedWallPiece(r.alongX, r.fixed, start - SEG / 2, prev + SEG / 2, [r.color, r.back], {
         // Glass partitions: a slimmer, see-through line.
         opacity: r.glass ? 0.8 : 1,
         across: r.glass ? t * 0.5 : t,
@@ -1090,7 +1136,7 @@ const buildScene = ({
     const flush = () => {
       const [a] = edgeNodes(start)
       const [, b] = edgeNodes(prev)
-      diagonalWallPiece(a, b, r.color, {
+      facedDiagonalWallPiece(a, b, r.rotation, [r.color, r.back], {
         opacity: r.glass ? 0.8 : 1,
         across: r.glass ? t * 0.5 : t,
       })
@@ -1107,6 +1153,21 @@ const buildScene = ({
 
   // Windows: the wall with a pane of glass along its middle. Doors: the gap
   // between two jambs, the leaf standing open and its swing — a plan's door.
+  // Both in the paint of the wall they're cut into.
+  const wallColors = composeWallColors(objects)
+  /** An opening's wall faces, its own way round (themed where unpainted). */
+  const facesOf = (o: SceneObject): [string, string] => {
+    const [front, back] = wallColors.openings.get(o.id) ?? [undefined, undefined]
+    return [front ?? wall, back ?? wall]
+  }
+  /** Built turned about from its line's way (the faces swap). */
+  const isTurnedFromLine = (o: SceneObject) =>
+    Math.cos(o.rotation - EDGE_ROTATION[edgeDirection(o.rotation)]) < 0
+  /** A door's frame: its wall's paint — the theme's when the faces differ. */
+  const frameOf = (o: SceneObject) => {
+    const [front, back] = facesOf(o)
+    return front === back ? front : wall
+  }
   for (const o of objects) {
     if (o.type !== "window" && o.type !== "door" && o.type !== "glassDoor") continue
     const [a, b] = edgeNodes(o)
@@ -1114,7 +1175,7 @@ const buildScene = ({
       // On a diagonal: a window is wall with glass down its middle; a door, its
       // two jambs, and its leaf standing open with its swing, as straight ones.
       if (o.type === "window") {
-        diagonalWallPiece(a, b, o.color ?? wall, {})
+        facedDiagonalWallPiece(a, b, o.rotation, facesOf(o), {})
         diagonalWallPiece(a, b, WINDOW_GLASS, { extend: -0.06, across: t * 0.35 })
         continue
       }
@@ -1122,7 +1183,7 @@ const buildScene = ({
       const span = Math.hypot(b.x - a.x, b.z - a.z)
       const along = { x: (b.x - a.x) / span, z: (b.z - a.z) / span }
       const lerp = (d: number) => ({ x: a.x + along.x * d, z: a.z + along.z * d })
-      const frame = o.type === "glassDoor" ? "#5b6577" : (o.color ?? wall)
+      const frame = o.type === "glassDoor" ? "#5b6577" : frameOf(o)
       diagonalWallPiece(a, lerp(post), frame, { extend: 0 })
       diagonalWallPiece(lerp(span - post), b, frame, { extend: 0 })
       // Hinged at the first jamb, the leaf opens to the door's front (its +Z);
@@ -1163,12 +1224,14 @@ const buildScene = ({
       ? [Math.min(a.x, b.x), Math.max(a.x, b.x)]
       : [Math.min(a.z, b.z), Math.max(a.z, b.z)]
     if (o.type === "window") {
-      wallPiece(alongX, fixed, from, to, o.color ?? wall)
+      // Faces seen the line's way round: its +Z (along X) or +X (along Z) first.
+      const [front, back] = facesOf(o)
+      facedWallPiece(alongX, fixed, from, to, isTurnedFromLine(o) ? [back, front] : [front, back])
       wallPiece(alongX, fixed, from, to, WINDOW_GLASS, { extend: -0.06, across: t * 0.35 })
       continue
     }
     const post = 0.1
-    const frame = o.type === "glassDoor" ? "#5b6577" : (o.color ?? wall)
+    const frame = o.type === "glassDoor" ? "#5b6577" : frameOf(o)
     wallPiece(alongX, fixed, from, from + post, frame, { extend: 0 })
     wallPiece(alongX, fixed, to - post, to, frame, { extend: 0 })
     // The leaf opens to the door's front (its +Z), hinged at the `from` jamb.

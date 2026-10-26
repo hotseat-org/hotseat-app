@@ -24,6 +24,7 @@ import {
 } from "../types"
 import { NodeMarker } from "./WallGhost"
 import { GhostObject } from "./GhostObject"
+import { GhostWalls } from "./GhostWalls"
 
 const BUILD = "#3b82f6"
 const ERASE = "#ef4444"
@@ -145,19 +146,18 @@ export const BuildController = () => {
   if (isWall(tool) || tool === "room") {
     return (
       <>
-        {run
-          ? run.map((c) => (
-              <GhostObject
-                key={`${c.x},${c.z}`}
-                type={tool === "glassWall" ? "glassWall" : "wall"}
-                x={c.x}
-                z={c.z}
-                rotation={c.rotation}
-                // Red where the run would cut through furniture (skipped on commit).
-                tint={edgeBlocked(objects, c) ? ERASE : undefined}
-              />
-            ))
-          : hover && <NodeMarker x={hover.x} z={hover.z} color={BUILD} />}
+        {run ? (
+          <GhostWalls
+            edges={run.map((c) => ({
+              ...c,
+              type: tool === "glassWall" ? "glassWall" : "wall",
+              // Red where the run would cut through furniture (skipped on commit).
+              tint: edgeBlocked(objects, c) ? ERASE : undefined,
+            }))}
+          />
+        ) : (
+          hover && <NodeMarker x={hover.x} z={hover.z} color={BUILD} />
+        )}
         {start && <NodeMarker x={start.x} z={start.z} color={BUILD} />}
         {end && <NodeMarker x={end.x} z={end.z} color={BUILD} />}
       </>
@@ -194,17 +194,14 @@ export const BuildController = () => {
       <>
         {reverting ? (
           // This opening reverts to walls — highlight its two halves.
-          plan.add.map((w) => (
-            <GhostObject
-              key={`${w.x},${w.z}`}
-              type={w.type}
-              x={w.x}
-              z={w.z}
-              rotation={w.rotation}
-              tint={ERASE}
-              scale={1.04}
-            />
-          ))
+          <GhostWalls
+            edges={plan.add.map((w) => ({
+              ...w,
+              type: w.type === "glassWall" ? "glassWall" : "wall",
+              tint: ERASE,
+            }))}
+            grow={0.03}
+          />
         ) : (
           // The new door/window appears here — show it translucent in place.
           <GhostObject type={tool} x={target.x} z={target.z} rotation={target.rotation} />
@@ -227,19 +224,28 @@ export const BuildController = () => {
     if (id) doomed = objects.filter((o) => o.id === id)
   }
 
+  // Walls as merged runs; doors and windows as themselves.
   return (
     <>
-      {doomed.map((o) => (
-        <GhostObject
-          key={o.id}
-          type={o.type}
-          x={o.x}
-          z={o.z}
-          rotation={o.rotation}
-          tint={ERASE}
-          scale={1.06}
-        />
-      ))}
+      <GhostWalls
+        edges={doomed.flatMap((o) =>
+          o.type === "wall" || o.type === "glassWall" ? [{ ...o, type: o.type, tint: ERASE }] : []
+        )}
+        grow={0.04}
+      />
+      {doomed
+        .filter((o) => isOpening(o.type))
+        .map((o) => (
+          <GhostObject
+            key={o.id}
+            type={o.type}
+            x={o.x}
+            z={o.z}
+            rotation={o.rotation}
+            tint={ERASE}
+            scale={1.06}
+          />
+        ))}
     </>
   )
 }

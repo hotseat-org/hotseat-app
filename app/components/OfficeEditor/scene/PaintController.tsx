@@ -2,22 +2,21 @@ import { useFrame, useThree } from "@react-three/fiber"
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { Object3D, Plane, Vector3, type InstancedMesh } from "three"
 import { useEditorStore, useEditorStoreApi } from "../store"
-import { SEG, enclosedRegions, wallLine } from "../layout"
+import { SEG, enclosedRegions, roomWalls, wallBetweenJoints, type WallPaint } from "../layout"
 import { isEdgeType, type Cell } from "../types"
 import { useSurfaces } from "../sceneTheme"
 import { intersectEdge } from "./wallHit"
-import { GhostObject } from "./GhostObject"
 
 const GROUND = new Plane(new Vector3(0, 1, 0), 0)
 const dummy = new Object3D()
-
 type Target =
-  | { kind: "wall"; ids: string[] }
+  | { kind: "wall"; targets: WallPaint[] }
   | { kind: "floor"; cells: Cell[]; x: number; z: number }
   | null
 
 /**
- * Paint tool. Points at a wall → its whole straight line (Shift: one segment);
+ * Paint tool. Points at a wall → that wall, corner to corner (Shift: the inside
+ * of the room on the side you look from — the faces of its walls facing in);
  * otherwise at a room's floor → that room. Previews the paint, click applies.
  */
 export const PaintController = () => {
@@ -44,14 +43,24 @@ export const PaintController = () => {
       const t = targetRef.current
       if (e.button !== 0 || !t) return
       const s = store.getState()
-      if (t.kind === "wall") s.paintWalls(t.ids, s.paintColor)
+      if (t.kind === "wall") s.paintWalls(t.targets, s.paintColor)
       else s.paintFloor(t.x, t.z, s.paintColor)
+    }
+    // Shift switches between a wall and its room at once, without a move.
+    const key = (e: KeyboardEvent) => {
+      if (e.key !== "Shift") return
+      shift.current = e.type === "keydown"
+      invalidate()
     }
     el.addEventListener("pointermove", move)
     el.addEventListener("pointerdown", down)
+    window.addEventListener("keydown", key)
+    window.addEventListener("keyup", key)
     return () => {
       el.removeEventListener("pointermove", move)
       el.removeEventListener("pointerdown", down)
+      window.removeEventListener("keydown", key)
+      window.removeEventListener("keyup", key)
     }
   }, [gl, invalidate, store])
 
@@ -73,9 +82,12 @@ export const PaintController = () => {
 
     let next: Target = null
     if (best) {
-      const seg = all.find((o) => o.id === best.id)
-      const ids = shift.current && seg?.type === "wall" ? [best.id] : wallLine(all, best.id)
-      if (ids.length) next = { kind: "wall", ids }
+      // A wall, corner to corner; Shift: the inside of the room on the side you
+      // look from.
+      const targets =
+        (shift.current && roomWalls(all, regions, best.id, ray.origin)) ||
+        wallBetweenJoints(all, best.id).map((id) => ({ id }))
+      if (targets.length) next = { kind: "wall", targets }
     } else if (ray.intersectPlane(GROUND, hit)) {
       const region = regions.find((r) =>
         r.some((c) => c.x <= hit.x && hit.x < c.x + SEG && c.z <= hit.z && hit.z < c.z + SEG)
@@ -86,7 +98,7 @@ export const PaintController = () => {
     const key = !next
       ? ""
       : next.kind === "wall"
-        ? `w:${next.ids.join(",")}`
+        ? `w:${next.targets.map((t) => `${t.id}${t.face ?? ""}`).join(",")}`
         : `f:${next.cells[0].x},${next.cells[0].z},${next.cells.length}`
     if (key !== lastKey.current) {
       lastKey.current = key
@@ -97,29 +109,16 @@ export const PaintController = () => {
     }
   })
 
-  if (!target) return null
-  const color = paintColor ?? (target.kind === "wall" ? surfaces.wall : surfaces.floorInside)
-  if (target.kind === "wall") {
-    const ids = new Set(target.ids)
-    return (
-      <>
-        {objects
-          .filter((o) => ids.has(o.id))
-          .map((o) => (
-            <GhostObject
-              key={o.id}
-              type="wall"
-              x={o.x}
-              z={o.z}
-              rotation={o.rotation}
-              tint={color}
-              scale={1.04}
-            />
-          ))}
-      </>
-    )
-  }
-  return <FloorPreview cells={target.cells} color={color} />
+  // Walls: shown in the paint on the walls themselves (merged, as they'd look —
+  // with their doors, windows and joints), not as a ghost over them.
+  const setPaintPreview = useEditorStore((s) => s.setPaintPreview)
+  useEffect(() => {
+    setPaintPreview(target?.kind === "wall" ? { targets: target.targets, color: paintColor } : null)
+  }, [target, paintColor, setPaintPreview])
+  useEffect(() => () => setPaintPreview(null), [setPaintPreview])
+
+  if (target?.kind !== "floor") return null
+  return <FloorPreview cells={target.cells} color={paintColor ?? surfaces.floorInside} />
 }
 
 /** Translucent overlay of a room's floor in the paint colour. */

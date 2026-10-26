@@ -68,6 +68,13 @@ export interface SceneObject {
   rotation: number
   /** Optional palette override; falls back to the type's default colour. */
   color?: string
+  /**
+   * Walls: one face painted apart from the other — its front (its +Z side as
+   * built) and back. Either set, these give the faces instead of `color`
+   * (see getWallFaces).
+   */
+  colorFront?: string
+  colorBack?: string
   /** For deskmate: which animal model sits on the chair. */
   model?: string
   /** Desks: a seat label, e.g. "D-3". */

@@ -8,6 +8,8 @@ import {
   edgeNodes,
   mountWalls,
   unitEdges,
+  composeFacePaint,
+  getWallFacesFrom,
 } from "./layout"
 import { isEdgeType, isOpening, isWall, isWallMounted, type SceneObject } from "./types"
 
@@ -120,7 +122,8 @@ export const composeWallShift = (
         added.push({
           id: nanoid(8),
           type: isWall(template.type) ? template.type : runType,
-          color: template.color,
+          // Its paint, each face seen the new wall's way round.
+          ...composeFacePaint(getWallFacesFrom(template, unit)),
           ...unit,
         })
       }

@@ -49,6 +49,9 @@ interface Props {
   onPickOpening?: (id: string) => void
   /** Desks in view mode: whether someone sits here on the shown day. */
   occupied?: boolean
+  /** Doors and windows: the paint of the wall they're cut into, each face. */
+  wallFront?: string
+  wallBack?: string
 }
 
 const isFurniture = (o: SceneObject) => !isEdgeType(o.type)
@@ -83,6 +86,8 @@ export const ObjectRenderer = memo(function ObjectRenderer({
   onMenuPress,
   onSeatClick,
   occupied,
+  wallFront,
+  wallBack,
 }: Props) {
   const [hovered, setHovered] = useState(false)
   // View mode: desks are clickable (seat card).
@@ -249,6 +254,8 @@ export const ObjectRenderer = memo(function ObjectRenderer({
             <ObjectMesh
               type={obj.type}
               color={obj.color}
+              wallFront={wallFront}
+              wallBack={wallBack}
               model={obj.model}
               variant={variantOf(obj)}
               occupied={occupied}

@@ -6,16 +6,21 @@ import { WALL, FLUSH_INSET } from "./dimensions"
 
 interface Props {
   color?: string
+  /** Its wall's paint, each face (undefined = themed). */
+  wallFront?: string
+  wallBack?: string
 }
 
 const POST = 0.13
 const OPENING = WALL.width - POST * 2
 
 /** A wall-height frame with an open, slightly-ajar painted door panel + handle. */
-export const Door = ({ color = PALETTE.door }: Props) => {
+export const Door = ({ color = PALETTE.door, wallFront, wallBack }: Props) => {
   const postX = WALL.width / 2 - POST / 2
-  // The frame is part of the wall, so it follows the themed wall colour.
-  const frame = useSurfaces().wall
+  // The frame is part of the wall, so it follows the wall's colour — the
+  // theme's (a trim) when its faces are painted apart.
+  const themed = useSurfaces().wall
+  const frame = (wallFront === wallBack && wallFront) || themed
   return (
     <group>
       {/* Side posts */}

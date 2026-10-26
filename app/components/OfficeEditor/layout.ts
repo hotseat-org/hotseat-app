@@ -299,7 +299,13 @@ export const openingPlan = (
     const glass = o.model === GLASS_HOST
     if (o.type === kind) {
       const host = glass ? "glassWall" : "wall"
-      return { remove: [o.id], add: unitEdges(o).map((e) => ({ type: host, ...e })) }
+      // Filled back in with the paint of the wall round it.
+      const faces = glass ? undefined : composeWallColors(objects).openings.get(o.id)
+      const paint = faces ? composeFacePaint(faces) : {}
+      return {
+        remove: [o.id],
+        add: unitEdges(o).map((e) => ({ type: host, ...e, ...paint })),
+      }
     }
     // A window needs solid wall around it.
     if (kind === "window" && glass) return null
@@ -832,30 +838,246 @@ export const cellAt = (x: number, z: number): Cell => ({
 })
 
 /**
- * Paint tool, walls: the wall segments on the same straight line as `id` that
- * are contiguous with it — through any doors/windows in the line (they're part
- * of the wall, just not painted). Returns the wall ids to recolour.
+ * Paint tool, a wall: the wall segments on the same straight line as `id`, up
+ * to the corners or junctions where other walls meet it — through any doors and
+ * windows on the way (they take the wall's paint, see composeWallColors), not
+ * into glass. Returns the wall ids to recolour.
  */
-export const wallLine = (objects: SceneObject[], id: string): string[] => {
+export const wallBetweenJoints = (objects: SceneObject[], id: string): string[] => {
   const o = objects.find((obj) => obj.id === id)
   if (!o || !isEdgeType(o.type)) return []
   const direction = edgeDirection(o.rotation)
   const [sx, sz] = edgeStep(o.rotation)
-  // Unit edges in this direction, by position → owning object.
+  // Unit edges in this direction, by position → owning object; and the grid
+  // nodes where an edge of another direction ends (a corner, a T, a cross).
   const owner = new Map<string, SceneObject>()
+  const joints = new Set<string>()
   for (const w of objects) {
-    if (!isEdgeType(w.type) || edgeDirection(w.rotation) !== direction) continue
-    for (const e of unitEdges(w)) owner.set(`${e.x},${e.z}`, w)
+    if (!isEdgeType(w.type)) continue
+    if (edgeDirection(w.rotation) === direction)
+      for (const e of unitEdges(w)) owner.set(`${e.x},${e.z}`, w)
+    else for (const n of edgeNodes(w)) joints.add(`${n.x},${n.z}`)
   }
   // Walk both ways from the segment (an opening, from one of its halves).
   const [start] = unitEdges(o)
   const ids = new Set<string>()
   for (const dir of [1, -1])
-    for (let x = start.x, z = start.z; owner.has(`${x},${z}`); x += dir * sx, z += dir * sz) {
-      const w = owner.get(`${x},${z}`) as SceneObject
+    for (let x = start.x, z = start.z; ; x += dir * sx, z += dir * sz) {
+      const w = owner.get(`${x},${z}`)
+      if (!w || isGlassEdge(w)) break
       if (w.type === "wall") ids.add(w.id)
+      if (joints.has(`${x + (dir * sx) / 2},${z + (dir * sz) / 2}`)) break
     }
   return [...ids]
+}
+
+/** Whether a floor point lies in a region's cells (a split square: its parts). */
+const isInRegion = (cells: Map<string, FloorCell>, x: number, z: number) => {
+  const { x: cx, z: cz } = cellAt(x, z)
+  const cell = cells.get(`${cx},${cz}`)
+  if (!cell) return false
+  if (cell.parts === undefined) return true
+  const u = (x - cx) / SEG
+  const v = (z - cz) / SEG
+  const part =
+    v < u && v < 1 - u
+      ? FLOOR_PART.south
+      : v > u && v > 1 - u
+        ? FLOOR_PART.north
+        : u > v
+          ? FLOOR_PART.east
+          : FLOOR_PART.west
+  return (cell.parts & part) !== 0
+}
+
+/**
+ * Paint tool with Shift, a room's inside: the face looking into the room of
+ * every wall segment round it — the room on the side of `id` that faces
+ * `toward` (the camera), or its other side when that one isn't a room. A wall
+ * standing inside the room gets both faces. Null when neither side is a room.
+ */
+export const roomWalls = (
+  objects: SceneObject[],
+  /** enclosedRegions(objects), worked out once by the caller. */
+  rooms: FloorCell[][],
+  id: string,
+  toward: { x: number; z: number }
+): WallPaint[] | null => {
+  const o = objects.find((obj) => obj.id === id)
+  if (!o || !isEdgeType(o.type)) return null
+  // Just off a segment's middle, to one side (and a hair along it, off the
+  // diagonals a split square's parts meet on).
+  const probe = (w: SceneObject, side: number) => ({
+    x: w.x + Math.sin(w.rotation) * 0.1 * side + Math.cos(w.rotation) * 0.03,
+    z: w.z + Math.cos(w.rotation) * 0.1 * side - Math.sin(w.rotation) * 0.03,
+  })
+  const facing =
+    Math.sign(Math.sin(o.rotation) * (toward.x - o.x) + Math.cos(o.rotation) * (toward.z - o.z)) ||
+    1
+  const regions = rooms.map((cells) => new Map(cells.map((c) => [`${c.x},${c.z}`, c])))
+  for (const side of [facing, -facing]) {
+    const at = probe(o, side)
+    const room = regions.find((cells) => isInRegion(cells, at.x, at.z))
+    if (!room) continue
+    return objects.flatMap((w): WallPaint[] => {
+      if (w.type !== "wall") return []
+      const [isFrontIn, isBackIn] = [1, -1].map((side) => {
+        const p = probe(w, side)
+        return isInRegion(room, p.x, p.z)
+      })
+      if (isFrontIn && isBackIn) return [{ id: w.id }]
+      if (isFrontIn) return [{ id: w.id, face: "front" }]
+      if (isBackIn) return [{ id: w.id, face: "back" }]
+      return []
+    })
+  }
+  return null
+}
+
+/** A glass partition, or an opening cut into one. */
+const isGlassEdge = (o: SceneObject) => o.type === "glassWall" || o.model === GLASS_HOST
+
+/** A wall's two faces' paint: its front (its +Z side as built) and back. */
+export type WallFaces = [front: string | undefined, back: string | undefined]
+
+/** The paint on each face of a wall (undefined = the theme's wall colour). */
+export const getWallFaces = (o: SceneObject): WallFaces =>
+  o.colorFront !== undefined || o.colorBack !== undefined
+    ? [o.colorFront, o.colorBack]
+    : [o.color, o.color]
+
+/** Faces as seen from a wall turned the other way round (front ⇄ back). */
+const flipFaces = ([front, back]: WallFaces): WallFaces => [back, front]
+
+/** Whether two edges of a line are built facing opposite ways. */
+const isTurnedFrom = (a: SceneObject, b: { rotation: number }) =>
+  Math.cos(a.rotation - b.rotation) < 0
+
+/** A wall's faces as seen from `from`'s way round (a run's, an opening's). */
+export const getWallFacesFrom = (o: SceneObject, from: { rotation: number }): WallFaces =>
+  isTurnedFrom(o, from) ? flipFaces(getWallFaces(o)) : getWallFaces(o)
+
+/** The fields that carry faces' paint, for these faces (none when themed). */
+export const composeFacePaint = ([front, back]: WallFaces): Partial<SceneObject> => {
+  const fields = front === back ? { color: front } : { colorFront: front, colorBack: back }
+  return Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== undefined))
+}
+
+/** What the Paint tool paints: a wall, or (`face`) one face of it. */
+export interface WallPaint {
+  id: string
+  face?: "front" | "back"
+}
+
+/** The layout with these walls (or faces) in `color` (null = the theme's). */
+export const paintWallFaces = (
+  objects: SceneObject[],
+  targets: WallPaint[],
+  color: string | null
+): SceneObject[] => {
+  const faceOf = new Map(targets.map((t) => [t.id, t.face]))
+  const paint = color ?? undefined
+  return objects.map((o) => {
+    if (!faceOf.has(o.id)) return o
+    const [front, back] = getWallFaces(o)
+    const face = faceOf.get(o.id)
+    const faces: WallFaces =
+      face === "front" ? [paint, back] : face === "back" ? [front, paint] : [paint, paint]
+    const paintFields = composeFacePaint(faces)
+    const repainted = { ...o, ...paintFields }
+    // Drop the paint fields the new faces don't use.
+    for (const key of ["color", "colorFront", "colorBack"] as const)
+      if (!(key in paintFields)) delete repainted[key]
+    return repainted
+  })
+}
+
+/** A joint post's four quarters: (−x, −z), (+x, −z), (−x, +z), (+x, +z). */
+export type PostQuarters = [
+  string | undefined,
+  string | undefined,
+  string | undefined,
+  string | undefined,
+]
+
+/**
+ * The paint that the wall parts of openings and joints take from the walls
+ * round them (undefined = the theme's wall colour):
+ * - an opening (a window's sill and head, a door's frame) each face the
+ *   colour of the nearest walls' along its line, through other openings — a
+ *   painted side wins; seen from the opening's way round;
+ * - a joint post (a corner, a T), in quarters: each the colour most of the
+ *   wall faces looking into it have, a painted one winning a tie. Keyed "x,z".
+ */
+export const composeWallColors = (objects: SceneObject[]) => {
+  const owner = new Map<string, SceneObject>()
+  for (const o of objects)
+    if (isEdgeType(o.type)) for (const e of unitEdges(o)) owner.set(edgeKey(e), o)
+
+  const openings = new Map<string, WallFaces>()
+  for (const o of objects) {
+    if (!isOpening(o.type) || isGlassEdge(o)) continue
+    const [sx, sz] = edgeStep(o.rotation)
+    const [first, last] = unitEdges(o)
+    const sides = (
+      [
+        [first, -1],
+        [last, 1],
+      ] as const
+    ).flatMap(([e, dir]) => {
+      for (let x = e.x + dir * sx, z = e.z + dir * sz; ; x += dir * sx, z += dir * sz) {
+        const w = owner.get(edgeKey({ x, z, rotation: o.rotation }))
+        if (!w || isGlassEdge(w)) return []
+        if (w.type === "wall") return [getWallFacesFrom(w, o)]
+      }
+    })
+    openings.set(o.id, [sides.find(([front]) => front)?.[0], sides.find(([, back]) => back)?.[1]])
+  }
+
+  /** Each quarter of each node: how many faces of each colour look into it. */
+  const counts = new Map<string, Map<string | undefined, number>[]>()
+  for (const o of objects) {
+    if (!isEdgeType(o.type) || isGlassEdge(o)) continue
+    const [front, back] = isOpening(o.type) ? (openings.get(o.id) as WallFaces) : getWallFaces(o)
+    const normal = { x: Math.sin(o.rotation), z: Math.cos(o.rotation) }
+    for (const n of edgeNodes(o)) {
+      const key = `${n.x},${n.z}`
+      const quarters =
+        counts.get(key) ?? [0, 1, 2, 3].map(() => new Map<string | undefined, number>())
+      counts.set(key, quarters)
+      // Towards the edge from the node, then off it to each face's side: the
+      // quarter (or, a diagonal, the two) that face looks into.
+      const toward = { x: Math.sign(o.x - n.x), z: Math.sign(o.z - n.z) }
+      for (const [color, side] of [
+        [front, 1],
+        [back, -1],
+      ] as const) {
+        const qx = Math.sign(toward.x + Math.round(normal.x * side))
+        const qz = Math.sign(toward.z + Math.round(normal.z * side))
+        for (const ix of qx === 0 ? [0, 1] : [qx > 0 ? 1 : 0])
+          for (const iz of qz === 0 ? [0, 1] : [qz > 0 ? 1 : 0]) {
+            const tally = quarters[ix + iz * 2]
+            tally.set(color, (tally.get(color) ?? 0) + 1)
+          }
+      }
+    }
+  }
+  /** The most common colour, a painted one winning a tie. */
+  const winnerOf = (tally: Map<string | undefined, number>) =>
+    [...tally].sort(([a, n], [b, m]) => m - n || (a ? 0 : 1) - (b ? 0 : 1))[0]?.[0]
+  const joints = new Map<string, PostQuarters>()
+  for (const [key, quarters] of counts) {
+    // A quarter no face looks into (behind a wall's end): the post's colour.
+    const all = new Map<string | undefined, number>()
+    for (const tally of quarters)
+      for (const [color, n] of tally) all.set(color, (all.get(color) ?? 0) + n)
+    const overall = winnerOf(all)
+    joints.set(
+      key,
+      quarters.map((tally) => (tally.size ? winnerOf(tally) : overall)) as PostQuarters
+    )
+  }
+  return { openings, joints }
 }
 
 /** The two grid nodes at the ends of a wall/door edge. */

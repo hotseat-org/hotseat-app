@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid"
-import { createContext, useContext } from "react"
+import { createContext, useContext, useMemo } from "react"
 // Import everything from the "zustand" entrypoint (pre-bundled by Vite). Pulling
 // createStore from "zustand/vanilla" caused a late dep re-optimize that briefly
 // duplicated React and crashed useStore (blank canvas on some refreshes).
@@ -23,6 +23,8 @@ import {
   unitEdges,
   ROTATION_STEP,
   type PlacementPattern,
+  paintWallFaces,
+  type WallPaint,
 } from "./layout"
 import {
   isEdgeType,
@@ -310,13 +312,34 @@ export interface EditorState {
   /** Paint tool colour (null = back to the default/theme colour). */
   paintColor: string | null
   setPaintColor: (color: string | null) => void
-  /** Recolour wall segments (null = theme default). */
-  paintWalls: (ids: string[], color: string | null) => void
+  /** Recolour walls, or one face of each (null = theme default). */
+  paintWalls: (targets: WallPaint[], color: string | null) => void
+  /**
+   * The walls (or faces) the Paint tool hovers and its colour: shown on the
+   * walls themselves (see useObjectsWithPaintPreview), never saved.
+   */
+  paintPreview: { targets: WallPaint[]; color: string | null } | null
+  setPaintPreview: (preview: EditorState["paintPreview"]) => void
   /** Paint the floor of the room containing (x, z); null removes its paint. */
   paintFloor: (x: number, z: number, color: string | null) => void
   /** An in-progress box selection, in client (screen) pixels. */
   box: { x0: number; y0: number; x1: number; y1: number; additive: boolean } | null
   setBox: (box: EditorState["box"]) => void
+  /**
+   * A piece turned in place into others: where it stood before it last
+   * overlapped nothing, and the undo steps since. Deselected still
+   * overlapping, it springs back there (see settleTurn) — as a refused drop.
+   */
+  pendingTurn: {
+    id: string
+    x: number
+    z: number
+    rotation: number
+    historyLength: number
+    steps: number
+  } | null
+  /** The last turn sprung back (a timestamp) — the piece shakes "no". */
+  refusedTurn: { id: string; at: number } | null
   /** Furniture currently being carried (rotating it then skips the overlap check). */
   carryingId: string | null
   setCarrying: (id: string | null) => void
@@ -480,6 +503,7 @@ const makeInitializer =
       ;(rawSet as (p: typeof partial, r?: boolean) => void)(partial, replace)
       const after = get().objects
       syncSelection()
+      settleTurn()
       if (after === before || history.applying || history.batch) return
       rawSet({ past: [...get().past, before].slice(-HISTORY_LIMIT), future: [] })
     }
@@ -498,6 +522,28 @@ const makeInitializer =
         sel.some((id, i) => id !== selection[i])
       )
         rawSet({ selectedId: primary, selection: sel })
+    }
+    /**
+     * Once a piece turned into others is let go (deselected): still
+     * overlapping, it goes back to where it last stood free and shakes — and
+     * the turns leave no undo steps, as though refused.
+     */
+    const settleTurn = () => {
+      const { pendingTurn: turn, selectedId, objects, past } = get()
+      if (!turn || selectedId === turn.id) return
+      const o = objects.find((obj) => obj.id === turn.id)
+      if (!o || !furnitureCollides(objects, o.type, o.x, o.z, o.rotation, o.id))
+        return rawSet({ pendingTurn: null })
+      const { x, z, rotation } = turn
+      const isOnlyTurns = past.length === turn.historyLength + turn.steps
+      rawSet({
+        pendingTurn: null,
+        refusedTurn: { id: turn.id, at: performance.now() },
+        objects: objects.map((obj) => (obj.id === turn.id ? { ...obj, x, z, rotation } : obj)),
+        ...(isOnlyTurns
+          ? { past: past.slice(0, turn.historyLength) }
+          : { past: [...past, objects].slice(-HISTORY_LIMIT), future: [] }),
+      })
     }
     // Furniture in the current selection (group ops skip walls/openings).
     const selectedFurniture = () => {
@@ -667,12 +713,10 @@ const makeInitializer =
       clearRoute: () => set({ route: null }),
       paintColor: "#c9b48d",
       setPaintColor: (paintColor) => set({ paintColor }),
-      paintWalls: (ids, color) => {
-        const set_ = new Set(ids)
-        set((s) => ({
-          objects: s.objects.map((o) => (set_.has(o.id) ? { ...o, color: color ?? undefined } : o)),
-        }))
-      },
+      paintWalls: (targets, color) =>
+        set((s) => ({ objects: paintWallFaces(s.objects, targets, color) })),
+      paintPreview: null,
+      setPaintPreview: (paintPreview) => set({ paintPreview }),
       paintFloor: (x, z, color) => {
         const all = get().objects
         const region = enclosedRegions(all).find((r) =>
@@ -702,6 +746,8 @@ const makeInitializer =
       },
       box: null,
       setBox: (box) => set({ box }),
+      pendingTurn: null,
+      refusedTurn: null,
       carryingId: null,
       setCarrying: (carryingId) => set({ carryingId }),
       fitNonce: 0,
@@ -901,23 +947,40 @@ const makeInitializer =
           ),
         })),
 
-      rotateObject: (id) =>
-        set((s) => {
-          const o = s.objects.find((obj) => obj.id === id)
-          // Walls/doors live on grid edges — turning one in place would leave it
-          // off the edge grid, so they don't rotate.
-          if (!o || isEdgeType(o.type)) return s
-          const rotation = toRotationStep(o.rotation + ROTATION_STEP)
-          // An odd×even footprint changes parity when turned; re-snap so it still
-          // sits on whole grid squares, and refuse a turn into other furniture —
-          // unless it's being carried (the overlap is checked on drop).
-          const p = clampToFloor(o.type, rotation, snapToFootprint(o.type, rotation, o.x, o.z))
-          const carrying = s.carryingId === id
-          if (!carrying && furnitureCollides(s.objects, o.type, p.x, p.z, rotation, o.id)) return s
-          return {
-            objects: s.objects.map((obj) => (obj.id === id ? { ...obj, ...p, rotation } : obj)),
-          }
-        }),
+      rotateObject: (id) => {
+        const s = get()
+        const o = s.objects.find((obj) => obj.id === id)
+        // Walls/doors live on grid edges — turning one in place would leave it
+        // off the edge grid, so they don't rotate.
+        if (!o || isEdgeType(o.type)) return
+        const rotation = toRotationStep(o.rotation + ROTATION_STEP)
+        // An odd×even footprint changes parity when turned; re-snap so it still
+        // sits on whole grid squares. A turn into other furniture is allowed —
+        // carried, the drop checks it; in place, letting go of it does (and it
+        // springs back to where it last stood free, see settleTurn).
+        const p = clampToFloor(o.type, rotation, snapToFootprint(o.type, rotation, o.x, o.z))
+        const isOverlapping = furnitureCollides(s.objects, o.type, p.x, p.z, rotation, o.id)
+        const isInPlace = s.carryingId !== id
+        const turn = s.pendingTurn?.id === id ? s.pendingTurn : null
+        const pendingTurn = !isInPlace
+          ? s.pendingTurn
+          : !isOverlapping
+            ? null
+            : turn
+              ? { ...turn, steps: turn.steps + 1 }
+              : {
+                  id,
+                  x: o.x,
+                  z: o.z,
+                  rotation: o.rotation,
+                  historyLength: s.past.length,
+                  steps: 1,
+                }
+        set({
+          pendingTurn,
+          objects: s.objects.map((obj) => (obj.id === id ? { ...obj, ...p, rotation } : obj)),
+        })
+      },
 
       setColor: (id, color) =>
         set((s) => ({
@@ -1135,4 +1198,14 @@ export function useEditorStoreApi(): EditorStore {
   const store = useContext(EditorStoreContext)
   if (!store) throw new Error("useEditorStoreApi must be used within an OfficeEditor")
   return store
+}
+
+/** The layout with the Paint tool's hovered walls in its colour, for drawing them. */
+export const useObjectsWithPaintPreview = () => {
+  const objects = useEditorStore((s) => s.objects)
+  const preview = useEditorStore((s) => s.paintPreview)
+  return useMemo(
+    () => (preview ? paintWallFaces(objects, preview.targets, preview.color) : objects),
+    [objects, preview]
+  )
 }

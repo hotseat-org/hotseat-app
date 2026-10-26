@@ -1,22 +1,32 @@
 import { useEffect, useMemo } from "react"
 import { BoxGeometry, Matrix4, Vector3, type BufferGeometry } from "three"
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js"
-import { useEditorStore } from "../store"
+import { useObjectsWithPaintPreview } from "../store"
 import { useSurfaces } from "../sceneTheme"
 import { Surface } from "../objects/Surface"
-import { EDGE_ROTATION, SEG, edgeDirection, edgeLength, type EdgeDirection } from "../layout"
+import {
+  EDGE_ROTATION,
+  SEG,
+  edgeDirection,
+  edgeLength,
+  getWallFacesFrom,
+  type EdgeDirection,
+} from "../layout"
 import { WALL } from "../objects/dimensions"
 import { GlassFrameSurface, GlassSurface, getGlassRunParts } from "../objects/GlassWall"
 import { DEFAULT_COLOR } from "../palette"
 import { type SceneObject } from "../types"
 import { CUT_DIRECTION, CutawayContext, setCutAttributes } from "./cutaway"
 
-interface Run {
+export interface Run {
   key: string
   direction: EdgeDirection
   /** The rotation its pieces are built with (see EDGE_ROTATION). */
   rotation: number
+  /** Its front face's colour (its +Z side, built at `rotation`)… */
   color: string
+  /** …and its back's (the same, unless one face is painted apart). */
+  back: string
   /** Its middle. */
   x: number
   z: number
@@ -46,11 +56,18 @@ const lineOf = (w: SceneObject) => {
  * Merge wall segments into maximal straight runs of the same direction and
  * colour, so a run renders as ONE continuous mesh (no per-segment seams).
  */
-const buildRuns = (walls: SceneObject[], defaultColor: string): Run[] => {
+export const buildRuns = (walls: SceneObject[], defaultColor: string): Run[] => {
+  // Faces seen the run's way round (a segment may be built turned about).
+  const facesOf = (w: SceneObject) => {
+    const [front, back] = getWallFacesFrom(w, {
+      rotation: EDGE_ROTATION[edgeDirection(w.rotation)],
+    })
+    return [front ?? defaultColor, back ?? defaultColor] as const
+  }
   const groups = new Map<string, SceneObject[]>()
   for (const w of walls) {
-    const color = w.color ?? defaultColor
-    const gk = `${edgeDirection(w.rotation)}|${lineOf(w).line}|${color}`
+    const [front, back] = facesOf(w)
+    const gk = `${edgeDirection(w.rotation)}|${lineOf(w).line}|${front}|${back}`
     const arr = groups.get(gk)
     if (arr) arr.push(w)
     else groups.set(gk, [w])
@@ -59,7 +76,7 @@ const buildRuns = (walls: SceneObject[], defaultColor: string): Run[] => {
   const runs: Run[] = []
   for (const [gk, segs] of groups) {
     const direction = edgeDirection(segs[0].rotation)
-    const color = segs[0].color ?? defaultColor
+    const [color, back] = facesOf(segs[0])
     const along = (w: SceneObject) => lineOf(w).along
     segs.sort((a, b) => along(a) - along(b))
     const unit = edgeLength({ type: "wall", rotation: segs[0].rotation })
@@ -76,6 +93,7 @@ const buildRuns = (walls: SceneObject[], defaultColor: string): Run[] => {
           direction,
           rotation: EDGE_ROTATION[direction],
           color,
+          back,
           x: (first.x + last.x) / 2,
           z: (first.z + last.z) / 2,
           length: (i - start) * unit,
@@ -94,7 +112,8 @@ const buildRuns = (walls: SceneObject[], defaultColor: string): Run[] => {
  * Erase tools, which BuildController handles.
  */
 export const Walls = () => {
-  const objects = useEditorStore((s) => s.objects)
+  // Hovering with the Paint tool shows its colour on the walls themselves.
+  const objects = useObjectsWithPaintPreview()
 
   const walls = useMemo(() => objects.filter((o) => o.type === "wall"), [objects])
   const wallColor = useSurfaces().wall
@@ -128,10 +147,11 @@ export const Walls = () => {
  */
 const WallRuns = ({ runs }: { runs: Run[] }) => {
   const meshes = useMemo(() => {
-    const byColor = new Map<string, Run[]>()
-    for (const r of runs) byColor.set(r.color, [...(byColor.get(r.color) ?? []), r])
-    return [...byColor].map(([color, colorRuns]) => {
-      const parts = colorRuns.map(runGeometry)
+    const byColor = new Map<string, BufferGeometry[]>()
+    for (const r of runs)
+      for (const { color, geometry } of runGeometries(r))
+        byColor.set(color, [...(byColor.get(color) ?? []), geometry])
+    return [...byColor].map(([color, parts]) => {
       const geometry = mergeGeometries(parts, false)
       parts.forEach((p) => p.dispose())
       return { color, geometry }
@@ -152,15 +172,27 @@ const WallRuns = ({ runs }: { runs: Run[] }) => {
   )
 }
 
-/** One straight run as a box, along its axis, with its anchor for the cutaway. */
-const runGeometry = (r: Run) => {
-  // Sink the base slightly below the floor so there's no bright contact gap.
-  const box = new BoxGeometry(r.length, WALL.height + WALL.sink, WALL.depth)
-  box.translate(0, (WALL.height - WALL.sink) / 2, 0)
-  box.rotateY(r.rotation)
+/**
+ * One straight run as a box, along its axis, with its anchor for the cutaway —
+ * or, its faces painted apart, two half-thick slabs back to back.
+ */
+const runGeometries = (r: Run) => {
+  const slabs =
+    r.color === r.back
+      ? [{ color: r.color, depth: WALL.depth, offset: 0 }]
+      : [
+          { color: r.color, depth: WALL.depth / 2, offset: WALL.depth / 4 },
+          { color: r.back, depth: WALL.depth / 2, offset: -WALL.depth / 4 },
+        ]
   const anchor = new Vector3(r.x, 0, r.z)
-  box.translate(anchor.x, 0, anchor.z)
-  return setCutAttributes(box, anchor, CUT_DIRECTION[r.direction])
+  return slabs.map(({ color, depth, offset }) => {
+    // Sink the base slightly below the floor so there's no bright contact gap.
+    const box = new BoxGeometry(r.length, WALL.height + WALL.sink, depth)
+    box.translate(0, (WALL.height - WALL.sink) / 2, offset)
+    box.rotateY(r.rotation)
+    box.translate(anchor.x, 0, anchor.z)
+    return { color, geometry: setCutAttributes(box, anchor, CUT_DIRECTION[r.direction]) }
+  })
 }
 
 /**

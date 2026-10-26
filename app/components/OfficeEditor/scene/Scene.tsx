@@ -2,8 +2,14 @@ import { OrbitControls, OrthographicCamera } from "@react-three/drei"
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { useThree, type ThreeEvent } from "@react-three/fiber"
 import { MOUSE, Plane, Vector3 } from "three"
-import { useEditorStore, useEditorStoreApi } from "../store"
-import { composeRepeat, furnitureCollides, snapPlacement, wallMount } from "../layout"
+import { useEditorStore, useEditorStoreApi, useObjectsWithPaintPreview } from "../store"
+import {
+  composeRepeat,
+  composeWallColors,
+  furnitureCollides,
+  snapPlacement,
+  wallMount,
+} from "../layout"
 import { randomModelId } from "../models"
 import { daylight, DaylightContext } from "../daylight"
 import { SURFACES } from "../palette"
@@ -40,6 +46,7 @@ import { ContactBlobs } from "./ContactBlobs"
 import { WindowLight } from "./WindowLight"
 import { Halos } from "./Halos"
 import { GhostObject } from "./GhostObject"
+import { GhostWalls } from "./GhostWalls"
 import { Posts } from "./Posts"
 import { Walls } from "./Walls"
 import { BuildController } from "./BuildController"
@@ -133,6 +140,9 @@ const MENU_SLOP = 6
 
 export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
   const objects = useEditorStore((s) => s.objects)
+  // Doors and windows wear their wall line's paint (or the Paint tool's, hovered).
+  const paintedObjects = useObjectsWithPaintPreview()
+  const wallColors = useMemo(() => composeWallColors(paintedObjects), [paintedObjects])
   const selection = useEditorStore((s) => s.selection)
   const tool = useEditorStore((s) => s.tool)
   const placementRotation = useEditorStore((s) => s.placementRotation)
@@ -517,6 +527,12 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
   }
 
   const carried = dragId ? objects.find((o) => o.id === dragId) : undefined
+  const refusedTurn = useEditorStore((s) => s.refusedTurn)
+  const pendingTurnId = useEditorStore((s) => s.pendingTurn?.id)
+  const turnedInto =
+    pendingTurnId && pendingTurnId !== dragId
+      ? objects.find((o) => o.id === pendingTurnId)
+      : undefined
   // Canvas cursor between camera gestures: the tool's, a closed hand while
   // carrying a piece, the plain arrow in display mode.
   const cursor = readOnly
@@ -615,18 +631,30 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
             {layers.zones && <ZoneFloor isEditing={!readOnly} isDark={dark} />}
             {/* Editing: each room's area and desks. */}
             {!readOnly && layers.roomSizes && <RoomLabels />}
+            {/* A saved room about to be placed: its walls merged, as they'll stand. */}
+            {!readOnly && kitPlan && (
+              <GhostWalls
+                edges={kitPlan.flatMap((o) =>
+                  o.type === "wall" || o.type === "glassWall"
+                    ? [{ ...o, type: o.type, tint: doesKitFit ? undefined : "#ef4444" }]
+                    : []
+                )}
+              />
+            )}
             {!readOnly &&
-              kitPlan?.map((o, i) => (
-                <GhostObject
-                  key={i}
-                  type={o.type}
-                  x={o.x}
-                  z={o.z}
-                  rotation={o.rotation}
-                  color={o.color}
-                  tint={doesKitFit ? undefined : "#ef4444"}
-                />
-              ))}
+              kitPlan
+                ?.filter((o) => o.type !== "wall" && o.type !== "glassWall")
+                .map((o, i) => (
+                  <GhostObject
+                    key={i}
+                    type={o.type}
+                    x={o.x}
+                    z={o.z}
+                    rotation={o.rotation}
+                    color={o.color}
+                    tint={doesKitFit ? undefined : "#ef4444"}
+                  />
+                ))}
             {/* Soft shadows grounding each piece on the floor. */}
             <ContactBlobs />
             {/* Sunlight through the windows, and glows on screens and lamps. */}
@@ -644,7 +672,13 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
                     obj={obj}
                     selected={!readOnly && selection.includes(obj.id)}
                     carried={!readOnly && obj.id === dragId}
-                    blockedAt={obj.id === dragId ? blockedAt : 0}
+                    blockedAt={
+                      obj.id === dragId
+                        ? blockedAt
+                        : obj.id === refusedTurn?.id
+                          ? refusedTurn.at
+                          : 0
+                    }
                     tool={tool}
                     interactive={!readOnly}
                     onSelect={select}
@@ -655,6 +689,8 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
                     onMenuPress={readOnly ? undefined : onMenuPress}
                     onSeatClick={readOnly ? openSeatCard : undefined}
                     occupied={isSeatable(obj.type) ? occupied?.get(obj.id) : undefined}
+                    wallFront={wallColors.openings.get(obj.id)?.[0]}
+                    wallBack={wallColors.openings.get(obj.id)?.[1]}
                   />
                 ))}
             </StaticBatch>
@@ -766,6 +802,17 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
                     z={carried.z}
                     rotation={carried.rotation}
                     ignoreId={carried.id}
+                  />
+                )}
+                {/* Turned in place into others: red until it's turned free (or
+                    let go, when it springs back). */}
+                {turnedInto && (
+                  <PlacementHighlight
+                    type={turnedInto.type}
+                    x={turnedInto.x}
+                    z={turnedInto.z}
+                    rotation={turnedInto.rotation}
+                    valid={false}
                   />
                 )}
                 {carried && (

@@ -204,8 +204,8 @@ export const cs: Messages = {
   Colour: "Barva",
   "Colour — pick an item": "Barva — vyberte předmět",
   Default: "Výchozí",
-  "Click a wall to paint its whole line (⇧ for one segment), or a room's floor.":
-    "Klikněte na zeď a obarvíte celou její linii (⇧ jen jeden úsek), nebo na podlahu místnosti.",
+  "Click a wall to paint it (⇧ for the inside of the whole room), or a room's floor.":
+    "Klikněte na zeď a obarvíte ji (⇧ celou místnost zevnitř), nebo na podlahu místnosti.",
   Walls: "Stěny",
   Floors: "Podlahy",
   "Reset to default": "Obnovit výchozí",
@@ -253,7 +253,7 @@ export const cs: Messages = {
   "Undo / redo": "Zpět / znovu",
   "Fit to office": "Zobrazit celou kancelář",
   "⇧ Paint": "⇧ malovat",
-  "Paint one wall segment": "Obarvit jeden úsek zdi",
+  "Paint the inside of the whole room": "Obarvit celou místnost zevnitř",
   "⇧ Click / drag box": "⇧ klik / tažení rámečku",
   "Multi-select": "Vybrat víc",
   "Nudge selection": "Posunout výběr",

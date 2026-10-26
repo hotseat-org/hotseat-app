@@ -60,6 +60,8 @@ export const sceneObjectSchema = z.object({
   z: z.number(),
   rotation: z.number(),
   color: z.string().optional(),
+  colorFront: z.string().optional(),
+  colorBack: z.string().optional(),
   model: z.string().optional(),
   label: z.string().max(24).optional(),
   assignee: z.string().optional(),

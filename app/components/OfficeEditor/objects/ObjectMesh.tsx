@@ -49,6 +49,9 @@ import { Divider } from "./Divider"
 
 interface MeshProps {
   color?: string
+  /** Doors and windows: the paint of the wall they're cut into, each face. */
+  wallFront?: string
+  wallBack?: string
   model?: string
   /** Which look to show (see `variantOf`); undefined = the first. */
   variant?: number

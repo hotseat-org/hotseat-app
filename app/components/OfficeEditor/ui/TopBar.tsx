@@ -27,7 +27,7 @@ const SHORTCUTS: [string, string][] = [
   ["Esc", msg("Deselect")],
   ["⌘Z / ⇧⌘Z", msg("Undo / redo")],
   ["F", msg("Fit to office")],
-  [msg("⇧ Paint"), msg("Paint one wall segment")],
+  [msg("⇧ Paint"), msg("Paint the inside of the whole room")],
   [msg("⇧ Click / drag box"), msg("Multi-select")],
   ["← ↑ → ↓", msg("Nudge selection")],
   ["⌘C / ⌘V / ⌘D", msg("Copy / paste / duplicate")],

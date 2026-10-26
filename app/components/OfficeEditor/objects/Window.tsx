@@ -5,6 +5,9 @@ import { WALL, FLUSH_INSET } from "./dimensions"
 interface Props {
   /** Frame colour. */
   color?: string
+  /** The wall below and above it: its paint, each face (undefined = themed). */
+  wallFront?: string
+  wallBack?: string
 }
 
 /** Window opening, in wall-local heights (the wall is WALL.height = 1.4 tall). */
@@ -19,22 +22,28 @@ const FRAME_D = WALL.depth + 0.03
  * head (themed like the walls), a painted frame with a centre mullion, and
  * glass. The glass casts NO shadow, so sunlight falls through onto the floor.
  */
-export const Window = ({ color = "#f4efe6" }: Props) => {
-  const wall = useSurfaces().wall
+export const Window = ({ color = "#f4efe6", wallFront, wallBack }: Props) => {
+  const themed = useSurfaces().wall
+  const front = wallFront ?? themed
+  const back = wallBack ?? themed
   const glassH = HEAD - SILL
   return (
     <group>
       {/* Wall below the sill (sunk like the walls, no contact gap); its top
           stays under the sill ledge's, not level with it (FLUSH_INSET) */}
-      <mesh position={[0, (SILL - FLUSH_INSET - WALL.sink) / 2, 0]} castShadow receiveShadow>
-        <boxGeometry args={[W, SILL - FLUSH_INSET + WALL.sink, WALL.depth]} />
-        <Surface color={wall} roughness={0.85} />
-      </mesh>
+      <WallPiece
+        y={(SILL - FLUSH_INSET - WALL.sink) / 2}
+        height={SILL - FLUSH_INSET + WALL.sink}
+        front={front}
+        back={back}
+      />
       {/* Wall above the head */}
-      <mesh position={[0, (HEAD + WALL.height) / 2, 0]} castShadow receiveShadow>
-        <boxGeometry args={[W, WALL.height - HEAD, WALL.depth]} />
-        <Surface color={wall} roughness={0.85} />
-      </mesh>
+      <WallPiece
+        y={(HEAD + WALL.height) / 2}
+        height={WALL.height - HEAD}
+        front={front}
+        back={back}
+      />
 
       {/* Frame: sill, head, two jambs and a centre mullion */}
       {[SILL + FRAME / 2, HEAD - FRAME / 2].map((y) => (
@@ -65,3 +74,36 @@ export const Window = ({ color = "#f4efe6" }: Props) => {
     </group>
   )
 }
+
+/** A band of wall round the window: one piece, or two back to back when its faces differ. */
+const WallPiece = ({
+  y,
+  height,
+  front,
+  back,
+}: {
+  y: number
+  height: number
+  front: string
+  back: string
+}) =>
+  front === back ? (
+    <mesh position={[0, y, 0]} castShadow receiveShadow>
+      <boxGeometry args={[W, height, WALL.depth]} />
+      <Surface color={front} roughness={0.85} />
+    </mesh>
+  ) : (
+    <>
+      {(
+        [
+          [front, 1],
+          [back, -1],
+        ] as const
+      ).map(([color, side]) => (
+        <mesh key={side} position={[0, y, (side * WALL.depth) / 4]} castShadow receiveShadow>
+          <boxGeometry args={[W, height, WALL.depth / 2]} />
+          <Surface color={color} roughness={0.85} />
+        </mesh>
+      ))}
+    </>
+  )
