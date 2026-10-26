@@ -23,6 +23,7 @@ import {
   unitEdges,
   ROTATION_STEP,
   type PlacementPattern,
+  getOpeningPaint,
   paintWallFaces,
   type WallPaint,
 } from "./layout"
@@ -41,6 +42,7 @@ import {
   type SceneObject,
   type Tool,
   type WallCell,
+  isRecolorable,
 } from "./types"
 import { findDeskChair, toWorld } from "./seatSpot"
 import type { Kit } from "./kits"
@@ -901,7 +903,7 @@ const makeInitializer =
         set({
           objects: [
             ...s.objects.filter((obj) => !plan.remove.includes(obj.id)),
-            { ...plan.add[0], id: o.id, color: o.color },
+            { ...plan.add[0], id: o.id, color: o.color, ...getOpeningPaint(o) },
           ],
           selectedId: o.id,
         })
@@ -984,7 +986,9 @@ const makeInitializer =
 
       setColor: (id, color) =>
         set((s) => ({
-          objects: s.objects.map((o) => (o.id === id ? { ...o, color } : o)),
+          objects: s.objects.map((o) =>
+            o.id === id && isRecolorable(o.type) ? { ...o, color } : o
+          ),
         })),
 
       toggleSelect: (id) => {
@@ -1015,7 +1019,11 @@ const makeInitializer =
       },
       colorSelection: (color) => {
         const ids = new Set(get().selection)
-        set((s) => ({ objects: s.objects.map((o) => (ids.has(o.id) ? { ...o, color } : o)) }))
+        set((s) => ({
+          objects: s.objects.map((o) =>
+            ids.has(o.id) && isRecolorable(o.type) ? { ...o, color } : o
+          ),
+        }))
       },
       nudgeSelection: (dx, dz) => {
         const group = selectedFurniture()

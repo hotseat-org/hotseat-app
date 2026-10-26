@@ -2,7 +2,14 @@ import { useFrame, useThree } from "@react-three/fiber"
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { Object3D, Plane, Vector3, type InstancedMesh } from "three"
 import { useEditorStore, useEditorStoreApi } from "../store"
-import { SEG, enclosedRegions, roomWalls, wallBetweenJoints, type WallPaint } from "../layout"
+import {
+  SEG,
+  composeFacesToward,
+  enclosedRegions,
+  roomWalls,
+  wallBetweenJoints,
+  type WallPaint,
+} from "../layout"
 import { isEdgeType, type Cell } from "../types"
 import { useSurfaces } from "../sceneTheme"
 import { intersectEdge } from "./wallHit"
@@ -15,7 +22,8 @@ type Target =
   | null
 
 /**
- * Paint tool. Points at a wall → that wall, corner to corner (Shift: the inside
+ * Paint tool. Points at a wall → the face you see of it, corner to corner, with
+ * its doors and windows (Shift: the inside
  * of the room on the side you look from — the faces of its walls facing in);
  * otherwise at a room's floor → that room. Previews the paint, click applies.
  */
@@ -82,11 +90,11 @@ export const PaintController = () => {
 
     let next: Target = null
     if (best) {
-      // A wall, corner to corner; Shift: the inside of the room on the side you
-      // look from.
+      // The face you look at of a wall, corner to corner; Shift: the inside of
+      // the room on the side you look from.
       const targets =
         (shift.current && roomWalls(all, regions, best.id, ray.origin)) ||
-        wallBetweenJoints(all, best.id).map((id) => ({ id }))
+        composeFacesToward(all, wallBetweenJoints(all, best.id), ray.origin)
       if (targets.length) next = { kind: "wall", targets }
     } else if (ray.intersectPlane(GROUND, hit)) {
       const region = regions.find((r) =>

@@ -311,7 +311,17 @@ export const openingPlan = (
     if (kind === "window" && glass) return null
     return {
       remove: [o.id],
-      add: [{ type: kind, x: o.x, z: o.z, rotation: o.rotation, model: o.model }],
+      add: [
+        {
+          type: kind,
+          x: o.x,
+          z: o.z,
+          rotation: o.rotation,
+          model: o.model,
+          // Swapped, it keeps its paint.
+          ...getOpeningPaint(o),
+        },
+      ],
     }
   }
   if (!isWall(o.type) || (kind === "window" && o.type === "glassWall")) return null
@@ -839,9 +849,8 @@ export const cellAt = (x: number, z: number): Cell => ({
 
 /**
  * Paint tool, a wall: the wall segments on the same straight line as `id`, up
- * to the corners or junctions where other walls meet it — through any doors and
- * windows on the way (they take the wall's paint, see composeWallColors), not
- * into glass. Returns the wall ids to recolour.
+ * to the corners or junctions where other walls meet it — with the windows on
+ * the way (through doors, not into glass). Returns their ids.
  */
 export const wallBetweenJoints = (objects: SceneObject[], id: string): string[] => {
   const o = objects.find((obj) => obj.id === id)
@@ -865,10 +874,25 @@ export const wallBetweenJoints = (objects: SceneObject[], id: string): string[] 
     for (let x = start.x, z = start.z; ; x += dir * sx, z += dir * sz) {
       const w = owner.get(`${x},${z}`)
       if (!w || isGlassEdge(w)) break
-      if (w.type === "wall") ids.add(w.id)
+      if (isPaintable(w)) ids.add(w.id)
       if (joints.has(`${x + (dir * sx) / 2},${z + (dir * sz) / 2}`)) break
     }
   return [...ids]
+}
+
+/** Paint tool, a wall: of each of these, the face looking toward `toward` (the camera). */
+export const composeFacesToward = (
+  objects: SceneObject[],
+  ids: string[],
+  toward: { x: number; z: number }
+): WallPaint[] => {
+  const byId = new Map(objects.map((o) => [o.id, o]))
+  return ids.flatMap((id) => {
+    const o = byId.get(id)
+    if (!o) return []
+    const side = Math.sin(o.rotation) * (toward.x - o.x) + Math.cos(o.rotation) * (toward.z - o.z)
+    return [{ id, face: side >= 0 ? "front" : "back" }]
+  })
 }
 
 /** Whether a floor point lies in a region's cells (a split square: its parts). */
@@ -892,7 +916,7 @@ const isInRegion = (cells: Map<string, FloorCell>, x: number, z: number) => {
 
 /**
  * Paint tool with Shift, a room's inside: the face looking into the room of
- * every wall segment round it — the room on the side of `id` that faces
+ * every wall segment and window round it — the room on the side of `id` that faces
  * `toward` (the camera), or its other side when that one isn't a room. A wall
  * standing inside the room gets both faces. Null when neither side is a room.
  */
@@ -920,7 +944,7 @@ export const roomWalls = (
     const room = regions.find((cells) => isInRegion(cells, at.x, at.z))
     if (!room) continue
     return objects.flatMap((w): WallPaint[] => {
-      if (w.type !== "wall") return []
+      if (!isPaintable(w)) return []
       const [isFrontIn, isBackIn] = [1, -1].map((side) => {
         const p = probe(w, side)
         return isInRegion(room, p.x, p.z)
@@ -940,11 +964,22 @@ const isGlassEdge = (o: SceneObject) => o.type === "glassWall" || o.model === GL
 /** A wall's two faces' paint: its front (its +Z side as built) and back. */
 export type WallFaces = [front: string | undefined, back: string | undefined]
 
-/** The paint on each face of a wall (undefined = the theme's wall colour). */
+/**
+ * What the Paint tool paints: walls, and the windows in them (face by face,
+ * like the wall). Doors keep their wooden frames.
+ */
+const isPaintable = (o: SceneObject) => o.type === "wall" || o.type === "window"
+
+/** Whether a window has paint of its own (else it takes its wall's). */
+const hasOwnPaint = (o: SceneObject) => o.colorFront !== undefined || o.colorBack !== undefined
+
+/**
+ * The paint on each face of a wall (undefined = the theme's wall colour). A
+ * window's own (its `color` is its frame's) — see
+ * composeWallColors for what it shows.
+ */
 export const getWallFaces = (o: SceneObject): WallFaces =>
-  o.colorFront !== undefined || o.colorBack !== undefined
-    ? [o.colorFront, o.colorBack]
-    : [o.color, o.color]
+  hasOwnPaint(o) || isOpening(o.type) ? [o.colorFront, o.colorBack] : [o.color, o.color]
 
 /** Faces as seen from a wall turned the other way round (front ⇄ back). */
 const flipFaces = ([front, back]: WallFaces): WallFaces => [back, front]
@@ -957,11 +992,23 @@ const isTurnedFrom = (a: SceneObject, b: { rotation: number }) =>
 export const getWallFacesFrom = (o: SceneObject, from: { rotation: number }): WallFaces =>
   isTurnedFrom(o, from) ? flipFaces(getWallFaces(o)) : getWallFaces(o)
 
-/** The fields that carry faces' paint, for these faces (none when themed). */
-export const composeFacePaint = ([front, back]: WallFaces): Partial<SceneObject> => {
-  const fields = front === back ? { color: front } : { colorFront: front, colorBack: back }
+/**
+ * The fields that carry faces' paint, for these faces (none when themed): a
+ * wall's one `color` when they match; a window's always per face
+ * (its `color` is its frame's or leaf's).
+ */
+export const composeFacePaint = (
+  [front, back]: WallFaces,
+  isOpeningPaint = false
+): Partial<SceneObject> => {
+  const fields =
+    front === back && !isOpeningPaint ? { color: front } : { colorFront: front, colorBack: back }
   return Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== undefined))
 }
+
+/** A window's own paint, to carry over when it's swapped (kept by a door between) or moved. */
+export const getOpeningPaint = (o: SceneObject) =>
+  composeFacePaint([o.colorFront, o.colorBack], true)
 
 /** What the Paint tool paints: a wall, or (`face`) one face of it. */
 export interface WallPaint {
@@ -977,17 +1024,25 @@ export const paintWallFaces = (
 ): SceneObject[] => {
   const faceOf = new Map(targets.map((t) => [t.id, t.face]))
   const paint = color ?? undefined
+  // A window shows its wall's paint until painted itself: one face
+  // painted keeps the other as it showed.
+  const shown = objects.some((o) => faceOf.has(o.id) && isOpening(o.type))
+    ? composeWallColors(objects).openings
+    : null
   return objects.map((o) => {
     if (!faceOf.has(o.id)) return o
-    const [front, back] = getWallFaces(o)
+    const isOpeningPaint = isOpening(o.type)
+    const [front, back] = (isOpeningPaint && shown?.get(o.id)) || getWallFaces(o)
     const face = faceOf.get(o.id)
     const faces: WallFaces =
       face === "front" ? [paint, back] : face === "back" ? [front, paint] : [paint, paint]
-    const paintFields = composeFacePaint(faces)
+    const paintFields = composeFacePaint(faces, isOpeningPaint)
     const repainted = { ...o, ...paintFields }
-    // Drop the paint fields the new faces don't use.
-    for (const key of ["color", "colorFront", "colorBack"] as const)
-      if (!(key in paintFields)) delete repainted[key]
+    // Drop the paint fields the new faces don't use (never a window's frame colour).
+    const keys = isOpeningPaint
+      ? (["colorFront", "colorBack"] as const)
+      : (["color", "colorFront", "colorBack"] as const)
+    for (const key of keys) if (!(key in paintFields)) delete repainted[key]
     return repainted
   })
 }
@@ -1003,7 +1058,7 @@ export type PostQuarters = [
 /**
  * The paint that the wall parts of openings and joints take from the walls
  * round them (undefined = the theme's wall colour):
- * - an opening (a window's sill and head, a door's frame) each face the
+ * - a window (its sill and head) each face the
  *   colour of the nearest walls' along its line, through other openings — a
  *   painted side wins; seen from the opening's way round;
  * - a joint post (a corner, a T), in quarters: each the colour most of the
@@ -1031,7 +1086,12 @@ export const composeWallColors = (objects: SceneObject[]) => {
         if (w.type === "wall") return [getWallFacesFrom(w, o)]
       }
     })
-    openings.set(o.id, [sides.find(([front]) => front)?.[0], sides.find(([, back]) => back)?.[1]])
+    openings.set(
+      o.id,
+      hasOwnPaint(o)
+        ? [o.colorFront, o.colorBack]
+        : [sides.find(([front]) => front)?.[0], sides.find(([, back]) => back)?.[1]]
+    )
   }
 
   /** Each quarter of each node: how many faces of each colour look into it. */
@@ -1067,14 +1127,24 @@ export const composeWallColors = (objects: SceneObject[]) => {
     [...tally].sort(([a, n], [b, m]) => m - n || (a ? 0 : 1) - (b ? 0 : 1))[0]?.[0]
   const joints = new Map<string, PostQuarters>()
   for (const [key, quarters] of counts) {
-    // A quarter no face looks into (behind a wall's end): the post's colour.
-    const all = new Map<string | undefined, number>()
-    for (const tally of quarters)
-      for (const [color, n] of tally) all.set(color, (all.get(color) ?? 0) + n)
-    const overall = winnerOf(all)
+    // A quarter no face looks into (an outer corner, behind both walls'
+    // ends): the colour of the two quarters beside it — the faces either side
+    // of the corner — then of the whole post.
+    const merge = (tallies: Map<string | undefined, number>[]) => {
+      const sum = new Map<string | undefined, number>()
+      for (const tally of tallies)
+        for (const [color, n] of tally) sum.set(color, (sum.get(color) ?? 0) + n)
+      return sum
+    }
+    const overall = winnerOf(merge(quarters))
     joints.set(
       key,
-      quarters.map((tally) => (tally.size ? winnerOf(tally) : overall)) as PostQuarters
+      quarters.map((tally, q) => {
+        if (tally.size) return winnerOf(tally)
+        // Beside it: across x (q ^ 1) and across z (q ^ 2).
+        const beside = merge([quarters[q ^ 1], quarters[q ^ 2]])
+        return beside.size ? winnerOf(beside) : overall
+      }) as PostQuarters
     )
   }
   return { openings, joints }

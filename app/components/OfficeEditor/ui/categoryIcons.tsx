@@ -31,7 +31,7 @@ const Structure = ({ className }: IconProps) => (
     </g>
     {/* Door in its frame */}
     <rect x="12" y="11" width="16" height="24" rx="2" fill={PALETTE.doorFrame} />
-    <rect x="14" y="13" width="12" height="22" rx="1.2" fill={PALETTE.door} />
+    <rect x="14" y="13" width="12" height="22" rx="1.2" fill={PALETTE.doorLeaf} />
     <rect x="16" y="15.5" width="8" height="7" rx="1" fill={PALETTE.pot} />
     <rect x="16" y="24.5" width="8" height="7.5" rx="1" fill={PALETTE.pot} />
     <circle cx="24" cy="24" r="1.2" fill={PALETTE.doorHandle} />

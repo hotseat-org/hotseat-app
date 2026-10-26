@@ -230,6 +230,9 @@ export const isEdgeType = (type: ObjectType) =>
 export type WallType = "wall" | "glassWall"
 export const isWall = (type?: Tool): type is WallType => type === "wall" || type === "glassWall"
 
+/** Whether a piece takes a colour of its own: all but doors, which are always wood. */
+export const isRecolorable = (type: Tool) => type !== "door"
+
 /** Openings cut into a wall: 1 unit wide (two wall half-segments). */
 export type OpeningType = "door" | "glassDoor" | "window"
 export const isOpening = (type?: Tool): type is OpeningType =>

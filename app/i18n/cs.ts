@@ -203,6 +203,7 @@ export const cs: Messages = {
   Paint: "Malovat",
   Colour: "Barva",
   "Colour — pick an item": "Barva — vyberte předmět",
+  "Colour — doors are wood": "Barva — dveře jsou dřevěné",
   Default: "Výchozí",
   "Click a wall to paint it (⇧ for the inside of the whole room), or a room's floor.":
     "Klikněte na zeď a obarvíte ji (⇧ celou místnost zevnitř), nebo na podlahu místnosti.",

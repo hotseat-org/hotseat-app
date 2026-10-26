@@ -13,6 +13,7 @@ import {
   type LucideIcon,
 } from "lucide-react"
 import { useEditorStore } from "../store"
+import { isRecolorable } from "../types"
 import { DEFAULT_COLOR, FLOOR_SWATCHES, SWATCHES } from "../palette"
 import type { PlacementPattern } from "../layout"
 import {
@@ -83,7 +84,9 @@ export const Catalog = () => {
   // The armed asset, if it's in the open category (drives the colour picker).
   const armed = category && isCatalogItem(tool) && category.types.includes(tool) ? tool : null
   // The colour chosen for the armed type (null = its default); Room → walls'.
-  const colorType = armed ? colorKey(armed) : null
+  // Doors have none: always wood.
+  const canColor = !!armed && isRecolorable(armed)
+  const colorType = armed && canColor ? colorKey(armed) : null
   const activeColor = colorType ? (placementColors[colorType] ?? null) : null
 
   const toggleCategory = (id: string) => {
@@ -274,12 +277,16 @@ export const Catalog = () => {
           <div
             className={clsx(
               "mt-3 shrink-0 border-t border-separator pt-2.5 transition-opacity",
-              !armed && "pointer-events-none opacity-40"
+              !canColor && "pointer-events-none opacity-40"
             )}
-            aria-disabled={!armed}
+            aria-disabled={!canColor}
           >
             <div className="mb-1.5 px-1 text-[11px] font-medium text-muted">
-              {armed ? t("Colour") : t("Colour — pick an item")}
+              {canColor
+                ? t("Colour")
+                : armed
+                  ? t("Colour — doors are wood")
+                  : t("Colour — pick an item")}
             </div>
             <div className="flex flex-wrap gap-1.5 px-1">
               <Swatch

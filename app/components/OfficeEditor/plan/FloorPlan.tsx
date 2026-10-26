@@ -21,6 +21,7 @@ import {
   composeWallColors,
   edgeDirection,
   getWallFacesFrom,
+  wallJointNodes,
   edgeNodes,
   enclosedRegions,
   footprintCells,
@@ -30,7 +31,7 @@ import {
   toRotationStep,
   type FloorCell,
 } from "../layout"
-import { SURFACES, type SurfacePalette } from "../palette"
+import { PALETTE, SURFACES, type SurfacePalette } from "../palette"
 import { tilesCovering, useLandscape } from "../contours"
 import { personByEmail, usePeople, type Person } from "../people"
 import { SeatAvatar } from "../SeatAvatar"
@@ -1044,7 +1045,7 @@ const buildScene = ({
     from: number,
     to: number,
     [front, back]: [string, string],
-    options: { opacity?: number; across?: number } = {}
+    options: { opacity?: number; across?: number; extend?: number } = {}
   ) => {
     if (front === back) return wallPiece(alongX, fixed, from, to, front, options)
     const half = (options.across ?? t) / 2
@@ -1057,7 +1058,7 @@ const buildScene = ({
     b: Cell,
     rotation: number,
     [front, back]: [string, string],
-    options: { opacity?: number; across?: number } = {}
+    options: { opacity?: number; across?: number; extend?: number } = {}
   ) => {
     if (front === back) return diagonalWallPiece(a, b, front, options)
     const half = (options.across ?? t) / 2
@@ -1151,10 +1152,25 @@ const buildScene = ({
     flush()
   }
 
+  // Corners and junctions: each quarter in the paint of the wall faces looking
+  // into it (as the 3D posts) — over the runs' ends, which overlap there.
+  const wallColors = composeWallColors(objects)
+  for (const n of wallJointNodes(objects)) {
+    const quarters = wallColors.joints.get(`${n.x},${n.z}`)
+    if (!quarters || new Set(quarters).size === 1) continue
+    quarters.forEach((color, q) => {
+      const x0 = q % 2 ? n.x : n.x - t
+      const z0 = q < 2 ? n.z - t : n.z
+      push(
+        { x0, x1: x0 + t, z0, z1: z0 + t, y0: 0, y1: WALL.height },
+        <rect x={x0} y={z0} width={t} height={t} fill={color ?? wall} />
+      )
+    })
+  }
+
   // Windows: the wall with a pane of glass along its middle. Doors: the gap
   // between two jambs, the leaf standing open and its swing — a plan's door.
-  // Both in the paint of the wall they're cut into.
-  const wallColors = composeWallColors(objects)
+  // A window in its wall's paint (or its own); a door in its wooden frame.
   /** An opening's wall faces, its own way round (themed where unpainted). */
   const facesOf = (o: SceneObject): [string, string] => {
     const [front, back] = wallColors.openings.get(o.id) ?? [undefined, undefined]
@@ -1163,11 +1179,12 @@ const buildScene = ({
   /** Built turned about from its line's way (the faces swap). */
   const isTurnedFromLine = (o: SceneObject) =>
     Math.cos(o.rotation - EDGE_ROTATION[edgeDirection(o.rotation)]) < 0
-  /** A door's frame: its wall's paint — the theme's when the faces differ. */
-  const frameOf = (o: SceneObject) => {
+  /** An opening's faces, its line's way round (see facedWallPiece). */
+  const lineFacesOf = (o: SceneObject): [string, string] => {
     const [front, back] = facesOf(o)
-    return front === back ? front : wall
+    return isTurnedFromLine(o) ? [back, front] : [front, back]
   }
+
   for (const o of objects) {
     if (o.type !== "window" && o.type !== "door" && o.type !== "glassDoor") continue
     const [a, b] = edgeNodes(o)
@@ -1183,7 +1200,8 @@ const buildScene = ({
       const span = Math.hypot(b.x - a.x, b.z - a.z)
       const along = { x: (b.x - a.x) / span, z: (b.z - a.z) / span }
       const lerp = (d: number) => ({ x: a.x + along.x * d, z: a.z + along.z * d })
-      const frame = o.type === "glassDoor" ? "#5b6577" : frameOf(o)
+      // A glass door's slim metal frame; a door's wooden one.
+      const frame = o.type === "glassDoor" ? "#5b6577" : PALETTE.doorFrame
       diagonalWallPiece(a, lerp(post), frame, { extend: 0 })
       diagonalWallPiece(lerp(span - post), b, frame, { extend: 0 })
       // Hinged at the first jamb, the leaf opens to the door's front (its +Z);
@@ -1194,7 +1212,7 @@ const buildScene = ({
       const shut = lerp(post + len)
       const open = { x: hinge.x + front.x * len, z: hinge.z + front.z * len }
       const sweep = along.x * front.z - along.z * front.x > 0 ? 1 : 0
-      const leafColor = o.type === "glassDoor" ? WINDOW_GLASS : (o.color ?? "#d98a63")
+      const leafColor = o.type === "glassDoor" ? WINDOW_GLASS : PALETTE.doorLeaf
       push(
         { x0: hinge.x, x1: hinge.x, z0: hinge.z, z1: hinge.z, y0: 0, y1: 0.02 },
         <g>
@@ -1224,14 +1242,12 @@ const buildScene = ({
       ? [Math.min(a.x, b.x), Math.max(a.x, b.x)]
       : [Math.min(a.z, b.z), Math.max(a.z, b.z)]
     if (o.type === "window") {
-      // Faces seen the line's way round: its +Z (along X) or +X (along Z) first.
-      const [front, back] = facesOf(o)
-      facedWallPiece(alongX, fixed, from, to, isTurnedFromLine(o) ? [back, front] : [front, back])
+      facedWallPiece(alongX, fixed, from, to, lineFacesOf(o))
       wallPiece(alongX, fixed, from, to, WINDOW_GLASS, { extend: -0.06, across: t * 0.35 })
       continue
     }
     const post = 0.1
-    const frame = o.type === "glassDoor" ? "#5b6577" : frameOf(o)
+    const frame = o.type === "glassDoor" ? "#5b6577" : PALETTE.doorFrame
     wallPiece(alongX, fixed, from, from + post, frame, { extend: 0 })
     wallPiece(alongX, fixed, to - post, to, frame, { extend: 0 })
     // The leaf opens to the door's front (its +Z), hinged at the `from` jamb.
@@ -1244,7 +1260,7 @@ const buildScene = ({
     const [hx, hz] = at(hinge, fixed)
     const [ox, oz] = at(hinge + len, fixed)
     const [lx, lz] = at(hinge, fixed + side * len)
-    const leafColor = o.type === "glassDoor" ? WINDOW_GLASS : (o.color ?? "#d98a63")
+    const leafColor = o.type === "glassDoor" ? WINDOW_GLASS : PALETTE.doorLeaf
     push(
       { x0: hx, x1: hx, z0: hz, z1: hz, y0: 0, y1: 0.02 },
       <g>

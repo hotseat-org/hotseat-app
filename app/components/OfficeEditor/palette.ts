@@ -8,7 +8,9 @@ export const PALETTE = {
   wall: "#efe7db",
   wallTrim: "#e2d6c4",
   door: "#d98a63",
-  doorFrame: "#efe7db",
+  /** Doors are wood, never painted: a warm leaf in a darker frame (the desk legs' wood). */
+  doorLeaf: "#b8865a",
+  doorFrame: "#8f6a4a",
   doorHandle: "#e8c07a",
   deskTop: "#c9946a",
   deskLeg: "#8f6a4a",
@@ -30,7 +32,7 @@ export const ACCENT = "#3fd0ff"
 /** Primary (recolourable) colour per type. */
 export const DEFAULT_COLOR: Record<ObjectType, string> = {
   wall: PALETTE.wall,
-  door: PALETTE.door,
+  door: PALETTE.doorLeaf,
   window: "#f4efe6",
   glassWall: "#5b6577",
   glassDoor: "#5b6577",

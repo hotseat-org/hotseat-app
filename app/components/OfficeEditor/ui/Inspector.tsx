@@ -8,6 +8,7 @@ import {
   DESK_FEATURES,
   hasLooks,
   isEdgeType,
+  isRecolorable,
   isRetiredDesk,
   isSeatable,
   isWallMounted,
@@ -48,6 +49,14 @@ export const Inspector = () => {
     })
   )
 
+  // Doors are always wood: no colour to pick while one is selected.
+  const canColor = useEditorStore((s) =>
+    s.selection.every((id) => {
+      const o = s.objects.find((x) => x.id === id)
+      return !!o && isRecolorable(o.type)
+    })
+  )
+
   if (!selectedId || !obj) return null
 
   const current = obj.color ?? DEFAULT_COLOR[obj.type]
@@ -67,21 +76,25 @@ export const Inspector = () => {
         <CloseButton aria-label={t("Deselect")} onPress={() => select(null)} />
       </div>
 
-      <p className="mb-1 text-xs font-medium text-muted">{t("Colour")}</p>
-      <ColorSwatchPicker
-        aria-label={t("Colour")}
-        value={current}
-        onChange={(c) => colorSelection(c.toString("hex").toLowerCase())}
-        className="mb-4 grid grid-cols-5 justify-items-center gap-1.5"
-      >
-        {SWATCHES.map((c) => (
-          // Size the item (its 2px ring included); the swatch fills it.
-          <ColorSwatchPicker.Item key={c} color={c} className="size-9 rounded-xl">
-            <ColorSwatchPicker.Swatch />
-            <ColorSwatchPicker.Indicator />
-          </ColorSwatchPicker.Item>
-        ))}
-      </ColorSwatchPicker>
+      {canColor && (
+        <>
+          <p className="mb-1 text-xs font-medium text-muted">{t("Colour")}</p>
+          <ColorSwatchPicker
+            aria-label={t("Colour")}
+            value={current}
+            onChange={(c) => colorSelection(c.toString("hex").toLowerCase())}
+            className="mb-4 grid grid-cols-5 justify-items-center gap-1.5"
+          >
+            {SWATCHES.map((c) => (
+              // Size the item (its 2px ring included); the swatch fills it.
+              <ColorSwatchPicker.Item key={c} color={c} className="size-9 rounded-xl">
+                <ColorSwatchPicker.Swatch />
+                <ColorSwatchPicker.Indicator />
+              </ColorSwatchPicker.Item>
+            ))}
+          </ColorSwatchPicker>
+        </>
+      )}
 
       {count === 1 && isRetiredDesk(obj.type) && <RetiredDeskNote id={obj.id} type={obj.type} />}
       <ZoneSection />
