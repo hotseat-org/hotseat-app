@@ -1068,5 +1068,4 @@ export const cs: Messages = {
   Fit: "Celá",
   Simple: "Jednoduché",
   "3D": "3D",
-  Search: "Hledat",
 }

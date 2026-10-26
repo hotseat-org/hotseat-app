@@ -75,6 +75,7 @@ interface Props {
   is3d?: boolean
   /** How it sits: in the map controls (desktop) or the phone's dock. */
   variant?: "stack" | "compact"
+  onOpenChange?: (isOpen: boolean) => void
 }
 
 /**
@@ -83,7 +84,12 @@ interface Props {
  * — only a zone's, only standing desks… The button counts what's changed:
  * layers hidden plus filters on.
  */
-export const MapMenu = ({ isEditing = false, is3d: is3dProp, variant = "stack" }: Props) => {
+export const MapMenu = ({
+  isEditing = false,
+  is3d: is3dProp,
+  variant = "stack",
+  onOpenChange,
+}: Props) => {
   const { t, tn } = useI18n()
   const view = useEditorStore((s) => s.view)
   const is3d = is3dProp ?? (isEditing || (hasWebGL() && view === "3d"))
@@ -117,7 +123,7 @@ export const MapMenu = ({ isEditing = false, is3d: is3dProp, variant = "stack" }
   const label = changedCount ? tn(changedCount, "Map ({n} change)", "Map ({n} changes)") : t("Map")
 
   return (
-    <Popover>
+    <Popover onOpenChange={onOpenChange}>
       <Button
         isIconOnly={variant === "compact"}
         variant="ghost"

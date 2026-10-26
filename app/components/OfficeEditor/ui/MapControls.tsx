@@ -1,6 +1,6 @@
 import { Tooltip } from "@heroui/react"
 import { Box, Feather, Focus, RotateCcw, RotateCw } from "lucide-react"
-import type { ReactNode } from "react"
+import { useState, type ReactNode } from "react"
 import { useEditorStore } from "../store"
 import { hasWebGL } from "../webgl"
 import { MapMenu } from "./MapMenu"
@@ -19,11 +19,17 @@ export const MapControls = ({ isEditing = false }: { isEditing?: boolean }) => {
   const setView = useEditorStore((s) => s.setView)
   const turnPlan = useEditorStore((s) => s.turnPlan)
   const webgl = hasWebGL()
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
   // Editing is always 3D; without WebGL, viewing is the simple view.
   const is3d = isEditing || (webgl && view === "3d")
 
   return (
-    <div className="group/bar pointer-events-auto absolute bottom-4 left-4 flex flex-col items-stretch gap-0.5 rounded-2xl border border-border bg-overlay/90 p-1 text-foreground shadow-overlay backdrop-blur-md">
+    // Stays open while its Map menu is: the menu hangs off it, and mustn't
+    // slide as the bar folds up under it.
+    <div
+      data-open={isMenuOpen || undefined}
+      className="group/bar pointer-events-auto flex flex-col items-stretch gap-0.5 rounded-2xl border border-border bg-overlay/90 p-1 text-foreground shadow-overlay backdrop-blur-md"
+    >
       <ControlButton label={t("Fit")} title={t("Fit to office (F)")} onPress={requestFit}>
         <Focus className="size-[18px]" />
       </ControlButton>
@@ -51,7 +57,7 @@ export const MapControls = ({ isEditing = false }: { isEditing?: boolean }) => {
         </div>
       )}
       <span className="mx-1.5 my-0.5 h-px bg-separator" aria-hidden />
-      <MapMenu isEditing={isEditing} is3d={is3d} />
+      <MapMenu isEditing={isEditing} is3d={is3d} onOpenChange={setIsMenuOpen} />
     </div>
   )
 }

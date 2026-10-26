@@ -601,34 +601,41 @@ const OfficeEditorInner = ({
           </div>
         )}
 
-        {/* The map's controls (fit, view, Map menu), bottom-left — the phone
-            shell has its own. Beside them, the frame-rate readout when on. */}
-        {!isEmpty && !(shellMode && isMobile) && <MapControls isEditing={!readOnly} />}
-        {!isEmpty && !flat && isFrameRateShown && stats && (
-          <div className="pointer-events-none absolute bottom-4 left-[4.5rem] rounded-xl border border-border bg-overlay/95 px-3 py-2 font-mono text-sm text-foreground shadow-overlay backdrop-blur-md">
-            <span className="tabular-nums">
-              <span
-                className={
-                  stats.fps >= 55
-                    ? "text-success"
-                    : stats.fps >= 30
-                      ? "text-warning"
-                      : "text-danger"
-                }
-              >
-                {stats.fps.toFixed(0)}
-              </span>{" "}
-              FPS
-              <span className="ml-2 text-muted">{stats.ms.toFixed(1)} ms</span>
-              {/* One per line: a narrow column stays clear of the centred bottom bar. */}
-              <span className="block text-xs leading-5 text-muted">
-                <span className="block">{t("CPU {ms} ms", { ms: stats.cpuMs.toFixed(1) })}</span>
-                <span className="block">
-                  {tn(stats.drawCalls, "{n} draw call", "{n} draw calls")}
+        {/* Bottom-left, one column: the frame-rate readout (when on) above the
+            map's controls (fit, view, Map menu) — so the controls, widening on
+            hover, never cover it. The phone shell has its own controls. */}
+        {!isEmpty && (
+          <div className="pointer-events-none absolute bottom-4 left-4 flex flex-col items-start gap-2">
+            {!flat && isFrameRateShown && stats && (
+              <div className="rounded-xl border border-border bg-overlay/95 px-3 py-2 font-mono text-sm text-foreground shadow-overlay backdrop-blur-md">
+                <span className="tabular-nums">
+                  <span
+                    className={
+                      stats.fps >= 55
+                        ? "text-success"
+                        : stats.fps >= 30
+                          ? "text-warning"
+                          : "text-danger"
+                    }
+                  >
+                    {stats.fps.toFixed(0)}
+                  </span>{" "}
+                  FPS
+                  <span className="ml-2 text-muted">{stats.ms.toFixed(1)} ms</span>
+                  {/* One per line: a narrow column stays clear of the centred bottom bar. */}
+                  <span className="block text-xs leading-5 text-muted">
+                    <span className="block">
+                      {t("CPU {ms} ms", { ms: stats.cpuMs.toFixed(1) })}
+                    </span>
+                    <span className="block">
+                      {tn(stats.drawCalls, "{n} draw call", "{n} draw calls")}
+                    </span>
+                    <span className="block">{tn(stats.objects, "{n} object", "{n} objects")}</span>
+                  </span>
                 </span>
-                <span className="block">{tn(stats.objects, "{n} object", "{n} objects")}</span>
-              </span>
-            </span>
+              </div>
+            )}
+            {!(shellMode && isMobile) && <MapControls isEditing={!readOnly} />}
           </div>
         )}
 

@@ -12,7 +12,6 @@ import {
 } from "lucide-react"
 import { useEditorStore } from "../store"
 import { isMarker } from "../types"
-import { REVEAL_LABEL } from "./revealLabel"
 import { useI18n } from "~/i18n/I18nProvider"
 import { msg } from "~/i18n/msg"
 
@@ -93,41 +92,39 @@ export const TopBar = ({ dbMode, saving, saveFailed, onRetrySave }: Props) => {
         </div>
       </div>
 
-      <div className="group/bar pointer-events-auto absolute right-4 top-4 flex items-center gap-2">
+      <div className="pointer-events-auto absolute right-4 top-4 flex items-center gap-2">
         {/* The command search — also ⌘K. */}
         <button
           type="button"
           data-tour="search"
           aria-label={t("Search commands (⌘K)")}
+          title={t("Search commands (⌘K)")}
           onClick={() => setCommandSearchOpen(true)}
-          className="flex h-10 items-center rounded-xl border border-border bg-overlay/90 px-[11px] text-sm font-semibold text-muted shadow-overlay backdrop-blur-md outline-none transition-colors hover:bg-surface-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
+          className="flex size-10 items-center justify-center rounded-xl border border-border bg-overlay/90 text-muted shadow-overlay backdrop-blur-md outline-none transition-colors hover:bg-surface-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
         >
-          <Search className="size-[18px] shrink-0" />
-          <span className={`${REVEAL_LABEL} flex items-center gap-2`}>
-            {t("Search")}
-            <Kbd className="text-[11px]">⌘K</Kbd>
-          </span>
+          <Search className="size-5" />
         </button>
 
         {/* Undo / redo — also ⌘Z / ⇧⌘Z. */}
         <div className="flex overflow-hidden rounded-xl border border-border bg-overlay/90 shadow-overlay backdrop-blur-md">
           <HistoryButton label={t("Undo (⌘Z)")} disabled={!canUndo} onClick={undo}>
-            <Undo2 className="size-[18px] shrink-0" />
-            <span className={REVEAL_LABEL}>{t("Undo")}</span>
+            <Undo2 className="size-5" />
           </HistoryButton>
           <span className="my-2 w-px bg-separator" aria-hidden />
           <HistoryButton label={t("Redo (⇧⌘Z)")} disabled={!canRedo} onClick={redo}>
-            <Redo2 className="size-[18px] shrink-0" />
-            <span className={REVEAL_LABEL}>{t("Redo")}</span>
+            <Redo2 className="size-5" />
           </HistoryButton>
         </div>
 
         {/* Shortcuts — a real Popover (focus-managed, dismissable) with Kbd keycaps. */}
         <Popover>
           <Popover.Trigger>
-            <span className="cursor-pointer flex h-10 items-center rounded-xl border border-border bg-overlay/90 px-[11px] text-sm font-semibold text-muted shadow-overlay backdrop-blur-md outline-none transition-colors hover:bg-surface-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus">
-              <Info className="size-[18px] shrink-0" />
-              <span className={REVEAL_LABEL}>{t("Shortcuts")}</span>
+            <span
+              className="cursor-pointer flex size-10 items-center justify-center rounded-xl border border-border bg-overlay/90 text-muted shadow-overlay backdrop-blur-md outline-none transition-colors hover:bg-surface-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
+              title={t("Shortcuts")}
+              aria-label={t("Shortcuts")}
+            >
+              <Info className="size-5" />
             </span>
           </Popover.Trigger>
           <Popover.Content placement="bottom end" className="w-64">
@@ -229,7 +226,7 @@ const HistoryButton = ({
     aria-label={label}
     disabled={disabled}
     onClick={onClick}
-    className="flex h-10 items-center px-[11px] text-sm font-semibold text-muted transition-colors hover:bg-surface-secondary hover:text-foreground disabled:pointer-events-none disabled:opacity-35"
+    className="flex size-10 items-center justify-center text-muted transition-colors hover:bg-surface-secondary hover:text-foreground disabled:pointer-events-none disabled:opacity-35"
   >
     {children}
   </button>
