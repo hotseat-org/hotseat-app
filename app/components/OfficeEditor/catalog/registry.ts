@@ -43,6 +43,8 @@ export interface ItemDefinition {
   hasLooks: boolean
   /** Floor décor that other furniture may stand on (a rug). */
   isUnderlay: boolean
+  /** Copied (duplicated, pasted) like any piece; not a kind no longer placed. */
+  isCopyable: boolean
   edge?: EdgeTraits
   /** What integrators mark it as — the office module's "desk", for one. */
   tags: readonly string[]
@@ -55,6 +57,7 @@ const DEFAULTS = {
   isRecolorable: true,
   hasLooks: false,
   isUnderlay: false,
+  isCopyable: true,
   tags: [],
 } as const
 

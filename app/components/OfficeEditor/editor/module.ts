@@ -44,6 +44,15 @@ export interface EditorModule {
   useSaveGuard?: (autosave: AutosaveControls) => SaveGuard
   /** Its commands (the command search; `isOnFloorMenu` ones on the floor's right-click menu too). */
   commands?: Command[]
+  /** Its sections in the Inspector (editing), for the selection. */
+  inspectorSections?: ComponentType<InspectorSectionProps>[]
+}
+
+export interface InspectorSectionProps {
+  /** The primary selected piece. */
+  selected: SceneObject
+  /** How many pieces are selected. */
+  count: number
 }
 
 /** A module's panel over the editor, shown while viewing, editing, or always. */

@@ -7,6 +7,8 @@ export const FURNITURE_ITEMS = {
     footprint: [4, 2],
     defaultColor: PALETTE.deskTop,
     hasLooks: true,
+    // No longer placed: a copy would place one anew.
+    isCopyable: false,
     tags: ["desk", "retiredDesk"],
   }),
   seat: defineItem({ footprint: [2, 2], defaultColor: PALETTE.seat }),
@@ -21,6 +23,8 @@ export const FURNITURE_ITEMS = {
     footprint: [4, 4],
     defaultColor: PALETTE.deskTop,
     hasLooks: true,
+    // No longer placed: a copy would place one anew.
+    isCopyable: false,
     tags: ["desk", "retiredDesk"],
   }),
   sofa: defineItem({ footprint: [4, 2], defaultColor: "#5f8a86", hasLooks: true }),
