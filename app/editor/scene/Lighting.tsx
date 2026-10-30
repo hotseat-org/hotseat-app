@@ -32,10 +32,10 @@ const SHADOW_TEXEL = 0.012
  * per-pixel lookup, not a redraw every frame.
  */
 const getShadowArea = (reach: number, maxMapSize: number) => {
-  const half = Math.min(MAX_SHADOW_HALF, Math.max(MIN_SHADOW_HALF, reach + SHADOW_MARGIN))
+  const half = THREE.MathUtils.clamp(reach + SHADOW_MARGIN, MIN_SHADOW_HALF, MAX_SHADOW_HALF)
   const wanted = 2 ** Math.ceil(Math.log2((2 * half) / SHADOW_TEXEL))
 
-  return { half, mapSize: Math.min(maxMapSize, Math.max(1024, wanted)) }
+  return { half, mapSize: THREE.MathUtils.clamp(wanted, 1024, maxMapSize) }
 }
 
 export const Lighting = ({ profile: profile, centre = [0, 0], reach = 0 }: Props) => {

@@ -9,6 +9,8 @@ import {
   type WallCell,
 } from "../types"
 import { getEdge } from "../catalog"
+import { clamp } from "../math"
+import { getCellKey } from "./cells"
 
 /**
  * Which way a wall/door edge runs: along X, along Z, or across a grid square
@@ -155,7 +157,7 @@ const distanceToSegment = (point: Cell, start: Cell, end: Cell) => {
   const deltaZ = end.z - start.z
   const lengthSquared = deltaX * deltaX + deltaZ * deltaZ || 1
   let fraction = ((point.x - start.x) * deltaX + (point.z - start.z) * deltaZ) / lengthSquared
-  fraction = Math.max(0, Math.min(1, fraction))
+  fraction = clamp(fraction, 0, 1)
   const closestX = start.x + fraction * deltaX
   const closestZ = start.z + fraction * deltaZ
 
@@ -165,10 +167,11 @@ const distanceToSegment = (point: Cell, start: Cell, end: Cell) => {
 /** Id of the wall/door segment nearest a point, within `maxDistance`, else null. */
 export const nearestEdgeId = (
   objects: SceneObject[],
-  pointX: number,
-  pointZ: number,
-  maxDistance = 0.45,
-  accept: (edge: SceneObject) => boolean = (edge) => isEdgeType(edge.type)
+  point: Cell,
+  {
+    maxDistance = 0.45,
+    accept = (edge) => isEdgeType(edge.type),
+  }: { maxDistance?: number; accept?: (edge: SceneObject) => boolean } = {}
 ): string | null => {
   let best: string | null = null
   let bestDistance = maxDistance
@@ -176,7 +179,7 @@ export const nearestEdgeId = (
     if (!accept(edge)) continue
 
     const [start, end] = edgeNodes(edge)
-    const distance = distanceToSegment({ x: pointX, z: pointZ }, start, end)
+    const distance = distanceToSegment(point, start, end)
     if (distance < bestDistance) {
       bestDistance = distance
       best = edge.id
@@ -199,7 +202,7 @@ export const wallJointNodes = (objects: SceneObject[]): Cell[] => {
 
     const direction = edgeDirection(edge.rotation)
     for (const node of edgeNodes(edge)) {
-      const key = `${node.x},${node.z}`
+      const key = getCellKey(node.x, node.z)
       const junction = map.get(key) ?? { cell: node, directions: new Set<EdgeDirection>() }
       junction.directions.add(direction)
       map.set(key, junction)

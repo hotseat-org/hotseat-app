@@ -54,12 +54,15 @@ export const ContourLines = ({
   const snap = (value: number, shouldRoundUp: boolean) =>
     (shouldRoundUp ? Math.ceil(value / VISIBLE_STEP) : Math.floor(value / VISIBLE_STEP)) *
     VISIBLE_STEP
-  const x0 = snap(Math.min(...corners.map((corner) => corner[0])), false)
-  const x1 = snap(Math.max(...corners.map((corner) => corner[0])), true)
-  const z0 = snap(Math.min(...corners.map((corner) => corner[1])), false)
-  const z1 = snap(Math.max(...corners.map((corner) => corner[1])), true)
+  const minX = snap(Math.min(...corners.map((corner) => corner[0])), false)
+  const maxX = snap(Math.max(...corners.map((corner) => corner[0])), true)
+  const minZ = snap(Math.min(...corners.map((corner) => corner[1])), false)
+  const maxZ = snap(Math.max(...corners.map((corner) => corner[1])), true)
 
-  const tiles = useMemo(() => tilesCovering(x0, z0, x1, z1), [x0, z0, x1, z1])
+  const tiles = useMemo(
+    () => tilesCovering({ x: minX, z: minZ }, { x: maxX, z: maxZ }),
+    [minX, minZ, maxX, maxZ]
+  )
   const toPath = (segments: Float32Array) => {
     let path = ""
     for (let i = 0; i < segments.length; i += 4) {

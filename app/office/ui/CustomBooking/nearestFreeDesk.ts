@@ -7,10 +7,12 @@ const distance = (first: SceneObject, second: SceneObject) =>
 /** The free desk closest to `desk` on a day, for when `desk` itself is taken. */
 export const findNearestFreeDesk = (
   desk: SceneObject,
-  desks: SceneObject[],
-  day: Day,
-  byDay: BookingsByDay,
-  released: BookingsByDay
+  {
+    desks,
+    day,
+    byDay,
+    released,
+  }: { desks: SceneObject[]; day: Day; byDay: BookingsByDay; released: BookingsByDay }
 ) =>
   desks
     .filter(

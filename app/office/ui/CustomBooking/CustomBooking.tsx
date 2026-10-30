@@ -113,7 +113,7 @@ const CustomBookingBody = ({
       // Already seated elsewhere: nothing to move you to.
       const alternative = currentDesk
         ? undefined
-        : findNearestFreeDesk(desk, desks, day, byDay, released)
+        : findNearestFreeDesk(desk, { desks, day, byDay, released })
 
       return { kind: "taken", day, holder, alternative }
     }

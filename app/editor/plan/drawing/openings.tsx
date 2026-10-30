@@ -1,17 +1,10 @@
-import {
-  EDGE_ROTATION,
-  composeWallColors,
-  edgeDirection,
-  edgeNodes,
-  isDiagonalEdge,
-  runsAlongX,
-} from "../../layout"
+import { EDGE_ROTATION, edgeDirection, edgeNodes, isDiagonalEdge, runsAlongX } from "../../layout"
 import { PALETTE } from "../../palette"
 import type { SceneObject } from "../../types"
 import { WINDOW_GLASS } from "../sketch"
 import { shade } from "../shapes"
 import { isOpening } from "../../types"
-import { HALF_WALL, type Push, type WallPieces } from "./wallPieces"
+import { HALF_WALL, type WallDrawing } from "./wallPieces"
 
 /** A door's jambs, each this wide (m). */
 const POST = 0.1
@@ -23,14 +16,13 @@ const GLASS_DOOR_FRAME = "#5b6577"
  * between two jambs, the leaf standing open and its swing — a plan's door.
  * A window in its wall's paint (or its own); a door in its wooden frame.
  */
-export const drawOpenings = (
-  objects: SceneObject[],
-  /** The theme's wall colour (unpainted faces). */
-  wall: string,
-  wallColors: ReturnType<typeof composeWallColors>,
-  { wallPiece, diagonalWallPiece, facedWallPiece, facedDiagonalWallPiece }: WallPieces,
-  push: Push
-) => {
+export const drawOpenings = ({
+  objects,
+  wall,
+  wallColors,
+  pieces: { wallPiece, diagonalWallPiece, facedWallPiece, facedDiagonalWallPiece },
+  push,
+}: WallDrawing) => {
   /** An opening's wall faces, its own way round (themed where unpainted). */
   const facesOf = (opening: SceneObject): [string, string] => {
     const [front, back] = wallColors.openings.get(opening.id) ?? [undefined, undefined]

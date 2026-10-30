@@ -1,4 +1,5 @@
 import { createContext } from "react"
+import { clamp, lerp } from "./math"
 
 /** A full scene-lighting profile derived from a time of day. */
 export interface DayProfile {
@@ -21,8 +22,6 @@ export interface DayProfile {
   envIntensity: number
 }
 
-const clamp01 = (value: number) => Math.min(1, Math.max(0, value))
-const lerp = (from: number, to: number, amount: number) => from + (to - from) * amount
 // Hex colours mixed in linear light (as three's Color.lerp does) — kept
 // three-free so the simple view's sky slider doesn't pull three.js in.
 const toLinear = (channel: number) =>
@@ -43,7 +42,7 @@ const mix = (first: string, second: string, amount: number) => {
   const firstChannels = channels(first)
   const secondChannels = channels(second)
   const [red, green, blue] = firstChannels.map((channel, i) =>
-    Math.round(toSrgb(lerp(channel, secondChannels[i], clamp01(amount))) * 255)
+    Math.round(toSrgb(lerp(channel, secondChannels[i], clamp(amount, 0, 1))) * 255)
   )
 
   return `rgb(${red},${green},${blue})`
@@ -82,11 +81,11 @@ export const daylight = (time: number, nightDepth = 0): DayProfile => {
   const hour = ((time % 24) + 24) % 24
   const theta = ((hour - 6) / 12) * Math.PI // 0 at 06:00, PI at 18:00
   const elevation = Math.sin(theta) // >0 above horizon (day), <0 below (night)
-  const day = clamp01((elevation + 0.12) / 0.4)
+  const day = clamp((elevation + 0.12) / 0.4, 0, 1)
   const nightness = 1 - day
 
   const sunUp = Math.max(0, elevation)
-  const warmth = 1 - clamp01(elevation / 0.6) // orange near the horizon, white high up
+  const warmth = 1 - clamp(elevation / 0.6, 0, 1) // orange near the horizon, white high up
   const sky = sampleSky(hour)
 
   // Night keeps the office readable: a cool "moonlight" key takes over from the

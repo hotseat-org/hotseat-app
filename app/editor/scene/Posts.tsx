@@ -2,7 +2,7 @@ import { useEffect, useMemo } from "react"
 import { BoxGeometry, Vector3 } from "three"
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js"
 import { useObjectsWithPaintPreview } from "../store"
-import { composeWallColors, wallJointNodes } from "../layout"
+import { composeWallColors, getCellKey, wallJointNodes } from "../layout"
 import { Surface } from "../objects/Surface"
 import { WALL } from "../objects/dimensions"
 import { useSurfaces } from "../sceneTheme"
@@ -40,7 +40,7 @@ export const Posts = () => {
     const solid = new Map<string, BoxGeometry[]>()
     const glass: BoxGeometry[] = []
     for (const node of nodes) {
-      const key = `${node.x},${node.z}`
+      const key = getCellKey(node.x, node.z)
       const isSolid = joints.has(key)
       const size = isSolid ? SIZE : GLASS_SIZE
       const box = new BoxGeometry(size, WALL.height + WALL.sink, size)

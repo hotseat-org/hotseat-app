@@ -1,4 +1,5 @@
 import { isEdgeType, isOpening, type SceneObject } from "../types"
+import { getCellKey } from "./cells"
 import { edgeKey, edgeNodes, edgeStep, isGlassEdge, isSolidWall, unitEdges } from "./edges"
 import { getWallFaces, getWallFacesFrom, hasOwnPaint, type WallFaces } from "./wallFaces"
 
@@ -85,7 +86,7 @@ export const composeWallColors = (objects: SceneObject[]) => {
       : getWallFaces(edge)
     const normal = { x: Math.sin(edge.rotation), z: Math.cos(edge.rotation) }
     for (const node of edgeNodes(edge)) {
-      const key = `${node.x},${node.z}`
+      const key = getCellKey(node.x, node.z)
       const quarters =
         counts.get(key) ?? [0, 1, 2, 3].map(() => new Map<string | undefined, number>())
       counts.set(key, quarters)

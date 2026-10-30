@@ -1,3 +1,5 @@
+import { clamp } from "./math"
+
 /**
  * What a wheel event means. Browsers send mouse wheels, trackpad scrolls and
  * pinches as the same `wheel` event, so they're told apart here:
@@ -43,8 +45,7 @@ export const createWheelReader = () => {
 }
 
 /** Zoom factor for a pinch / two-finger scroll event (continuous deltas; capped for Ctrl + wheel). */
-export const getSmoothZoomFactor = (deltaY: number) =>
-  Math.exp(-Math.max(-30, Math.min(30, deltaY)) * 0.01)
+export const getSmoothZoomFactor = (deltaY: number) => Math.exp(-clamp(deltaY, -30, 30) * 0.01)
 
 /** Zoom factor for one mouse wheel notch, whatever its size on this platform. */
 export const getStepZoomFactor = (deltaY: number) => (deltaY < 0 ? 1.15 : 1 / 1.15)

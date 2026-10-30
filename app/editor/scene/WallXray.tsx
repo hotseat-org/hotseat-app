@@ -1,6 +1,6 @@
 import { useFrame, useThree } from "@react-three/fiber"
 import { useEffect, useMemo, useRef } from "react"
-import { Box3, Vector3 } from "three"
+import { Box3, MathUtils, Vector3 } from "three"
 import { useEditorStoreApi } from "../store"
 import { GRID, isEdgeType, isWall, isWallMounted } from "../types"
 import { WALL } from "../objects/dimensions"
@@ -112,7 +112,7 @@ export const WallXray = ({ enabled, isEditing }: Props) => {
     for (const object of objects) {
       if (!isEdgeType(object.type) || getEdge(object.type)?.isSeeThrough) continue
       if (isEditing && !isWall(object.type)) continue
-      if (!intersectEdge(ray, object, hitPoint, SLACK)) continue
+      if (!intersectEdge(ray, object, { target: hitPoint, slack: SLACK })) continue
 
       const half = edgeLength(object) / 2
       const axis = CUT_DIRECTION[edgeDirection(object.rotation)]
@@ -122,9 +122,10 @@ export const WallXray = ({ enabled, isEditing }: Props) => {
         axis,
         line: object.x * across[0] + object.z * across[1],
         // Where the ray meets the wall, clamped to this segment.
-        centre: Math.min(
-          middle + half,
-          Math.max(middle - half, hitPoint.x * along[0] + hitPoint.z * along[1])
+        centre: MathUtils.clamp(
+          hitPoint.x * along[0] + hitPoint.z * along[1],
+          middle - half,
+          middle + half
         ),
         distance: hitPoint.distanceTo(ray.origin),
       })

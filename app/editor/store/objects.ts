@@ -15,18 +15,13 @@ export interface ObjectsSlice {
 /** Wall items whose wall has gone (erased, or a door cut in behind them) come down too. */
 export const dropOrphanMounts = (objects: SceneObject[]) =>
   objects.some((piece) => isWallMounted(piece.type))
-    ? objects.filter(
-        (piece) =>
-          !isWallMounted(piece.type) ||
-          mountWalls(objects, piece.type, piece.x, piece.z, piece.rotation)
-      )
+    ? objects.filter((piece) => !isWallMounted(piece.type) || mountWalls(objects, piece))
     : objects
 
 export const createObjectsSlice = (
   set: SetState,
   _get: GetState,
-  hooks: StoreHooks,
-  initialObjects: SceneObject[]
+  { initialObjects, hooks }: { initialObjects: SceneObject[]; hooks: StoreHooks }
 ): ObjectsSlice => ({
   objects: initialObjects,
   load: (objects) => set({ objects: normalizeEdges(objects), selectedId: null }),

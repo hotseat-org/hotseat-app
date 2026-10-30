@@ -1,3 +1,4 @@
+export * from "./cells"
 export * from "./collisions"
 export * from "./edges"
 export * from "./mounts"

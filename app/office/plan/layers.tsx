@@ -9,6 +9,7 @@ import { RoutePath } from "./RoutePath"
 import { DeskTag, HeatTag, Occupant, RouteEnd, SpotlightRing, ZoneName } from "./overlays"
 import { composeOccupants, usePlanDesks, usePlanZoneAreas } from "./drawings"
 import { useEditorStore } from "~/editor/store"
+import { clamp } from "~/editor/math"
 import { turnPoint } from "~/editor/plan/planView"
 import type { PlanLayerProps } from "~/editor/module"
 import { useI18n } from "~/i18n/I18nProvider"
@@ -39,7 +40,7 @@ const useTurnedRoute = (turn: number) => {
 export const OfficeRoutePath = ({ plan }: PlanLayerProps) => {
   const { points } = useTurnedRoute(plan.turn)
 
-  return points ? <RoutePath points={points} k={plan.view.zoom} /> : null
+  return points ? <RoutePath points={points} zoom={plan.view.zoom} /> : null
 }
 
 /**
@@ -87,7 +88,7 @@ export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
   })
 
   const openId = card?.seat.id
-  const avatarSize = Math.min(MAX_AVATAR_PX, Math.max(MIN_AVATAR_PX, AVATAR_SIZE * view.zoom))
+  const avatarSize = clamp(AVATAR_SIZE * view.zoom, MIN_AVATAR_PX, MAX_AVATAR_PX)
   // The card's desk comes from the store, so it's turned here to match.
   const cardAt = card && turnPoint(card.seat.x, card.seat.z, turn)
   const highlighted = highlightId ? findSpot(highlightId) : undefined

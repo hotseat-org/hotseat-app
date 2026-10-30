@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react"
 import { useThree } from "@react-three/fiber"
-import { CanvasTexture, Object3D, type InstancedMesh } from "three"
+import { CanvasTexture, MathUtils, Object3D, type InstancedMesh } from "three"
 import { useEditorStore } from "../store"
 import { GRID, isEdgeType, isMarker, isWallMounted, type ObjectType } from "../types"
 import { getItem } from "../catalog"
@@ -32,7 +32,7 @@ const createBlobTexture = () => {
         const offsetX = Math.abs((x + 0.5) / size - 0.5) * 2
         const offsetY = Math.abs((y + 0.5) / size - 0.5) * 2
         const distance = Math.pow(offsetX ** 4 + offsetY ** 4, 0.25)
-        const falloff = Math.min(1, Math.max(0, (distance - 0.35) / 0.65))
+        const falloff = MathUtils.clamp((distance - 0.35) / 0.65, 0, 1)
         const alpha = 1 - falloff * falloff * (3 - 2 * falloff)
         // An alpha map is read from the green channel: grey levels, not alpha.
         const level = Math.round(alpha * 255)

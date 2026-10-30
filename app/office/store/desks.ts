@@ -125,7 +125,7 @@ export const createDesksSlice = (set: SetState, _get: GetState): DesksSlice => (
       // A workstation's desk sits 0.25 m back from its centre; a deskmate's 0.35.
       const shift = desk.type === "desk" ? 0.25 : 0.1
       const centre = toWorld(desk, 0, shift)
-      const snapped = snapToFootprint("workstation", desk.rotation, centre.x, centre.z)
+      const snapped = snapToFootprint({ type: "workstation", rotation: desk.rotation }, centre)
       const chair =
         desk.type === "desk"
           ? findDeskChair(

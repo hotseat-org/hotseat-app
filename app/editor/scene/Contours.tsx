@@ -161,7 +161,7 @@ const starsGeometry = (stars: Float32Array) => {
 }
 
 /**
- * Minor and major segments (x0, z0, x1, z1 …) as one geometry (one draw call
+ * Minor and major segments (fromX, fromZ, toX, toZ …) as one geometry (one draw call
  * per tile; each vertex knows which it is, for its colour), drawn as strips of two triangles: each corner knows
  * its own end, the other end, which end it is and which side it's on; the line shader spreads
  * them a fixed number of pixels apart on screen.
@@ -178,13 +178,13 @@ const segmentsGeometry = (minor: Float32Array, major: Float32Array) => {
   for (let i = 0; i < count; i++) {
     const isMajor = i >= minorCount
     const j = isMajor ? i - minorCount : i
-    const [x0, z0, x1, z1] = (isMajor ? major : minor).subarray(j * 4, j * 4 + 4)
+    const [fromX, fromZ, toX, toZ] = (isMajor ? major : minor).subarray(j * 4, j * 4 + 4)
     // Corners: start left, start right, end left, end right.
     const corners = [
-      [x0, z0, x1, z1, 1, 0],
-      [x0, z0, x1, z1, -1, 0],
-      [x1, z1, x0, z0, 1, 1],
-      [x1, z1, x0, z0, -1, 1],
+      [fromX, fromZ, toX, toZ, 1, 0],
+      [fromX, fromZ, toX, toZ, -1, 0],
+      [toX, toZ, fromX, fromZ, 1, 1],
+      [toX, toZ, fromX, fromZ, -1, 1],
     ]
     corners.forEach(([x, z, offsetX, offsetZ, side, isEnd], cornerIndex) => {
       const vertex = i * 4 + cornerIndex
@@ -312,10 +312,8 @@ export const Contours = ({ isEditing = false }: { isEditing?: boolean }) => {
 
   const [cellsX, cellsZ] = centreTile
   const tiles = tilesCovering(
-    (cellsX - REACH) * TILE,
-    (cellsZ - REACH) * TILE,
-    (cellsX + REACH) * TILE,
-    (cellsZ + REACH) * TILE
+    { x: (cellsX - REACH) * TILE, z: (cellsZ - REACH) * TILE },
+    { x: (cellsX + REACH) * TILE, z: (cellsZ + REACH) * TILE }
   ).map(([tileX, tileZ]) => {
     const key = `${tileX},${tileZ}`
     let geometry = geometries.current.get(key)

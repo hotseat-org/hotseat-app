@@ -53,16 +53,11 @@ describe("every template reads the same", () => {
         joints: [...colors.joints],
         jointNodes: wallJointNodes(objects),
         collides: furniture
-          .filter((piece) =>
-            furnitureCollides(objects, piece.type, piece.x, piece.z, piece.rotation, piece.id)
-          )
+          .filter((piece) => furnitureCollides(objects, piece))
           .map((piece) => piece.id),
         mounts: furniture
           .filter((piece) => isWallMounted(piece.type))
-          .map((piece) => [
-            piece.id,
-            mountWalls(objects, piece.type, piece.x, piece.z, piece.rotation),
-          ]),
+          .map((piece) => [piece.id, mountWalls(objects, piece)]),
         zones: composeZoneAreas(objects).map((area) => [
           area.zone.name,
           area.cells.length,

@@ -96,6 +96,42 @@ export default [
       ],
     },
   },
+  // A function reads in steps, a blank line between them: a guard (`if`)
+  // ends its step, and the result (`return`) is a step of its own. A guard
+  // may sit right under the value it checks.
+  {
+    files: ["app/editor/**/*.{ts,tsx}", "app/office/**/*.{ts,tsx}"],
+    rules: {
+      "padding-line-between-statements": [
+        "error",
+        { blankLine: "always", prev: "*", next: "return" },
+        { blankLine: "always", prev: "if", next: "*" },
+        { blankLine: "any", prev: "if", next: "if" },
+      ],
+      // Names say what they hold: no one-letter names but coordinates,
+      // loop counters and the translation helpers.
+      "id-length": ["error", { min: 2, exceptions: ["x", "y", "z", "i", "j", "t", "tn", "_"] }],
+      "object-shorthand": "error",
+      "prefer-template": "error",
+      "arrow-body-style": ["error", "as-needed"],
+      // Lead with the positive case; no `else` after a return.
+      "no-negated-condition": "error",
+      "no-else-return": ["error", { allowElseIf: false }],
+      "no-lonely-if": "error",
+      "no-useless-return": "error",
+      eqeqeq: "error",
+      // Shapes stay shallow: a named step instead of a nested ternary or a
+      // fourth level of blocks, one options object instead of a long list.
+      "no-nested-ternary": "error",
+      "max-depth": ["error", 3],
+      "max-params": ["error", 3],
+    },
+  },
+  // A drawing API like the canvas one: coordinates read best positionally.
+  {
+    files: ["app/editor/plan/sketch.tsx"],
+    rules: { "max-params": "off" },
+  },
   // The editor's core knows nothing about offices: the office plugs in as a
   // module (app/office/, see office/module.ts), never the other way.
   {

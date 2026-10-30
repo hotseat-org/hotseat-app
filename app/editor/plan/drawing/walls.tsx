@@ -1,9 +1,9 @@
 import {
   EDGE_ROTATION,
   SEG,
-  composeWallColors,
   edgeDirection,
   edgeNodes,
+  getCellKey,
   getWallFacesFrom,
   isDiagonalEdge,
   runsAlongX,
@@ -13,7 +13,7 @@ import { WALL } from "../../objects/dimensions"
 import { isWall, type SceneObject } from "../../types"
 import { getItem } from "../../catalog"
 import { getRenderer } from "../../catalog/rendering"
-import { HALF_WALL, type Push, type WallPieces } from "./wallPieces"
+import { HALF_WALL, type WallDrawing } from "./wallPieces"
 
 /**
  * Wall runs (walls, glass, fences…), merged into straight runs of the same
@@ -22,14 +22,13 @@ import { HALF_WALL, type Push, type WallPieces } from "./wallPieces"
  * paint; a run with a plan look of its own (see ItemRenderer.planRun) draws
  * that instead.
  */
-export const drawWalls = (
-  objects: SceneObject[],
-  /** The theme's wall colour (unpainted faces). */
-  wall: string,
-  wallColors: ReturnType<typeof composeWallColors>,
-  { facedWallPiece, facedDiagonalWallPiece }: WallPieces,
-  push: Push
-) => {
+export const drawWalls = ({
+  objects,
+  wall,
+  wallColors,
+  pieces: { facedWallPiece, facedDiagonalWallPiece },
+  push,
+}: WallDrawing) => {
   const runs = new Map<
     string,
     {
@@ -138,7 +137,7 @@ export const drawWalls = (
   // Corners and junctions: each quarter in the paint of the wall faces looking
   // into it (as the 3D posts) — over the runs' ends, which overlap there.
   for (const node of wallJointNodes(objects)) {
-    const quarters = wallColors.joints.get(`${node.x},${node.z}`)
+    const quarters = wallColors.joints.get(getCellKey(node.x, node.z))
     if (!quarters || new Set(quarters).size === 1) continue
 
     quarters.forEach((color, quarter) => {

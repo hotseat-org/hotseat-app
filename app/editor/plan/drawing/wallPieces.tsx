@@ -1,6 +1,7 @@
 import type { ReactNode } from "react"
+import { composeWallColors } from "../../layout"
 import { WALL } from "../../objects/dimensions"
-import type { Cell } from "../../types"
+import type { Cell, SceneObject } from "../../types"
 import type { Extent } from "../shapes"
 
 /** Half a wall's thickness (plan units). */
@@ -141,3 +142,13 @@ export const createWallPieces = (push: Push) => {
 }
 
 export type WallPieces = ReturnType<typeof createWallPieces>
+
+/** What drawing the walls, and the doors and windows in them, works from. */
+export interface WallDrawing {
+  objects: SceneObject[]
+  /** The theme's wall colour (unpainted faces). */
+  wall: string
+  wallColors: ReturnType<typeof composeWallColors>
+  pieces: WallPieces
+  push: Push
+}

@@ -1,9 +1,10 @@
 import { toRotationStep } from "../layout"
+import { clamp } from "../math"
 import { isEdgeType, type SceneObject } from "../types"
 
 /** Screen pixels per plan unit: the zoom range. */
-export const MIN_K = 8
-export const MAX_K = 220
+export const MIN_ZOOM = 8
+export const MAX_ZOOM = 220
 
 /** Where the plan is looked at from: its zoom and pan. */
 export interface View {
@@ -19,14 +20,19 @@ export type Bounds = { x0: number; x1: number; y0: number; y1: number }
 export type Insets = { top: number; bottom: number; left: number; right: number }
 
 /** The view showing `bounds` whole, inside a width×height screen less its insets. */
-export const fitView = (bounds: Bounds, width: number, height: number, padding: Insets): View => {
+export const fitView = (
+  bounds: Bounds,
+  { width, height }: { width: number; height: number },
+  padding: Insets
+): View => {
   const availableWidth = Math.max(1, width - padding.left - padding.right)
   const availableHeight = Math.max(1, height - padding.top - padding.bottom)
   const boundsWidth = Math.max(1, bounds.x1 - bounds.x0)
   const boundsHeight = Math.max(1, bounds.y1 - bounds.y0)
-  const zoom = Math.min(
-    MAX_K,
-    Math.max(MIN_K, Math.min(availableWidth / boundsWidth, availableHeight / boundsHeight))
+  const zoom = clamp(
+    Math.min(availableWidth / boundsWidth, availableHeight / boundsHeight),
+    MIN_ZOOM,
+    MAX_ZOOM
   )
 
   return {

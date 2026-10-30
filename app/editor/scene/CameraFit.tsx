@@ -1,6 +1,6 @@
 import { useFrame, useThree } from "@react-three/fiber"
 import { useEffect, useRef } from "react"
-import { Box3, Vector3, type OrthographicCamera } from "three"
+import { Box3, MathUtils, Vector3, type OrthographicCamera } from "three"
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib"
 import { useEditorStore, useEditorStoreApi } from "../store"
 import { edgeNodes, footprintCells } from "../layout"
@@ -143,7 +143,7 @@ export const CameraFit = ({ insets = NO_INSETS }: { insets?: FitInsets }) => {
     const free =
       canvasWidth > 0 ? Math.max(0.3, (canvasWidth - pad.left - pad.right) / canvasWidth) : 1
     const extent = Math.max(extentX / free, extentY, 1e-6)
-    const zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, FILL / extent))
+    const zoom = MathUtils.clamp(FILL / extent, MIN_ZOOM, MAX_ZOOM)
     // The free area's centre, in NDC — moved there by sliding the camera sideways.
     const shiftNdc = canvasWidth > 0 ? (pad.left - pad.right) / canvasWidth : 0
     const right = new Vector3().setFromMatrixColumn(probe.matrixWorld, 0)
@@ -178,7 +178,7 @@ export const CameraFit = ({ insets = NO_INSETS }: { insets?: FitInsets }) => {
       {
         target: animation.from.target.clone().lerp(animation.to.target, eased),
         position: animation.from.position.clone().lerp(animation.to.position, eased),
-        zoom: animation.from.zoom + (animation.to.zoom - animation.from.zoom) * eased,
+        zoom: MathUtils.lerp(animation.from.zoom, animation.to.zoom, eased),
       },
       camera,
       controls

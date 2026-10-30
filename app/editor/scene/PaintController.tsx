@@ -98,7 +98,7 @@ export const PaintController = () => {
     let best: { id: string; distance: number } | null = null
     for (const object of all) {
       if (!isEdgeType(object.type)) continue
-      if (!intersectEdge(ray, object, hit)) continue
+      if (!intersectEdge(ray, object, { target: hit })) continue
 
       const distance = hit.distanceTo(ray.origin)
       if (!best || distance < best.distance) best = { id: object.id, distance }
@@ -109,7 +109,7 @@ export const PaintController = () => {
       // The face you look at of a wall, corner to corner; Shift: the inside of
       // the room on the side you look from.
       const targets =
-        (shift.current && roomWalls(all, regions, best.id, ray.origin)) ||
+        (shift.current && roomWalls(all, regions, { id: best.id, toward: ray.origin })) ||
         composeFacesToward(all, wallBetweenJoints(all, best.id), ray.origin)
       if (targets.length) next = { kind: "wall", targets }
     } else if (ray.intersectPlane(GROUND, hit)) {

@@ -62,10 +62,10 @@ describe("footprint", () => {
     expect(footprintCells("desk", Math.PI / 4)).toEqual([5, 5])
   })
   test("a piece turned full circle ends where it started", () => {
-    let position = snapToFootprint("toilet", 0, 0.3, 0.3)
+    let position = snapToFootprint({ type: "toilet", rotation: 0 }, { x: 0.3, z: 0.3 })
     const start = position
     for (let i = 1; i <= 4; i++)
-      position = snapToFootprint("toilet", i * QUARTER, position.x, position.z)
+      position = snapToFootprint({ type: "toilet", rotation: i * QUARTER }, position)
     expect(position).toEqual(start)
   })
 })
@@ -112,9 +112,11 @@ describe("rooms", () => {
   test("a door still closes a room", () => {
     const objects = room({ x: 0, z: 0 }, { x: 2, z: 1 })
     const wall = objects.find((segment) => segment.z === 0 && segment.x === 0.75) as SceneObject
-    const plan = openingPlan(objects, wall.id, "door", 0.8, 0) as NonNullable<
-      ReturnType<typeof openingPlan>
-    >
+    const plan = openingPlan(objects, {
+      id: wall.id,
+      kind: "door",
+      point: { x: 0.8, z: 0 },
+    }) as NonNullable<ReturnType<typeof openingPlan>>
     const withDoor = [
       ...objects.filter((object) => !plan.remove.includes(object.id)),
       ...plan.add.map((object, i) => ({ ...object, id: `door${i}` })),
@@ -141,37 +143,47 @@ describe("collisions", () => {
   const office = room({ x: 0, z: 0 }, { x: 4, z: 4 })
   test("furniture can't overlap furniture", () => {
     const desk = place("desk", { x: 1, z: 1 })
-    expect(furnitureCollides([...office, desk], "desk", 1.5, 1, 0)).toBe(true)
+    expect(furnitureCollides([...office, desk], { type: "desk", x: 1.5, z: 1, rotation: 0 })).toBe(
+      true
+    )
   })
   test("but may stand flush against it", () => {
     const desk = place("desk", { x: 1, z: 1 })
-    expect(furnitureCollides([...office, desk], "desk", 3, 1, 0)).toBe(false)
+    expect(furnitureCollides([...office, desk], { type: "desk", x: 3, z: 1, rotation: 0 })).toBe(
+      false
+    )
   })
   test("furniture can't straddle a wall, but may touch it", () => {
-    expect(furnitureCollides(office, "desk", 1, 0, 0)).toBe(true)
-    expect(furnitureCollides(office, "desk", 1, 0.5, 0)).toBe(false)
+    expect(furnitureCollides(office, { type: "desk", x: 1, z: 0, rotation: 0 })).toBe(true)
+    expect(furnitureCollides(office, { type: "desk", x: 1, z: 0.5, rotation: 0 })).toBe(false)
   })
   test("a rug goes under furniture", () => {
     const desk = place("desk", { x: 2, z: 2 })
-    expect(furnitureCollides([...office, desk], "rug", 2, 2, 0)).toBe(false)
+    expect(furnitureCollides([...office, desk], { type: "rug", x: 2, z: 2, rotation: 0 })).toBe(
+      false
+    )
   })
   test("ceiling lights only bump into ceiling lights", () => {
     const desk = place("desk", { x: 2, z: 2 })
-    expect(furnitureCollides([...office, desk], "ceilingLight", 2, 2, 0)).toBe(false)
+    expect(
+      furnitureCollides([...office, desk], { type: "ceilingLight", x: 2, z: 2, rotation: 0 })
+    ).toBe(false)
     const light = place("ceilingLight", { x: 2, z: 2 })
-    expect(furnitureCollides([...office, light], "ceilingLight", 2, 2, 0)).toBe(true)
+    expect(
+      furnitureCollides([...office, light], { type: "ceilingLight", x: 2, z: 2, rotation: 0 })
+    ).toBe(true)
   })
 })
 
 describe("wall items", () => {
   const office = room({ x: 0, z: 0 }, { x: 4, z: 4 })
   test("hang against the nearest wall, facing the cursor's side", () => {
-    expect(wallMount(office, "wallArt", 1.1, 0.3)).toEqual({ x: 1, z: 0.25, rotation: 0 })
+    expect(wallMount(office, "wallArt", { x: 1.1, z: 0.3 })).toEqual({ x: 1, z: 0.25, rotation: 0 })
   })
   test("need solid wall behind their whole width", () => {
-    expect(mountWalls(office, "wallArt", 1, 0.25, 0)).toHaveLength(2)
-    expect(mountWalls(office, "wallArt", 1, 2, 0)).toBeNull()
-    expect(furnitureCollides(office, "wallArt", 1, 2, 0)).toBe(true)
+    expect(mountWalls(office, { type: "wallArt", x: 1, z: 0.25, rotation: 0 })).toHaveLength(2)
+    expect(mountWalls(office, { type: "wallArt", x: 1, z: 2, rotation: 0 })).toBeNull()
+    expect(furnitureCollides(office, { type: "wallArt", x: 1, z: 2, rotation: 0 })).toBe(true)
   })
 })
 
@@ -179,18 +191,20 @@ describe("openings", () => {
   test("a door takes two wall halves, and gives them back", () => {
     const objects = room({ x: 0, z: 0 }, { x: 2, z: 2 })
     const wall = objects.find((segment) => segment.z === 0 && segment.x === 0.75) as SceneObject
-    const cut = openingPlan(objects, wall.id, "door", 0.8, 0)
+    const cut = openingPlan(objects, { id: wall.id, kind: "door", point: { x: 0.8, z: 0 } })
     expect(cut?.remove).toHaveLength(2)
     expect(cut?.add).toEqual([{ type: "door", x: 1, z: 0, rotation: 0 }])
     const door = place("door", { x: 1, z: 0 })
-    const filled = openingPlan([...objects, door], door.id, "door")
+    const filled = openingPlan([...objects, door], { id: door.id, kind: "door" })
     expect(filled?.add.map((object) => object.type)).toEqual(["wall", "wall"])
   })
   test("a window needs solid wall: none in glass", () => {
     const glass = walls(roomEdges({ x: 0, z: 0 }, { x: 2, z: 2 }), "glassWall")
     const wall = glass.find((segment) => segment.z === 0 && segment.x === 0.75) as SceneObject
-    expect(openingPlan(glass, wall.id, "window", 0.8, 0)).toBeNull()
-    expect(openingPlan(glass, wall.id, "door", 0.8, 0)?.add[0]).toMatchObject({
+    expect(openingPlan(glass, { id: wall.id, kind: "window", point: { x: 0.8, z: 0 } })).toBeNull()
+    expect(
+      openingPlan(glass, { id: wall.id, kind: "door", point: { x: 0.8, z: 0 } })?.add[0]
+    ).toMatchObject({
       type: "door",
       model: "glass",
     })
@@ -232,12 +246,14 @@ describe("fences", () => {
     expect(enclosedRegions(fenced)).toEqual([])
   })
   test("block furniture like walls do", () => {
-    expect(furnitureCollides(fenced, "desk", 1, 0, 0)).toBe(true)
-    expect(furnitureCollides(fenced, "desk", 1, 0.5, 0)).toBe(false)
+    expect(furnitureCollides(fenced, { type: "desk", x: 1, z: 0, rotation: 0 })).toBe(true)
+    expect(furnitureCollides(fenced, { type: "desk", x: 1, z: 0.5, rotation: 0 })).toBe(false)
   })
   test("take no door, and nothing hangs on them", () => {
     const segment = fenced.find((object) => object.z === 0 && object.x === 0.75) as SceneObject
-    expect(openingPlan(fenced, segment.id, "door", 0.8, 0)).toBeNull()
-    expect(wallMount(fenced, "wallArt", 1.1, 0.3)).toBeNull()
+    expect(
+      openingPlan(fenced, { id: segment.id, kind: "door", point: { x: 0.8, z: 0 } })
+    ).toBeNull()
+    expect(wallMount(fenced, "wallArt", { x: 1.1, z: 0.3 })).toBeNull()
   })
 })

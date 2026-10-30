@@ -1,4 +1,5 @@
 import { SEG, enclosedRegions, footprintCells } from "./layout"
+import { clamp } from "./math"
 import { GRID, isObjectType, type SceneObject, type Tool } from "./types"
 
 /**
@@ -194,8 +195,7 @@ const blur = ({
     // Rows, then columns: a running sum, edges clamped.
     for (let j = 0; j < height; j++) {
       let sum = 0
-      for (let i = -radius; i <= radius; i++)
-        sum += source[j * width + Math.min(width - 1, Math.max(0, i))]
+      for (let i = -radius; i <= radius; i++) sum += source[j * width + clamp(i, 0, width - 1)]
       for (let i = 0; i < width; i++) {
         target[j * width + i] = sum / size
         sum +=
@@ -206,8 +206,7 @@ const blur = ({
     ;[source, target] = [target, source]
     for (let i = 0; i < width; i++) {
       let sum = 0
-      for (let j = -radius; j <= radius; j++)
-        sum += source[Math.min(height - 1, Math.max(0, j)) * width + i]
+      for (let j = -radius; j <= radius; j++) sum += source[clamp(j, 0, height - 1) * width + i]
       for (let j = 0; j < height; j++) {
         target[j * width + i] = sum / size
         sum +=

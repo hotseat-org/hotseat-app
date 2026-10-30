@@ -2,10 +2,10 @@ import { useEffect, useRef, useState, type RefObject } from "react"
 import { routeBounds } from "../wayfinding"
 import { useEditorStore } from "~/editor/store"
 import { GLIDE_MS, type Frame } from "~/editor/plan/useFraming"
-import { MAX_K, fitView, type View } from "~/editor/plan/planView"
+import { MAX_ZOOM, fitView, type View } from "~/editor/plan/planView"
 
 /** Bringing a desk into view: at least this zoom (px per plan unit)… */
-const SPOTLIGHT_K = 44
+const SPOTLIGHT_ZOOM = 44
 /** …and, once the glide is over, the highlight ripples this long (ms). */
 const SPOTLIGHT_MS = 2700
 
@@ -41,7 +41,7 @@ export const useSpotlight = ({
     const target = findSpot(spotlight.id)
     if (!target) return
 
-    const zoom = Math.min(MAX_K, Math.max(from.zoom, SPOTLIGHT_K))
+    const zoom = Math.min(MAX_ZOOM, Math.max(from.zoom, SPOTLIGHT_ZOOM))
     const centreX = padding.left + (size.width - padding.left - padding.right) / 2
     const centreY = padding.top + (size.height - padding.top - padding.bottom) / 2
     const to = { zoom, offsetX: centreX - target.x * zoom, offsetY: centreY - target.z * zoom }
@@ -80,12 +80,7 @@ export const useRouteFraming = ({
     const bounds = routeBounds(routePoints)
     glideTo(
       from,
-      fitView(
-        { x0: bounds.x0, x1: bounds.x1, y0: bounds.z0, y1: bounds.z1 },
-        size.width,
-        size.height,
-        padding
-      )
+      fitView({ x0: bounds.x0, x1: bounds.x1, y0: bounds.z0, y1: bounds.z1 }, size, padding)
     )
     // Only when a way is asked for (or the plan first has a view) — not on every pan.
   }, [routeNonce, hasView])

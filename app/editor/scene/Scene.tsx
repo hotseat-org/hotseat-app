@@ -125,11 +125,11 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
   const placeAt = (type: ObjectType, x: number, z: number): Cell & { rotation?: number } => {
     if (isWallMounted(type)) {
       const aim = aimAtWallHeight(raycaster, pointer, camera) ?? { x, z }
-      const mount = wallMount(objects, type, aim.x, aim.z)
+      const mount = wallMount(objects, type, aim)
       if (mount) return mount
     }
 
-    return snapPlacement(objects, type, placementRotation, x, z)
+    return snapPlacement(objects, { type, rotation: placementRotation }, { x, z })
   }
 
   // The modules': how they see each piece (a lived-in desk), what clicks do

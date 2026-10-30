@@ -39,10 +39,10 @@ export class Sketch {
   }
 
   rect(
-    x0: number,
-    z0: number,
-    x1: number,
-    z1: number,
+    minX: number,
+    minZ: number,
+    maxX: number,
+    maxZ: number,
     color: string,
     cornerRadius = 0.04,
     edge = true
@@ -50,10 +50,10 @@ export class Sketch {
     this.parts.push(
       <rect
         key={this.key()}
-        x={Math.min(x0, x1)}
-        y={Math.min(z0, z1)}
-        width={Math.abs(x1 - x0)}
-        height={Math.abs(z1 - z0)}
+        x={Math.min(minX, maxX)}
+        y={Math.min(minZ, maxZ)}
+        width={Math.abs(maxX - minX)}
+        height={Math.abs(maxZ - minZ)}
         rx={cornerRadius}
         fill={this.tone(color)}
         stroke={edge ? this.tone(shade(color, 0.78)) : undefined}
@@ -97,14 +97,14 @@ export class Sketch {
       />
     )
   }
-  line(x0: number, z0: number, x1: number, z1: number, color: string, width = 0.02) {
+  line(fromX: number, fromZ: number, toX: number, toZ: number, color: string, width = 0.02) {
     this.parts.push(
       <line
         key={this.key()}
-        x1={x0}
-        y1={z0}
-        x2={x1}
-        y2={z1}
+        x1={fromX}
+        y1={fromZ}
+        x2={toX}
+        y2={toZ}
         stroke={this.tone(color)}
         strokeWidth={width}
         strokeLinecap="round"
@@ -136,14 +136,14 @@ export class Sketch {
     )
   }
 
-  shadowRect(x0: number, z0: number, x1: number, z1: number, cornerRadius = 0.06) {
+  shadowRect(minX: number, minZ: number, maxX: number, maxZ: number, cornerRadius = 0.06) {
     this.outline.push(
       <rect
         key={this.outline.length}
-        x={x0}
-        y={z0}
-        width={x1 - x0}
-        height={z1 - z0}
+        x={minX}
+        y={minZ}
+        width={maxX - minX}
+        height={maxZ - minZ}
         rx={cornerRadius}
       />
     )

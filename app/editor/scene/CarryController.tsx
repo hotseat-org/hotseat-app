@@ -40,14 +40,12 @@ export const CarryController = ({
     // follow the cursor and can't be dropped.
     const all = store.getState().objects
     const aim = isWallMounted(carried.type) ? aimAtWallHeight(raycaster, pointer, camera) : null
-    const placement = (aim && wallMount(all, carried.type, aim.x, aim.z)) || {
+    const placement = (aim && wallMount(all, carried.type, aim)) || {
       // Flush against a diagonal wall when turned beside one (see snapPlacement).
       ...snapPlacement(
         all.filter((other) => other.id !== carried.id),
-        carried.type,
-        carried.rotation,
-        hit.x + grab.dx,
-        hit.z + grab.dz
+        carried,
+        { x: hit.x + grab.dx, z: hit.z + grab.dz }
       ),
       rotation: carried.rotation,
     }
@@ -56,7 +54,7 @@ export const CarryController = ({
       placement.z !== carried.z ||
       placement.rotation !== carried.rotation
     )
-      moveObject(carryId, placement.x, placement.z, placement.rotation)
+      moveObject(carryId, placement)
 
     state.invalidate() // keep following under frameloop="demand"
   })

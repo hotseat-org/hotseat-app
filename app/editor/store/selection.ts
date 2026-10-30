@@ -132,7 +132,7 @@ export const createSelectionSlice = (
       const turned = group.map((piece) => {
         const rotation = toRotationStep(piece.rotation + ROTATION_STEP)
 
-        return { ...piece, ...snapToFootprint(piece.type, rotation, piece.x, piece.z), rotation }
+        return { ...piece, ...snapToFootprint({ type: piece.type, rotation }, piece), rotation }
       })
       if (groupCollides(get().objects, turned)) return
 

@@ -1,6 +1,6 @@
 import { Html } from "@react-three/drei"
 import { useMemo } from "react"
-import { SEG, enclosedRegions, type FloorCell } from "../layout"
+import { SEG, enclosedRegions, getCellKey, getCellKeyAt, type FloorCell } from "../layout"
 import { useEditorStore } from "../store"
 import { describePieces, useModules } from "../modules"
 import { useI18n } from "~/i18n/I18nProvider"
@@ -34,10 +34,8 @@ export const RoomLabels = () => {
         const area = cells.reduce((sum, cell) => sum + shareOf(cell), 0) * SEG * SEG
         if (area < MIN_AREA) return []
 
-        const inside = new Set(cells.map((cell) => `${cell.x},${cell.z}`))
-        const pieces = objects.filter((object) =>
-          inside.has(`${Math.floor(object.x / SEG) * SEG},${Math.floor(object.z / SEG) * SEG}`)
-        )
+        const inside = new Set(cells.map((cell) => getCellKey(cell.x, cell.z)))
+        const pieces = objects.filter((object) => inside.has(getCellKeyAt(object.x, object.z)))
         // What the modules say about it (the office: its desks).
         const description = describePieces(modules, pieces, i18n)
         // On the room's own floor: the square nearest its middle (an L-shaped
@@ -60,7 +58,7 @@ export const RoomLabels = () => {
     <>
       {rooms.map((room) => (
         <Html
-          key={`${room.x},${room.z}`}
+          key={getCellKey(room.x, room.z)}
           position={[room.x, 0.05, room.z]}
           center
           zIndexRange={[5, 0]}

@@ -1,4 +1,6 @@
 import type { ReactNode } from "react"
+import { lerp } from "../math"
+import type { Cell } from "../types"
 
 /**
  * Top-down drawing for the simple view: world x / z map straight onto the
@@ -29,7 +31,7 @@ export const mix = (hex: string, toward: string, amount: number) => {
 
   return `#${first
     .map((channel, i) =>
-      Math.round(channel + (second[i] - channel) * amount)
+      Math.round(lerp(channel, second[i], amount))
         .toString(16)
         .padStart(2, "0")
     )
@@ -56,13 +58,12 @@ export interface Drawable {
 
 /** A flat rectangle on the floor (rugs, rooms) — no edge. */
 export const floorRect = (
-  x0: number,
-  z0: number,
-  x1: number,
-  z1: number,
+  { from, to }: { from: Cell; to: Cell },
   props: React.SVGProps<SVGRectElement>,
   key?: string
-): ReactNode => <rect key={key} x={x0} y={z0} width={x1 - x0} height={z1 - z0} {...props} />
+): ReactNode => (
+  <rect key={key} x={from.x} y={from.z} width={to.x - from.x} height={to.z - from.z} {...props} />
+)
 
 /** Bottom to top: what stands higher covers what's under it. */
 export const sortBottomToTop = (items: Drawable[]): Drawable[] =>

@@ -34,8 +34,9 @@ export const buildScene = ({ wall, drawings, ...furnitureInput }: SceneInput) =>
 
   const pieces = createWallPieces(push)
   const wallColors = composeWallColors(objects)
-  drawWalls(objects, wall, wallColors, pieces, push)
-  drawOpenings(objects, wall, wallColors, pieces, push)
+  const wallDrawing = { objects, wall, wallColors, pieces, push }
+  drawWalls(wallDrawing)
+  drawOpenings(wallDrawing)
   const { shadows } = drawFurniture(furnitureInput, push)
 
   let bounds: Bounds | null = null

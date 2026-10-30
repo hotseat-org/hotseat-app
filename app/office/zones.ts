@@ -1,5 +1,5 @@
 import { isSeatable } from "./catalog"
-import { edgeDirection, footprintCells, unitEdges } from "~/editor/layout"
+import { edgeDirection, footprintCells, getCellKey, unitEdges } from "~/editor/layout"
 import { GRID, type SceneObject } from "~/editor/types"
 import { getEdge } from "~/editor/catalog"
 
@@ -139,7 +139,7 @@ const getClosedSides = (objects: SceneObject[]) => {
     for (const edge of unitEdges(piece)) {
       const i = Math.round(edge.x / ZONE_CELL - (direction === "x" ? 0.5 : 0))
       const j = Math.round(edge.z / ZONE_CELL - (direction === "z" ? 0.5 : 0))
-      sides.add(`${direction}:${i},${j}`)
+      sides.add(`${direction}:${getCellKey(i, j)}`)
     }
   }
 
@@ -149,10 +149,10 @@ const getClosedSides = (objects: SceneObject[]) => {
 /** The four neighbours of a square, each with the side crossed to reach it. */
 const getNeighbours = (i: number, j: number) =>
   [
-    [i, j + 1, `x:${i},${j + 1}`],
-    [i, j - 1, `x:${i},${j}`],
-    [i + 1, j, `z:${i + 1},${j}`],
-    [i - 1, j, `z:${i},${j}`],
+    [i, j + 1, `x:${getCellKey(i, j + 1)}`],
+    [i, j - 1, `x:${getCellKey(i, j)}`],
+    [i + 1, j, `z:${getCellKey(i + 1, j)}`],
+    [i - 1, j, `z:${getCellKey(i, j)}`],
   ] as const
 
 interface Owner {
@@ -196,14 +196,14 @@ const claimSquares = (desk: SceneObject, closedSides: Set<string>, owners: Map<s
   if (under.length === 0)
     under.push([Math.floor(desk.x / ZONE_CELL), Math.floor(desk.z / ZONE_CELL)])
 
-  const reached = new Set(under.map(([i, j]) => `${i},${j}`))
+  const reached = new Set(under.map(([i, j]) => getCellKey(i, j)))
   const queue = [...under]
   while (queue.length > 0) {
     const [i, j] = queue.pop() as [number, number]
     // …equally near two desks: the one whose middle is nearer.
     const distance = distanceOf(i, j)
     const toMiddle = Math.hypot((i + 0.5) * ZONE_CELL - desk.x, (j + 0.5) * ZONE_CELL - desk.z)
-    const key = `${i},${j}`
+    const key = getCellKey(i, j)
     const owner = owners.get(key)
     if (
       !owner ||
@@ -213,7 +213,7 @@ const claimSquares = (desk: SceneObject, closedSides: Set<string>, owners: Map<s
       owners.set(key, { zone: desk.zone, distance, toMiddle, cell: [i, j] })
 
     for (const [neighbourI, neighbourJ, side] of getNeighbours(i, j)) {
-      const next = `${neighbourI},${neighbourJ}`
+      const next = getCellKey(neighbourI, neighbourJ)
       if (reached.has(next) || !isInMargin(neighbourI, neighbourJ) || closedSides.has(side))
         continue
 
@@ -280,7 +280,7 @@ const traceCorners = (
   let edge: Edge | null = first
   let direction = firstDirection
   while (edge && !isStart(edge.to)) {
-    const next = take(`${edge.to[0]},${edge.to[1]}`, direction)
+    const next = take(getCellKey(...edge.to), direction)
     if (!next) break
 
     const nextDirection = getDirection(next)
@@ -303,12 +303,12 @@ const traceCorners = (
  * filled in — as the 3D floor draws it. Holes wind the other way (nonzero).
  */
 export const composeZoneOutline = (cells: [number, number][]): string => {
-  const filled = new Set(cells.map(([i, j]) => `${i},${j}`))
-  const has = (i: number, j: number) => filled.has(`${i},${j}`)
+  const filled = new Set(cells.map(([i, j]) => getCellKey(i, j)))
+  const has = (i: number, j: number) => filled.has(getCellKey(i, j))
   // Unit edges with the zone on their left, keyed by where they start.
   const starts = new Map<string, Edge[]>()
   const add = (from: [number, number], to: [number, number]) => {
-    const key = `${from[0]},${from[1]}`
+    const key = getCellKey(...from)
     starts.set(key, [...(starts.get(key) ?? []), { from, to }])
   }
   for (const [i, j] of cells) {

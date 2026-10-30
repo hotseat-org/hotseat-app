@@ -26,7 +26,7 @@ export interface FurnitureSlice {
   /** Several pieces in one step (one undo): any that would collide are skipped. */
   addObjects: (pieces: NewObject[]) => number
   /** Moves a piece; wall items also turn to face out from their new wall. */
-  moveObject: (id: string, x: number, z: number, rotation?: number) => void
+  moveObject: (id: string, position: { x: number; z: number; rotation?: number }) => void
   rotateObject: (id: string) => void
   setColor: (id: string, color: string) => void
   /** Gives each piece its next look (props, cushions…). */
@@ -60,8 +60,7 @@ export const settleTurn = (rawSet: SetState, get: GetState) => {
   if (!turn || selectedId === turn.id) return
 
   const piece = objects.find((candidate) => candidate.id === turn.id)
-  if (!piece || !furnitureCollides(objects, piece.type, piece.x, piece.z, piece.rotation, piece.id))
-    return rawSet({ pendingTurn: null })
+  if (!piece || !furnitureCollides(objects, piece)) return rawSet({ pendingTurn: null })
 
   const { x, z, rotation } = turn
   const isOnlyTurns = past.length === turn.historyLength + turn.steps
@@ -84,7 +83,7 @@ export const createFurnitureSlice = (
 ): FurnitureSlice => ({
   addObject: ({ type, x, z, rotation = 0, color, model }) => {
     // Don't place furniture inside existing furniture.
-    if (furnitureCollides(get().objects, type, x, z, rotation)) return ""
+    if (furnitureCollides(get().objects, { type, x, z, rotation })) return ""
 
     const id = nanoid(8)
     set((state) => ({
@@ -100,7 +99,7 @@ export const createFurnitureSlice = (
   addObjects: (pieces) => {
     const placed: SceneObject[] = []
     for (const { type, x, z, rotation = 0, color, model } of pieces) {
-      if (furnitureCollides([...get().objects, ...placed], type, x, z, rotation)) continue
+      if (furnitureCollides([...get().objects, ...placed], { type, x, z, rotation })) continue
 
       placed.push({ id: nanoid(8), type, x, z, rotation, color, model })
     }
@@ -112,7 +111,7 @@ export const createFurnitureSlice = (
     return placed.length
   },
 
-  moveObject: (id, x, z, rotation) =>
+  moveObject: (id, { x, z, rotation }) =>
     set((state) => ({
       objects: state.objects.map((piece) =>
         piece.id === id ? { ...piece, x, z, rotation: rotation ?? piece.rotation } : piece
@@ -134,16 +133,14 @@ export const createFurnitureSlice = (
     const snapped = clampToFloor(
       piece.type,
       rotation,
-      snapToFootprint(piece.type, rotation, piece.x, piece.z)
+      snapToFootprint({ type: piece.type, rotation }, piece)
     )
-    const isOverlapping = furnitureCollides(
-      state.objects,
-      piece.type,
-      snapped.x,
-      snapped.z,
+    const isOverlapping = furnitureCollides(state.objects, {
+      ...snapped,
+      id: piece.id,
+      type: piece.type,
       rotation,
-      piece.id
-    )
+    })
     const turn = state.pendingTurn?.id === id ? state.pendingTurn : null
     const composePendingTurn = (): FurnitureSlice["pendingTurn"] => {
       const isInPlace = state.carryingId !== id
@@ -212,7 +209,11 @@ export const createFurnitureSlice = (
           z: original.z + deltaZ,
         })
         if (
-          furnitureCollides(state.objects, original.type, snapped.x, snapped.z, original.rotation)
+          furnitureCollides(state.objects, {
+            ...snapped,
+            type: original.type,
+            rotation: original.rotation,
+          })
         )
           continue
 

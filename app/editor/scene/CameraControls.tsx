@@ -1,6 +1,6 @@
 import { useFrame, useThree } from "@react-three/fiber"
 import { useEffect, useRef, type RefObject } from "react"
-import { OrthographicCamera, Vector3 } from "three"
+import { MathUtils, OrthographicCamera, Vector3 } from "three"
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib"
 import { CURSORS, type CursorHint } from "../cursors"
 import { isTypingTarget } from "../keyboard"
@@ -192,7 +192,7 @@ export const CameraControls = ({
 
     flashGesture(factor > 1 ? "zoomIn" : "zoomOut")
     const prevZoom = camera.zoom
-    camera.zoom = Math.min(controls.maxZoom, Math.max(controls.minZoom, prevZoom * factor))
+    camera.zoom = MathUtils.clamp(prevZoom * factor, controls.minZoom, controls.maxZoom)
     camera.updateProjectionMatrix()
     const applied = camera.zoom / prevZoom
     if (x !== undefined && y !== undefined) {

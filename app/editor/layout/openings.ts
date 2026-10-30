@@ -3,6 +3,7 @@ import {
   isEdgeType,
   isOpening,
   isWall,
+  type Cell,
   type OpeningType,
   type SceneObject,
 } from "../types"
@@ -21,10 +22,7 @@ import { composeFacePaint, getOpeningPaint } from "./wallFaces"
  */
 export const openingPlan = (
   objects: SceneObject[],
-  id: string,
-  kind: OpeningType,
-  pointX?: number,
-  pointZ?: number
+  { id, kind, point }: { id: string; kind: OpeningType; point?: Cell }
 ): { remove: string[]; add: Omit<SceneObject, "id">[] } | null => {
   const edge = objects.find((candidate) => candidate.id === id)
   if (!edge || !isEdgeType(edge.type)) return null
@@ -64,10 +62,7 @@ export const openingPlan = (
   const direction = edgeDirection(edge.rotation)
   const [stepX, stepZ] = edgeStep(edge.rotation)
   // The cursor's side of the segment, along the line, is tried first.
-  const cursorAlong =
-    pointX !== undefined && pointZ !== undefined
-      ? (pointX - edge.x) * stepX + (pointZ - edge.z) * stepZ
-      : 0
+  const cursorAlong = point ? (point.x - edge.x) * stepX + (point.z - edge.z) * stepZ : 0
   const first = cursorAlong < 0 ? -1 : 1
   for (const side of [first, -first]) {
     const nextX = edge.x + side * stepX

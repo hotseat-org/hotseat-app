@@ -36,8 +36,14 @@ export const OpeningCarry = ({ carried, onDone }: Props) => {
     if (!isOpening(carried.type)) return null
 
     const all = store.getState().objects
-    const wallId = nearestEdgeId(all, x, z, 0.6, (wall) => isWall(wall.type))
-    const plan = wallId ? openingPlan(all, wallId, carried.type, x, z) : null
+    const wallId = nearestEdgeId(
+      all,
+      { x, z },
+      { maxDistance: 0.6, accept: (wall) => isWall(wall.type) }
+    )
+    const plan = wallId
+      ? openingPlan(all, { id: wallId, kind: carried.type, point: { x, z } })
+      : null
 
     return plan ? plan.add[0] : null
   }

@@ -35,7 +35,7 @@ export const useFurnitureDrag = (readOnly: boolean) => {
     const start = dragStart.current
     if (!start) return
 
-    storeApi.getState().moveObject(start.id, start.x, start.z, start.rotation)
+    storeApi.getState().moveObject(start.id, start)
     endDrag()
   }
 
@@ -45,10 +45,7 @@ export const useFurnitureDrag = (readOnly: boolean) => {
 
     const all = storeApi.getState().objects
     const object = all.find((candidate) => candidate.id === start.id)
-    if (
-      object &&
-      furnitureCollides(all, object.type, object.x, object.z, object.rotation, object.id)
-    ) {
+    if (object && furnitureCollides(all, object)) {
       setBlockedAt(performance.now())
 
       return putBack()

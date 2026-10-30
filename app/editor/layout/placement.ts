@@ -9,6 +9,7 @@ import {
   type SceneObject,
 } from "../types"
 import { getItem } from "../catalog"
+import { clamp } from "../math"
 import { edgeStep, isDiagonalEdge } from "./edges"
 import { ALONG_Z, isDiagonal, toRotationStep } from "./rotation"
 
@@ -43,11 +44,14 @@ export const snapAxis = (value: number, cells: number) =>
     ? Math.ceil(value / GRID - 0.5) * GRID // even: centre on a grid line (ties down)
     : (Math.round(value / GRID - 0.5) + 0.5) * GRID // odd: centre in a square (ties up)
 
-/** Snap a position so the object's footprint occupies whole grid squares. */
-export const snapToFootprint = (type: ObjectType, rotation: number, x: number, z: number): Cell => {
-  const [cellsX, cellsZ] = footprintCells(type, rotation)
+/** The part of a piece that decides its footprint. */
+type PieceShape = Pick<SceneObject, "type" | "rotation">
 
-  return { x: snapAxis(x, cellsX), z: snapAxis(z, cellsZ) }
+/** Snap a position so the object's footprint occupies whole grid squares. */
+export const snapToFootprint = (piece: PieceShape, point: Cell): Cell => {
+  const [cellsX, cellsZ] = footprintCells(piece.type, piece.rotation)
+
+  return { x: snapAxis(point.x, cellsX), z: snapAxis(point.z, cellsZ) }
 }
 
 /** How a furniture tool places: one piece, a row of copies, or a back-to-back pod of two rows. */
@@ -63,10 +67,8 @@ const MAX_REPEAT = 40
  * back with the first, turned to face the other way (desks facing across).
  */
 export const composeRepeat = (
-  type: ObjectType,
-  rotation: number,
-  start: Cell,
-  end: Cell,
+  { type, rotation }: PieceShape,
+  { start, end }: { start: Cell; end: Cell },
   pattern: Exclude<PlacementPattern, "single">
 ): { x: number; z: number; rotation: number }[] => {
   const [width, depth] = getItem(type).footprint
@@ -107,20 +109,15 @@ export const composeRepeat = (
 const FLUSH_REACH = 0.6
 
 /**
- * Where a piece goes for a cursor at (x, z): on the grid, kept on the floor —
+ * Where a piece goes for a cursor at `point`: on the grid, kept on the floor —
  * or, turned to 45° beside a diagonal wall running the same way, flush against
  * that wall's face (back or side to it), slid along it in half-segment steps.
  * Grid points never put a turned piece flush with a diagonal: its centre must
  * sit half its depth from the wall's line, a distance with √2 in it.
  */
-export const snapPlacement = (
-  objects: SceneObject[],
-  type: ObjectType,
-  rotation: number,
-  x: number,
-  z: number
-): Cell => {
-  const onGrid = clampToFloor(type, rotation, snapToFootprint(type, rotation, x, z))
+export const snapPlacement = (objects: SceneObject[], piece: PieceShape, point: Cell): Cell => {
+  const { type, rotation } = piece
+  const onGrid = clampToFloor(type, rotation, snapToFootprint(piece, point))
   if (!isDiagonal(rotation) || isWallMounted(type) || isOverhead(type)) return onGrid
 
   const [widthCells, depthCells] = getItem(type).footprint
@@ -137,8 +134,8 @@ export const snapPlacement = (
     // Width along the wall (back to it) or across it (side to it).
     const isBackToWall = Math.abs(axisX.x * direction.x + axisX.z * direction.z) > 0.99
     const flush = ((isBackToWall ? depthCells : widthCells) * GRID) / 2
-    const across = (x - segment.x) * normal.x + (z - segment.z) * normal.z
-    const along = (x - segment.x) * direction.x + (z - segment.z) * direction.z
+    const across = (point.x - segment.x) * normal.x + (point.z - segment.z) * normal.z
+    const along = (point.x - segment.x) * direction.x + (point.z - segment.z) * direction.z
     // Near this segment's face, beside it along the wall (with some slack).
     if (Math.abs(across) > flush + FLUSH_REACH) continue
     if (Math.abs(along) > length / 2 + flush + FLUSH_REACH) continue
@@ -168,7 +165,7 @@ export const clampToFloor = (type: ObjectType, rotation: number, position: Cell)
   const halfZ = BUILD_HALF - (cellsZ * GRID) / 2
 
   return {
-    x: Math.max(-halfX, Math.min(halfX, position.x)),
-    z: Math.max(-halfZ, Math.min(halfZ, position.z)),
+    x: clamp(position.x, -halfX, halfX),
+    z: clamp(position.z, -halfZ, halfZ),
   }
 }

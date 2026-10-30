@@ -7,6 +7,8 @@ import {
   enclosedRegions,
   furnitureCollides,
   furnitureInRoomAt,
+  getCellKey,
+  getCellKeyAt,
   unitEdges,
   type FloorCell,
 } from "./layout"
@@ -82,23 +84,22 @@ export const useKitLibrary = (): KitLibrary => {
   return library ?? { kits: localKits, addKit: addLocalKit, deleteKit: deleteLocalKit }
 }
 
-const cellKey = (x: number, z: number) =>
-  `${Math.floor(x / SEG) * SEG},${Math.floor(z / SEG) * SEG}`
-
 /** Whether a wall/door edge borders (or, diagonally, crosses) one of the room's squares. */
 const bordersRoom = (object: SceneObject, cells: Set<string>) =>
   unitEdges(object).some((edge) => {
     const direction = edgeDirection(edge.rotation)
     if (direction === "x")
       return (
-        cells.has(cellKey(edge.x, edge.z - SEG / 2)) || cells.has(cellKey(edge.x, edge.z + SEG / 2))
+        cells.has(getCellKeyAt(edge.x, edge.z - SEG / 2)) ||
+        cells.has(getCellKeyAt(edge.x, edge.z + SEG / 2))
       )
     if (direction === "z")
       return (
-        cells.has(cellKey(edge.x - SEG / 2, edge.z)) || cells.has(cellKey(edge.x + SEG / 2, edge.z))
+        cells.has(getCellKeyAt(edge.x - SEG / 2, edge.z)) ||
+        cells.has(getCellKeyAt(edge.x + SEG / 2, edge.z))
       )
 
-    return cells.has(cellKey(edge.x, edge.z))
+    return cells.has(getCellKeyAt(edge.x, edge.z))
   })
 
 const areaOf = (room: FloorCell[]) =>
@@ -120,11 +121,11 @@ export const composeKit = (
   z: number
 ): Omit<Kit, "name"> | null => {
   const room = enclosedRegions(objects).find((region) =>
-    region.some((cell) => cellKey(x, z) === `${cell.x},${cell.z}`)
+    region.some((cell) => getCellKeyAt(x, z) === getCellKey(cell.x, cell.z))
   )
   if (!room) return null
 
-  const cells = new Set(room.map((cell) => `${cell.x},${cell.z}`))
+  const cells = new Set(room.map((cell) => getCellKey(cell.x, cell.z)))
   const inside = new Set(furnitureInRoomAt(objects, x, z))
   const picked = objects.filter((object) =>
     isEdgeType(object.type)
@@ -180,5 +181,5 @@ export const canPlaceKit = (objects: SceneObject[], placed: SceneObject[]) => {
 
   return placed
     .filter((piece) => !isEdgeType(piece.type))
-    .every((piece) => !furnitureCollides(withEdges, piece.type, piece.x, piece.z, piece.rotation))
+    .every((piece) => !furnitureCollides(withEdges, piece))
 }

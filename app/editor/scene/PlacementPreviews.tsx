@@ -51,7 +51,8 @@ export const PlacementPreviews = ({
   // The armed piece under the cursor — not while carrying or laying a row.
   const shown = isFurniture && !dragId && !isRepeatDragging ? hover : null
   const rotation = shown?.rotation ?? placementRotation
-  const isHoverBlocked = !!shown && furnitureCollides(objects, type, shown.x, shown.z, rotation)
+  const isHoverBlocked =
+    !!shown && furnitureCollides(objects, { type, x: shown.x, z: shown.z, rotation })
 
   return (
     <>
@@ -145,16 +146,7 @@ export const PlacementPreviews = ({
           x={carried.x}
           z={carried.z}
           rotation={carried.rotation}
-          valid={
-            !furnitureCollides(
-              objects,
-              carried.type,
-              carried.x,
-              carried.z,
-              carried.rotation,
-              carried.id
-            )
-          }
+          valid={!furnitureCollides(objects, carried)}
         />
       )}
     </>

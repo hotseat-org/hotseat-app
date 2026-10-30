@@ -1,5 +1,6 @@
 import { isEdgeType, isMarker, type Cell, type SceneObject } from "../types"
 import { getEdge } from "../catalog"
+import { getCellKey } from "./cells"
 import { SEG, edgeDirection, unitEdges } from "./edges"
 
 /**
@@ -59,19 +60,19 @@ export const enclosedRegions = (objects: SceneObject[]): FloorCell[][] => {
       if (direction === "x") {
         const i = Math.round((edge.x - SEG / 2) / SEG)
         const j = Math.round(edge.z / SEG)
-        blockedAlongX.add(`${i},${j}`)
+        blockedAlongX.add(getCellKey(i, j))
         touch(i, j - 1)
         touch(i, j)
       } else if (direction === "z") {
         const i = Math.round(edge.x / SEG)
         const j = Math.round((edge.z - SEG / 2) / SEG)
-        blockedAlongZ.add(`${i},${j}`)
+        blockedAlongZ.add(getCellKey(i, j))
         touch(i - 1, j)
         touch(i, j)
       } else {
         const i = Math.floor(edge.x / SEG)
         const j = Math.floor(edge.z / SEG)
-        const key = `${i},${j}`
+        const key = getCellKey(i, j)
         diagonals.set(key, (diagonals.get(key) ?? 0) | (direction === "rising" ? 1 : 2))
         touch(i, j)
       }
@@ -96,7 +97,7 @@ export const enclosedRegions = (objects: SceneObject[]): FloorCell[][] => {
   /** Triangles a triangle opens onto: its cell's two neighbours, and across the cell side. */
   const neighbours = ([i, j, triangle]: Triangle, out: Triangle[]) => {
     out.length = 0
-    const diagonalBits = diagonals.get(`${i},${j}`) ?? 0
+    const diagonalBits = diagonals.get(getCellKey(i, j)) ?? 0
     const isRising = (diagonalBits & 1) !== 0 // SW–NE: parts S|W and N|E
     const isFalling = (diagonalBits & 2) !== 0 // NW–SE: parts N|W and S|E
     const inner = (target: number, blocked: boolean) => {
@@ -105,19 +106,19 @@ export const enclosedRegions = (objects: SceneObject[]): FloorCell[][] => {
     if (triangle === SOUTH) {
       inner(EAST, isFalling)
       inner(WEST, isRising)
-      if (!blockedAlongX.has(`${i},${j}`)) out.push([i, j - 1, NORTH])
+      if (!blockedAlongX.has(getCellKey(i, j))) out.push([i, j - 1, NORTH])
     } else if (triangle === EAST) {
       inner(SOUTH, isFalling)
       inner(NORTH, isRising)
-      if (!blockedAlongZ.has(`${i + 1},${j}`)) out.push([i + 1, j, WEST])
+      if (!blockedAlongZ.has(getCellKey(i + 1, j))) out.push([i + 1, j, WEST])
     } else if (triangle === NORTH) {
       inner(EAST, isRising)
       inner(WEST, isFalling)
-      if (!blockedAlongX.has(`${i},${j + 1}`)) out.push([i, j + 1, SOUTH])
+      if (!blockedAlongX.has(getCellKey(i, j + 1))) out.push([i, j + 1, SOUTH])
     } else {
       inner(SOUTH, isRising)
       inner(NORTH, isFalling)
-      if (!blockedAlongZ.has(`${i},${j}`)) out.push([i - 1, j, EAST])
+      if (!blockedAlongZ.has(getCellKey(i, j))) out.push([i - 1, j, EAST])
     }
 
     return out
@@ -156,7 +157,7 @@ export const enclosedRegions = (objects: SceneObject[]): FloorCell[][] => {
     while (queue.length) {
       const current = queue.pop() as Triangle
       const [currentI, currentJ, currentTriangle] = current
-      const key = `${currentI},${currentJ}`
+      const key = getCellKey(currentI, currentJ)
       const cell = parts.get(key) ?? { x: currentI * SEG, z: currentJ * SEG, parts: 0 }
       cell.parts = (cell.parts ?? 0) | (1 << currentTriangle)
       parts.set(key, cell)
@@ -204,10 +205,17 @@ const getFloorPart = (offsetX: number, offsetZ: number) => {
   return FLOOR_PART.west
 }
 
+/** The key of the cell containing a floor point. */
+export const getCellKeyAt = (x: number, z: number) => {
+  const cell = cellAt(x, z)
+
+  return getCellKey(cell.x, cell.z)
+}
+
 /** Whether a floor point lies in a region's cells (a split square: its parts). */
 export const isInRegion = (cells: Map<string, FloorCell>, x: number, z: number) => {
   const { x: cellX, z: cellZ } = cellAt(x, z)
-  const cell = cells.get(`${cellX},${cellZ}`)
+  const cell = cells.get(getCellKey(cellX, cellZ))
   if (!cell) return false
   if (cell.parts === undefined) return true
 
@@ -227,14 +235,14 @@ export const furnitureInRoomAt = (objects: SceneObject[], x: number, z: number):
   )
   if (!room) return []
 
-  const cells = new Set(room.map((cell) => `${cell.x},${cell.z}`))
+  const cells = new Set(room.map((cell) => getCellKey(cell.x, cell.z)))
 
   return objects
     .filter(
       (piece) =>
         !isEdgeType(piece.type) &&
         !isMarker(piece.type) &&
-        cells.has(`${Math.floor(piece.x / SEG) * SEG},${Math.floor(piece.z / SEG) * SEG}`)
+        cells.has(getCellKeyAt(piece.x, piece.z))
     )
     .map((piece) => piece.id)
 }

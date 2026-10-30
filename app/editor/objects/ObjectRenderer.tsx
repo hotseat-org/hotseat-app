@@ -1,6 +1,6 @@
 import { memo, useContext, useEffect, useLayoutEffect, useRef, useState } from "react"
 import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber"
-import type { Group } from "three"
+import { MathUtils, type Group } from "three"
 import {
   GRID,
   isEdgeType,
@@ -154,7 +154,7 @@ export const ObjectRenderer = memo(function ObjectRenderer({
     const turnedGroup = turned.current
     if (swing && turnedGroup) {
       swing.t = Math.min(1, swing.t + Math.min(delta, 0.05) / TURN)
-      angle.current = swing.from + (swing.to - swing.from) * snapEase(swing.t)
+      angle.current = MathUtils.lerp(swing.from, swing.to, snapEase(swing.t))
       turnedGroup.rotation.y = angle.current
       if (swing.t >= 1) {
         turn.current = null

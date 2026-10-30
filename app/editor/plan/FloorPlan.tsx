@@ -100,7 +100,7 @@ export const FloorPlan = ({
   const measured = size !== null
   useLayoutEffect(() => {
     const { size: frameSize, bounds, insets: padding } = frame.current
-    if (frameSize && bounds) setView(fitView(bounds, frameSize.width, frameSize.height, padding))
+    if (frameSize && bounds) setView(fitView(bounds, frameSize, padding))
   }, [fitNonce, hasContent, measured, turn])
 
   const viewRef = useRef(view)

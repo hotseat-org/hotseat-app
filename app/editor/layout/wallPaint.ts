@@ -1,4 +1,5 @@
-import { isEdgeType, isOpening, type SceneObject } from "../types"
+import { isEdgeType, isOpening, type Cell, type SceneObject } from "../types"
+import { getCellKey } from "./cells"
 import { edgeDirection, edgeNodes, edgeStep, isGlassEdge, unitEdges } from "./edges"
 import { isInRegion, type FloorCell } from "./rooms"
 import { composeWallColors } from "./wallColors"
@@ -22,18 +23,18 @@ export const wallBetweenJoints = (objects: SceneObject[], id: string): string[] 
   for (const segment of objects) {
     if (!isEdgeType(segment.type)) continue
     if (edgeDirection(segment.rotation) === direction)
-      for (const unit of unitEdges(segment)) owner.set(`${unit.x},${unit.z}`, segment)
-    else for (const node of edgeNodes(segment)) joints.add(`${node.x},${node.z}`)
+      for (const unit of unitEdges(segment)) owner.set(getCellKey(unit.x, unit.z), segment)
+    else for (const node of edgeNodes(segment)) joints.add(getCellKey(node.x, node.z))
   }
   // Walk both ways from the segment (an opening, from one of its halves).
   const [start] = unitEdges(edge)
   const ids = new Set<string>()
   for (const sign of [1, -1])
     for (let x = start.x, z = start.z; ; x += sign * stepX, z += sign * stepZ) {
-      const segment = owner.get(`${x},${z}`)
+      const segment = owner.get(getCellKey(x, z))
       if (!segment || isGlassEdge(segment)) break
       if (isPaintable(segment)) ids.add(segment.id)
-      if (joints.has(`${x + (sign * stepX) / 2},${z + (sign * stepZ) / 2}`)) break
+      if (joints.has(getCellKey(x + (sign * stepX) / 2, z + (sign * stepZ) / 2))) break
     }
 
   return [...ids]
@@ -69,8 +70,7 @@ export const roomWalls = (
   objects: SceneObject[],
   /** enclosedRegions(objects), worked out once by the caller. */
   rooms: FloorCell[][],
-  id: string,
-  toward: { x: number; z: number }
+  { id, toward }: { id: string; toward: Cell }
 ): WallPaint[] | null => {
   const edge = objects.find((candidate) => candidate.id === id)
   if (!edge || !isEdgeType(edge.type)) return null
@@ -85,7 +85,9 @@ export const roomWalls = (
     Math.sign(
       Math.sin(edge.rotation) * (toward.x - edge.x) + Math.cos(edge.rotation) * (toward.z - edge.z)
     ) || 1
-  const regions = rooms.map((cells) => new Map(cells.map((cell) => [`${cell.x},${cell.z}`, cell])))
+  const regions = rooms.map(
+    (cells) => new Map(cells.map((cell) => [getCellKey(cell.x, cell.z), cell]))
+  )
   for (const side of [facing, -facing]) {
     const at = probe(edge, side)
     const room = regions.find((cells) => isInRegion(cells, at.x, at.z))

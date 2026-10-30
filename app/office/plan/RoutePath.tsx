@@ -4,7 +4,7 @@
  * and a glowing dot at the entrance. Plan units; strokes in screen pixels, and
  * the blur sized from the zoom (`zoom`), so it looks the same at any zoom.
  */
-export const RoutePath = ({ points, k: zoom }: { points: [number, number][]; k: number }) => {
+export const RoutePath = ({ points, zoom }: { points: [number, number][]; zoom: number }) => {
   const path = points.map(([x, z], i) => `${i ? "L" : "M"}${x.toFixed(3)} ${z.toFixed(3)}`).join("")
   const [startX, startZ] = points[0]
   // The filter's own box: the route's, with room for the glow.

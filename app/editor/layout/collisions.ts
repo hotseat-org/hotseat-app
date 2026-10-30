@@ -147,27 +147,24 @@ const layerOf = (type: ObjectType) => {
 }
 
 /**
- * Whether furniture of `type` at (x,z) would collide: overlapping other
+ * Whether `piece` (its type at its x/z and rotation) would collide: overlapping other
  * furniture (grid-aligned footprints, so edge-to-edge is fine) or crossing a
  * wall/door. Rugs are floor décor — they may go under furniture, but not
  * through walls. Overhead items (ceiling lights) ignore everything on the
- * floor and walls, colliding only with each other. `ignoreId` skips the object being moved.
+ * floor and walls, colliding only with each other. The piece's `id`, when given, skips the object being moved.
  */
 export const furnitureCollides = (
   objects: SceneObject[],
-  type: ObjectType,
-  x: number,
-  z: number,
-  rotation: number,
-  ignoreId?: string
+  piece: Pick<SceneObject, "type" | "x" | "z" | "rotation"> & { id?: string }
 ): boolean => {
+  const { type } = piece
   if (isMarker(type)) return false
   // Wall items need solid wall behind their whole width.
-  if (isWallMounted(type) && !mountWalls(objects, type, x, z, rotation)) return true
+  if (isWallMounted(type) && !mountWalls(objects, piece)) return true
 
-  const moving = footprintRect({ type, rotation, x, z })
+  const moving = footprintRect(piece)
   for (const other of objects) {
-    if (other.id === ignoreId || isMarker(other.type)) continue
+    if (other.id === piece.id || isMarker(other.type)) continue
     if (isEdgeType(other.type)) {
       if (!isOverhead(type) && edgeCrossesRect(other, moving)) return true
 
@@ -196,7 +193,7 @@ export const groupCollides = (objects: SceneObject[], moved: SceneObject[]): boo
 
     const rest = [...others, ...moved.filter((other) => other.id !== piece.id)]
 
-    return furnitureCollides(rest, piece.type, piece.x, piece.z, piece.rotation)
+    return furnitureCollides(rest, piece)
   })
 }
 

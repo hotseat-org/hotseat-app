@@ -21,10 +21,8 @@ export const useRepeatPlacement = (tool: Tool, isFurniture: boolean) => {
     if (!repeat || placementPattern === "single") return []
 
     return composeRepeat(
-      tool as ObjectType,
-      repeat.start.rotation ?? placementRotation,
-      repeat.start,
-      repeat.end,
+      { type: tool as ObjectType, rotation: repeat.start.rotation ?? placementRotation },
+      repeat,
       placementPattern
     )
   }, [repeat, placementPattern, tool, placementRotation])
@@ -32,13 +30,10 @@ export const useRepeatPlacement = (tool: Tool, isFurniture: boolean) => {
     const placed: SceneObject[] = []
 
     return repeatPlan.map((point) => {
-      const isBlocked = furnitureCollides(
-        [...objects, ...placed],
-        tool as ObjectType,
-        point.x,
-        point.z,
-        point.rotation
-      )
+      const isBlocked = furnitureCollides([...objects, ...placed], {
+        type: tool as ObjectType,
+        ...point,
+      })
       if (!isBlocked)
         placed.push({ id: `plan-${placed.length}`, type: tool as ObjectType, ...point })
 

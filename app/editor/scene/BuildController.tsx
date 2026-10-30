@@ -1,6 +1,6 @@
 import { useFrame, useThree } from "@react-three/fiber"
 import { useEffect, useMemo, useRef, useState } from "react"
-import { Plane, Vector3 } from "three"
+import { MathUtils, Plane, Vector3 } from "three"
 import { useEditorStore, useEditorStoreApi } from "../store"
 import {
   SEG,
@@ -32,7 +32,7 @@ const GROUND = new Plane(new Vector3(0, 1, 0), 0)
 
 /** Wall nodes stay on the buildable floor (same bounds as furniture). */
 const clampNode = (value: number) =>
-  Math.max(-BUILD_HALF, Math.min(BUILD_HALF, Math.round(value / SEG) * SEG))
+  MathUtils.clamp(Math.round(value / SEG) * SEG, -BUILD_HALF, BUILD_HALF)
 
 const same = (first: Cell | null, second: Cell | null) =>
   (!first && !second) || (!!first && !!second && first.x === second.x && first.z === second.z)
@@ -112,15 +112,15 @@ export const BuildController = () => {
         } else if (isOpening(state.tool)) {
           // Toggle the segment nearest the click: wall → opening, opening of
           // this kind → wall, the other kind → swapped (door ⇄ window).
-          const id = raw && nearestEdgeId(state.objects, raw.x, raw.z)
-          if (id) state.toggleOpening(id, state.tool, raw.x, raw.z)
+          const id = raw && nearestEdgeId(state.objects, raw)
+          if (id) state.toggleOpening(id, state.tool, raw)
         } else if (same(startNode, endNode)) {
           // A click (no drag): remove the single segment under the cursor —
           // unless that click already erased a piece of furniture (handled by
           // ObjectRenderer; R3F's stopPropagation doesn't reach this DOM
           // listener), which would otherwise take a nearby wall with it.
           const erasedFurniture = downObjectsRef.current !== state.objects
-          const id = !erasedFurniture && raw && nearestEdgeId(state.objects, raw.x, raw.z)
+          const id = !erasedFurniture && raw && nearestEdgeId(state.objects, raw)
           if (id) state.removeObject(id)
         } else {
           state.removeEdges(wallRun(startNode, endNode))
@@ -181,11 +181,11 @@ export const BuildController = () => {
     // opening (two wall halves → door/window), swap door ⇄ window, or fill an
     // opening of this kind back to walls.
     const raw = hoverRawRef.current
-    const id = raw ? nearestEdgeId(objects, raw.x, raw.z) : null
+    const id = raw ? nearestEdgeId(objects, raw) : null
     const segment = id ? objects.find((object) => object.id === id) : null
     if (!segment) return null
 
-    const plan = openingPlan(objects, segment.id, tool, raw?.x, raw?.z)
+    const plan = openingPlan(objects, { id: segment.id, kind: tool, point: raw ?? undefined })
     if (!plan) {
       // A lone half-segment with no wall neighbour can't hold an opening.
       return (
@@ -236,7 +236,7 @@ export const BuildController = () => {
         isEdgeType(object.type) && unitEdges(object).some((edge) => kill.has(edgeKey(edge)))
     )
   } else if (hoverRawRef.current) {
-    const id = nearestEdgeId(objects, hoverRawRef.current.x, hoverRawRef.current.z)
+    const id = nearestEdgeId(objects, hoverRawRef.current)
     if (id) doomed = objects.filter((object) => object.id === id)
   }
 

@@ -1,7 +1,7 @@
 import { useMemo, useRef } from "react"
 import { useEditorStore } from "./store"
 import { getStructureField, PLATEAU_MARGIN } from "./structureField"
-import type { SceneObject } from "./types"
+import type { Cell, SceneObject } from "./types"
 
 /**
  * The ground round the office as an endless, abstract contour map: the office
@@ -13,7 +13,7 @@ import type { SceneObject } from "./types"
  * 3D ground alike, so both show the same land.
  */
 export interface ContourTile {
-  /** Ordinary contours, as line segments: x0, z0, x1, z1, … */
+  /** Ordinary contours, as line segments: fromX, fromZ, toX, toZ, … */
   minor: Float32Array
   /** Every fourth contour (the heavier "index" lines). */
   major: Float32Array
@@ -85,7 +85,7 @@ const emptyPlateau = (): [number, number][][] => {
 }
 
 /**
- * Join loose segments (x0, z0, x1, z1, …) into continuous lines and round them
+ * Join loose segments (fromX, fromZ, toX, toZ, …) into continuous lines and round them
  * (Chaikin corner cutting), so contours read as smooth curves, not short
  * straight pieces. Ends at a tile's edge stay put, so tiles still meet.
  */
@@ -178,15 +178,15 @@ interface CellOptions {
   grid: Float32Array
   size: number
   /** World position of the grid's first sample. */
-  x0: number
-  z0: number
+  originX: number
+  originZ: number
   level: number
   column: number
   row: number
 }
 
-/** The segments (x1, z1, x2, z2 …) where one grid cell crosses `level`. */
-const traceCell = ({ grid, size, x0, z0, level, column, row }: CellOptions) => {
+/** The segments (fromX, fromZ, toX, toZ …) where one grid cell crosses `level`. */
+const traceCell = ({ grid, size, originX, originZ, level, column, row }: CellOptions) => {
   const topLeft = grid[row * size + column]
   const topRight = grid[row * size + column + 1]
   const bottomRight = grid[(row + 1) * size + column + 1]
@@ -198,8 +198,8 @@ const traceCell = ({ grid, size, x0, z0, level, column, row }: CellOptions) => {
     (bottomLeft > level ? 1 : 0)
   if (code === 0 || code === 15) return []
 
-  const x = x0 + column * CELL
-  const z = z0 + row * CELL
+  const x = originX + column * CELL
+  const z = originZ + row * CELL
   const at = (start: number, end: number) => (level - start) / (end - start)
   const top = [x + at(topLeft, topRight) * CELL, z]
   const right = [x + CELL, z + at(topRight, bottomRight) * CELL]
@@ -245,12 +245,12 @@ const traceCell = ({ grid, size, x0, z0, level, column, row }: CellOptions) => {
   return out
 }
 
-/** Line segments where `grid` (n×n heights, from x0/z0) crosses each level. */
+/** Line segments where `grid` (n×n heights, from originX/originZ) crosses each level. */
 const trace = ({
   grid,
   size,
-  x0,
-  z0,
+  originX,
+  originZ,
 }: Omit<CellOptions, "level" | "column" | "row">): ContourTile => {
   let low = Infinity
   let high = -Infinity
@@ -265,7 +265,7 @@ const trace = ({
     const out = Math.round(level - 0.5) % 4 === 0 ? major : minor
     for (let row = 0; row < size - 1; row++)
       for (let column = 0; column < size - 1; column++)
-        out.push(...traceCell({ grid, size, x0, z0, level, column, row }))
+        out.push(...traceCell({ grid, size, originX, originZ, level, column, row }))
   }
 
   return { minor: smoothSegments(minor), major: smoothSegments(major), stars: new Float32Array() }
@@ -327,20 +327,21 @@ export const createLandscape = (objects: SceneObject[]): Landscape => {
     const cached = cache.get(key)
     if (cached) return cached
 
-    const x0 = tileX * TILE
-    const z0 = tileZ * TILE
+    const originX = tileX * TILE
+    const originZ = tileZ * TILE
     const grid = new Float32Array(size * size)
     for (let j = 0; j < size; j++)
-      for (let i = 0; i < size; i++) grid[j * size + i] = heightAt(x0 + i * CELL, z0 + j * CELL)
+      for (let i = 0; i < size; i++)
+        grid[j * size + i] = heightAt(originX + i * CELL, originZ + j * CELL)
     const stars: number[] = []
     for (let star = 0; star < STARS_PER_TILE; star++) {
-      const x = x0 + hash(tileX * 97 + star, tileZ, seed + 5) * TILE
-      const z = z0 + hash(tileX, tileZ * 89 + star, seed + 6) * TILE
+      const x = originX + hash(tileX * 97 + star, tileZ, seed + 5) * TILE
+      const z = originZ + hash(tileX, tileZ * 89 + star, seed + 6) * TILE
       // Mostly faint, a few bright: brightness skewed low.
       if (offPlateau(x, z) >= STAR_CLEARANCE)
         stars.push(x, z, 0.25 + hash(tileX + star, tileZ - star, seed + 7) ** 3 * 0.75)
     }
-    const traced = { ...trace({ grid, size, x0, z0 }), stars: new Float32Array(stars) }
+    const traced = { ...trace({ grid, size, originX, originZ }), stars: new Float32Array(stars) }
     // Keep memory bounded on long pans: forget the oldest tiles.
     if (cache.size > 400) cache.delete(cache.keys().next().value as string)
 
@@ -368,10 +369,10 @@ export const useLandscape = (objects: SceneObject[]) => {
 }
 
 /** The tiles (tx, tz) covering a world rectangle. */
-export const tilesCovering = (x0: number, z0: number, x1: number, z1: number) => {
+export const tilesCovering = (from: Cell, to: Cell) => {
   const out: [number, number][] = []
-  for (let tileZ = Math.floor(z0 / TILE); tileZ <= Math.floor(z1 / TILE); tileZ++)
-    for (let tileX = Math.floor(x0 / TILE); tileX <= Math.floor(x1 / TILE); tileX++)
+  for (let tileZ = Math.floor(from.z / TILE); tileZ <= Math.floor(to.z / TILE); tileZ++)
+    for (let tileX = Math.floor(from.x / TILE); tileX <= Math.floor(to.x / TILE); tileX++)
       out.push([tileX, tileZ])
 
   return out

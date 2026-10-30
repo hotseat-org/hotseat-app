@@ -170,7 +170,7 @@ export const composeWallShift = (
   for (const piece of objects) {
     if (!isWallMounted(piece.type)) continue
 
-    const walls = mountWalls(objects, piece.type, piece.x, piece.z, piece.rotation) ?? []
+    const walls = mountWalls(objects, piece) ?? []
     if (walls.some((id) => removedIds.has(id))) return null
     if (walls.some((id) => runIds.has(id))) shiftedMounts.add(piece.id)
   }

@@ -7,11 +7,12 @@ import {
   type SetStateAction,
 } from "react"
 import { isTypingTarget } from "../keyboard"
+import { clamp } from "../math"
 import { createWheelReader, getSmoothZoomFactor, getStepZoomFactor } from "../wheel"
-import { MAX_K, MIN_K, type View } from "./planView"
+import { MAX_ZOOM, MIN_ZOOM, type View } from "./planView"
 
 /** A press that moves further than this is a pan, not a click (px). */
-const DRAG = 4
+const DRAG_THRESHOLD = 4
 
 /** How much a zoom key (+ / −) scales the plan; 0 for any other key. */
 const getKeyZoomFactor = (key: string) => {
@@ -38,7 +39,7 @@ export const usePlanGestures = (
       setView((view) => {
         if (!view) return view
 
-        const zoom = Math.min(MAX_K, Math.max(MIN_K, view.zoom * factor))
+        const zoom = clamp(view.zoom * factor, MIN_ZOOM, MAX_ZOOM)
         const ratio = zoom / view.zoom
 
         return {
@@ -126,7 +127,7 @@ export const usePlanGestures = (
 
         moved.current = true
       } else {
-        if (Math.hypot(moveEvent.clientX - start.x, moveEvent.clientY - start.y) > DRAG)
+        if (Math.hypot(moveEvent.clientX - start.x, moveEvent.clientY - start.y) > DRAG_THRESHOLD)
           moved.current = true
         if (moved.current) {
           const deltaX = moveEvent.clientX - prev.x

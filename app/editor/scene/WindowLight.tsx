@@ -6,10 +6,11 @@ import {
   Color,
   DoubleSide,
   Matrix4,
+  MathUtils,
   type InstancedMesh,
 } from "three"
 import { useEditorStore } from "../store"
-import { SEG, edgeStep, enclosedRegions, isDiagonalEdge } from "../layout"
+import { SEG, edgeStep, enclosedRegions, getCellKey, getCellKeyAt, isDiagonalEdge } from "../layout"
 import type { DayProfile } from "../daylight"
 
 /** Just above the blobs under furniture. */
@@ -37,8 +38,7 @@ const createPoolTexture = () => {
   const context = canvas.getContext("2d")
   if (context) {
     const image = context.createImageData(size, size)
-    const edge = (fraction: number) =>
-      Math.min(1, Math.max(0, (1 - Math.abs(fraction * 2 - 1)) / 0.3))
+    const edge = (fraction: number) => MathUtils.clamp((1 - Math.abs(fraction * 2 - 1)) / 0.3, 0, 1)
     for (let y = 0; y < size; y++)
       for (let x = 0; x < size; x++) {
         const alpha = edge((x + 0.5) / size) * edge((y + 0.5) / size)
@@ -73,9 +73,8 @@ export const WindowLight = ({ profile }: Props) => {
   const windows = useMemo(() => {
     const inside = new Set<string>()
     for (const region of enclosedRegions(objects))
-      for (const cell of region) inside.add(`${cell.x},${cell.z}`)
-    const isInside = (x: number, z: number) =>
-      inside.has(`${Math.floor(x / SEG) * SEG},${Math.floor(z / SEG) * SEG}`)
+      for (const cell of region) inside.add(getCellKey(cell.x, cell.z))
+    const isInside = (x: number, z: number) => inside.has(getCellKeyAt(x, z))
 
     return objects
       .filter((object) => object.type === "window")

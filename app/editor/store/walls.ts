@@ -18,6 +18,7 @@ import {
   isWall,
   type OpeningType,
   type SceneObject,
+  type Cell,
   type WallCell,
   type WallType,
 } from "../types"
@@ -35,7 +36,7 @@ export interface WallsSlice {
    * cursor's side) into an opening of `kind`, an opening of that kind back into
    * two wall halves, or swap a door ⇄ window.
    */
-  toggleOpening: (id: string, kind: OpeningType, pointX?: number, pointZ?: number) => void
+  toggleOpening: (id: string, kind: OpeningType, point?: Cell) => void
   /**
    * Pick a door/window up to move it: it's removed and the wall is closed
    * behind it (two wall halves). Returns the lifted opening (to place later).
@@ -95,9 +96,9 @@ export const createWallsSlice = (set: SetState, get: GetState): WallsSlice => ({
       }
     }),
 
-  toggleOpening: (id, kind, pointX, pointZ) =>
+  toggleOpening: (id, kind, point) =>
     set((state) => {
-      const plan = openingPlan(state.objects, id, kind, pointX, pointZ)
+      const plan = openingPlan(state.objects, { id, kind, point })
       if (!plan) return state
 
       const added = plan.add.map((piece) => ({ ...piece, id: nanoid(8) }))
@@ -115,7 +116,7 @@ export const createWallsSlice = (set: SetState, get: GetState): WallsSlice => ({
     const opening = get().objects.find((candidate) => candidate.id === id)
     if (!opening || !isOpening(opening.type)) return null
 
-    const plan = openingPlan(get().objects, id, opening.type)
+    const plan = openingPlan(get().objects, { id, kind: opening.type })
     if (!plan) return null
 
     set((state) => ({
@@ -134,8 +135,18 @@ export const createWallsSlice = (set: SetState, get: GetState): WallsSlice => ({
     if (state.objects.some((candidate) => candidate.id === opening.id)) return true
     if (!isOpening(opening.type)) return false
 
-    const wallId = nearestEdgeId(state.objects, pointX, pointZ, 0.6, (wall) => isWall(wall.type))
-    const plan = wallId && openingPlan(state.objects, wallId, opening.type, pointX, pointZ)
+    const wallId = nearestEdgeId(
+      state.objects,
+      { x: pointX, z: pointZ },
+      { maxDistance: 0.6, accept: (wall) => isWall(wall.type) }
+    )
+    const plan =
+      wallId &&
+      openingPlan(state.objects, {
+        id: wallId,
+        kind: opening.type,
+        point: { x: pointX, z: pointZ },
+      })
     if (!plan) return false
 
     set({

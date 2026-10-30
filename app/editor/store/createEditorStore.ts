@@ -50,7 +50,7 @@ const makeInitializer =
 
     return {
       ...moduleSlices,
-      ...createObjectsSlice(set, get, hooks, initialObjects),
+      ...createObjectsSlice(set, get, { initialObjects, hooks }),
       ...createFurnitureSlice(set, get, hooks),
       ...createWallsSlice(set, get),
       ...createSelectionSlice(set, get, hooks),
