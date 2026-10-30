@@ -1,0 +1,13 @@
+import type { EditorModule } from "../editor/module"
+import "./objectFields"
+import { asNewDesks, createOfficeSlice } from "./store"
+
+/**
+ * The office: bookable desks on top of the editor — their labels, residents,
+ * zones and features, booking them by day, and what the map shows about them.
+ */
+export const officeModule: EditorModule = {
+  id: "office",
+  createSlice: createOfficeSlice,
+  prepareNewPieces: asNewDesks,
+}

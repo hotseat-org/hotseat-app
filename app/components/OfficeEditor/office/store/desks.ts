@@ -1,8 +1,8 @@
-import { snapToFootprint } from "../layout"
-import { findDeskChair, toWorld } from "../seatSpot"
-import { isSeatable, type SceneObject } from "../types"
-import { numberDesksByZone } from "../zones"
-import type { GetState, SetState } from "./state"
+import { snapToFootprint } from "../../layout"
+import { findDeskChair, toWorld } from "../../seatSpot"
+import { isSeatable, type SceneObject } from "../../types"
+import { numberDesksByZone } from "../../zones"
+import type { GetState, SetState } from "../../store/state"
 
 /** Desks: their labels, residents, zones and features. */
 export interface DesksSlice {

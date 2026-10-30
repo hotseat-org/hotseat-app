@@ -7,10 +7,9 @@ import {
   toRotationStep,
 } from "../layout"
 import { isEdgeType, isRecolorable, variantOf, type ObjectType, type SceneObject } from "../types"
-import { asNewDesks } from "./desks"
 import { HISTORY_LIMIT } from "./history"
 import { dropOrphanMounts } from "./objects"
-import type { GetState, SetState } from "./state"
+import type { GetState, SetState, StoreHooks } from "./state"
 
 export interface NewObject {
   type: ObjectType
@@ -76,7 +75,11 @@ export const settleTurn = (rawSet: SetState, get: GetState) => {
   })
 }
 
-export const createFurnitureSlice = (set: SetState, get: GetState): FurnitureSlice => ({
+export const createFurnitureSlice = (
+  set: SetState,
+  get: GetState,
+  hooks: StoreHooks
+): FurnitureSlice => ({
   addObject: ({ type, x, z, rotation = 0, color, model }) => {
     // Don't place furniture inside existing furniture.
     if (furnitureCollides(get().objects, type, x, z, rotation)) return ""
@@ -84,7 +87,7 @@ export const createFurnitureSlice = (set: SetState, get: GetState): FurnitureSli
     set((state) => ({
       objects: [
         ...state.objects,
-        ...asNewDesks(state.objects, [{ id, type, x, z, rotation, color, model }]),
+        ...hooks.prepareNewPieces(state.objects, [{ id, type, x, z, rotation, color, model }]),
       ],
     }))
     return id
@@ -97,7 +100,9 @@ export const createFurnitureSlice = (set: SetState, get: GetState): FurnitureSli
       placed.push({ id: nanoid(8), type, x, z, rotation, color, model })
     }
     if (placed.length)
-      set((state) => ({ objects: [...state.objects, ...asNewDesks(state.objects, placed)] }))
+      set((state) => ({
+        objects: [...state.objects, ...hooks.prepareNewPieces(state.objects, placed)],
+      }))
     return placed.length
   },
 
@@ -201,7 +206,7 @@ export const createFurnitureSlice = (set: SetState, get: GetState): FurnitureSli
           furnitureCollides(state.objects, original.type, snapped.x, snapped.z, original.rotation)
         )
           continue
-        const [clone] = asNewDesks(state.objects, [
+        const [clone] = hooks.prepareNewPieces(state.objects, [
           { ...original, id: nanoid(8), ...snapped, variant: undefined },
         ])
         return { objects: [...state.objects, clone], selectedId: clone.id }

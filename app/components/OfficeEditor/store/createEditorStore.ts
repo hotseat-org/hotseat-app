@@ -4,21 +4,20 @@
 import { createStore, type StateCreator } from "zustand"
 import { persist } from "zustand/middleware"
 import { normalizeEdges } from "../layout"
+import type { EditorModule } from "../editor/module"
 import type { SceneObject } from "../types"
-import { createBookingSlice } from "./booking"
-import { createDesksSlice } from "./desks"
 import { createFurnitureSlice, settleTurn } from "./furniture"
 import { createHistory } from "./history"
 import { createObjectsSlice } from "./objects"
 import { createPanelsSlice } from "./panels"
 import { createSelectionSlice, syncSelection } from "./selection"
-import type { EditorState, EditorStore } from "./state"
+import type { EditorState, EditorStore, StoreHooks } from "./state"
 import { createToolsSlice } from "./tools"
 import { createViewSlice } from "./view"
 import { createWallsSlice } from "./walls"
 
 const makeInitializer =
-  (initialObjects: SceneObject[]): StateCreator<EditorState> =>
+  (initialObjects: SceneObject[], modules: EditorModule[]): StateCreator<EditorState> =>
   (rawSet, get) => {
     // After every change: keep the selection to what exists, and settle a
     // piece turned into others once it's let go.
@@ -26,16 +25,28 @@ const makeInitializer =
       syncSelection(rawSet, get)
       settleTurn(rawSet, get)
     })
+    const hooks: StoreHooks = {
+      // Each module in turn, the pieces as the one before left them.
+      prepareNewPieces: (existing, fresh) =>
+        modules.reduce(
+          (pieces, module) => module.prepareNewPieces?.(existing, pieces) ?? pieces,
+          fresh
+        ),
+    }
+    // The modules' slices: typed through ModuleState, which each one extends.
+    const moduleSlices = Object.assign(
+      {},
+      ...modules.map((module) => module.createSlice?.(set, get) ?? {})
+    ) as EditorState
     return {
-      ...createObjectsSlice(set, get, initialObjects),
-      ...createFurnitureSlice(set, get),
+      ...moduleSlices,
+      ...createObjectsSlice(set, get, hooks, initialObjects),
+      ...createFurnitureSlice(set, get, hooks),
       ...createWallsSlice(set, get),
-      ...createDesksSlice(set, get),
-      ...createSelectionSlice(set, get),
+      ...createSelectionSlice(set, get, hooks),
       ...createToolsSlice(set, get),
       ...createViewSlice(set, get),
       ...createPanelsSlice(set, get),
-      ...createBookingSlice(set, get),
       ...history,
     }
   }
@@ -45,6 +56,8 @@ interface CreateEditorStoreOptions {
   persistKey?: string
   /** Scene the store is born with (an office's saved layout), avoiding any load race. */
   initialObjects?: SceneObject[]
+  /** The modules this editor runs with (their slices and hooks). */
+  modules?: EditorModule[]
 }
 
 /**
@@ -55,8 +68,9 @@ interface CreateEditorStoreOptions {
 export const createEditorStore = ({
   persistKey,
   initialObjects = [],
+  modules = [],
 }: CreateEditorStoreOptions = {}): EditorStore => {
-  const initializer = makeInitializer(normalizeEdges(initialObjects))
+  const initializer = makeInitializer(normalizeEdges(initialObjects), modules)
   return persistKey
     ? createStore<EditorState>()(
         persist(initializer, {

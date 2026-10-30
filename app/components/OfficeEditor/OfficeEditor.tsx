@@ -38,6 +38,8 @@ import { useBookingSync, type EditorBooking } from "./editor/useBookingSync"
 import { useEditorMode, type Mode } from "./editor/useEditorMode"
 import { useEditorShortcuts } from "./editor/useEditorShortcuts"
 import { useRouteLink } from "./editor/useRouteLink"
+import type { EditorModule } from "./editor/module"
+import { officeModule } from "./office/module"
 import { MOBILE_CHROME } from "~/components/office/mobile"
 import { ContourBackdrop } from "~/components/ui/ContourBackdrop"
 
@@ -46,6 +48,8 @@ const NO_PEOPLE: People = { me: null, members: [] }
 const SceneCanvas = lazy(() => import("./scene/SceneCanvas"))
 
 interface Props {
+  /** The modules this editor runs with; the office's by default. */
+  modules?: EditorModule[]
   /** When provided, the editor loads/saves this office's layout instead of localStorage. */
   initialObjects?: SceneObject[]
   /**
@@ -97,9 +101,10 @@ export const OfficeEditor = (props: Props) => {
   if (!storeRef.current) {
     // DB-backed offices are born with their saved layout (no load race); the
     // standalone editor persists to localStorage instead.
+    const modules = props.modules ?? [officeModule]
     storeRef.current = props.onSave
-      ? createEditorStore({ initialObjects: props.initialObjects })
-      : createEditorStore({ persistKey: "office-editor:v1" })
+      ? createEditorStore({ initialObjects: props.initialObjects, modules })
+      : createEditorStore({ persistKey: "office-editor:v1", modules })
   }
 
   return (

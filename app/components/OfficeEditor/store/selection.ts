@@ -1,8 +1,7 @@
 import { nanoid } from "nanoid"
 import { ROTATION_STEP, groupCollides, snapToFootprint, toRotationStep } from "../layout"
 import { isEdgeType, isMarker, isRecolorable, type SceneObject } from "../types"
-import { asNewDesks } from "./desks"
-import type { GetState, SetState } from "./state"
+import type { GetState, SetState, StoreHooks } from "./state"
 
 /** What's selected, and what's done to the whole selection. */
 export interface SelectionSlice {
@@ -55,7 +54,11 @@ export const syncSelection = (rawSet: SetState, get: GetState) => {
     rawSet({ selectedId: primary, selection: nextSelection })
 }
 
-export const createSelectionSlice = (set: SetState, get: GetState): SelectionSlice => {
+export const createSelectionSlice = (
+  set: SetState,
+  get: GetState,
+  hooks: StoreHooks
+): SelectionSlice => {
   // Furniture in the current selection (group ops skip walls/openings).
   const selectedFurniture = () => {
     const { selection, objects } = get()
@@ -76,7 +79,7 @@ export const createSelectionSlice = (set: SetState, get: GetState): SelectionSli
     ])
     for (const [deltaX, deltaZ] of offsets) {
       // Copies get their own look (variant unset → derived from the new id).
-      const copies = asNewDesks(
+      const copies = hooks.prepareNewPieces(
         get().objects,
         source.map((piece) => ({
           ...piece,

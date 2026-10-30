@@ -1,7 +1,6 @@
 import { edgeKey, mountWalls, normalizeEdges, unitEdges } from "../layout"
 import { isEdgeType, isWallMounted, type SceneObject } from "../types"
-import { asNewDesks } from "./desks"
-import type { GetState, SetState } from "./state"
+import type { GetState, SetState, StoreHooks } from "./state"
 
 /** The layout as a whole. */
 export interface ObjectsSlice {
@@ -26,6 +25,7 @@ export const dropOrphanMounts = (objects: SceneObject[]) =>
 export const createObjectsSlice = (
   set: SetState,
   _get: GetState,
+  hooks: StoreHooks,
   initialObjects: SceneObject[]
 ): ObjectsSlice => ({
   objects: initialObjects,
@@ -43,7 +43,7 @@ export const createObjectsSlice = (
         (piece) =>
           isEdgeType(piece.type) && !unitEdges(piece).some((unit) => taken.has(edgeKey(unit)))
       )
-      const furniture = asNewDesks(
+      const furniture = hooks.prepareNewPieces(
         state.objects,
         placed.filter((piece) => !isEdgeType(piece.type))
       )
