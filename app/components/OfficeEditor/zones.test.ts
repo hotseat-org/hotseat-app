@@ -63,3 +63,13 @@ describe("zones", () => {
     expect([...eng].some((key) => ops.has(key))).toBe(false)
   })
 })
+
+describe("zones and fences", () => {
+  test("a zone carries on past a fence (it isn't a wall)", () => {
+    const desk = place("workstation", 2, 0.75, { zone: "Eng" })
+    const fence = roomEdges({ x: 0, z: 0 }, { x: 4, z: 4 }).map((edge) =>
+      place("fence", edge.x, edge.z, { rotation: edge.rotation })
+    )
+    expect(composeZoneAreas([desk, ...fence])[0].cells.some(([, j]) => j < 0)).toBe(true)
+  })
+})

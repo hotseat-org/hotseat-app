@@ -11,14 +11,16 @@ import {
 } from "../../layout"
 import { WALL } from "../../objects/dimensions"
 import { isWall, type SceneObject } from "../../types"
-import { WINDOW_GLASS } from "../sketch"
-import { getEdge } from "../../catalog"
+import { getItem } from "../../catalog"
+import { getRenderer } from "../../catalog/rendering"
 import { HALF_WALL, type Push, type WallPieces } from "./wallPieces"
 
 /**
- * Plain and glass walls, merged into straight runs of the same colour — one
- * piece per run, so no seams between half-metre segments — then the corner
- * and junction posts over the runs' ends.
+ * Wall runs (walls, glass, fences…), merged into straight runs of the same
+ * look — one piece per run, so no seams between half-metre segments — then
+ * the corner and junction posts over the runs' ends. A wall shows its faces'
+ * paint; a run with a plan look of its own (see ItemRenderer.planRun) draws
+ * that instead.
  */
 export const drawWalls = (
   objects: SceneObject[],
@@ -30,30 +32,49 @@ export const drawWalls = (
 ) => {
   const runs = new Map<
     string,
-    { alongX: boolean; fixed: number; at: number[]; color: string; back: string; glass: boolean }
+    {
+      alongX: boolean
+      fixed: number
+      at: number[]
+      color: string
+      back: string
+      opacity: number
+      across: number
+    }
   >()
   const diagonalRuns = new Map<
     string,
-    { rotation: number; at: SceneObject[]; color: string; back: string; glass: boolean }
+    {
+      rotation: number
+      at: SceneObject[]
+      color: string
+      back: string
+      opacity: number
+      across: number
+    }
   >()
   for (const segment of objects) {
     if (!isWall(segment.type)) continue
-    const glass = !!getEdge(segment.type)?.isSeeThrough
+    const look = getRenderer(segment.type).planRun
+    const ownColor = look && (look.color ?? segment.color ?? getItem(segment.type).defaultColor)
+    const opacity = look?.opacity ?? 1
+    const across = HALF_WALL * (look?.thickness ?? 1)
     // Each face's paint, seen the run's way round (its line's +Z / +X side first).
     const faces = getWallFacesFrom(segment, {
       rotation: EDGE_ROTATION[edgeDirection(segment.rotation)],
     })
-    const [color, back] = glass ? [WINDOW_GLASS, WINDOW_GLASS] : faces.map((face) => face ?? wall)
+    const [color, back] = ownColor ? [ownColor, ownColor] : faces.map((face) => face ?? wall)
     if (isDiagonalEdge(segment.rotation)) {
       // Diagonal: runs on the lines where x − z (rising) or x + z (falling) holds.
       const isRising = edgeDirection(segment.rotation) === "rising"
-      const key = `${isRising}|${isRising ? segment.x - segment.z : segment.x + segment.z}|${glass}|${color}|${back}`
+      const key = `${isRising}|${isRising ? segment.x - segment.z : segment.x + segment.z}|${segment.type}|${color}|${back}`
       const run = diagonalRuns.get(key) ?? {
         rotation: EDGE_ROTATION[edgeDirection(segment.rotation)],
         at: [],
         color,
         back,
-        glass,
+        opacity,
+        across,
       }
       run.at.push(segment)
       diagonalRuns.set(key, run)
@@ -61,8 +82,8 @@ export const drawWalls = (
     }
     const alongX = runsAlongX(segment.rotation)
     const fixed = alongX ? segment.z : segment.x
-    const key = `${alongX}|${fixed}|${glass}|${color}|${back}`
-    const run = runs.get(key) ?? { alongX, fixed, at: [], color, back, glass }
+    const key = `${alongX}|${fixed}|${segment.type}|${color}|${back}`
+    const run = runs.get(key) ?? { alongX, fixed, at: [], color, back, opacity, across }
     run.at.push(alongX ? segment.x : segment.z)
     runs.set(key, run)
   }
@@ -78,11 +99,7 @@ export const drawWalls = (
         start - SEG / 2,
         prev + SEG / 2,
         [run.color, run.back],
-        {
-          // Glass partitions: a slimmer, see-through line.
-          opacity: run.glass ? 0.8 : 1,
-          across: run.glass ? HALF_WALL * 0.5 : HALF_WALL,
-        }
+        { opacity: run.opacity, across: run.across }
       )
     for (const position of run.at.slice(1)) {
       if (Math.abs(position - prev - SEG) > 1e-6) {
@@ -102,8 +119,8 @@ export const drawWalls = (
       const [startNode] = edgeNodes(start)
       const [, endNode] = edgeNodes(prev)
       facedDiagonalWallPiece(startNode, endNode, run.rotation, [run.color, run.back], {
-        opacity: run.glass ? 0.8 : 1,
-        across: run.glass ? HALF_WALL * 0.5 : HALF_WALL,
+        opacity: run.opacity,
+        across: run.across,
       })
     }
     for (const segment of run.at.slice(1)) {

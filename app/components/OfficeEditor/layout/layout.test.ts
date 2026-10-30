@@ -217,3 +217,19 @@ describe("saved layouts", () => {
     expect(normalizeEdges(upgraded)).toBe(upgraded)
   })
 })
+
+describe("fences", () => {
+  const fenced = walls(roomEdges({ x: 0, z: 0 }, { x: 4, z: 4 }), "fence")
+  test("don't make rooms", () => {
+    expect(enclosedRegions(fenced)).toEqual([])
+  })
+  test("block furniture like walls do", () => {
+    expect(furnitureCollides(fenced, "desk", 1, 0, 0)).toBe(true)
+    expect(furnitureCollides(fenced, "desk", 1, 0.5, 0)).toBe(false)
+  })
+  test("take no door, and nothing hangs on them", () => {
+    const segment = fenced.find((object) => object.z === 0 && object.x === 0.75) as SceneObject
+    expect(openingPlan(fenced, segment.id, "door", 0.8, 0)).toBeNull()
+    expect(wallMount(fenced, "wallArt", 1.1, 0.3)).toBeNull()
+  })
+})

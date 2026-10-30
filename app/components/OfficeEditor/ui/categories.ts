@@ -31,7 +31,7 @@ export const CATEGORIES: Category[] = [
     id: "structure",
     label: msg("Structure"),
     icon: StructureIcon,
-    types: ["room", "wall", "door", "window", "glassWall", "glassDoor"],
+    types: ["room", "wall", "door", "window", "glassWall", "glassDoor", "fence"],
   },
   {
     id: "desks",

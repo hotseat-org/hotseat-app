@@ -13,7 +13,6 @@ import {
   isMarker,
   isObjectType,
   isSeatable,
-  isWall,
   isWallMounted,
   type Cell,
   type ObjectType,
@@ -22,6 +21,7 @@ import { ObjectRenderer } from "../objects/ObjectRenderer"
 import { StaticBatch } from "../objects/StaticBatch"
 import { CURSORS, CursorHintContext, getToolCursor, type CursorHint } from "../cursors"
 import { canPlaceKit, composeKitAt } from "../kits"
+import { getRenderer } from "../catalog/rendering"
 import { Lighting } from "./Lighting"
 import { StudioEnvironment } from "./StudioEnvironment"
 import { PostFx } from "./PostFx"
@@ -406,7 +406,9 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
             <Walls />
             <StaticBatch enabled={readOnly}>
               {objects
-                .filter((object) => !isWall(object.type) && !isMarker(object.type))
+                .filter(
+                  (object) => !getRenderer(object.type).isDrawnAsRun && !isMarker(object.type)
+                )
                 .map((object) => (
                   <ObjectRenderer
                     key={object.id}

@@ -4,5 +4,6 @@
  */
 import "./presets/structure"
 import "./presets/furniture"
+import "./presets/fence"
 
 export * from "./registry"

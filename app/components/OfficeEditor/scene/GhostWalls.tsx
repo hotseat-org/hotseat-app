@@ -4,13 +4,14 @@ import { GlassRun } from "../objects/GlassWall"
 import { GhostContext, Surface, type GhostMode } from "../objects/Surface"
 import { WALL } from "../objects/dimensions"
 import { useSurfaces } from "../sceneTheme"
-import type { SceneObject, WallCell } from "../types"
+import type { SceneObject, WallCell, WallType } from "../types"
+import { GhostObject } from "./GhostObject"
 import { buildRuns, type Run } from "./Walls"
 
 interface Props {
-  /** The wall (or glass wall) segments to preview. */
+  /** The wall segments to preview (walls and glass merged into runs; other kinds piece by piece). */
   edges: (WallCell & {
-    type: "wall" | "glassWall"
+    type: WallType
     /** Its own colour, for a translucent ghost (a saved room's painted walls). */
     color?: string
     /** A flat tint instead (blocked, erased). */
@@ -46,10 +47,23 @@ export const GhostWalls = ({ edges, grow = 0 }: Props) => {
       ...buildRuns(asObjects("glassWall"), TRANSLUCENT).map((run) => ({ ...run, isGlass: true })),
     ]
   }, [edges])
+  const pieces = edges.filter((edge) => edge.type !== "wall" && edge.type !== "glassWall")
   return (
     <>
       {runs.map((run) => (
         <GhostRun key={`${run.isGlass}|${run.key}`} run={run} grow={grow} />
+      ))}
+      {pieces.map((edge, i) => (
+        <GhostObject
+          key={i}
+          type={edge.type}
+          x={edge.x}
+          z={edge.z}
+          rotation={edge.rotation}
+          color={edge.color}
+          tint={edge.tint}
+          scale={1 + grow}
+        />
       ))}
     </>
   )

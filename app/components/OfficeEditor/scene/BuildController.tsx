@@ -150,7 +150,7 @@ export const BuildController = () => {
           <GhostWalls
             edges={run.map((edge) => ({
               ...edge,
-              type: tool === "glassWall" ? "glassWall" : "wall",
+              type: isWall(tool) ? tool : "wall",
               // Red where the run would cut through furniture (skipped on commit).
               tint: edgeBlocked(objects, edge) ? ERASE : undefined,
             }))}
@@ -197,7 +197,7 @@ export const BuildController = () => {
           <GhostWalls
             edges={plan.add.map((edge) => ({
               ...edge,
-              type: edge.type === "glassWall" ? "glassWall" : "wall",
+              type: isWall(edge.type) ? edge.type : "wall",
               tint: ERASE,
             }))}
             grow={0.03}
@@ -230,9 +230,7 @@ export const BuildController = () => {
     <>
       <GhostWalls
         edges={doomed.flatMap((object) =>
-          object.type === "wall" || object.type === "glassWall"
-            ? [{ ...object, type: object.type, tint: ERASE }]
-            : []
+          isWall(object.type) ? [{ ...object, type: object.type, tint: ERASE }] : []
         )}
         grow={0.04}
       />

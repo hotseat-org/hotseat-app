@@ -5,6 +5,7 @@ import {
   Coffee,
   DoorOpen,
   Eraser,
+  Fence,
   Frame,
   GlassWater,
   LampCeiling,
@@ -70,6 +71,7 @@ export const TOOLS: ToolMeta[] = [
   { tool: "window", label: msg("Window"), icon: AppWindow, key: "" },
   { tool: "glassWall", label: msg("Glass wall"), icon: Columns2, key: "" },
   { tool: "glassDoor", label: msg("Glass door"), icon: DoorClosed, key: "" },
+  { tool: "fence", label: msg("Fence"), icon: Fence, key: "" },
   // The one bookable desk: a desk with its chair (what people book is a seat).
   { tool: "workstation", label: msg("Desk with chair"), icon: LampDesk, key: "4" },
   // Older layouts' desks: no longer placed (no shortcut, not in the catalog),

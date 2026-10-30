@@ -28,6 +28,16 @@ export interface ItemRenderer {
    * from their traits.)
    */
   drawSymbol?: DrawSymbol | null
+  /**
+   * A wall run drawn merged into seamless runs, with corner posts at its
+   * joints (see Walls, Posts) — not piece by piece with its Mesh.
+   */
+  isDrawnAsRun?: boolean
+  /**
+   * A run's line on the plan, unless it shows its faces' paint (walls): its
+   * colour (unset: the piece's own), thickness (of a wall's) and opacity.
+   */
+  planRun?: { color?: string; thickness: number; opacity: number }
 }
 
 const renderers = new Map<string, ItemRenderer>()

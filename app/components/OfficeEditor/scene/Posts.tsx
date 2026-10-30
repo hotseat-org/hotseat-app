@@ -7,6 +7,8 @@ import { Surface } from "../objects/Surface"
 import { WALL } from "../objects/dimensions"
 import { useSurfaces } from "../sceneTheme"
 import { getItem } from "../catalog"
+import { getRenderer } from "../catalog/rendering"
+import { isWall } from "../types"
 import { CutawayContext, setCutAttributes } from "./cutaway"
 
 const SIZE = 0.15 // slightly proud of the wall thickness so it fills the corner notch
@@ -19,7 +21,15 @@ const GLASS_SIZE = 0.07
  */
 export const Posts = () => {
   const objects = useObjectsWithPaintPreview()
-  const nodes = useMemo(() => wallJointNodes(objects), [objects])
+  // Where walls (and what's cut into them) meet: other runs, like fences,
+  // join without wall posts.
+  const nodes = useMemo(
+    () =>
+      wallJointNodes(
+        objects.filter((object) => !isWall(object.type) || getRenderer(object.type).isDrawnAsRun)
+      ),
+    [objects]
+  )
   const surfaces = useSurfaces()
   // Nodes touched by any solid wall/opening get the chunky wall post, in the
   // paint of its walls.

@@ -5,5 +5,6 @@
  */
 import "./presets/structure.render"
 import "./presets/furniture.render"
+import "./presets/fence.render"
 
 export * from "./renderers"
