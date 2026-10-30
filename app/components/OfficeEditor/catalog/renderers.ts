@@ -1,3 +1,4 @@
+import type { LucideIcon } from "lucide-react"
 import type { ReactElement } from "react"
 import type { DrawSymbol } from "../plan/sketch"
 import type { ObjectType } from "./registry"
@@ -38,6 +39,19 @@ export interface ItemRenderer {
    * colour (unset: the piece's own), thickness (of a wall's) and opacity.
    */
   planRun?: { color?: string; thickness: number; opacity: number }
+  /** How the editor names and offers it. */
+  tile?: ItemTile
+}
+
+/** A kind's tile in the catalogue (and its name everywhere else: the Inspector, commands). */
+export interface ItemTile {
+  /** Its name, translatable (msg). */
+  label: string
+  icon: LucideIcon
+  /** A number-key shortcut. */
+  key?: string
+  /** The catalogue category it's offered in (see categories.ts); unset, not offered (older layouts' kinds). */
+  category?: string
 }
 
 const renderers = new Map<string, ItemRenderer>()
@@ -52,3 +66,9 @@ export const getRenderer = (type: ObjectType): ItemRenderer => {
   if (!renderer) throw new Error(`No renderer for "${type}" in the catalogue`)
   return renderer
 }
+
+/** The kinds with a tile, in the order registered (the catalogue's order). */
+export const getTiles = () =>
+  [...renderers].flatMap(([type, renderer]) =>
+    renderer.tile ? [{ type: type as ObjectType, ...renderer.tile }] : []
+  )

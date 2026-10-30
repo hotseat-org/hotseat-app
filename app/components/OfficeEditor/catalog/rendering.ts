@@ -8,3 +8,4 @@ import "./presets/furniture.render"
 import "./presets/fence.render"
 
 export * from "./renderers"
+export * from "./categories"
