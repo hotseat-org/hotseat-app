@@ -1,0 +1,188 @@
+import { Button } from "@heroui/react"
+import clsx from "clsx"
+import { Pin, RotateCcw, RotateCw, Scan } from "lucide-react"
+import type { CSSProperties } from "react"
+import { heatColor } from "../heatmap"
+import type { Person } from "../people"
+import { SeatAvatar } from "../SeatAvatar"
+import type { Zone } from "../zones"
+import { useI18n } from "~/i18n/I18nProvider"
+
+/**
+ * The HTML laid over the plan's drawing: legible at any zoom, each centred on
+ * its spot (`style`: where it is on screen, see FloorPlan's `screen`).
+ */
+
+/** A booked desk: who sits there (tap for the desk's card). */
+export const Occupant = ({
+  person,
+  email,
+  isMine,
+  size,
+  style,
+  onClick,
+}: {
+  person: Person | null
+  email: string
+  isMine: boolean
+  size: number
+  style: CSSProperties
+  onClick: (e: React.MouseEvent) => void
+}) => {
+  const { t } = useI18n()
+  const name = person ? (isMine ? t("You") : person.name) : t("Taken")
+  return (
+    <button
+      type="button"
+      aria-label={name}
+      title={name}
+      onClick={onClick}
+      // A finger-sized hit area round the small avatar.
+      className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full before:absolute before:-inset-2 before:rounded-full before:content-['']"
+      style={style}
+    >
+      <SeatAvatar person={person} email={email} isMine={isMine} size={size} />
+    </button>
+  )
+}
+
+/** A desk's name tag: its label, who sits there, a pin for a permanent desk. */
+export const DeskTag = ({
+  person,
+  label,
+  mine,
+  free,
+  resident,
+}: {
+  person: { name: string } | null
+  label?: string
+  mine: boolean
+  free: boolean
+  resident: boolean
+}) => {
+  const { t } = useI18n()
+  return (
+    <div
+      className={clsx(
+        "flex items-center gap-1.5 whitespace-nowrap rounded-full border px-1.5 py-0.5 text-[11px] font-bold shadow-overlay",
+        mine
+          ? "border-accent bg-accent text-accent-foreground"
+          : free
+            ? "border-success bg-success text-success-foreground"
+            : "border-border bg-overlay/95 text-foreground"
+      )}
+    >
+      {label && <span className="opacity-80">{label}</span>}
+      {/* First name only: neighbouring desks' tags would collide. */}
+      {person && <span>{mine ? t("You") : person.name.split(" ")[0]}</span>}
+      {resident && <Pin className="size-3 opacity-70" aria-label={t("Permanent desk")} />}
+    </div>
+  )
+}
+
+/** Where the way ends: a ring pulsing round the desk's chair. */
+export const RouteEnd = ({ size, style }: { size: number; style: CSSProperties }) => (
+  <div
+    aria-hidden
+    className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"
+    style={{ ...style, width: size, height: size }}
+  >
+    <span className="route-pulse absolute inset-0 rounded-full border-[3px] border-accent bg-accent/15 shadow-[0_0_16px_2px_var(--accent),inset_0_0_10px_var(--accent)]" />
+  </div>
+)
+
+/** The spotlit desk: rings ripple out from it. */
+export const SpotlightRing = ({ size, style }: { size: number; style: CSSProperties }) => (
+  <div
+    aria-hidden
+    className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"
+    style={{ ...style, width: size, height: size }}
+  >
+    <span className="absolute inset-0 rounded-full border-[3px] border-accent bg-accent/15" />
+    <span className="spotlight absolute inset-0 rounded-full border-[3px] border-accent" />
+  </div>
+)
+
+/** Heatmap: a desk's share of days in use. */
+export const HeatTag = ({
+  label,
+  ratio,
+  isDark,
+  style,
+}: {
+  label?: string
+  ratio: number
+  isDark: boolean
+  style: CSSProperties
+}) => (
+  <div className="group absolute -translate-x-1/2 -translate-y-1/2 hover:z-10" style={style}>
+    {/* Just the share (desks sit close together); the desk on hover. */}
+    <span className="flex cursor-default items-center gap-1 whitespace-nowrap rounded-full border border-border bg-overlay/95 px-1.5 text-[10px] font-extrabold leading-4 text-foreground shadow-overlay">
+      {label && <span className="hidden opacity-70 group-hover:inline">{label}</span>}
+      {/* The bar chart, flat: as full as the desk's share of days. */}
+      <span aria-hidden className="h-1.5 w-5 overflow-hidden rounded-full bg-foreground/10">
+        <span
+          className="block h-full rounded-full"
+          style={{ width: `${Math.max(4, ratio * 100)}%`, background: heatColor(ratio, isDark) }}
+        />
+      </span>
+      {Math.round(ratio * 100)}%
+    </span>
+  </div>
+)
+
+/** A zone's name, on its floor. */
+export const ZoneName = ({ zone, style }: { zone: Zone; style: CSSProperties }) => (
+  <div className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2" style={style}>
+    <span className="flex items-center gap-1.5 whitespace-nowrap rounded-full bg-overlay/85 px-2 py-0.5 text-[11px] font-bold text-foreground shadow-sm backdrop-blur-sm">
+      <span className="size-2 rounded-full" style={{ background: zone.color }} />
+      {zone.name}
+    </span>
+  </div>
+)
+
+/**
+ * A phone: turn and fit, bottom-right above the shell (no dock there).
+ * Elsewhere they're in the map controls, bottom-left.
+ */
+export const PhoneControls = ({
+  bottom,
+  onTurn,
+  onFit,
+}: {
+  bottom: number
+  onTurn: (quarters: number) => void
+  onFit: () => void
+}) => {
+  const { t } = useI18n()
+  return (
+    <div
+      className="absolute right-4 flex gap-1 rounded-xl border border-chrome-border bg-chrome/95 p-1 shadow-overlay backdrop-blur-md"
+      style={{ bottom }}
+      onPointerDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <Button
+        isIconOnly
+        size="md"
+        variant="ghost"
+        aria-label={t("Turn view left")}
+        onPress={() => onTurn(1)}
+      >
+        <RotateCcw className="size-4" />
+      </Button>
+      <Button
+        isIconOnly
+        size="md"
+        variant="ghost"
+        aria-label={t("Turn view right")}
+        onPress={() => onTurn(-1)}
+      >
+        <RotateCw className="size-4" />
+      </Button>
+      <Button isIconOnly size="md" variant="ghost" aria-label={t("Fit the office")} onPress={onFit}>
+        <Scan className="size-4" />
+      </Button>
+    </div>
+  )
+}
