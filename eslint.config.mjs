@@ -70,7 +70,7 @@ export default [
       "space-in-parens": ["error"],
       "no-trailing-spaces": ["error"],
       eqeqeq: ["error"],
-      "spaced-comment": ["error", "always"],
+      "spaced-comment": ["error", "always", { markers: ["/"] }],
       yoda: ["error"],
       "no-mixed-spaces-and-tabs": ["error"],
       "space-infix-ops": ["error"],
