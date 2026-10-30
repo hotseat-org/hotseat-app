@@ -1,5 +1,3 @@
-import type { ObjectType } from "./types"
-
 /**
  * A regular office palette — warm, slightly-desaturated naturals — with only a
  * hint of outrun (a soft neon `ACCENT` used sparingly, e.g. the monitor glow).
@@ -28,58 +26,6 @@ export const PALETTE = {
 
 /** The lone outrun touch: a soft neon cyan for screen glow / small accents. */
 export const ACCENT = "#3fd0ff"
-
-/** Primary (recolourable) colour per type. */
-export const DEFAULT_COLOR: Record<ObjectType, string> = {
-  wall: PALETTE.wall,
-  door: PALETTE.doorLeaf,
-  window: "#f4efe6",
-  glassWall: "#5b6577",
-  glassDoor: "#5b6577",
-  desk: PALETTE.deskTop,
-  seat: PALETTE.seat,
-  plant: PALETTE.plantLeaf,
-  workstation: PALETTE.deskTop,
-  deskmate: PALETTE.deskTop,
-  sofa: "#5f8a86",
-  coffeeTable: PALETTE.deskTop,
-  meetingTable: PALETTE.deskTop,
-  bookshelf: PALETTE.deskLeg,
-  rug: "#b96f6f",
-  cooler: "#e8edf2",
-  filingCabinet: "#8f9aa6",
-  lockers: "#5f7d9a",
-  printer: "#e8edf2",
-  tvScreen: PALETTE.deskLeg,
-  whiteboard: "#b9bcc4",
-  vendingMachine: "#c9564f",
-  floorLamp: "#f0e2c0",
-  trashBin: "#5b6577",
-  kitchenCounter: "#d9cbb4",
-  fridge: "#e8edf2",
-  armchair: "#c0876a",
-  ceilingLight: "#3d4657",
-  wardrobe: "#c9a27e",
-  barStool: "#d98a63",
-  barTable: PALETTE.deskTop,
-  toilet: "#f3f1ec",
-  shower: "#9fc3c9",
-  bathroomSink: "#6d7f99",
-  roundTable: PALETTE.deskTop,
-  squareTable: PALETTE.deskTop,
-  ovalTable: PALETTE.deskTop,
-  ovalBarTable: PALETTE.deskTop,
-  serverRack: "#2c313c",
-  shelvingUnit: "#e9e1d4",
-  wallTv: "#2c313c",
-  wallArt: "#c9946a",
-  wallClock: "#3d4657",
-  wallShelf: PALETTE.deskTop,
-  coatRack: PALETTE.deskLeg,
-  planterBox: "#8f9aa6",
-  divider: "#5f8a86",
-  floorPaint: "#c9b48d",
-}
 
 /** Floor finishes for the Paint tool (woods, carpets, stone). */
 export const FLOOR_SWATCHES = [

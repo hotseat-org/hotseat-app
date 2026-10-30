@@ -3,10 +3,10 @@ import { BoxGeometry, Vector3 } from "three"
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js"
 import { useObjectsWithPaintPreview } from "../store"
 import { composeWallColors, wallJointNodes } from "../layout"
-import { DEFAULT_COLOR } from "../palette"
 import { Surface } from "../objects/Surface"
 import { WALL } from "../objects/dimensions"
 import { useSurfaces } from "../sceneTheme"
+import { getItem } from "../catalog/items"
 import { CutawayContext, setCutAttributes } from "./cutaway"
 
 const SIZE = 0.15 // slightly proud of the wall thickness so it fills the corner notch
@@ -87,7 +87,7 @@ export const Posts = () => {
       ))}
       {meshes.glass && (
         <mesh geometry={meshes.glass} castShadow receiveShadow>
-          <Surface color={DEFAULT_COLOR.glassWall} roughness={0.4} metalness={0.4} />
+          <Surface color={getItem("glassWall").defaultColor} roughness={0.4} metalness={0.4} />
         </mesh>
       )}
     </CutawayContext.Provider>

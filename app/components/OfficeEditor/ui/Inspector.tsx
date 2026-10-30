@@ -3,7 +3,7 @@ import clsx from "clsx"
 import { useMemo, useState } from "react"
 import { ArrowRightLeft, Copy, Dices, RotateCw, Trash2 } from "lucide-react"
 import { useEditorStore } from "../store"
-import { SWATCHES, DEFAULT_COLOR } from "../palette"
+import { SWATCHES } from "../palette"
 import {
   DESK_FEATURES,
   hasLooks,
@@ -15,6 +15,7 @@ import {
 } from "../types"
 import { usePeople } from "../people"
 import { getZones } from "../zones"
+import { getItem } from "../catalog/items"
 import { TOOLS } from "./tools"
 import type { Day } from "~/utils/booking"
 import { useI18n } from "~/i18n/I18nProvider"
@@ -59,7 +60,7 @@ export const Inspector = () => {
 
   if (!selectedId || !obj) return null
 
-  const current = obj.color ?? DEFAULT_COLOR[obj.type]
+  const current = obj.color ?? getItem(obj.type).defaultColor
   // Walls/doors sit on grid edges: they can't be turned or copied in place.
   const edge = isEdgeType(obj.type)
 

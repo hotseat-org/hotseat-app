@@ -1,6 +1,5 @@
 import {
   BUILD_HALF,
-  FOOTPRINT_CELLS,
   GRID,
   isEdgeType,
   isOverhead,
@@ -9,6 +8,7 @@ import {
   type ObjectType,
   type SceneObject,
 } from "../types"
+import { getItem } from "../catalog/items"
 import { edgeStep, isDiagonalEdge } from "./edges"
 import { ALONG_Z, isDiagonal, toRotationStep } from "./rotation"
 
@@ -19,7 +19,7 @@ import { ALONG_Z, isDiagonal, toRotationStep } from "./rotation"
  * the turned shape itself (see footprintRect).
  */
 export const footprintCells = (type: ObjectType, rotation: number): [number, number] => {
-  const [wx, wz] = FOOTPRINT_CELLS[type]
+  const [wx, wz] = getItem(type).footprint
   if (isDiagonal(rotation)) {
     const side = Math.ceil((wx + wz) * Math.SQRT1_2 - 1e-6)
     return [side, side]
@@ -65,7 +65,7 @@ export const composeRepeat = (
   end: Cell,
   pattern: Exclude<PlacementPattern, "single">
 ): { x: number; z: number; rotation: number }[] => {
-  const [w, d] = FOOTPRINT_CELLS[type]
+  const [w, d] = getItem(type).footprint
   // The piece's own axes in the world: X (its width) and Z (its depth, front +Z).
   const ax = { x: Math.cos(rotation), z: -Math.sin(rotation) }
   const az = { x: Math.sin(rotation), z: Math.cos(rotation) }
@@ -116,7 +116,7 @@ export const snapPlacement = (
 ): Cell => {
   const onGrid = clampToFloor(type, rotation, snapToFootprint(type, rotation, x, z))
   if (!isDiagonal(rotation) || isWallMounted(type) || isOverhead(type)) return onGrid
-  const [wx, wz] = FOOTPRINT_CELLS[type]
+  const [wx, wz] = getItem(type).footprint
   // The piece's own axes in the world: X (its width) and Z (its depth).
   const ax = { x: Math.cos(rotation), z: -Math.sin(rotation) }
   let best: { d: number; p: Cell } | null = null

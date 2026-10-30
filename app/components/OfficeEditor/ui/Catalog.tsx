@@ -14,8 +14,9 @@ import {
 } from "lucide-react"
 import { useEditorStore } from "../store"
 import { isRecolorable } from "../types"
-import { DEFAULT_COLOR, FLOOR_SWATCHES, SWATCHES } from "../palette"
+import { FLOOR_SWATCHES, SWATCHES } from "../palette"
 import type { PlacementPattern } from "../layout"
+import { getItem } from "../catalog/items"
 import {
   CATEGORIES,
   TOOL_META,
@@ -296,7 +297,9 @@ export const Catalog = () => {
               >
                 <span
                   className="flex size-full items-center justify-center rounded-md"
-                  style={{ background: colorType ? DEFAULT_COLOR[colorType] : "transparent" }}
+                  style={{
+                    background: colorType ? getItem(colorType).defaultColor : "transparent",
+                  }}
                 >
                   <Ban className="size-3.5 text-slate-900/70" strokeWidth={2.5} />
                 </span>

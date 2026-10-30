@@ -1,54 +1,15 @@
+import {
+  ITEMS,
+  findItem,
+  getItem,
+  hasTag,
+  type ObjectType,
+  type WallType,
+  type OpeningType,
+} from "./catalog/items"
 import { msg } from "~/i18n/msg"
 
-export type ObjectType =
-  | "wall"
-  | "door"
-  | "window"
-  | "glassWall"
-  | "glassDoor"
-  | "desk"
-  | "seat"
-  | "plant"
-  | "workstation"
-  | "deskmate"
-  | "sofa"
-  | "coffeeTable"
-  | "meetingTable"
-  | "bookshelf"
-  | "rug"
-  | "cooler"
-  | "filingCabinet"
-  | "lockers"
-  | "printer"
-  | "tvScreen"
-  | "whiteboard"
-  | "vendingMachine"
-  | "floorLamp"
-  | "trashBin"
-  | "kitchenCounter"
-  | "fridge"
-  | "armchair"
-  | "ceilingLight"
-  | "wardrobe"
-  | "barStool"
-  | "barTable"
-  | "toilet"
-  | "shower"
-  | "bathroomSink"
-  | "roundTable"
-  | "squareTable"
-  | "ovalTable"
-  | "ovalBarTable"
-  | "serverRack"
-  | "shelvingUnit"
-  | "wallTv"
-  | "wallArt"
-  | "wallClock"
-  | "wallShelf"
-  | "coatRack"
-  | "planterBox"
-  | "divider"
-  | "floorPaint"
+export type { ObjectType, OpeningType, WallType }
 
 /** Tools that don't place a single object: room (4 walls) and paint. */
 export type Tool = "select" | "delete" | "room" | "paint" | ObjectType
@@ -101,56 +62,10 @@ export const DESK_FEATURES = [
 ] as const
 export type DeskFeature = (typeof DESK_FEATURES)[number]["id"]
 
-/** The set of build tools (everything that isn't select/delete places an object). */
-export const OBJECT_TYPES: ObjectType[] = [
-  "wall",
-  "door",
-  "window",
-  "glassWall",
-  "glassDoor",
-  "desk",
-  "seat",
-  "plant",
-  "workstation",
-  "deskmate",
-  "sofa",
-  "coffeeTable",
-  "meetingTable",
-  "bookshelf",
-  "rug",
-  "cooler",
-  "filingCabinet",
-  "lockers",
-  "printer",
-  "tvScreen",
-  "whiteboard",
-  "vendingMachine",
-  "floorLamp",
-  "trashBin",
-  "kitchenCounter",
-  "fridge",
-  "armchair",
-  "ceilingLight",
-  "wardrobe",
-  "barStool",
-  "barTable",
-  "toilet",
-  "shower",
-  "bathroomSink",
-  "roundTable",
-  "squareTable",
-  "ovalTable",
-  "ovalBarTable",
-  "serverRack",
-  "shelvingUnit",
-  "wallTv",
-  "wallArt",
-  "wallClock",
-  "wallShelf",
-  "coatRack",
-  "planterBox",
-  "divider",
-]
+/** The set of build tools: every kind of piece but data markers. */
+export const OBJECT_TYPES = (Object.keys(ITEMS) as ObjectType[]).filter(
+  (type) => getItem(type).mount !== "marker"
+)
 
 export const isObjectType = (tool: Tool): tool is ObjectType =>
   (OBJECT_TYPES as string[]).includes(tool)
@@ -169,21 +84,19 @@ export const BUILD_HALF = 1000
  * colours the ROOM containing it (so it survives walls being edited). Markers
  * never render, collide, get selected or framed.
  */
-export const isMarker = (type: ObjectType) => type === "floorPaint"
+export const isMarker = (type: ObjectType) => getItem(type).mount === "marker"
 
 /**
  * Desks no longer placed: one without a chair, and one with a pet always in its
  * chair (a pet means someone's booked it). Older layouts still have them.
  */
-export const isRetiredDesk = (type: ObjectType) => type === "desk" || type === "deskmate"
+export const isRetiredDesk = (type: ObjectType) => hasTag(type, "retiredDesk")
 
 /** Desks people sit at — they carry a seat label and an assignee. */
-export const isSeatable = (type: ObjectType) =>
-  type === "desk" || type === "workstation" || type === "deskmate"
+export const isSeatable = (type: ObjectType) => hasTag(type, "desk")
 
 /** Hangs on a wall face: needs solid wall behind it; collides only with other wall items. */
-export const isWallMounted = (type: ObjectType) =>
-  type === "wallTv" || type === "wallArt" || type === "wallClock" || type === "wallShelf"
+export const isWallMounted = (type: ObjectType) => getItem(type).mount === "wall"
 
 /** A piece's look: its stored variant, or a stable one derived from its id. */
 export const variantOf = (o: Pick<SceneObject, "id" | "variant">) => {
@@ -194,49 +107,23 @@ export const variantOf = (o: Pick<SceneObject, "id" | "variant">) => {
 }
 
 /** Pieces that come in several looks (their props, cushions, artwork…). */
-const WITH_LOOKS = new Set<ObjectType>([
-  "desk",
-  "workstation",
-  "deskmate",
-  "coffeeTable",
-  "squareTable",
-  "roundTable",
-  "meetingTable",
-  "ovalTable",
-  "barTable",
-  "ovalBarTable",
-  "sofa",
-  "armchair",
-  "wallTv",
-  "wallArt",
-  "wallShelf",
-  "coatRack",
-  "planterBox",
-])
-export const hasLooks = (type: ObjectType) => WITH_LOOKS.has(type)
+export const hasLooks = (type: ObjectType) => getItem(type).hasLooks
 
 /** Hangs overhead: collides only with other overhead items, never floor furniture or walls. */
-export const isOverhead = (type: ObjectType) => type === "ceilingLight"
+export const isOverhead = (type: ObjectType) => getItem(type).mount === "ceiling"
 
 /** Walls/doors live on grid edges; everything else is furniture. */
-export const isEdgeType = (type: ObjectType) =>
-  type === "wall" ||
-  type === "glassWall" ||
-  type === "door" ||
-  type === "glassDoor" ||
-  type === "window"
+export const isEdgeType = (type: ObjectType) => getItem(type).mount === "edge"
 
-/** Plain wall segments (solid or glass) — what an opening is cut into. */
-export type WallType = "wall" | "glassWall"
-export const isWall = (type?: Tool): type is WallType => type === "wall" || type === "glassWall"
+/** Wall runs (solid or glass) — what an opening is cut into. */
+export const isWall = (type?: Tool): type is WallType => findItem(type)?.edge?.role === "run"
 
 /** Whether a piece takes a colour of its own: all but doors, which are always wood. */
-export const isRecolorable = (type: Tool) => type !== "door"
+export const isRecolorable = (type: Tool) => findItem(type)?.isRecolorable !== false
 
 /** Openings cut into a wall: 1 unit wide (two wall half-segments). */
-export type OpeningType = "door" | "glassDoor" | "window"
 export const isOpening = (type?: Tool): type is OpeningType =>
-  type === "door" || type === "glassDoor" || type === "window"
+  findItem(type)?.edge?.role === "opening"
 
 /**
  * An opening cut into a glass wall remembers it (`model: GLASS_HOST`), so
@@ -246,58 +133,6 @@ export const GLASS_HOST = "glass"
 
 /** Placement grid step (a grid square is GRID × GRID world units). */
 export const GRID = 0.5
-
-/** Footprint of each furniture type in grid squares [x, z] (before rotation). */
-export const FOOTPRINT_CELLS: Record<ObjectType, [number, number]> = {
-  wall: [1, 1],
-  door: [1, 1],
-  window: [1, 1],
-  glassWall: [1, 1],
-  glassDoor: [1, 1],
-  desk: [4, 2],
-  seat: [2, 2],
-  plant: [1, 1],
-  workstation: [4, 3],
-  deskmate: [4, 4],
-  sofa: [4, 2],
-  coffeeTable: [3, 2],
-  meetingTable: [8, 4],
-  bookshelf: [3, 1],
-  rug: [6, 4],
-  cooler: [1, 1],
-  filingCabinet: [1, 1],
-  lockers: [3, 1],
-  printer: [2, 2],
-  tvScreen: [3, 1],
-  whiteboard: [3, 1],
-  vendingMachine: [2, 2],
-  floorLamp: [1, 1],
-  trashBin: [1, 1],
-  kitchenCounter: [4, 2],
-  fridge: [2, 2],
-  armchair: [2, 2],
-  ceilingLight: [2, 2],
-  wardrobe: [3, 2],
-  barStool: [1, 1],
-  barTable: [2, 2],
-  toilet: [1, 2],
-  shower: [2, 2],
-  bathroomSink: [2, 1],
-  roundTable: [3, 3],
-  squareTable: [2, 2],
-  ovalTable: [6, 3],
-  ovalBarTable: [4, 2],
-  serverRack: [2, 2],
-  shelvingUnit: [3, 1],
-  wallTv: [3, 1],
-  wallArt: [2, 1],
-  wallClock: [1, 1],
-  wallShelf: [2, 1],
-  coatRack: [1, 1],
-  planterBox: [4, 1],
-  divider: [4, 1],
-  floorPaint: [1, 1],
-}
 
 /** A grid cell coordinate. */
 export interface Cell {

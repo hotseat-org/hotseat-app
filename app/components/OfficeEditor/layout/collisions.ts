@@ -1,5 +1,4 @@
 import {
-  FOOTPRINT_CELLS,
   GRID,
   isEdgeType,
   isMarker,
@@ -9,6 +8,7 @@ import {
   type SceneObject,
   type WallCell,
 } from "../types"
+import { getItem } from "../catalog/items"
 import { edgeLength, edgeStep, isDiagonalEdge, runsAlongX } from "./edges"
 import { mountWalls } from "./mounts"
 import { clampToFloor, footprintCells } from "./placement"
@@ -60,7 +60,7 @@ const rectsOverlap = (a: Rect, b: Rect) => {
 
 const footprintRect = (type: ObjectType, rotation: number, x: number, z: number): Rect => {
   if (isDiagonal(rotation)) {
-    const [wx, wz] = FOOTPRINT_CELLS[type]
+    const [wx, wz] = getItem(type).footprint
     return { x, z, hx: (wx * GRID) / 2, hz: (wz * GRID) / 2, angle: rotation }
   }
   const [cx, cz] = footprintCells(type, rotation)

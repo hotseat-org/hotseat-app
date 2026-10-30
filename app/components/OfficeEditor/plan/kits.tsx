@@ -1,7 +1,8 @@
 import type { ReactNode } from "react"
-import { ACCENT, DEFAULT_COLOR, PALETTE } from "../palette"
-import { FOOTPRINT_CELLS, GRID, type ObjectType, type SceneObject } from "../types"
+import { ACCENT, PALETTE } from "../palette"
+import { GRID, type ObjectType, type SceneObject } from "../types"
 import { DESKMATE_SEAT_Z, WORKSTATION_SEAT_Z } from "../objects/dimensions"
+import { getItem } from "../catalog/items"
 import { shade } from "./shapes"
 
 /**
@@ -142,8 +143,8 @@ class Sketch {
 }
 
 const half = (type: ObjectType): [number, number] => [
-  (FOOTPRINT_CELLS[type][0] * GRID) / 2,
-  (FOOTPRINT_CELLS[type][1] * GRID) / 2,
+  (getItem(type).footprint[0] * GRID) / 2,
+  (getItem(type).footprint[1] * GRID) / 2,
 ]
 
 /** An office chair at (x, z): seat, backrest (at −Z) and arms on a star base. */
@@ -235,7 +236,7 @@ export const drawPiece = (
   tone: (color: string) => string = (c) => c
 ): PieceDrawing | null => {
   const s = new Sketch(tone)
-  const c = o.color ?? DEFAULT_COLOR[o.type]
+  const c = o.color ?? getItem(o.type).defaultColor
   const [hx, hz] = half(o.type)
   const on = state.occupied !== false
   switch (o.type) {

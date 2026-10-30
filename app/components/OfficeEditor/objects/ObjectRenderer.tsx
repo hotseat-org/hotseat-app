@@ -2,7 +2,6 @@ import { memo, useContext, useEffect, useLayoutEffect, useRef, useState } from "
 import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber"
 import type { Group } from "three"
 import {
-  FOOTPRINT_CELLS,
   GRID,
   isEdgeType,
   isOpening,
@@ -18,6 +17,7 @@ import { edgeLength, edgeStretch } from "../layout"
 import { markShadowsDirty } from "../scene/shadows"
 import { CutawayContext } from "../scene/cutaway"
 import { CursorHintContext } from "../cursors"
+import { getItem } from "../catalog/items"
 import { ObjectMesh } from "./ObjectMesh"
 import { WALL } from "./dimensions"
 import { FootprintOutline } from "./FootprintOutline"
@@ -211,7 +211,7 @@ export const ObjectRenderer = memo(function ObjectRenderer({
   // Outline size: a footprint for furniture; the wall segment for doors/windows.
   const outline: [number, number] = isEdgeType(obj.type)
     ? [edgeLength(obj), WALL.depth + 0.2]
-    : [FOOTPRINT_CELLS[obj.type][0] * GRID, FOOTPRINT_CELLS[obj.type][1] * GRID]
+    : [getItem(obj.type).footprint[0] * GRID, getItem(obj.type).footprint[1] * GRID]
   // Red preview when this piece of furniture is about to be erased.
   const showErase = interactive && tool === "delete" && hovered && isFurniture(obj)
 

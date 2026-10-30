@@ -1,7 +1,8 @@
 import { useMemo } from "react"
 import { Edges } from "@react-three/drei"
 import { DoubleSide, Shape } from "three"
-import { FOOTPRINT_CELLS, GRID, type ObjectType } from "../types"
+import { GRID, type ObjectType } from "../types"
+import { getItem } from "../catalog/items"
 
 interface Props {
   type: ObjectType
@@ -35,7 +36,7 @@ const chevron = () => {
 export const PlacementHighlight = ({ type, x, z, rotation, valid = true }: Props) => {
   const color = valid ? "#22c55e" : "#ef4444"
   // Footprint and front marker in the piece's own (unrotated) frame: front = +Z.
-  const [fw, fd] = FOOTPRINT_CELLS[type]
+  const [fw, fd] = getItem(type).footprint
   const width = fw * GRID
   const halfDepth = (fd * GRID) / 2
   const shape = useMemo(chevron, [])

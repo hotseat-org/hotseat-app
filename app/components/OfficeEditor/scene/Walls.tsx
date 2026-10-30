@@ -14,8 +14,8 @@ import {
 } from "../layout"
 import { WALL } from "../objects/dimensions"
 import { GlassFrameSurface, GlassSurface, getGlassRunParts } from "../objects/GlassWall"
-import { DEFAULT_COLOR } from "../palette"
 import { type SceneObject } from "../types"
+import { getItem } from "../catalog/items"
 import { CUT_DIRECTION, CutawayContext, setCutAttributes } from "./cutaway"
 
 export interface Run {
@@ -126,7 +126,7 @@ export const Walls = () => {
     () =>
       buildRuns(
         objects.filter((o) => o.type === "glassWall"),
-        DEFAULT_COLOR.glassWall
+        getItem("glassWall").defaultColor
       ),
     [objects]
   )

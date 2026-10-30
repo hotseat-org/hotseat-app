@@ -113,58 +113,6 @@ const COMPONENTS: Record<ObjectType, (props: MeshProps) => React.ReactElement> =
   floorPaint: () => <></>, // data marker — never rendered
 }
 
-/** Radius of the on-floor footprint per type (used for the selection ring). */
-export const FOOTPRINT: Record<ObjectType, number> = {
-  wall: 0.72,
-  door: 0.72,
-  window: 0.72,
-  glassWall: 0.72,
-  glassDoor: 0.72,
-  desk: 1.02,
-  seat: 0.5,
-  plant: 0.36,
-  workstation: 1.3,
-  deskmate: 1.4,
-  sofa: 1.1,
-  coffeeTable: 0.7,
-  meetingTable: 2.0,
-  bookshelf: 0.7,
-  rug: 1.75,
-  cooler: 0.32,
-  filingCabinet: 0.42,
-  lockers: 0.82,
-  printer: 0.52,
-  tvScreen: 0.82,
-  whiteboard: 0.86,
-  vendingMachine: 0.58,
-  floorLamp: 0.3,
-  trashBin: 0.26,
-  kitchenCounter: 1.1,
-  fridge: 0.55,
-  armchair: 0.55,
-  ceilingLight: 0.34,
-  wardrobe: 0.85,
-  barStool: 0.24,
-  barTable: 0.46,
-  toilet: 0.4,
-  shower: 0.6,
-  bathroomSink: 0.5,
-  roundTable: 0.7,
-  squareTable: 0.45,
-  ovalTable: 1.5,
-  ovalBarTable: 0.95,
-  serverRack: 0.5,
-  shelvingUnit: 0.75,
-  wallTv: 0.8,
-  wallArt: 0.55,
-  wallClock: 0.3,
-  wallShelf: 0.55,
-  coatRack: 0.3,
-  planterBox: 1.0,
-  divider: 1.0,
-  floorPaint: 0,
-}
-
 interface Props extends MeshProps {
   type: ObjectType
 }

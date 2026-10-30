@@ -1,4 +1,5 @@
-import { FOOTPRINT_CELLS, GRID, type ObjectType, type SceneObject } from "../types"
+import { GRID, type ObjectType, type SceneObject } from "../types"
+import { getItem } from "../catalog/items"
 import { SEG, edgeStep, isDiagonalEdge, nearestEdgeId, runsAlongX } from "./edges"
 import { snapAxis } from "./placement"
 
@@ -31,7 +32,7 @@ export const mountWalls = (
   z: number,
   rotation: number
 ): string[] | null => {
-  const [w, d] = FOOTPRINT_CELLS[type]
+  const [w, d] = getItem(type).footprint
   const f = facing(rotation)
   // Back-edge centre, and the direction along it (the piece's local X).
   const bx = x - (f.x * d * GRID) / 2
@@ -63,7 +64,7 @@ export const wallMount = (
   const id = nearestEdgeId(objects, px, pz, 0.8, (o) => o.type === "wall")
   const wall = id && objects.find((o) => o.id === id)
   if (!wall) return null
-  const [w, d] = FOOTPRINT_CELLS[type]
+  const [w, d] = getItem(type).footprint
   const depth = (d * GRID) / 2
   if (isDiagonalEdge(wall.rotation)) {
     // Along the diagonal's line in half-segment steps, out from its face.
