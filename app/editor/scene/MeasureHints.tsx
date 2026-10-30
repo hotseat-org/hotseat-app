@@ -99,7 +99,17 @@ interface Rect {
   z1: number
 }
 
-const rectOf = (type: ObjectType, rotation: number, x: number, z: number): Rect => {
+const rectOf = ({
+  type,
+  rotation,
+  x,
+  z,
+}: {
+  type: ObjectType
+  rotation: number
+  x: number
+  z: number
+}): Rect => {
   const [cellsX, cellsZ] = footprintCells(type, rotation)
   const halfX = (cellsX * GRID) / 2
   const halfZ = (cellsZ * GRID) / 2
@@ -107,19 +117,75 @@ const rectOf = (type: ObjectType, rotation: number, x: number, z: number): Rect 
   return { x0: x - halfX, x1: x + halfX, z0: z - halfZ, z1: z + halfZ }
 }
 
+const centreOf = (rect: Rect) => ({ x: (rect.x0 + rect.x1) / 2, z: (rect.z0 + rect.z1) / 2 })
+
+type Range = [start: number, end: number]
+
 /** Open-interval overlap: touching at an end doesn't count. */
-const overlaps = (firstStart: number, firstEnd: number, secondStart: number, secondEnd: number) =>
-  firstStart < secondEnd - EPSILON && secondStart < firstEnd - EPSILON
+const overlaps = (first: Range, second: Range) =>
+  first[0] < second[1] - EPSILON && second[0] < first[1] - EPSILON
+
+/** Floor furniture: what measures against others (not rugs, ceiling or wall items). */
+const isStandingPiece = (type: ObjectType) =>
+  !getItem(type).isUnderlay && !isOverhead(type) && !isWallMounted(type)
 
 interface Measure {
   from: [number, number, number]
   to: [number, number, number]
-  d: number
+  distance: number
 }
 
 interface Guide {
   from: [number, number, number]
   to: [number, number, number]
+}
+
+/** The free distance from a footprint to the nearest obstacle, per direction. */
+interface Clearances {
+  positiveX: number
+  negativeX: number
+  positiveZ: number
+  negativeZ: number
+}
+
+/** Shortens the clearances by a wall (or door/window) segment in the way. */
+const limitByEdge = (clearances: Clearances, rect: Rect, edge: SceneObject) => {
+  // Distances are measured straight along X and Z: diagonal walls don't count.
+  if (isDiagonalEdge(edge.rotation)) return
+
+  const half = edgeLength(edge) / 2
+  if (runsAlongX(edge.rotation)) {
+    // A horizontal line at z = edge.z blocks ±Z when it spans our x range.
+    if (!overlaps([rect.x0, rect.x1], [edge.x - half, edge.x + half])) return
+    if (edge.z >= rect.z1 - EPSILON)
+      clearances.positiveZ = Math.min(clearances.positiveZ, edge.z - rect.z1)
+    if (edge.z <= rect.z0 + EPSILON)
+      clearances.negativeZ = Math.min(clearances.negativeZ, rect.z0 - edge.z)
+
+    return
+  }
+
+  if (!overlaps([rect.z0, rect.z1], [edge.z - half, edge.z + half])) return
+  if (edge.x >= rect.x1 - EPSILON)
+    clearances.positiveX = Math.min(clearances.positiveX, edge.x - rect.x1)
+  if (edge.x <= rect.x0 + EPSILON)
+    clearances.negativeX = Math.min(clearances.negativeX, rect.x0 - edge.x)
+}
+
+/** Shortens the clearances by another piece's footprint in the way. */
+const limitByPiece = (clearances: Clearances, rect: Rect, other: Rect) => {
+  if (overlaps([rect.z0, rect.z1], [other.z0, other.z1])) {
+    if (other.x0 >= rect.x1 - EPSILON)
+      clearances.positiveX = Math.min(clearances.positiveX, other.x0 - rect.x1)
+    if (other.x1 <= rect.x0 + EPSILON)
+      clearances.negativeX = Math.min(clearances.negativeX, rect.x0 - other.x1)
+  }
+  if (overlaps([rect.x0, rect.x1], [other.x0, other.x1])) {
+    if (other.z0 >= rect.z1 - EPSILON)
+      clearances.positiveZ = Math.min(clearances.positiveZ, other.z0 - rect.z1)
+    if (other.z1 <= rect.z0 + EPSILON)
+      clearances.negativeZ = Math.min(clearances.negativeZ, rect.z0 - other.z1)
+  }
 }
 
 /**
@@ -128,55 +194,68 @@ interface Guide {
  * MAX. Touching (a gap of 0) isn't shown.
  */
 const measure = (objects: SceneObject[], rect: Rect, ignoreId?: string): (Measure | null)[] => {
-  const centreX = (rect.x0 + rect.x1) / 2
-  const centreZ = (rect.z0 + rect.z1) / 2
-  // Nearest obstacle distance per direction.
-  let positiveX = Infinity
-  let negativeX = Infinity
-  let positiveZ = Infinity
-  let negativeZ = Infinity
+  const centre = centreOf(rect)
+  const clearances: Clearances = {
+    positiveX: Infinity,
+    negativeX: Infinity,
+    positiveZ: Infinity,
+    negativeZ: Infinity,
+  }
   for (const object of objects) {
     if (object.id === ignoreId || isMarker(object.type)) continue
     if (isEdgeType(object.type)) {
-      // Distances are measured straight along X and Z: diagonal walls don't count.
-      if (isDiagonalEdge(object.rotation)) continue
-
-      const half = edgeLength(object) / 2
-      if (runsAlongX(object.rotation)) {
-        // A horizontal line at z = o.z blocks ±Z when it spans our x range.
-        if (!overlaps(rect.x0, rect.x1, object.x - half, object.x + half)) continue
-        if (object.z >= rect.z1 - EPSILON) positiveZ = Math.min(positiveZ, object.z - rect.z1)
-        if (object.z <= rect.z0 + EPSILON) negativeZ = Math.min(negativeZ, rect.z0 - object.z)
-      } else {
-        if (!overlaps(rect.z0, rect.z1, object.z - half, object.z + half)) continue
-        if (object.x >= rect.x1 - EPSILON) positiveX = Math.min(positiveX, object.x - rect.x1)
-        if (object.x <= rect.x0 + EPSILON) negativeX = Math.min(negativeX, rect.x0 - object.x)
-      }
+      limitByEdge(clearances, rect, object)
 
       continue
     }
-    if (getItem(object.type).isUnderlay || isOverhead(object.type) || isWallMounted(object.type))
-      continue
+    if (!isStandingPiece(object.type)) continue
 
-    const other = rectOf(object.type, object.rotation, object.x, object.z)
-    if (overlaps(rect.z0, rect.z1, other.z0, other.z1)) {
-      if (other.x0 >= rect.x1 - EPSILON) positiveX = Math.min(positiveX, other.x0 - rect.x1)
-      if (other.x1 <= rect.x0 + EPSILON) negativeX = Math.min(negativeX, rect.x0 - other.x1)
-    }
-    if (overlaps(rect.x0, rect.x1, other.x0, other.x1)) {
-      if (other.z0 >= rect.z1 - EPSILON) positiveZ = Math.min(positiveZ, other.z0 - rect.z1)
-      if (other.z1 <= rect.z0 + EPSILON) negativeZ = Math.min(negativeZ, rect.z0 - other.z1)
-    }
+    limitByPiece(clearances, rect, rectOf(object))
   }
   const slot = (distance: number, from: [number, number, number], to: [number, number, number]) =>
-    distance > EPSILON && distance <= MAX ? { from, to, d: distance } : null
+    distance > EPSILON && distance <= MAX ? { from, to, distance } : null
+  const { positiveX, negativeX, positiveZ, negativeZ } = clearances
 
   return [
-    slot(positiveX, [rect.x1, HEIGHT, centreZ], [rect.x1 + positiveX, HEIGHT, centreZ]),
-    slot(negativeX, [rect.x0, HEIGHT, centreZ], [rect.x0 - negativeX, HEIGHT, centreZ]),
-    slot(positiveZ, [centreX, HEIGHT, rect.z1], [centreX, HEIGHT, rect.z1 + positiveZ]),
-    slot(negativeZ, [centreX, HEIGHT, rect.z0], [centreX, HEIGHT, rect.z0 - negativeZ]),
+    slot(positiveX, [rect.x1, HEIGHT, centre.z], [rect.x1 + positiveX, HEIGHT, centre.z]),
+    slot(negativeX, [rect.x0, HEIGHT, centre.z], [rect.x0 - negativeX, HEIGHT, centre.z]),
+    slot(positiveZ, [centre.x, HEIGHT, rect.z1], [centre.x, HEIGHT, rect.z1 + positiveZ]),
+    slot(negativeZ, [centre.x, HEIGHT, rect.z0], [centre.x, HEIGHT, rect.z0 - negativeZ]),
   ]
+}
+
+/** The first coordinate of `lines` that `otherLines` also has (within EPSILON), if any. */
+const findSharedLine = (lines: number[], otherLines: number[]) =>
+  lines.find((line) => otherLines.some((otherLine) => Math.abs(otherLine - line) < EPSILON))
+
+/** A guide along Z where the pieces share an x line — for pieces apart along Z. */
+const composeGuideAlongZ = (rect: Rect, other: Rect): Guide | null => {
+  if (overlaps([rect.z0, rect.z1], [other.z0, other.z1])) return null
+
+  const x = findSharedLine(
+    [rect.x0, centreOf(rect).x, rect.x1],
+    [other.x0, centreOf(other).x, other.x1]
+  )
+  if (x === undefined) return null
+
+  const [gapStart, gapEnd] = other.z0 >= rect.z1 ? [rect.z1, other.z0] : [other.z1, rect.z0]
+
+  return { from: [x, HEIGHT, gapStart], to: [x, HEIGHT, gapEnd] }
+}
+
+/** A guide along X where the pieces share a z line — for pieces apart along X. */
+const composeGuideAlongX = (rect: Rect, other: Rect): Guide | null => {
+  if (overlaps([rect.x0, rect.x1], [other.x0, other.x1])) return null
+
+  const z = findSharedLine(
+    [rect.z0, centreOf(rect).z, rect.z1],
+    [other.z0, centreOf(other).z, other.z1]
+  )
+  if (z === undefined) return null
+
+  const [gapStart, gapEnd] = other.x0 >= rect.x1 ? [rect.x1, other.x0] : [other.x1, rect.x0]
+
+  return { from: [gapStart, HEIGHT, z], to: [gapEnd, HEIGHT, z] }
 }
 
 /**
@@ -185,56 +264,26 @@ const measure = (objects: SceneObject[], rect: Rect, ignoreId?: string): (Measur
  * closest one per axis, so it reads as "snapped in line with that".
  */
 const guides = (objects: SceneObject[], rect: Rect, ignoreId?: string): (Guide | null)[] => {
-  const centreX = (rect.x0 + rect.x1) / 2
-  const centreZ = (rect.z0 + rect.z1) / 2
-  let bestX: { g: Guide; d: number } | null = null
-  let bestZ: { g: Guide; d: number } | null = null
+  const centre = centreOf(rect)
+  let bestX: { guide: Guide; distance: number } | null = null
+  let bestZ: { guide: Guide; distance: number } | null = null
   for (const object of objects) {
     if (object.id === ignoreId || isMarker(object.type) || isEdgeType(object.type)) continue
-    if (getItem(object.type).isUnderlay || isOverhead(object.type) || isWallMounted(object.type))
-      continue
+    if (!isStandingPiece(object.type)) continue
 
-    const other = rectOf(object.type, object.rotation, object.x, object.z)
-    const otherCentreX = (other.x0 + other.x1) / 2
-    const otherCentreZ = (other.z0 + other.z1) / 2
-    const distance = Math.hypot(otherCentreX - centreX, otherCentreZ - centreZ)
+    const other = rectOf(object)
+    const otherCentre = centreOf(other)
+    const distance = Math.hypot(otherCentre.x - centre.x, otherCentre.z - centre.z)
     if (distance > GUIDE_REACH) continue
-    // Lines along Z (constant x) shared by both, for pieces apart along Z.
-    if (!overlaps(rect.z0, rect.z1, other.z0, other.z1)) {
-      for (const x of [rect.x0, centreX, rect.x1]) {
-        if (
-          ![other.x0, otherCentreX, other.x1].some(
-            (coordinate) => Math.abs(coordinate - x) < EPSILON
-          )
-        )
-          continue
 
-        const [gapStart, gapEnd] = other.z0 >= rect.z1 ? [rect.z1, other.z0] : [other.z1, rect.z0]
-        if (!bestX || distance < bestX.d)
-          bestX = { d: distance, g: { from: [x, HEIGHT, gapStart], to: [x, HEIGHT, gapEnd] } }
+    const guideX = composeGuideAlongZ(rect, other)
+    if (guideX && (!bestX || distance < bestX.distance)) bestX = { guide: guideX, distance }
 
-        break
-      }
-    }
-    if (!overlaps(rect.x0, rect.x1, other.x0, other.x1)) {
-      for (const z of [rect.z0, centreZ, rect.z1]) {
-        if (
-          ![other.z0, otherCentreZ, other.z1].some(
-            (coordinate) => Math.abs(coordinate - z) < EPSILON
-          )
-        )
-          continue
-
-        const [gapStart, gapEnd] = other.x0 >= rect.x1 ? [rect.x1, other.x0] : [other.x1, rect.x0]
-        if (!bestZ || distance < bestZ.d)
-          bestZ = { d: distance, g: { from: [gapStart, HEIGHT, z], to: [gapEnd, HEIGHT, z] } }
-
-        break
-      }
-    }
+    const guideZ = composeGuideAlongX(rect, other)
+    if (guideZ && (!bestZ || distance < bestZ.distance)) bestZ = { guide: guideZ, distance }
   }
 
-  return [bestX?.g ?? null, bestZ?.g ?? null]
+  return [bestX?.guide ?? null, bestZ?.guide ?? null]
 }
 
 const formatDistance = (distance: number) =>
@@ -260,7 +309,7 @@ export const MeasureHints = ({ objects, type, x, z, rotation, ignoreId }: Props)
     if (isOverhead(type) || isWallMounted(type) || isMarker(type))
       return { gaps: [null, null, null, null], lines: [null, null] }
 
-    const rect = rectOf(type, rotation, x, z)
+    const rect = rectOf({ type, rotation, x, z })
 
     return { gaps: measure(objects, rect, ignoreId), lines: guides(objects, rect, ignoreId) }
   }, [objects, type, x, z, rotation, ignoreId])
@@ -282,7 +331,7 @@ export const MeasureHints = ({ objects, type, x, z, rotation, ignoreId }: Props)
               style={{ pointerEvents: "none" }}
             >
               <span className="whitespace-nowrap rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-bold text-accent-foreground shadow-sm">
-                {formatDistance(gap.d)}
+                {formatDistance(gap.distance)}
               </span>
             </Html>
           )}

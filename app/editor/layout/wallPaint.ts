@@ -116,6 +116,24 @@ export interface WallPaint {
   face?: "front" | "back"
 }
 
+/** A wall's two faces after `paint` goes on `face` (both faces when none is named). */
+const getRepaintedFaces = ({
+  face,
+  paint,
+  front,
+  back,
+}: {
+  face: WallPaint["face"]
+  paint: string | undefined
+  front: string | undefined
+  back: string | undefined
+}): WallFaces => {
+  if (face === "front") return [paint, back]
+  if (face === "back") return [front, paint]
+
+  return [paint, paint]
+}
+
 /** The layout with these walls (or faces) in `color` (null = the theme's). */
 export const paintWallFaces = (
   objects: SceneObject[],
@@ -136,8 +154,7 @@ export const paintWallFaces = (
     const isOpeningPaint = isOpening(object.type)
     const [front, back] = (isOpeningPaint && shown?.get(object.id)) || getWallFaces(object)
     const face = faceOf.get(object.id)
-    const faces: WallFaces =
-      face === "front" ? [paint, back] : face === "back" ? [front, paint] : [paint, paint]
+    const faces = getRepaintedFaces({ face, paint, front, back })
     const paintFields = composeFacePaint(faces, isOpeningPaint)
     const repainted = { ...object, ...paintFields }
     // Drop the paint fields the new faces don't use (never a window's frame colour).

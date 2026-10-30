@@ -73,14 +73,21 @@ const chamfer = (cells: Float32Array, width: number, height: number) => {
 }
 
 /** Closed loops where the grid crosses `level` (marching squares + joining). */
-const traceLoops = (
-  cells: Float32Array,
-  width: number,
-  height: number,
-  x0: number,
-  z0: number,
+const traceLoops = ({
+  cells,
+  width,
+  height,
+  x0,
+  z0,
+  level,
+}: {
+  cells: Float32Array
+  width: number
+  height: number
+  x0: number
+  z0: number
   level: number
-): [number, number][][] => {
+}): [number, number][][] => {
   // Segments, keyed by their endpoints (shared edges give identical points).
   const key = (point: number[]) => `${point[0].toFixed(4)},${point[1].toFixed(4)}`
   const next = new Map<string, number[][]>()
@@ -167,7 +174,19 @@ const traceLoops = (
  * land and plateau follow the building's overall shape in calm curves, not
  * every corner and the grid's octagonal facets.
  */
-const blur = (cells: Float32Array, width: number, height: number, radius = 4, passes = 3) => {
+const blur = ({
+  cells,
+  width,
+  height,
+  radius = 4,
+  passes = 3,
+}: {
+  cells: Float32Array
+  width: number
+  height: number
+  radius?: number
+  passes?: number
+}) => {
   let source = Float32Array.from(cells)
   let target = new Float32Array(width * height)
   const size = radius * 2 + 1
@@ -257,7 +276,7 @@ const build = (objects: SceneObject[]): StructureField | null => {
   // Past the grid: the bounding-box distance (the shape no longer matters there).
   const boxDistance = (x: number, z: number) =>
     Math.hypot(Math.max(bounds.x0 - x, 0, x - bounds.x1), Math.max(bounds.z0 - z, 0, z - bounds.z1))
-  const soft = blur(cells, width, height)
+  const soft = blur({ cells, width, height })
   // Near the grid's edge, ease into the box distance (no seam in the land).
   const EASE = 6
   const distanceAt = (x: number, z: number) => {
@@ -283,8 +302,8 @@ const build = (objects: SceneObject[]): StructureField | null => {
     return boxDistance(x, z) * (1 - eased) + distance * eased
   }
 
-  const plateau = traceLoops(soft, width, height, x0, z0, PLATEAU_MARGIN).map((loop) =>
-    smooth(loop)
+  const plateau = traceLoops({ cells: soft, width, height, x0, z0, level: PLATEAU_MARGIN }).map(
+    (loop) => smooth(loop)
   )
 
   return { distanceAt, plateau, grid: { cells, width, height, x0, z0 } }

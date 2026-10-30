@@ -20,7 +20,17 @@ interface Bounds {
   isTurned: boolean
 }
 
-const boundsOf = (type: ObjectType, rotation: number, x: number, z: number): Bounds => {
+const boundsOf = ({
+  type,
+  rotation,
+  x,
+  z,
+}: {
+  type: ObjectType
+  rotation: number
+  x: number
+  z: number
+}): Bounds => {
   const [cellsX, cellsZ] = footprintCells(type, rotation)
 
   return {
@@ -56,7 +66,7 @@ interface Props {
  */
 export const AlignmentGuides = ({ objects, type, x, z, rotation, ignoreId }: Props) => {
   const guides = useMemo(() => {
-    const moving = boundsOf(type, rotation, x, z)
+    const moving = boundsOf({ type, rotation, x, z })
     const others = objects
       .filter(
         (object) =>
@@ -66,7 +76,7 @@ export const AlignmentGuides = ({ objects, type, x, z, rotation, ignoreId }: Pro
           !isOverhead(object.type) &&
           Math.hypot(object.x - x, object.z - z) <= REACH
       )
-      .map((object) => boundsOf(object.type, object.rotation, object.x, object.z))
+      .map((object) => boundsOf(object))
     const result: [number, number, number][][] = []
     for (const axis of ["x", "z"] as const) {
       // A line at a fixed x (or z), running along the other axis.

@@ -16,7 +16,7 @@ const GROUND_SIZE = BUILD_HALF * 4
 
 interface Props {
   // Raw ground coordinates — Scene snaps them per-object (footprint aware).
-  onDown: (x: number, z: number, button: number, event: PointerEvent) => void
+  onDown: (point: { x: number; z: number }, button: number, event: PointerEvent) => void
   onMove: (x: number, z: number) => void
   onUp: (x: number, z: number, button: number) => void
   onLeave: () => void
@@ -41,7 +41,7 @@ export const Ground = ({ onDown, onMove, onUp, onLeave, onClick, showGrid = true
         position={[0, 0, 0]}
         receiveShadow
         onPointerDown={(event: ThreeEvent<PointerEvent>) =>
-          onDown(event.point.x, event.point.z, event.button, event.nativeEvent)
+          onDown({ x: event.point.x, z: event.point.z }, event.button, event.nativeEvent)
         }
         onPointerMove={(event: ThreeEvent<PointerEvent>) => {
           onMove(event.point.x, event.point.z)

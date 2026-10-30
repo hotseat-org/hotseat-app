@@ -13,6 +13,14 @@ import { MAX_K, MIN_K, type View } from "./planView"
 /** A press that moves further than this is a pan, not a click (px). */
 const DRAG = 4
 
+/** How much a zoom key (+ / −) scales the plan; 0 for any other key. */
+const getKeyZoomFactor = (key: string) => {
+  if (key === "+" || key === "=") return 1.25
+  if (key === "-" || key === "_") return 1 / 1.25
+
+  return 0
+}
+
 /**
  * Pan (drag) and zoom (wheel, pinch, + / −) the plan, and turn it (Q / E) —
  * the same reading as the 3D view. `moved` tells a click from the end of a
@@ -78,7 +86,7 @@ export const usePlanGestures = (
       if (key === "e") return turnByRef.current(-1)
 
       const element = box.current
-      const factor = key === "+" || key === "=" ? 1.25 : key === "-" || key === "_" ? 1 / 1.25 : 0
+      const factor = getKeyZoomFactor(key)
       if (factor && element) zoomAt(factor, element.clientWidth / 2, element.clientHeight / 2)
     }
     window.addEventListener("keydown", onKey)

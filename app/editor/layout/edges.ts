@@ -17,10 +17,12 @@ import { getEdge } from "../catalog"
  */
 export type EdgeDirection = "x" | "z" | "rising" | "falling"
 
+const DIRECTION_BY_EIGHTHS: EdgeDirection[] = ["x", "falling", "z", "rising"]
+
 export const edgeDirection = (rotation: number): EdgeDirection => {
   const eighths = Math.round((((rotation % Math.PI) + Math.PI) % Math.PI) / (Math.PI / 4)) % 4
 
-  return eighths === 0 ? "x" : eighths === 1 ? "falling" : eighths === 2 ? "z" : "rising"
+  return DIRECTION_BY_EIGHTHS[eighths]
 }
 
 /** The rotation a wall/door is built with to run each way. */
@@ -148,23 +150,16 @@ export const edgeNodes = (edge: SceneObject): [Cell, Cell] => {
 }
 
 /** Shortest distance from a point to a line segment. */
-const distToSegment = (
-  pointX: number,
-  pointZ: number,
-  startX: number,
-  startZ: number,
-  endX: number,
-  endZ: number
-) => {
-  const deltaX = endX - startX
-  const deltaZ = endZ - startZ
+const distanceToSegment = (point: Cell, start: Cell, end: Cell) => {
+  const deltaX = end.x - start.x
+  const deltaZ = end.z - start.z
   const lengthSquared = deltaX * deltaX + deltaZ * deltaZ || 1
-  let fraction = ((pointX - startX) * deltaX + (pointZ - startZ) * deltaZ) / lengthSquared
+  let fraction = ((point.x - start.x) * deltaX + (point.z - start.z) * deltaZ) / lengthSquared
   fraction = Math.max(0, Math.min(1, fraction))
-  const closestX = startX + fraction * deltaX
-  const closestZ = startZ + fraction * deltaZ
+  const closestX = start.x + fraction * deltaX
+  const closestZ = start.z + fraction * deltaZ
 
-  return Math.hypot(pointX - closestX, pointZ - closestZ)
+  return Math.hypot(point.x - closestX, point.z - closestZ)
 }
 
 /** Id of the wall/door segment nearest a point, within `maxDistance`, else null. */
@@ -181,7 +176,7 @@ export const nearestEdgeId = (
     if (!accept(edge)) continue
 
     const [start, end] = edgeNodes(edge)
-    const distance = distToSegment(pointX, pointZ, start.x, start.z, end.x, end.z)
+    const distance = distanceToSegment({ x: pointX, z: pointZ }, start, end)
     if (distance < bestDistance) {
       bestDistance = distance
       best = edge.id

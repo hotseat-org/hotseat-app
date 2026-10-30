@@ -87,6 +87,18 @@ const shiftMonth = (month: Day, offset: number) => {
   return shifted.toISOString().slice(0, 10)
 }
 
+const getDayTone = (isSelected: boolean, isEnabled: boolean) => {
+  if (isSelected) return "bg-accent text-accent-foreground"
+
+  return isEnabled ? "text-foreground hover:bg-surface-secondary" : "text-muted opacity-40"
+}
+
+const getFillTone = (isSelected: boolean, isMine: boolean) => {
+  if (isSelected) return "bg-accent-foreground"
+
+  return isMine ? "bg-accent" : "bg-muted"
+}
+
 /**
  * A month of days to pick from: how full each one is, and yours. Also the
  * phone's calendar sheet (`className` sizes it there).
@@ -181,11 +193,7 @@ export const MonthCalendar = ({
               className={clsx(
                 "flex h-10 flex-col items-center justify-center gap-1 rounded-lg text-[0.8rem] font-extrabold tabular-nums outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus",
                 !inMonth && "invisible",
-                selected
-                  ? "bg-accent text-accent-foreground"
-                  : enabled
-                    ? "text-foreground hover:bg-surface-secondary"
-                    : "text-muted opacity-40",
+                getDayTone(selected, enabled),
                 !selected && cellDay === today && "text-accent"
               )}
             >
@@ -198,10 +206,7 @@ export const MonthCalendar = ({
                 )}
               >
                 <span
-                  className={clsx(
-                    "block h-full rounded-full",
-                    selected ? "bg-accent-foreground" : isMine ? "bg-accent" : "bg-muted"
-                  )}
+                  className={clsx("block h-full rounded-full", getFillTone(selected, isMine))}
                   style={{ width: `${Math.round(fill(cellDay) * 100)}%` }}
                 />
               </span>

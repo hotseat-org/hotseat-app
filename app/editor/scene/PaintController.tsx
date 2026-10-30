@@ -21,6 +21,18 @@ type Target =
   | { kind: "floor"; cells: Cell[]; x: number; z: number }
   | null
 
+/** Tells two targets apart: the same walls' faces, or the same room (wherever in it). */
+const getTargetKey = (target: Target) => {
+  if (!target) return ""
+  if (target.kind === "floor") {
+    return `f:${target.cells[0].x},${target.cells[0].z},${target.cells.length}`
+  }
+
+  const faces = target.targets.map((wallTarget) => `${wallTarget.id}${wallTarget.face ?? ""}`)
+
+  return `w:${faces.join(",")}`
+}
+
 /**
  * Paint tool. Points at a wall → the face you see of it, corner to corner, with
  * its doors and windows (Shift: the inside
@@ -83,13 +95,13 @@ export const PaintController = () => {
     const all = store.getState().objects
 
     // Nearest wall/opening the ray passes through.
-    let best: { id: string; d: number } | null = null
+    let best: { id: string; distance: number } | null = null
     for (const object of all) {
       if (!isEdgeType(object.type)) continue
       if (!intersectEdge(ray, object, hit)) continue
 
       const distance = hit.distanceTo(ray.origin)
-      if (!best || distance < best.d) best = { id: object.id, d: distance }
+      if (!best || distance < best.distance) best = { id: object.id, distance }
     }
 
     let next: Target = null
@@ -110,11 +122,7 @@ export const PaintController = () => {
       if (region) next = { kind: "floor", cells: region, x: hit.x, z: hit.z }
     }
 
-    const key = !next
-      ? ""
-      : next.kind === "wall"
-        ? `w:${next.targets.map((wallTarget) => `${wallTarget.id}${wallTarget.face ?? ""}`).join(",")}`
-        : `f:${next.cells[0].x},${next.cells[0].z},${next.cells.length}`
+    const key = getTargetKey(next)
     if (key !== lastKey.current) {
       lastKey.current = key
       setTarget(next)

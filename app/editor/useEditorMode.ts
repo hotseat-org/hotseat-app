@@ -7,6 +7,22 @@ import { useI18n } from "~/i18n/I18nProvider"
 
 export type Mode = "edit" | "display"
 
+const getBusyLabel = ({
+  t,
+  isBuilding,
+  busyMode,
+}: {
+  t: (text: string) => string
+  isBuilding: boolean
+  busyMode: Mode | null
+}) => {
+  if (isBuilding) return t("Building the office…")
+  if (busyMode === "edit") return t("Opening the editor…")
+  if (busyMode === "display") return t("Back to the office…")
+
+  return null
+}
+
 /**
  * Editing or viewing, and how the office is shown. Editing is 3D-only:
  * without WebGL the office is view-only (as a 2D plan); phones are
@@ -85,14 +101,7 @@ export const useEditorMode = ({
   }, [flat])
 
   const busyMode = pendingMode ?? (readyFor !== null && readyFor !== mode ? mode : null)
-  const busyLabel =
-    readyFor === null
-      ? t("Building the office…")
-      : busyMode === "edit"
-        ? t("Opening the editor…")
-        : busyMode === "display"
-          ? t("Back to the office…")
-          : null
+  const busyLabel = getBusyLabel({ t, isBuilding: readyFor === null, busyMode })
   // Keep the last words while the indicator fades out.
   const lastBusyLabel = useRef(busyLabel)
   if (busyLabel) lastBusyLabel.current = busyLabel

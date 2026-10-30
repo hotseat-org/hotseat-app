@@ -70,7 +70,12 @@ const rectsOverlap = (first: Rect, second: Rect) => {
   )
 }
 
-const footprintRect = (type: ObjectType, rotation: number, x: number, z: number): Rect => {
+const footprintRect = ({
+  type,
+  rotation,
+  x,
+  z,
+}: Pick<SceneObject, "type" | "rotation" | "x" | "z">): Rect => {
   if (isDiagonal(rotation)) {
     const [cellsX, cellsZ] = getItem(type).footprint
 
@@ -84,7 +89,7 @@ const footprintRect = (type: ObjectType, rotation: number, x: number, z: number)
 
 /** Whether a piece's footprint (turned as it is) overlaps the grid square centred at (x, z). */
 export const footprintOverlapsSquare = (piece: SceneObject, x: number, z: number) =>
-  rectsOverlap(footprintRect(piece.type, piece.rotation, piece.x, piece.z), {
+  rectsOverlap(footprintRect(piece), {
     x,
     z,
     halfX: GRID / 2,
@@ -134,8 +139,12 @@ const edgeCrossesRect = (
 }
 
 /** Which collision layer a piece lives in: the floor, the ceiling or a wall face. */
-const layerOf = (type: ObjectType) =>
-  isOverhead(type) ? "overhead" : isWallMounted(type) ? "wall" : "floor"
+const layerOf = (type: ObjectType) => {
+  if (isOverhead(type)) return "overhead"
+  if (isWallMounted(type)) return "wall"
+
+  return "floor"
+}
 
 /**
  * Whether furniture of `type` at (x,z) would collide: overlapping other
@@ -156,7 +165,7 @@ export const furnitureCollides = (
   // Wall items need solid wall behind their whole width.
   if (isWallMounted(type) && !mountWalls(objects, type, x, z, rotation)) return true
 
-  const moving = footprintRect(type, rotation, x, z)
+  const moving = footprintRect({ type, rotation, x, z })
   for (const other of objects) {
     if (other.id === ignoreId || isMarker(other.type)) continue
     if (isEdgeType(other.type)) {
@@ -167,8 +176,7 @@ export const furnitureCollides = (
     // Overhead items (ceiling lights) and wall items only bump into their own kind.
     if (layerOf(type) !== layerOf(other.type)) continue
     if (getItem(type).isUnderlay || getItem(other.type).isUnderlay) continue
-    if (rectsOverlap(moving, footprintRect(other.type, other.rotation, other.x, other.z)))
-      return true
+    if (rectsOverlap(moving, footprintRect(other))) return true
   }
 
   return false
@@ -199,5 +207,5 @@ export const edgeBlocked = (objects: SceneObject[], edge: WallCell): boolean =>
       !isEdgeType(piece.type) &&
       !isOverhead(piece.type) &&
       !isMarker(piece.type) &&
-      edgeCrossesRect(edge, footprintRect(piece.type, piece.rotation, piece.x, piece.z))
+      edgeCrossesRect(edge, footprintRect(piece))
   )

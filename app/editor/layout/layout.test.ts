@@ -23,7 +23,10 @@ import {
 } from "."
 
 let nextId = 0
-const place = (type: ObjectType, x: number, z: number, rotation = 0): SceneObject => ({
+const place = (
+  type: ObjectType,
+  { x, z, rotation = 0 }: { x: number; z: number; rotation?: number }
+): SceneObject => ({
   id: `o${nextId++}`,
   type,
   x,
@@ -31,10 +34,10 @@ const place = (type: ObjectType, x: number, z: number, rotation = 0): SceneObjec
   rotation,
 })
 const walls = (cells: WallCell[], type: ObjectType = "wall") =>
-  cells.map((cell) => place(type, cell.x, cell.z, cell.rotation))
+  cells.map((cell) => place(type, cell))
 /** A closed rectangle of walls between two grid nodes. */
-const room = (x0: number, z0: number, x1: number, z1: number) =>
-  walls(roomEdges({ x: x0, z: z0 }, { x: x1, z: z1 }))
+const room = (from: { x: number; z: number }, to: { x: number; z: number }) =>
+  walls(roomEdges(from, to))
 const cellCount = (regions: { parts?: number }[][]) => regions.map((region) => region.length)
 const QUARTER = Math.PI / 2
 
@@ -93,18 +96,21 @@ describe("wall runs", () => {
 
 describe("rooms", () => {
   test("a closed rectangle is one room, its whole floor", () => {
-    expect(cellCount(enclosedRegions(room(0, 0, 2, 1)))).toEqual([8])
+    expect(cellCount(enclosedRegions(room({ x: 0, z: 0 }, { x: 2, z: 1 })))).toEqual([8])
   })
   test("a gap leaves no room", () => {
-    const open = room(0, 0, 2, 1).slice(1)
+    const open = room({ x: 0, z: 0 }, { x: 2, z: 1 }).slice(1)
     expect(enclosedRegions(open)).toEqual([])
   })
   test("a partition makes two rooms", () => {
-    const split = [...room(0, 0, 2, 1), ...walls(wallRun({ x: 1, z: 0 }, { x: 1, z: 1 }))]
+    const split = [
+      ...room({ x: 0, z: 0 }, { x: 2, z: 1 }),
+      ...walls(wallRun({ x: 1, z: 0 }, { x: 1, z: 1 })),
+    ]
     expect(cellCount(enclosedRegions(split)).sort()).toEqual([4, 4])
   })
   test("a door still closes a room", () => {
-    const objects = room(0, 0, 2, 1)
+    const objects = room({ x: 0, z: 0 }, { x: 2, z: 1 })
     const wall = objects.find((segment) => segment.z === 0 && segment.x === 0.75) as SceneObject
     const plan = openingPlan(objects, wall.id, "door", 0.8, 0) as NonNullable<
       ReturnType<typeof openingPlan>
@@ -132,13 +138,13 @@ describe("rooms", () => {
 })
 
 describe("collisions", () => {
-  const office = room(0, 0, 4, 4)
+  const office = room({ x: 0, z: 0 }, { x: 4, z: 4 })
   test("furniture can't overlap furniture", () => {
-    const desk = place("desk", 1, 1)
+    const desk = place("desk", { x: 1, z: 1 })
     expect(furnitureCollides([...office, desk], "desk", 1.5, 1, 0)).toBe(true)
   })
   test("but may stand flush against it", () => {
-    const desk = place("desk", 1, 1)
+    const desk = place("desk", { x: 1, z: 1 })
     expect(furnitureCollides([...office, desk], "desk", 3, 1, 0)).toBe(false)
   })
   test("furniture can't straddle a wall, but may touch it", () => {
@@ -146,19 +152,19 @@ describe("collisions", () => {
     expect(furnitureCollides(office, "desk", 1, 0.5, 0)).toBe(false)
   })
   test("a rug goes under furniture", () => {
-    const desk = place("desk", 2, 2)
+    const desk = place("desk", { x: 2, z: 2 })
     expect(furnitureCollides([...office, desk], "rug", 2, 2, 0)).toBe(false)
   })
   test("ceiling lights only bump into ceiling lights", () => {
-    const desk = place("desk", 2, 2)
+    const desk = place("desk", { x: 2, z: 2 })
     expect(furnitureCollides([...office, desk], "ceilingLight", 2, 2, 0)).toBe(false)
-    const light = place("ceilingLight", 2, 2)
+    const light = place("ceilingLight", { x: 2, z: 2 })
     expect(furnitureCollides([...office, light], "ceilingLight", 2, 2, 0)).toBe(true)
   })
 })
 
 describe("wall items", () => {
-  const office = room(0, 0, 4, 4)
+  const office = room({ x: 0, z: 0 }, { x: 4, z: 4 })
   test("hang against the nearest wall, facing the cursor's side", () => {
     expect(wallMount(office, "wallArt", 1.1, 0.3)).toEqual({ x: 1, z: 0.25, rotation: 0 })
   })
@@ -171,12 +177,12 @@ describe("wall items", () => {
 
 describe("openings", () => {
   test("a door takes two wall halves, and gives them back", () => {
-    const objects = room(0, 0, 2, 2)
+    const objects = room({ x: 0, z: 0 }, { x: 2, z: 2 })
     const wall = objects.find((segment) => segment.z === 0 && segment.x === 0.75) as SceneObject
     const cut = openingPlan(objects, wall.id, "door", 0.8, 0)
     expect(cut?.remove).toHaveLength(2)
     expect(cut?.add).toEqual([{ type: "door", x: 1, z: 0, rotation: 0 }])
-    const door = place("door", 1, 0)
+    const door = place("door", { x: 1, z: 0 })
     const filled = openingPlan([...objects, door], door.id, "door")
     expect(filled?.add.map((object) => object.type)).toEqual(["wall", "wall"])
   })
@@ -194,7 +200,7 @@ describe("openings", () => {
 describe("wall paint", () => {
   test("a window shows the paint of the wall round it", () => {
     const line = walls(wallRun({ x: 0, z: 0 }, { x: 3, z: 0 }))
-    const window = place("window", 1.5, 0)
+    const window = place("window", { x: 1.5, z: 0 })
     const objects = [...line.filter((object) => object.x !== 1.25 && object.x !== 1.75), window]
     const painted = paintWallFaces(
       objects,
@@ -206,14 +212,14 @@ describe("wall paint", () => {
     expect(composeWallColors(painted).openings.get(window.id)).toEqual(["#ff0000", undefined])
   })
   test("corner posts stand where walls running different ways meet", () => {
-    expect(wallJointNodes(room(0, 0, 1, 1))).toHaveLength(4)
+    expect(wallJointNodes(room({ x: 0, z: 0 }, { x: 1, z: 1 }))).toHaveLength(4)
     expect(wallJointNodes(walls(wallRun({ x: 0, z: 0 }, { x: 2, z: 0 })))).toEqual([])
   })
 })
 
 describe("saved layouts", () => {
   test("old 1-unit walls become two halves, once", () => {
-    const old = [place("wall", 1, 0)]
+    const old = [place("wall", { x: 1, z: 0 })]
     const upgraded = normalizeEdges(old)
     expect(upgraded.map((object) => object.x)).toEqual([0.75, 1.25])
     expect(normalizeEdges(upgraded)).toBe(upgraded)

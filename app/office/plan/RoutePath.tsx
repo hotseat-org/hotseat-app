@@ -18,7 +18,6 @@ export const RoutePath = ({ points, k: zoom }: { points: [number, number][]; k: 
     height: Math.max(...zs) - Math.min(...zs) + padding * 2,
   }
   const line = {
-    d: path,
     fill: "none",
     strokeLinecap: "round" as const,
     strokeLinejoin: "round" as const,
@@ -40,15 +39,17 @@ export const RoutePath = ({ points, k: zoom }: { points: [number, number][]; k: 
         </filter>
       </defs>
       <path
+        d={path}
         {...line}
         stroke="var(--accent)"
         strokeOpacity={0.55}
         strokeWidth={16}
         filter="url(#route-glow)"
       />
-      <path {...line} stroke="var(--accent)" strokeWidth={4.5} />
-      <path {...line} stroke="#ffffff" strokeOpacity={0.45} strokeWidth={1.5} />
+      <path d={path} {...line} stroke="var(--accent)" strokeWidth={4.5} />
+      <path d={path} {...line} stroke="#ffffff" strokeOpacity={0.45} strokeWidth={1.5} />
       <path
+        d={path}
         {...line}
         className="route-flow"
         stroke="#ffffff"

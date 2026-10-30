@@ -49,57 +49,106 @@ export const WithTooltip = ({ tip: tooltip, children }: { tip?: string; children
     children
   )
 
+interface Look {
+  label: string
+  tooltip?: string
+  tone: string
+}
+
+/** Someone else's day: their name, or (once picked) the nearest free desk instead. */
+const getTakenLook = (
+  i18n: Translator,
+  cell: Extract<Cell, { kind: "taken" }>,
+  isPicked: boolean
+): Look => {
+  const { t, format } = i18n
+  const when = format.onDay(cell.day)
+  const { holder } = cell
+  const tone = isPicked
+    ? "border-transparent bg-accent/55 text-foreground"
+    : "border-transparent bg-surface-tertiary text-muted"
+  if (!cell.alternative) {
+    return { label: holder, tooltip: t("{holder} has this desk {when}.", { holder, when }), tone }
+  }
+
+  const alternative = deskName(i18n, cell.alternative)
+  if (isPicked) {
+    return {
+      label: alternative,
+      tooltip: t(
+        "{holder} has this desk {when}, so you get {alternative}, the nearest free desk. Tap to drop the day.",
+        { holder, when, alternative }
+      ),
+      tone,
+    }
+  }
+
+  return {
+    label: holder,
+    tooltip: t(
+      "{holder} has this desk {when}. Tap to book {alternative}, the nearest free desk, instead.",
+      { holder, when, alternative }
+    ),
+    tone,
+  }
+}
+
+const getFreeTone = (isPicked: boolean, isMove: boolean, isWeekend: boolean) => {
+  if (isPicked) {
+    return isMove
+      ? "border-transparent bg-[color-mix(in_oklab,var(--accent)_72%,black)] text-accent-foreground"
+      : "border-transparent bg-accent text-accent-foreground"
+  }
+  if (isMove) return "border-warning bg-warning/15 text-foreground"
+
+  return clsx("border-border bg-surface", isWeekend && "text-muted")
+}
+
+/** A free day: plain, or (when you sit elsewhere that day) a move to this desk. */
+const getFreeLook = (
+  i18n: Translator,
+  cell: Extract<Cell, { kind: "free" }>,
+  isPicked: boolean
+): Look => {
+  const { t, format } = i18n
+  const when = format.onDay(cell.day)
+  const isMove = !!cell.currentDesk
+  const current = cell.currentDesk ? deskName(i18n, cell.currentDesk) : undefined
+  const tone = getFreeTone(isPicked, isMove, cell.isWeekend)
+  // Plain days need no words: the colour (and a check when picked) says it.
+  if (!current) return { label: "", tone }
+
+  return {
+    label: isPicked ? t("Moves you") : current,
+    tooltip: isPicked
+      ? t("You sit at {desk} {when}. Booking moves you here.", { desk: current, when })
+      : t("You sit at {desk} {when}. Picking it moves you here.", { desk: current, when }),
+    tone,
+  }
+}
+
+const getCellLook = (i18n: Translator, cell: Cell, isPicked: boolean): Look => {
+  const { t, format } = i18n
+  if (cell.kind === "closed") return { label: cell.label, tone: "border-transparent text-muted/60" }
+  if (cell.kind === "yours") {
+    return {
+      label: t("Yours"),
+      tooltip: t("You already have this desk {when}.", { when: format.onDay(cell.day) }),
+      tone: "border-dashed border-accent bg-accent/8 text-accent",
+    }
+  }
+
+  return cell.kind === "taken"
+    ? getTakenLook(i18n, cell, isPicked)
+    : getFreeLook(i18n, cell, isPicked)
+}
+
 /** How a day reads: its label, tooltip/explanation, colours and corner mark. */
 export const getDayLook = (i18n: Translator, cell: Cell, isPicked: boolean) => {
   const { t, format } = i18n
-  const when = format.onDay(cell.day)
   const isMove = cell.kind === "free" && !!cell.currentDesk
   const isElsewhere = cell.kind === "taken" && isPicked
-  let label: string
-  let tooltip: string | undefined
-  let tone: string
-  if (cell.kind === "closed") {
-    label = cell.label
-    tone = "border-transparent text-muted/60"
-  } else if (cell.kind === "yours") {
-    label = t("Yours")
-    tooltip = t("You already have this desk {when}.", { when })
-    tone = "border-dashed border-accent bg-accent/8 text-accent"
-  } else if (cell.kind === "taken") {
-    const alternative = cell.alternative ? deskName(i18n, cell.alternative) : undefined
-    const holder = cell.holder
-    label = isPicked && alternative ? alternative : holder
-    tooltip = !alternative
-      ? t("{holder} has this desk {when}.", { holder, when })
-      : isPicked
-        ? t(
-            "{holder} has this desk {when}, so you get {alternative}, the nearest free desk. Tap to drop the day.",
-            { holder, when, alternative }
-          )
-        : t(
-            "{holder} has this desk {when}. Tap to book {alternative}, the nearest free desk, instead.",
-            { holder, when, alternative }
-          )
-    tone = isPicked
-      ? "border-transparent bg-accent/55 text-foreground"
-      : "border-transparent bg-surface-tertiary text-muted"
-  } else {
-    const current = cell.currentDesk ? deskName(i18n, cell.currentDesk) : undefined
-    // Plain days need no words: the colour (and a check when picked) says it.
-    label = isPicked ? (isMove ? t("Moves you") : "") : (current ?? "")
-    if (current)
-      tooltip = isPicked
-        ? t("You sit at {desk} {when}. Booking moves you here.", { desk: current, when })
-        : t("You sit at {desk} {when}. Picking it moves you here.", { desk: current, when })
-
-    tone = isPicked
-      ? isMove
-        ? "border-transparent bg-[color-mix(in_oklab,var(--accent)_72%,black)] text-accent-foreground"
-        : "border-transparent bg-accent text-accent-foreground"
-      : isMove
-        ? "border-warning bg-warning/15 text-foreground"
-        : clsx("border-border bg-surface", cell.isWeekend && "text-muted")
-  }
+  const { label, tooltip, tone } = getCellLook(i18n, cell, isPicked)
 
   const aria =
     `${format.long(cell.day)}, ${label || (cell.kind === "free" ? t("free") : "")}`.replace(

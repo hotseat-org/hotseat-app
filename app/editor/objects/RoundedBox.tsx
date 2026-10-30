@@ -37,16 +37,25 @@ const createShape = (width: number, height: number, radius0: number) => {
  * parts. Never disposed: there are only a few hundred shapes in all.
  */
 const geometries = new Map<string, BufferGeometry>()
-const getRoundedBoxGeometry = (
-  width: number,
-  height: number,
-  depth: number,
-  radius: number,
-  smoothness: number,
-  bevelSegments: number,
-  steps: number,
+const getRoundedBoxGeometry = ({
+  width,
+  height,
+  depth,
+  radius,
+  smoothness,
+  bevelSegments,
+  steps,
+  creaseAngle,
+}: {
+  width: number
+  height: number
+  depth: number
+  radius: number
+  smoothness: number
+  bevelSegments: number
+  steps: number
   creaseAngle: number
-) => {
+}) => {
   const key = [width, height, depth, radius, smoothness, bevelSegments, steps, creaseAngle].join(
     "|"
   )
@@ -90,7 +99,7 @@ export const RoundedBox = forwardRef<Mesh, Props>(function RoundedBox(
   },
   ref
 ) {
-  const geometry = getRoundedBoxGeometry(
+  const geometry = getRoundedBoxGeometry({
     width,
     height,
     depth,
@@ -98,8 +107,8 @@ export const RoundedBox = forwardRef<Mesh, Props>(function RoundedBox(
     smoothness,
     bevelSegments,
     steps,
-    creaseAngle
-  )
+    creaseAngle,
+  })
 
   return (
     <mesh ref={ref} {...props}>

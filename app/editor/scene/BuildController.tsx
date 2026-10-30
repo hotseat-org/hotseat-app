@@ -148,7 +148,12 @@ export const BuildController = () => {
 
   if (!active) return null
 
-  const run = start && end ? (tool === "room" ? roomEdges(start, end) : wallRun(start, end)) : null
+  const getRun = () => {
+    if (!start || !end) return null
+
+    return tool === "room" ? roomEdges(start, end) : wallRun(start, end)
+  }
+  const run = getRun()
 
   if (isWall(tool) || tool === "room") {
     return (

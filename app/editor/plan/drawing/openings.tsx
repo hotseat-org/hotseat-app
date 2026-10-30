@@ -57,8 +57,12 @@ export const drawOpenings = (
       // On a diagonal: a window is wall with glass down its middle; a door, its
       // two jambs, and its leaf standing open with its swing, as straight ones.
       if (opening.type === "window") {
-        facedDiagonalWallPiece(startNode, endNode, opening.rotation, facesOf(opening), {})
-        diagonalWallPiece(startNode, endNode, WINDOW_GLASS, {
+        facedDiagonalWallPiece(
+          { start: startNode, end: endNode, rotation: opening.rotation },
+          facesOf(opening),
+          {}
+        )
+        diagonalWallPiece({ start: startNode, end: endNode }, WINDOW_GLASS, {
           extend: -0.06,
           across: HALF_WALL * 0.35,
         })
@@ -71,8 +75,8 @@ export const drawOpenings = (
         x: startNode.x + along.x * distance,
         z: startNode.z + along.z * distance,
       })
-      diagonalWallPiece(startNode, lerp(POST), frame, { extend: 0 })
-      diagonalWallPiece(lerp(span - POST), endNode, frame, { extend: 0 })
+      diagonalWallPiece({ start: startNode, end: lerp(POST) }, frame, { extend: 0 })
+      diagonalWallPiece({ start: lerp(span - POST), end: endNode }, frame, { extend: 0 })
       // Hinged at the first jamb, the leaf opens to the door's front (its +Z);
       // the swing runs from where it shuts to where it stands.
       const front = { x: Math.sin(opening.rotation), z: Math.cos(opening.rotation) }
@@ -99,14 +103,15 @@ export const drawOpenings = (
     const [from, to] = alongX
       ? [Math.min(startNode.x, endNode.x), Math.max(startNode.x, endNode.x)]
       : [Math.min(startNode.z, endNode.z), Math.max(startNode.z, endNode.z)]
+    const line = { alongX, fixed, from, to }
     if (opening.type === "window") {
-      facedWallPiece(alongX, fixed, from, to, lineFacesOf(opening))
-      wallPiece(alongX, fixed, from, to, WINDOW_GLASS, { extend: -0.06, across: HALF_WALL * 0.35 })
+      facedWallPiece(line, lineFacesOf(opening))
+      wallPiece(line, WINDOW_GLASS, { extend: -0.06, across: HALF_WALL * 0.35 })
       continue
     }
 
-    wallPiece(alongX, fixed, from, from + POST, frame, { extend: 0 })
-    wallPiece(alongX, fixed, to - POST, to, frame, { extend: 0 })
+    wallPiece({ ...line, to: from + POST }, frame, { extend: 0 })
+    wallPiece({ ...line, from: to - POST }, frame, { extend: 0 })
     // The leaf opens to the door's front (its +Z), hinged at the `from` jamb.
     const side = alongX
       ? Math.sign(Math.cos(opening.rotation)) || 1

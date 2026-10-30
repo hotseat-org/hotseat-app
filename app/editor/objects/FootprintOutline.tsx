@@ -68,7 +68,17 @@ const THICK = 0.06
 
 /** A rounded-rectangle band (w × d outer size) centred on the origin. */
 const outline = (outlineWidth: number, outlineDepth: number) => {
-  const rect = (target: Shape | Path, halfWidth: number, halfDepth: number, radius: number) => {
+  const rect = ({
+    target,
+    halfWidth,
+    halfDepth,
+    radius,
+  }: {
+    target: Shape | Path
+    halfWidth: number
+    halfDepth: number
+    radius: number
+  }) => {
     target.moveTo(-halfWidth + radius, -halfDepth)
     target.lineTo(halfWidth - radius, -halfDepth)
     target.quadraticCurveTo(halfWidth, -halfDepth, halfWidth, -halfDepth + radius)
@@ -82,14 +92,19 @@ const outline = (outlineWidth: number, outlineDepth: number) => {
     return target
   }
   const cornerRadius = Math.min(0.22, outlineWidth / 4, outlineDepth / 4)
-  const shape = rect(new Shape(), outlineWidth / 2, outlineDepth / 2, cornerRadius) as Shape
+  const shape = rect({
+    target: new Shape(),
+    halfWidth: outlineWidth / 2,
+    halfDepth: outlineDepth / 2,
+    radius: cornerRadius,
+  }) as Shape
   shape.holes.push(
-    rect(
-      new Path(),
-      outlineWidth / 2 - THICK,
-      outlineDepth / 2 - THICK,
-      Math.max(0.02, cornerRadius - THICK)
-    ) as Path
+    rect({
+      target: new Path(),
+      halfWidth: outlineWidth / 2 - THICK,
+      halfDepth: outlineDepth / 2 - THICK,
+      radius: Math.max(0.02, cornerRadius - THICK),
+    }) as Path
   )
 
   return shape

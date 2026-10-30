@@ -107,12 +107,12 @@ export const PhoneLayout = ({
           return (
             <section
               key={week.start}
-              aria-label={t("Week {n}", { n: week.number })}
+              aria-label={t("Week {week}", { week: week.number })}
               className="flex flex-col gap-2"
             >
               <div className="flex items-center justify-between gap-2">
                 <p className="truncate text-sm font-extrabold">
-                  {t("W{n}", { n: week.number })}{" "}
+                  {t("W{week}", { week: week.number })}{" "}
                   <span className="font-semibold text-muted">
                     · {format.dayMonth(first)} – {format.dayMonth(last)}
                   </span>
@@ -195,15 +195,24 @@ const PhoneDayCell = ({
 }) => {
   const { tone, aria, isMove, isElsewhere } = getDayLook(i18n, cell, isPicked)
   // The corner badge — sits on the corner, clear of the weekday and date.
-  const badge = isMove
-    ? { look: "bg-warning text-warning-foreground", mark: <ArrowLeftRight strokeWidth={2.6} /> }
-    : isElsewhere
-      ? { look: "bg-overlay text-foreground", mark: <Armchair strokeWidth={2.4} /> }
-      : isPicked && cell.kind === "free"
-        ? { look: "bg-overlay text-accent", mark: <Check strokeWidth={3.5} /> }
-        : cell.kind === "taken" // whose it is, by initial
-          ? { look: "bg-muted text-background", mark: cell.holder[0] }
-          : undefined
+  const getBadge = () => {
+    if (isMove) {
+      return {
+        look: "bg-warning text-warning-foreground",
+        mark: <ArrowLeftRight strokeWidth={2.6} />,
+      }
+    }
+    if (isElsewhere)
+      return { look: "bg-overlay text-foreground", mark: <Armchair strokeWidth={2.4} /> }
+    if (isPicked && cell.kind === "free") {
+      return { look: "bg-overlay text-accent", mark: <Check strokeWidth={3.5} /> }
+    }
+    // Whose it is, by initial.
+    if (cell.kind === "taken") return { look: "bg-muted text-background", mark: cell.holder[0] }
+
+    return undefined
+  }
+  const badge = getBadge()
 
   return (
     <button

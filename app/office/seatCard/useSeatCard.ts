@@ -62,11 +62,13 @@ export const useSeatCard = () => {
 
   const me = booking.me
   const { day, today, lastDay, byDay, released } = booking
-  const state = booking.enabled
-    ? deskState(seat, day, byDay, released)
-    : seat.assignee
-      ? ({ kind: "resident", email: seat.assignee } as const)
-      : ({ kind: "free" } as const)
+  const getState = () => {
+    if (booking.enabled) return deskState(seat, day, byDay, released)
+    if (seat.assignee) return { kind: "resident", email: seat.assignee } as const
+
+    return { kind: "free" } as const
+  }
+  const state = getState()
   const person = state.kind === "free" ? null : personByEmail(people, state.email)
   const mine = !!me && state.kind !== "free" && state.email === me
   const past = booking.enabled && day < today
@@ -124,13 +126,16 @@ export const useSeatCard = () => {
               ]
             : []
         })
-        const detail = taken.length
-          ? `${t("{free} of {total} free", { free: free.length, total: days.length })} · ${taken.join(", ")}`
-          : free.length === days.length
-            ? days.length === 1
-              ? t("Free")
-              : tn(days.length, "All {n} day free", "All {n} days free")
-            : t("Some are already yours")
+        const getAvailability = () => {
+          if (taken.length) {
+            return `${t("{free} of {total} free", { free: free.length, total: days.length })} · ${taken.join(", ")}`
+          }
+          if (free.length !== days.length) return t("Some are already yours")
+          if (days.length === 1) return t("Free")
+
+          return tn(days.length, "All {n} day free", "All {n} days free")
+        }
+        const detail = getAvailability()
         // Booking moves you: say so when you already sit elsewhere on those days.
         const moves = free.some((date) => Object.values(byDay[date] ?? {}).includes(me))
 

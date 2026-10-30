@@ -144,22 +144,23 @@ export const createFurnitureSlice = (
       rotation,
       piece.id
     )
-    const isInPlace = state.carryingId !== id
     const turn = state.pendingTurn?.id === id ? state.pendingTurn : null
-    const pendingTurn = !isInPlace
-      ? state.pendingTurn
-      : !isOverlapping
-        ? null
-        : turn
-          ? { ...turn, steps: turn.steps + 1 }
-          : {
-              id,
-              x: piece.x,
-              z: piece.z,
-              rotation: piece.rotation,
-              historyLength: state.past.length,
-              steps: 1,
-            }
+    const composePendingTurn = (): FurnitureSlice["pendingTurn"] => {
+      const isInPlace = state.carryingId !== id
+      if (!isInPlace) return state.pendingTurn
+      if (!isOverlapping) return null
+      if (turn) return { ...turn, steps: turn.steps + 1 }
+
+      return {
+        id,
+        x: piece.x,
+        z: piece.z,
+        rotation: piece.rotation,
+        historyLength: state.past.length,
+        steps: 1,
+      }
+    }
+    const pendingTurn = composePendingTurn()
     set({
       pendingTurn,
       objects: state.objects.map((candidate) =>

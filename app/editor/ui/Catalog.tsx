@@ -88,6 +88,12 @@ export const Catalog = () => {
   // Doors have none: always wood.
   const canColor = !!armed && isRecolorable(armed)
   const colorType = armed && canColor ? colorKey(armed) : null
+  const getColorLabel = () => {
+    if (canColor) return t("Colour")
+    if (armed) return t("Colour — doors are wood")
+
+    return t("Colour — pick an item")
+  }
   const activeColor = colorType ? (placementColors[colorType] ?? null) : null
 
   const toggleCategory = (id: string) => {
@@ -286,13 +292,7 @@ export const Catalog = () => {
             )}
             aria-disabled={!canColor}
           >
-            <div className="mb-1.5 px-1 text-[11px] font-medium text-muted">
-              {canColor
-                ? t("Colour")
-                : armed
-                  ? t("Colour — doors are wood")
-                  : t("Colour — pick an item")}
-            </div>
+            <div className="mb-1.5 px-1 text-[11px] font-medium text-muted">{getColorLabel()}</div>
             <div className="flex flex-wrap gap-1.5 px-1">
               <Swatch
                 title={t("Default")}
@@ -389,6 +389,13 @@ interface RailButtonProps {
   children: React.ReactNode
 }
 
+const getRailToneClass = (active: boolean, danger?: boolean) => {
+  if (!active) return "text-muted hover:bg-foreground/10 hover:text-foreground"
+  if (danger) return "bg-danger text-danger-foreground"
+
+  return "bg-accent text-accent-foreground"
+}
+
 const RailButton = ({ label, shortcut, active, danger, onClick, children }: RailButtonProps) => (
   <Tooltip delay={350}>
     {/* Controlled isSelected + onPress: re-pressing an armed tool re-selects it
@@ -399,11 +406,7 @@ const RailButton = ({ label, shortcut, active, danger, onClick, children }: Rail
       onPress={onClick}
       className={clsx(
         "flex h-auto w-full min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl px-0.5 pb-1 pt-1.5 transition-colors",
-        active
-          ? danger
-            ? "bg-danger text-danger-foreground"
-            : "bg-accent text-accent-foreground"
-          : "text-muted hover:bg-foreground/10 hover:text-foreground"
+        getRailToneClass(active, danger)
       )}
     >
       {children}

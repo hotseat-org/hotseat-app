@@ -77,8 +77,8 @@ export const HeatPads = () => {
         return {
           x: object.x,
           z: object.z,
-          w: cellsX * GRID + MARGIN * 2,
-          d: cellsZ * GRID + MARGIN * 2,
+          width: cellsX * GRID + MARGIN * 2,
+          depth: cellsZ * GRID + MARGIN * 2,
           color: new THREE.Color(heatColor(ratio, isDark)),
           // Dark: the busiest desks bright enough for the bloom to make them glow.
           glow: isDark ? 1 + ratio * 0.8 : 1,
@@ -116,8 +116,11 @@ export const HeatPads = () => {
     const glow = geometry.getAttribute("padGlow") as THREE.InstancedBufferAttribute
     const matrix = new THREE.Matrix4()
     pads.forEach((pad, i) => {
-      padMesh.setMatrixAt(i, matrix.makeScale(pad.w, 1, pad.d).setPosition(pad.x, HEIGHT, pad.z))
-      size.setXY(i, pad.w, pad.d)
+      padMesh.setMatrixAt(
+        i,
+        matrix.makeScale(pad.width, 1, pad.depth).setPosition(pad.x, HEIGHT, pad.z)
+      )
+      size.setXY(i, pad.width, pad.depth)
       color.setXYZ(i, pad.color.r, pad.color.g, pad.color.b)
       glow.setX(i, pad.glow)
     })

@@ -52,7 +52,7 @@ export const findDeskChair = (desk: SceneObject, seats: SceneObject[]) => {
   const front = toWorld(desk, 0, DESK_CHAIR_Z)
 
   return seats
-    .map((seat) => ({ s: seat, d: Math.hypot(seat.x - front.x, seat.z - front.z) }))
-    .filter((candidate) => candidate.d <= CHAIR_REACH)
-    .sort((first, second) => first.d - second.d)[0]?.s
+    .map((seat) => ({ seat, distance: Math.hypot(seat.x - front.x, seat.z - front.z) }))
+    .filter((candidate) => candidate.distance <= CHAIR_REACH)
+    .sort((first, second) => first.distance - second.distance)[0]?.seat
 }

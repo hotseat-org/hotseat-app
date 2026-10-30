@@ -53,6 +53,13 @@ const EDIT_ROWS: LayerRow[] = [
   { id: "grid", label: msg("Grid"), hint: msg("The build grid on the floor"), icon: Grid3x3 },
 ]
 
+const getToneClass = (hasChanges: boolean, isCompact: boolean) => {
+  if (hasChanges) return "bg-accent/15 text-accent"
+  if (isCompact) return "bg-foreground/[0.07] text-foreground"
+
+  return "text-muted hover:bg-foreground/10 hover:text-foreground"
+}
+
 interface Props {
   isEditing?: boolean
   /** The 3D view (the frame rate is only measured there). */
@@ -106,18 +113,18 @@ export const MapMenu = ({
     .filter((layer) => layer.when === "always" || (layer.when === "editing") === isEditing)
     .map((layer) => ({ ...layer, id: layer.id as keyof Layers }))
   const rows = [...moduleRows, ...(isEditing ? EDIT_ROWS : []), ...(is3d ? [FRAME_RATE] : [])]
-  const isOn = (row: LayerRow) =>
-    row.id === "measurements"
-      ? measureHints
-      : row.id === "frameRate"
-        ? isFrameRateShown
-        : layers[row.id]
-  const toggle = (row: LayerRow) =>
-    row.id === "measurements"
-      ? toggleMeasureHints()
-      : row.id === "frameRate"
-        ? toggleFrameRate()
-        : toggleLayer(row.id)
+  const isOn = (row: LayerRow) => {
+    if (row.id === "measurements") return measureHints
+    if (row.id === "frameRate") return isFrameRateShown
+
+    return layers[row.id]
+  }
+  const toggle = (row: LayerRow) => {
+    if (row.id === "measurements") return toggleMeasureHints()
+    if (row.id === "frameRate") return toggleFrameRate()
+
+    return toggleLayer(row.id)
+  }
   // The frame rate is off by default: on isn't a change worth a badge.
   const hiddenCount = rows.filter((row) => row.id !== "frameRate" && !isOn(row)).length
   const changedCount =
@@ -136,11 +143,7 @@ export const MapMenu = ({
           variant === "compact"
             ? "h-12 w-11 rounded-xl"
             : "h-9 w-auto min-w-0 justify-start rounded-xl px-[9px] text-sm font-semibold",
-          changedCount
-            ? "bg-accent/15 text-accent"
-            : variant === "compact"
-              ? "bg-foreground/[0.07] text-foreground"
-              : "text-muted hover:bg-foreground/10 hover:text-foreground"
+          getToneClass(changedCount > 0, variant === "compact")
         )}
       >
         <LayersIcon className={variant === "compact" ? "size-5" : "size-[18px]"} />

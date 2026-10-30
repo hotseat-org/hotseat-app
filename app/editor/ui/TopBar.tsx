@@ -45,6 +45,51 @@ interface Props {
   onRetrySave?: () => void
 }
 
+interface SaveStatusProps extends Props {
+  count: number
+}
+
+/** The line under the title: where the layout is saved and how it went. */
+const SaveStatus = ({ dbMode, saving, saveFailed, count, onRetrySave }: SaveStatusProps) => {
+  const { t, tn } = useI18n()
+  const itemCount = tn(count, "{n} item", "{n} items")
+
+  if (dbMode && saveFailed && !saving)
+    return (
+      <p className="flex items-center gap-1 text-xs text-danger">
+        <CloudOff className="size-3" /> {t("Couldn't save")} ·{" "}
+        <button
+          type="button"
+          onClick={onRetrySave}
+          className="font-semibold underline underline-offset-2 hover:no-underline"
+        >
+          {t("Retry")}
+        </button>
+      </p>
+    )
+
+  if (dbMode)
+    return (
+      <p className="flex items-center gap-1 text-xs text-success">
+        {saving ? (
+          <>
+            <CloudUpload className="size-3 animate-pulse" /> {t("Saving…")}
+          </>
+        ) : (
+          <>
+            <Check className="size-3" /> {t("Saved")} · {itemCount}
+          </>
+        )}
+      </p>
+    )
+
+  return (
+    <p className="flex items-center gap-1 text-xs text-success">
+      <Check className="size-3" /> {t("Auto-saved")} · {itemCount}
+    </p>
+  )
+}
+
 export const TopBar = ({ dbMode, saving, saveFailed, onRetrySave }: Props) => {
   const { t, tn } = useI18n()
   const setCommandSearchOpen = useEditorStore((state) => state.setCommandSearchOpen)
@@ -63,34 +108,13 @@ export const TopBar = ({ dbMode, saving, saveFailed, onRetrySave }: Props) => {
         <LayoutGrid className="size-5 text-accent" />
         <div className="leading-tight">
           <p className="text-sm font-semibold">{t("Office Editor")}</p>
-          {dbMode && saveFailed && !saving ? (
-            <p className="flex items-center gap-1 text-xs text-danger">
-              <CloudOff className="size-3" /> {t("Couldn't save")} ·{" "}
-              <button
-                type="button"
-                onClick={onRetrySave}
-                className="font-semibold underline underline-offset-2 hover:no-underline"
-              >
-                {t("Retry")}
-              </button>
-            </p>
-          ) : dbMode ? (
-            <p className="flex items-center gap-1 text-xs text-success">
-              {saving ? (
-                <>
-                  <CloudUpload className="size-3 animate-pulse" /> {t("Saving…")}
-                </>
-              ) : (
-                <>
-                  <Check className="size-3" /> {t("Saved")} · {tn(count, "{n} item", "{n} items")}
-                </>
-              )}
-            </p>
-          ) : (
-            <p className="flex items-center gap-1 text-xs text-success">
-              <Check className="size-3" /> {t("Auto-saved")} · {tn(count, "{n} item", "{n} items")}
-            </p>
-          )}
+          <SaveStatus
+            dbMode={dbMode}
+            saving={saving}
+            saveFailed={saveFailed}
+            count={count}
+            onRetrySave={onRetrySave}
+          />
         </div>
       </div>
 

@@ -60,21 +60,101 @@ interface Floor {
   bounds: { i0: number; i1: number; j0: number; j1: number }
 }
 
-const readFloor = (objects: SceneObject[]): Floor | null => {
-  const occupied = new Set<string>()
-  for (const piece of objects) {
-    if (!isObstacle(piece)) continue
-
-    const [cellsX, cellsZ] = footprintCells(piece.type, piece.rotation)
-    const i0 = Math.round((piece.x - (cellsX * GRID) / 2) / GRID)
-    const j0 = Math.round((piece.z - (cellsZ * GRID) / 2) / GRID)
-    // A piece on the diagonal blocks only the squares its turned shape covers,
-    // not the whole square it fits in (aisles between angled desks stay open).
-    const isTurned = isDiagonal(piece.rotation)
-    for (let i = i0; i < i0 + cellsX; i++)
-      for (let j = j0; j < j0 + cellsZ; j++)
-        if (!isTurned || footprintOverlapsSquare(piece, ...centre(i, j))) occupied.add(key(i, j))
+/** The squares a piece of furniture stands on. */
+const getStandingSquares = (piece: SceneObject) => {
+  const [cellsX, cellsZ] = footprintCells(piece.type, piece.rotation)
+  const i0 = Math.round((piece.x - (cellsX * GRID) / 2) / GRID)
+  const j0 = Math.round((piece.z - (cellsZ * GRID) / 2) / GRID)
+  // A piece on the diagonal blocks only the squares its turned shape covers,
+  // not the whole square it fits in (aisles between angled desks stay open).
+  const isTurned = isDiagonal(piece.rotation)
+  const squares: string[] = []
+  for (let i = i0; i < i0 + cellsX; i++) {
+    for (let j = j0; j < j0 + cellsZ; j++) {
+      if (!isTurned || footprintOverlapsSquare(piece, ...centre(i, j))) squares.push(key(i, j))
+    }
   }
+
+  return squares
+}
+
+/** The square a straight edge is filed under: `blocked` keys it as `h:i,j` or `v:i,j`. */
+const getSideSquare = (edge: Pick<SceneObject, "x" | "z" | "rotation">): [number, number] => {
+  const alongX = runsAlongX(edge.rotation)
+
+  return [
+    Math.round((alongX ? edge.x - GRID / 2 : edge.x) / GRID),
+    Math.round((alongX ? edge.z : edge.z - GRID / 2) / GRID),
+  ]
+}
+
+/** The bounds, grown to take in the square (i, j) and two squares round it. */
+const growBounds = (bounds: Floor["bounds"], i: number, j: number) => ({
+  i0: Math.min(bounds.i0, i - 2),
+  i1: Math.max(bounds.i1, i + 2),
+  j0: Math.min(bounds.j0, j - 2),
+  j1: Math.max(bounds.j1, j + 2),
+})
+
+type Entrance = Floor["entrances"][number]
+
+/**
+ * A door in a diagonal wall stands in the squares it crosses: the way in is
+ * through them, to their inside neighbours; outdoors lies beyond.
+ */
+const findDiagonalEntrance = (
+  door: SceneObject,
+  inside: Set<string>,
+  walled: Set<string>
+): Entrance | null => {
+  const cells: [number, number][] = []
+  let outdoors = false
+  for (const edge of unitEdges(door)) {
+    const [i, j] = cellOf(edge.x, edge.z)
+    cells.push([i, j])
+    for (const neighbour of [
+      [i + 1, j],
+      [i - 1, j],
+      [i, j + 1],
+      [i, j - 1],
+    ] as [number, number][]) {
+      if (!inside.has(key(...neighbour))) outdoors = true
+      else if (!walled.has(key(...neighbour))) cells.push(neighbour)
+    }
+  }
+  if (!outdoors) return null
+
+  return { cells, door: [door.x, door.z] }
+}
+
+/** A door in a straight wall: the squares on both its sides, one inside, one out. */
+const findStraightEntrance = (door: SceneObject, inside: Set<string>): Entrance | null => {
+  const cells: [number, number][] = []
+  let outdoors = false
+  for (const edge of unitEdges(door)) {
+    const alongX = runsAlongX(edge.rotation)
+    const [i, j] = getSideSquare(edge)
+    const sides: [number, number][] = alongX
+      ? [
+          [i, j - 1],
+          [i, j],
+        ]
+      : [
+          [i - 1, j],
+          [i, j],
+        ]
+    for (const side of sides) {
+      if (inside.has(key(...side))) cells.push(side)
+      else outdoors = true
+    }
+  }
+  if (!outdoors || !cells.length) return null
+
+  return { cells, door: [door.x, door.z] }
+}
+
+const readFloor = (objects: SceneObject[]): Floor | null => {
+  const occupied = new Set(objects.filter(isObstacle).flatMap(getStandingSquares))
 
   const blocked = new Set<string>()
   const walled = new Set<string>()
@@ -87,32 +167,16 @@ const readFloor = (objects: SceneObject[]): Floor | null => {
     if (isPassable) doors.push(piece)
 
     for (const edge of unitEdges(piece)) {
-      if (isDiagonalEdge(edge.rotation)) {
-        // A diagonal wall runs corner to corner through a square: the square
-        // isn't walked through (a door in one is).
-        const [i, j] = cellOf(edge.x, edge.z)
-        bounds = {
-          i0: Math.min(bounds.i0, i - 2),
-          i1: Math.max(bounds.i1, i + 2),
-          j0: Math.min(bounds.j0, j - 2),
-          j1: Math.max(bounds.j1, j + 2),
-        }
-        if (!isPassable) walled.add(key(i, j))
-
-        continue
-      }
-
-      const alongX = runsAlongX(edge.rotation)
-      const i = Math.round((alongX ? edge.x - GRID / 2 : edge.x) / GRID)
-      const j = Math.round((alongX ? edge.z : edge.z - GRID / 2) / GRID)
-      bounds = {
-        i0: Math.min(bounds.i0, i - 2),
-        i1: Math.max(bounds.i1, i + 2),
-        j0: Math.min(bounds.j0, j - 2),
-        j1: Math.max(bounds.j1, j + 2),
-      }
+      const isDiagonalWall = isDiagonalEdge(edge.rotation)
+      const [i, j] = isDiagonalWall ? cellOf(edge.x, edge.z) : getSideSquare(edge)
+      bounds = growBounds(bounds, i, j)
       // Doors are walked through; walls and windows are not.
-      if (!isPassable) blocked.add(`${alongX ? "h" : "v"}:${i},${j}`)
+      if (isPassable) continue
+
+      // A diagonal wall runs corner to corner through a square: the square
+      // isn't walked through (a door in one is).
+      if (isDiagonalWall) walled.add(key(i, j))
+      else blocked.add(`${runsAlongX(edge.rotation) ? "h" : "v"}:${i},${j}`)
     }
   }
   if (!Number.isFinite(bounds.i0)) return null
@@ -121,68 +185,31 @@ const readFloor = (objects: SceneObject[]): Floor | null => {
   const inside = new Set(
     enclosedCells(objects).map((cell) => key(...cellOf(cell.x + 0.01, cell.z + 0.01)))
   )
-  const entrances: Floor["entrances"] = []
+  const entrances: Entrance[] = []
   for (const door of doors) {
-    if (isDiagonalEdge(door.rotation)) {
-      // A door in a diagonal wall stands in the squares it crosses: the way in
-      // is through them, to their inside neighbours; outdoors lies beyond.
-      const cells: [number, number][] = []
-      let outdoors = false
-      for (const edge of unitEdges(door)) {
-        const [i, j] = cellOf(edge.x, edge.z)
-        cells.push([i, j])
-        for (const neighbour of [
-          [i + 1, j],
-          [i - 1, j],
-          [i, j + 1],
-          [i, j - 1],
-        ] as [number, number][]) {
-          if (!inside.has(key(...neighbour))) outdoors = true
-          else if (!walled.has(key(...neighbour))) cells.push(neighbour)
-        }
-      }
-      if (outdoors) entrances.push({ cells, door: [door.x, door.z] })
-
-      continue
-    }
-
-    const cells: [number, number][] = []
-    let outdoors = false
-    for (const edge of unitEdges(door)) {
-      const alongX = runsAlongX(edge.rotation)
-      const i = Math.round((alongX ? edge.x - GRID / 2 : edge.x) / GRID)
-      const j = Math.round((alongX ? edge.z : edge.z - GRID / 2) / GRID)
-      const sides: [number, number][] = alongX
-        ? [
-            [i, j - 1],
-            [i, j],
-          ]
-        : [
-            [i - 1, j],
-            [i, j],
-          ]
-      for (const side of sides) {
-        if (inside.has(key(...side))) cells.push(side)
-        else outdoors = true
-      }
-    }
-    if (outdoors && cells.length) entrances.push({ cells, door: [door.x, door.z] })
+    const entrance = isDiagonalEdge(door.rotation)
+      ? findDiagonalEntrance(door, inside, walled)
+      : findStraightEntrance(door, inside)
+    if (entrance) entrances.push(entrance)
   }
+
   for (const cellKey of walled) occupied.add(cellKey)
 
   return { occupied, blocked, walled, entrances, bounds }
 }
 
-/**
- * Can you step from a square to its neighbour (one apart along one axis)?
- * `wallsOnly`: furniture doesn't count (only walls and windows stop you).
- */
-const canStep = (
-  floor: Floor,
-  [fromI, fromJ]: [number, number],
-  [toI, toJ]: [number, number],
-  wallsOnly = false
-) => {
+interface StepOptions<Point> {
+  from: Point
+  to: Point
+  /** Furniture doesn't count: only walls and windows stop you. */
+  wallsOnly?: boolean
+}
+
+/** Can you step from a square to its neighbour (one apart along one axis)? */
+const canStep = (floor: Floor, { from, to, wallsOnly = false }: StepOptions<[number, number]>) => {
+  const [fromI, fromJ] = from
+  const [toI, toJ] = to
+
   if (floor.walled.has(key(toI, toJ))) return false
   if (!wallsOnly && floor.occupied.has(key(toI, toJ))) return false
   if (toI !== fromI) return !floor.blocked.has(`v:${Math.max(fromI, toI)},${fromJ}`)
@@ -205,12 +232,9 @@ const STEPS: [number, number, number][] = [
  * Can you walk straight from one point to another (no wall, no furniture)?
  * `wallsOnly`: just no wall in between (a chair's last step, a rounded corner).
  */
-const isClear = (
-  floor: Floor,
-  [fromX, fromZ]: [number, number],
-  [toX, toZ]: [number, number],
-  wallsOnly = false
-) => {
+const isClear = (floor: Floor, { from, to, wallsOnly = false }: StepOptions<[number, number]>) => {
+  const [fromX, fromZ] = from
+  const [toX, toZ] = to
   const steps = Math.ceil(Math.hypot(toX - fromX, toZ - fromZ) / (GRID / 4))
   let prev = cellOf(fromX, fromZ) as [number, number]
   for (let step = 1; step <= steps; step++) {
@@ -224,10 +248,12 @@ const isClear = (
       const viaX: [number, number] = [cell[0], prev[1]]
       const viaZ: [number, number] = [prev[0], cell[1]]
       const isOpen =
-        (canStep(floor, prev, viaX, wallsOnly) && canStep(floor, viaX, cell, wallsOnly)) ||
-        (canStep(floor, prev, viaZ, wallsOnly) && canStep(floor, viaZ, cell, wallsOnly))
+        (canStep(floor, { from: prev, to: viaX, wallsOnly }) &&
+          canStep(floor, { from: viaX, to: cell, wallsOnly })) ||
+        (canStep(floor, { from: prev, to: viaZ, wallsOnly }) &&
+          canStep(floor, { from: viaZ, to: cell, wallsOnly }))
       if (!isOpen) return false
-    } else if (!canStep(floor, prev, cell, wallsOnly)) return false
+    } else if (!canStep(floor, { from: prev, to: cell, wallsOnly })) return false
 
     prev = cell
   }
@@ -304,6 +330,46 @@ const round = (points: [number, number][], passes = 3) => {
 /** Starting squares: open ones round a chair (a desk's own squares are taken). */
 const STAND_UP = 1
 
+interface Start {
+  cell: [number, number]
+  point: [number, number]
+  distance: number
+}
+
+/** Your chair: step out onto the open squares right round it. */
+const findChairStarts = (floor: Floor, chair: { x: number; z: number }) => {
+  const starts: Start[] = []
+  const [cellI, cellJ] = cellOf(chair.x, chair.z)
+  const reach = Math.ceil(STAND_UP / GRID)
+  for (let i = cellI - reach; i <= cellI + reach; i++) {
+    for (let j = cellJ - reach; j <= cellJ + reach; j++) {
+      if (floor.occupied.has(key(i, j))) continue
+
+      const [x, z] = centre(i, j)
+      const distance = Math.hypot(x - chair.x, z - chair.z)
+      const isReachable =
+        distance <= STAND_UP &&
+        isClear(floor, { from: [chair.x, chair.z], to: [x, z], wallsOnly: true })
+      if (isReachable) starts.push({ cell: [i, j], point: [chair.x, chair.z], distance })
+    }
+  }
+
+  return starts
+}
+
+/** The open squares inside each outside door. */
+const findEntranceStarts = (floor: Floor) => {
+  const starts: Start[] = []
+  for (const entrance of floor.entrances) {
+    for (const cell of entrance.cells) {
+      if (!floor.occupied.has(key(...cell)))
+        starts.push({ cell, point: entrance.door, distance: 0 })
+    }
+  }
+
+  return starts
+}
+
 const findRoute = (objects: SceneObject[], deskId: string, fromDeskId?: string): Route | null => {
   const desk = objects.find((piece) => piece.id === deskId)
   if (!desk) return null
@@ -315,27 +381,8 @@ const findRoute = (objects: SceneObject[], deskId: string, fromDeskId?: string):
   const spot = spotFor(desk, seats)
 
   // Where it starts: [square, its first point, the walk to it from there].
-  const starts: { cell: [number, number]; point: [number, number]; distance: number }[] = []
   const origin = fromDeskId ? objects.find((piece) => piece.id === fromDeskId) : undefined
-  if (origin) {
-    // Your chair: step out onto the open squares right round it.
-    const chair = spotFor(origin, seats)
-    const [cellI, cellJ] = cellOf(chair.x, chair.z)
-    const reach = Math.ceil(STAND_UP / GRID)
-    for (let i = cellI - reach; i <= cellI + reach; i++)
-      for (let j = cellJ - reach; j <= cellJ + reach; j++) {
-        if (floor.occupied.has(key(i, j))) continue
-
-        const [x, z] = centre(i, j)
-        const distance = Math.hypot(x - chair.x, z - chair.z)
-        if (distance <= STAND_UP && isClear(floor, [chair.x, chair.z], [x, z], true))
-          starts.push({ cell: [i, j], point: [chair.x, chair.z], distance })
-      }
-  } else
-    for (const entrance of floor.entrances)
-      for (const cell of entrance.cells)
-        if (!floor.occupied.has(key(...cell)))
-          starts.push({ cell, point: entrance.door, distance: 0 })
+  const starts = origin ? findChairStarts(floor, spotFor(origin, seats)) : findEntranceStarts(floor)
   if (!starts.length) return null
 
   // Dijkstra from every start at once — the nearest entrance wins (the floor is
@@ -363,13 +410,15 @@ const findRoute = (objects: SceneObject[], deskId: string, fromDeskId?: string):
       const next: [number, number] = [cell[0] + deltaI, cell[1] + deltaJ]
       if (next[0] < i0 || next[0] > i1 || next[1] < j0 || next[1] > j1) continue
 
+      const viaI: [number, number] = [next[0], cell[1]]
+      const viaJ: [number, number] = [cell[0], next[1]]
       const isOpen =
         deltaI && deltaJ
-          ? canStep(floor, cell, [next[0], cell[1]]) &&
-            canStep(floor, [next[0], cell[1]], next) &&
-            canStep(floor, cell, [cell[0], next[1]]) &&
-            canStep(floor, [cell[0], next[1]], next)
-          : canStep(floor, cell, next)
+          ? canStep(floor, { from: cell, to: viaI }) &&
+            canStep(floor, { from: viaI, to: next }) &&
+            canStep(floor, { from: cell, to: viaJ }) &&
+            canStep(floor, { from: viaJ, to: next })
+          : canStep(floor, { from: cell, to: next })
       if (!isOpen) continue
 
       const nextKey = key(...next)
@@ -392,13 +441,15 @@ const findRoute = (objects: SceneObject[], deskId: string, fromDeskId?: string):
       const [centreX, centreZ] = centre(i, j)
 
       return {
-        k: cellKey,
+        cellKey,
         at: [centreX, centreZ] as [number, number],
         score: Math.hypot(centreX - spot.x, centreZ - spot.z) * 100 + distance,
       }
     })
     .sort((first, second) => first.score - second.score)
-    .find((candidate) => isClear(floor, candidate.at, [spot.x, spot.z], true))?.k
+    .find((candidate) =>
+      isClear(floor, { from: candidate.at, to: [spot.x, spot.z], wallsOnly: true })
+    )?.cellKey
   if (!goal) return null
 
   // Squares back to the start, then the door (or your chair) and the chair at the ends.
@@ -414,7 +465,8 @@ const findRoute = (objects: SceneObject[], deskId: string, fromDeskId?: string):
   let at = 1
   while (at < path.length - 1) {
     let next = at
-    while (next + 1 < path.length - 1 && isClear(floor, path[at], path[next + 1])) next++
+    while (next + 1 < path.length - 1 && isClear(floor, { from: path[at], to: path[next + 1] }))
+      next++
     tight.push(path[at])
     at = next === at ? at + 1 : next
   }
@@ -427,7 +479,10 @@ const findRoute = (objects: SceneObject[], deskId: string, fromDeskId?: string):
     [3, 2, 1]
       .map((passes) => round(corners, passes))
       .find((candidate) =>
-        candidate.every((point, i) => i === 0 || isClear(floor, candidate[i - 1], point, true))
+        candidate.every(
+          (point, i) =>
+            i === 0 || isClear(floor, { from: candidate[i - 1], to: point, wallsOnly: true })
+        )
       ) ?? corners
   let length = 0
   for (let i = 1; i < points.length; i++)
@@ -457,7 +512,7 @@ export const getRoute = (
 
 /** "1 min walk", "2 min walk" — at an easy indoor pace. */
 export const walkTime = ({ t }: Translator, metres: number) =>
-  t("{n} min walk", { n: Math.max(1, Math.round(metres / 1.1 / 60)) })
+  t("{minutes} min walk", { minutes: Math.max(1, Math.round(metres / 1.1 / 60)) })
 
 /**
  * The route being shown (store `route`), worked out for the current layout:

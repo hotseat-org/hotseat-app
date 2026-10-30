@@ -275,8 +275,8 @@ const CustomBookingBody = ({
               const workdays = week.cells.filter(isWorkday)
               const isFull = workdays.length > 0 && workdays.every((cell) => picked.has(cell.day))
               const tooltip = isFull
-                ? t("Clear week {n}", { n: week.number })
-                : t("Pick all of week {n}", { n: week.number })
+                ? t("Clear week {week}", { week: week.number })
+                : t("Pick all of week {week}", { week: week.number })
 
               return (
                 <div key={week.start} className={GRID}>
@@ -292,7 +292,7 @@ const CustomBookingBody = ({
                         isFull ? PICK_ALL_ON : PICK_ALL_OFF
                       )}
                     >
-                      {t("W{n}", { n: week.number })}
+                      {t("W{week}", { week: week.number })}
                       <ArrowRight className="size-3 shrink-0" strokeWidth={2.6} />
                     </button>
                   </WithTooltip>

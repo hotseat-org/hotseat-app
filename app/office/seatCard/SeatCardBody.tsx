@@ -71,6 +71,13 @@ const weekdayNames = ({ format }: Translator, weekdays: number[]) =>
     .map((weekday) => format.workdays()[weekday - 1])
     .join(", ")
 
+/** The row's height: a sheet's are touch-sized, a row with a detail line grows. */
+const getRowSize = (isSheet: boolean, hasDetail: boolean) => {
+  if (isSheet) return "min-h-12 py-2.5"
+
+  return hasDetail ? "min-h-11 py-1.5" : "h-10"
+}
+
 /** One of the card's actions: an icon, a label (and maybe a detail), a step on (chevron). */
 const Row = ({
   icon: Icon,
@@ -99,7 +106,7 @@ const Row = ({
     onClick={onPress}
     className={clsx(
       "flex w-full items-center gap-2.5 rounded-xl px-3 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50",
-      isSheet ? "min-h-12 py-2.5" : detail ? "min-h-11 py-1.5" : "h-10",
+      getRowSize(isSheet, !!detail),
       isPrimary
         ? "mb-1 bg-accent font-extrabold text-accent-foreground hover:brightness-105"
         : clsx("font-bold hover:bg-foreground/5", isDanger ? "text-danger" : "text-foreground")
@@ -209,15 +216,18 @@ export const SeatCardBody = ({
   const more = options.filter((option) => option.key !== "one")
   const showWayFirst = mine && !one
   const shortDay = dayLabel?.split(" ").slice(0, 2).join(" ")
-  const status = past
-    ? t("{day} · past", { day: dayLabel ?? "" })
-    : mine
-      ? t("Yours · {day}", { day: dayLabel ?? "" })
-      : state === "free"
-        ? t("Free · {day}", { day: dayLabel ?? "" })
-        : state === "resident"
-          ? t("{name}'s permanent desk", { name: person?.name ?? t("Someone") })
-          : `${person?.name ?? t("Taken")} · ${dayLabel ?? ""}`
+  const getStatus = () => {
+    const dayName = dayLabel ?? ""
+    if (past) return t("{day} · past", { day: dayName })
+    if (mine) return t("Yours · {day}", { day: dayName })
+    if (state === "free") return t("Free · {day}", { day: dayName })
+    if (state === "resident") {
+      return t("{name}'s permanent desk", { name: person?.name ?? t("Someone") })
+    }
+
+    return `${person?.name ?? t("Taken")} · ${dayName}`
+  }
+  const status = getStatus()
 
   const main = (
     <>
@@ -399,7 +409,8 @@ export const SeatCardBody = ({
               <span
                 className={clsx(
                   "font-bold",
-                  mine ? "text-accent" : state === "free" && !past ? "text-success" : undefined
+                  mine && "text-accent",
+                  !mine && state === "free" && !past && "text-success"
                 )}
               >
                 {status}

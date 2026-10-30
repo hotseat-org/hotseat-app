@@ -174,8 +174,84 @@ const smoothSegments = (flat: number[]) => {
   return new Float32Array(out)
 }
 
+interface CellOptions {
+  grid: Float32Array
+  size: number
+  /** World position of the grid's first sample. */
+  x0: number
+  z0: number
+  level: number
+  column: number
+  row: number
+}
+
+/** The segments (x1, z1, x2, z2 …) where one grid cell crosses `level`. */
+const traceCell = ({ grid, size, x0, z0, level, column, row }: CellOptions) => {
+  const topLeft = grid[row * size + column]
+  const topRight = grid[row * size + column + 1]
+  const bottomRight = grid[(row + 1) * size + column + 1]
+  const bottomLeft = grid[(row + 1) * size + column]
+  const code =
+    (topLeft > level ? 8 : 0) |
+    (topRight > level ? 4 : 0) |
+    (bottomRight > level ? 2 : 0) |
+    (bottomLeft > level ? 1 : 0)
+  if (code === 0 || code === 15) return []
+
+  const x = x0 + column * CELL
+  const z = z0 + row * CELL
+  const at = (start: number, end: number) => (level - start) / (end - start)
+  const top = [x + at(topLeft, topRight) * CELL, z]
+  const right = [x + CELL, z + at(topRight, bottomRight) * CELL]
+  const bottom = [x + at(bottomLeft, bottomRight) * CELL, z + CELL]
+  const left = [x, z + at(topLeft, bottomLeft) * CELL]
+  const out: number[] = []
+  const segment = (from: number[], to: number[]) => out.push(from[0], from[1], to[0], to[1])
+  switch (code) {
+    case 1:
+    case 14:
+      segment(left, bottom)
+      break
+    case 2:
+    case 13:
+      segment(bottom, right)
+      break
+    case 3:
+    case 12:
+      segment(left, right)
+      break
+    case 4:
+    case 11:
+      segment(top, right)
+      break
+    case 6:
+    case 9:
+      segment(top, bottom)
+      break
+    case 7:
+    case 8:
+      segment(left, top)
+      break
+    case 5:
+      segment(left, top)
+      segment(bottom, right)
+      break
+    case 10:
+      segment(top, right)
+      segment(left, bottom)
+      break
+  }
+
+  return out
+}
+
 /** Line segments where `grid` (n×n heights, from x0/z0) crosses each level. */
-const trace = (grid: Float32Array, size: number, x0: number, z0: number): ContourTile => {
+const trace = ({
+  grid,
+  size,
+  x0,
+  z0,
+}: Omit<CellOptions, "level" | "column" | "row">): ContourTile => {
   let low = Infinity
   let high = -Infinity
   for (const height of grid) {
@@ -187,62 +263,9 @@ const trace = (grid: Float32Array, size: number, x0: number, z0: number): Contou
   // Levels at half-steps, so the flat plateau top never sits exactly on one.
   for (let level = Math.floor(low - 0.5) + 0.5; level < high; level += 1) {
     const out = Math.round(level - 0.5) % 4 === 0 ? major : minor
-    for (let j = 0; j < size - 1; j++)
-      for (let i = 0; i < size - 1; i++) {
-        const topLeft = grid[j * size + i] // top-left
-        const topRight = grid[j * size + i + 1] // top-right
-        const bottomRight = grid[(j + 1) * size + i + 1] // bottom-right
-        const bottomLeft = grid[(j + 1) * size + i] // bottom-left
-        const code =
-          (topLeft > level ? 8 : 0) |
-          (topRight > level ? 4 : 0) |
-          (bottomRight > level ? 2 : 0) |
-          (bottomLeft > level ? 1 : 0)
-        if (code === 0 || code === 15) continue
-
-        const x = x0 + i * CELL
-        const z = z0 + j * CELL
-        const at = (start: number, end: number) => (level - start) / (end - start)
-        const top = [x + at(topLeft, topRight) * CELL, z]
-        const right = [x + CELL, z + at(topRight, bottomRight) * CELL]
-        const bottom = [x + at(bottomLeft, bottomRight) * CELL, z + CELL]
-        const left = [x, z + at(topLeft, bottomLeft) * CELL]
-        const segment = (from: number[], to: number[]) => out.push(from[0], from[1], to[0], to[1])
-        switch (code) {
-          case 1:
-          case 14:
-            segment(left, bottom)
-            break
-          case 2:
-          case 13:
-            segment(bottom, right)
-            break
-          case 3:
-          case 12:
-            segment(left, right)
-            break
-          case 4:
-          case 11:
-            segment(top, right)
-            break
-          case 6:
-          case 9:
-            segment(top, bottom)
-            break
-          case 7:
-          case 8:
-            segment(left, top)
-            break
-          case 5:
-            segment(left, top)
-            segment(bottom, right)
-            break
-          case 10:
-            segment(top, right)
-            segment(left, bottom)
-            break
-        }
-      }
+    for (let row = 0; row < size - 1; row++)
+      for (let column = 0; column < size - 1; column++)
+        out.push(...traceCell({ grid, size, x0, z0, level, column, row }))
   }
 
   return { minor: smoothSegments(minor), major: smoothSegments(major), stars: new Float32Array() }
@@ -317,7 +340,7 @@ export const createLandscape = (objects: SceneObject[]): Landscape => {
       if (offPlateau(x, z) >= STAR_CLEARANCE)
         stars.push(x, z, 0.25 + hash(tileX + star, tileZ - star, seed + 7) ** 3 * 0.75)
     }
-    const traced = { ...trace(grid, size, x0, z0), stars: new Float32Array(stars) }
+    const traced = { ...trace({ grid, size, x0, z0 }), stars: new Float32Array(stars) }
     // Keep memory bounded on long pans: forget the oldest tiles.
     if (cache.size > 400) cache.delete(cache.keys().next().value as string)
 

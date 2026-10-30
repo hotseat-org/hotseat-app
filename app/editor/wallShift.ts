@@ -115,6 +115,38 @@ export const composeWallShift = (
   const removed = new Set<SceneObject>()
   const added: SceneObject[] = []
   const runType = grip.type
+  const addJoiningWalls = (span: ReturnType<typeof spanOf>, template: SceneObject) => {
+    for (const unit of span) {
+      if (byUnit.has(edgeKey(unit))) continue
+
+      added.push({
+        id: nanoid(8),
+        type: isWall(template.type) ? template.type : runType,
+        // Its paint, each face seen the new wall's way round.
+        ...composeFacePaint(getWallFacesFrom(template, unit)),
+        ...unit,
+      })
+    }
+  }
+  /** The wall ahead shrinks — all of it plain wall, with nothing else joining it on the way. */
+  const shrinkWallAhead = (span: ReturnType<typeof spanOf>, end: { x: number; z: number }) => {
+    for (const [index, unit] of span.entries()) {
+      const wall = byUnit.get(edgeKey(unit))
+      if (!wall || isOpening(wall.type)) return false
+
+      removed.add(wall)
+      const node =
+        across === "z"
+          ? { x: end.x, z: end.z + sign * index * SEG }
+          : { x: end.x + sign * index * SEG, z: end.z }
+      const joining = (atNode.get(nodeKey(node.x, node.z)) ?? []).filter(
+        (edge) => !run.has(edge) && edgeDirection(edge.rotation) !== crossDirection
+      )
+      if (index > 0 && joining.length > 0) return false
+    }
+
+    return true
+  }
   for (const end of ends) {
     const attached = (atNode.get(nodeKey(end.x, end.z)) ?? []).filter((edge) => !run.has(edge))
     if (attached.length === 0) continue // a free end
@@ -124,35 +156,10 @@ export const composeWallShift = (
     const rest = attached.filter((edge) => edge !== first)
     if (rest.length > 0) {
       // Something else still meets the old corner: a wall joins it to the new one.
-      const template = first ?? rest.find((edge) => isWall(edge.type)) ?? grip
-      for (const unit of span) {
-        if (byUnit.has(edgeKey(unit))) continue
-
-        added.push({
-          id: nanoid(8),
-          type: isWall(template.type) ? template.type : runType,
-          // Its paint, each face seen the new wall's way round.
-          ...composeFacePaint(getWallFacesFrom(template, unit)),
-          ...unit,
-        })
-      }
-    } else {
-      // Only the wall ahead meets it: that wall shrinks — all of it plain wall,
-      // with nothing else joining it on the way.
-      for (const [index, unit] of span.entries()) {
-        const wall = byUnit.get(edgeKey(unit))
-        if (!wall || isOpening(wall.type)) return null
-
-        removed.add(wall)
-        const node =
-          across === "z"
-            ? { x: end.x, z: end.z + sign * index * SEG }
-            : { x: end.x + sign * index * SEG, z: end.z }
-        const joining = (atNode.get(nodeKey(node.x, node.z)) ?? []).filter(
-          (edge) => !run.has(edge) && edgeDirection(edge.rotation) !== crossDirection
-        )
-        if (index > 0 && joining.length > 0) return null
-      }
+      addJoiningWalls(span, first ?? rest.find((edge) => isWall(edge.type)) ?? grip)
+    } else if (!shrinkWallAhead(span, end)) {
+      // Only the wall ahead meets it, and it cannot shrink.
+      return null
     }
   }
 

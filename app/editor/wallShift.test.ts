@@ -7,21 +7,22 @@ import type { ObjectType, SceneObject } from "./types"
 import { composeWallShift, findWallGrip } from "./wallShift"
 
 let nextId = 0
-const place = (type: ObjectType, x: number, z: number, rotation = 0): SceneObject => ({
+const place = (
+  type: ObjectType,
+  { x, z, rotation = 0 }: { x: number; z: number; rotation?: number }
+): SceneObject => ({
   id: `o${nextId++}`,
   type,
   x,
   z,
   rotation,
 })
-const room = (x0: number, z0: number, x1: number, z1: number) =>
-  roomEdges({ x: x0, z: z0 }, { x: x1, z: z1 }).map((edge) =>
-    place("wall", edge.x, edge.z, edge.rotation)
-  )
+const room = (from: { x: number; z: number }, to: { x: number; z: number }) =>
+  roomEdges(from, to).map((edge) => place("wall", edge))
 const floorOf = (objects: SceneObject[]) => enclosedRegions(objects).map((region) => region.length)
 
 describe("dragging a wall sideways", () => {
-  const office = room(0, 0, 2, 2)
+  const office = room({ x: 0, z: 0 }, { x: 2, z: 2 })
   const grip = findWallGrip(office, 1, 0.1) as string
 
   test("grabs the wall whose foot is under the cursor", () => {
@@ -38,7 +39,7 @@ describe("dragging a wall sideways", () => {
     expect(floorOf(composeWallShift(office, grip, 0.5)?.objects ?? [])).toEqual([12])
   })
   test("won't run through furniture", () => {
-    const desk = place("desk", 1, 0.5)
+    const desk = place("desk", { x: 1, z: 0.5 })
     expect(composeWallShift([...office, desk], grip, 0.5)).toBeNull()
   })
   test("a zero move is no move", () => {

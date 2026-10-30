@@ -21,7 +21,7 @@ export interface DayProfile {
   envIntensity: number
 }
 
-const clamp01 = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x)
+const clamp01 = (value: number) => Math.min(1, Math.max(0, value))
 const lerp = (from: number, to: number, amount: number) => from + (to - from) * amount
 // Hex colours mixed in linear light (as three's Color.lerp does) — kept
 // three-free so the simple view's sky slider doesn't pull three.js in.

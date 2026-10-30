@@ -19,18 +19,28 @@ interface PieceOptions {
   y1?: number
 }
 
+/** A straight piece's line: world coords `from`..`to` along the run, `fixed` across it. */
+export interface WallLine {
+  alongX: boolean
+  fixed: number
+  from: number
+  to: number
+}
+
+/** A diagonal piece's line, from node `start` to node `end`. */
+export interface WallDiagonal {
+  start: Cell
+  end: Cell
+}
+
 /** Draws wall pieces — straight or diagonal, one colour or each face its own — into `push`. */
 export const createWallPieces = (push: Push) => {
   /**
-   * A wall piece along its line from `from` to `to` (world coords along the
-   * run; `fixed` across it), full thickness. Its ends overlap the neighbours
-   * by half a wall, so corners close.
+   * A wall piece along its line, full thickness. Its ends overlap the
+   * neighbours by half a wall, so corners close.
    */
   const wallPiece = (
-    alongX: boolean,
-    fixed: number,
-    from: number,
-    to: number,
+    { alongX, fixed, from, to }: WallLine,
     color: string,
     { opacity = 1, extend = HALF_WALL, across = HALF_WALL, y1 = WALL.height }: PieceOptions = {}
   ) => {
@@ -54,8 +64,7 @@ export const createWallPieces = (push: Push) => {
 
   /** A wall piece on a diagonal, from node `start` to `end`: a turned bar, its ends overlapping corners. */
   const diagonalWallPiece = (
-    start: Cell,
-    end: Cell,
+    { start, end }: WallDiagonal,
     color: string,
     { opacity = 1, extend = HALF_WALL, across = HALF_WALL, y1 = WALL.height }: PieceOptions = {}
   ) => {
@@ -94,29 +103,25 @@ export const createWallPieces = (push: Push) => {
    * the front one on the line's +Z (along X) or +X (along Z) side.
    */
   const facedWallPiece = (
-    alongX: boolean,
-    fixed: number,
-    from: number,
-    to: number,
+    line: WallLine,
     [front, back]: [string, string],
     options: PieceOptions = {}
   ) => {
-    if (front === back) return wallPiece(alongX, fixed, from, to, front, options)
+    if (front === back) return wallPiece(line, front, options)
 
     const half = (options.across ?? HALF_WALL) / 2
-    wallPiece(alongX, fixed + half, from, to, front, { ...options, across: half })
-    wallPiece(alongX, fixed - half, from, to, back, { ...options, across: half })
+    wallPiece({ ...line, fixed: line.fixed + half }, front, { ...options, across: half })
+    wallPiece({ ...line, fixed: line.fixed - half }, back, { ...options, across: half })
   }
 
   /** The same on a diagonal, built at `rotation` (its front: +Z turned by it). */
   const facedDiagonalWallPiece = (
-    start: Cell,
-    end: Cell,
-    rotation: number,
+    diagonal: WallDiagonal & { rotation: number },
     [front, back]: [string, string],
     options: PieceOptions = {}
   ) => {
-    if (front === back) return diagonalWallPiece(start, end, front, options)
+    const { start, end, rotation } = diagonal
+    if (front === back) return diagonalWallPiece(diagonal, front, options)
 
     const half = (options.across ?? HALF_WALL) / 2
     const [normalX, normalZ] = [Math.sin(rotation) * half, Math.cos(rotation) * half]
@@ -125,7 +130,10 @@ export const createWallPieces = (push: Push) => {
       [back, -1],
     ] as const) {
       const shift = (node: Cell) => ({ x: node.x + normalX * side, z: node.z + normalZ * side })
-      diagonalWallPiece(shift(start), shift(end), color, { ...options, across: half })
+      diagonalWallPiece({ start: shift(start), end: shift(end) }, color, {
+        ...options,
+        across: half,
+      })
     }
   }
 

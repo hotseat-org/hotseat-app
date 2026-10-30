@@ -96,10 +96,7 @@ export const drawWalls = (
     let prev = run.at[0]
     const flush = () =>
       facedWallPiece(
-        run.alongX,
-        run.fixed,
-        start - SEG / 2,
-        prev + SEG / 2,
+        { alongX: run.alongX, fixed: run.fixed, from: start - SEG / 2, to: prev + SEG / 2 },
         [run.color, run.back],
         { opacity: run.opacity, across: run.across }
       )
@@ -121,10 +118,11 @@ export const drawWalls = (
     const flush = () => {
       const [startNode] = edgeNodes(start)
       const [, endNode] = edgeNodes(prev)
-      facedDiagonalWallPiece(startNode, endNode, run.rotation, [run.color, run.back], {
-        opacity: run.opacity,
-        across: run.across,
-      })
+      facedDiagonalWallPiece(
+        { start: startNode, end: endNode, rotation: run.rotation },
+        [run.color, run.back],
+        { opacity: run.opacity, across: run.across }
+      )
     }
     for (const segment of run.at.slice(1)) {
       if (Math.abs(segment.x - prev.x - SEG) > 1e-6) {

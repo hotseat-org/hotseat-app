@@ -87,13 +87,13 @@ export const ContourLines = ({
   const plateau = land.plateau
     .map(
       (loop) =>
-        loop
+        `${loop
           .map(([x, z], i) => {
             const [turnedX, turnedZ] = turnPoint(x, z, turn)
 
             return `${i ? "L" : "M"}${turnedX.toFixed(2)} ${turnedZ.toFixed(2)}`
           })
-          .join("") + "Z"
+          .join("")}Z`
     )
     .join("")
 

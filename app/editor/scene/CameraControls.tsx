@@ -6,8 +6,8 @@ import { CURSORS, type CursorHint } from "../cursors"
 import { isTypingTarget } from "../keyboard"
 import { createWheelReader, getSmoothZoomFactor, getStepZoomFactor } from "../wheel"
 
-const PAN_KEYS: Record<string, true> = { w: true, a: true, s: true, d: true }
-const ORBIT_KEYS: Record<string, true> = { q: true, e: true }
+const PAN_KEYS = new Set(["w", "a", "s", "d"])
+const ORBIT_KEYS = new Set(["q", "e"])
 const ZOOM_KEYS: Record<string, number> = { "+": 1.25, "=": 1.25, "-": 1 / 1.25, _: 1 / 1.25 }
 const UP = new Vector3(0, 1, 0)
 /** Q/E orbit speed (rad/s). */
@@ -24,6 +24,22 @@ type Gesture = (typeof GESTURES)[number]
 type GestureSource = "button" | "drag" | "keys" | "space"
 /** How long a one-off gesture (a wheel step, a zoom key) keeps its cursor (ms). */
 const FLASH_DURATION = 350
+
+/** The gesture's cursor wins, then a hovered piece's hint, then the base one. */
+const getCursor = ({
+  gesture,
+  hint,
+  base,
+}: {
+  gesture: Gesture | null
+  hint: CursorHint | undefined
+  base: string
+}) => {
+  if (gesture) return CURSORS[gesture]
+  if (hint) return CURSORS[hint]
+
+  return base
+}
 
 /** Lets Scene start a pan from a press on bare floor (see the drag effect below). */
 export interface FloorPan {
@@ -86,7 +102,7 @@ export const CameraControls = ({
     const heldGestures = Object.values(held)
     const gesture = GESTURES.find((candidate) => heldGestures.includes(candidate)) ?? flash
     const hint = isHintShown ? hints.values().next().value : undefined
-    renderer.domElement.style.cursor = gesture ? CURSORS[gesture] : hint ? CURSORS[hint] : base
+    renderer.domElement.style.cursor = getCursor({ gesture, hint, base })
   }
   const setHeldGesture = (source: GestureSource, gesture: Gesture | null) => {
     const { held } = cursorState.current
@@ -217,7 +233,7 @@ export const CameraControls = ({
       if (zoomFactor) return actions.current.zoomAt(zoomFactor)
 
       const key = event.key.toLowerCase()
-      if (!PAN_KEYS[key] && !ORBIT_KEYS[key]) return
+      if (!PAN_KEYS.has(key) && !ORBIT_KEYS.has(key)) return
 
       keys.current.add(key)
       setOrbitCursor()

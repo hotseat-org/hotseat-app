@@ -56,6 +56,14 @@ interface Props {
 
 const isFurniture = (object: SceneObject) => !isEdgeType(object.type)
 /** Seconds for a rotation to swing round (with a little overshoot). */
+/** Doors, windows and wall items are sliced with their wall by the cursor cutaway. */
+const getCutaway = (type: SceneObject["type"]) => {
+  if (isOpening(type)) return "wall"
+  if (isWallMounted(type)) return "item"
+
+  return null
+}
+
 const TURN = 0.2
 const TAU = Math.PI * 2
 /** Ease-out with a slight overshoot, so a turn lands with a snap. */
@@ -109,7 +117,7 @@ export const ObjectRenderer = memo(function ObjectRenderer({
   }, [hoverable, hovered, selectable, object.id, setCursorHint])
   // Doors, windows and wall items are sliced with their wall by the cursor
   // cutaway (see cutaway.ts).
-  const cutaway = isOpening(object.type) ? "wall" : isWallMounted(object.type) ? "item" : null
+  const cutaway = getCutaway(object.type)
 
   // Rotation swings round quickly instead of jumping: the group's angle is
   // driven here (not as a prop), easing along the shortest way to the target.

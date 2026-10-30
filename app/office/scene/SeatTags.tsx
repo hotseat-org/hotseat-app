@@ -1,5 +1,7 @@
 import { Html } from "@react-three/drei"
+import clsx from "clsx"
 import { Pin } from "lucide-react"
+import { getDeskTagTone } from "../deskTagTone"
 import { heatBarTop } from "../heatmap"
 import { personByEmail, usePeople } from "../people"
 import { SeatAvatar } from "../SeatAvatar"
@@ -76,14 +78,10 @@ export const SeatTags = () => {
                 <SeatAvatar person={person} email={state.email} isMine={mine} size={40} />
               )}
               <div
-                className={
-                  "flex items-center gap-1.5 whitespace-nowrap rounded-full border px-1.5 py-0.5 text-[11px] font-bold shadow-overlay " +
-                  (mine
-                    ? "border-accent bg-accent text-accent-foreground"
-                    : free
-                      ? "border-success bg-success text-success-foreground"
-                      : "border-border bg-overlay/95 text-foreground")
-                }
+                className={clsx(
+                  "flex items-center gap-1.5 whitespace-nowrap rounded-full border px-1.5 py-0.5 text-[11px] font-bold shadow-overlay",
+                  getDeskTagTone(mine, free)
+                )}
               >
                 {desk.label && <span className="opacity-80">{desk.label}</span>}
                 {/* First name only: neighbouring desks' tags would collide. */}

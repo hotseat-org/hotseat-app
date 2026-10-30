@@ -41,6 +41,13 @@ export const RoutePill = ({ className }: { className?: string }) => {
     }
   }
 
+  const getStartLabel = () => {
+    if (!route.fromMyDesk) return t("From the nearest entrance")
+    if (route.myDesk?.label) return t("From your desk {label}", { label: route.myDesk.label })
+
+    return t("From your desk")
+  }
+
   return (
     <div
       role="status"
@@ -68,11 +75,7 @@ export const RoutePill = ({ className }: { className?: string }) => {
               }
               className="inline-flex shrink-0 items-center gap-1 rounded-full font-semibold text-accent hover:underline"
             >
-              {route.fromMyDesk
-                ? route.myDesk.label
-                  ? t("From your desk {label}", { label: route.myDesk.label })
-                  : t("From your desk")
-                : t("From the nearest entrance")}
+              {getStartLabel()}
               <ArrowLeftRight className="size-3" />
             </button>
           ) : (

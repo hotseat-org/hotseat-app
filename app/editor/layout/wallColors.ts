@@ -10,6 +10,26 @@ export type PostQuarters = [
   string | undefined,
 ]
 
+/** The quarter indexes (0 or 1 along an axis) a face looking towards `quarter` (−1, 0 or 1) covers. */
+const getQuarterIndexes = (quarter: number) => {
+  if (quarter === 0) return [0, 1]
+
+  return [quarter > 0 ? 1 : 0]
+}
+
+/** Counts `color` in every quarter of a post that a face looking into `quarter` covers. */
+const tallyColor = (
+  quarters: Map<string | undefined, number>[],
+  color: string | undefined,
+  quarter: { x: number; z: number }
+) => {
+  for (const indexX of getQuarterIndexes(quarter.x))
+    for (const indexZ of getQuarterIndexes(quarter.z)) {
+      const tally = quarters[indexX + indexZ * 2]
+      tally.set(color, (tally.get(color) ?? 0) + 1)
+    }
+}
+
 /**
  * The paint that the wall parts of openings and joints take from the walls
  * round them (undefined = the theme's wall colour):
@@ -78,11 +98,7 @@ export const composeWallColors = (objects: SceneObject[]) => {
       ] as const) {
         const quarterX = Math.sign(toward.x + Math.round(normal.x * side))
         const quarterZ = Math.sign(toward.z + Math.round(normal.z * side))
-        for (const indexX of quarterX === 0 ? [0, 1] : [quarterX > 0 ? 1 : 0])
-          for (const indexZ of quarterZ === 0 ? [0, 1] : [quarterZ > 0 ? 1 : 0]) {
-            const tally = quarters[indexX + indexZ * 2]
-            tally.set(color, (tally.get(color) ?? 0) + 1)
-          }
+        tallyColor(quarters, color, { x: quarterX, z: quarterZ })
       }
     }
   }

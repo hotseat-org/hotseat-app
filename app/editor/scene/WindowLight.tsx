@@ -88,11 +88,13 @@ export const WindowLight = ({ profile }: Props) => {
         // Sample a little either side: far enough to leave the squares a
         // diagonal wall runs through.
         const step = isDiagonalEdge(object.rotation) ? SEG * 1.6 : SEG / 2
-        const sign = isInside(object.x + normalX * step, object.z + normalZ * step)
-          ? 1
-          : isInside(object.x - normalX * step, object.z - normalZ * step)
-            ? -1
-            : 0
+        const getInwardSign = () => {
+          if (isInside(object.x + normalX * step, object.z + normalZ * step)) return 1
+          if (isInside(object.x - normalX * step, object.z - normalZ * step)) return -1
+
+          return 0
+        }
+        const sign = getInwardSign()
         if (!sign) return [] // between two outsides (or two rooms' worth of glass): skip
 
         // Its glass is as much wider as a diagonal window is longer.

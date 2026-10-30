@@ -162,7 +162,7 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
   }, [])
   // Wall + Erase tools are owned by BuildController; here we handle select and
   // furniture placement only. All no-ops in display mode.
-  const handleDown = (x: number, z: number, button: number, event: PointerEvent) => {
+  const handleDown = ({ x, z }: Cell, button: number, event: PointerEvent) => {
     if (!readOnly && button === 2) return pressMenu(null, { x, z }, event)
     if (readOnly || button !== 0) return
     if (dragId) return // mid-drag (another button/finger): the release decides
@@ -245,16 +245,23 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
     }
   }
 
+  const getBlockedAt = (id: string) => {
+    if (id === dragId) return blockedAt
+    if (id === refusedTurn?.id) return refusedTurn.at
+
+    return 0
+  }
   const carried = dragId ? objects.find((object) => object.id === dragId) : undefined
   // Canvas cursor between camera gestures: the tool's, a closed hand while
   // carrying a piece, the plain arrow in display mode.
-  const cursor = readOnly
-    ? CURSORS.select
-    : carried || carriedOpening
-      ? "grabbing"
-      : armedKit
-        ? CURSORS.place
-        : getToolCursor(tool, isFurniture)
+  const getCanvasCursor = () => {
+    if (readOnly) return CURSORS.select
+    if (carried || carriedOpening) return "grabbing"
+    if (armedKit) return CURSORS.place
+
+    return getToolCursor(tool, isFurniture)
+  }
+  const cursor = getCanvasCursor()
 
   return (
     <SceneThemeContext.Provider value={surfaces}>
@@ -362,13 +369,7 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
                     object={object}
                     selected={!readOnly && selection.includes(object.id)}
                     carried={!readOnly && object.id === dragId}
-                    blockedAt={
-                      object.id === dragId
-                        ? blockedAt
-                        : object.id === refusedTurn?.id
-                          ? refusedTurn.at
-                          : 0
-                    }
+                    blockedAt={getBlockedAt(object.id)}
                     tool={tool}
                     interactive={!readOnly}
                     onSelect={select}

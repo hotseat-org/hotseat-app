@@ -16,7 +16,7 @@ import { Inspector } from "./ui/Inspector"
 import { TopBar } from "./ui/TopBar"
 import { TimeOfDay } from "./ui/TimeOfDay"
 import { FloorPlan } from "./plan/FloorPlan"
-import { ControlsGuide } from "./ui/ControlsGuide"
+import { ControlsGuide, type GuideView } from "./ui/ControlsGuide"
 import { SceneLoading } from "./ui/SceneLoading"
 import { CommandSearch } from "./ui/CommandSearch"
 import { composeCommands } from "./ui/commands"
@@ -112,6 +112,18 @@ export const Editor = (props: EditorProps) => {
   )
 }
 
+const getGuideView = ({
+  isFlat,
+  isReadOnly,
+}: {
+  isFlat: boolean
+  isReadOnly: boolean
+}): GuideView => {
+  if (isFlat) return "plan"
+
+  return isReadOnly ? "view" : "edit"
+}
+
 const EditorInner = ({
   initialObjects,
   onSave,
@@ -178,9 +190,8 @@ const EditorInner = ({
   const hasLayout = useEditorStore((state) => state.objects.length > 0)
   const isEmpty = !hasLayout && !emptyDismissed
   // Mouse / trackpad controls: no use on a touch phone.
-  const guide = isMobile ? null : (
-    <ControlsGuide view={flat ? "plan" : readOnly ? "view" : "edit"} />
-  )
+  const guideView = getGuideView({ isFlat: flat, isReadOnly: readOnly })
+  const guide = isMobile ? null : <ControlsGuide view={guideView} />
 
   // Perf HUD. While on, the Canvas renders continuously (`frameloop="always"`)
   // so the reading reflects a true, comparable FPS instead of only the frames
@@ -188,6 +199,15 @@ const EditorInner = ({
   const isFrameRateShown = useEditorStore((state) => state.isFrameRateShown)
   const [stats, setStats] = useState<FrameStats | null>(null)
   const dbMode = !!onSave
+  const modeButton = readOnly ? (
+    <Button size="sm" variant="primary" className="min-w-32" onPress={enterEdit}>
+      <Pencil className="size-4" /> Edit layout
+    </Button>
+  ) : (
+    <Button size="sm" variant="primary" className="min-w-32" onPress={() => switchMode("display")}>
+      <Check className="size-4" strokeWidth={2.5} /> Done
+    </Button>
+  )
 
   return (
     <div className="relative h-full w-full overflow-hidden">
@@ -271,22 +291,7 @@ const EditorInner = ({
         {/* Bottom bar: time of day + leave/enter editing. The app shell
             provides its own in display mode. */}
         {!shellMode && !isEmpty && (
-          <TimeOfDay isViewing={readOnly}>
-            {!editable ? null : readOnly ? (
-              <Button size="sm" variant="primary" className="min-w-32" onPress={enterEdit}>
-                <Pencil className="size-4" /> Edit layout
-              </Button>
-            ) : (
-              <Button
-                size="sm"
-                variant="primary"
-                className="min-w-32"
-                onPress={() => switchMode("display")}
-              >
-                <Check className="size-4" strokeWidth={2.5} /> Done
-              </Button>
-            )}
-          </TimeOfDay>
+          <TimeOfDay isViewing={readOnly}>{editable && modeButton}</TimeOfDay>
         )}
 
         {!readOnly && !isEmpty && (

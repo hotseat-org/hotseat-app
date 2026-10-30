@@ -1,6 +1,7 @@
 import clsx from "clsx"
 import { Pin } from "lucide-react"
 import type { CSSProperties } from "react"
+import { getDeskTagTone } from "../deskTagTone"
 import { heatColor } from "../heatmap"
 import type { Person } from "../people"
 import { SeatAvatar } from "../SeatAvatar"
@@ -29,7 +30,12 @@ export const Occupant = ({
   onClick: (event: React.MouseEvent) => void
 }) => {
   const { t } = useI18n()
-  const name = person ? (isMine ? t("You") : person.name) : t("Taken")
+  const getOccupantName = () => {
+    if (!person) return t("Taken")
+
+    return isMine ? t("You") : person.name
+  }
+  const name = getOccupantName()
 
   return (
     <button
@@ -66,11 +72,7 @@ export const DeskTag = ({
     <div
       className={clsx(
         "flex items-center gap-1.5 whitespace-nowrap rounded-full border px-1.5 py-0.5 text-[11px] font-bold shadow-overlay",
-        mine
-          ? "border-accent bg-accent text-accent-foreground"
-          : free
-            ? "border-success bg-success text-success-foreground"
-            : "border-border bg-overlay/95 text-foreground"
+        getDeskTagTone(mine, free)
       )}
     >
       {label && <span className="opacity-80">{label}</span>}

@@ -155,6 +155,74 @@ const getNeighbours = (i: number, j: number) =>
     [i - 1, j, `z:${i},${j}`],
   ] as const
 
+interface Owner {
+  zone?: string
+  distance: number
+  toMiddle: number
+  cell: [number, number]
+}
+
+/**
+ * Claim the squares round a desk, from under it out to its margin and never
+ * through a wall: a square goes to the nearest desk.
+ */
+const claimSquares = (desk: SceneObject, closedSides: Set<string>, owners: Map<string, Owner>) => {
+  const [cellsX, cellsZ] = footprintCells(desk.type, desk.rotation)
+  const [x0, x1] = [desk.x - (cellsX * GRID) / 2, desk.x + (cellsX * GRID) / 2]
+  const [z0, z1] = [desk.z - (cellsZ * GRID) / 2, desk.z + (cellsZ * GRID) / 2]
+  const i0 = Math.floor((x0 - ZONE_MARGIN) / ZONE_CELL + 1e-6)
+  const i1 = Math.ceil((x1 + ZONE_MARGIN) / ZONE_CELL - 1e-6)
+  const j0 = Math.floor((z0 - ZONE_MARGIN) / ZONE_CELL + 1e-6)
+  const j1 = Math.ceil((z1 + ZONE_MARGIN) / ZONE_CELL - 1e-6)
+  /** From a square's middle to the desk's footprint (0: under it). */
+  const distanceOf = (i: number, j: number) => {
+    const centreX = (i + 0.5) * ZONE_CELL
+    const centreZ = (j + 0.5) * ZONE_CELL
+
+    return Math.hypot(
+      Math.max(x0 - centreX, 0, centreX - x1),
+      Math.max(z0 - centreZ, 0, centreZ - z1)
+    )
+  }
+  // Spread from the squares under the desk (or, a small one, its middle's)
+  // to its margin, never through a wall.
+  const isInMargin = (i: number, j: number) => i >= i0 && i < i1 && j >= j0 && j < j1
+  const under: [number, number][] = []
+  for (let i = i0; i < i1; i++) {
+    for (let j = j0; j < j1; j++) {
+      if (distanceOf(i, j) === 0) under.push([i, j])
+    }
+  }
+  if (under.length === 0)
+    under.push([Math.floor(desk.x / ZONE_CELL), Math.floor(desk.z / ZONE_CELL)])
+
+  const reached = new Set(under.map(([i, j]) => `${i},${j}`))
+  const queue = [...under]
+  while (queue.length > 0) {
+    const [i, j] = queue.pop() as [number, number]
+    // …equally near two desks: the one whose middle is nearer.
+    const distance = distanceOf(i, j)
+    const toMiddle = Math.hypot((i + 0.5) * ZONE_CELL - desk.x, (j + 0.5) * ZONE_CELL - desk.z)
+    const key = `${i},${j}`
+    const owner = owners.get(key)
+    if (
+      !owner ||
+      distance < owner.distance ||
+      (distance === owner.distance && toMiddle < owner.toMiddle)
+    )
+      owners.set(key, { zone: desk.zone, distance, toMiddle, cell: [i, j] })
+
+    for (const [neighbourI, neighbourJ, side] of getNeighbours(i, j)) {
+      const next = `${neighbourI},${neighbourJ}`
+      if (reached.has(next) || !isInMargin(neighbourI, neighbourJ) || closedSides.has(side))
+        continue
+
+      reached.add(next)
+      queue.push([neighbourI, neighbourJ])
+    }
+  }
+}
+
 /**
  * Each zone's floor: the squares within ZONE_MARGIN of its desks that can be
  * reached from the desk without crossing a wall. A square goes to the nearest
@@ -163,64 +231,9 @@ const getNeighbours = (i: number, j: number) =>
  */
 export const composeZoneAreas = (objects: SceneObject[]): ZoneArea[] => {
   const closedSides = getClosedSides(objects)
-  const owners = new Map<
-    string,
-    { zone?: string; distance: number; toMiddle: number; cell: [number, number] }
-  >()
+  const owners = new Map<string, Owner>()
   for (const desk of objects) {
-    if (!isSeatable(desk.type)) continue
-
-    const [cellsX, cellsZ] = footprintCells(desk.type, desk.rotation)
-    const [x0, x1] = [desk.x - (cellsX * GRID) / 2, desk.x + (cellsX * GRID) / 2]
-    const [z0, z1] = [desk.z - (cellsZ * GRID) / 2, desk.z + (cellsZ * GRID) / 2]
-    const i0 = Math.floor((x0 - ZONE_MARGIN) / ZONE_CELL + 1e-6)
-    const i1 = Math.ceil((x1 + ZONE_MARGIN) / ZONE_CELL - 1e-6)
-    const j0 = Math.floor((z0 - ZONE_MARGIN) / ZONE_CELL + 1e-6)
-    const j1 = Math.ceil((z1 + ZONE_MARGIN) / ZONE_CELL - 1e-6)
-    /** From a square's middle to the desk's footprint (0: under it). */
-    const distanceOf = (i: number, j: number) => {
-      const centreX = (i + 0.5) * ZONE_CELL
-      const centreZ = (j + 0.5) * ZONE_CELL
-
-      return Math.hypot(
-        Math.max(x0 - centreX, 0, centreX - x1),
-        Math.max(z0 - centreZ, 0, centreZ - z1)
-      )
-    }
-    // Spread from the squares under the desk (or, a small one, its middle's)
-    // to its margin, never through a wall.
-    const isInMargin = (i: number, j: number) => i >= i0 && i < i1 && j >= j0 && j < j1
-    const under: [number, number][] = []
-    for (let i = i0; i < i1; i++)
-      for (let j = j0; j < j1; j++) if (distanceOf(i, j) === 0) under.push([i, j])
-    if (under.length === 0)
-      under.push([Math.floor(desk.x / ZONE_CELL), Math.floor(desk.z / ZONE_CELL)])
-
-    const reached = new Set(under.map(([i, j]) => `${i},${j}`))
-    const queue = [...under]
-    while (queue.length > 0) {
-      const [i, j] = queue.pop() as [number, number]
-      // …equally near two desks: the one whose middle is nearer.
-      const distance = distanceOf(i, j)
-      const toMiddle = Math.hypot((i + 0.5) * ZONE_CELL - desk.x, (j + 0.5) * ZONE_CELL - desk.z)
-      const key = `${i},${j}`
-      const owner = owners.get(key)
-      if (
-        !owner ||
-        distance < owner.distance ||
-        (distance === owner.distance && toMiddle < owner.toMiddle)
-      )
-        owners.set(key, { zone: desk.zone, distance, toMiddle, cell: [i, j] })
-
-      for (const [neighbourI, neighbourJ, side] of getNeighbours(i, j)) {
-        const next = `${neighbourI},${neighbourJ}`
-        if (reached.has(next) || !isInMargin(neighbourI, neighbourJ) || closedSides.has(side))
-          continue
-
-        reached.add(next)
-        queue.push([neighbourI, neighbourJ])
-      }
-    }
+    if (isSeatable(desk.type)) claimSquares(desk, closedSides, owners)
   }
 
   return getZones(objects).flatMap((zone) => {
@@ -244,6 +257,46 @@ export const composeZoneAreas = (objects: SceneObject[]): ZoneArea[] => {
   })
 }
 
+/** A unit edge of a zone's outline. */
+type Edge = { from: [number, number]; to: [number, number] }
+
+const getDirection = (edge: Edge): [number, number] => [
+  edge.to[0] - edge.from[0],
+  edge.to[1] - edge.from[1],
+]
+
+/**
+ * Follow a loop from its first edge, keeping only the corners (where it turns).
+ * `take` hands over the next edge from a point, preferring the left turn.
+ */
+const traceCorners = (
+  first: Edge,
+  take: (key: string, direction?: [number, number]) => Edge | null
+) => {
+  const corners: [number, number][] = []
+  const firstDirection = getDirection(first)
+  const isStart = (point: [number, number]) =>
+    point[0] === first.from[0] && point[1] === first.from[1]
+  let edge: Edge | null = first
+  let direction = firstDirection
+  while (edge && !isStart(edge.to)) {
+    const next = take(`${edge.to[0]},${edge.to[1]}`, direction)
+    if (!next) break
+
+    const nextDirection = getDirection(next)
+    if (nextDirection[0] !== direction[0] || nextDirection[1] !== direction[1])
+      corners.push(next.from)
+
+    direction = nextDirection
+    edge = next
+  }
+  // Back where it began: a corner there too, unless it carries straight on.
+  if (direction[0] !== firstDirection[0] || direction[1] !== firstDirection[1])
+    corners.push(first.from)
+
+  return corners
+}
+
 /**
  * A zone's outline as an SVG path (plan units = metres, y = z): every loop
  * round its squares, each corner rounded — outer corners off, inner ones
@@ -253,7 +306,6 @@ export const composeZoneOutline = (cells: [number, number][]): string => {
   const filled = new Set(cells.map(([i, j]) => `${i},${j}`))
   const has = (i: number, j: number) => filled.has(`${i},${j}`)
   // Unit edges with the zone on their left, keyed by where they start.
-  type Edge = { from: [number, number]; to: [number, number] }
   const starts = new Map<string, Edge[]>()
   const add = (from: [number, number], to: [number, number]) => {
     const key = `${from[0]},${from[1]}`
@@ -277,7 +329,9 @@ export const composeZoneOutline = (cells: [number, number][]): string => {
       const delta = [candidate.to[0] - candidate.from[0], candidate.to[1] - candidate.from[1]]
       const cross = direction[0] * delta[1] - direction[1] * delta[0]
 
-      return cross > 0 ? 0 : cross === 0 ? 1 : 2
+      if (cross > 0) return 0
+
+      return cross === 0 ? 1 : 2
     }
     const edge = [...list].sort((first, second) => turn(first) - turn(second))[0]
     list.splice(list.indexOf(edge), 1)
@@ -289,33 +343,7 @@ export const composeZoneOutline = (cells: [number, number][]): string => {
   const loops: string[] = []
   for (const key of starts.keys()) {
     for (let first = take(key); first; first = take(key)) {
-      // Follow the loop, keeping only the corners (where it turns).
-      const corners: [number, number][] = []
-      let edge: Edge | null = first
-      const firstDirection: [number, number] = [
-        first.to[0] - first.from[0],
-        first.to[1] - first.from[1],
-      ]
-      let direction = firstDirection
-      const isStart = (point: [number, number]) =>
-        point[0] === first.from[0] && point[1] === first.from[1]
-      while (edge && !isStart(edge.to)) {
-        const next = take(`${edge.to[0]},${edge.to[1]}`, direction)
-        if (!next) break
-
-        const nextDirection: [number, number] = [
-          next.to[0] - next.from[0],
-          next.to[1] - next.from[1],
-        ]
-        if (nextDirection[0] !== direction[0] || nextDirection[1] !== direction[1])
-          corners.push(next.from)
-
-        direction = nextDirection
-        edge = next
-      }
-      // Back where it began: a corner there too, unless it carries straight on.
-      if (direction[0] !== firstDirection[0] || direction[1] !== firstDirection[1])
-        corners.push(first.from)
+      const corners = traceCorners(first, take)
       if (corners.length < 4) continue
 
       const at = (index: number) => corners[(index + corners.length) % corners.length]

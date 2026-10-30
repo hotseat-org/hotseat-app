@@ -317,9 +317,9 @@ export const cs: Messages = {
   "Book {desk}": "Rezervace: {desk}",
   "Clear {every}": "Zrušit {every}",
   "Pick {every}": "Vybrat {every}",
-  "Clear week {n}": "Zrušit týden {n}",
-  "Pick all of week {n}": "Vybrat celý týden {n}",
-  "W{n}": "T{n}",
+  "Clear week {week}": "Zrušit týden {week}",
+  "Pick all of week {week}": "Vybrat celý týden {week}",
+  "W{week}": "T{week}",
   Yours: "Váš",
   "You already have this desk {when}.": "Tento stůl už máte {when}.",
   "{holder} has this desk {when}.": "{holder} má tento stůl {when}.",
@@ -334,7 +334,7 @@ export const cs: Messages = {
     "Máte {when} jiný stůl ({desk}). Když tento den vyberete, přesunete se sem.",
   free: "volno",
   Every: "Vždy",
-  "Week {n}": "Týden {n}",
+  "Week {week}": "Týden {week}",
   "Whole week": "Celý týden",
   "Tap a weekday or a week number to pick all of it at once.":
     "Klepnutím na den v týdnu nebo číslo týdne vyberete všechny jeho dny najednou.",
@@ -345,7 +345,7 @@ export const cs: Messages = {
   "Another desk on a taken day": "Jiný stůl v obsazený den",
 
   // —— Editor: overlays ——
-  "{n} min walk": "{n} min chůze",
+  "{minutes} min walk": "{minutes} min chůze",
   "Way to {desk}": "Cesta: {desk}",
   "Start at the entrance instead": "Začít raději u vchodu",
   "Start at your desk instead": "Začít raději u vašeho stolu",
@@ -1039,7 +1039,7 @@ export const cs: Messages = {
   "Teams and booking": "Týmy a rezervace",
   "Select desks and give them a zone, so each team finds and books its own area. Everything saves as you go.":
     "Vyberte stoly a přiřaďte jim zónu — každý tým tak najde a zarezervuje svou část kanceláře. Vše se ukládá průběžně.",
-  "{n} of {count}": "{n} z {count}",
+  "{step} of {count}": "{step} z {count}",
   "Skip tour": "Přeskočit průvodce",
   Finish: "Hotovo",
   Next: "Další",

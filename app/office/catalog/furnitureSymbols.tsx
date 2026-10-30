@@ -17,9 +17,11 @@ const STEEL = "#b9bcc4"
 const WATER = "#cfe6f0"
 const BOOKS = ["#b96f6f", "#6d90c9", "#7fa66a", "#e8c07a", "#8b7fb0", "#5f8a86"]
 
+type ChairOptions = { x: number; z: number; isFacingBack?: boolean }
+
 /** An office chair at (x, z): seat, backrest (at −Z) and arms on a star base. */
-const chair = (sketch: Sketch, x: number, z: number, faceBack = false) => {
-  sketch.turned(x, z, faceBack ? 180 : 0, () => {
+const chair = (sketch: Sketch, { x, z, isFacingBack = false }: ChairOptions) => {
+  sketch.turned(x, z, isFacingBack ? 180 : 0, () => {
     for (let i = 0; i < 5; i++) {
       const angle = (i / 5) * Math.PI * 2 + Math.PI / 2
       sketch.line(
@@ -48,7 +50,9 @@ const chair = (sketch: Sketch, x: number, z: number, faceBack = false) => {
 }
 
 /** A desk centred at local z = offsetZ: monitor at the back, keyboard, mouse, a mug. */
-const desk = (sketch: Sketch, color: string, offsetZ: number, isOn: boolean) => {
+type DeskOptions = { color: string; offsetZ: number; isOn: boolean }
+
+const desk = (sketch: Sketch, { color, offsetZ, isOn }: DeskOptions) => {
   sketch.rect(-0.8, offsetZ - 0.45, 0.8, offsetZ + 0.45, color, 0.05)
   sketch.rect(-0.76, offsetZ - 0.41, 0.76, offsetZ - 0.36, shade(color, 1.08), 0.02, false)
   // Monitor: stand, body and (when someone's in) its glow.
@@ -65,7 +69,9 @@ const desk = (sketch: Sketch, color: string, offsetZ: number, isOn: boolean) => 
 }
 
 /** A sofa or armchair `halfWidth` wide (each side): back, arms, seat cushions, pillows. */
-const couch = (sketch: Sketch, color: string, halfWidth: number, seats: number) => {
+type CouchOptions = { color: string; halfWidth: number; seats: number }
+
+const couch = (sketch: Sketch, { color, halfWidth, seats }: CouchOptions) => {
   const back = shade(color, 0.86)
   const arm = shade(color, 0.92)
   sketch.rect(-halfWidth, -0.43, halfWidth, 0.43, color, 0.1)
@@ -85,13 +91,17 @@ const couch = (sketch: Sketch, color: string, halfWidth: number, seats: number) 
 }
 
 /** A plate with some food on it at (x, z). */
-const plate = (sketch: Sketch, x: number, z: number, food = "#e9a35a") => {
+type PlateOptions = { x: number; z: number; food?: string }
+
+const plate = (sketch: Sketch, { x, z, food = "#e9a35a" }: PlateOptions) => {
   sketch.circle(x, z, 0.11, CERAMIC)
   sketch.circle(x, z, 0.06, food, false)
 }
 
 /** A potted plant: leaves fanning from the centre over a round pot. */
-const plant = (sketch: Sketch, x: number, z: number, radius: number, leaf: string) => {
+type PlantOptions = { x: number; z: number; radius: number; leaf: string }
+
+const plant = (sketch: Sketch, { x, z, radius, leaf }: PlantOptions) => {
   sketch.circle(x, z, radius * 0.62, PALETTE.pot)
   const count = 7
   for (let i = 0; i < count; i++) {
@@ -112,25 +122,29 @@ const plant = (sketch: Sketch, x: number, z: number, radius: number, leaf: strin
 
 export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> = {
   desk: ({ sketch, color, isOn }) => {
-    desk(sketch, color, 0, isOn)
+    desk(sketch, { color, offsetZ: 0, isOn })
 
     return sketch.done(0.8)
   },
   // The chair first: tucked in, its front slides under the desk top.
   workstation: ({ sketch, color, isOn, state }) => {
-    chair(sketch, 0, state.occupied ? WORKSTATION_SEAT_Z : 0.12, true)
-    desk(sketch, color, -0.25, isOn)
+    chair(sketch, {
+      x: 0,
+      z: state.occupied ? WORKSTATION_SEAT_Z : 0.12,
+      isFacingBack: true,
+    })
+    desk(sketch, { color, offsetZ: -0.25, isOn })
 
     return sketch.done(1)
   },
   deskmate: ({ sketch, color, isOn }) => {
-    chair(sketch, 0, DESKMATE_SEAT_Z, true)
-    desk(sketch, color, -0.35, isOn)
+    chair(sketch, { x: 0, z: DESKMATE_SEAT_Z, isFacingBack: true })
+    desk(sketch, { color, offsetZ: -0.35, isOn })
 
     return sketch.done(1)
   },
   seat: ({ sketch }) => {
-    chair(sketch, 0, 0)
+    chair(sketch, { x: 0, z: 0 })
 
     return sketch.done(1)
   },
@@ -143,12 +157,12 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
     return sketch.done(0.8)
   },
   sofa: ({ sketch, color }) => {
-    couch(sketch, color, 1, 2)
+    couch(sketch, { color, halfWidth: 1, seats: 2 })
 
     return sketch.done(0.9)
   },
   armchair: ({ sketch, color }) => {
-    couch(sketch, color, 0.46, 1)
+    couch(sketch, { color, halfWidth: 0.46, seats: 1 })
 
     return sketch.done(0.9)
   },
@@ -178,7 +192,7 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
     }
     sketch.circle(1.4, 0, 0.07, WATER)
     sketch.circle(-1.45, 0.1, 0.06, CERAMIC)
-    plant(sketch, 0, 0, 0.16, PALETTE.plantLeaf)
+    plant(sketch, { x: 0, z: 0, radius: 0.16, leaf: PALETTE.plantLeaf })
     sketch.shadowRect(-1.8, -0.75, 1.8, 0.75, 0.12)
 
     return sketch.done(0.8)
@@ -198,7 +212,11 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
     sketch.circle(0, 0, 0.56, shade(color, 1.05), false)
     for (let i = 0; i < 4; i++) {
       const angle = (i / 4) * Math.PI * 2 + Math.PI / 4
-      plate(sketch, Math.cos(angle) * 0.4, Math.sin(angle) * 0.4, i % 2 ? "#7fa66a" : "#e9a35a")
+      plate(sketch, {
+        x: Math.cos(angle) * 0.4,
+        z: Math.sin(angle) * 0.4,
+        food: i % 2 ? "#7fa66a" : "#e9a35a",
+      })
     }
     sketch.circle(0, 0, 0.1, "#c9564f")
     sketch.shadowCircle(0, 0, 0.66)
@@ -207,7 +225,7 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
   },
   squareTable: ({ sketch, color }) => {
     sketch.rect(-0.4, -0.4, 0.4, 0.4, color, 0.05)
-    plate(sketch, -0.14, 0.12)
+    plate(sketch, { x: -0.14, z: 0.12 })
     sketch.circle(0.17, -0.15, 0.055, CERAMIC)
     sketch.shadowRect(-0.4, -0.4, 0.4, 0.4)
 
@@ -231,7 +249,7 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
     return sketch.done(1.1)
   },
   plant: ({ sketch, color }) => {
-    plant(sketch, 0, 0, 0.3, color)
+    plant(sketch, { x: 0, z: 0, radius: 0.3, leaf: color })
 
     return sketch.done(0.9)
   },

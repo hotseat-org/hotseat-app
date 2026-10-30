@@ -12,6 +12,9 @@ export interface FloorCell extends Cell {
 }
 /** A square's four triangles, between its two diagonals (z grows "north"). */
 export const FLOOR_PART = { south: 1, east: 2, north: 4, west: 8 } as const
+/** A triangle of the flood grid: its square (i, j) and which quarter of it. */
+type Triangle = [number, number, number]
+
 const WHOLE = 15
 
 /**
@@ -91,7 +94,7 @@ export const enclosedRegions = (objects: SceneObject[]): FloorCell[][] => {
     i >= loI && i < loI + width && j >= loJ && j < loJ + height
 
   /** Triangles a triangle opens onto: its cell's two neighbours, and across the cell side. */
-  const neighbours = (i: number, j: number, triangle: number, out: [number, number, number][]) => {
+  const neighbours = ([i, j, triangle]: Triangle, out: Triangle[]) => {
     out.length = 0
     const diagonalBits = diagonals.get(`${i},${j}`) ?? 0
     const isRising = (diagonalBits & 1) !== 0 // SW–NE: parts S|W and N|E
@@ -121,8 +124,8 @@ export const enclosedRegions = (objects: SceneObject[]): FloorCell[][] => {
   }
 
   const outside = new Uint8Array(width * height * 4)
-  const stack: [number, number, number][] = []
-  const next: [number, number, number][] = []
+  const stack: Triangle[] = []
+  const next: Triangle[] = []
   const visitOutside = (i: number, j: number, triangle: number) => {
     if (!inGrid(i, j)) return
 
@@ -139,50 +142,49 @@ export const enclosedRegions = (objects: SceneObject[]): FloorCell[][] => {
     for (const i of [loI, loI + width - 1])
       for (let triangle = 0; triangle < 4; triangle++) visitOutside(i, j, triangle)
   while (stack.length) {
-    const [i, j, triangle] = stack.pop() as [number, number, number]
-    for (const [nextI, nextJ, nextTriangle] of neighbours(i, j, triangle, next))
+    for (const [nextI, nextJ, nextTriangle] of neighbours(stack.pop() as Triangle, next))
       visitOutside(nextI, nextJ, nextTriangle)
   }
 
   // Rooms: each unvisited triangle's component, gathered per square.
   const seen = new Uint8Array(width * height * 4)
   const regions: FloorCell[][] = []
-  for (let i = minI; i <= maxI; i++)
-    for (let j = minJ; j <= maxJ; j++)
-      for (let triangle = 0; triangle < 4; triangle++) {
-        const startIndex = index(i, j, triangle)
-        if (outside[startIndex] || seen[startIndex]) continue
+  const gatherRegion = (start: Triangle): FloorCell[] => {
+    const parts = new Map<string, FloorCell>()
+    const queue: Triangle[] = [start]
+    seen[index(...start)] = 1
+    while (queue.length) {
+      const current = queue.pop() as Triangle
+      const [currentI, currentJ, currentTriangle] = current
+      const key = `${currentI},${currentJ}`
+      const cell = parts.get(key) ?? { x: currentI * SEG, z: currentJ * SEG, parts: 0 }
+      cell.parts = (cell.parts ?? 0) | (1 << currentTriangle)
+      parts.set(key, cell)
+      for (const neighbour of neighbours(current, next)) {
+        const [nextI, nextJ] = neighbour
+        if (!inGrid(nextI, nextJ)) continue
 
-        const parts = new Map<string, FloorCell>()
-        const queue: [number, number, number][] = [[i, j, triangle]]
-        seen[startIndex] = 1
-        while (queue.length) {
-          const [currentI, currentJ, currentTriangle] = queue.pop() as [number, number, number]
-          const key = `${currentI},${currentJ}`
-          const cell = parts.get(key) ?? { x: currentI * SEG, z: currentJ * SEG, parts: 0 }
-          cell.parts = (cell.parts ?? 0) | (1 << currentTriangle)
-          parts.set(key, cell)
-          for (const [nextI, nextJ, nextTriangle] of neighbours(
-            currentI,
-            currentJ,
-            currentTriangle,
-            next
-          )) {
-            if (!inGrid(nextI, nextJ)) continue
+        const neighbourIndex = index(...neighbour)
+        if (outside[neighbourIndex] || seen[neighbourIndex]) continue
 
-            const neighbourIndex = index(nextI, nextJ, nextTriangle)
-            if (outside[neighbourIndex] || seen[neighbourIndex]) continue
-
-            seen[neighbourIndex] = 1
-            queue.push([nextI, nextJ, nextTriangle])
-          }
-        }
-        regions.push(
-          [...parts.values()].map((floorCell) =>
-            floorCell.parts === WHOLE ? { x: floorCell.x, z: floorCell.z } : floorCell
-          )
-        )
+        seen[neighbourIndex] = 1
+        queue.push(neighbour)
       }
+    }
+
+    return [...parts.values()].map((floorCell) =>
+      floorCell.parts === WHOLE ? { x: floorCell.x, z: floorCell.z } : floorCell
+    )
+  }
+  const gatherRegionsAt = (i: number, j: number) => {
+    for (let triangle = 0; triangle < 4; triangle++) {
+      const startIndex = index(i, j, triangle)
+      if (outside[startIndex] || seen[startIndex]) continue
+
+      regions.push(gatherRegion([i, j, triangle]))
+    }
+  }
+  for (let i = minI; i <= maxI; i++) for (let j = minJ; j <= maxJ; j++) gatherRegionsAt(i, j)
 
   return regions
 }
@@ -193,6 +195,15 @@ export const cellAt = (x: number, z: number): Cell => ({
   z: Math.floor(z / SEG) * SEG,
 })
 
+/** The part of a split square (offsets 0–1 from its corner) a point falls in. */
+const getFloorPart = (offsetX: number, offsetZ: number) => {
+  if (offsetZ < offsetX && offsetZ < 1 - offsetX) return FLOOR_PART.south
+  if (offsetZ > offsetX && offsetZ > 1 - offsetX) return FLOOR_PART.north
+  if (offsetX > offsetZ) return FLOOR_PART.east
+
+  return FLOOR_PART.west
+}
+
 /** Whether a floor point lies in a region's cells (a split square: its parts). */
 export const isInRegion = (cells: Map<string, FloorCell>, x: number, z: number) => {
   const { x: cellX, z: cellZ } = cellAt(x, z)
@@ -202,16 +213,8 @@ export const isInRegion = (cells: Map<string, FloorCell>, x: number, z: number) 
 
   const offsetX = (x - cellX) / SEG
   const offsetZ = (z - cellZ) / SEG
-  const part =
-    offsetZ < offsetX && offsetZ < 1 - offsetX
-      ? FLOOR_PART.south
-      : offsetZ > offsetX && offsetZ > 1 - offsetX
-        ? FLOOR_PART.north
-        : offsetX > offsetZ
-          ? FLOOR_PART.east
-          : FLOOR_PART.west
 
-  return (cell.parts & part) !== 0
+  return (cell.parts & getFloorPart(offsetX, offsetZ)) !== 0
 }
 
 /**

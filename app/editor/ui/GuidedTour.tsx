@@ -102,6 +102,14 @@ export const GuidedTour = () => {
   return <TourCard />
 }
 
+/** A progress dot: long for the current step, bright for the done ones, faint for the rest. */
+const getDotClass = (dotIndex: number, currentIndex: number) => {
+  if (dotIndex === currentIndex) return "w-5 bg-accent"
+  if (dotIndex < currentIndex) return "w-1.5 bg-accent/50"
+
+  return "w-1.5 bg-foreground/15"
+}
+
 const TourCard = () => {
   const steps = useTourSteps()
   const { t } = useI18n()
@@ -172,7 +180,7 @@ const TourCard = () => {
               {t(step.title)}
             </h2>
             <span className="shrink-0 text-xs font-semibold tabular-nums text-muted">
-              {t("{n} of {count}", { n: index + 1, count: steps.length })}
+              {t("{step} of {count}", { step: index + 1, count: steps.length })}
             </span>
           </div>
           {/* Fixed height: the card doesn't jump between steps. */}
@@ -182,14 +190,7 @@ const TourCard = () => {
               {steps.map((_, i) => (
                 <span
                   key={i}
-                  className={clsx(
-                    "h-1.5 rounded-full transition-all",
-                    i === index
-                      ? "w-5 bg-accent"
-                      : i < index
-                        ? "w-1.5 bg-accent/50"
-                        : "w-1.5 bg-foreground/15"
-                  )}
+                  className={clsx("h-1.5 rounded-full transition-all", getDotClass(i, index))}
                 />
               ))}
             </div>
