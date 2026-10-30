@@ -4,6 +4,7 @@ import { useI18n } from "~/i18n/I18nProvider"
 /** The perf HUD's reading: frames per second (coloured by how smooth), frame time and what's drawn. */
 export const FrameRateReadout = ({ stats }: { stats: FrameStats }) => {
   const { t, tn } = useI18n()
+
   return (
     <div className="rounded-xl border border-border bg-overlay/95 px-3 py-2 font-mono text-sm text-foreground shadow-overlay backdrop-blur-md">
       <span className="tabular-nums">

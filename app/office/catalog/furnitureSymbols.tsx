@@ -80,6 +80,7 @@ const couch = (sketch: Sketch, color: string, halfWidth: number, seats: number) 
   }
   sketch.rect(-inner + 0.06, -0.24, -inner + 0.3, -0.04, "#e8c07a", 0.05)
   if (seats > 1) sketch.rect(inner - 0.3, -0.24, inner - 0.06, -0.04, "#f3e4d0", 0.05)
+
   sketch.shadowRect(-halfWidth, -0.43, halfWidth, 0.43, 0.1)
 }
 
@@ -112,21 +113,25 @@ const plant = (sketch: Sketch, x: number, z: number, radius: number, leaf: strin
 export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> = {
   desk: ({ sketch, color, isOn }) => {
     desk(sketch, color, 0, isOn)
+
     return sketch.done(0.8)
   },
   // The chair first: tucked in, its front slides under the desk top.
   workstation: ({ sketch, color, isOn, state }) => {
     chair(sketch, 0, state.occupied ? WORKSTATION_SEAT_Z : 0.12, true)
     desk(sketch, color, -0.25, isOn)
+
     return sketch.done(1)
   },
   deskmate: ({ sketch, color, isOn }) => {
     chair(sketch, 0, DESKMATE_SEAT_Z, true)
     desk(sketch, color, -0.35, isOn)
+
     return sketch.done(1)
   },
   seat: ({ sketch }) => {
     chair(sketch, 0, 0)
+
     return sketch.done(1)
   },
   barStool: ({ sketch, color }) => {
@@ -134,14 +139,17 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
     sketch.circle(0, 0, 0.17, color)
     sketch.circle(0, 0, 0.11, shade(color, 1.08), false)
     sketch.shadowCircle(0, 0, 0.21)
+
     return sketch.done(0.8)
   },
   sofa: ({ sketch, color }) => {
     couch(sketch, color, 1, 2)
+
     return sketch.done(0.9)
   },
   armchair: ({ sketch, color }) => {
     couch(sketch, color, 0.46, 1)
+
     return sketch.done(0.9)
   },
   coffeeTable: ({ sketch, color }) => {
@@ -151,6 +159,7 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
     sketch.circle(0.32, 0.05, 0.06, CERAMIC)
     sketch.ring(0.32, 0.05, 0.04, shade(CERAMIC, 0.75), 0.012)
     sketch.shadowRect(-0.6, -0.3, 0.6, 0.3)
+
     return sketch.done(0.4)
   },
   meetingTable: ({ sketch, color }) => {
@@ -171,6 +180,7 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
     sketch.circle(-1.45, 0.1, 0.06, CERAMIC)
     plant(sketch, 0, 0, 0.16, PALETTE.plantLeaf)
     sketch.shadowRect(-1.8, -0.75, 1.8, 0.75, 0.12)
+
     return sketch.done(0.8)
   },
   ovalTable: ({ sketch, color }) => {
@@ -180,6 +190,7 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
     sketch.rect(0.42, -0.14, 0.74, 0.2, PAPER, 0.02)
     sketch.circle(0, 0, 0.08, WATER)
     sketch.shadowRect(-1.35, -0.62, 1.35, 0.62, 0.62)
+
     return sketch.done(0.8)
   },
   roundTable: ({ sketch, color }) => {
@@ -191,6 +202,7 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
     }
     sketch.circle(0, 0, 0.1, "#c9564f")
     sketch.shadowCircle(0, 0, 0.66)
+
     return sketch.done(0.8)
   },
   squareTable: ({ sketch, color }) => {
@@ -198,6 +210,7 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
     plate(sketch, -0.14, 0.12)
     sketch.circle(0.17, -0.15, 0.055, CERAMIC)
     sketch.shadowRect(-0.4, -0.4, 0.4, 0.4)
+
     return sketch.done(0.8)
   },
   barTable: ({ sketch, color }) => {
@@ -205,6 +218,7 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
     sketch.circle(0, 0, 0.34, shade(color, 1.05), false)
     sketch.circle(0.1, -0.08, 0.055, CERAMIC)
     sketch.shadowCircle(0, 0, 0.42)
+
     return sketch.done(1.1)
   },
   ovalBarTable: ({ sketch, color }) => {
@@ -213,10 +227,12 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
     sketch.circle(-0.3, 0, 0.055, CERAMIC)
     sketch.circle(0.35, 0.05, 0.055, WATER)
     sketch.shadowRect(-0.9, -0.38, 0.9, 0.38, 0.38)
+
     return sketch.done(1.1)
   },
   plant: ({ sketch, color }) => {
     plant(sketch, 0, 0, 0.3, color)
+
     return sketch.done(0.9)
   },
   planterBox: ({ sketch, color }) => {
@@ -226,6 +242,7 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
       sketch.circle(x - 0.03, -0.03, 0.12, PALETTE.plantLeaf, false)
     }
     sketch.shadowRect(-0.95, -0.21, 0.95, 0.21)
+
     return sketch.done(0.8)
   },
   floorLamp: ({ sketch, color }) => {
@@ -233,12 +250,14 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
     sketch.circle(0, 0, 0.17, color)
     sketch.circle(0, 0, 0.07, "#fffaf0", false)
     sketch.shadowCircle(0, 0, 0.17)
+
     return sketch.done(1.4)
   },
   trashBin: ({ sketch, color }) => {
     sketch.circle(0, 0, 0.16, color)
     sketch.circle(0, 0, 0.12, shade(color, 0.7), false)
     sketch.shadowCircle(0, 0, 0.16)
+
     return sketch.done(0.4)
   },
   coatRack: ({ sketch, color }) => {
@@ -251,6 +270,7 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
     sketch.ellipse(-0.08, -0.08, 0.12, 0.07, "#b96f6f", -30)
     sketch.circle(0, 0, 0.035, shade(color, 0.6), false)
     sketch.shadowCircle(0, 0, 0.16)
+
     return sketch.done(1.5)
   },
   rug: ({ sketch, color, halfX, halfZ }) => {
@@ -263,6 +283,7 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
       sketch.line(x, z0 - 0.04, x, z0, shade(color, 0.85), 0.015)
       sketch.line(x, -z0, x, -z0 + 0.04, shade(color, 0.85), 0.015)
     }
+
     return sketch.done(0.01)
   },
   tvScreen: ({ sketch }) => {
@@ -271,6 +292,7 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
     sketch.rect(-0.7, -0.05, 0.7, 0.04, DARK, 0.02)
     sketch.line(-0.66, 0.05, 0.66, 0.05, ACCENT, 0.015)
     sketch.shadowRect(-0.7, -0.2, 0.7, 0.2, 0.04)
+
     return sketch.done(1.6)
   },
   whiteboard: ({ sketch }) => {
@@ -284,6 +306,7 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
     ] as const)
       sketch.circle(x, 0.08, 0.018, markerColor, false)
     sketch.shadowRect(-0.7, -0.2, 0.7, 0.2, 0.04)
+
     return sketch.done(1.6)
   },
   divider: ({ sketch, color, halfX }) => {
@@ -291,6 +314,7 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
     sketch.rect(halfX - 0.2, -0.15, halfX - 0.08, 0.15, DARK, 0.03)
     sketch.rect(-halfX + 0.05, -0.05, halfX - 0.05, 0.05, color, 0.04)
     sketch.shadowRect(-halfX + 0.05, -0.15, halfX - 0.05, 0.15, 0.04)
+
     return sketch.done(1.3)
   },
   toilet: ({ sketch, color }) => {
@@ -299,6 +323,7 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
     sketch.ellipse(0, -0.03, 0.12, 0.17, WATER)
     sketch.circle(0, -0.41, 0.025, STEEL, false)
     sketch.shadowRect(-0.2, -0.5, 0.2, 0.2, 0.18)
+
     return sketch.done(0.8)
   },
   shower: ({ sketch, color }) => {
@@ -316,6 +341,7 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
     sketch.line(-0.43, 0.46, 0.48, 0.46, GLASS, 0.03)
     sketch.line(0.46, -0.43, 0.46, 0.48, GLASS, 0.03)
     sketch.shadowRect(-0.48, -0.48, 0.48, 0.48, 0.03)
+
     return sketch.done(1.5)
   },
   bathroomSink: ({ sketch, color }) => {
@@ -325,6 +351,7 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
     sketch.circle(0, 0.03, 0.02, STEEL, false)
     sketch.rect(-0.03, -0.18, 0.03, -0.08, STEEL, 0.01)
     sketch.shadowRect(-0.45, -0.22, 0.45, 0.22)
+
     return sketch.done(0.9)
   },
   bookshelf: ({ sketch, color }) => {
@@ -339,6 +366,7 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
       i++
     }
     sketch.shadowRect(-0.6, -0.18, 0.6, 0.18, 0.03)
+
     return sketch.done(1.5)
   },
   shelvingUnit: ({ sketch, color }) => {
@@ -350,6 +378,7 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
     ] as const)
       sketch.rect(x0, -0.12, x1, 0.12, shelfColor, 0.02)
     sketch.shadowRect(-0.6, -0.18, 0.6, 0.18, 0.03)
+
     return sketch.done(1.7)
   },
   filingCabinet: ({ sketch, color }) => {
@@ -357,6 +386,7 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
     sketch.rect(-0.18, -0.18, 0.18, 0.12, shade(color, 1.06), 0.02, false)
     sketch.line(-0.08, 0.17, 0.08, 0.17, shade(color, 0.6), 0.025)
     sketch.shadowRect(-0.22, -0.22, 0.22, 0.22, 0.03)
+
     return sketch.done(0.9)
   },
   lockers: ({ sketch, color }) => {
@@ -368,6 +398,7 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
     for (let i = 0; i < count; i++)
       sketch.circle(-0.72 + (i + 0.75) * width, 0.17, 0.02, STEEL, false)
     sketch.shadowRect(-0.72, -0.22, 0.72, 0.22, 0.03)
+
     return sketch.done(1.7)
   },
   wardrobe: ({ sketch, color }) => {
@@ -377,6 +408,7 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
     sketch.line(-0.1, 0.4, -0.04, 0.4, shade(color, 0.5), 0.025)
     sketch.line(0.04, 0.4, 0.1, 0.4, shade(color, 0.5), 0.025)
     sketch.shadowRect(-0.7, -0.45, 0.7, 0.45, 0.04)
+
     return sketch.done(1.75)
   },
   printer: ({ sketch, color }) => {
@@ -387,6 +419,7 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
     sketch.circle(-0.3, 0.24, 0.015, "#6ee7a0", false)
     sketch.rect(-0.25, 0.33, 0.25, 0.44, PAPER, 0.01)
     sketch.shadowRect(-0.4, -0.35, 0.4, 0.44, 0.05)
+
     return sketch.done(0.9)
   },
   vendingMachine: ({ sketch, color }) => {
@@ -396,6 +429,7 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
     for (let i = 0; i < 4; i++) sketch.circle(-0.33 + i * 0.13, 0.31, 0.03, BOOKS[i], false)
     sketch.rect(0.2, 0.22, 0.38, 0.38, "#e8e2d6", 0.02)
     sketch.shadowRect(-0.45, -0.4, 0.45, 0.4, 0.04)
+
     return sketch.done(1.8)
   },
   kitchenCounter: ({ sketch, color }) => {
@@ -414,6 +448,7 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
     ])
       sketch.ring(x, z, 0.1, "#5c6475", 0.025)
     sketch.shadowRect(-1, -0.45, 1, 0.45, 0.04)
+
     return sketch.done(0.9)
   },
   fridge: ({ sketch, color }) => {
@@ -422,6 +457,7 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
     sketch.line(-0.38, 0.12, 0.38, 0.12, shade(color, 0.78), 0.015)
     sketch.line(0.25, 0.2, 0.25, 0.34, shade(color, 0.55), 0.03)
     sketch.shadowRect(-0.38, -0.38, 0.38, 0.38, 0.06)
+
     return sketch.done(1.8)
   },
   cooler: ({ sketch, color }) => {
@@ -430,6 +466,7 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
     sketch.circle(0, -0.02, 0.07, "#cfe9f6", false)
     sketch.circle(0, -0.02, 0.035, "#4a6fae", false)
     sketch.shadowRect(-0.2, -0.2, 0.2, 0.2, 0.04)
+
     return sketch.done(1.1)
   },
   serverRack: ({ sketch, color }) => {
@@ -439,26 +476,31 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
     for (let i = 0; i < 4; i++)
       sketch.circle(-0.18 + i * 0.1, 0.4, 0.015, i % 3 ? "#6ee7a0" : ACCENT, false)
     sketch.shadowRect(-0.31, -0.45, 0.31, 0.45, 0.03)
+
     return sketch.done(1.9)
   },
   wallTv: ({ sketch }) => {
     sketch.rect(-0.65, -0.21, 0.65, -0.14, DARK, 0.02)
     sketch.line(-0.6, -0.13, 0.6, -0.13, ACCENT, 0.012)
+
     return sketch.done(1.2)
   },
   wallArt: ({ sketch, color }) => {
     sketch.rect(-0.36, -0.21, 0.36, -0.14, color, 0.015)
     sketch.line(-0.3, -0.13, 0.3, -0.13, "#9fc3c9", 0.012)
+
     return sketch.done(1.1)
   },
   wallClock: ({ sketch, color }) => {
     sketch.rect(-0.17, -0.21, 0.17, -0.14, color, 0.03)
+
     return sketch.done(1.2)
   },
   wallShelf: ({ sketch, color }) => {
     sketch.rect(-0.45, -0.21, 0.45, 0.02, color, 0.02)
     sketch.circle(-0.25, -0.08, 0.06, PALETTE.plantLeaf, false)
     sketch.rect(0.05, -0.15, 0.3, -0.04, "#6d90c9", 0.01)
+
     return sketch.done(0.9)
   },
   ceilingLight: null,

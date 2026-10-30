@@ -34,6 +34,7 @@ export const useLampsOn = () => {
   const renderer = useThree((state) => state.gl)
   const invalidate = useThree((state) => state.invalidate)
   useLayoutEffect(() => markShadowsDirty(renderer, invalidate), [isOn, renderer, invalidate])
+
   return isOn
 }
 
@@ -56,6 +57,7 @@ export const ShaderWarmup = ({ children }: { children: ReactNode }) => {
   // Once, after the office has loaded.
   useEffect(() => {
     const timer = window.setTimeout(() => setForced(!(nightness > LAMPS_ON)), DELAY)
+
     return () => window.clearTimeout(timer)
     // Only the time of day at load decides which way to warm up.
   }, [])
@@ -63,6 +65,7 @@ export const ShaderWarmup = ({ children }: { children: ReactNode }) => {
   // The lamps have flipped (this commit): compile, then put them back.
   useEffect(() => {
     if (forced === null) return
+
     let isDone = false
     const { frameloop } = get()
     setFrameloop("never")
@@ -71,15 +74,18 @@ export const ShaderWarmup = ({ children }: { children: ReactNode }) => {
       .catch(() => {}) // A failed warm-up just means compiling later, as before.
       .finally(() => {
         if (isDone) return
+
         isDone = true
         setFrameloop(frameloop)
         setForced(null)
         // The lamps flip back: their shadows must be drawn afresh.
         markShadowsDirty(renderer, invalidate)
       })
+
     return () => {
       // Left mid-way (unmounted): don't leave rendering paused.
       if (!isDone) setFrameloop(frameloop)
+
       isDone = true
     }
   }, [forced, renderer, scene, camera, get, setFrameloop, invalidate])

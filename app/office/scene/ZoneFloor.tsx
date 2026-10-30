@@ -142,6 +142,7 @@ export const ZoneFloor = ({ isEditing, isDark }: { isEditing: boolean; isDark: b
           transparent: true,
           depthWrite: false,
         })
+
         return {
           zone,
           texture,

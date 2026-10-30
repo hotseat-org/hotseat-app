@@ -91,6 +91,7 @@ export const getDayLook = (i18n: Translator, cell: Cell, isPicked: boolean) => {
       tooltip = isPicked
         ? t("You sit at {desk} {when}. Booking moves you here.", { desk: current, when })
         : t("You sit at {desk} {when}. Picking it moves you here.", { desk: current, when })
+
     tone = isPicked
       ? isMove
         ? "border-transparent bg-[color-mix(in_oklab,var(--accent)_72%,black)] text-accent-foreground"
@@ -99,11 +100,13 @@ export const getDayLook = (i18n: Translator, cell: Cell, isPicked: boolean) => {
         ? "border-warning bg-warning/15 text-foreground"
         : clsx("border-border bg-surface", cell.isWeekend && "text-muted")
   }
+
   const aria =
     `${format.long(cell.day)}, ${label || (cell.kind === "free" ? t("free") : "")}`.replace(
       /, $/,
       ""
     )
+
   return { label, tip: tooltip, tone, aria, isMove, isElsewhere }
 }
 
@@ -120,6 +123,7 @@ const DayMark = ({ i18n, cell, isPicked }: { i18n: Translator; cell: Cell; isPic
   if (isElsewhere) return <Armchair className="size-3.5 shrink-0" strokeWidth={2.2} />
   if (isPicked && cell.kind === "free")
     return <Check className="size-3.5 shrink-0" strokeWidth={3} />
+
   return null
 }
 

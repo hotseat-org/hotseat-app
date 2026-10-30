@@ -63,6 +63,7 @@ export const createSelectionSlice = (
   const selectedFurniture = () => {
     const { selection, objects } = get()
     const ids = new Set(selection)
+
     return objects.filter(
       (piece) => ids.has(piece.id) && !isEdgeType(piece.type) && !isMarker(piece.type)
     )
@@ -91,6 +92,7 @@ export const createSelectionSlice = (
       )
       if (!groupCollides([...get().objects, ...copies], copies)) return copies
     }
+
     return null
   }
 
@@ -105,6 +107,7 @@ export const createSelectionSlice = (
       const { selection, objects } = get()
       const piece = objects.find((candidate) => candidate.id === id)
       if (!piece || isEdgeType(piece.type)) return
+
       const next = selection.includes(id)
         ? selection.filter((selected) => selected !== id)
         : [...selection, id]
@@ -115,6 +118,7 @@ export const createSelectionSlice = (
     removeSelection: () => {
       const ids = new Set(get().selection)
       if (ids.size === 0) return
+
       set((state) => ({
         objects: state.objects.filter((piece) => !ids.has(piece.id)),
         selectedId: null,
@@ -123,12 +127,15 @@ export const createSelectionSlice = (
     rotateSelection: () => {
       const group = selectedFurniture()
       if (group.length === 1) return get().rotateObject(group[0].id)
+
       // Each piece turns in place (re-snapped); refused if any would collide.
       const turned = group.map((piece) => {
         const rotation = toRotationStep(piece.rotation + ROTATION_STEP)
+
         return { ...piece, ...snapToFootprint(piece.type, rotation, piece.x, piece.z), rotation }
       })
       if (groupCollides(get().objects, turned)) return
+
       const byId = new Map(turned.map((piece) => [piece.id, piece]))
       set((state) => ({ objects: state.objects.map((piece) => byId.get(piece.id) ?? piece) }))
     },
@@ -143,10 +150,13 @@ export const createSelectionSlice = (
     nudgeSelection: (deltaX, deltaZ) => {
       const group = selectedFurniture()
       if (group.length === 0) return false
+
       const moved = group.map((piece) => ({ ...piece, x: piece.x + deltaX, z: piece.z + deltaZ }))
       if (groupCollides(get().objects, moved)) return false
+
       const byId = new Map(moved.map((piece) => [piece.id, piece]))
       set((state) => ({ objects: state.objects.map((piece) => byId.get(piece.id) ?? piece) }))
+
       return true
     },
     copySelection: () => {
@@ -156,8 +166,10 @@ export const createSelectionSlice = (
     paste: () => {
       const source = get().clipboard
       if (source.length === 0) return
+
       const copies = placeCopies(source)
       if (!copies) return
+
       // Next paste steps further along, like most editors.
       set((state) => ({
         objects: [...state.objects, ...copies],
@@ -170,6 +182,7 @@ export const createSelectionSlice = (
       const group = selectedFurniture()
       const copies = group.length ? placeCopies(group) : null
       if (!copies) return
+
       set((state) => ({
         objects: [...state.objects, ...copies],
         selection: copies.map((piece) => piece.id),

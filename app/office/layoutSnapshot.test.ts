@@ -37,6 +37,7 @@ const round = (value: number) => Math.round(value * 1000) / 1000
 const checksum = (values: unknown[]) => {
   let hash = 0
   for (const char of JSON.stringify(values)) hash = (hash * 31 + char.charCodeAt(0)) >>> 0
+
   return hash.toString(36)
 }
 
@@ -72,6 +73,7 @@ describe("every template reads the same", () => {
           .filter((piece) => isSeatable(piece.type))
           .map((piece) => {
             const route = getRoute(objects, piece.id)
+
             return [piece.id, route ? round(route.length) : null]
           }),
       }).toMatchSnapshot()

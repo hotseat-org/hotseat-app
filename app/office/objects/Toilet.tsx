@@ -11,6 +11,7 @@ const BACK = -0.5
 /** A toilet: cistern with a flush button, rounded bowl, seat and raised lid. Faces +Z. */
 export const Toilet = ({ color = "#f3f1ec" }: Props) => {
   const bowlZ = BACK + 0.42
+
   return (
     <group>
       {/* Cistern */}

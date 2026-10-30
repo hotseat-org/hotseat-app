@@ -12,6 +12,7 @@ const half = (type: ObjectType): [number, number] => [
 const drawBox: DrawSymbol = ({ sketch, color, halfX, halfZ }) => {
   sketch.rect(-halfX + 0.04, -halfZ + 0.04, halfX - 0.04, halfZ - 0.04, color, 0.04)
   sketch.shadowRect(-halfX + 0.04, -halfZ + 0.04, halfX - 0.04, halfZ - 0.04, 0.04)
+
   return sketch.done(1)
 }
 
@@ -26,7 +27,9 @@ export const drawPiece = (
 ): PieceDrawing | null => {
   const draw = getRenderer(object.type).drawSymbol
   if (draw === null) return null
+
   const [halfX, halfZ] = half(object.type)
+
   return (draw ?? drawBox)({
     sketch: new Sketch(tone),
     object,

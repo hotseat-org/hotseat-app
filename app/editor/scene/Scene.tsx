@@ -128,6 +128,7 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
       const mount = wallMount(objects, type, aim.x, aim.z)
       if (mount) return mount
     }
+
     return snapPlacement(objects, type, placementRotation, x, z)
   }
 
@@ -156,6 +157,7 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
   useEffect(() => {
     const clear = () => (isFloorPress.current = false)
     window.addEventListener("pointerup", clear)
+
     return () => window.removeEventListener("pointerup", clear)
   }, [])
   // Wall + Erase tools are owned by BuildController; here we handle select and
@@ -170,6 +172,7 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
       const start = placeAt(tool as ObjectType, x, z)
       setRepeat({ start, end: start })
       isFloorPress.current = true
+
       return
     }
     // Bare floor, Select tool + Shift: a box selection, added to the current
@@ -182,16 +185,19 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
         y1: event.clientY,
         additive: true,
       })
+
       return
     }
     // A saved room on the cursor: a click places it, a drag pans.
     if (armedKit) {
       isFloorPress.current = true
       floorPan.current?.start(event)
+
       return
     }
     // Select, at a wall's foot: drag the wall sideways.
     if (tool === "select" && wallResize.current?.press(x, z)) return
+
     // Otherwise a drag pans (Select, furniture); a click acts on pointerup.
     isFloorPress.current = true
     if (tool === "select" || isFurniture) floorPan.current?.start(event)
@@ -199,6 +205,7 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
 
   const handleMove = (x: number, z: number) => {
     if (readOnly || dragId) return // carrying is handled by CarryController (plane raycast)
+
     wallResize.current?.hover(x, z)
     if (repeat) setRepeat({ ...repeat, end: { x, z } })
     if (isFurniture) setHover(placeAt(tool as ObjectType, x, z))
@@ -216,11 +223,13 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
         }))
       )
       setRepeat(null)
+
       return
     }
     if (floorPan.current?.hasMoved()) return // that was a pan, not a click
     if (armedKit) {
       if (isFloorPress.current && kitPlan && doesKitFit) storeApi.getState().placeKit(kitPlan)
+
       return
     }
     if (tool === "select" && isFloorPress.current) select(null) // click on bare floor

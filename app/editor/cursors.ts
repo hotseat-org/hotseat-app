@@ -40,6 +40,7 @@ const glyph = (paths: string[]) =>
 
 const compose = (body: string, x: number, y: number, fallback: string) => {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">${body}</svg>`
+
   return `url("data:image/svg+xml,${encodeURIComponent(svg)}") ${x} ${y}, ${fallback}`
 }
 
@@ -52,6 +53,7 @@ const LENS = "M10 4 A6 6 0 1 1 9.99 4 Z M14.5 14.5 L20 20"
 /** A double-headed arrow, turned `degrees` clockwise from horizontal. */
 function resizeCursor(degrees: number) {
   const arrow = line("M4 12 H20 M4 12 L7.5 8.5 M4 12 L7.5 15.5 M20 12 L16.5 8.5 M20 12 L16.5 15.5")
+
   return compose(`<g transform="rotate(${degrees} 12 12)">${arrow}</g>`, 12, 12, "move")
 }
 
@@ -138,6 +140,7 @@ export const getToolCursor = (tool: Tool, isFurniture: boolean) => {
   if (tool === "delete") return CURSORS.erase
   if (tool === "paint") return CURSORS.paint
   if (tool === "room" || isEdgeType(tool)) return CURSORS.build
+
   return isFurniture ? CURSORS.place : CURSORS.select
 }
 

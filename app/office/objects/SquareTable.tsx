@@ -16,6 +16,7 @@ const TOP_THICKNESS = 0.05
 /** A small square café table on four slim, slightly splayed metal legs. */
 export const SquareTable = ({ color = PALETTE.deskTop, variant }: Props) => {
   const legOffset = SIDE / 2 - 0.08
+
   return (
     <group>
       <RoundedBox

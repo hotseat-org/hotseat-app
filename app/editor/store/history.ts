@@ -55,6 +55,7 @@ export const createHistory = (
     const after = get().objects
     afterSet()
     if (after === before || history.applying || history.batch) return
+
     rawSet({ past: [...get().past, before].slice(-HISTORY_LIMIT), future: [] })
   }
   const slice: HistorySlice = {
@@ -63,9 +64,11 @@ export const createHistory = (
     // These only move snapshots between the stacks; `set` records the rest.
     undo: () => {
       if (history.batch) return // mid-carry: finish (or cancel) it first
+
       const { past, future, objects, selectedId } = get()
       const prev = past[past.length - 1]
       if (!prev) return
+
       history.applying = true
       set({
         objects: prev,
@@ -77,9 +80,11 @@ export const createHistory = (
     },
     redo: () => {
       if (history.batch) return // mid-carry: finish (or cancel) it first
+
       const { past, future, objects, selectedId } = get()
       const next = future[future.length - 1]
       if (!next) return
+
       history.applying = true
       set({
         objects: next,
@@ -98,8 +103,10 @@ export const createHistory = (
       const { objects, past } = get()
       // Nothing (visibly) changed → no step (e.g. a door put back where it was).
       if (!base || JSON.stringify(stripIds(base)) === JSON.stringify(stripIds(objects))) return
+
       rawSet({ past: [...past, base].slice(-HISTORY_LIMIT), future: [] })
     },
   }
+
   return { set, slice }
 }

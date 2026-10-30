@@ -11,8 +11,10 @@ const MIN_AREA = 2
 /** How much of a grid square is floor: all of it, or the triangles a diagonal leaves. */
 const shareOf = (cell: FloorCell) => {
   if (cell.parts === undefined) return 1
+
   let count = 0
   for (let bits = cell.parts; bits; bits >>= 1) count += bits & 1
+
   return count / 4
 }
 
@@ -26,29 +28,33 @@ export const RoomLabels = () => {
   const { format } = i18n
   const modules = useModules()
   const objects = useEditorStore((state) => state.objects)
-  const rooms = useMemo(() => {
-    return enclosedRegions(objects).flatMap((cells) => {
-      const area = cells.reduce((sum, cell) => sum + shareOf(cell), 0) * SEG * SEG
-      if (area < MIN_AREA) return []
-      const inside = new Set(cells.map((cell) => `${cell.x},${cell.z}`))
-      const pieces = objects.filter((object) =>
-        inside.has(`${Math.floor(object.x / SEG) * SEG},${Math.floor(object.z / SEG) * SEG}`)
-      )
-      // What the modules say about it (the office: its desks).
-      const description = describePieces(modules, pieces, i18n)
-      // On the room's own floor: the square nearest its middle (an L-shaped
-      // room's middle can be outside it).
-      const centreX = cells.reduce((sum, cell) => sum + cell.x, 0) / cells.length + SEG / 2
-      const centreZ = cells.reduce((sum, cell) => sum + cell.z, 0) / cells.length + SEG / 2
-      const spot = cells.reduce((best, cell) =>
-        Math.hypot(cell.x + SEG / 2 - centreX, cell.z + SEG / 2 - centreZ) <
-        Math.hypot(best.x + SEG / 2 - centreX, best.z + SEG / 2 - centreZ)
-          ? cell
-          : best
-      )
-      return [{ x: spot.x + SEG / 2, z: spot.z + SEG / 2, area, description }]
-    })
-  }, [objects, modules, i18n])
+  const rooms = useMemo(
+    () =>
+      enclosedRegions(objects).flatMap((cells) => {
+        const area = cells.reduce((sum, cell) => sum + shareOf(cell), 0) * SEG * SEG
+        if (area < MIN_AREA) return []
+
+        const inside = new Set(cells.map((cell) => `${cell.x},${cell.z}`))
+        const pieces = objects.filter((object) =>
+          inside.has(`${Math.floor(object.x / SEG) * SEG},${Math.floor(object.z / SEG) * SEG}`)
+        )
+        // What the modules say about it (the office: its desks).
+        const description = describePieces(modules, pieces, i18n)
+        // On the room's own floor: the square nearest its middle (an L-shaped
+        // room's middle can be outside it).
+        const centreX = cells.reduce((sum, cell) => sum + cell.x, 0) / cells.length + SEG / 2
+        const centreZ = cells.reduce((sum, cell) => sum + cell.z, 0) / cells.length + SEG / 2
+        const spot = cells.reduce((best, cell) =>
+          Math.hypot(cell.x + SEG / 2 - centreX, cell.z + SEG / 2 - centreZ) <
+          Math.hypot(best.x + SEG / 2 - centreX, best.z + SEG / 2 - centreZ)
+            ? cell
+            : best
+        )
+
+        return [{ x: spot.x + SEG / 2, z: spot.z + SEG / 2, area, description }]
+      }),
+    [objects, modules, i18n]
+  )
 
   return (
     <>

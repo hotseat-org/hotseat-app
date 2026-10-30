@@ -12,5 +12,6 @@ const hit = new Vector3()
  */
 export const aimAtWallHeight = (raycaster: Raycaster, pointer: Vector2, camera: Camera) => {
   raycaster.setFromCamera(pointer, camera)
+
   return raycaster.ray.intersectPlane(WALL_AIM, hit) ? { x: hit.x, z: hit.z } : null
 }

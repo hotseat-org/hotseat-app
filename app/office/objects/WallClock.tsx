@@ -22,6 +22,7 @@ export const WallClock = ({ color = "#3d4657" }: Props) => (
     </mesh>
     {Array.from({ length: 12 }, (_, i) => {
       const angle = (i / 12) * Math.PI * 2
+
       return (
         <mesh
           key={i}

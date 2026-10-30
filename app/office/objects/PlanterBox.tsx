@@ -20,6 +20,7 @@ const HEIGHT = 0.45
 export const PlanterBox = ({ color = "#8f9aa6", variant }: Props) => {
   const lookIndex = look(variant, 3)
   const offsetsX = [-0.72, -0.36, 0, 0.36, 0.72]
+
   return (
     <group>
       <RoundedBox

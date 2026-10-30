@@ -26,6 +26,7 @@ const createShape = (width: number, height: number, radius0: number) => {
   shape.absarc(EPSILON, height - radius * 2, EPSILON, Math.PI, Math.PI / 2, true)
   shape.absarc(width - radius * 2, height - radius * 2, EPSILON, Math.PI / 2, 0, true)
   shape.absarc(width - radius * 2, EPSILON, EPSILON, 0, -Math.PI / 2, true)
+
   return shape
 }
 
@@ -64,6 +65,7 @@ const getRoundedBoxGeometry = (
     geometry = toCreasedNormals(extruded, creaseAngle)
     geometries.set(key, geometry)
   }
+
   return geometry
 }
 
@@ -98,6 +100,7 @@ export const RoundedBox = forwardRef<Mesh, Props>(function RoundedBox(
     steps,
     creaseAngle
   )
+
   return (
     <mesh ref={ref} {...props}>
       {/* Shared: never disposed along with one box. */}

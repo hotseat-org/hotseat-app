@@ -20,6 +20,7 @@ const TILE_D = 0.05
  */
 export const Shower = ({ color = "#9fc3c9" }: Props) => {
   const glassH = HEIGHT - TRAY - 0.04
+
   return (
     <group>
       {/* Tray: just inside the tiled walls' outer faces (FLUSH_INSET) */}

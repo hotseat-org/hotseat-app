@@ -23,12 +23,15 @@ export const RoutePill = ({ className }: { className?: string }) => {
 
   useEffect(() => {
     if (!route) return
+
     const onKey = (event: KeyboardEvent) => event.key === "Escape" && clearRoute()
     window.addEventListener("keydown", onKey)
+
     return () => window.removeEventListener("keydown", onKey)
   }, [route, clearRoute])
 
   if (!route) return null
+
   const copyLink = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href)

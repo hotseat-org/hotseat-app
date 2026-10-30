@@ -18,6 +18,7 @@ export const drawZones = ({ areas, isDark, clipId }: ZonesInput) =>
     const zoneClipId = `${clipId}-${i}`
     // The light floor washes a pale tint out: a deeper shade there.
     const color = isDark ? zone.color : shade(zone.color, 0.65)
+
     return (
       <g key={zone.name}>
         <clipPath id={zoneClipId}>

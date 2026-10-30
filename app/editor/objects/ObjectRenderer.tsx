@@ -62,6 +62,7 @@ const TAU = Math.PI * 2
 const snapEase = (t: number) => {
   const overshoot = 1.2
   const offset = t - 1
+
   return 1 + (overshoot + 1) * offset * offset * offset + overshoot * offset * offset
 }
 /** Duration (s) of the refused-drop shake. */
@@ -101,7 +102,9 @@ export const ObjectRenderer = memo(function ObjectRenderer({
   const setCursorHint = useContext(CursorHintContext)
   useEffect(() => {
     if (!hoverable || !hovered) return
+
     setCursorHint(object.id, selectable ? "grab" : "point")
+
     return () => setCursorHint(object.id, null)
   }, [hoverable, hovered, selectable, object.id, setCursorHint])
   // Doors, windows and wall items are sliced with their wall by the cursor
@@ -117,6 +120,7 @@ export const ObjectRenderer = memo(function ObjectRenderer({
   useLayoutEffect(() => {
     const group = turned.current
     if (!group) return
+
     const target = object.rotation
     const currentAngle = angle.current
     // Shortest signed difference (a turn from 270° to 0° goes +90°, not −270°).
@@ -126,8 +130,10 @@ export const ObjectRenderer = memo(function ObjectRenderer({
       turn.current = null
       angle.current = target
       group.rotation.y = target
+
       return
     }
+
     turn.current = { from: currentAngle, to: currentAngle + difference, t: 0 }
     invalidate()
   }, [object.rotation, invalidate])
@@ -147,12 +153,14 @@ export const ObjectRenderer = memo(function ObjectRenderer({
         angle.current = object.rotation
         turnedGroup.rotation.y = object.rotation
       }
+
       markShadowsDirty(state.gl, state.invalidate) // shadows turn with it
     }
   })
   useFrame((state, delta) => {
     const group = lifted.current
     if (!group) return
+
     const prev = amount.current
     const target = carried ? 1 : 0
     amount.current += (target - amount.current) * Math.min(1, delta * 12)
@@ -163,9 +171,12 @@ export const ObjectRenderer = memo(function ObjectRenderer({
         group.rotation.set(0, 0, 0)
         markShadowsDirty(state.gl, state.invalidate) // settled back down
       }
+
       amount.current = 0
+
       return
     }
+
     const time = state.clock.elapsedTime
     const sway = Math.sin(time * 2.4) * 0.05
     group.position.y = strength * (0.34 + Math.sin(time * 3.1) * 0.03)
@@ -184,6 +195,7 @@ export const ObjectRenderer = memo(function ObjectRenderer({
   const handlePointerDown = (event: ThreeEvent<PointerEvent>) => {
     if (event.button === 2 && onMenuPress && isFurniture(object)) {
       event.stopPropagation() // the floor beneath would open its own menu
+
       return onMenuPress(object.id, event)
     }
     if (event.button !== 0) return
@@ -191,8 +203,10 @@ export const ObjectRenderer = memo(function ObjectRenderer({
       // Walls/doors are erased by BuildController (single click or drag-run);
       // here we only handle single-click deletion of furniture.
       if (!isFurniture(object)) return
+
       event.stopPropagation()
       onDelete(object.id)
+
       return
     }
     if (tool === "select") {
@@ -202,6 +216,7 @@ export const ObjectRenderer = memo(function ObjectRenderer({
       if (isOpening(object.type) && onPickOpening) return onPickOpening(object.id)
       // Shift-click: add/remove to the multi-selection (no pick-up).
       if (event.shiftKey && isFurniture(object) && onToggleSelect) return onToggleSelect(object.id)
+
       onSelect(object.id)
       if (isFurniture(object)) onStartDrag(object.id, event)
     }
@@ -227,6 +242,7 @@ export const ObjectRenderer = memo(function ObjectRenderer({
               // erase, a desk in view mode); with a build tool armed the floor
               // keeps tracking, so the placement preview stays up (red) here.
               if (hoverable || tool === "delete") event.stopPropagation()
+
               setHovered(true)
             }
           : undefined
@@ -238,6 +254,7 @@ export const ObjectRenderer = memo(function ObjectRenderer({
         clickable && onViewClick
           ? (event) => {
               if (event.delta > 4) return
+
               event.stopPropagation()
               onViewClick(object.id)
             }

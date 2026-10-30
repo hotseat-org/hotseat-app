@@ -75,6 +75,7 @@ export const BUILD_AREA_GLSL = /* glsl */ `
 const buildDistanceMap = (objects: SceneObject[]) => {
   const field = getStructureField(objects)
   if (!field) return null
+
   const { cells, width: width, height: height, x0, z0 } = field.grid
   const bytes = new Uint8Array(width * height)
   for (let index = 0; index < cells.length; index++)
@@ -84,6 +85,7 @@ const buildDistanceMap = (objects: SceneObject[]) => {
   texture.magFilter = LinearFilter
   texture.unpackAlignment = 1
   texture.needsUpdate = true
+
   // Texel centres sit on the cell centres.
   return {
     texture,
@@ -105,6 +107,7 @@ export const useBuildArea = () => {
   const placing = useEditorStore((state) => isPlacing(state.tool, state.carryingId))
   const map = useMemo(() => buildDistanceMap(objects), [objects])
   useEffect(() => () => map?.texture.dispose(), [map])
+
   // A ShaderMaterial's uniforms (made with createBuildAreaUniforms).
   return (uniforms: Record<string, IUniform>) => {
     uniforms.distanceMap.value = map?.texture ?? null
@@ -112,6 +115,7 @@ export const useBuildArea = () => {
       uniforms.mapOrigin.value.copy(map.origin)
       uniforms.mapSize.value.copy(map.size)
     }
+
     uniforms.hasStructure.value = !!map
     uniforms.reach.value = map ? STRUCTURE_REACH : EMPTY_REACH
     uniforms.cursorReach.value = placing ? CURSOR_REACH : 0

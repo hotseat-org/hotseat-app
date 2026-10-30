@@ -28,6 +28,7 @@ export const composeWallColors = (objects: SceneObject[]) => {
   const openings = new Map<string, WallFaces>()
   for (const opening of objects) {
     if (!isOpening(opening.type) || isGlassEdge(opening)) continue
+
     const [stepX, stepZ] = edgeStep(opening.rotation)
     const [first, last] = unitEdges(opening)
     const sides = (
@@ -58,6 +59,7 @@ export const composeWallColors = (objects: SceneObject[]) => {
   const counts = new Map<string, Map<string | undefined, number>[]>()
   for (const edge of objects) {
     if (!isEdgeType(edge.type) || isGlassEdge(edge)) continue
+
     const [front, back] = isOpening(edge.type)
       ? (openings.get(edge.id) as WallFaces)
       : getWallFaces(edge)
@@ -99,6 +101,7 @@ export const composeWallColors = (objects: SceneObject[]) => {
       const sum = new Map<string | undefined, number>()
       for (const tally of tallies)
         for (const [color, count] of tally) sum.set(color, (sum.get(color) ?? 0) + count)
+
       return sum
     }
     const overall = winnerOf(merge(quarters))
@@ -106,11 +109,14 @@ export const composeWallColors = (objects: SceneObject[]) => {
       key,
       quarters.map((tally, quarter) => {
         if (tally.size) return winnerOf(tally)
+
         // Beside it: across x (quarter ^ 1) and across z (quarter ^ 2).
         const beside = merge([quarters[quarter ^ 1], quarters[quarter ^ 2]])
+
         return beside.size ? winnerOf(beside) : overall
       }) as PostQuarters
     )
   }
+
   return { openings, joints }
 }

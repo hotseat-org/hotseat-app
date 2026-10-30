@@ -79,6 +79,7 @@ export const cutDirectionOf = (directionX: number, directionZ: number): CutDirec
   const z = directionZ / length
   if (Math.abs(x) > 0.92) return CUT_DIRECTION.x
   if (Math.abs(z) > 0.92) return CUT_DIRECTION.z
+
   return x * z > 0 ? CUT_DIRECTION.rising : CUT_DIRECTION.falling
 }
 
@@ -225,5 +226,6 @@ export const setCutAttributes = (geometry: BufferGeometry, anchor: Vector3, axis
   }
   geometry.setAttribute("cutAnchor", new BufferAttribute(anchors, 3))
   geometry.setAttribute("cutAxis", new BufferAttribute(new Float32Array(count).fill(axis), 1))
+
   return geometry
 }

@@ -44,9 +44,11 @@ const collect = (root: Object3D, skip: Object3D | null): Mesh[] => {
     if (object === skip || object.userData.noBake) return
     if ((object as Mesh).isMesh && !Array.isArray((object as Mesh).material))
       collected.push(object as Mesh)
+
     for (const child of object.children) walk(child)
   }
   for (const child of root.children) walk(child)
+
   return collected
 }
 
@@ -90,6 +92,7 @@ export const Baked = ({
   useLayoutEffect(() => {
     const group = root.current
     if (!group) return
+
     const meshes = collect(group, output.current)
     const nextFingerprint = meshes
       .map(
@@ -101,6 +104,7 @@ export const Baked = ({
     // Hide and freeze originals every time (newly mounted ones included); cheap.
     for (const mesh of meshes) setOriginal(mesh, true)
     if (nextFingerprint === fingerprint.current) return
+
     fingerprint.current = nextFingerprint
     const shape = meshes
       .map(
@@ -137,7 +141,9 @@ export const Baked = ({
         if (source.getAttribute("normal"))
           geometry.setAttribute("normal", source.getAttribute("normal"))
         else geometry.computeVertexNormals()
+
         source.dispose()
+
         return geometry.applyMatrix4(new Matrix4().multiplyMatrices(inverse, mesh.matrixWorld))
       })
       const merged = mergeGeometries(geoms, false)
@@ -146,6 +152,7 @@ export const Baked = ({
         groupMeshes.forEach((mesh) => setOriginal(mesh, false)) // couldn't merge: leave them as-is
         continue
       }
+
       next.push({
         key,
         geometry: merged,
@@ -167,6 +174,7 @@ export const Baked = ({
     // re-bake all the time in the wall cutaway, and each call re-merges the
     // whole office.
     if (shouldBatch) handleBatchChanged?.()
+
     return () => parts.forEach((part) => part.geometry.dispose())
   }, [parts, renderer, invalidate, handleBatchChanged, shouldBatch])
 

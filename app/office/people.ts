@@ -23,6 +23,7 @@ export const personByEmail = (people: People, email?: string) =>
 
 export const initials = (name: string) => {
   const parts = name.split(/[\s.@_-]+/).filter(Boolean)
+
   return (
     ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || name.slice(0, 2).toUpperCase()
   )

@@ -31,12 +31,14 @@ const useTurnedRoute = (turn: number) => {
     () => route?.path?.points.map(([x, z]) => turnPoint(x, z, turn)),
     [route?.path, turn]
   )
+
   return { points, nonce: route?.path ? route.nonce : null }
 }
 
 /** The way to a desk on the plan: its glowing line (an SVG layer, sized with the zoom). */
 export const OfficeRoutePath = ({ plan }: PlanLayerProps) => {
   const { points } = useTurnedRoute(plan.turn)
+
   return points ? <RoutePath points={points} k={plan.view.zoom} /> : null
 }
 
@@ -146,17 +148,20 @@ export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
         view.zoom >= TAG_ZOOM &&
         desks.map(({ desk, state }) => {
           if (desk.id === openId) return null
+
           const person = state.kind === "free" ? null : personByEmail(people, state.email)
           const free = state.kind === "free" && bookable
           // Filtered out: no tag for a free desk (its taker still shows).
           if (free && !matchesFilter(desk)) return null
           // A free desk already shows its "+" ring: a tag only for its label.
           if (!person && !desk.label) return null
+
           const mine = !!person && person.email === people.me?.email
           // A booked desk's tag sits just above its avatar.
           const occupant = occupants.get(desk.id)
           const at = occupant ? screen(occupant.x, occupant.z) : screen(desk.x, desk.z - 0.45)
           if (occupant) at.top -= avatarSize / 2 + 3
+
           return (
             <div
               key={desk.id}

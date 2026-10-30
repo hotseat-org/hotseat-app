@@ -48,6 +48,7 @@ export const RoundTable = ({ color = PALETTE.deskTop, variant }: Props) => (
             HEIGHT,
             Math.cos(angle) * radius,
           ]
+
           return (
             <group key={food}>
               <Plate food={food} hot={i % 2 === 0} position={getPosition(0.44)} />
@@ -77,6 +78,7 @@ export const RoundTable = ({ color = PALETTE.deskTop, variant }: Props) => (
         <Flowers position={[0, HEIGHT, 0]} />
         {[0, 1, 2].map((i) => {
           const angle = 0.4 + (i * Math.PI * 2) / 3
+
           return (
             <group key={i}>
               <Plate position={[Math.sin(angle) * 0.42, HEIGHT, Math.cos(angle) * 0.42]} />

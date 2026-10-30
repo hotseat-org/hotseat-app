@@ -69,11 +69,13 @@ export const readViewPref = (): OfficeView => {
     // Storage blocked: fall through to the guess.
   }
   if (typeof navigator === "undefined") return "3d"
+
   const nav = navigator as Navigator & {
     deviceMemory?: number
     connection?: { saveData?: boolean }
   }
   const lowMemory = nav.deviceMemory !== undefined && nav.deviceMemory <= 2
+
   return lowMemory || nav.connection?.saveData ? "2d" : "3d"
 }
 export const writeViewPref = (view: OfficeView) => writePref(VIEW_KEY, view)

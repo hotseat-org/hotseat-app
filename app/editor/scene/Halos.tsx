@@ -140,6 +140,7 @@ const HaloSet = ({
   useLayoutEffect(() => {
     const mesh = ref.current
     if (!mesh) return
+
     points.forEach((position, i) => {
       dummy.position.copy(position)
       dummy.updateMatrix()
@@ -150,10 +151,12 @@ const HaloSet = ({
     // The quads are spread out by the shader: give culling a generous sphere.
     mesh.computeBoundingSphere()
     if (mesh.boundingSphere) mesh.boundingSphere.radius += size
+
     invalidate()
   }, [points, size, invalidate])
 
   if (points.length === 0) return null
+
   return (
     <instancedMesh
       key={points.length}

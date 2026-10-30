@@ -65,6 +65,7 @@ export const Bookshelf = ({ color = PALETTE.deskLeg }: Props) => {
           const bookWidth = 0.12
           const x = -WIDTH / 2 + THICKNESS + 0.08 + i * (bookWidth + 0.02)
           const bookHeight = 0.26 + (i % 3) * 0.03
+
           return (
             <mesh
               key={`${shelfY}-${i}`}

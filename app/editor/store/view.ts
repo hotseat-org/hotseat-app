@@ -53,6 +53,7 @@ export interface ViewSlice {
 /** The viewer's local wall-clock time in hours [0,24), minute precision. */
 export const nowHours = () => {
   const now = new Date()
+
   return now.getHours() + now.getMinutes() / 60
 }
 
@@ -75,6 +76,7 @@ export const createViewSlice = (set: SetState, get: GetState, hooks: StoreHooks)
     set((state) => {
       const layers = { ...state.layers, [layer]: !state.layers[layer] }
       writeLayers(layers)
+
       return { layers }
     }),
   planTurn: readPlanTurn(),
@@ -82,12 +84,14 @@ export const createViewSlice = (set: SetState, get: GetState, hooks: StoreHooks)
     set((state) => {
       const planTurn = (state.planTurn + quarters) & 3
       writePlanTurn(planTurn)
+
       return { planTurn }
     }),
   measureHints: readMeasurePref(),
   toggleMeasureHints: () =>
     set((state) => {
       writeMeasurePref(!state.measureHints)
+
       return { measureHints: !state.measureHints }
     }),
   isFrameRateShown: false,

@@ -67,6 +67,7 @@ export const ContourLines = ({
       const [toX, toZ] = turnPoint(segments[i + 2], segments[i + 3], turn)
       path += `M${fromX.toFixed(2)} ${fromZ.toFixed(2)}L${toX.toFixed(2)} ${toZ.toFixed(2)}`
     }
+
     return path
   }
   const pathsOf = (tileX: number, tileZ: number) => {
@@ -77,6 +78,7 @@ export const ContourLines = ({
       tilePaths = { minor: toPath(tile.minor), major: toPath(tile.major) }
       paths.current.set(key, tilePaths)
     }
+
     return tilePaths
   }
 
@@ -88,11 +90,13 @@ export const ContourLines = ({
         loop
           .map(([x, z], i) => {
             const [turnedX, turnedZ] = turnPoint(x, z, turn)
+
             return `${i ? "L" : "M"}${turnedX.toFixed(2)} ${turnedZ.toFixed(2)}`
           })
           .join("") + "Z"
     )
     .join("")
+
   return (
     <g aria-hidden>
       <path
@@ -106,6 +110,7 @@ export const ContourLines = ({
       />
       {tiles.map(([tileX, tileZ]) => {
         const tilePaths = pathsOf(tileX, tileZ)
+
         return (
           <g key={`${tileX},${tileZ}`} opacity={PLAN_CONTOUR_OPACITY}>
             <path

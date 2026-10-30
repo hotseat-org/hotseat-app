@@ -48,6 +48,7 @@ export const KitsPanel = ({ style }: { style?: CSSProperties }) => {
           // What the modules say about it (the office: its desks).
           const description = describePieces(modules, kit.objects, i18n)
           const isConfirming = confirmingId === kit.id
+
           return (
             <div key={kit.id} className="group relative">
               <button
@@ -73,6 +74,7 @@ export const KitsPanel = ({ style }: { style?: CSSProperties }) => {
                 onClick={() => {
                   if (!isConfirming) return setConfirmingId(kit.id)
                   if (isArmed) armKit(null)
+
                   deleteKit(kit.id)
                 }}
                 onBlur={() => setConfirmingId(null)}

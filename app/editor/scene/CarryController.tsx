@@ -29,10 +29,13 @@ export const CarryController = ({
 
   useFrame((state) => {
     if (!carryId) return
+
     const carried = store.getState().objects.find((object) => object.id === carryId)
     if (!carried) return
+
     raycaster.setFromCamera(pointer, camera)
     if (!raycaster.ray.intersectPlane(GROUND, hit)) return
+
     // Wall items hop along wall faces (turning to face out); off a wall they
     // follow the cursor and can't be dropped.
     const all = store.getState().objects
@@ -54,6 +57,7 @@ export const CarryController = ({
       placement.rotation !== carried.rotation
     )
       moveObject(carryId, placement.x, placement.z, placement.rotation)
+
     state.invalidate() // keep following under frameloop="demand"
   })
 

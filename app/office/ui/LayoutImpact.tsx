@@ -53,6 +53,7 @@ export const LayoutImpact = ({ moves, labelOf, onMove, onCancel, onUndo }: Props
       <ul className="mt-3 flex flex-col gap-1.5">
         {moves.slice(0, MAX_ROWS).map(({ booking, to }) => {
           const person = personByEmail(people, booking.userEmail)
+
           return (
             <li
               key={`${booking.userEmail}|${booking.date}`}

@@ -51,12 +51,15 @@ export const useSeatCard = () => {
 
   useEffect(() => {
     if (!card) return
+
     const onKey = (event: KeyboardEvent) => event.key === "Escape" && close()
     window.addEventListener("keydown", onKey)
+
     return () => window.removeEventListener("keydown", onKey)
   }, [card])
 
   if (!card || !seat) return null
+
   const me = booking.me
   const { day, today, lastDay, byDay, released } = booking
   const state = booking.enabled
@@ -114,6 +117,7 @@ export const useSeatCard = () => {
         const free = days.filter((date) => deskState(seat, date, byDay, released).kind === "free")
         const taken = days.flatMap((date) => {
           const dayState = deskState(seat, date, byDay, released)
+
           return dayState.kind === "booked" && dayState.email !== me
             ? [
                 `${format.dow(date)} ${personByEmail(people, dayState.email)?.name.split(" ")[0] ?? t("taken")}`,
@@ -129,6 +133,7 @@ export const useSeatCard = () => {
             : t("Some are already yours")
         // Booking moves you: say so when you already sit elsewhere on those days.
         const moves = free.some((date) => Object.values(byDay[date] ?? {}).includes(me))
+
         return { free, detail: moves ? t("{detail} · moves you here", { detail }) : detail }
       }
       const presetChoices: [BookingPreset, string][] = [
@@ -141,6 +146,7 @@ export const useSeatCard = () => {
         .filter(([key]) => key === "one" || presets[key].length > 1)
         .map(([key, title]) => {
           const { free, detail } = describe(presets[key])
+
           return {
             key,
             title,
@@ -214,6 +220,7 @@ export const useSeatCard = () => {
     onClose: close,
     onReserve: (days) => {
       if (!me) return
+
       applyReserve(seat.id, me, days)
       booking.reserve([{ deskId: seat.id, dates: days }])
       close()
@@ -222,6 +229,7 @@ export const useSeatCard = () => {
     onShowWay: () => showRoute(seat.id),
     onCancel: () => {
       if (!me) return
+
       applyCancel(me, [day])
       booking.cancel([day])
       close()
@@ -235,5 +243,6 @@ export const useSeatCard = () => {
       close()
     },
   }
+
   return { seat, body, key: `${seat.id}:${day}` }
 }

@@ -7,6 +7,7 @@ let cached: boolean | undefined
 export const hasWebGL = () => {
   if (cached !== undefined) return cached
   if (typeof document === "undefined") return true
+
   try {
     const canvas = document.createElement("canvas")
     cached = !!(
@@ -16,5 +17,6 @@ export const hasWebGL = () => {
   } catch {
     cached = false
   }
+
   return cached
 }

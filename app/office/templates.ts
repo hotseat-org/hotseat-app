@@ -69,9 +69,12 @@ const withOpenings = (
   const unique = walls.filter((wall) => {
     const key = `${wall.x},${wall.z},${wall.rotation}`
     if (seen.has(key)) return false
+
     seen.add(key)
+
     return true
   })
+
   return openings.reduce(
     (current, [kind, x, z, vertical]) => withOpening(kind, current, x, z, vertical),
     unique
@@ -116,6 +119,7 @@ const stalls = (x: number, back: number, count: number, direction: 1 | -1) => {
     x + i * 1.5 + 0.5,
     front,
   ])
+
   return { walls, toilets, doors }
 }
 
@@ -239,6 +243,7 @@ export const TEMPLATES: OfficeTemplate[] = [
         ["window", 0, 3.5, true],
         ["window", 10, 3.5, true],
       ])
+
       return [
         ...walls,
         ...deskWithChair(2, 1),
@@ -271,6 +276,7 @@ export const TEMPLATES: OfficeTemplate[] = [
         ...line(5, 0, 5, 3),
         ...line(5, 4, 5, 7),
       ]
+
       return [
         ...walls,
         // Each table lengthwise, two chairs a side.
@@ -329,6 +335,7 @@ export const TEMPLATES: OfficeTemplate[] = [
           ["window", 20, 14],
         ]
       )
+
       return [
         ...walls,
 
@@ -453,6 +460,7 @@ export const TEMPLATES: OfficeTemplate[] = [
           ["window", 24.5, 20],
         ]
       )
+
       return [
         ...walls,
 
@@ -581,6 +589,7 @@ export const TEMPLATES: OfficeTemplate[] = [
           ["window", 11, 12],
         ]
       )
+
       return [
         ...walls,
 

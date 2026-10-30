@@ -29,6 +29,7 @@ const notify = () => listeners.forEach((listener) => listener())
 
 const subscribe = (listener: () => void) => {
   listeners.add(listener)
+
   return () => {
     listeners.delete(listener)
   }
@@ -41,8 +42,10 @@ const subscribe = (listener: () => void) => {
 export const requestThumbnail = (type: CatalogItem, color?: string, isUrgent = false) => {
   const key = getKey(type, color)
   if (images.has(key)) return
+
   const isQueued = queue.some((request) => request.key === key)
   if (isQueued && (!isUrgent || queue[0]?.key === key)) return
+
   const request = { key, type, color, isUrgent }
   const rest = queue.filter((queued) => queued.key !== key)
   queue = isUrgent ? [request, ...rest] : [...rest, request]

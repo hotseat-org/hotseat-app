@@ -33,12 +33,14 @@ export const useLayoutImpactGuard = ({
   const impact = useMemo(() => {
     const booking = bookingState
     if (!isEnabled || !booking.enabled || !booking.today) return null
+
     const bookings = Object.entries(booking.byDay).flatMap(([date, desks]) =>
       date >= booking.today
         ? Object.entries(desks).map(([deskId, userEmail]) => ({ deskId, date, userEmail }))
         : []
     )
     if (bookings.length === 0) return null
+
     const releasedBy: ReleasedBy = new Map(
       Object.entries(booking.released).flatMap(([date, desks]) =>
         Object.entries(desks).map(([deskId, email]): [string, string] => [
@@ -50,7 +52,9 @@ export const useLayoutImpactGuard = ({
     const after = objects.filter((piece) => isSeatable(piece.type))
     const lost = getLostBookings(after, bookings, releasedBy)
     if (lost.length === 0) return null
+
     const before = getSavedObjects().filter((piece) => isSeatable(piece.type))
+
     return { before, moves: planRehoming({ before, after, bookings, lost, releasedBy }) }
     // The saved layout is read as it stands when the layout or bookings change.
   }, [objects, bookingState, isEnabled])
@@ -66,6 +70,7 @@ export const useLayoutImpactGuard = ({
     )
     saveNow({ shouldRehome })
   }
+
   return {
     isHolding: isPending,
     panel:

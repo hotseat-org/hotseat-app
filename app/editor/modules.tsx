@@ -24,9 +24,11 @@ export const usePieceStates = (isViewing: boolean): ReadonlyMap<string, PieceSta
   const modules = useModules()
   // Each module's hook, in a loop: safe, the list is fixed (see ModulesContext).
   const states = modules.map((module) => module.usePieceStates?.(isViewing) ?? null)
+
   return useMemo(
     () => {
       const present = states.filter((state) => state !== null)
+
       return present.length > 1
         ? new Map(present.flatMap((state) => [...state]))
         : (present[0] ?? null)
@@ -45,6 +47,7 @@ export const useViewClicks = (): Required<ViewClicks> => {
   // Stable handlers (pieces are memoized), always calling the latest ones.
   const latest = useRef(clicks)
   latest.current = clicks
+
   return useMemo(
     () => ({
       isClickable: (object: SceneObject) =>
@@ -63,6 +66,7 @@ export const usePlanPieceStyles = (objects: SceneObject[]) => {
   const styles = modules.flatMap((module) =>
     module.plan?.usePieceStyles ? [module.plan.usePieceStyles(objects)] : []
   )
+
   return useMemo(
     () =>
       (object: SceneObject): PlanPieceStyle | undefined => {
@@ -70,6 +74,7 @@ export const usePlanPieceStyles = (objects: SceneObject[]) => {
           const found = style(object)
           if (found) return found
         }
+
         return undefined
       },
     // One function per module (the list keeps its length).
@@ -84,6 +89,7 @@ export const usePlanDrawings = (context: PlanDrawingContext): PlanDrawings[] => 
   const drawings = modules.flatMap((module) =>
     module.plan?.useDrawings ? [module.plan.useDrawings(context)] : []
   )
+
   return useMemo(() => drawings, drawings)
 }
 

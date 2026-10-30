@@ -49,6 +49,7 @@ export const createToolsSlice = (set: SetState, get: GetState): ToolsSlice => ({
       const placementColors = { ...state.placementColors }
       if (color === null) delete placementColors[type]
       else placementColors[type] = color
+
       return { placementColors }
     }),
   placementPattern: "single",

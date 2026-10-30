@@ -26,6 +26,7 @@ import {
 /** A kind's own thumbnail model if it has one (see ItemRenderer.Thumbnail), else its mesh. */
 const Thumbnail = ({ type, color }: { type: ObjectType; color?: string }) => {
   const { Thumbnail: Own } = getRenderer(type)
+
   return Own ? <Own color={color} /> : <ObjectMesh type={type} color={color} />
 }
 
@@ -44,9 +45,11 @@ const Spin = ({ spinning, children }: { spinning: boolean; children: React.React
   }, [spinning, invalidate])
   useFrame((state, delta) => {
     if (!spinning || !groupRef.current) return
+
     groupRef.current.rotation.y += Math.min(delta, 0.05) * 0.55
     state.invalidate()
   })
+
   return <group ref={groupRef}>{children}</group>
 }
 
@@ -70,6 +73,7 @@ const FitCamera = ({ children }: { children: React.ReactNode }) => {
 
   useLayoutEffect(() => {
     if (!groupRef.current) return
+
     const sphere = new Box3().setFromObject(groupRef.current).getBoundingSphere(new Sphere())
     const verticalFieldOfView = (camera.fov * Math.PI) / 180
     const horizontalFieldOfView =
@@ -90,6 +94,7 @@ const FitCamera = ({ children }: { children: React.ReactNode }) => {
 /** Room tool thumbnail: a small square of walls (one segment = 0.5). */
 const RoomPreview = ({ color }: { color?: string }) => {
   const offsets = [-0.5, 0, 0.5]
+
   return (
     <group>
       {offsets.flatMap((offset) => [
@@ -116,6 +121,7 @@ type ReadyHandler = (gl: WebGLRenderer, scene: Scene, camera: Camera) => void
 const OnReady = ({ onReady }: { onReady: ReadyHandler }) => {
   const { gl: renderer, scene, camera } = useThree()
   useLayoutEffect(() => onReady(renderer, scene, camera), [onReady, renderer, scene, camera])
+
   return null
 }
 
@@ -124,9 +130,11 @@ const OnFirstFrame = ({ onFirstFrame }: { onFirstFrame: () => void }) => {
   const hasFired = useRef(false)
   useFrame(() => {
     if (hasFired.current) return
+
     hasFired.current = true
     onFirstFrame()
   })
+
   return null
 }
 
@@ -189,9 +197,11 @@ export const ThumbnailStudio = () => {
   const isUrgent = request?.isUrgent ?? false
   handleReady.current = (renderer, scene, camera) => {
     if (!key) return
+
     renderer.render(scene, camera)
     renderer.domElement.toBlob((blob) => {
       if (!blob) return
+
       const add = () => addThumbnail(key, URL.createObjectURL(blob))
       // A tile is waiting: now. The background pre-render: in idle time.
       if (isUrgent) add()
@@ -253,6 +263,7 @@ export const PreviewTile = ({ type, color, active = false }: TileProps) => {
   // While a new colour's still renders, keep showing the previous one.
   const shownImage = useRef(image)
   if (image) shownImage.current = image
+
   useEffect(() => requestThumbnail(type, color, true), [type, color])
   const isSpinning = hovered || active
   // The live canvas is transparent: once it has drawn the model, the still

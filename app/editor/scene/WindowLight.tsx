@@ -48,6 +48,7 @@ const createPoolTexture = () => {
       }
     context.putImageData(image, 0, 0)
   }
+
   return new CanvasTexture(canvas)
 }
 
@@ -75,6 +76,7 @@ export const WindowLight = ({ profile }: Props) => {
       for (const cell of region) inside.add(`${cell.x},${cell.z}`)
     const isInside = (x: number, z: number) =>
       inside.has(`${Math.floor(x / SEG) * SEG},${Math.floor(z / SEG) * SEG}`)
+
     return objects
       .filter((object) => object.type === "window")
       .flatMap((object) => {
@@ -92,8 +94,10 @@ export const WindowLight = ({ profile }: Props) => {
             ? -1
             : 0
         if (!sign) return [] // between two outsides (or two rooms' worth of glass): skip
+
         // Its glass is as much wider as a diagonal window is longer.
         const width = WIDTH * (isDiagonalEdge(object.rotation) ? Math.SQRT2 : 1)
+
         return [
           {
             x: object.x,
@@ -112,6 +116,7 @@ export const WindowLight = ({ profile }: Props) => {
   useLayoutEffect(() => {
     const mesh = ref.current
     if (!mesh) return
+
     const flat = Math.hypot(sunX, sunZ)
     let count = 0
     if (sunUp > 0.02 && flat > 1e-3 && sunY > 0) {
@@ -121,6 +126,7 @@ export const WindowLight = ({ profile }: Props) => {
       for (const opening of windows) {
         const facing = lightX * opening.inward[0] + lightZ * opening.inward[1]
         if (facing < 0.1) continue // the sun's on this window's inside: no light through it
+
         const near = SILL * reachPerMetre
         const length = Math.min(MAX_LENGTH, (HEAD - SILL) * reachPerMetre)
         const mid = near + length / 2
@@ -140,14 +146,17 @@ export const WindowLight = ({ profile }: Props) => {
         count++
       }
     }
+
     mesh.count = count
     mesh.instanceMatrix.needsUpdate = true
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true
+
     mesh.computeBoundingSphere()
     invalidate()
   }, [windows, sunX, sunY, sunZ, sunUp, profile.sunColor, invalidate])
 
   if (windows.length === 0) return null
+
   return (
     <instancedMesh
       key={windows.length}

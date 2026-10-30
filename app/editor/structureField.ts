@@ -26,6 +26,7 @@ const FIELD_MARGIN = 24
 /** The bounds of what's built (null when nothing is) — world metres. */
 export const getStructureBounds = (objects: SceneObject[]) => {
   if (!objects.length) return null
+
   let x0 = Infinity
   let z0 = Infinity
   let x1 = -Infinity
@@ -36,6 +37,7 @@ export const getStructureBounds = (objects: SceneObject[]) => {
     x1 = Math.max(x1, piece.x)
     z1 = Math.max(z1, piece.z)
   }
+
   // Positions are centres: allow for the pieces' own size (walls are thin).
   return { x0: x0 - 0.3, z0: z0 - 0.3, x1: x1 + 0.3, z1: z1 + 0.3 }
 }
@@ -106,6 +108,7 @@ const traceLoops = (
         (bottomRight < level ? 2 : 0) |
         (bottomLeft < level ? 1 : 0)
       if (code === 0 || code === 15) continue
+
       const x = x0 + i * GRID
       const z = z0 + j * GRID
       const at = (start: number, end: number) => (level - start) / (end - start)
@@ -133,6 +136,7 @@ const traceLoops = (
   const loops: [number, number][][] = []
   for (const [startKey, ends] of next) {
     if (used.has(startKey)) continue
+
     const start = startKey.split(",").map(Number)
     const loop: [number, number][] = [[start[0], start[1]]]
     used.add(startKey)
@@ -142,6 +146,7 @@ const traceLoops = (
       const currentKey = key(current)
       if (currentKey === startKey) break
       if (used.has(currentKey)) break
+
       used.add(currentKey)
       loop.push([current[0], current[1]])
       const options = next.get(currentKey) ?? []
@@ -153,6 +158,7 @@ const traceLoops = (
     }
     if (loop.length > 3) loops.push(loop)
   }
+
   return loops
 }
 
@@ -192,6 +198,7 @@ const blur = (cells: Float32Array, width: number, height: number, radius = 4, pa
     }
     ;[source, target] = [target, source]
   }
+
   return source
 }
 
@@ -210,12 +217,14 @@ const smooth = (loop: [number, number][], passes = 2) => {
     }
     points = out
   }
+
   return points
 }
 
 const build = (objects: SceneObject[]): StructureField | null => {
   const bounds = getStructureBounds(objects)
   if (!bounds) return null
+
   const x0 = Math.floor((bounds.x0 - FIELD_MARGIN) / GRID) * GRID
   const z0 = Math.floor((bounds.z0 - FIELD_MARGIN) / GRID) * GRID
   const width = Math.ceil((bounds.x1 + FIELD_MARGIN - x0) / GRID) + 1
@@ -256,6 +265,7 @@ const build = (objects: SceneObject[]): StructureField | null => {
     const gridJ = (z - z0) / GRID
     if (gridI < 0 || gridJ < 0 || gridI >= width - 1 || gridJ >= height - 1)
       return boxDistance(x, z)
+
     const i = Math.floor(gridI)
     const j = Math.floor(gridJ)
     const fractionX = gridI - i
@@ -266,20 +276,24 @@ const build = (objects: SceneObject[]): StructureField | null => {
     const distance = top * (1 - fractionZ) + bottom * fractionZ
     const edge = Math.min(gridI, gridJ, width - 1 - gridI, height - 1 - gridJ) * GRID
     if (edge >= EASE) return distance
+
     const progress = edge / EASE
     const eased = progress * progress * (3 - 2 * progress) // smoothstep
+
     return boxDistance(x, z) * (1 - eased) + distance * eased
   }
 
   const plateau = traceLoops(soft, width, height, x0, z0, PLATEAU_MARGIN).map((loop) =>
     smooth(loop)
   )
-  return { distanceAt, plateau, grid: { cells, width: width, height: height, x0, z0 } }
+
+  return { distanceAt, plateau, grid: { cells, width, height, x0, z0 } }
 }
 
 /** One field per layout (the objects array is replaced on every change). */
 const cache = new WeakMap<SceneObject[], StructureField | null>()
 export const getStructureField = (objects: SceneObject[]) => {
   if (!cache.has(objects)) cache.set(objects, build(objects))
+
   return cache.get(objects) ?? null
 }

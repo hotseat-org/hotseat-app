@@ -22,9 +22,12 @@ export const footprintCells = (type: ObjectType, rotation: number): [number, num
   const [widthCells, depthCells] = getItem(type).footprint
   if (isDiagonal(rotation)) {
     const side = Math.ceil((widthCells + depthCells) * Math.SQRT1_2 - 1e-6)
+
     return [side, side]
   }
+
   const turned = Math.abs(Math.round(rotation / ALONG_Z)) % 2 === 1
+
   return turned ? [depthCells, widthCells] : [widthCells, depthCells]
 }
 
@@ -43,6 +46,7 @@ export const snapAxis = (value: number, cells: number) =>
 /** Snap a position so the object's footprint occupies whole grid squares. */
 export const snapToFootprint = (type: ObjectType, rotation: number, x: number, z: number): Cell => {
   const [cellsX, cellsZ] = footprintCells(type, rotation)
+
   return { x: snapAxis(x, cellsX), z: snapAxis(z, cellsZ) }
 }
 
@@ -85,8 +89,10 @@ export const composeRepeat = (
     rotation,
   }))
   if (pattern === "row") return row
+
   // Back to back: the second row behind the first (its −Z side), facing away.
   const behind = depth * GRID
+
   return [
     ...row,
     ...row.map((copy) => ({
@@ -116,12 +122,14 @@ export const snapPlacement = (
 ): Cell => {
   const onGrid = clampToFloor(type, rotation, snapToFootprint(type, rotation, x, z))
   if (!isDiagonal(rotation) || isWallMounted(type) || isOverhead(type)) return onGrid
+
   const [widthCells, depthCells] = getItem(type).footprint
   // The piece's own axes in the world: X (its width) and Z (its depth).
   const axisX = { x: Math.cos(rotation), z: -Math.sin(rotation) }
   let best: { gap: number; point: Cell } | null = null
   for (const segment of objects) {
     if (!isEdgeType(segment.type) || !isDiagonalEdge(segment.rotation)) continue
+
     const [stepX, stepZ] = edgeStep(segment.rotation)
     const length = Math.hypot(stepX, stepZ)
     const direction = { x: stepX / length, z: stepZ / length }
@@ -134,19 +142,22 @@ export const snapPlacement = (
     // Near this segment's face, beside it along the wall (with some slack).
     if (Math.abs(across) > flush + FLUSH_REACH) continue
     if (Math.abs(along) > length / 2 + flush + FLUSH_REACH) continue
+
     const gap = Math.abs(Math.abs(across) - flush)
     if (best && gap >= best.gap) continue
+
     const step = length / 2
     const snappedAlong = Math.round(along / step) * step
     const side = across >= 0 ? 1 : -1
     best = {
-      gap: gap,
+      gap,
       point: {
         x: segment.x + direction.x * snappedAlong + normal.x * side * flush,
         z: segment.z + direction.z * snappedAlong + normal.z * side * flush,
       },
     }
   }
+
   return best ? best.point : onGrid
 }
 
@@ -155,6 +166,7 @@ export const clampToFloor = (type: ObjectType, rotation: number, position: Cell)
   const [cellsX, cellsZ] = footprintCells(type, rotation)
   const halfX = BUILD_HALF - (cellsX * GRID) / 2
   const halfZ = BUILD_HALF - (cellsZ * GRID) / 2
+
   return {
     x: Math.max(-halfX, Math.min(halfX, position.x)),
     z: Math.max(-halfZ, Math.min(halfZ, position.z)),

@@ -29,6 +29,7 @@ export const Sofa = ({ color = "#5f8a86", variant }: Props) => {
     [-WIDTH / 2 + 0.14, DEPTH / 2 - 0.14],
     [WIDTH / 2 - 0.14, DEPTH / 2 - 0.14],
   ]
+
   return (
     <group>
       {/* Seat base */}
@@ -89,6 +90,7 @@ export const Sofa = ({ color = "#5f8a86", variant }: Props) => {
       {/* Lived-in: cushions (and maybe a throw); colours per look */}
       {(() => {
         const [firstColor, secondColor, throwColor] = SOFA_LOOKS[look(variant, SOFA_LOOKS.length)]
+
         return (
           <>
             <Cushion

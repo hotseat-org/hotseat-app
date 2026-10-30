@@ -28,8 +28,9 @@ export const fitView = (bounds: Bounds, width: number, height: number, padding: 
     MAX_K,
     Math.max(MIN_K, Math.min(availableWidth / boundsWidth, availableHeight / boundsHeight))
   )
+
   return {
-    zoom: zoom,
+    zoom,
     offsetX: padding.left + availableWidth / 2 - ((bounds.x0 + bounds.x1) / 2) * zoom,
     offsetY: padding.top + availableHeight / 2 - ((bounds.y0 + bounds.y1) / 2) * zoom,
   }
@@ -45,17 +46,21 @@ export const turnPoint = (x: number, z: number, turns: number): [number, number]
   const angle = (turns * Math.PI) / 2
   const cosine = Math.round(Math.cos(angle))
   const sine = Math.round(Math.sin(angle))
+
   return [x * cosine + z * sine, -x * sine + z * cosine]
 }
 
 export const turnObject = (object: SceneObject, turns: number): SceneObject => {
   if (!turns) return object
+
   const [x, z] = turnPoint(object.x, object.z, turns)
   // Exact steps: helpers like runsAlongX expect clean values. Furniture keeps
   // its eighth (a desk at 45° stays at 45°); walls and openings, quarters.
   if (isEdgeType(object.type)) {
     const quarters = (Math.round(object.rotation / (Math.PI / 2)) + turns) & 3
+
     return { ...object, x, z, rotation: (quarters * Math.PI) / 2 }
   }
+
   return { ...object, x, z, rotation: toRotationStep(object.rotation + (turns * Math.PI) / 2) }
 }

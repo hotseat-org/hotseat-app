@@ -13,6 +13,7 @@ export const useRouteLink = (readOnly: boolean) => {
   const askedRoute = useRef(false)
   useEffect(() => {
     if (askedRoute.current || !hasLayout) return
+
     askedRoute.current = true
     const to = new URL(window.location.href).searchParams.get("to")
     if (to && store.getState().objects.some((piece) => piece.id === to))
@@ -20,6 +21,7 @@ export const useRouteLink = (readOnly: boolean) => {
   }, [hasLayout, store])
   useEffect(() => {
     if (!askedRoute.current) return
+
     const url = new URL(window.location.href)
     if (routeDesk) url.searchParams.set("to", routeDesk)
     else url.searchParams.delete("to")

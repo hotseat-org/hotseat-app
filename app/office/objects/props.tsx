@@ -95,6 +95,7 @@ const FOOD: Record<Food, { base: string; bits: string[] }> = {
 /** A plate of food; `hot` dishes steam. */
 export const Plate = ({ food, hot, ...at }: At & { food?: Food; hot?: boolean }) => {
   const serving = food && FOOD[food]
+
   return (
     <Place {...at}>
       <mesh position={[0, 0.008, 0]} receiveShadow>

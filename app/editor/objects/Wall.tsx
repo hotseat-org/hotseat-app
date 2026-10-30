@@ -15,6 +15,7 @@ interface Props {
  */
 export const Wall = ({ color }: Props) => {
   const surfaces = useSurfaces()
+
   return (
     <mesh position={[0, (WALL.height - WALL.sink) / 2, 0]} castShadow receiveShadow>
       <boxGeometry args={[GRID, WALL.height + WALL.sink, WALL.depth]} />

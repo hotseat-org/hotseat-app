@@ -32,6 +32,7 @@ export const registerCategories = (definitions: CategoryDefinition[]) => {
 /** The catalogue's categories with what each offers. */
 export const getCategories = (): Category[] => {
   const tiles = getTiles()
+
   return categories.map((category) => ({
     ...category,
     types: [

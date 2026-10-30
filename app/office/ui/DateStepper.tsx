@@ -83,6 +83,7 @@ const monthOf = (day: Day) => `${day.slice(0, 8)}01`
 const shiftMonth = (month: Day, offset: number) => {
   const [year, monthNumber] = month.split("-").map(Number)
   const shifted = new Date(Date.UTC(year, monthNumber - 1 + offset, 1))
+
   return shifted.toISOString().slice(0, 10)
 }
 
@@ -111,6 +112,7 @@ export const MonthCalendar = ({
   const { seats, residents, myResident, bookable } = useMemo(() => {
     const desks = objects.filter((object) => isSeatable(object.type))
     const resident = desks.filter((desk) => desk.assignee)
+
     return {
       seats: desks.length,
       residents: resident.length,
@@ -120,6 +122,7 @@ export const MonthCalendar = ({
   }, [objects, me])
   const fill = (shownDay: Day) => {
     const booked = Object.keys(byDay[shownDay] ?? {}).filter((id) => bookable.has(id)).length
+
     return seats ? (residents + booked) / seats : 0
   }
   const mine = (desk: Day) => myResident || (!!me && Object.values(byDay[desk] ?? {}).includes(me))
@@ -166,6 +169,7 @@ export const MonthCalendar = ({
           const enabled = inMonth && cellDay >= from && cellDay <= lastDay
           const selected = cellDay === day
           const isMine = enabled && mine(cellDay)
+
           return (
             <button
               key={cellDay}

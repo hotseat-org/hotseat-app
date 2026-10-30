@@ -51,6 +51,7 @@ const withColor = (geometry: BufferGeometry, color: Color) => {
     colors[i + 2] = color.b
   }
   geometry.setAttribute("color", new BufferAttribute(colors, 3))
+
   return geometry
 }
 
@@ -69,6 +70,7 @@ export const StaticBatch = ({ enabled, children }: { enabled: boolean; children:
   useLayoutEffect(() => {
     const group = root.current
     if (!group) return
+
     const sources: Mesh[] = []
     group.traverse((object) => {
       if ((object as Mesh).isMesh && object.userData[BATCH_PART]) sources.push(object as Mesh)
@@ -77,8 +79,10 @@ export const StaticBatch = ({ enabled, children }: { enabled: boolean; children:
     hidden.current = []
     if (!enabled) {
       setParts([]) // editing: every piece draws its own meshes again
+
       return
     }
+
     group.updateWorldMatrix(true, true)
     const inverse = new Matrix4().copy(group.matrixWorld).invert()
     const groups = new Map<string, Mesh[]>()
@@ -98,15 +102,18 @@ export const StaticBatch = ({ enabled, children }: { enabled: boolean; children:
           (mesh.material as Material & { color: Color }).color
         )
         if (!cutaway) return geometry
+
         // Cut by the wall cutaway: each vertex keeps its piece's anchor (its
         // origin) and the way it runs (its local X), as its own mesh gave them.
         const elements = toBatch.elements
         const axis = cutDirectionOf(elements[0], elements[2])
+
         return setCutAttributes(geometry, new Vector3().setFromMatrixPosition(toBatch), axis)
       })
       const merged = mergeGeometries(geometries, false)
       geometries.forEach((x) => x.dispose())
       if (!merged) continue // couldn't merge: those keep drawing themselves
+
       meshes.forEach((mesh) => (mesh.visible = false))
       hidden.current.push(...meshes)
       // The look of the first, in white: the colours come from the vertices.
@@ -116,6 +123,7 @@ export const StaticBatch = ({ enabled, children }: { enabled: boolean; children:
       // A clone loses its shader patch: the shading, and the cutaway's merged variant.
       if (material.type === "MeshStandardMaterial")
         Object.assign(material, getSurfaceShader(cutaway ? MERGED_KIND[cutaway] : null))
+
       next.push({
         key,
         geometry: merged,
@@ -130,6 +138,7 @@ export const StaticBatch = ({ enabled, children }: { enabled: boolean; children:
   // New batch → the cached shadow maps must include it; free the old one.
   useLayoutEffect(() => {
     markShadowsDirty(renderer, invalidate)
+
     return () =>
       parts.forEach((part) => {
         part.geometry.dispose()

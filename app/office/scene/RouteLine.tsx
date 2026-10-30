@@ -32,6 +32,7 @@ const ribbon = (points: [number, number][], width: number) => {
   for (let i = 0; i < count; i++) {
     const [x, z] = points[i]
     if (i > 0) run += Math.hypot(x - points[i - 1][0], z - points[i - 1][1])
+
     // The direction here: averaged over the segments either side.
     const [prevX, prevZ] = points[Math.max(0, i - 1)]
     const [nextX, nextZ] = points[Math.min(count - 1, i + 1)]
@@ -62,6 +63,7 @@ const ribbon = (points: [number, number][], width: number) => {
   geometry.setAttribute("distance", new THREE.BufferAttribute(distance, 1))
   geometry.setAttribute("across", new THREE.BufferAttribute(across, 1))
   geometry.setIndex(index)
+
   return { geometry, length: run }
 }
 
@@ -196,6 +198,7 @@ export const RouteLine = () => {
   }, [points, invalidate])
   useFrame((_, delta) => {
     if (!points || isStill || flowing.current >= FLOW_SECONDS) return
+
     flowing.current += delta
     const isDone = flowing.current >= FLOW_SECONDS
     line.uniforms.time.value += delta * SPEED
@@ -206,8 +209,10 @@ export const RouteLine = () => {
   })
 
   if (!points || !strip) return null
+
   const [startX, startZ] = points[0]
   const [endX, endZ] = points[points.length - 1]
+
   return (
     <group raycast={() => null}>
       <mesh geometry={strip.geometry} material={line} renderOrder={2} />

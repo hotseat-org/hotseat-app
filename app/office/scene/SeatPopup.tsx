@@ -20,6 +20,7 @@ import { SeatCardBody, useSeatCard } from "../seatCard"
 export const SeatPopup = () => {
   const card = useSeatCard()
   if (!card) return null
+
   return (
     <Html
       // Anchored just above the desk; the card sits above this point.

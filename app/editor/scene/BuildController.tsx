@@ -73,8 +73,10 @@ export const BuildController = () => {
   // Track the cursor on the ground plane every frame while a build tool is on.
   useFrame(() => {
     if (!active) return
+
     raycaster.setFromCamera(pointer, camera)
     if (!raycaster.ray.intersectPlane(GROUND, hit)) return
+
     hoverRawRef.current = { x: hit.x, z: hit.z }
     const node: Cell = { x: clampNode(hit.x), z: clampNode(hit.z) }
     if (!same(node, hoverRef.current)) setHover(node)
@@ -84,10 +86,12 @@ export const BuildController = () => {
   // Start / commit the drag from the canvas directly (bypasses occluders).
   useEffect(() => {
     if (!active) return
+
     const element = renderer.domElement
 
     const onDown = (event: PointerEvent) => {
       if (event.button !== 0 || !hoverRef.current) return
+
       downObjectsRef.current = store.getState().objects
       setStart(hoverRef.current)
       setEnd(hoverRef.current)
@@ -95,6 +99,7 @@ export const BuildController = () => {
 
     const onUp = (event: PointerEvent) => {
       if (event.button !== 0) return
+
       const startNode = startRef.current
       const endNode = endRef.current
       if (startNode && endNode) {
@@ -121,12 +126,14 @@ export const BuildController = () => {
           state.removeEdges(wallRun(startNode, endNode))
         }
       }
+
       setStart(null)
       setEnd(null)
     }
 
     element.addEventListener("pointerdown", onDown)
     window.addEventListener("pointerup", onUp)
+
     return () => {
       element.removeEventListener("pointerdown", onDown)
       window.removeEventListener("pointerup", onUp)
@@ -172,6 +179,7 @@ export const BuildController = () => {
     const id = raw ? nearestEdgeId(objects, raw.x, raw.z) : null
     const segment = id ? objects.find((object) => object.id === id) : null
     if (!segment) return null
+
     const plan = openingPlan(objects, segment.id, tool, raw?.x, raw?.z)
     if (!plan) {
       // A lone half-segment with no wall neighbour can't hold an opening.
@@ -186,10 +194,12 @@ export const BuildController = () => {
         />
       )
     }
+
     const reverting = segment.type === tool
     const target = reverting ? segment : plan.add[0]
     const [startNode, endNode] = edgeNodes({ ...target, id: "" })
     const color = reverting ? ERASE : BUILD
+
     return (
       <>
         {reverting ? (

@@ -48,6 +48,7 @@ export const useEditorMode = ({
     (next: Mode) => {
       if (next === mode) return
       if (readyFor === null) return setMode(next)
+
       setPendingMode(next)
       requestAnimationFrame(() => requestAnimationFrame(() => setMode(next)))
     },
@@ -63,8 +64,10 @@ export const useEditorMode = ({
   // "Edit layout" from the office settings (outside this tree) → edit mode.
   useEffect(() => {
     if (!editable) return
+
     const enterEdit = () => switchMode("edit")
     window.addEventListener("hotseat:edit-layout", enterEdit)
+
     return () => window.removeEventListener("hotseat:edit-layout", enterEdit)
   }, [editable, switchMode])
   // The one way into the editor: never on a phone or without WebGL, whatever

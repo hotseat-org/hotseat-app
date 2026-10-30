@@ -83,12 +83,14 @@ export const isTourDone = () => {
 /** The core's steps with each module's placed after the step it follows. */
 const useTourSteps = () => {
   const modules = useModules()
+
   return useMemo(() => {
     const steps = [...CORE_STEPS]
     for (const { after, step } of modules.flatMap((module) => module.tourSteps ?? [])) {
       const index = steps.findIndex((candidate) => candidate.id === after)
       steps.splice(index < 0 ? steps.length : index + 1, 0, step)
     }
+
     return steps
   }, [modules])
 }
@@ -96,6 +98,7 @@ const useTourSteps = () => {
 export const GuidedTour = () => {
   const isOpen = useEditorStore((state) => state.isTourOpen)
   if (!isOpen) return null
+
   return <TourCard />
 }
 
@@ -120,7 +123,9 @@ const TourCard = () => {
   useEffect(() => {
     const isDone = step.isDone
     if (!isDone) return
+
     const start = store.getState()
+
     return store.subscribe((now) => {
       // From this step only: several updates in a row mustn't skip the next.
       if (isDone(now, start)) setIndex((i) => (i === index ? Math.min(i + 1, steps.length - 1) : i))
@@ -131,12 +136,14 @@ const TourCard = () => {
   const [ring, setRing] = useState<DOMRect | null>(null)
   useLayoutEffect(() => {
     if (!step.target) return setRing(null)
+
     const update = () =>
       setRing(
         document.querySelector(`[data-tour="${step.target}"]`)?.getBoundingClientRect() ?? null
       )
     update()
     window.addEventListener("resize", update)
+
     return () => window.removeEventListener("resize", update)
   }, [step])
 

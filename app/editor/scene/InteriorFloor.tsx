@@ -112,6 +112,7 @@ export const InteriorFloor = () => {
       const color = paint?.color ?? surfaces.floorInside
       byColor.set(color, [...(byColor.get(color) ?? []), ...region])
     }
+
     return [...byColor]
   }, [key, store, surfaces.floorInside])
 
@@ -134,6 +135,7 @@ const FloorTiles = ({ color, cells: all }: { color: string; cells: FloorCell[] }
   useLayoutEffect(() => {
     const mesh = ref.current
     if (!mesh) return
+
     cells.forEach((cell, i) => {
       dummy.position.set(cell.x + SEG / 2, 0.006, cell.z + SEG / 2)
       dummy.rotation.set(-Math.PI / 2, 0, 0)
@@ -198,9 +200,11 @@ const CutFloor = ({ color, cells }: { color: string; cells: FloorCell[] }) => {
     const cutGeometry = new BufferGeometry()
     cutGeometry.setAttribute("position", new Float32BufferAttribute(positions, 3))
     cutGeometry.computeVertexNormals()
+
     return cutGeometry
   }, [cells])
   useEffect(() => () => geometry.dispose(), [geometry])
+
   return (
     <mesh geometry={geometry} receiveShadow>
       <FloorSurface color={color} />

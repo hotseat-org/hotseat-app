@@ -22,6 +22,7 @@ const RAIL = 0.035
  */
 export const GlassDoor = ({ color = PALETTE.seatLeg }: Props) => {
   const postX = WALL.width / 2 - POST / 2
+
   return (
     <group>
       {[-postX, postX].map((x) => (

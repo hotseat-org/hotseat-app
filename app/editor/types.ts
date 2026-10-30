@@ -47,6 +47,7 @@ export interface SceneObject extends ObjectFields {
 /** A tool that places a piece (a registered kind, not a data marker). */
 export const isObjectType = (tool: Tool): tool is ObjectType => {
   const item = findItem(tool)
+
   return !!item && item.mount !== "marker"
 }
 
@@ -72,8 +73,10 @@ export const isWallMounted = (type: ObjectType) => findItem(type)?.mount === "wa
 /** A piece's look: its stored variant, or a stable one derived from its id. */
 export const variantOf = (object: Pick<SceneObject, "id" | "variant">) => {
   if (object.variant !== undefined) return object.variant
+
   let hash = 0
   for (let i = 0; i < object.id.length; i++) hash = (hash * 31 + object.id.charCodeAt(i)) >>> 0
+
   return hash % 1000
 }
 

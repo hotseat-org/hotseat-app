@@ -33,6 +33,7 @@ interface Props {
 export const Ground = ({ onDown, onMove, onUp, onLeave, onClick, showGrid = true }: Props) => {
   const surfaces = useSurfaces()
   const invalidate = useThree((state) => state.invalidate)
+
   return (
     <group>
       <mesh

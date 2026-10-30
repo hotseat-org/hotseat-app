@@ -18,6 +18,7 @@ export const KitPlan = ({ objects, className }: { objects: SceneObject[]; classN
   const minZ = Math.min(...zCoordinates) - PAD
   const width = Math.max(...xCoordinates) + PAD - minX
   const depth = Math.max(...zCoordinates) + PAD - minZ
+
   return (
     <svg
       viewBox={`${minX} ${minZ} ${width} ${depth}`}
@@ -27,6 +28,7 @@ export const KitPlan = ({ objects, className }: { objects: SceneObject[]; classN
     >
       {pieces.map((piece) => {
         const [cellsWide, cellsDeep] = footprintCells(piece.type, piece.rotation)
+
         return (
           <rect
             key={piece.id}
@@ -43,6 +45,7 @@ export const KitPlan = ({ objects, className }: { objects: SceneObject[]; classN
       <g opacity={0.8}>
         {edges.map((edge) => {
           const [start, end] = edgeNodes(edge)
+
           return (
             <line
               key={edge.id}

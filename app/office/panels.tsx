@@ -27,6 +27,7 @@ const OfficeViewPanels = ({ isMobile, isDark }: PanelProps) => (
 const OfficeRouteLink = ({ isViewing }: PanelProps) => {
   // Its argument is whether the office is only being viewed (read-only).
   useRouteLink(isViewing)
+
   return null
 }
 

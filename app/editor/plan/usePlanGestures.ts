@@ -29,10 +29,12 @@ export const usePlanGestures = (
     (factor: number, focusX: number, focusY: number) =>
       setView((view) => {
         if (!view) return view
+
         const zoom = Math.min(MAX_K, Math.max(MIN_K, view.zoom * factor))
         const ratio = zoom / view.zoom
+
         return {
-          zoom: zoom,
+          zoom,
           offsetX: focusX - (focusX - view.offsetX) * ratio,
           offsetY: focusY - (focusY - view.offsetY) * ratio,
         }
@@ -45,11 +47,13 @@ export const usePlanGestures = (
   useEffect(() => {
     const element = box.current
     if (!element) return
+
     const readWheel = createWheelReader()
     const onWheel = (event: WheelEvent) => {
       event.preventDefault()
       const intent = readWheel(event)
       if (intent === "rotate" || event.deltaY === 0) return
+
       const rect = element.getBoundingClientRect()
       const factor =
         intent === "smoothZoom"
@@ -58,6 +62,7 @@ export const usePlanGestures = (
       zoomAt(factor, event.clientX - rect.left, event.clientY - rect.top)
     }
     element.addEventListener("wheel", onWheel, { passive: false })
+
     return () => element.removeEventListener("wheel", onWheel)
   }, [box, zoomAt])
 
@@ -67,30 +72,36 @@ export const usePlanGestures = (
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (isTypingTarget(event.target) || event.metaKey || event.ctrlKey || event.altKey) return
+
       const key = event.key.toLowerCase()
       if (key === "q") return turnByRef.current(1)
       if (key === "e") return turnByRef.current(-1)
+
       const element = box.current
       const factor = key === "+" || key === "=" ? 1.25 : key === "-" || key === "_" ? 1 / 1.25 : 0
       if (factor && element) zoomAt(factor, element.clientWidth / 2, element.clientHeight / 2)
     }
     window.addEventListener("keydown", onKey)
+
     return () => window.removeEventListener("keydown", onKey)
   }, [box, zoomAt])
 
   const pointers = useRef(new Map<number, { x: number; y: number }>())
   const onPointerDown = (downEvent: React.PointerEvent) => {
     if (downEvent.button !== 0 && downEvent.pointerType === "mouse") return
+
     pointers.current.set(downEvent.pointerId, { x: downEvent.clientX, y: downEvent.clientY })
     // One set of window listeners serves every finger (a second finger just
     // joins the gesture as a pinch).
     if (pointers.current.size > 1) return
+
     moved.current = false
     const start = { x: downEvent.clientX, y: downEvent.clientY }
     const element = box.current
     const move = (moveEvent: PointerEvent) => {
       const prev = pointers.current.get(moveEvent.pointerId)
       if (!prev) return
+
       const fingers = [...pointers.current.values()]
       if (pointers.current.size === 2 && element) {
         // Pinch: scale by the change in finger spread, around their midpoint.
@@ -104,6 +115,7 @@ export const usePlanGestures = (
             (moveEvent.clientX + other.x) / 2 - rect.left,
             (moveEvent.clientY + other.y) / 2 - rect.top
           )
+
         moved.current = true
       } else {
         if (Math.hypot(moveEvent.clientX - start.x, moveEvent.clientY - start.y) > DRAG)
@@ -117,11 +129,13 @@ export const usePlanGestures = (
           )
         }
       }
+
       pointers.current.set(moveEvent.pointerId, { x: moveEvent.clientX, y: moveEvent.clientY })
     }
     const up = (upEvent: PointerEvent) => {
       pointers.current.delete(upEvent.pointerId)
       if (pointers.current.size > 0) return
+
       window.removeEventListener("pointermove", move)
       window.removeEventListener("pointerup", up)
       window.removeEventListener("pointercancel", up)

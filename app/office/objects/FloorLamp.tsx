@@ -15,6 +15,7 @@ const HEIGHT = 1.6
 export const FloorLamp = ({ color = "#f0e2c0" }: Props) => {
   const nightness = useContext(DaylightContext)
   const isLampOn = useLampsOn()
+
   return (
     <group>
       {/* Warm pool of light, on only as it gets dark. Casts shadows and sits just

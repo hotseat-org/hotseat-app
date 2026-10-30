@@ -32,11 +32,13 @@ export const FootprintOutline = ({
   useFrame((state, delta) => {
     const outlineMesh = mesh.current
     if (!outlineMesh) return
+
     const target = hovered || selected ? 1 : 0
     amount.current += (target - amount.current) * Math.min(1, delta * 14)
     const strength = amount.current
     outlineMesh.visible = strength > 0.01
     if (!outlineMesh.visible) return
+
     // Only a hover breathes; a selection holds still.
     const breathe = hovered && !selected ? Math.sin(state.clock.elapsedTime * 4) * 0.012 : 0
     outlineMesh.scale.setScalar(0.92 + 0.08 * strength + breathe)
@@ -76,6 +78,7 @@ const outline = (outlineWidth: number, outlineDepth: number) => {
     target.quadraticCurveTo(-halfWidth, halfDepth, -halfWidth, halfDepth - radius)
     target.lineTo(-halfWidth, -halfDepth + radius)
     target.quadraticCurveTo(-halfWidth, -halfDepth, -halfWidth + radius, -halfDepth)
+
     return target
   }
   const cornerRadius = Math.min(0.22, outlineWidth / 4, outlineDepth / 4)
@@ -88,5 +91,6 @@ const outline = (outlineWidth: number, outlineDepth: number) => {
       Math.max(0.02, cornerRadius - THICK)
     ) as Path
   )
+
   return shape
 }

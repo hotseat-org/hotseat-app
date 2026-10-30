@@ -135,6 +135,7 @@ const EditorInner = ({
     const { tickClock } = store.getState()
     tickClock()
     const id = window.setInterval(tickClock, 60_000)
+
     return () => window.clearInterval(id)
   }, [store])
 

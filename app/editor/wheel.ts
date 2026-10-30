@@ -37,6 +37,7 @@ export const createWheelReader = () => {
     else if (isSideways) device = "trackpad"
 
     if (event.altKey) return "rotate"
+
     return device === "mouse" ? "stepZoom" : "smoothZoom"
   }
 }

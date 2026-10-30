@@ -93,6 +93,7 @@ export const Catalog = () => {
   const toggleCategory = (id: string) => {
     // Don't leave an asset from another (or the closing) category armed.
     if (isCatalogItem(tool) || armedKit) setTool("select")
+
     setOpenId((currentId) => (currentId === id ? null : id))
   }
   // The panel is as tall as the tray — but at least PANEL_MIN_HEIGHT (the
@@ -102,8 +103,10 @@ export const Catalog = () => {
   useEffect(() => {
     const element = railRef.current
     if (!element) return
+
     const observer = new ResizeObserver(() => setRailHeight(element.offsetHeight))
     observer.observe(element)
+
     return () => observer.disconnect()
   }, [])
   const panelStyle = railHeight
@@ -231,6 +234,7 @@ export const Catalog = () => {
               const meta = getToolMeta(type)
               const label = meta ? t(meta.label) : type
               const active = tool === type
+
               return (
                 <button
                   key={type}
@@ -426,6 +430,7 @@ const PaintPanel = ({ style }: { style?: React.CSSProperties }) => {
   const { t } = useI18n()
   const paintColor = useEditorStore((state) => state.paintColor)
   const setPaintColor = useEditorStore((state) => state.setPaintColor)
+
   return (
     <div
       style={style}
@@ -506,6 +511,7 @@ const PatternSwitch = () => {
     row: t("Drag along the floor to lay a row."),
     pod: t("Drag to lay two rows back to back."),
   }[pattern]
+
   return (
     <div className="mt-3 shrink-0 border-t border-separator pt-2.5">
       <div

@@ -62,6 +62,7 @@ const commandsFor = (menu: Menu, moduleCommands: Command[]): Command[] =>
 export const ContextMenu = () => {
   const menu = useEditorStore((state) => state.contextMenu)
   if (!menu) return null
+
   // A new menu (another right-click) starts fresh: focus, position.
   return <ContextMenuPanel key={`${menu.x},${menu.y}`} menu={menu} />
 }
@@ -83,6 +84,7 @@ const ContextMenuPanel = ({ menu }: { menu: Menu }) => {
     const element = menuRef.current
     const parent = element?.offsetParent?.getBoundingClientRect()
     if (!element || !parent) return
+
     const { width, height } = element.getBoundingClientRect()
     const x = menu.x - parent.left
     const y = menu.y - parent.top
@@ -101,6 +103,7 @@ const ContextMenuPanel = ({ menu }: { menu: Menu }) => {
     window.addEventListener("pointerdown", handlePress, true)
     window.addEventListener("wheel", close, { passive: true })
     window.addEventListener("blur", close)
+
     return () => {
       window.removeEventListener("pointerdown", handlePress, true)
       window.removeEventListener("wheel", close)
@@ -110,12 +113,15 @@ const ContextMenuPanel = ({ menu }: { menu: Menu }) => {
 
   useEffect(() => {
     if (step !== "saved") return
+
     const timer = window.setTimeout(close, SAVED_FOR)
+
     return () => window.clearTimeout(timer)
   }, [step])
 
   const run = (command: Command) => {
     if (command.id === SAVE_ROOM_ID) return setStep("naming")
+
     close()
     command.run(store.getState())
   }
@@ -127,6 +133,7 @@ const ContextMenuPanel = ({ menu }: { menu: Menu }) => {
     const index = items.indexOf(document.activeElement as HTMLElement)
     if (event.key === "Escape" || event.key === "Tab") {
       event.preventDefault()
+
       return close()
     }
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
@@ -160,6 +167,7 @@ const ContextMenuPanel = ({ menu }: { menu: Menu }) => {
         )}
       </div>
     )
+
   return (
     <div
       ref={menuRef}
@@ -173,6 +181,7 @@ const ContextMenuPanel = ({ menu }: { menu: Menu }) => {
       {commands.map((command) => {
         const Icon = command.icon
         const isDanger = command.id === "delete"
+
         return (
           <button
             key={command.id}
@@ -212,6 +221,7 @@ const SaveRoomForm = ({
     t("Room · {area} m²", { area: format.number(Math.round((kit?.area ?? 0) * 10) / 10) })
   )
   if (!kit) return null
+
   return (
     <form
       onSubmit={(event) => {

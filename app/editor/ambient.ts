@@ -37,10 +37,13 @@ export const subscribeAmbient = (invalidate: () => void) => {
       window.addEventListener(eventName, handleInput, { passive: true })
     timer = setInterval(() => {
       if (!isAmbientAwake()) return
+
       for (const invalidateCanvas of canvases.keys()) invalidateCanvas()
     }, 1000 / FPS)
   }
+
   canvases.set(invalidate, (canvases.get(invalidate) ?? 0) + 1)
+
   return () => {
     const count = (canvases.get(invalidate) ?? 1) - 1
     if (count > 0) canvases.set(invalidate, count)

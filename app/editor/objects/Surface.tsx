@@ -67,6 +67,7 @@ export const Surface = ({
 
   const translucent = ghost === "translucent" || baseOpacity < 1
   const opacity = (ghost === "translucent" ? 0.55 : 1) * baseOpacity
+
   return (
     <meshStandardMaterial
       color={color}

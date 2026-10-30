@@ -18,6 +18,7 @@ const straightEdges = (start: Cell, end: Cell): WallCell[] => {
         z: from.z + (isRising ? 1 : -1) * (i + 0.5) * SEG,
         rotation: EDGE_ROTATION[isRising ? "rising" : "falling"],
       })
+
     return edges
   }
   if (start.z === end.z) {
@@ -31,6 +32,7 @@ const straightEdges = (start: Cell, end: Cell): WallCell[] => {
     for (let i = 0; i < count; i++)
       edges.push({ x: start.x, z: minZ + (i + 0.5) * SEG, rotation: ALONG_Z })
   }
+
   return edges
 }
 
@@ -52,19 +54,24 @@ export const wallRun = (start: Cell, end: Cell): WallCell[] => {
     Math.min(Math.abs(deltaX), Math.abs(deltaZ)) / Math.max(Math.abs(deltaX), Math.abs(deltaZ))
   if (ratio > Math.tan(Math.PI / 8)) {
     const count = Math.max(1, Math.round((Math.abs(deltaX) + Math.abs(deltaZ)) / 2 / SEG))
+
     return straightEdges(start, {
       x: start.x + Math.sign(deltaX) * count * SEG,
       z: start.z + Math.sign(deltaZ) * count * SEG,
     })
   }
+
   const corner: Cell =
     Math.abs(deltaX) >= Math.abs(deltaZ) ? { x: end.x, z: start.z } : { x: start.x, z: end.z }
 
   const seen = new Set<string>()
+
   return [...straightEdges(start, corner), ...straightEdges(corner, end)].filter((edge) => {
     const key = `${edge.x},${edge.z},${Math.round(edge.rotation * 100)}`
     if (seen.has(key)) return false
+
     seen.add(key)
+
     return true
   })
 }
@@ -76,8 +83,10 @@ export const wallRun = (start: Cell, end: Cell): WallCell[] => {
 export const roomEdges = (start: Cell, end: Cell): WallCell[] => {
   if (start.x === end.x || start.z === end.z)
     return start.x === end.x && start.z === end.z ? [] : wallRun(start, end)
+
   const firstCorner = { x: end.x, z: start.z }
   const secondCorner = { x: start.x, z: end.z }
+
   return [
     ...straightEdges(start, firstCorner),
     ...straightEdges(firstCorner, end),

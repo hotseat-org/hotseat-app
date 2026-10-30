@@ -50,6 +50,7 @@ export const PaintController = () => {
     const down = (event: PointerEvent) => {
       const current = targetRef.current
       if (event.button !== 0 || !current) return
+
       const state = store.getState()
       if (current.kind === "wall") state.paintWalls(current.targets, state.paintColor)
       else state.paintFloor(current.x, current.z, state.paintColor)
@@ -57,6 +58,7 @@ export const PaintController = () => {
     // Shift switches between a wall and its room at once, without a move.
     const key = (event: KeyboardEvent) => {
       if (event.key !== "Shift") return
+
       shift.current = event.type === "keydown"
       invalidate()
     }
@@ -64,6 +66,7 @@ export const PaintController = () => {
     element.addEventListener("pointerdown", down)
     window.addEventListener("keydown", key)
     window.addEventListener("keyup", key)
+
     return () => {
       element.removeEventListener("pointermove", move)
       element.removeEventListener("pointerdown", down)
@@ -84,6 +87,7 @@ export const PaintController = () => {
     for (const object of all) {
       if (!isEdgeType(object.type)) continue
       if (!intersectEdge(ray, object, hit)) continue
+
       const distance = hit.distanceTo(ray.origin)
       if (!best || distance < best.d) best = { id: object.id, d: distance }
     }
@@ -129,6 +133,7 @@ export const PaintController = () => {
   useEffect(() => () => setPaintPreview(null), [setPaintPreview])
 
   if (target?.kind !== "floor") return null
+
   return <FloorPreview cells={target.cells} color={paintColor ?? surfaces.floorInside} />
 }
 
@@ -139,6 +144,7 @@ const FloorPreview = ({ cells, color }: { cells: Cell[]; color: string }) => {
   useLayoutEffect(() => {
     const mesh = ref.current
     if (!mesh) return
+
     cells.forEach((cell, i) => {
       dummy.position.set(cell.x + SEG / 2, 0.012, cell.z + SEG / 2)
       dummy.rotation.set(-Math.PI / 2, 0, 0)
@@ -148,6 +154,7 @@ const FloorPreview = ({ cells, color }: { cells: Cell[]; color: string }) => {
     mesh.instanceMatrix.needsUpdate = true
     invalidate()
   }, [cells, invalidate])
+
   return (
     <instancedMesh key={cells.length} ref={ref} args={[undefined, undefined, cells.length]}>
       <planeGeometry args={[SEG, SEG]} />

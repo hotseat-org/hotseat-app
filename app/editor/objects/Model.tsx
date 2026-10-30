@@ -26,6 +26,7 @@ export const Model = ({ url, scale = 1, yOffset = 0, rotationOffset = 0 }: Props
   // it when it goes (a desk pet leaves with its booking).
   useEffect(() => {
     markShadowsDirty(renderer, invalidate)
+
     return () => markShadowsDirty(renderer, invalidate)
   }, [scene, renderer, invalidate])
 

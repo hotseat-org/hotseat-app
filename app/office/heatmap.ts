@@ -12,6 +12,7 @@ const DARK = ["#5a3418", "#8a4415", "#c25a14", "#ea7420", "#ff8f2e", "#ffab4a"]
 export const heatColor = (ratio: number, isDark: boolean) => {
   const ramp = isDark ? DARK : LIGHT
   const i = Math.round(Math.max(0, Math.min(1, ratio)) * (ramp.length - 1))
+
   return ramp[i]
 }
 

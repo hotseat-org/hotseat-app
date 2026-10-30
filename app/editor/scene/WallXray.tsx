@@ -73,6 +73,7 @@ export const WallXray = ({ enabled, isEditing }: Props) => {
     }
     element.addEventListener("pointermove", move)
     element.addEventListener("pointerleave", leave)
+
     return () => {
       element.removeEventListener("pointermove", move)
       element.removeEventListener("pointerleave", leave)
@@ -87,6 +88,7 @@ export const WallXray = ({ enabled, isEditing }: Props) => {
   /** The wall lines the cursor ray passes through, nearest first (one per line). */
   const getAims = (): Aim[] => {
     if (!enabled || !inside.current) return []
+
     raycaster.setFromCamera(pointer, camera)
     const ray = raycaster.ray
     const objects = store.getState().objects
@@ -95,6 +97,7 @@ export const WallXray = ({ enabled, isEditing }: Props) => {
     // be seen and picked — like pointing at a door.
     for (const object of objects) {
       if (!isWallMounted(object.type)) continue
+
       const [cellsX, cellsZ] = footprintCells(object.type, object.rotation)
       min.set(object.x - (cellsX * GRID) / 2, MOUNT_BOTTOM, object.z - (cellsZ * GRID) / 2)
       max.set(object.x + (cellsX * GRID) / 2, WALL.height, object.z + (cellsZ * GRID) / 2)
@@ -110,6 +113,7 @@ export const WallXray = ({ enabled, isEditing }: Props) => {
       if (!isEdgeType(object.type) || getEdge(object.type)?.isSeeThrough) continue
       if (isEditing && !isWall(object.type)) continue
       if (!intersectEdge(ray, object, hitPoint, SLACK)) continue
+
       const half = edgeLength(object) / 2
       const axis = CUT_DIRECTION[edgeDirection(object.rotation)]
       const { along, across } = cutAxes(axis)
@@ -130,6 +134,7 @@ export const WallXray = ({ enabled, isEditing }: Props) => {
     for (const hit of hits)
       if (!aims.some((existing) => existing.axis === hit.axis && existing.line === hit.line))
         aims.push(hit)
+
     return aims.slice(0, MAX_CUTS)
   }
 

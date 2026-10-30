@@ -8,5 +8,6 @@ interface Props extends MeshProps {
 /** Pure, non-interactive geometry for an object type. */
 export const ObjectMesh = ({ type, ...props }: Props) => {
   const { Mesh } = getRenderer(type)
+
   return <Mesh {...props} />
 }

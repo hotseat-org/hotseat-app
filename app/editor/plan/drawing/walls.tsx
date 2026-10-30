@@ -55,6 +55,7 @@ export const drawWalls = (
   >()
   for (const segment of objects) {
     if (!isWall(segment.type)) continue
+
     const look = getRenderer(segment.type).planRun
     const ownColor = look && (look.color ?? segment.color ?? getItem(segment.type).defaultColor)
     const opacity = look?.opacity ?? 1
@@ -80,6 +81,7 @@ export const drawWalls = (
       diagonalRuns.set(key, run)
       continue
     }
+
     const alongX = runsAlongX(segment.rotation)
     const fixed = alongX ? segment.z : segment.x
     const key = `${alongX}|${fixed}|${segment.type}|${color}|${back}`
@@ -106,6 +108,7 @@ export const drawWalls = (
         flush()
         start = position
       }
+
       prev = position
     }
     flush()
@@ -128,6 +131,7 @@ export const drawWalls = (
         flush()
         start = segment
       }
+
       prev = segment
     }
     flush()
@@ -138,6 +142,7 @@ export const drawWalls = (
   for (const node of wallJointNodes(objects)) {
     const quarters = wallColors.joints.get(`${node.x},${node.z}`)
     if (!quarters || new Set(quarters).size === 1) continue
+
     quarters.forEach((color, quarter) => {
       const x0 = quarter % 2 ? node.x : node.x - HALF_WALL
       const z0 = quarter < 2 ? node.z - HALF_WALL : node.z

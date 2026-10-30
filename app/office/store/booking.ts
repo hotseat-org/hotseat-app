@@ -97,10 +97,12 @@ export const createBookingSlice = (set: SetState, _get: GetState): BookingSlice 
       for (const date of dates) {
         const day = { ...byDay[date] }
         if (day[deskId] && day[deskId] !== email) continue // taken: the server reports it
+
         for (const key of Object.keys(day)) if (day[key] === email) delete day[key]
         day[deskId] = email
         byDay[date] = day
       }
+
       return { booking: { ...state.booking, byDay } }
     }),
   applyCancel: (email, dates) =>
@@ -111,12 +113,14 @@ export const createBookingSlice = (set: SetState, _get: GetState): BookingSlice 
         for (const key of Object.keys(day)) if (day[key] === email) delete day[key]
         byDay[date] = day
       }
+
       return { booking: { ...state.booking, byDay } }
     }),
   applyFavorite: (deskId, isFavorite) =>
     set((state) => {
       const favorites = state.booking.preferences.favorites.filter((id) => id !== deskId)
       if (isFavorite) favorites.push(deskId)
+
       return {
         booking: { ...state.booking, preferences: { ...state.booking.preferences, favorites } },
       }

@@ -28,6 +28,7 @@ interface Rect {
 const axesOf = (rect: Rect): [[number, number], [number, number]] => {
   const cosine = Math.cos(rect.angle)
   const sine = Math.sin(rect.angle)
+
   return [
     [cosine, -sine],
     [sine, cosine],
@@ -37,6 +38,7 @@ const axesOf = (rect: Rect): [[number, number], [number, number]] => {
 /** How far a rectangle reaches along a direction from its centre. */
 const reachAlong = (rect: Rect, [directionX, directionZ]: [number, number]) => {
   const [firstAxis, secondAxis] = axesOf(rect)
+
   return (
     rect.halfX * Math.abs(firstAxis[0] * directionX + firstAxis[1] * directionZ) +
     rect.halfZ * Math.abs(secondAxis[0] * directionX + secondAxis[1] * directionZ)
@@ -57,8 +59,10 @@ const rectsOverlap = (first: Rect, second: Rect) => {
       Math.abs(second.x - first.x) < first.halfX + second.halfX &&
       Math.abs(second.z - first.z) < first.halfZ + second.halfZ
     )
+
   const deltaX = second.x - first.x
   const deltaZ = second.z - first.z
+
   return [...axesOf(first), ...axesOf(second)].every(
     (axis) =>
       Math.abs(deltaX * axis[0] + deltaZ * axis[1]) <
@@ -69,9 +73,12 @@ const rectsOverlap = (first: Rect, second: Rect) => {
 const footprintRect = (type: ObjectType, rotation: number, x: number, z: number): Rect => {
   if (isDiagonal(rotation)) {
     const [cellsX, cellsZ] = getItem(type).footprint
+
     return { x, z, halfX: (cellsX * GRID) / 2, halfZ: (cellsZ * GRID) / 2, angle: rotation }
   }
+
   const [cellsX, cellsZ] = footprintCells(type, rotation)
+
   return { x, z, halfX: (cellsX * GRID) / 2, halfZ: (cellsZ * GRID) / 2, angle: 0 }
 }
 
@@ -105,6 +112,7 @@ const edgeCrossesRect = (
     const across: [number, number] = [-along[1], along[0]]
     const deltaX = rect.x - edge.x
     const deltaZ = rect.z - edge.z
+
     return [along, across, ...axesOf(rect)].every(
       (axis) =>
         Math.abs(deltaX * axis[0] + deltaZ * axis[1]) <
@@ -113,6 +121,7 @@ const edgeCrossesRect = (
           TOUCH
     )
   }
+
   return runsAlongX(edge.rotation)
     ? rect.z - rect.halfZ < edge.z &&
         edge.z < rect.z + rect.halfZ &&
@@ -146,11 +155,13 @@ export const furnitureCollides = (
   if (isMarker(type)) return false
   // Wall items need solid wall behind their whole width.
   if (isWallMounted(type) && !mountWalls(objects, type, x, z, rotation)) return true
+
   const moving = footprintRect(type, rotation, x, z)
   for (const other of objects) {
     if (other.id === ignoreId || isMarker(other.type)) continue
     if (isEdgeType(other.type)) {
       if (!isOverhead(type) && edgeCrossesRect(other, moving)) return true
+
       continue
     }
     // Overhead items (ceiling lights) and wall items only bump into their own kind.
@@ -159,6 +170,7 @@ export const furnitureCollides = (
     if (rectsOverlap(moving, footprintRect(other.type, other.rotation, other.x, other.z)))
       return true
   }
+
   return false
 }
 
@@ -169,10 +181,13 @@ export const furnitureCollides = (
 export const groupCollides = (objects: SceneObject[], moved: SceneObject[]): boolean => {
   const ids = new Set(moved.map((piece) => piece.id))
   const others = objects.filter((other) => !ids.has(other.id))
+
   return moved.some((piece) => {
     const clamped = clampToFloor(piece.type, piece.rotation, { x: piece.x, z: piece.z })
     if (clamped.x !== piece.x || clamped.z !== piece.z) return true
+
     const rest = [...others, ...moved.filter((other) => other.id !== piece.id)]
+
     return furnitureCollides(rest, piece.type, piece.x, piece.z, piece.rotation)
   })
 }

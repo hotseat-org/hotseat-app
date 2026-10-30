@@ -40,6 +40,7 @@ const createBlobTexture = () => {
       }
     context.putImageData(image, 0, 0)
   }
+
   return new CanvasTexture(canvas)
 }
 
@@ -70,6 +71,7 @@ export const ContactBlobs = () => {
   useLayoutEffect(() => {
     const mesh = ref.current
     if (!mesh) return
+
     pieces.forEach((object, i) => {
       // The piece's own footprint, turned with it (on the diagonal too).
       const [cellsX, cellsZ] = getItem(object.type).footprint
@@ -86,6 +88,7 @@ export const ContactBlobs = () => {
   }, [pieces, invalidate])
 
   if (pieces.length === 0) return null
+
   return (
     // Keyed by count so the instance buffer is re-sized as pieces come and go.
     <instancedMesh

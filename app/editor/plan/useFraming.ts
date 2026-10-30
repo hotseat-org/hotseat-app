@@ -17,6 +17,7 @@ export interface Frame {
 export const useGlide = (setView: Dispatch<SetStateAction<View | null>>) => {
   const frame = useRef(0)
   useEffect(() => () => cancelAnimationFrame(frame.current), [])
+
   return useCallback(
     (from: View, to: View) => {
       const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches

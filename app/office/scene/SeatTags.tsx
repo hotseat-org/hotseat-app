@@ -53,12 +53,15 @@ export const SeatTags = () => {
     <>
       {desks.map(({ desk, state }) => {
         if (desk.id === openId) return null
+
         const person = state.kind === "free" ? null : personByEmail(people, state.email)
         const free = state.kind === "free" && booking && !past
         // Filtered out: a free desk gets no tag (its taker still shows).
         if (free && !matchesFilter(desk)) return null
         if (!person && !free && !desk.label) return null
+
         const mine = !!person && person.email === people.me?.email
+
         return (
           <Html
             key={desk.id}

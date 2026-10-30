@@ -20,6 +20,7 @@ const LED_GREEN = "#6ee7a0"
  */
 export const ServerRack = ({ color = "#2c313c" }: Props) => {
   const unitH = (HEIGHT - 0.24) / UNITS
+
   return (
     <group>
       {/* Cabinet body, stopping short of the front so the servers show */}
@@ -54,6 +55,7 @@ export const ServerRack = ({ color = "#2c313c" }: Props) => {
       {/* Servers, recessed behind the door */}
       {Array.from({ length: UNITS }, (_, i) => {
         const y = 0.12 + unitH * (i + 0.5)
+
         return (
           <group key={i} position={[0, y, DEPTH / 2 - RECESS + 0.01]}>
             <mesh>

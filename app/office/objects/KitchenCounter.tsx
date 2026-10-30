@@ -20,6 +20,7 @@ const CENTRE_Z = -0.5 + DEPTH / 2
  */
 export const KitchenCounter = ({ color = "#d9cbb4" }: Props) => {
   const doors = [-0.735, -0.245, 0.245, 0.735]
+
   return (
     <group position={[0, 0, CENTRE_Z]}>
       {/* Base cabinets */}

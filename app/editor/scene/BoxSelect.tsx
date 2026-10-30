@@ -21,6 +21,7 @@ export const BoxSelect = () => {
 
   useEffect(() => {
     if (!active) return
+
     const move = (event: PointerEvent) => {
       const box = store.getState().box
       if (box) store.getState().setBox({ ...box, x1: event.clientX, y1: event.clientY })
@@ -30,8 +31,10 @@ export const BoxSelect = () => {
       const box = state.box
       state.setBox(null)
       if (!box) return
+
       const dragged = Math.abs(box.x1 - box.x0) > THRESHOLD || Math.abs(box.y1 - box.y0) > THRESHOLD
       if (!dragged) return
+
       const rect = renderer.domElement.getBoundingClientRect()
       const [minX, maxX] = [Math.min(box.x0, box.x1), Math.max(box.x0, box.x1)]
       const [minY, maxY] = [Math.min(box.y0, box.y1), Math.max(box.y0, box.y1)]
@@ -42,6 +45,7 @@ export const BoxSelect = () => {
           vector.set(object.x, 0.4, object.z).project(camera)
           const screenX = rect.left + ((vector.x + 1) / 2) * rect.width
           const screenY = rect.top + ((1 - vector.y) / 2) * rect.height
+
           return screenX >= minX && screenX <= maxX && screenY >= minY && screenY <= maxY
         })
         .map((object) => object.id)
@@ -50,6 +54,7 @@ export const BoxSelect = () => {
     }
     window.addEventListener("pointermove", move)
     window.addEventListener("pointerup", up)
+
     return () => {
       window.removeEventListener("pointermove", move)
       window.removeEventListener("pointerup", up)

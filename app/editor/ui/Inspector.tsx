@@ -28,6 +28,7 @@ export const Inspector = () => {
   const hasUncopyable = useEditorStore((state) =>
     state.selection.some((id) => {
       const object = state.objects.find((candidate) => candidate.id === id)
+
       return !!object && !getItem(object.type).isCopyable
     })
   )
@@ -36,6 +37,7 @@ export const Inspector = () => {
   const shufflable = useEditorStore((state) =>
     state.selection.every((id) => {
       const object = state.objects.find((candidate) => candidate.id === id)
+
       return !!object && hasLooks(object.type)
     })
   )
@@ -44,6 +46,7 @@ export const Inspector = () => {
   const canColor = useEditorStore((state) =>
     state.selection.every((id) => {
       const object = state.objects.find((candidate) => candidate.id === id)
+
       return !!object && isRecolorable(object.type)
     })
   )

@@ -21,5 +21,6 @@ export const intersectEdge = (ray: Ray, edge: SceneObject, hit: Vector3, slack =
   box.min.set(-half, -WALL.sink, -WALL.depth / 2 - slack)
   box.max.set(half, WALL.height + slack, WALL.depth / 2 + slack)
   if (!localRay.intersectBox(box, hit)) return null
+
   return hit.applyMatrix4(toWall)
 }

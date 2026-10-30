@@ -9,6 +9,7 @@ export const useEditorShortcuts = (readOnly: boolean) => {
   const store = useEditorStoreApi()
   useEffect(() => {
     if (readOnly) return
+
     const onKey = (event: KeyboardEvent) => {
       // Undo / redo: ⌘Z / ⇧⌘Z (Ctrl on Windows/Linux), plus ⌘Y.
       if ((event.metaKey || event.ctrlKey) && !event.altKey && !isTypingTarget(event.target)) {
@@ -16,12 +17,14 @@ export const useEditorShortcuts = (readOnly: boolean) => {
         // The command search: ⌘K (Ctrl+K).
         if (key === "k") {
           event.preventDefault()
+
           return store.getState().setCommandSearchOpen(true)
         }
         if (key === "z" || key === "y") {
           event.preventDefault()
           if (key === "y" || event.shiftKey) store.getState().redo()
           else store.getState().undo()
+
           return
         }
         // Clipboard + duplicate for the selection (furniture).
@@ -29,6 +32,7 @@ export const useEditorShortcuts = (readOnly: boolean) => {
         if (key === "v") return store.getState().paste()
         if (key === "d") {
           event.preventDefault() // not the browser's bookmark shortcut
+
           return store.getState().duplicateSelection()
         }
       }
@@ -41,11 +45,13 @@ export const useEditorShortcuts = (readOnly: boolean) => {
       const mapped = getTools().find((meta) => meta.key && meta.key === event.key)?.tool
       if (mapped) {
         state.setTool(mapped)
+
         return
       }
 
       if (event.key === "m" || event.key === "M") {
         state.toggleMeasureHints()
+
         return
       }
 
@@ -55,6 +61,7 @@ export const useEditorShortcuts = (readOnly: boolean) => {
         const selection = state.objects.find((piece) => piece.id === state.selectedId)
         if (selection && !isEdgeType(selection.type)) state.rotateSelection()
         else state.rotatePlacement()
+
         return
       }
 
@@ -63,6 +70,7 @@ export const useEditorShortcuts = (readOnly: boolean) => {
           event.preventDefault()
           state.removeSelection()
         }
+
         return
       }
 
@@ -72,6 +80,7 @@ export const useEditorShortcuts = (readOnly: boolean) => {
       }
     }
     window.addEventListener("keydown", onKey)
+
     return () => window.removeEventListener("keydown", onKey)
   }, [readOnly, store])
 }

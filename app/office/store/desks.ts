@@ -31,9 +31,11 @@ export interface DesksSlice {
 const freeDeskLabels = (objects: SceneObject[]) => {
   const taken = new Set(objects.map((piece) => piece.label).filter(Boolean))
   let counter = 1
+
   return () => {
     while (taken.has(`D-${counter}`)) counter++
     taken.add(`D-${counter}`)
+
     return `D-${counter}`
   }
 }
@@ -47,6 +49,7 @@ export const numberUnlabelledDesks = (objects: SceneObject[]): SceneObject[] => 
       .sort((first, second) => first.z - second.z || first.x - second.x)
       .map((piece) => [piece.id, next()])
   )
+
   return labels.size
     ? objects.map((piece) =>
         labels.has(piece.id) ? { ...piece, label: labels.get(piece.id) } : piece
@@ -60,6 +63,7 @@ export const numberUnlabelledDesks = (objects: SceneObject[]): SceneObject[] => 
  */
 export const asNewDesks = (existing: SceneObject[], fresh: SceneObject[]): SceneObject[] => {
   const next = freeDeskLabels(existing)
+
   return fresh.map((piece) =>
     isSeatable(piece.type) ? { ...piece, label: next(), assignee: undefined } : piece
   )
@@ -78,18 +82,21 @@ export const createDesksSlice = (set: SetState, _get: GetState): DesksSlice => (
         if (piece.id === id) return { ...piece, assignee: email ?? undefined }
         // One desk per person: free their previous desk.
         if (email && piece.assignee === email) return { ...piece, assignee: undefined }
+
         return piece
       }),
     })),
   numberDesks: () =>
     set((state) => {
       const objects = numberUnlabelledDesks(state.objects)
+
       return objects === state.objects ? state : { objects }
     }),
   setZone: (ids, zone) =>
     set((state) => {
       const targets = new Set(ids)
       const name = zone?.trim().slice(0, 32) || undefined
+
       return {
         objects: state.objects.map((piece) =>
           targets.has(piece.id) && isSeatable(piece.type) ? { ...piece, zone: name } : piece
@@ -101,10 +108,12 @@ export const createDesksSlice = (set: SetState, _get: GetState): DesksSlice => (
     set((state) => ({
       objects: state.objects.map((piece) => {
         if (piece.id !== id) return piece
+
         const has = piece.features?.includes(feature)
         const features = has
           ? (piece.features ?? []).filter((existing) => existing !== feature)
           : [...(piece.features ?? []), feature]
+
         return { ...piece, features: features.length ? features : undefined }
       }),
     })),
@@ -112,6 +121,7 @@ export const createDesksSlice = (set: SetState, _get: GetState): DesksSlice => (
     set((state) => {
       const desk = state.objects.find((piece) => piece.id === id)
       if (!desk || (desk.type !== "desk" && desk.type !== "deskmate")) return state
+
       // A workstation's desk sits 0.25 m back from its centre; a deskmate's 0.35.
       const shift = desk.type === "desk" ? 0.25 : 0.1
       const centre = toWorld(desk, 0, shift)
@@ -123,6 +133,7 @@ export const createDesksSlice = (set: SetState, _get: GetState): DesksSlice => (
               state.objects.filter((piece) => piece.type === "seat")
             )
           : undefined
+
       return {
         objects: state.objects
           .filter((piece) => piece.id !== chair?.id)

@@ -50,6 +50,7 @@ export const enclosedRegions = (objects: SceneObject[]): FloorCell[][] => {
 
   for (const object of objects) {
     if (!getEdge(object.type)?.encloses) continue
+
     for (const edge of unitEdges(object)) {
       const direction = edgeDirection(edge.rotation)
       if (direction === "x") {
@@ -115,6 +116,7 @@ export const enclosedRegions = (objects: SceneObject[]): FloorCell[][] => {
       inner(NORTH, isFalling)
       if (!blockedAlongZ.has(`${i},${j}`)) out.push([i - 1, j, EAST])
     }
+
     return out
   }
 
@@ -123,8 +125,10 @@ export const enclosedRegions = (objects: SceneObject[]): FloorCell[][] => {
   const next: [number, number, number][] = []
   const visitOutside = (i: number, j: number, triangle: number) => {
     if (!inGrid(i, j)) return
+
     const triangleIndex = index(i, j, triangle)
     if (outside[triangleIndex]) return
+
     outside[triangleIndex] = 1
     stack.push([i, j, triangle])
   }
@@ -148,6 +152,7 @@ export const enclosedRegions = (objects: SceneObject[]): FloorCell[][] => {
       for (let triangle = 0; triangle < 4; triangle++) {
         const startIndex = index(i, j, triangle)
         if (outside[startIndex] || seen[startIndex]) continue
+
         const parts = new Map<string, FloorCell>()
         const queue: [number, number, number][] = [[i, j, triangle]]
         seen[startIndex] = 1
@@ -164,8 +169,10 @@ export const enclosedRegions = (objects: SceneObject[]): FloorCell[][] => {
             next
           )) {
             if (!inGrid(nextI, nextJ)) continue
+
             const neighbourIndex = index(nextI, nextJ, nextTriangle)
             if (outside[neighbourIndex] || seen[neighbourIndex]) continue
+
             seen[neighbourIndex] = 1
             queue.push([nextI, nextJ, nextTriangle])
           }
@@ -176,6 +183,7 @@ export const enclosedRegions = (objects: SceneObject[]): FloorCell[][] => {
           )
         )
       }
+
   return regions
 }
 
@@ -191,6 +199,7 @@ export const isInRegion = (cells: Map<string, FloorCell>, x: number, z: number) 
   const cell = cells.get(`${cellX},${cellZ}`)
   if (!cell) return false
   if (cell.parts === undefined) return true
+
   const offsetX = (x - cellX) / SEG
   const offsetZ = (z - cellZ) / SEG
   const part =
@@ -201,6 +210,7 @@ export const isInRegion = (cells: Map<string, FloorCell>, x: number, z: number) 
         : offsetX > offsetZ
           ? FLOOR_PART.east
           : FLOOR_PART.west
+
   return (cell.parts & part) !== 0
 }
 
@@ -213,7 +223,9 @@ export const furnitureInRoomAt = (objects: SceneObject[], x: number, z: number):
     region.some((cell) => cell.x <= x && x < cell.x + SEG && cell.z <= z && z < cell.z + SEG)
   )
   if (!room) return []
+
   const cells = new Set(room.map((cell) => `${cell.x},${cell.z}`))
+
   return objects
     .filter(
       (piece) =>

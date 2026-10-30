@@ -93,6 +93,7 @@ export const CameraControls = ({
     if ((held[source] ?? null) === gesture) return
     if (gesture) held[source] = gesture
     else delete held[source]
+
     applyCursor()
   }
   const flashGesture = (gesture: Gesture) => {
@@ -114,12 +115,15 @@ export const CameraControls = ({
   // a re-render here would otherwise call it while unset, and the hint stuck.
   useEffect(() => {
     if (!setCursorHint) return
+
     const { hints } = cursorState.current
     setCursorHint.current = (id, hint) => {
       if (hint) hints.set(id, hint)
       else hints.delete(id)
+
       actions.current.applyCursor()
     }
+
     return () => {
       setCursorHint.current = null
       hints.clear()
@@ -128,6 +132,7 @@ export const CameraControls = ({
   useEffect(() => {
     const element = renderer.domElement
     const state = cursorState.current
+
     return () => {
       window.clearTimeout(state.flashTimer)
       element.style.cursor = ""
@@ -140,14 +145,17 @@ export const CameraControls = ({
     camera.getWorldDirection(forward.current)
     forward.current.y = 0
     if (forward.current.lengthSq() < 1e-6) return false
+
     forward.current.normalize()
     right.current.crossVectors(forward.current, UP).normalize()
+
     return true
   }
 
   /** Pans so the ground follows the pointer: (dx, dy) screen px, + = right / down. */
   const panByPixels = (deltaX: number, deltaY: number) => {
     if (!controls || !setGroundAxes()) return
+
     const worldPerPixel =
       (camera.top - camera.bottom) / camera.zoom / renderer.domElement.clientHeight
     // Ground depth is foreshortened on screen by the camera's tilt.
@@ -165,6 +173,7 @@ export const CameraControls = ({
   /** Zooms by `factor`, keeping the ground under (x, y) — canvas px — in place. */
   const zoomAt = (factor: number, x?: number, y?: number) => {
     if (!controls) return
+
     flashGesture(factor > 1 ? "zoomIn" : "zoomOut")
     const prevZoom = camera.zoom
     camera.zoom = Math.min(controls.maxZoom, Math.max(controls.minZoom, prevZoom * factor))
@@ -174,12 +183,14 @@ export const CameraControls = ({
       const { clientWidth, clientHeight } = renderer.domElement
       panByPixels((x - clientWidth / 2) * (applied - 1), (y - clientHeight / 2) * (applied - 1))
     }
+
     invalidate()
   }
 
   /** Orbits around the target; + turns the scene clockwise (seen from above). */
   const orbit = (angle: number) => {
     if (!controls) return
+
     move.current.subVectors(camera.position, controls.target).applyAxisAngle(UP, angle)
     camera.position.copy(controls.target).add(move.current)
     camera.lookAt(controls.target)
@@ -201,10 +212,13 @@ export const CameraControls = ({
       // Not while typing, and not with modifiers: on macOS the keyup of a key
       // released while ⌘ is held never fires, so ⌘+A/⌘+S would pan forever.
       if (isTypingTarget(event.target) || event.metaKey || event.ctrlKey || event.altKey) return
+
       const zoomFactor = ZOOM_KEYS[event.key]
       if (zoomFactor) return actions.current.zoomAt(zoomFactor)
+
       const key = event.key.toLowerCase()
       if (!PAN_KEYS[key] && !ORBIT_KEYS[key]) return
+
       keys.current.add(key)
       setOrbitCursor()
       invalidate() // frameloop="demand": start the render loop for the move
@@ -220,6 +234,7 @@ export const CameraControls = ({
     window.addEventListener("keydown", down)
     window.addEventListener("keyup", up)
     window.addEventListener("blur", clear)
+
     return () => {
       window.removeEventListener("keydown", down)
       window.removeEventListener("keyup", up)
@@ -240,10 +255,12 @@ export const CameraControls = ({
       const intent = readWheel(event)
       if (intent === "rotate") {
         flashGesture("orbit")
+
         return orbit((event.deltaX || event.deltaY) * SCROLL_ORBIT)
       }
       // A purely sideways scroll has nothing to zoom by.
       if (event.deltaY === 0) return
+
       const factor =
         intent === "smoothZoom"
           ? getSmoothZoomFactor(event.deltaY)
@@ -251,6 +268,7 @@ export const CameraControls = ({
       zoomAt(factor, event.offsetX, event.offsetY)
     }
     element.addEventListener("wheel", onWheel, { capture: true, passive: false })
+
     return () => element.removeEventListener("wheel", onWheel, { capture: true })
   }, [renderer])
 
@@ -274,6 +292,7 @@ export const CameraControls = ({
       if (!leftStart) return
       if (Math.hypot(event.clientX - leftStart.x, event.clientY - leftStart.y) <= DRAG_THRESHOLD)
         return
+
       actions.current.setHeldGesture("button", "panning")
     }
     const onPointerUp = () => {
@@ -284,6 +303,7 @@ export const CameraControls = ({
     window.addEventListener("pointermove", onPointerMove)
     window.addEventListener("pointerup", onPointerUp)
     window.addEventListener("blur", onPointerUp)
+
     return () => {
       element.removeEventListener("pointerdown", onPointerDown)
       window.removeEventListener("pointermove", onPointerMove)
@@ -323,6 +343,7 @@ export const CameraControls = ({
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.code !== "Space" || isTypingTarget(event.target)) return
+
       event.preventDefault() // no page scroll, no pressing a focused button
       isSpaceHeld = true
       setDragCursor()
@@ -330,6 +351,7 @@ export const CameraControls = ({
     const onKeyUp = (event: KeyboardEvent) => {
       if (event.code !== "Space") return
       if (!isTypingTarget(event.target)) event.preventDefault()
+
       isSpaceHeld = false
       setDragCursor()
     }
@@ -340,6 +362,7 @@ export const CameraControls = ({
     }
     const onPointerDown = (event: PointerEvent) => {
       if (!isSpaceHeld || event.button !== 0 || event.target !== element) return
+
       event.stopPropagation()
       event.preventDefault()
       startDrag(event, true)
@@ -349,9 +372,11 @@ export const CameraControls = ({
       if (!hasMoved) {
         if (Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) <= DRAG_THRESHOLD)
           return
+
         hasMoved = true
         setDragCursor()
       }
+
       actions.current.panByPixels(drag.x - event.clientX, drag.y - event.clientY)
       drag.x = event.clientX
       drag.y = event.clientY
@@ -359,6 +384,7 @@ export const CameraControls = ({
     const onPointerUp = (event: PointerEvent) => {
       if (!drag || event.button !== 0) return
       if (drag.isSpace) event.stopPropagation()
+
       drag = null
       setDragCursor()
     }
@@ -369,14 +395,17 @@ export const CameraControls = ({
         hasMoved: () => hasMoved,
       }
     }
+
     window.addEventListener("keydown", onKeyDown)
     window.addEventListener("keyup", onKeyUp)
     window.addEventListener("blur", onBlur)
     window.addEventListener("pointerdown", onPointerDown, { capture: true })
     window.addEventListener("pointermove", onPointerMove)
     window.addEventListener("pointerup", onPointerUp, { capture: true })
+
     return () => {
       if (floorPan) floorPan.current = null
+
       window.removeEventListener("keydown", onKeyDown)
       window.removeEventListener("keyup", onKeyUp)
       window.removeEventListener("blur", onBlur)
@@ -393,6 +422,7 @@ export const CameraControls = ({
     if (turn) orbit(turn * ORBIT_SPEED * delta)
 
     if (!setGroundAxes()) return
+
     move.current.set(0, 0, 0)
     if (keys.current.has("w")) move.current.add(forward.current)
     if (keys.current.has("s")) move.current.sub(forward.current)
@@ -404,6 +434,7 @@ export const CameraControls = ({
       camera.position.add(move.current)
       controls.target.add(move.current)
     }
+
     invalidate() // keep rendering while a key is held
   })
 

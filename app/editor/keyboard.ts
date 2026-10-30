@@ -2,6 +2,7 @@
 export const isTypingTarget = (target: EventTarget | null) => {
   const element = target as HTMLElement | null
   if (!element) return false
+
   return (
     element.tagName === "INPUT" ||
     element.tagName === "TEXTAREA" ||

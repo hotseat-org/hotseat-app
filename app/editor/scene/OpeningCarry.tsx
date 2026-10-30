@@ -34,15 +34,18 @@ export const OpeningCarry = ({ carried, onDone }: Props) => {
 
   const slotAt = (x: number, z: number) => {
     if (!isOpening(carried.type)) return null
+
     const all = store.getState().objects
     const wallId = nearestEdgeId(all, x, z, 0.6, (wall) => isWall(wall.type))
     const plan = wallId ? openingPlan(all, wallId, carried.type, x, z) : null
+
     return plan ? plan.add[0] : null
   }
 
   useFrame(() => {
     raycaster.setFromCamera(pointer, camera)
     if (!raycaster.ray.intersectPlane(MID_WALL, hit)) return
+
     raw.current = { x: hit.x, z: hit.z }
     const slot = slotAt(hit.x, hit.z)
     const key = slot ? `${slot.x},${slot.z},${slot.rotation}` : ""
@@ -55,6 +58,7 @@ export const OpeningCarry = ({ carried, onDone }: Props) => {
     const down = (event: PointerEvent) => {
       if (event.button !== 0 || !raw.current) return
       if (!store.getState().placeOpening(carried, raw.current.x, raw.current.z)) return
+
       // Consumed: don't let this click reach R3F (the floor would deselect the
       // opening that was just placed and selected).
       event.stopPropagation()
@@ -62,6 +66,7 @@ export const OpeningCarry = ({ carried, onDone }: Props) => {
     }
     element.addEventListener("pointermove", move)
     element.addEventListener("pointerdown", down)
+
     return () => {
       element.removeEventListener("pointermove", move)
       element.removeEventListener("pointerdown", down)
@@ -70,9 +75,11 @@ export const OpeningCarry = ({ carried, onDone }: Props) => {
 
   const slot = slotKey && raw.current ? slotAt(raw.current.x, raw.current.z) : null
   if (!slot) return null
+
   const [startNode, endNode] = edgeNodes({ ...slot, id: "" })
   // `objects` keeps the preview in sync with edits made while carrying.
   void objects
+
   return (
     <>
       <GhostObject

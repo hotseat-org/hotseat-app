@@ -16,6 +16,7 @@ const CENTRE_Z = -0.5 + DEPTH / 2
 /** A tall two-door wardrobe on a dark plinth, with long bar handles. Front faces +Z. */
 export const Wardrobe = ({ color = "#c9a27e" }: Props) => {
   const doorW = WIDTH / 2 - 0.03
+
   return (
     <group position={[0, 0, CENTRE_Z]}>
       <mesh position={[0, PLINTH / 2, 0.01]} receiveShadow>

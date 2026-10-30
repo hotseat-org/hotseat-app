@@ -107,7 +107,9 @@ export const randomModelId = (): string => MODELS[Math.floor(Math.random() * MOD
 export const petFor = (email: string, chosen?: string): ModelDef => {
   const own = chosen ? modelById(chosen) : undefined
   if (own) return own
+
   let hash = 0
   for (let i = 0; i < email.length; i++) hash = (hash * 31 + email.charCodeAt(i)) >>> 0
+
   return MODELS[hash % MODELS.length]
 }

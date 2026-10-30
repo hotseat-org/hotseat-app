@@ -39,6 +39,7 @@ const dashTexture = () => {
   texture.minFilter = NearestFilter
   texture.wrapS = RepeatWrapping
   texture.needsUpdate = true
+
   return texture
 }
 
@@ -66,6 +67,7 @@ const Ribbon = ({
     if (texture) texture.repeat.set(Math.max(1, length / DASH), 1)
   }, [texture, length])
   useLayoutEffect(() => () => texture?.dispose(), [texture])
+
   return (
     <group
       visible={!!segment && length > 0}
@@ -101,6 +103,7 @@ const rectOf = (type: ObjectType, rotation: number, x: number, z: number): Rect 
   const [cellsX, cellsZ] = footprintCells(type, rotation)
   const halfX = (cellsX * GRID) / 2
   const halfZ = (cellsZ * GRID) / 2
+
   return { x0: x - halfX, x1: x + halfX, z0: z - halfZ, z1: z + halfZ }
 }
 
@@ -137,6 +140,7 @@ const measure = (objects: SceneObject[], rect: Rect, ignoreId?: string): (Measur
     if (isEdgeType(object.type)) {
       // Distances are measured straight along X and Z: diagonal walls don't count.
       if (isDiagonalEdge(object.rotation)) continue
+
       const half = edgeLength(object) / 2
       if (runsAlongX(object.rotation)) {
         // A horizontal line at z = o.z blocks ±Z when it spans our x range.
@@ -148,10 +152,12 @@ const measure = (objects: SceneObject[], rect: Rect, ignoreId?: string): (Measur
         if (object.x >= rect.x1 - EPSILON) positiveX = Math.min(positiveX, object.x - rect.x1)
         if (object.x <= rect.x0 + EPSILON) negativeX = Math.min(negativeX, rect.x0 - object.x)
       }
+
       continue
     }
     if (getItem(object.type).isUnderlay || isOverhead(object.type) || isWallMounted(object.type))
       continue
+
     const other = rectOf(object.type, object.rotation, object.x, object.z)
     if (overlaps(rect.z0, rect.z1, other.z0, other.z1)) {
       if (other.x0 >= rect.x1 - EPSILON) positiveX = Math.min(positiveX, other.x0 - rect.x1)
@@ -164,6 +170,7 @@ const measure = (objects: SceneObject[], rect: Rect, ignoreId?: string): (Measur
   }
   const slot = (distance: number, from: [number, number, number], to: [number, number, number]) =>
     distance > EPSILON && distance <= MAX ? { from, to, d: distance } : null
+
   return [
     slot(positiveX, [rect.x1, HEIGHT, centreZ], [rect.x1 + positiveX, HEIGHT, centreZ]),
     slot(negativeX, [rect.x0, HEIGHT, centreZ], [rect.x0 - negativeX, HEIGHT, centreZ]),
@@ -186,6 +193,7 @@ const guides = (objects: SceneObject[], rect: Rect, ignoreId?: string): (Guide |
     if (object.id === ignoreId || isMarker(object.type) || isEdgeType(object.type)) continue
     if (getItem(object.type).isUnderlay || isOverhead(object.type) || isWallMounted(object.type))
       continue
+
     const other = rectOf(object.type, object.rotation, object.x, object.z)
     const otherCentreX = (other.x0 + other.x1) / 2
     const otherCentreZ = (other.z0 + other.z1) / 2
@@ -200,9 +208,11 @@ const guides = (objects: SceneObject[], rect: Rect, ignoreId?: string): (Guide |
           )
         )
           continue
+
         const [gapStart, gapEnd] = other.z0 >= rect.z1 ? [rect.z1, other.z0] : [other.z1, rect.z0]
         if (!bestX || distance < bestX.d)
           bestX = { d: distance, g: { from: [x, HEIGHT, gapStart], to: [x, HEIGHT, gapEnd] } }
+
         break
       }
     }
@@ -214,13 +224,16 @@ const guides = (objects: SceneObject[], rect: Rect, ignoreId?: string): (Guide |
           )
         )
           continue
+
         const [gapStart, gapEnd] = other.x0 >= rect.x1 ? [rect.x1, other.x0] : [other.x1, rect.x0]
         if (!bestZ || distance < bestZ.d)
           bestZ = { d: distance, g: { from: [gapStart, HEIGHT, z], to: [gapEnd, HEIGHT, z] } }
+
         break
       }
     }
   }
+
   return [bestX?.g ?? null, bestZ?.g ?? null]
 }
 
@@ -246,7 +259,9 @@ export const MeasureHints = ({ objects, type, x, z, rotation, ignoreId }: Props)
   const { gaps, lines } = useMemo(() => {
     if (isOverhead(type) || isWallMounted(type) || isMarker(type))
       return { gaps: [null, null, null, null], lines: [null, null] }
+
     const rect = rectOf(type, rotation, x, z)
+
     return { gaps: measure(objects, rect, ignoreId), lines: guides(objects, rect, ignoreId) }
   }, [objects, type, x, z, rotation, ignoreId])
 

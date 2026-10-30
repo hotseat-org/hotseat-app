@@ -72,23 +72,28 @@ const useLighterWhileMoving = () => {
       pass.autoDetectTransparency = false
       pass.configuration.transparencyAware = false
     }
+
     const last = view.current
     if (
       !hasMatrixMoved(last.world, camera.matrixWorld) &&
       !hasMatrixMoved(last.projection, camera.projectionMatrix)
     )
       return
+
     last.world.copy(camera.matrixWorld)
     last.projection.copy(camera.projectionMatrix)
     pass.configuration.denoiseIterations = DENOISE_MOVING
     if (tiltShift.current) tiltShift.current.samples = TILT_SAMPLES_MOVING
+
     clearTimeout(settle.current ?? undefined)
     settle.current = setTimeout(() => {
       pass.configuration.denoiseIterations = DENOISE_STILL
       if (tiltShift.current) tiltShift.current.samples = TILT_SAMPLES_STILL
+
       invalidate()
     }, SETTLE)
   })
+
   return { occlusion, tiltShift }
 }
 
@@ -104,6 +109,7 @@ const useLighterWhileMoving = () => {
  */
 export const PostFx = ({ highQuality = false }: Props) => {
   const { occlusion, tiltShift } = useLighterWhileMoving()
+
   return (
     <SilentBoundary>
       {/* 2× MSAA: enough for the soft, rounded furniture; the composer's

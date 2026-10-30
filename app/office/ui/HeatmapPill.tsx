@@ -18,12 +18,15 @@ export const HeatmapPill = ({ isDark, className }: { isDark: boolean; className?
 
   useEffect(() => {
     if (!heatmap || isInsightsOpen) return
+
     const onKey = (event: KeyboardEvent) => event.key === "Escape" && setHeatmap(null)
     window.addEventListener("keydown", onKey)
+
     return () => window.removeEventListener("keydown", onKey)
   }, [heatmap, isInsightsOpen, setHeatmap])
 
   if (!heatmap) return null
+
   return (
     <div
       role="status"

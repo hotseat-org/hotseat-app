@@ -55,16 +55,20 @@ export const CameraFit = ({ insets = NO_INSETS }: { insets?: FitInsets }) => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key.toLowerCase() !== "f" || event.metaKey || event.ctrlKey || event.altKey) return
       if (isTypingTarget(event.target)) return
+
       store.getState().requestFit()
     }
     window.addEventListener("keydown", onKey)
+
     return () => window.removeEventListener("keydown", onKey)
   }, [store])
 
   useEffect(() => {
     if (!controls) return
+
     const objects = store.getState().objects
     if (objects.length === 0) return
+
     const instant = !didInitial.current
     didInitial.current = true
 
@@ -72,6 +76,7 @@ export const CameraFit = ({ insets = NO_INSETS }: { insets?: FitInsets }) => {
     const box = new Box3()
     for (const object of objects) {
       if (isMarker(object.type)) continue
+
       let halfX: number
       let halfZ: number
       if (isEdgeType(object.type)) {
@@ -87,6 +92,7 @@ export const CameraFit = ({ insets = NO_INSETS }: { insets?: FitInsets }) => {
         const [cellsX, cellsZ] = footprintCells(object.type, object.rotation)
         ;[halfX, halfZ] = [(cellsX * GRID) / 2, (cellsZ * GRID) / 2]
       }
+
       box.expandByPoint(new Vector3(object.x - halfX, 0, object.z - halfZ))
       box.expandByPoint(new Vector3(object.x + halfX, WALL.height, object.z + halfZ))
     }
@@ -97,6 +103,7 @@ export const CameraFit = ({ insets = NO_INSETS }: { insets?: FitInsets }) => {
   const frameRequest = useEditorStore((state) => state.frameRequest)
   useEffect(() => {
     if (!controls || !frameRequest) return
+
     const { bounds } = frameRequest
     frame(
       new Box3(new Vector3(bounds.x0, 0, bounds.z0), new Vector3(bounds.x1, 1, bounds.z1)),
@@ -107,6 +114,7 @@ export const CameraFit = ({ insets = NO_INSETS }: { insets?: FitInsets }) => {
   /** Move the view onto `box` (animated unless `instant`), keeping the angle. */
   function frame(box: Box3, instant: boolean) {
     if (!controls) return
+
     const center = box.getCenter(new Vector3()).setY(0)
 
     // Keep the viewing angle: move camera + target together onto the centre.
@@ -144,8 +152,10 @@ export const CameraFit = ({ insets = NO_INSETS }: { insets?: FitInsets }) => {
     if (instant) {
       apply(to, camera, controls)
       invalidate()
+
       return
     }
+
     anim.current = {
       t: 0,
       from: {
@@ -161,6 +171,7 @@ export const CameraFit = ({ insets = NO_INSETS }: { insets?: FitInsets }) => {
   useFrame((_, delta) => {
     const animation = anim.current
     if (!animation || !controls) return
+
     animation.t = Math.min(1, animation.t + delta / DURATION)
     const eased = 1 - Math.pow(1 - animation.t, 3) // ease-out
     apply(
@@ -173,6 +184,7 @@ export const CameraFit = ({ insets = NO_INSETS }: { insets?: FitInsets }) => {
       controls
     )
     if (animation.t >= 1) anim.current = null
+
     invalidate()
   })
 

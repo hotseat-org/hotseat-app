@@ -22,6 +22,7 @@ interface Bounds {
 
 const boundsOf = (type: ObjectType, rotation: number, x: number, z: number): Bounds => {
   const [cellsX, cellsZ] = footprintCells(type, rotation)
+
   return {
     x0: x - (cellsX * GRID) / 2,
     x1: x + (cellsX * GRID) / 2,
@@ -34,6 +35,7 @@ const boundsOf = (type: ObjectType, rotation: number, x: number, z: number): Bou
 /** The lines a piece offers along one axis: its two edges and its centre. */
 const linesOf = (bounds: Bounds, axis: "x" | "z") => {
   const [low, high] = axis === "x" ? [bounds.x0, bounds.x1] : [bounds.z0, bounds.z1]
+
   return bounds.isTurned ? [(low + high) / 2] : [low, (low + high) / 2, high]
 }
 
@@ -75,6 +77,7 @@ export const AlignmentGuides = ({ objects, type, x, z, rotation, ignoreId }: Pro
           linesOf(other, axis).some((value) => Math.abs(value - at) < SAME)
         )
         if (aligned.length === 0) continue
+
         const ends = [moving, ...aligned].flatMap(across)
         const from = Math.min(...ends)
         const to = Math.max(...ends)
@@ -91,6 +94,7 @@ export const AlignmentGuides = ({ objects, type, x, z, rotation, ignoreId }: Pro
         )
       }
     }
+
     return result
   }, [objects, type, x, z, rotation, ignoreId])
 

@@ -48,6 +48,7 @@ export const CustomBooking = () => {
   const desk = customBooking ? objects.find((object) => object.id === customBooking.id) : undefined
   const isPhone = useIsMobile()
   if (!desk) return null
+
   return (
     <Modal.Backdrop isOpen onOpenChange={(isOpen) => !isOpen && close()} isDismissable>
       <Modal.Container
@@ -95,20 +96,25 @@ const CustomBookingBody = ({
     const describe = (day: Day): Cell => {
       if (day < today) return { kind: "closed", day, label: "" }
       if (day > lastDay) return { kind: "closed", day, label: t("Not open") }
+
       const state = deskState(desk, day, byDay, released)
       if (state.kind !== "free" && state.email === me) return { kind: "yours", day }
+
       // Where you already sit that day (booking here moves you).
       const currentDesk = desks.find((resident) => {
         const status = deskState(resident, day, byDay, released)
+
         return status.kind !== "free" && status.email === me
       })
       if (state.kind === "free")
         return { kind: "free", day, isWeekend: isWeekend(day), currentDesk }
+
       const holder = personByEmail(people, state.email)?.name.split(" ")[0] ?? t("Someone")
       // Already seated elsewhere: nothing to move you to.
       const alternative = currentDesk
         ? undefined
         : findNearestFreeDesk(desk, desks, day, byDay, released)
+
       return { kind: "taken", day, holder, alternative }
     }
     const generatedWeeks: { start: Day; number: number; cells: Cell[] }[] = []
@@ -118,6 +124,7 @@ const CustomBookingBody = ({
         number: weekNumber(start),
         cells: [0, 1, 2, 3, 4, 5, 6].map((i) => describe(addDays(start, i))),
       })
+
     return generatedWeeks
   }, [objects, desk, today, lastDay, byDay, released, me, people, t])
 
@@ -130,6 +137,7 @@ const CustomBookingBody = ({
 
   const [picked, setPicked] = useState<Set<Day>>(() => {
     const shown = cells.find((cell) => cell.day === booking.day)
+
     return new Set(shown && isPickable(shown) ? [shown.day] : [])
   })
   const toggle = (day: Day) =>
@@ -137,6 +145,7 @@ const CustomBookingBody = ({
       const next = new Set(prev)
       if (next.has(day)) next.delete(day)
       else next.add(day)
+
       return next
     })
   // Pick all of a group, or clear it when it's all picked already.
@@ -148,6 +157,7 @@ const CustomBookingBody = ({
         if (isFull) next.delete(cell.day)
         else next.add(cell.day)
       }
+
       return next
     })
 
@@ -161,6 +171,7 @@ const CustomBookingBody = ({
 
   const reserve = () => {
     if (!me) return
+
     const byDesk = new Map<string, Day[]>()
     for (const cell of pickedCells) {
       const deskId = cell.kind === "taken" ? cell.alternative?.id : desk.id
@@ -231,6 +242,7 @@ const CustomBookingBody = ({
                 const tooltip = isFull
                   ? t("Clear {every}", { every: lowerFirst(column.every) })
                   : t("Pick {every}", { every: lowerFirst(column.every) })
+
                 return column.days.length ? (
                   <WithTooltip key={column.short} tip={tooltip}>
                     <button
@@ -265,6 +277,7 @@ const CustomBookingBody = ({
               const tooltip = isFull
                 ? t("Clear week {n}", { n: week.number })
                 : t("Pick all of week {n}", { n: week.number })
+
               return (
                 <div key={week.start} className={GRID}>
                   <WithTooltip tip={workdays.length ? tooltip : undefined}>

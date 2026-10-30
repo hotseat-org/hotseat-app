@@ -34,6 +34,7 @@ const SHADOW_TEXEL = 0.012
 const getShadowArea = (reach: number, maxMapSize: number) => {
   const half = Math.min(MAX_SHADOW_HALF, Math.max(MIN_SHADOW_HALF, reach + SHADOW_MARGIN))
   const wanted = 2 ** Math.ceil(Math.log2((2 * half) / SHADOW_TEXEL))
+
   return { half, mapSize: Math.min(maxMapSize, Math.max(1024, wanted)) }
 }
 
@@ -47,6 +48,7 @@ export const Lighting = ({ profile: profile, centre = [0, 0], reach = 0 }: Props
   useLayoutEffect(() => {
     const light = sun.current
     if (!light) return
+
     light.target.position.set(centreX, 0, centreZ)
     light.target.updateMatrixWorld()
   }, [centreX, centreZ])
@@ -57,6 +59,7 @@ export const Lighting = ({ profile: profile, centre = [0, 0], reach = 0 }: Props
   useLayoutEffect(() => {
     const light = sun.current
     if (!light) return
+
     const { camera, mapSize: size } = light.shadow
     camera.left = camera.bottom = -half
     camera.right = camera.top = half
@@ -69,8 +72,10 @@ export const Lighting = ({ profile: profile, centre = [0, 0], reach = 0 }: Props
       light.shadow.map?.dispose()
       light.shadow.map = null
     }
+
     markShadowsDirty(renderer, invalidate)
   }, [half, mapSize, renderer, invalidate])
+
   return (
     <>
       <color attach="background" args={[background ?? profile.sky]} />

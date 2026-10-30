@@ -29,6 +29,7 @@ export const useDesksOnDay = () => {
   const day = useEditorStore((state) => state.booking.day)
   const byDay = useEditorStore((state) => state.booking.byDay)
   const released = useEditorStore((state) => state.booking.released)
+
   return useMemo(() => {
     const desks: DeskOnDay[] = objects
       .filter((piece) => isSeatable(piece.type))
@@ -36,6 +37,7 @@ export const useDesksOnDay = () => {
     const byPerson = new Map<string, DeskOnDay>()
     for (const entry of desks)
       if (entry.state.kind !== "free") byPerson.set(entry.state.email, entry)
+
     return { desks, byPerson }
   }, [objects, day, byDay, released])
 }
@@ -47,10 +49,12 @@ export const useDesksOnDay = () => {
  */
 export const useDeskFilter = () => {
   const filter = useEditorStore((state) => state.deskFilter)
+
   return useCallback(
     (desk: Pick<SceneObject, "features" | "zone">) => {
       const zones = filter.filter((option) => option.startsWith(ZONE_FILTER_PREFIX))
       if (zones.length && !zones.includes(`${ZONE_FILTER_PREFIX}${desk.zone}`)) return false
+
       return filter
         .filter((option) => !option.startsWith(ZONE_FILTER_PREFIX))
         .every((option) => desk.features?.includes(option))
@@ -64,6 +68,7 @@ export const useGivenUpDesk = (email?: string) => {
   const objects = useEditorStore((state) => state.objects)
   const day = useEditorStore((state) => state.booking.day)
   const released = useEditorStore((state) => state.booking.released)
+
   return email
     ? objects.find((piece) => piece.assignee === email && released[day]?.[piece.id] === email)
     : undefined
@@ -75,9 +80,11 @@ export const useWeekPresence = () => {
   const day = useEditorStore((state) => state.booking.day)
   const byDay = useEditorStore((state) => state.booking.byDay)
   const released = useEditorStore((state) => state.booking.released)
+
   return useMemo(() => {
     // No day yet (booking not set up — standalone, or the first render).
     if (!day) return { days: [] as Day[], isIn: () => false }
+
     const monday = weekStart(day)
     const days: Day[] = [0, 1, 2, 3, 4].map((i) => addDays(monday, i))
     const desks = objects.filter((piece) => isSeatable(piece.type))
@@ -87,11 +94,13 @@ export const useWeekPresence = () => {
         new Set(
           desks.flatMap((desk) => {
             const state = deskState(desk, date, byDay, released)
+
             return state.kind === "free" ? [] : [state.email]
           })
         ),
       ])
     )
+
     return { days, isIn: (email: string, date: Day) => present.get(date)?.has(email) ?? false }
   }, [objects, day, byDay, released])
 }
@@ -117,6 +126,7 @@ export const useWaitlist = () => {
     desks.length > 0 &&
     !desks.some((entry) => entry.state.kind === "free")
   const isWaiting = preferences.waiting.includes(day)
+
   return {
     canWait: isFull && !!me && !byPerson.has(me) && !isResident && !isWaiting,
     isWaiting,

@@ -31,8 +31,10 @@ export const Steam = ({ position, size = 1 }: Props) => {
     // Reduced motion: a still, faint plume (set once by the first frame below).
     if (reduced.current) {
       invalidate()
+
       return
     }
+
     return subscribeAmbient(invalidate)
   }, [invalidate])
 
@@ -40,6 +42,7 @@ export const Steam = ({ position, size = 1 }: Props) => {
     const time = reduced.current ? 1 : clock.elapsedTime + seed.current
     puffs.current.forEach((puff, i) => {
       if (!puff) return
+
       const progress = (time / PERIOD + i / PUFFS) % 1
       puff.position.set(
         Math.sin(progress * 5 + i) * 0.025,

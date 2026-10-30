@@ -27,6 +27,7 @@ export const Window = ({ color = "#f4efe6", wallFront, wallBack }: Props) => {
   const front = wallFront ?? themed
   const back = wallBack ?? themed
   const glassH = HEAD - SILL
+
   return (
     <group>
       {/* Wall below the sill (sunk like the walls, no contact gap); its top

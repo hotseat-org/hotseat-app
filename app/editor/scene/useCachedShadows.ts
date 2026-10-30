@@ -16,6 +16,7 @@ export const useCachedShadows = (readOnly: boolean, dark: boolean) => {
   useLayoutEffect(() => {
     renderer.shadowMap.autoUpdate = false
     markShadowsDirty(renderer, invalidate)
+
     return storeApi.subscribe((state, prev) => {
       if (state.objects !== prev.objects || state.timeOfDay !== prev.timeOfDay)
         markShadowsDirty(renderer, invalidate)

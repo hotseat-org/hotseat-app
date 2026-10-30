@@ -156,6 +156,7 @@ const starsGeometry = (stars: Float32Array) => {
   const geometry = new THREE.BufferGeometry()
   geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3))
   geometry.setAttribute("brightness", new THREE.BufferAttribute(brightness, 1))
+
   return geometry
 }
 
@@ -203,6 +204,7 @@ const segmentsGeometry = (minor: Float32Array, major: Float32Array) => {
   geometry.setAttribute("isEnd", new THREE.BufferAttribute(ends, 1))
   geometry.setAttribute("isMajor", new THREE.BufferAttribute(majors, 1))
   geometry.setIndex(new THREE.BufferAttribute(indices, 1))
+
   return geometry
 }
 
@@ -218,6 +220,7 @@ const isInside = ([x, z]: [number, number], loop: [number, number][]) => {
     )
       inside = !inside
   }
+
   return inside
 }
 
@@ -229,6 +232,7 @@ const plateauGeometry = (loops: [number, number][][]) => {
   const toPath = (loop: [number, number][], path: THREE.Path) => {
     loop.forEach(([x, z], i) => (i ? path.lineTo(x, z) : path.moveTo(x, z)))
     path.closePath()
+
     return path
   }
   const shapes: THREE.Shape[] = []
@@ -245,6 +249,7 @@ const plateauGeometry = (loops: [number, number][][]) => {
   const geometry = new THREE.ShapeGeometry(shapes)
   // Shapes are drawn in XY; lay them on the ground (y up, z towards the viewer).
   geometry.rotateX(Math.PI / 2)
+
   return geometry
 }
 
@@ -290,6 +295,7 @@ export const Contours = ({ isEditing = false }: { isEditing?: boolean }) => {
   linesMaterial.uniforms.resolution.value.set(size.width * pixelRatio, size.height * pixelRatio)
   useFrame(({ camera }) => {
     if (!getViewCentre(camera, viewCentre)) return
+
     const tileX = Math.floor(viewCentre.x / TILE)
     const tileZ = Math.floor(viewCentre.z / TILE)
     if (tileX !== centreTile[0] || tileZ !== centreTile[1]) setCentreTile([tileX, tileZ])
@@ -303,6 +309,7 @@ export const Contours = ({ isEditing = false }: { isEditing?: boolean }) => {
     geometries.current.clear()
     cacheFor.current = land
   }
+
   const [cellsX, cellsZ] = centreTile
   const tiles = tilesCovering(
     (cellsX - REACH) * TILE,
@@ -316,6 +323,7 @@ export const Contours = ({ isEditing = false }: { isEditing?: boolean }) => {
       geometry = toGeometry(land.tile(tileX, tileZ))
       geometries.current.set(key, geometry)
     }
+
     return { key, ...geometry }
   })
   // Free tiles that drifted out of reach.

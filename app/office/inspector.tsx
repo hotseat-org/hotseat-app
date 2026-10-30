@@ -81,6 +81,7 @@ const SeatSection = ({ id }: { id: string }) => {
   const describe = (list: typeof bookings) =>
     list.map((booking) => `${nameOf(booking.email)} (${format.short(booking.day)})`).join(", ")
   if (!seat) return null
+
   return (
     <div className="mb-4 flex flex-col gap-2">
       <div className="flex items-center justify-between">
@@ -109,6 +110,7 @@ const SeatSection = ({ id }: { id: string }) => {
       <div className="flex flex-wrap gap-1.5">
         {DESK_FEATURES.map((feature) => {
           const isActive = !!seat.features?.includes(feature.id)
+
           return (
             <button
               key={feature.id}
@@ -201,6 +203,7 @@ const SeatSection = ({ id }: { id: string }) => {
 const RetiredDeskNote = ({ id, type }: { id: string; type: string }) => {
   const { t } = useI18n()
   const replaceWithWorkstation = useEditorStore((state) => state.replaceWithWorkstation)
+
   return (
     <div className="mb-4 rounded-xl bg-warning/10 p-3 text-xs leading-snug text-foreground">
       <p>
@@ -236,10 +239,12 @@ const ZoneSection = () => {
   const zones = useMemo(() => getZones(objects), [objects])
   const desks = useMemo(() => {
     const ids = new Set(selection)
+
     return objects.filter((object) => ids.has(object.id) && isSeatable(object.type))
   }, [objects, selection])
   const [draft, setDraft] = useState("")
   if (desks.length === 0) return null
+
   const ids = desks.map((desk) => desk.id)
   const zoneNames = new Set(desks.map((desk) => desk.zone ?? ""))
   const current = zoneNames.size === 1 ? [...zoneNames][0] : null
@@ -264,6 +269,7 @@ const ZoneSection = () => {
       <div className="flex flex-wrap gap-1.5">
         {zones.map((zone) => {
           const isOn = current === zone.name
+
           return (
             <button
               key={zone.name}
@@ -288,6 +294,7 @@ const ZoneSection = () => {
         onChange={(event) => setDraft(event.currentTarget.value)}
         onKeyDown={(event) => {
           if (event.key !== "Enter" || !draft.trim()) return
+
           setZone(ids, draft)
           setDraft("")
         }}

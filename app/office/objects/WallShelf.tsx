@@ -16,6 +16,7 @@ const HANG_HEIGHT = 0.88
 /** A floating wall shelf; its look decides what's on it. */
 export const WallShelf = ({ color = PALETTE.deskTop, variant }: Props) => {
   const lookIndex = look(variant, 3)
+
   return (
     <group position={[0, HANG_HEIGHT, WALL_FACE]}>
       <mesh position={[0, 0, DEPTH / 2]} castShadow receiveShadow>

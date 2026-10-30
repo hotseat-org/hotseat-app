@@ -15,12 +15,14 @@ import type { SceneLayer, SceneLayerProps, ViewClicks } from "~/editor/module"
 /** Who sits where, while the Desk tags layer is on. */
 const SeatTagsLayer = () => {
   const isShown = useEditorStore((state) => state.layers.deskTags)
+
   return isShown ? <SeatTags /> : null
 }
 
 /** Team zones, their floor tinted and their names, while the Zones layer is on. */
 const ZoneFloorLayer = ({ isEditing, isDark }: SceneLayerProps) => {
   const isShown = useEditorStore((state) => state.layers.zones)
+
   return isShown ? <ZoneFloor isEditing={isEditing} isDark={isDark} /> : null
 }
 
@@ -30,6 +32,7 @@ const SeatCardReset = ({ isEditing }: SceneLayerProps) => {
   useEffect(() => {
     store.getState().closeSeatCard()
   }, [isEditing, store])
+
   return null
 }
 
@@ -42,6 +45,7 @@ const RouteFraming = () => {
     if (route?.path) requestFrame(routeBounds(route.path.points))
     // Only when a way is asked for — not as it's recomputed.
   }, [routeNonce])
+
   return null
 }
 
@@ -61,6 +65,7 @@ export const OFFICE_SCENE_LAYERS: SceneLayer[] = [
 /** Viewing: who's in at each desk on the shown day (clutter, monitor, pet). */
 export const useOfficePieceStates = (isViewing: boolean) => {
   const { desks } = useDesksOnDay()
+
   return useMemo(
     () =>
       isViewing
@@ -74,6 +79,7 @@ export const useOfficePieceStates = (isViewing: boolean) => {
 export const useOfficeViewClicks = (): ViewClicks => {
   const openSeatCard = useEditorStore((state) => state.openSeatCard)
   const closeSeatCard = useEditorStore((state) => state.closeSeatCard)
+
   return {
     isClickable: (object) => isSeatable(object.type),
     onPiece: openSeatCard,

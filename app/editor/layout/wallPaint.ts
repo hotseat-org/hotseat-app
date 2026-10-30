@@ -12,6 +12,7 @@ import { composeFacePaint, getWallFaces, isPaintable, type WallFaces } from "./w
 export const wallBetweenJoints = (objects: SceneObject[], id: string): string[] => {
   const edge = objects.find((candidate) => candidate.id === id)
   if (!edge || !isEdgeType(edge.type)) return []
+
   const direction = edgeDirection(edge.rotation)
   const [stepX, stepZ] = edgeStep(edge.rotation)
   // Unit edges in this direction, by position → owning object; and the grid
@@ -34,6 +35,7 @@ export const wallBetweenJoints = (objects: SceneObject[], id: string): string[] 
       if (isPaintable(segment)) ids.add(segment.id)
       if (joints.has(`${x + (sign * stepX) / 2},${z + (sign * stepZ) / 2}`)) break
     }
+
   return [...ids]
 }
 
@@ -44,12 +46,15 @@ export const composeFacesToward = (
   toward: { x: number; z: number }
 ): WallPaint[] => {
   const byId = new Map(objects.map((object) => [object.id, object]))
+
   return ids.flatMap((id) => {
     const object = byId.get(id)
     if (!object) return []
+
     const side =
       Math.sin(object.rotation) * (toward.x - object.x) +
       Math.cos(object.rotation) * (toward.z - object.z)
+
     return [{ id, face: side >= 0 ? "front" : "back" }]
   })
 }
@@ -69,6 +74,7 @@ export const roomWalls = (
 ): WallPaint[] | null => {
   const edge = objects.find((candidate) => candidate.id === id)
   if (!edge || !isEdgeType(edge.type)) return null
+
   // Just off a segment's middle, to one side (and a hair along it, off the
   // diagonals a split square's parts meet on).
   const probe = (segment: SceneObject, side: number) => ({
@@ -84,18 +90,23 @@ export const roomWalls = (
     const at = probe(edge, side)
     const room = regions.find((cells) => isInRegion(cells, at.x, at.z))
     if (!room) continue
+
     return objects.flatMap((segment): WallPaint[] => {
       if (!isPaintable(segment)) return []
+
       const [isFrontIn, isBackIn] = [1, -1].map((side) => {
         const point = probe(segment, side)
+
         return isInRegion(room, point.x, point.z)
       })
       if (isFrontIn && isBackIn) return [{ id: segment.id }]
       if (isFrontIn) return [{ id: segment.id, face: "front" }]
       if (isBackIn) return [{ id: segment.id, face: "back" }]
+
       return []
     })
   }
+
   return null
 }
 
@@ -118,8 +129,10 @@ export const paintWallFaces = (
   const shown = objects.some((object) => faceOf.has(object.id) && isOpening(object.type))
     ? composeWallColors(objects).openings
     : null
+
   return objects.map((object) => {
     if (!faceOf.has(object.id)) return object
+
     const isOpeningPaint = isOpening(object.type)
     const [front, back] = (isOpeningPaint && shown?.get(object.id)) || getWallFaces(object)
     const face = faceOf.get(object.id)
@@ -132,6 +145,7 @@ export const paintWallFaces = (
       ? (["colorFront", "colorBack"] as const)
       : (["color", "colorFront", "colorBack"] as const)
     for (const key of keys) if (!(key in paintFields)) delete repainted[key]
+
     return repainted
   })
 }

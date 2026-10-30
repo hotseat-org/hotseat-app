@@ -11,12 +11,14 @@ export const EditorStoreContextProvider = EditorStoreContext.Provider
 export function useEditorStore<T>(selector: (state: EditorState) => T): T {
   const store = useContext(EditorStoreContext)
   if (!store) throw new Error("useEditorStore must be used within an OfficeEditor")
+
   return useStore(store, selector)
 }
 
 export function useEditorStoreApi(): EditorStore {
   const store = useContext(EditorStoreContext)
   if (!store) throw new Error("useEditorStoreApi must be used within an OfficeEditor")
+
   return store
 }
 
@@ -24,6 +26,7 @@ export function useEditorStoreApi(): EditorStore {
 export const useObjectsWithPaintPreview = () => {
   const objects = useEditorStore((state) => state.objects)
   const preview = useEditorStore((state) => state.paintPreview)
+
   return useMemo(
     () => (preview ? paintWallFaces(objects, preview.targets, preview.color) : objects),
     [objects, preview]

@@ -67,11 +67,13 @@ export const HeatPads = () => {
 
   const pads = useMemo(() => {
     if (!heatmap) return []
+
     return objects
       .filter((object) => isSeatable(object.type) && object.id in heatmap.ratios)
       .map((object) => {
         const [cellsX, cellsZ] = footprintCells(object.type, object.rotation)
         const ratio = heatmap.ratios[object.id]
+
         return {
           x: object.x,
           z: object.z,
@@ -99,6 +101,7 @@ export const HeatPads = () => {
       "padGlow",
       new THREE.InstancedBufferAttribute(new Float32Array(pads.length), 1)
     )
+
     return plane
   }, [pads.length])
   useEffect(() => () => geometry.dispose(), [geometry])
@@ -107,6 +110,7 @@ export const HeatPads = () => {
   useLayoutEffect(() => {
     const padMesh = mesh.current
     if (!padMesh) return
+
     const size = geometry.getAttribute("padSize") as THREE.InstancedBufferAttribute
     const color = geometry.getAttribute("padColor") as THREE.InstancedBufferAttribute
     const glow = geometry.getAttribute("padGlow") as THREE.InstancedBufferAttribute
@@ -124,6 +128,7 @@ export const HeatPads = () => {
   }, [pads, geometry, invalidate])
 
   if (!pads.length) return null
+
   return (
     <instancedMesh
       ref={mesh}

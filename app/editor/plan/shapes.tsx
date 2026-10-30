@@ -13,6 +13,7 @@ export const shade = (hex: string, factor: number) => {
     Math.round(Math.min(255, channel * factor))
       .toString(16)
       .padStart(2, "0")
+
   return `#${toHex((value >> 16) & 255)}${toHex((value >> 8) & 255)}${toHex(value & 255)}`
 }
 
@@ -20,10 +21,12 @@ export const shade = (hex: string, factor: number) => {
 export const mix = (hex: string, toward: string, amount: number) => {
   const rgb = (color: string) => {
     const value = parseInt(color.replace("#", ""), 16)
+
     return [(value >> 16) & 255, (value >> 8) & 255, value & 255]
   }
   const first = rgb(hex)
   const second = rgb(toward)
+
   return `#${first
     .map((channel, i) =>
       Math.round(channel + (second[i] - channel) * amount)

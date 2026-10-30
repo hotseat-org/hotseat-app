@@ -36,6 +36,7 @@ const STARS: [number, number, number, number][] = [
 const formatHour = (t: number) => {
   const hours = Math.floor(t) % 24
   const minutes = Math.round((t - Math.floor(t)) * 60)
+
   return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`
 }
 
@@ -57,6 +58,7 @@ export const SkySlider = ({
 }) => {
   const night = daylight(value).nightness
   const { t } = useI18n()
+
   return (
     <div
       className={clsx("sky-slider", className)}

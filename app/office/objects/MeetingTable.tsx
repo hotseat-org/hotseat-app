@@ -24,6 +24,7 @@ export const MeetingTable = ({ color = PALETTE.deskTop, variant }: Props) => {
     [-legOffsetX, legOffsetZ],
     [legOffsetX, legOffsetZ],
   ]
+
   return (
     <group>
       <RoundedBox

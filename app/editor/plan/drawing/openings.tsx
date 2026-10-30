@@ -34,6 +34,7 @@ export const drawOpenings = (
   /** An opening's wall faces, its own way round (themed where unpainted). */
   const facesOf = (opening: SceneObject): [string, string] => {
     const [front, back] = wallColors.openings.get(opening.id) ?? [undefined, undefined]
+
     return [front ?? wall, back ?? wall]
   }
   /** Built turned about from its line's way (the faces swap). */
@@ -42,11 +43,13 @@ export const drawOpenings = (
   /** An opening's faces, its line's way round (see facedWallPiece). */
   const lineFacesOf = (opening: SceneObject): [string, string] => {
     const [front, back] = facesOf(opening)
+
     return isTurnedFromLine(opening) ? [back, front] : [front, back]
   }
 
   for (const opening of objects) {
     if (!isOpening(opening.type)) continue
+
     const [startNode, endNode] = edgeNodes(opening)
     const frame = opening.type === "glassDoor" ? GLASS_DOOR_FRAME : PALETTE.doorFrame
     const leafColor = opening.type === "glassDoor" ? WINDOW_GLASS : PALETTE.doorLeaf
@@ -61,6 +64,7 @@ export const drawOpenings = (
         })
         continue
       }
+
       const span = Math.hypot(endNode.x - startNode.x, endNode.z - startNode.z)
       const along = { x: (endNode.x - startNode.x) / span, z: (endNode.z - startNode.z) / span }
       const lerp = (distance: number) => ({
@@ -89,6 +93,7 @@ export const drawOpenings = (
       )
       continue
     }
+
     const alongX = runsAlongX(opening.rotation)
     const fixed = alongX ? startNode.z : startNode.x
     const [from, to] = alongX
@@ -99,6 +104,7 @@ export const drawOpenings = (
       wallPiece(alongX, fixed, from, to, WINDOW_GLASS, { extend: -0.06, across: HALF_WALL * 0.35 })
       continue
     }
+
     wallPiece(alongX, fixed, from, from + POST, frame, { extend: 0 })
     wallPiece(alongX, fixed, to - POST, to, frame, { extend: 0 })
     // The leaf opens to the door's front (its +Z), hinged at the `from` jamb.

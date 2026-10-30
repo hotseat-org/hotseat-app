@@ -46,6 +46,7 @@ export const composeFacePaint = (
 ): Partial<SceneObject> => {
   const fields =
     front === back && !isOpeningPaint ? { color: front } : { colorFront: front, colorBack: back }
+
   return Object.fromEntries(Object.entries(fields).filter(([, value]) => value !== undefined))
 }
 

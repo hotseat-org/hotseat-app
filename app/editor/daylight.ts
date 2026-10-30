@@ -36,6 +36,7 @@ const channels = (color: string) => {
     const value = parseInt(color.slice(1), 16)
     rgb = [(value >> 16) & 255, (value >> 8) & 255, value & 255]
   } else rgb = color.slice(4, -1).split(",").map(Number)
+
   return rgb.map((channel) => toLinear(channel / 255))
 }
 const mix = (first: string, second: string, amount: number) => {
@@ -44,6 +45,7 @@ const mix = (first: string, second: string, amount: number) => {
   const [red, green, blue] = firstChannels.map((channel, i) =>
     Math.round(toSrgb(lerp(channel, secondChannels[i], clamp01(amount))) * 255)
   )
+
   return `rgb(${red},${green},${blue})`
 }
 
@@ -68,6 +70,7 @@ const sampleSky = (hour: number) => {
     if (hour >= startTime && hour <= endTime)
       return mix(startColor, endColor, (hour - startTime) / (endTime - startTime))
   }
+
   return SKY[0][1]
 }
 

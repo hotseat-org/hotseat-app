@@ -15,5 +15,6 @@ export const OfficeSync = ({ booking, people }: { booking?: EditorBooking; peopl
     store.getState().setPeople(people ?? NO_PEOPLE)
   }, [people, store])
   useBookingSync(booking, people)
+
   return null
 }

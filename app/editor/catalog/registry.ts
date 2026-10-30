@@ -96,6 +96,7 @@ export const getItemTypes = () => [...definitions.keys()] as ObjectType[]
 export const getItem = (type: ObjectType): ItemDefinition => {
   const definition = definitions.get(type)
   if (!definition) throw new Error(`No item "${type}" in the catalogue`)
+
   return definition
 }
 

@@ -47,6 +47,7 @@ const makeInitializer =
       {},
       ...modules.map((module) => module.createSlice?.(set, get) ?? {})
     ) as EditorState
+
     return {
       ...moduleSlices,
       ...createObjectsSlice(set, get, hooks, initialObjects),
@@ -80,6 +81,7 @@ export const createEditorStore = ({
   modules = [],
 }: CreateEditorStoreOptions = {}): EditorStore => {
   const initializer = makeInitializer(normalizeEdges(initialObjects), modules)
+
   return persistKey
     ? createStore<EditorState>()(
         persist(initializer, {
@@ -89,6 +91,7 @@ export const createEditorStore = ({
           // Upgrade layouts saved with old 1-unit wall segments.
           merge: (persisted, current) => {
             const persistedState = persisted as Partial<EditorState> | undefined
+
             return {
               ...current,
               ...persistedState,

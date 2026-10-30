@@ -26,13 +26,16 @@ export const findWallGrip = (objects: SceneObject[], x: number, z: number): stri
   let best: { id: string; distance: number } | null = null
   for (const piece of objects) {
     if (!isWall(piece.type)) continue
+
     const direction = edgeDirection(piece.rotation)
     if (direction !== "x" && direction !== "z") continue
+
     const along = direction === "x" ? Math.abs(x - piece.x) : Math.abs(z - piece.z)
     const across = direction === "x" ? Math.abs(z - piece.z) : Math.abs(x - piece.x)
     if (along > SEG / 2 || across > GRIP) continue
     if (!best || across < best.distance) best = { id: piece.id, distance: across }
   }
+
   return best?.id ?? null
 }
 
@@ -58,8 +61,10 @@ export const composeWallShift = (
 ): WallShift | null => {
   const grip = objects.find((piece) => piece.id === gripId)
   if (!grip || offset === 0) return null
+
   const direction = edgeDirection(grip.rotation)
   if (direction !== "x" && direction !== "z") return null
+
   const across = direction === "x" ? "z" : "x"
   const crossDirection = direction === "x" ? "z" : "x"
   const sign = Math.sign(offset)
@@ -87,6 +92,7 @@ export const composeWallShift = (
         ends.push(node)
         break
       }
+
       run.add(next)
       const [startNode, endNode] = edgeNodes(next)
       node = nodeKey(startNode.x, startNode.z) === nodeKey(node.x, node.z) ? endNode : startNode
@@ -100,6 +106,7 @@ export const composeWallShift = (
   const spanOf = (end: { x: number; z: number }) =>
     Array.from({ length: steps }, (_, index) => {
       const at = end[across] + sign * (index + 0.5) * SEG
+
       return across === "z"
         ? { x: end.x, z: at, rotation: crossRotation }
         : { x: at, z: end.z, rotation: crossRotation }
@@ -111,6 +118,7 @@ export const composeWallShift = (
   for (const end of ends) {
     const attached = (atNode.get(nodeKey(end.x, end.z)) ?? []).filter((edge) => !run.has(edge))
     if (attached.length === 0) continue // a free end
+
     const span = spanOf(end)
     const first = byUnit.get(edgeKey(span[0]))
     const rest = attached.filter((edge) => edge !== first)
@@ -119,6 +127,7 @@ export const composeWallShift = (
       const template = first ?? rest.find((edge) => isWall(edge.type)) ?? grip
       for (const unit of span) {
         if (byUnit.has(edgeKey(unit))) continue
+
         added.push({
           id: nanoid(8),
           type: isWall(template.type) ? template.type : runType,
@@ -133,6 +142,7 @@ export const composeWallShift = (
       for (const [index, unit] of span.entries()) {
         const wall = byUnit.get(edgeKey(unit))
         if (!wall || isOpening(wall.type)) return null
+
         removed.add(wall)
         const node =
           across === "z"
@@ -152,6 +162,7 @@ export const composeWallShift = (
   const shiftedMounts = new Set<string>()
   for (const piece of objects) {
     if (!isWallMounted(piece.type)) continue
+
     const walls = mountWalls(objects, piece.type, piece.x, piece.z, piece.rotation) ?? []
     if (walls.some((id) => removedIds.has(id))) return null
     if (walls.some((id) => runIds.has(id))) shiftedMounts.add(piece.id)
@@ -169,6 +180,7 @@ export const composeWallShift = (
   )
   const fresh = [...moved, ...added].flatMap(unitEdges)
   if (fresh.some((unit) => taken.has(edgeKey(unit)))) return null
+
   // …nor through furniture.
   const furniture = kept.filter((piece) => !isEdgeType(piece.type) && !shiftedMounts.has(piece.id))
   if (fresh.some((unit) => edgeBlocked(furniture, unit))) return null
@@ -178,5 +190,6 @@ export const composeWallShift = (
     ...moved,
     ...added,
   ]
+
   return { objects: next, runIds: [...runIds] }
 }

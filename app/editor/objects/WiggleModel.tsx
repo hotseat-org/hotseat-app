@@ -28,6 +28,7 @@ export const WiggleModel = ({ url, scale = 1, yOffset = 0, rotationOffset = 0 }:
 
   useEffect(() => {
     if (prefersReducedMotion()) return
+
     let timer: ReturnType<typeof setTimeout>
     const schedule = () => {
       timer = setTimeout(
@@ -36,12 +37,14 @@ export const WiggleModel = ({ url, scale = 1, yOffset = 0, rotationOffset = 0 }:
             elapsed.current = 0
             stopFrames.current = subscribeAmbient(invalidate)
           }
+
           schedule()
         },
         2500 + Math.random() * 5000
       )
     }
     schedule()
+
     return () => {
       clearTimeout(timer)
       stopFrames.current?.()
@@ -52,6 +55,7 @@ export const WiggleModel = ({ url, scale = 1, yOffset = 0, rotationOffset = 0 }:
   useFrame((state, delta) => {
     const group = ref.current
     if (!group || elapsed.current === null) return
+
     elapsed.current += Math.min(delta, 0.05)
     const seconds = elapsed.current
     if (seconds >= DURATION) {
@@ -60,8 +64,10 @@ export const WiggleModel = ({ url, scale = 1, yOffset = 0, rotationOffset = 0 }:
       elapsed.current = null
       stopFrames.current?.()
       stopFrames.current = null
+
       return
     }
+
     const decay = 1 - seconds / DURATION
     const wobble = Math.sin(seconds * 24) * 0.16 * decay
     group.rotation.z = wobble

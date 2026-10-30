@@ -50,6 +50,7 @@ export const Posts = () => {
         glass.push(box)
         continue
       }
+
       // One post — or, the walls' faces round it painted apart, four quarter
       // pillars, each in the paint of the faces looking into its corner.
       const quarters = (joints.get(key) ?? []).map((color) => color ?? surfaces.wall)
@@ -59,6 +60,7 @@ export const Posts = () => {
         add(quarters[0], box)
         continue
       }
+
       box.dispose()
       quarters.forEach((color, quarterIndex) => {
         const quarter = new BoxGeometry(SIZE / 2, WALL.height + WALL.sink, SIZE / 2)
@@ -72,8 +74,10 @@ export const Posts = () => {
     const merge = (boxes: BoxGeometry[]) => {
       const geometry = boxes.length ? mergeGeometries(boxes, false) : null
       boxes.forEach((box) => box.dispose())
+
       return geometry
     }
+
     return {
       solid: [...solid].map(([color, boxes]) => ({ color, geometry: merge(boxes) })),
       glass: merge(glass),

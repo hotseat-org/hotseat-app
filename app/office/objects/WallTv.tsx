@@ -40,6 +40,7 @@ const SCREENS: { bg: string; glow: number; tiles: [number, number, number, numbe
 /** A wall-mounted display. Its look picks what's on screen (or that it's off). */
 export const WallTv = ({ color = "#2c313c", variant }: Props) => {
   const screen = SCREENS[look(variant, SCREENS.length)]
+
   return (
     <group position={[0, HANG_HEIGHT, WALL_FACE]}>
       <RoundedBox

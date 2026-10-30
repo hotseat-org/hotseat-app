@@ -34,6 +34,7 @@ export const useFurnitureDrag = (readOnly: boolean) => {
   const putBack = () => {
     const start = dragStart.current
     if (!start) return
+
     storeApi.getState().moveObject(start.id, start.x, start.z, start.rotation)
     endDrag()
   }
@@ -41,6 +42,7 @@ export const useFurnitureDrag = (readOnly: boolean) => {
   const tryDrop = () => {
     const start = dragStart.current
     if (!start) return
+
     const all = storeApi.getState().objects
     const object = all.find((candidate) => candidate.id === start.id)
     if (
@@ -48,20 +50,25 @@ export const useFurnitureDrag = (readOnly: boolean) => {
       furnitureCollides(all, object.type, object.x, object.z, object.rotation, object.id)
     ) {
       setBlockedAt(performance.now())
+
       return putBack()
     }
+
     endDrag()
   }
 
   const handlePick = (id: string, event: ThreeEvent<PointerEvent>) => {
     if (dragStart.current) return
+
     const object = storeApi.getState().objects.find((candidate) => candidate.id === id)
     if (!object) return
+
     const hit = event.ray.intersectPlane(GROUND, new Vector3())
     const offset = hit ? { dx: object.x - hit.x, dz: object.z - hit.z } : { dx: 0, dz: 0 }
     const { clientX: x0, clientY: y0 } = event.nativeEvent
     const move = (moveEvent: PointerEvent) => {
       if (Math.hypot(moveEvent.clientX - x0, moveEvent.clientY - y0) <= DRAG_PX) return
+
       window.removeEventListener("pointermove", move)
       dragStart.current = { id, x: object.x, z: object.z, rotation: object.rotation }
       setGrab(offset)
@@ -95,8 +102,10 @@ export const useFurnitureDrag = (readOnly: boolean) => {
   // Esc while dragging: back where it was.
   useEffect(() => {
     if (!dragId) return
+
     const onKey = (event: KeyboardEvent) => event.key === "Escape" && latest.current.putBack()
     window.addEventListener("keydown", onKey)
+
     return () => window.removeEventListener("keydown", onKey)
   }, [dragId])
 
@@ -104,5 +113,6 @@ export const useFurnitureDrag = (readOnly: boolean) => {
     (id: string, event: ThreeEvent<PointerEvent>) => latest.current.handlePick(id, event),
     []
   )
+
   return { dragId, grab, blockedAt, onStartDrag }
 }

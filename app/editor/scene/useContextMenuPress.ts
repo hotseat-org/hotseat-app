@@ -27,6 +27,7 @@ export const useContextMenuPress = (readOnly: boolean) => {
   )
   useEffect(() => {
     if (readOnly) return
+
     const handleMove = (event: PointerEvent) => {
       const press = menuPress.current
       if (press && Math.hypot(event.clientX - press.x, event.clientY - press.y) > MENU_SLOP)
@@ -36,11 +37,13 @@ export const useContextMenuPress = (readOnly: boolean) => {
       const press = menuPress.current
       menuPress.current = null
       if (!press || event.button !== 2) return
+
       const state = storeApi.getState()
       if (press.targetId && !state.selection.includes(press.targetId)) {
         state.setTool("select")
         state.select(press.targetId)
       }
+
       state.openContextMenu({
         x: event.clientX,
         y: event.clientY,
@@ -50,10 +53,12 @@ export const useContextMenuPress = (readOnly: boolean) => {
     }
     window.addEventListener("pointermove", handleMove)
     window.addEventListener("pointerup", handleUp)
+
     return () => {
       window.removeEventListener("pointermove", handleMove)
       window.removeEventListener("pointerup", handleUp)
     }
   }, [readOnly, storeApi])
+
   return { pressMenu, onMenuPress }
 }

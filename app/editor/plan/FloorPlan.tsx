@@ -80,10 +80,12 @@ export const FloorPlan = ({
   useLayoutEffect(() => {
     const element = box.current
     if (!element) return
+
     const resizeObserver = new ResizeObserver(([entry]) =>
       setSize({ width: entry.contentRect.width, height: entry.contentRect.height })
     )
     resizeObserver.observe(element)
+
     return () => resizeObserver.disconnect()
   }, [])
 

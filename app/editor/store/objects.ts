@@ -47,6 +47,7 @@ export const createObjectsSlice = (
         state.objects,
         placed.filter((piece) => !isEdgeType(piece.type))
       )
+
       return { objects: [...state.objects, ...edges, ...furniture] }
     }),
 })

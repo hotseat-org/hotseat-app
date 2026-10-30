@@ -30,6 +30,7 @@ export const Occupant = ({
 }) => {
   const { t } = useI18n()
   const name = person ? (isMine ? t("You") : person.name) : t("Taken")
+
   return (
     <button
       type="button"
@@ -60,6 +61,7 @@ export const DeskTag = ({
   resident: boolean
 }) => {
   const { t } = useI18n()
+
   return (
     <div
       className={clsx(

@@ -20,6 +20,7 @@ const LOOKS: { coats: string[]; scarf?: string }[] = [
 /** A standing coat rack with coats hung on its hooks. */
 export const CoatRack = ({ color = PALETTE.deskLeg, variant }: Props) => {
   const outfit = LOOKS[look(variant, LOOKS.length)]
+
   return (
     <group>
       <mesh position={[0, HEIGHT / 2, 0]} castShadow>
@@ -53,6 +54,7 @@ export const CoatRack = ({ color = PALETTE.deskLeg, variant }: Props) => {
       ))}
       {outfit.coats.map((coatColor, i) => {
         const angle = i === 0 ? 0 : Math.PI / 2
+
         return (
           <group key={i} rotation={[0, angle, 0]} position={[0, 0, 0]}>
             <RoundedBox

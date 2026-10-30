@@ -18,6 +18,7 @@ interface Props {
 export const CommandSearch = ({ commands }: Props) => {
   const isOpen = useEditorStore((state) => state.isCommandSearchOpen)
   if (!isOpen) return null
+
   return <CommandSearchDialog commands={commands} />
 }
 
@@ -31,10 +32,11 @@ const CommandSearchDialog = ({ commands }: Props) => {
 
   const results = useMemo(() => {
     const state = store.getState()
+
     return commands
       .filter((command) => command.isAvailable(state))
       .map((command, order) => ({
-        command: command,
+        command,
         order,
         // Found by its shown (translated) name or its English one.
         score: Math.max(scoreMatch(t(command.label), query), scoreMatch(command.label, query)),
@@ -64,6 +66,7 @@ const CommandSearchDialog = ({ commands }: Props) => {
       event.preventDefault()
       const step = event.key === "ArrowDown" ? 1 : -1
       setActiveIndex((i) => (results.length ? (i + step + results.length) % results.length : 0))
+
       return
     }
     if (event.key === "Enter" && results[activeIndex]) {
@@ -122,6 +125,7 @@ const CommandSearchDialog = ({ commands }: Props) => {
           {results.map((command, index) => {
             const Icon = command.icon
             const isActive = index === activeIndex
+
             return (
               <li
                 key={command.id}

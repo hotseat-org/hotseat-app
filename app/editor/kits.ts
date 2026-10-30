@@ -34,11 +34,13 @@ const listeners = new Set<() => void>()
 
 const readKits = (): Kit[] => {
   if (cache) return cache
+
   try {
     cache = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]") as Kit[]
   } catch {
     cache = []
   }
+
   return cache
 }
 
@@ -54,6 +56,7 @@ const writeKits = (kits: Kit[]) => {
 
 const subscribe = (listener: () => void) => {
   listeners.add(listener)
+
   return () => listeners.delete(listener)
 }
 
@@ -75,6 +78,7 @@ const deleteLocalKit = (id: string) => writeKits(readKits().filter((kit) => kit.
 export const useKitLibrary = (): KitLibrary => {
   const library = useContext(KitLibraryContext)
   const localKits = useSyncExternalStore(subscribe, readKits, () => NO_KITS)
+
   return library ?? { kits: localKits, addKit: addLocalKit, deleteKit: deleteLocalKit }
 }
 
@@ -93,14 +97,17 @@ const bordersRoom = (object: SceneObject, cells: Set<string>) =>
       return (
         cells.has(cellKey(edge.x - SEG / 2, edge.z)) || cells.has(cellKey(edge.x + SEG / 2, edge.z))
       )
+
     return cells.has(cellKey(edge.x, edge.z))
   })
 
 const areaOf = (room: FloorCell[]) =>
   room.reduce((sum, cell) => {
     if (cell.parts === undefined) return sum + 1
+
     let count = 0
     for (let bits = cell.parts; bits; bits >>= 1) count += bits & 1
+
     return sum + count / 4
   }, 0) *
   SEG *
@@ -116,6 +123,7 @@ export const composeKit = (
     region.some((cell) => cellKey(x, z) === `${cell.x},${cell.z}`)
   )
   if (!room) return null
+
   const cells = new Set(room.map((cell) => `${cell.x},${cell.z}`))
   const inside = new Set(furnitureInRoomAt(objects, x, z))
   const picked = objects.filter((object) =>
@@ -128,6 +136,7 @@ export const composeKit = (
   const zs = room.map((cell) => cell.z)
   const centreX = Math.round((Math.min(...xs) + Math.max(...xs) + SEG) / 2 / SEG) * SEG
   const centreZ = Math.round((Math.min(...zs) + Math.max(...zs) + SEG) / 2 / SEG) * SEG
+
   return {
     id: nanoid(8),
     area: areaOf(room),
@@ -150,6 +159,7 @@ export const composeKit = (
 export const composeKitAt = (kit: Kit, x: number, z: number): SceneObject[] => {
   const deltaX = Math.round(x / SEG) * SEG
   const deltaZ = Math.round(z / SEG) * SEG
+
   return kit.objects.map((piece) => ({
     ...piece,
     id: nanoid(8),
@@ -165,7 +175,9 @@ export const composeKitAt = (kit: Kit, x: number, z: number): SceneObject[] => {
 export const canPlaceKit = (objects: SceneObject[], placed: SceneObject[]) => {
   const edges = placed.filter((piece) => isEdgeType(piece.type))
   if (edges.flatMap(unitEdges).some((edge) => edgeBlocked(objects, edge))) return false
+
   const withEdges = [...objects, ...edges]
+
   return placed
     .filter((piece) => !isEdgeType(piece.type))
     .every((piece) => !furnitureCollides(withEdges, piece.type, piece.x, piece.z, piece.rotation))

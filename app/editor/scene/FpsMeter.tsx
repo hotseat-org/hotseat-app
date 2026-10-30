@@ -48,6 +48,7 @@ export const FpsMeter = ({ onSample }: Props) => {
       render.apply(this, args)
       frame.current.renderEnd = performance.now()
     }
+
     return () => {
       renderer.render = render
       info.autoReset = true
@@ -66,6 +67,7 @@ export const FpsMeter = ({ onSample }: Props) => {
       sums.frames += 1
       sums.elapsed += now - last.current
     }
+
     renderer.info.reset()
     last.current = now
     timing.start = now

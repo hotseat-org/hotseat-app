@@ -102,6 +102,7 @@ export const createWallPieces = (push: Push) => {
     options: PieceOptions = {}
   ) => {
     if (front === back) return wallPiece(alongX, fixed, from, to, front, options)
+
     const half = (options.across ?? HALF_WALL) / 2
     wallPiece(alongX, fixed + half, from, to, front, { ...options, across: half })
     wallPiece(alongX, fixed - half, from, to, back, { ...options, across: half })
@@ -116,6 +117,7 @@ export const createWallPieces = (push: Push) => {
     options: PieceOptions = {}
   ) => {
     if (front === back) return diagonalWallPiece(start, end, front, options)
+
     const half = (options.across ?? HALF_WALL) / 2
     const [normalX, normalZ] = [Math.sin(rotation) * half, Math.cos(rotation) * half]
     for (const [color, side] of [

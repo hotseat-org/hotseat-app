@@ -42,12 +42,14 @@ export const GhostWalls = ({ edges, grow = 0 }: Props) => {
             color: edge.tint ? TINT + edge.tint : TRANSLUCENT + (edge.color ?? ""),
           })
         )
+
     return [
       ...buildRuns(asObjects("wall"), TRANSLUCENT).map((run) => ({ ...run, isGlass: false })),
       ...buildRuns(asObjects("glassWall"), TRANSLUCENT).map((run) => ({ ...run, isGlass: true })),
     ]
   }, [edges])
   const pieces = edges.filter((edge) => edge.type !== "wall" && edge.type !== "glassWall")
+
   return (
     <>
       {runs.map((run) => (
@@ -86,6 +88,7 @@ const GhostRun = ({ run, grow }: { run: Run & { isGlass: boolean }; grow: number
     })
   })
   const margin = isTinted ? grow : 0
+
   return (
     <GhostContext.Provider value={mode}>
       <group ref={ref} position={[run.x, 0, run.z]} rotation={[0, run.rotation, 0]}>

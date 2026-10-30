@@ -14,6 +14,7 @@ const DOORS = 4
 /** A bank of four tall lockers, each with a vent strip and a handle. */
 export const Lockers = ({ color = "#5f7d9a" }: Props) => {
   const doorWidth = WIDTH / DOORS
+
   return (
     <group>
       {/* Carcass */}
@@ -29,6 +30,7 @@ export const Lockers = ({ color = "#5f7d9a" }: Props) => {
       </RoundedBox>
       {Array.from({ length: DOORS }, (_, i) => {
         const x = -WIDTH / 2 + doorWidth * (i + 0.5)
+
         return (
           <group key={i} position={[x, HEIGHT / 2, DEPTH / 2]}>
             {/* Door face */}

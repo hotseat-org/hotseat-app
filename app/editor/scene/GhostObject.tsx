@@ -41,6 +41,7 @@ export const GhostObject = ({
       object.castShadow = false
     })
   })
+
   return (
     <GhostContext.Provider value={mode}>
       <group ref={ref} position={[x, 0, z]} rotation={[0, rotation, 0]} scale={scale}>

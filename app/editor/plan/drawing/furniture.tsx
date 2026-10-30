@@ -35,6 +35,7 @@ export const drawFurniture = (
 
   for (const object of objects) {
     if (isEdgeType(object.type) || isMarker(object.type)) continue
+
     const style = styleOf(object)
     const piece = drawPiece(
       object,
@@ -42,6 +43,7 @@ export const drawFurniture = (
       style?.isMuted ? subdue : undefined
     )
     if (!piece) continue
+
     const isPieceClickable = isClickable(object)
     const open = (event: React.MouseEvent) => {
       event.stopPropagation()
@@ -80,5 +82,6 @@ export const drawFurniture = (
         </g>
       )
   }
+
   return { shadows }
 }

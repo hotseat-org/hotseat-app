@@ -36,9 +36,11 @@ export const useSpotlight = ({
     const from = viewRef.current
     const { size: size, insets: padding } = frame.current
     if (!spotlight || !from || !size) return
+
     resetSpotlight()
     const target = findSpot(spotlight.id)
     if (!target) return
+
     const zoom = Math.min(MAX_K, Math.max(from.zoom, SPOTLIGHT_K))
     const centreX = padding.left + (size.width - padding.left - padding.right) / 2
     const centreY = padding.top + (size.height - padding.top - padding.bottom) / 2
@@ -49,6 +51,7 @@ export const useSpotlight = ({
     setHighlightId(spotlight.id)
     timer.current = setTimeout(() => setHighlightId(null), GLIDE_MS + SPOTLIGHT_MS)
   }, [spotlight, hasView, findSpot, resetSpotlight, glideTo, viewRef, frame])
+
   return highlightId
 }
 
@@ -73,6 +76,7 @@ export const useRouteFraming = ({
     const from = viewRef.current
     const { size: size, insets: padding } = frame.current
     if (!routePoints || !from || !size) return
+
     const bounds = routeBounds(routePoints)
     glideTo(
       from,

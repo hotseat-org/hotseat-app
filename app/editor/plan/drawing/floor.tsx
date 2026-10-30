@@ -29,6 +29,7 @@ export const drawFloor = (objects: SceneObject[], floorInside: string): ReactNod
         colorOf.set(`${cell.x},${cell.z}`, color)
         continue
       }
+
       // A square a diagonal wall cuts: just its quarters inside the room.
       const list = rooms.get(color) ?? []
       list.push(<path key={`cut ${cell.x},${cell.z}`} d={cutSquarePath(cell)} />)
@@ -56,10 +57,12 @@ export const drawFloor = (objects: SceneObject[], floorInside: string): ReactNod
         flush()
         start = x
       }
+
       prev = x
     }
     flush()
   }
+
   return [...rooms].map(([color, list]) => (
     <g key={color} fill={color}>
       {list}
@@ -77,6 +80,7 @@ const cutSquarePath = (cell: FloorCell) => {
     [FLOOR_PART.north, [x1, z1], [x0, z1]],
     [FLOOR_PART.west, [x0, z1], [x0, z0]],
   ]
+
   return quarters
     .filter(([part]) => (cell.parts ?? 0) & part)
     .map(([, from, to]) => `M${from[0]} ${from[1]}L${to[0]} ${to[1]}L${centreX} ${centreZ}Z`)

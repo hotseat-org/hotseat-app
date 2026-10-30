@@ -48,6 +48,7 @@ const columnMaterial = (isDark: boolean) => {
       "#include <emissivemap_fragment>\ntotalEmissiveRadiance *= vColor.rgb;"
     )
   }
+
   return material
 }
 
@@ -65,6 +66,7 @@ export const HeatBars = () => {
 
   const bars = useMemo(() => {
     if (!heatmap) return []
+
     return objects
       .filter((object) => isSeatable(object.type) && object.id in heatmap.ratios)
       .map((object, i) => ({
@@ -120,6 +122,7 @@ export const HeatBars = () => {
     const columnMesh = columns.current
     const plateMesh = plates.current
     if (!columnMesh || !plateMesh) return
+
     bars.forEach((bar, i) => {
       columnMesh.setColorAt(i, bar.color)
       plateMesh.setMatrixAt(i, matrix.makeTranslation(bar.x, HEAT_BAR.base, bar.z))
@@ -127,6 +130,7 @@ export const HeatBars = () => {
       if (!isGrowing.current) columnMesh.setMatrixAt(i, columnMatrix(matrix, bar, 1))
     })
     if (columnMesh.instanceColor) columnMesh.instanceColor.needsUpdate = true
+
     columnMesh.instanceMatrix.needsUpdate = true
     plateMesh.instanceMatrix.needsUpdate = true
   }, [bars, matrix])
@@ -142,6 +146,7 @@ export const HeatBars = () => {
   useFrame(({ clock }) => {
     const columnMesh = columns.current
     if (!columnMesh || !isGrowing.current) return
+
     startedAt.current ??= clock.elapsedTime
     const elapsed = clock.elapsedTime - startedAt.current
     bars.forEach((bar, i) => {
@@ -159,6 +164,7 @@ export const HeatBars = () => {
   })
 
   if (!bars.length) return null
+
   return (
     <group raycast={() => null}>
       <instancedMesh

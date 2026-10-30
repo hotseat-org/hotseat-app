@@ -57,6 +57,7 @@ export const useBookingSync = (booking: EditorBooking | undefined, people: Peopl
   const firstDay = booking?.day
   useLayoutEffect(() => {
     if (!today || !from || !lastDay || !onReserve || !onCancel || !onRelease || !onReclaim) return
+
     const current = store.getState().booking
     store.getState().setBooking({
       enabled: true,
@@ -88,6 +89,7 @@ export const useBookingSync = (booking: EditorBooking | undefined, people: Peopl
   const shownDay = useEditorStore((state) => (state.booking.enabled ? state.booking.day : null))
   useEffect(() => {
     if (!shownDay || !today) return
+
     const url = new URL(window.location.href)
     if (shownDay === today) url.searchParams.delete("day")
     else url.searchParams.set("day", shownDay)

@@ -16,6 +16,7 @@ const solidWallAt = (walls: SceneObject[], pointX: number, pointZ: number) =>
     const length = Math.hypot(stepX, stepZ)
     const along = ((pointX - segment.x) * stepX + (pointZ - segment.z) * stepZ) / length
     const across = ((pointX - segment.x) * -stepZ + (pointZ - segment.z) * stepX) / length
+
     return Math.abs(across) <= ON_LINE && Math.abs(along) <= length / 2 + 1e-6
   })
 
@@ -45,8 +46,10 @@ export const mountWalls = (
     const offset = (i - (widthCells - 1) / 2) * SEG
     const wall = solidWallAt(walls, backX + along.x * offset, backZ + along.z * offset)
     if (!wall) return null
+
     ids.add(wall.id)
   }
+
   return [...ids]
 }
 
@@ -64,6 +67,7 @@ export const wallMount = (
   const id = nearestEdgeId(objects, pointX, pointZ, 0.8, isSolidWall)
   const wall = id && objects.find((candidate) => candidate.id === id)
   if (!wall) return null
+
   const [widthCells, depthCells] = getItem(type).footprint
   const depth = (depthCells * GRID) / 2
   if (isDiagonalEdge(wall.rotation)) {
@@ -76,6 +80,7 @@ export const wallMount = (
     const step = length / 2
     const snappedAlong =
       Math.round(((pointX - wall.x) * direction.x + (pointZ - wall.z) * direction.z) / step) * step
+
     return {
       x: wall.x + direction.x * snappedAlong + normal.x * side * depth,
       z: wall.z + direction.z * snappedAlong + normal.z * side * depth,
@@ -85,13 +90,16 @@ export const wallMount = (
   }
   if (runsAlongX(wall.rotation)) {
     const side = pointZ >= wall.z ? 1 : -1
+
     return {
       x: snapAxis(pointX, widthCells),
       z: wall.z + side * depth,
       rotation: side > 0 ? 0 : Math.PI,
     }
   }
+
   const side = pointX >= wall.x ? 1 : -1
+
   return {
     x: wall.x + side * depth,
     z: snapAxis(pointZ, widthCells),

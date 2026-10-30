@@ -19,6 +19,7 @@ export const useRepeatPlacement = (tool: Tool, isFurniture: boolean) => {
     isFurniture && placementPattern !== "single" && !isWallMounted(tool as ObjectType)
   const repeatPlan = useMemo(() => {
     if (!repeat || placementPattern === "single") return []
+
     return composeRepeat(
       tool as ObjectType,
       repeat.start.rotation ?? placementRotation,
@@ -29,6 +30,7 @@ export const useRepeatPlacement = (tool: Tool, isFurniture: boolean) => {
   }, [repeat, placementPattern, tool, placementRotation])
   const repeatBlocked = useMemo(() => {
     const placed: SceneObject[] = []
+
     return repeatPlan.map((point) => {
       const isBlocked = furnitureCollides(
         [...objects, ...placed],
@@ -39,8 +41,10 @@ export const useRepeatPlacement = (tool: Tool, isFurniture: boolean) => {
       )
       if (!isBlocked)
         placed.push({ id: `plan-${placed.length}`, type: tool as ObjectType, ...point })
+
       return isBlocked
     })
   }, [repeatPlan, objects, tool])
+
   return { repeat, setRepeat, isRepeating, repeatPlan, repeatBlocked }
 }

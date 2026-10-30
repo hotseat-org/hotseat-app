@@ -112,6 +112,7 @@ export const SELECTION_COMMANDS: Command[] = [
     icon: SquareDashedMousePointer,
     isAvailable: (state) => {
       const object = primaryOf(state)
+
       return (
         !!object &&
         isFurniture(object) &&
@@ -231,6 +232,7 @@ const PATTERN_COMMANDS: Command[] = (
 const composeToolCommands = (): Command[] => [
   ...(["select", "delete"] as const).map((tool) => {
     const meta = getToolMeta(tool)!
+
     return {
       id: `tool-${tool}`,
       label: meta.label,
@@ -257,6 +259,7 @@ const composePlaceCommands = (): Command[] =>
   getCatalogCategories().flatMap((category) =>
     category.types.map((type) => {
       const meta = getToolMeta(type)!
+
       return {
         id: `place-${type}`,
         label: meta.label,
@@ -303,6 +306,7 @@ export const toSearchText = (text: string) =>
 export const scoreMatch = (label: string, query: string): number => {
   const words = toSearchText(query).split(/\s+/).filter(Boolean)
   if (words.length === 0) return 1
+
   const text = toSearchText(label)
   const labelWords = text.split(/[\s/()·-]+/)
   let score = 0
@@ -311,5 +315,6 @@ export const scoreMatch = (label: string, query: string): number => {
     else if (text.includes(word)) score += 1
     else return 0
   }
+
   return score + (text.startsWith(words[0]) ? 1 : 0)
 }

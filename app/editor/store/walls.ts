@@ -70,9 +70,11 @@ export const createWallsSlice = (set: SetState, get: GetState): WallsSlice => ({
         const key = edgeKey(cell)
         // Skip existing edges, and never build a wall through furniture.
         if (taken.has(key) || edgeBlocked(state.objects, cell)) continue
+
         taken.add(key)
         fresh.push({ id: nanoid(8), type, x: cell.x, z: cell.z, rotation: cell.rotation, color })
       }
+
       return fresh.length ? { objects: [...state.objects, ...fresh] } : state
     }),
 
@@ -84,6 +86,7 @@ export const createWallsSlice = (set: SetState, get: GetState): WallsSlice => ({
         isEdgeType(object.type) && unitEdges(object).some((unit) => kill.has(edgeKey(unit)))
       const objects = dropOrphanMounts(state.objects.filter((object) => !isKilled(object)))
       if (objects.length === state.objects.length) return state
+
       return {
         objects,
         selectedId: objects.some((object) => object.id === state.selectedId)
@@ -96,7 +99,9 @@ export const createWallsSlice = (set: SetState, get: GetState): WallsSlice => ({
     set((state) => {
       const plan = openingPlan(state.objects, id, kind, pointX, pointZ)
       if (!plan) return state
+
       const added = plan.add.map((piece) => ({ ...piece, id: nanoid(8) }))
+
       return {
         objects: dropOrphanMounts([
           ...state.objects.filter((piece) => !plan.remove.includes(piece.id)),
@@ -109,8 +114,10 @@ export const createWallsSlice = (set: SetState, get: GetState): WallsSlice => ({
   liftOpening: (id) => {
     const opening = get().objects.find((candidate) => candidate.id === id)
     if (!opening || !isOpening(opening.type)) return null
+
     const plan = openingPlan(get().objects, id, opening.type)
     if (!plan) return null
+
     set((state) => ({
       objects: [
         ...state.objects.filter((candidate) => candidate.id !== id),
@@ -118,6 +125,7 @@ export const createWallsSlice = (set: SetState, get: GetState): WallsSlice => ({
       ],
       selectedId: state.selectedId === id ? null : state.selectedId,
     }))
+
     return opening
   },
 
@@ -125,9 +133,11 @@ export const createWallsSlice = (set: SetState, get: GetState): WallsSlice => ({
     const state = get()
     if (state.objects.some((candidate) => candidate.id === opening.id)) return true
     if (!isOpening(opening.type)) return false
+
     const wallId = nearestEdgeId(state.objects, pointX, pointZ, 0.6, (wall) => isWall(wall.type))
     const plan = wallId && openingPlan(state.objects, wallId, opening.type, pointX, pointZ)
     if (!plan) return false
+
     set({
       objects: [
         ...state.objects.filter((candidate) => !plan.remove.includes(candidate.id)),
@@ -135,6 +145,7 @@ export const createWallsSlice = (set: SetState, get: GetState): WallsSlice => ({
       ],
       selectedId: opening.id,
     })
+
     return true
   },
 
@@ -149,6 +160,7 @@ export const createWallsSlice = (set: SetState, get: GetState): WallsSlice => ({
       )
     )
     if (!region) return // outside any room
+
     const inRegion = (pointX: number, pointZ: number) =>
       region.some(
         (square) =>

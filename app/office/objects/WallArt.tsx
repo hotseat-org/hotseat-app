@@ -46,6 +46,7 @@ const ARTS: { bg: string; shapes: Shape[] }[] = [
 /** A framed abstract print. Its look picks the artwork. */
 export const WallArt = ({ color = "#c9946a", variant }: Props) => {
   const art = ARTS[look(variant, ARTS.length)]
+
   return (
     <group position={[0, HANG_HEIGHT, WALL_FACE]}>
       {/* Frame: the sides fit between the top and bottom bars — overlapping

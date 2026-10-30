@@ -12,6 +12,7 @@ const OPENING = WALL.width - POST * 2
  */
 export const Door = () => {
   const postX = WALL.width / 2 - POST / 2
+
   return (
     <group>
       {/* Side posts — a hair inside the lintel's front, back, top and end

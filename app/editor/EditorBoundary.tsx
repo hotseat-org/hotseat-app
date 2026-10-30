@@ -4,6 +4,7 @@ import { useI18n } from "~/i18n/I18nProvider"
 /** What shows instead of the editor (a function component: it needs the language). */
 const LoadFailed = () => {
   const { t } = useI18n()
+
   return (
     <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-[#dfe4ec] text-slate-600 dark:bg-[#20242e] dark:text-slate-300">
       <p className="text-sm">{t("The 3D editor failed to load.")}</p>
@@ -64,6 +65,7 @@ export class EditorBoundary extends Component<Props, State> {
     if (this.state.error) {
       return <LoadFailed />
     }
+
     return this.props.children
   }
 }

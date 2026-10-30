@@ -35,17 +35,22 @@ export const spotFor = (desk: SceneObject, seats: SceneObject[]): Spot => {
       0,
       desk.type === "workstation" ? WORKSTATION_SEAT_Z : DESKMATE_SEAT_Z
     )
+
     return { ...point, y: ON_SEAT, rotation: facingDesk }
   }
+
   const chair = findDeskChair(desk, seats)
   if (chair) return { x: chair.x, y: ON_SEAT, z: chair.z, rotation: chair.rotation }
+
   const floor = toWorld(desk, 0, 0.7)
+
   return { ...floor, y: 0, rotation: facingDesk }
 }
 
 /** The free-standing chair placed in front of a plain desk, if there is one. */
 export const findDeskChair = (desk: SceneObject, seats: SceneObject[]) => {
   const front = toWorld(desk, 0, DESK_CHAIR_Z)
+
   return seats
     .map((seat) => ({ s: seat, d: Math.hypot(seat.x - front.x, seat.z - front.z) }))
     .filter((candidate) => candidate.d <= CHAIR_REACH)

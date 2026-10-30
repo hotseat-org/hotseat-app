@@ -39,10 +39,13 @@ interface DeskInput {
  */
 export const composeOfficePieceStyles = ({ desks, bookable, matches }: DeskInput) => {
   const byId = new Map(desks.map((entry) => [entry.desk.id, entry]))
+
   return (object: SceneObject): PlanPieceStyle => {
     if (!isSeatable(object.type)) return { isMuted: true }
+
     const entry = byId.get(object.id)
     const isTaken = !!entry && entry.state.kind !== "free"
+
     return {
       isOccupied: bookable || isTaken ? isTaken : undefined,
       isDimmed: !matches(object),
@@ -96,9 +99,11 @@ export const composeOfficePlanDrawings = ({
         />
       )
     }
+
     const entry = byId.get(object.id)
     // Free to book (and not filtered out): the "+" ring on the seat.
     if (entry?.state.kind !== "free" || !bookable || !matches(object)) continue
+
     const spot = spotFor(object, seats)
     const radius = FREE_MARK
     markers.push(
@@ -127,6 +132,7 @@ export const composeOfficePlanDrawings = ({
       </g>
     )
   }
+
   return {
     floor: (
       <>
@@ -146,9 +152,11 @@ export const composeOccupants = (objects: SceneObject[], desks: DeskOnDay[]) => 
   for (const object of objects) {
     const entry = byId.get(object.id)
     if (!isSeatable(object.type) || !entry || entry.state.kind === "free") continue
+
     const spot = spotFor(object, seats)
     occupants.set(object.id, { id: object.id, x: spot.x, z: spot.z, email: entry.state.email })
   }
+
   return occupants
 }
 
@@ -156,6 +164,7 @@ export const composeOccupants = (objects: SceneObject[], desks: DeskOnDay[]) => 
 export const usePlanDesks = () => {
   const { desks } = useDesksOnDay()
   const turn = useEditorStore((state) => state.planTurn)
+
   return useMemo(
     () => desks.map((entry) => ({ ...entry, desk: turnObject(entry.desk, turn) })),
     [desks, turn]
@@ -173,8 +182,10 @@ const zoneAreasOf = new WeakMap<SceneObject[], ZoneArea[]>()
 export const usePlanZoneAreas = (objects: SceneObject[]) => {
   const isShown = useEditorStore((state) => state.layers.zones)
   if (!isShown) return []
+
   let areas = zoneAreasOf.get(objects)
   if (!areas) zoneAreasOf.set(objects, (areas = composeZoneAreas(objects)))
+
   return areas
 }
 
@@ -182,6 +193,7 @@ export const useOfficePieceStyles = () => {
   const desks = usePlanDesks()
   const bookable = usePlanBookable()
   const matches = useDeskFilter()
+
   return useMemo(
     () => composeOfficePieceStyles({ desks, bookable, matches }),
     [desks, bookable, matches]
@@ -201,6 +213,7 @@ export const useOfficePlanDrawings = ({
   const heatmap = useEditorStore((state) => state.heatmap)
   const areas = usePlanZoneAreas(objects)
   const freeTitle = t("Free — tap to book")
+
   return useMemo(
     () =>
       composeOfficePlanDrawings({

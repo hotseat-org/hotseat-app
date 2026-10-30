@@ -76,5 +76,6 @@ export const getSurfaceShader = (cutaway: CutawayKind | null) => {
     }
     cache.set(id, props)
   }
+
   return props
 }

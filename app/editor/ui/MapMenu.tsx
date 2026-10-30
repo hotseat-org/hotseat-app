@@ -165,6 +165,7 @@ export const MapMenu = ({
               const isLayerOn = isOn(row)
               const Icon = row.icon
               const hint = t(row.hintFor?.(objects) ?? row.hint)
+
               return (
                 <li key={row.id}>
                   <button

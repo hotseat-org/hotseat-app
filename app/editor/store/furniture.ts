@@ -58,9 +58,11 @@ export interface FurnitureSlice {
 export const settleTurn = (rawSet: SetState, get: GetState) => {
   const { pendingTurn: turn, selectedId, objects, past } = get()
   if (!turn || selectedId === turn.id) return
+
   const piece = objects.find((candidate) => candidate.id === turn.id)
   if (!piece || !furnitureCollides(objects, piece.type, piece.x, piece.z, piece.rotation, piece.id))
     return rawSet({ pendingTurn: null })
+
   const { x, z, rotation } = turn
   const isOnlyTurns = past.length === turn.historyLength + turn.steps
   rawSet({
@@ -83,6 +85,7 @@ export const createFurnitureSlice = (
   addObject: ({ type, x, z, rotation = 0, color, model }) => {
     // Don't place furniture inside existing furniture.
     if (furnitureCollides(get().objects, type, x, z, rotation)) return ""
+
     const id = nanoid(8)
     set((state) => ({
       objects: [
@@ -90,6 +93,7 @@ export const createFurnitureSlice = (
         ...hooks.prepareNewPieces(state.objects, [{ id, type, x, z, rotation, color, model }]),
       ],
     }))
+
     return id
   },
 
@@ -97,12 +101,14 @@ export const createFurnitureSlice = (
     const placed: SceneObject[] = []
     for (const { type, x, z, rotation = 0, color, model } of pieces) {
       if (furnitureCollides([...get().objects, ...placed], type, x, z, rotation)) continue
+
       placed.push({ id: nanoid(8), type, x, z, rotation, color, model })
     }
     if (placed.length)
       set((state) => ({
         objects: [...state.objects, ...hooks.prepareNewPieces(state.objects, placed)],
       }))
+
     return placed.length
   },
 
@@ -119,6 +125,7 @@ export const createFurnitureSlice = (
     // Walls/doors live on grid edges — turning one in place would leave it
     // off the edge grid, so they don't rotate.
     if (!piece || isEdgeType(piece.type)) return
+
     const rotation = toRotationStep(piece.rotation + ROTATION_STEP)
     // An odd×even footprint changes parity when turned; re-snap so it still
     // sits on whole grid squares. A turn into other furniture is allowed —
@@ -186,6 +193,7 @@ export const createFurnitureSlice = (
       const original = state.objects.find((piece) => piece.id === id)
       // Only furniture duplicates (a copied wall edge would be a stray segment).
       if (!original || isEdgeType(original.type)) return state
+
       // Drop the copy on the nearest free spot beside/around the original.
       const offsets = [1, 2, 3].flatMap((distance) => [
         [distance, 0],
@@ -206,11 +214,14 @@ export const createFurnitureSlice = (
           furnitureCollides(state.objects, original.type, snapped.x, snapped.z, original.rotation)
         )
           continue
+
         const [clone] = hooks.prepareNewPieces(state.objects, [
           { ...original, id: nanoid(8), ...snapped, variant: undefined },
         ])
+
         return { objects: [...state.objects, clone], selectedId: clone.id }
       }
+
       return state
     }),
 

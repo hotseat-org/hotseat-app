@@ -48,6 +48,7 @@ export const PhoneLayout = ({
   const isAllPicked = (group: Cell[]) =>
     group.length > 0 && group.every((cell) => picked.has(cell.day))
   const { t, format } = i18n
+
   return (
     <>
       <span aria-hidden className="mx-auto mt-2.5 h-1.5 w-10 shrink-0 rounded-full bg-border" />
@@ -76,6 +77,7 @@ export const PhoneLayout = ({
         </span>
         {columns.map((column) => {
           const isOn = isAllPicked(column.days)
+
           return (
             <button
               key={column.short}
@@ -101,6 +103,7 @@ export const PhoneLayout = ({
           const isOn = isAllPicked(workdays)
           const first = week.cells[0].day
           const last = week.cells[6].day
+
           return (
             <section
               key={week.start}
@@ -201,6 +204,7 @@ const PhoneDayCell = ({
         : cell.kind === "taken" // whose it is, by initial
           ? { look: "bg-muted text-background", mark: cell.holder[0] }
           : undefined
+
   return (
     <button
       type="button"

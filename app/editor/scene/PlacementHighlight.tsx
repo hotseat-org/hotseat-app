@@ -23,6 +23,7 @@ const chevron = () => {
   shape.lineTo(-0.12, -0.08)
   shape.lineTo(-0.2, -0.02)
   shape.closePath()
+
   return shape
 }
 

@@ -34,6 +34,7 @@ const ITEMS: [number, number, number, number, string][] = [
 export const ShelvingUnit = ({ color = "#e9e1d4" }: Props) => {
   const postOffsetX = WIDTH / 2 - POST / 2
   const postOffsetZ = DEPTH / 2 - POST / 2
+
   return (
     <group>
       {[-postOffsetX, postOffsetX].map((x) =>

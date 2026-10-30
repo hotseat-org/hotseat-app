@@ -51,6 +51,7 @@ export const buildScene = ({ wall, drawings, ...furnitureInput }: SceneInput) =>
   }
 
   const layered = sortBottomToTop(drawables)
+
   return {
     bounds,
     node: (

@@ -62,6 +62,7 @@ export const buildRuns = (walls: SceneObject[], defaultColor: string): Run[] => 
     const [front, back] = getWallFacesFrom(wall, {
       rotation: EDGE_ROTATION[edgeDirection(wall.rotation)],
     })
+
     return [front ?? defaultColor, back ?? defaultColor] as const
   }
   const groups = new Map<string, SceneObject[]>()
@@ -103,6 +104,7 @@ export const buildRuns = (walls: SceneObject[], defaultColor: string): Run[] => 
       }
     }
   }
+
   return runs
 }
 
@@ -151,13 +153,16 @@ const WallRuns = ({ runs }: { runs: Run[] }) => {
     for (const run of runs)
       for (const { color, geometry } of runGeometries(run))
         byColor.set(color, [...(byColor.get(color) ?? []), geometry])
+
     return [...byColor].map(([color, parts]) => {
       const geometry = mergeGeometries(parts, false)
       parts.forEach((part) => part.dispose())
+
       return { color, geometry }
     })
   }, [runs])
   useEffect(() => () => meshes.forEach((mesh) => mesh.geometry?.dispose()), [meshes])
+
   return (
     <CutawayContext.Provider value="mergedWall">
       {meshes.map(
@@ -185,12 +190,14 @@ const runGeometries = (run: Run) => {
           { color: run.back, depth: WALL.depth / 2, offset: -WALL.depth / 4 },
         ]
   const anchor = new Vector3(run.x, 0, run.z)
+
   return slabs.map(({ color, depth, offset }) => {
     // Sink the base slightly below the floor so there's no bright contact gap.
     const box = new BoxGeometry(run.length, WALL.height + WALL.sink, depth)
     box.translate(0, (WALL.height - WALL.sink) / 2, offset)
     box.rotateY(run.rotation)
     box.translate(anchor.x, 0, anchor.z)
+
     return { color, geometry: setCutAttributes(box, anchor, CUT_DIRECTION[run.direction]) }
   })
 }
@@ -218,8 +225,10 @@ const GlassRuns = ({ runs }: { runs: Run[] }) => {
     const merge = (parts: BufferGeometry[]) => {
       const geometry = parts.length ? mergeGeometries(parts, false) : null
       parts.forEach((part) => part.dispose())
+
       return geometry
     }
+
     return {
       frames: [...frames].map(([color, parts]) => ({ color, geometry: merge(parts) })),
       panes: merge(panes),
@@ -232,6 +241,7 @@ const GlassRuns = ({ runs }: { runs: Run[] }) => {
     },
     [meshes]
   )
+
   return (
     <>
       {meshes.frames.map(

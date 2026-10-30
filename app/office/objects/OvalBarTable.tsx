@@ -15,6 +15,7 @@ const HEIGHT = 1.04
 /** A long oval standing-height bar table on two pedestals with a foot rail. */
 export const OvalBarTable = ({ color = PALETTE.deskTop, variant }: Props) => {
   const legOffsetX = WIDTH / 2 - 0.45
+
   return (
     <group>
       <mesh

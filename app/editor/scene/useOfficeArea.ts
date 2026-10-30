@@ -8,6 +8,7 @@ import type { SceneObject } from "../types"
 export const useOfficeArea = (objects: SceneObject[]) =>
   useMemo((): { centre: [number, number]; reach: number } => {
     if (!objects.length) return { centre: [0, 0], reach: 0 }
+
     let x0 = Infinity
     let z0 = Infinity
     let x1 = -Infinity
@@ -18,6 +19,7 @@ export const useOfficeArea = (objects: SceneObject[]) =>
       x1 = Math.max(x1, object.x)
       z1 = Math.max(z1, object.z)
     }
+
     return {
       centre: [Math.round((x0 + x1) / 2), Math.round((z0 + z1) / 2)],
       reach: Math.ceil(Math.hypot(x1 - x0, z1 - z0) / 2),

@@ -35,6 +35,7 @@ export const openingPlan = (
       // Filled back in with the paint of the wall round it.
       const faces = glass ? undefined : composeWallColors(objects).openings.get(edge.id)
       const paint = faces ? composeFacePaint(faces) : {}
+
       return {
         remove: [edge.id],
         add: unitEdges(edge).map((unit) => ({ type: host, ...unit, ...paint })),
@@ -42,6 +43,7 @@ export const openingPlan = (
     }
     // Only what the wall round it takes (a window needs solid wall).
     if (!canHost(host, kind)) return null
+
     return {
       remove: [edge.id],
       add: [
@@ -58,6 +60,7 @@ export const openingPlan = (
     }
   }
   if (!isWall(edge.type) || !canHost(edge.type, kind)) return null
+
   const direction = edgeDirection(edge.rotation)
   const [stepX, stepZ] = edgeStep(edge.rotation)
   // The cursor's side of the segment, along the line, is tried first.
@@ -77,6 +80,7 @@ export const openingPlan = (
         candidate.z === nextZ
     )
     if (!partner) continue
+
     return {
       remove: [edge.id, partner.id],
       add: [
@@ -90,5 +94,6 @@ export const openingPlan = (
       ],
     }
   }
+
   return null
 }

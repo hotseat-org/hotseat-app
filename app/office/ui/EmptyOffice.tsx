@@ -53,6 +53,7 @@ const PICKS = [...TEMPLATES].sort(
 /** "24 desks" — or, for a layout without any, what it is instead. */
 const sizeOf = ({ t, tn }: Translator, template: OfficeTemplate) => {
   const desks = template.build().filter((object) => isSeatable(object.type)).length
+
   return desks ? tn(desks, "{n} desk", "{n} desks") : t("Meeting rooms only")
 }
 
@@ -82,6 +83,7 @@ export const EmptyOffice = ({ readOnly, isEditable, onEnterEdit, onDismiss }: Pr
     <div className="grid grid-cols-2 gap-2.5">
       {PICKS.map((template, i) => {
         const Icon = TEMPLATE_ICONS[template.id] ?? LayoutGrid
+
         return (
           <button
             key={template.id}

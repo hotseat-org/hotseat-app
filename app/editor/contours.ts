@@ -52,6 +52,7 @@ const hash = (first: number, second: number, seed: number) => {
     Math.imul(first, 374761393) ^ Math.imul(second, 668265263) ^ Math.imul(seed, 2246822519)
   bits = Math.imul(bits ^ (bits >>> 13), 1274126177)
   bits ^= bits >>> 16
+
   return (bits >>> 0) / 4294967296
 }
 
@@ -62,6 +63,7 @@ const emptyDistance = (x: number, z: number) => {
   const offsetZ = Math.abs(z) - (EMPTY.halfZ - EMPTY.radius)
   const distance =
     Math.hypot(Math.max(offsetX, 0), Math.max(offsetZ, 0)) + Math.min(Math.max(offsetX, offsetZ), 0)
+
   return Math.max(0, distance - EMPTY.radius + PLATEAU_MARGIN)
 }
 const emptyPlateau = (): [number, number][][] => {
@@ -78,6 +80,7 @@ const emptyPlateau = (): [number, number][][] => {
       const radians = (angle * Math.PI) / 180
       loop.push([centreX + Math.cos(radians) * radius, centreZ + Math.sin(radians) * radius])
     }
+
   return [loop]
 }
 
@@ -110,9 +113,11 @@ const smoothSegments = (flat: number[]) => {
       line.push(x, z)
       const next = (ends.get(key(x, z)) ?? []).find((candidate) => !used[candidate])
       if (next === undefined) break
+
       at = key(flat[next * 4], flat[next * 4 + 1]) === key(x, z) ? 2 : 0
       segment = next
     }
+
     return line
   }
   const lines: { points: number[]; closed: boolean }[] = []
@@ -135,6 +140,7 @@ const smoothSegments = (flat: number[]) => {
     for (let pass = 0; pass < 2; pass++) {
       const pointCount = smoothed.length / 2
       if (pointCount < 3) break
+
       const refined: number[] = closed ? [] : [smoothed[0], smoothed[1]]
       const last = closed ? pointCount : pointCount - 1
       for (let i = 0; i < last; i++) {
@@ -150,6 +156,7 @@ const smoothSegments = (flat: number[]) => {
         )
       }
       if (!closed) refined.push(smoothed[(pointCount - 1) * 2], smoothed[(pointCount - 1) * 2 + 1])
+
       smoothed = refined
     }
     const pointCount = smoothed.length / 2
@@ -163,6 +170,7 @@ const smoothSegments = (flat: number[]) => {
         smoothed[1]
       )
   }
+
   return new Float32Array(out)
 }
 
@@ -191,6 +199,7 @@ const trace = (grid: Float32Array, size: number, x0: number, z0: number): Contou
           (bottomRight > level ? 2 : 0) |
           (bottomLeft > level ? 1 : 0)
         if (code === 0 || code === 15) continue
+
         const x = x0 + i * CELL
         const z = z0 + j * CELL
         const at = (start: number, end: number) => (level - start) / (end - start)
@@ -235,6 +244,7 @@ const trace = (grid: Float32Array, size: number, x0: number, z0: number): Contou
         }
       }
   }
+
   return { minor: smoothSegments(minor), major: smoothSegments(major), stars: new Float32Array() }
 }
 
@@ -252,9 +262,11 @@ export const createLandscape = (objects: SceneObject[]): Landscape => {
 
   const hillAt = (cellX: number, cellZ: number) => {
     if (hash(cellX, cellZ, seed) > 0.6) return null
+
     const x = (cellX + 0.15 + hash(cellX, cellZ, seed + 1) * 0.7) * HILL_CELL
     const z = (cellZ + 0.15 + hash(cellX, cellZ, seed + 2) * 0.7) * HILL_CELL
     if (offPlateau(x, z) < HILL_CLEARANCE) return null
+
     return {
       x,
       z,
@@ -277,9 +289,11 @@ export const createLandscape = (objects: SceneObject[]): Landscape => {
       for (let cellX = squareX - 1; cellX <= squareX + 1; cellX++) {
         const hill = hillAt(cellX, cellZ)
         if (!hill) continue
+
         const squaredDistance = (x - hill.x) ** 2 + (z - hill.z) ** 2
         height += hill.height * Math.exp(-squaredDistance / (2 * hill.spread ** 2))
       }
+
     return height
   }
 
@@ -289,6 +303,7 @@ export const createLandscape = (objects: SceneObject[]): Landscape => {
     const key = `${tileX},${tileZ}`
     const cached = cache.get(key)
     if (cached) return cached
+
     const x0 = tileX * TILE
     const z0 = tileZ * TILE
     const grid = new Float32Array(size * size)
@@ -305,7 +320,9 @@ export const createLandscape = (objects: SceneObject[]): Landscape => {
     const traced = { ...trace(grid, size, x0, z0), stars: new Float32Array(stars) }
     // Keep memory bounded on long pans: forget the oldest tiles.
     if (cache.size > 400) cache.delete(cache.keys().next().value as string)
+
     cache.set(key, traced)
+
     return traced
   }
 
@@ -321,7 +338,9 @@ export const useLandscape = (objects: SceneObject[]) => {
   const isCarrying = useEditorStore((state) => state.carryingId !== null)
   const settled = useRef(objects)
   if (!isCarrying) settled.current = objects
+
   const layout = settled.current
+
   return useMemo(() => createLandscape(layout), [layout])
 }
 
@@ -331,5 +350,6 @@ export const tilesCovering = (x0: number, z0: number, x1: number, z1: number) =>
   for (let tileZ = Math.floor(z0 / TILE); tileZ <= Math.floor(z1 / TILE); tileZ++)
     for (let tileX = Math.floor(x0 / TILE); tileX <= Math.floor(x1 / TILE); tileX++)
       out.push([tileX, tileZ])
+
   return out
 }

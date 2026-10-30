@@ -48,6 +48,7 @@ export const WallResize = ({ ref, setCursorHint }: Props) => {
     )
     raycaster.setFromCamera(pointer, camera)
     const hit = raycaster.ray.intersectPlane(GROUND, new Vector3())
+
     return hit ? { x: hit.x, z: hit.z } : null
   }
 
@@ -59,15 +60,18 @@ export const WallResize = ({ ref, setCursorHint }: Props) => {
     const degrees =
       (Math.atan2(-(acrossPoint.y - centrePoint.y), acrossPoint.x - centrePoint.x) * 180) / Math.PI
     const step = (((Math.round(degrees / 45) * 45) % 180) + 180) % 180
+
     return `resize${step}` as CursorHint
   }
 
   useImperativeHandle(ref, () => ({
     hover: (x, z) => {
       if (cancel.current) return
+
       const { objects, tool, armedKit } = store.getState()
       const id = tool === "select" && !armedKit ? findWallGrip(objects, x, z) : null
       if (id === hovered.current) return
+
       hovered.current = id
       const wall = id ? objects.find((object) => object.id === id) : undefined
       setCursorHint(HINT_ID, wall ? hintFor(wall) : null)
@@ -77,6 +81,7 @@ export const WallResize = ({ ref, setCursorHint }: Props) => {
       const gripId = findWallGrip(base, x, z)
       const grip = gripId ? base.find((object) => object.id === gripId) : undefined
       if (!grip || !gripId) return false
+
       const across = edgeDirection(grip.rotation) === "x" ? "z" : "x"
       const start = across === "z" ? z : x
       let offset = 0
@@ -86,10 +91,13 @@ export const WallResize = ({ ref, setCursorHint }: Props) => {
       const handleMove = (event: PointerEvent) => {
         const point = groundAt(event.clientX, event.clientY)
         if (!point) return
+
         const next = Math.round((point[across] - start) / SEG) * SEG
         if (next === offset) return
+
         const shift = next === 0 ? { objects: base } : composeWallShift(base, gripId, next)
         if (!shift) return // can't go there: stays at the last step that could
+
         offset = next
         store.setState({ objects: shift.objects })
       }
@@ -100,6 +108,7 @@ export const WallResize = ({ ref, setCursorHint }: Props) => {
         window.removeEventListener("keydown", handleKey, true)
         cancel.current = null
         if (!isKept) store.setState({ objects: base })
+
         store.getState().endBatch()
         hovered.current = null
         setCursorHint(HINT_ID, null)
@@ -107,6 +116,7 @@ export const WallResize = ({ ref, setCursorHint }: Props) => {
       const handleUp = () => finish(true)
       const handleKey = (event: KeyboardEvent) => {
         if (event.key !== "Escape") return
+
         event.stopPropagation() // not also "deselect, back to Select"
         finish(false)
       }
@@ -115,6 +125,7 @@ export const WallResize = ({ ref, setCursorHint }: Props) => {
       window.addEventListener("pointercancel", handleUp)
       window.addEventListener("keydown", handleKey, true)
       cancel.current = () => finish(false)
+
       return true
     },
   }))

@@ -22,6 +22,7 @@ const CORD = 0.9
 export const CeilingLight = ({ color = "#3d4657" }: Props) => {
   const nightness = useContext(DaylightContext)
   const isLampOn = useLampsOn()
+
   return (
     <group>
       {isLampOn && (

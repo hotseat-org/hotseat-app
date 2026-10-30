@@ -33,6 +33,7 @@ export const NudgeKeys = () => {
       )
         return
       if (store.getState().selection.length === 0) return
+
       event.preventDefault()
       // Camera-relative forward/right, flattened and snapped to a world axis.
       const forward = camera.getWorldDirection(new Vector3()).setY(0).normalize()
@@ -46,6 +47,7 @@ export const NudgeKeys = () => {
       store.getState().nudgeSelection(deltaX, deltaZ)
     }
     window.addEventListener("keydown", onKey)
+
     return () => window.removeEventListener("keydown", onKey)
   }, [camera, store])
 

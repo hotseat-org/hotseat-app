@@ -22,10 +22,12 @@ export const DeskPets = () => {
   const people = usePeople()
   const pets = useMemo(() => {
     const seats = objects.filter((object) => object.type === "seat")
+
     return desks
       .filter((desk) => desk.state.kind !== "free")
       .map((desk) => {
         const email = desk.state.kind === "free" ? "" : desk.state.email
+
         return {
           desk: desk.desk,
           // Their own pick (settings → Desk pet), else one derived from the email.
@@ -47,6 +49,7 @@ export const DeskPets = () => {
 const Pet = ({ url, spot, onClick }: { url: string; spot: Spot; onClick: () => void }) => {
   const [hovered, setHovered] = useState(false)
   useCursor(hovered)
+
   return (
     <group
       position={[spot.x, spot.y, spot.z]}
@@ -58,6 +61,7 @@ const Pet = ({ url, spot, onClick }: { url: string; spot: Spot; onClick: () => v
       onPointerOut={() => setHovered(false)}
       onClick={(event: ThreeEvent<MouseEvent>) => {
         if (event.delta > 4) return // a camera drag, not a click
+
         event.stopPropagation()
         onClick()
       }}

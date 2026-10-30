@@ -22,6 +22,7 @@ export const Armchair = ({ color = "#c0876a", variant }: Props) => {
     [-WIDTH / 2 + 0.12, DEPTH / 2 - 0.12],
     [WIDTH / 2 - 0.12, DEPTH / 2 - 0.12],
   ]
+
   return (
     <group>
       {/* Seat base */}

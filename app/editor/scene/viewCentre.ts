@@ -22,5 +22,6 @@ const ray = new Ray()
 export const getViewCentre = (camera: Camera, out: Vector3) => {
   camera.getWorldPosition(ray.origin)
   camera.getWorldDirection(ray.direction)
+
   return ray.intersectPlane(GROUND, out)
 }

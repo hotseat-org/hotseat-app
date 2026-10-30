@@ -71,6 +71,7 @@ export const registerRenderers = (record: { [Type in ObjectType]?: ItemRenderer 
 export const getRenderer = (type: ObjectType): ItemRenderer => {
   const renderer = renderers.get(type)
   if (!renderer) throw new Error(`No renderer for "${type}" in the catalogue`)
+
   return renderer
 }
 

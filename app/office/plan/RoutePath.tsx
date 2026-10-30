@@ -24,6 +24,7 @@ export const RoutePath = ({ points, k: zoom }: { points: [number, number][]; k: 
     strokeLinejoin: "round" as const,
     vectorEffect: "non-scaling-stroke" as const,
   }
+
   return (
     <g aria-hidden pointerEvents="none">
       <defs>

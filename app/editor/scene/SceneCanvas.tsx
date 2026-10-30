@@ -29,6 +29,7 @@ const SceneCanvas = ({ store, readOnly, dark, fitInsets, showStats, onStats, onR
   const i18n = useI18n()
   const modules = useModules()
   const viewClicks = useViewClicks()
+
   return (
     <Canvas
       // PCF, which three.js uses anyway: asking for PCFSoft (`shadows`), it
@@ -87,10 +88,12 @@ const ReadySignal = ({
   }, [readOnly, invalidate])
   useFrame(() => {
     if (frames.current > FRAMES_TO_READY) return
+
     frames.current++
     if (frames.current === FRAMES_TO_READY) onReady(readOnly)
     else invalidate()
   })
+
   return null
 }
 

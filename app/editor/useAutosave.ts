@@ -51,12 +51,15 @@ export const useAutosave = ({
 
   useEffect(() => {
     if (!onSave || isHolding) return // waiting on a guard (the admin's choice)
+
     const serialized = JSON.stringify(objects)
     if (serialized === lastSaved.current) return
+
     const timeoutId = setTimeout(() => {
       lastSaved.current = serialized
       onSave(objects)
     }, SAVE_DELAY)
+
     return () => clearTimeout(timeoutId)
   }, [objects, onSave, isHolding])
 
@@ -74,6 +77,7 @@ export const useAutosave = ({
       if (onSaveRef.current && unsaved()) event.preventDefault()
     }
     window.addEventListener("beforeunload", onBeforeUnload)
+
     return () => {
       window.removeEventListener("beforeunload", onBeforeUnload)
       // Not a change a guard holds (one that would take people's bookings

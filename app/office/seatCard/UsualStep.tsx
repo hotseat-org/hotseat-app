@@ -28,6 +28,7 @@ export const UsualStep = ({
   const [days, setDays] = useState<number[]>(usual.weekdays ?? usual.suggested)
   const isUsual = !!usual.weekdays
   const { t, format } = i18n
+
   return (
     <div className="flex flex-col gap-2.5">
       <StepHeader i18n={i18n} title={t("Your usual desk")} onBack={onBack} />
@@ -35,6 +36,7 @@ export const UsualStep = ({
         {format.workdays().map((name, i) => {
           const weekday = i + 1
           const on = days.includes(weekday)
+
           return (
             <button
               key={name}
