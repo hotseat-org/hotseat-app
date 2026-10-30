@@ -1,4 +1,4 @@
-import { createContext, useContext } from "react"
+import { useEditorStore } from "./store"
 
 /** An org member as the editor needs them (seat assignment, name tags). */
 export interface Person {
@@ -15,10 +15,8 @@ export interface People {
   members: Person[]
 }
 
-/** Provided by OfficeEditor (and re-provided inside the Canvas). Empty standalone. */
-export const PeopleContext = createContext<People>({ me: null, members: [] })
-
-export const usePeople = () => useContext(PeopleContext)
+/** The organization's members, from the office's store (see OfficeSync). Empty standalone. */
+export const usePeople = () => useEditorStore((state) => state.people)
 
 export const personByEmail = (people: People, email?: string) =>
   email ? (people.members.find((member) => member.email === email) ?? null) : null

@@ -34,6 +34,53 @@ export interface EditorModule {
   useViewClicks?: () => ViewClicks
   /** What it adds to the simple (2D) plan. */
   plan?: PlanModule
+  /** Its panels over the editor (HTML), and when. */
+  panels?: Panel[]
+  /**
+   * A hook: a check before autosaving (the office: a change that would take
+   * bookings away waits for the admin's choice). See SaveGuard.
+   */
+  useSaveGuard?: (autosave: AutosaveControls) => SaveGuard
+}
+
+/** A module's panel over the editor, shown while viewing, editing, or always. */
+export interface Panel {
+  Component: ComponentType<PanelProps>
+  when: "viewing" | "editing" | "always"
+}
+
+export interface PanelProps {
+  isViewing: boolean
+  isMobile: boolean
+  isDark: boolean
+}
+
+/**
+ * What a save sends along besides the layout — modules add their own
+ * (`declare module`: the office's shouldRehome).
+ */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface SaveOptions {}
+
+/** What a save guard can do with the editor's autosave. */
+export interface AutosaveControls {
+  /** Autosave is on (the layout saves somewhere — a real office). */
+  isEnabled: boolean
+  objects: SceneObject[]
+  /** The layout as last saved. */
+  getSavedObjects: () => SceneObject[]
+  /** Save the current layout now, with these options. */
+  saveNow: (options?: SaveOptions) => void
+  /** Put the layout back as last saved. */
+  revert: () => void
+}
+
+/** A module's check before autosaving. */
+export interface SaveGuard {
+  /** Hold autosaving (and leaving's flush) until the module lets go. */
+  isHolding: boolean
+  /** What it shows meanwhile (its question), over the editor. */
+  panel: ReactNode
 }
 
 /** A module's part in the 2D plan (shown while viewing; the plan turns the layout, see planView). */

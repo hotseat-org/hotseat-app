@@ -1,7 +1,6 @@
 import { Canvas, useFrame, useThree } from "@react-three/fiber"
 import { Suspense, useEffect, useRef } from "react"
 import { EditorStoreContextProvider, type EditorStore } from "../store"
-import { PeopleContext, type People } from "../people"
 import { ModulesContext, useModules, useViewClicks } from "../editor/modules"
 import { Scene } from "./Scene"
 import { FpsMeter, type FrameStats } from "./FpsMeter"
@@ -10,7 +9,6 @@ import { I18nBridge, useI18n } from "~/i18n/I18nProvider"
 
 interface Props {
   store: EditorStore
-  people: People
   readOnly: boolean
   dark: boolean
   /** Screen space the floating panels cover (px): Fit frames the office beside them. */
@@ -27,16 +25,7 @@ interface Props {
  * R3F and every model stay out of the bundle until the 3D view is shown — the
  * simple (top-down SVG) view never downloads them.
  */
-const SceneCanvas = ({
-  store,
-  people,
-  readOnly,
-  dark,
-  fitInsets,
-  showStats,
-  onStats,
-  onReady,
-}: Props) => {
+const SceneCanvas = ({ store, readOnly, dark, fitInsets, showStats, onStats, onReady }: Props) => {
   const i18n = useI18n()
   const modules = useModules()
   const viewClicks = useViewClicks()
@@ -63,11 +52,9 @@ const SceneCanvas = ({
         {/* Bridge the store into the R3F tree — context doesn't cross the Canvas. */}
         <EditorStoreContextProvider value={store}>
           <ModulesContext.Provider value={modules}>
-            <PeopleContext.Provider value={people}>
-              <I18nBridge value={i18n}>
-                <Scene readOnly={readOnly} dark={dark} fitInsets={fitInsets} />
-              </I18nBridge>
-            </PeopleContext.Provider>
+            <I18nBridge value={i18n}>
+              <Scene readOnly={readOnly} dark={dark} fitInsets={fitInsets} />
+            </I18nBridge>
           </ModulesContext.Provider>
         </EditorStoreContextProvider>
         {showStats && <FpsMeter onSample={onStats} />}
