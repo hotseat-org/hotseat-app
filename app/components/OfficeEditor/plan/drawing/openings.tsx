@@ -10,6 +10,7 @@ import { PALETTE } from "../../palette"
 import type { SceneObject } from "../../types"
 import { WINDOW_GLASS } from "../kits"
 import { shade } from "../shapes"
+import { isOpening } from "../../types"
 import { HALF_WALL, type Push, type WallPieces } from "./wallPieces"
 
 /** A door's jambs, each this wide (m). */
@@ -45,7 +46,7 @@ export const drawOpenings = (
   }
 
   for (const o of objects) {
-    if (o.type !== "window" && o.type !== "door" && o.type !== "glassDoor") continue
+    if (!isOpening(o.type)) continue
     const [a, b] = edgeNodes(o)
     const frame = o.type === "glassDoor" ? GLASS_DOOR_FRAME : PALETTE.doorFrame
     const leafColor = o.type === "glassDoor" ? WINDOW_GLASS : PALETTE.doorLeaf

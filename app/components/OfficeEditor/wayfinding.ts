@@ -10,15 +10,8 @@ import {
 import { spotFor } from "./seatSpot"
 import { useEditorStore } from "./store"
 import { useDesksOnDay } from "./useBooking"
-import {
-  GRID,
-  isEdgeType,
-  isMarker,
-  isOpening,
-  isOverhead,
-  isWallMounted,
-  type SceneObject,
-} from "./types"
+import { GRID, isEdgeType, isMarker, isOverhead, isWallMounted, type SceneObject } from "./types"
+import { getEdge, getItem } from "./catalog/items"
 import type { Translator } from "~/i18n/translate"
 
 /**
@@ -46,7 +39,7 @@ const isObstacle = (o: SceneObject) =>
   !isMarker(o.type) &&
   !isOverhead(o.type) &&
   !isWallMounted(o.type) &&
-  o.type !== "rug"
+  !getItem(o.type).isUnderlay
 
 interface Floor {
   /** Squares something stands on. */
@@ -81,7 +74,8 @@ const readFloor = (objects: SceneObject[]): Floor | null => {
   const doors: SceneObject[] = []
   for (const o of objects) {
     if (!isEdgeType(o.type)) continue
-    if (o.type === "door" || o.type === "glassDoor") doors.push(o)
+    const isPassable = !!getEdge(o.type)?.isPassable
+    if (isPassable) doors.push(o)
     for (const e of unitEdges(o)) {
       if (isDiagonalEdge(e.rotation)) {
         // A diagonal wall runs corner to corner through a square: the square
@@ -93,7 +87,7 @@ const readFloor = (objects: SceneObject[]): Floor | null => {
           j0: Math.min(bounds.j0, j - 2),
           j1: Math.max(bounds.j1, j + 2),
         }
-        if (!isOpening(o.type) || o.type === "window") walled.add(key(i, j))
+        if (!isPassable) walled.add(key(i, j))
         continue
       }
       const alongX = runsAlongX(e.rotation)
@@ -106,7 +100,7 @@ const readFloor = (objects: SceneObject[]): Floor | null => {
         j1: Math.max(bounds.j1, j + 2),
       }
       // Doors are walked through; walls and windows are not.
-      if (!isOpening(o.type) || o.type === "window") blocked.add(`${alongX ? "h" : "v"}:${i},${j}`)
+      if (!isPassable) blocked.add(`${alongX ? "h" : "v"}:${i},${j}`)
     }
   }
   if (!Number.isFinite(bounds.i0)) return null

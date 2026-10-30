@@ -17,6 +17,8 @@ export interface EdgeTraits {
   isSeeThrough: boolean
   /** The Paint tool paints it, face by face. */
   isPaintable: boolean
+  /** People walk through it (a door), or not (a wall, a window). */
+  isPassable: boolean
   /** A run: the openings that can be cut into it. */
   hosts?: readonly string[]
 }
@@ -61,20 +63,39 @@ export const ITEMS = {
     mount: "edge",
     footprint: [1, 1],
     defaultColor: PALETTE.wall,
-    edge: { role: "run", encloses: true, isSeeThrough: false, isPaintable: true, hosts: OPENINGS },
+    edge: {
+      role: "run",
+      encloses: true,
+      isSeeThrough: false,
+      isPaintable: true,
+      isPassable: false,
+      hosts: OPENINGS,
+    },
   }),
   door: define({
     mount: "edge",
     footprint: [1, 1],
     defaultColor: PALETTE.doorLeaf,
     isRecolorable: false,
-    edge: { role: "opening", encloses: true, isSeeThrough: false, isPaintable: false },
+    edge: {
+      role: "opening",
+      encloses: true,
+      isSeeThrough: false,
+      isPaintable: false,
+      isPassable: true,
+    },
   }),
   window: define({
     mount: "edge",
     footprint: [1, 1],
     defaultColor: "#f4efe6",
-    edge: { role: "opening", encloses: true, isSeeThrough: false, isPaintable: true },
+    edge: {
+      role: "opening",
+      encloses: true,
+      isSeeThrough: false,
+      isPaintable: true,
+      isPassable: false,
+    },
   }),
   glassWall: define({
     mount: "edge",
@@ -85,6 +106,7 @@ export const ITEMS = {
       encloses: true,
       isSeeThrough: true,
       isPaintable: false,
+      isPassable: false,
       hosts: ["door", "glassDoor"],
     },
   }),
@@ -92,7 +114,13 @@ export const ITEMS = {
     mount: "edge",
     footprint: [1, 1],
     defaultColor: "#5b6577",
-    edge: { role: "opening", encloses: true, isSeeThrough: false, isPaintable: false },
+    edge: {
+      role: "opening",
+      encloses: true,
+      isSeeThrough: false,
+      isPaintable: false,
+      isPassable: true,
+    },
   }),
   desk: define({
     footprint: [4, 2],
@@ -181,5 +209,12 @@ export const findItem = (type: string | undefined): ItemDefinition | undefined =
   type !== undefined && Object.prototype.hasOwnProperty.call(ITEMS, type)
     ? getItem(type as ObjectType)
     : undefined
+
+/** A piece on the grid's edges: what it does to the layout. Undefined for the rest. */
+export const getEdge = (type: ObjectType): EdgeTraits | undefined => getItem(type).edge
+
+/** Whether an opening of `opening`'s kind can be cut into a run of `run`'s. */
+export const canHost = (run: ObjectType, opening: ObjectType) =>
+  getEdge(run)?.hosts?.includes(opening) ?? false
 
 export const hasTag = (type: ObjectType, tag: string) => getItem(type).tags.includes(tag)

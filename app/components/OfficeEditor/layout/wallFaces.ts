@@ -1,4 +1,5 @@
 import { isOpening, type SceneObject } from "../types"
+import { getEdge } from "../catalog/items"
 
 /** A wall's two faces' paint: its front (its +Z side as built) and back. */
 export type WallFaces = [front: string | undefined, back: string | undefined]
@@ -7,7 +8,7 @@ export type WallFaces = [front: string | undefined, back: string | undefined]
  * What the Paint tool paints: walls, and the windows in them (face by face,
  * like the wall). Doors keep their wooden frames.
  */
-export const isPaintable = (o: SceneObject) => o.type === "wall" || o.type === "window"
+export const isPaintable = (o: SceneObject) => !!getEdge(o.type)?.isPaintable
 
 /** Whether a window has paint of its own (else it takes its wall's). */
 export const hasOwnPaint = (o: SceneObject) =>

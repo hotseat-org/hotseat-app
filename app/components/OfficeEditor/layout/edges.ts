@@ -8,6 +8,7 @@ import {
   type SceneObject,
   type WallCell,
 } from "../types"
+import { getEdge } from "../catalog/items"
 
 /**
  * Which way a wall/door edge runs: along X, along Z, or across a grid square
@@ -112,7 +113,14 @@ const isLegacyWall = (o: SceneObject) => {
 }
 
 /** A glass partition, or an opening cut into one. */
-export const isGlassEdge = (o: SceneObject) => o.type === "glassWall" || o.model === GLASS_HOST
+export const isGlassEdge = (o: SceneObject) =>
+  !!getEdge(o.type)?.isSeeThrough || o.model === GLASS_HOST
+
+/** A solid wall run: what windows show the paint of, and what wall items hang on. */
+export const isSolidWall = (o: SceneObject) => {
+  const edge = getEdge(o.type)
+  return edge?.role === "run" && !edge.isSeeThrough
+}
 
 /** The two grid nodes at the ends of a wall/door edge. */
 export const edgeNodes = (o: SceneObject): [Cell, Cell] => {

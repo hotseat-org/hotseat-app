@@ -1,5 +1,6 @@
 import { edgeDirection, footprintCells, unitEdges } from "./layout"
-import { GRID, isEdgeType, isSeatable, type SceneObject } from "./types"
+import { GRID, isSeatable, type SceneObject } from "./types"
+import { getEdge } from "./catalog/items"
 
 /**
  * Zones (neighbourhoods): a team's part of the office — a name on its desks.
@@ -121,7 +122,7 @@ export interface ZoneArea {
 const getClosedSides = (objects: SceneObject[]) => {
   const sides = new Set<string>()
   for (const o of objects) {
-    if (!isEdgeType(o.type)) continue
+    if (!getEdge(o.type)?.encloses) continue
     const direction = edgeDirection(o.rotation)
     if (direction !== "x" && direction !== "z") continue
     for (const e of unitEdges(o)) {

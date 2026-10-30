@@ -2,9 +2,10 @@ import { useFrame, useThree } from "@react-three/fiber"
 import { useEffect, useMemo, useRef } from "react"
 import { Box3, Vector3 } from "three"
 import { useEditorStoreApi } from "../store"
-import { GRID, isEdgeType, isWallMounted } from "../types"
+import { GRID, isEdgeType, isWall, isWallMounted } from "../types"
 import { WALL } from "../objects/dimensions"
 import { edgeDirection, edgeLength, footprintCells } from "../layout"
+import { getEdge } from "../catalog/items"
 import { CUT_DIRECTION, cutAxes, cutawayUniform, MAX_CUTS } from "./cutaway"
 import { intersectEdge } from "./wallHit"
 
@@ -106,8 +107,8 @@ export const WallXray = ({ enabled, isEditing }: Props) => {
     // partitions never do — you can see through them already.
     const hits: (Aim & { distance: number })[] = []
     for (const o of objects) {
-      if (!isEdgeType(o.type) || o.type === "glassWall") continue
-      if (isEditing && o.type !== "wall") continue
+      if (!isEdgeType(o.type) || getEdge(o.type)?.isSeeThrough) continue
+      if (isEditing && !isWall(o.type)) continue
       if (!intersectEdge(ray, o, hitPoint, SLACK)) continue
       const half = edgeLength(o) / 2
       const axis = CUT_DIRECTION[edgeDirection(o.rotation)]

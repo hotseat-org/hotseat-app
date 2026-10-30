@@ -1,4 +1,5 @@
 import { isEdgeType, isMarker, type Cell, type SceneObject } from "../types"
+import { getEdge } from "../catalog/items"
 import { SEG, edgeDirection, unitEdges } from "./edges"
 
 /**
@@ -48,7 +49,7 @@ export const enclosedRegions = (objects: SceneObject[]): FloorCell[][] => {
   }
 
   for (const o of objects) {
-    if (!isEdgeType(o.type)) continue
+    if (!getEdge(o.type)?.encloses) continue
     for (const e of unitEdges(o)) {
       const direction = edgeDirection(e.rotation)
       if (direction === "x") {

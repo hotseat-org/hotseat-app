@@ -6,6 +6,7 @@ import {
   type OpeningType,
   type SceneObject,
 } from "../types"
+import { canHost } from "../catalog/items"
 import { edgeDirection, edgeStep, unitEdges } from "./edges"
 import { composeWallColors } from "./wallColors"
 import { composeFacePaint, getOpeningPaint } from "./wallFaces"
@@ -29,8 +30,8 @@ export const openingPlan = (
   if (!o || !isEdgeType(o.type)) return null
   if (isOpening(o.type)) {
     const glass = o.model === GLASS_HOST
+    const host = glass ? "glassWall" : "wall"
     if (o.type === kind) {
-      const host = glass ? "glassWall" : "wall"
       // Filled back in with the paint of the wall round it.
       const faces = glass ? undefined : composeWallColors(objects).openings.get(o.id)
       const paint = faces ? composeFacePaint(faces) : {}
@@ -39,8 +40,8 @@ export const openingPlan = (
         add: unitEdges(o).map((e) => ({ type: host, ...e, ...paint })),
       }
     }
-    // A window needs solid wall around it.
-    if (kind === "window" && glass) return null
+    // Only what the wall round it takes (a window needs solid wall).
+    if (!canHost(host, kind)) return null
     return {
       remove: [o.id],
       add: [
@@ -56,7 +57,7 @@ export const openingPlan = (
       ],
     }
   }
-  if (!isWall(o.type) || (kind === "window" && o.type === "glassWall")) return null
+  if (!isWall(o.type) || !canHost(o.type, kind)) return null
   const direction = edgeDirection(o.rotation)
   const [sx, sz] = edgeStep(o.rotation)
   // The cursor's side of the segment, along the line, is tried first.

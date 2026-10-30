@@ -1,4 +1,5 @@
 import type { SceneObject } from "../types"
+import { isWall } from "../types"
 import { GhostObject } from "./GhostObject"
 import { GhostWalls } from "./GhostWalls"
 
@@ -9,13 +10,11 @@ export const KitGhost = ({ plan, doesFit }: { plan: SceneObject[]; doesFit: bool
   <>
     <GhostWalls
       edges={plan.flatMap((o) =>
-        o.type === "wall" || o.type === "glassWall"
-          ? [{ ...o, type: o.type, tint: doesFit ? undefined : BLOCKED }]
-          : []
+        isWall(o.type) ? [{ ...o, type: o.type, tint: doesFit ? undefined : BLOCKED }] : []
       )}
     />
     {plan
-      .filter((o) => o.type !== "wall" && o.type !== "glassWall")
+      .filter((o) => !isWall(o.type))
       .map((o, i) => (
         <GhostObject
           key={i}

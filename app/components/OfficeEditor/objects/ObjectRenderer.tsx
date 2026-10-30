@@ -273,7 +273,7 @@ export const ObjectRenderer = memo(function ObjectRenderer({
           visible={false}
           rotation={[-Math.PI / 2, 0, 0]}
           // Above a rug's own surface (y ≈ 0.014), so a piece on a rug wins there.
-          position={[0, obj.type === "rug" ? 0.006 : 0.02, 0]}
+          position={[0, getItem(obj.type).isUnderlay ? 0.006 : 0.02, 0]}
         >
           <planeGeometry args={outline} />
           <meshBasicMaterial />

@@ -139,7 +139,7 @@ export const furnitureCollides = (
     }
     // Overhead items (ceiling lights) and wall items only bump into their own kind.
     if (layerOf(type) !== layerOf(o.type)) continue
-    if (type === "rug" || o.type === "rug") continue
+    if (getItem(type).isUnderlay || getItem(o.type).isUnderlay) continue
     if (rectsOverlap(a, footprintRect(o.type, o.rotation, o.x, o.z))) return true
   }
   return false

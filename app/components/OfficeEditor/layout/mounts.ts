@@ -1,6 +1,6 @@
 import { GRID, type ObjectType, type SceneObject } from "../types"
 import { getItem } from "../catalog/items"
-import { SEG, edgeStep, isDiagonalEdge, nearestEdgeId, runsAlongX } from "./edges"
+import { SEG, edgeStep, isDiagonalEdge, isSolidWall, nearestEdgeId, runsAlongX } from "./edges"
 import { snapAxis } from "./placement"
 
 /** Unit vector a piece faces (its +Z) at a rotation. */
@@ -38,7 +38,7 @@ export const mountWalls = (
   const bx = x - (f.x * d * GRID) / 2
   const bz = z - (f.z * d * GRID) / 2
   const along = { x: f.z, z: -f.x }
-  const walls = objects.filter((o) => o.type === "wall")
+  const walls = objects.filter(isSolidWall)
   const ids = new Set<string>()
   // Points along the back edge, a grid step apart, each on solid wall.
   for (let i = 0; i < w; i++) {
@@ -61,7 +61,7 @@ export const wallMount = (
   px: number,
   pz: number
 ): { x: number; z: number; rotation: number } | null => {
-  const id = nearestEdgeId(objects, px, pz, 0.8, (o) => o.type === "wall")
+  const id = nearestEdgeId(objects, px, pz, 0.8, isSolidWall)
   const wall = id && objects.find((o) => o.id === id)
   if (!wall) return null
   const [w, d] = getItem(type).footprint

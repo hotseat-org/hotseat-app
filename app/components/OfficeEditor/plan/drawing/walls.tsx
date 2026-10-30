@@ -10,8 +10,9 @@ import {
   wallJointNodes,
 } from "../../layout"
 import { WALL } from "../../objects/dimensions"
-import type { SceneObject } from "../../types"
+import { isWall, type SceneObject } from "../../types"
 import { WINDOW_GLASS } from "../kits"
+import { getEdge } from "../../catalog/items"
 import { HALF_WALL, type Push, type WallPieces } from "./wallPieces"
 
 /**
@@ -36,8 +37,8 @@ export const drawWalls = (
     { rotation: number; at: SceneObject[]; color: string; back: string; glass: boolean }
   >()
   for (const o of objects) {
-    if (o.type !== "wall" && o.type !== "glassWall") continue
-    const glass = o.type === "glassWall"
+    if (!isWall(o.type)) continue
+    const glass = !!getEdge(o.type)?.isSeeThrough
     // Each face's paint, seen the run's way round (its line's +Z / +X side first).
     const faces = getWallFacesFrom(o, { rotation: EDGE_ROTATION[edgeDirection(o.rotation)] })
     const [color, back] = glass ? [WINDOW_GLASS, WINDOW_GLASS] : faces.map((c) => c ?? wall)

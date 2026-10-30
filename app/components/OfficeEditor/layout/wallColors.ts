@@ -1,5 +1,5 @@
 import { isEdgeType, isOpening, type SceneObject } from "../types"
-import { edgeKey, edgeNodes, edgeStep, isGlassEdge, unitEdges } from "./edges"
+import { edgeKey, edgeNodes, edgeStep, isGlassEdge, isSolidWall, unitEdges } from "./edges"
 import { getWallFaces, getWallFacesFrom, hasOwnPaint, type WallFaces } from "./wallFaces"
 
 /** A joint post's four quarters: (−x, −z), (+x, −z), (−x, +z), (+x, +z). */
@@ -38,7 +38,7 @@ export const composeWallColors = (objects: SceneObject[]) => {
       for (let x = e.x + dir * sx, z = e.z + dir * sz; ; x += dir * sx, z += dir * sz) {
         const w = owner.get(edgeKey({ x, z, rotation: o.rotation }))
         if (!w || isGlassEdge(w)) return []
-        if (w.type === "wall") return [getWallFacesFrom(w, o)]
+        if (isSolidWall(w)) return [getWallFacesFrom(w, o)]
       }
     })
     openings.set(

@@ -11,6 +11,7 @@ import {
   type ObjectType,
   type SceneObject,
 } from "../types"
+import { getItem } from "../catalog/items"
 
 /** Distances further than this aren't worth a label. */
 const MAX = 4
@@ -141,7 +142,7 @@ const measure = (objects: SceneObject[], r: Rect, ignoreId?: string): (Measure |
       }
       continue
     }
-    if (o.type === "rug" || isOverhead(o.type) || isWallMounted(o.type)) continue
+    if (getItem(o.type).isUnderlay || isOverhead(o.type) || isWallMounted(o.type)) continue
     const b = rectOf(o.type, o.rotation, o.x, o.z)
     if (overlaps(r.z0, r.z1, b.z0, b.z1)) {
       if (b.x0 >= r.x1 - EPS) px = Math.min(px, b.x0 - r.x1)
@@ -174,7 +175,7 @@ const guides = (objects: SceneObject[], r: Rect, ignoreId?: string): (Guide | nu
   let bestZ: { g: Guide; d: number } | null = null
   for (const o of objects) {
     if (o.id === ignoreId || isMarker(o.type) || isEdgeType(o.type)) continue
-    if (o.type === "rug" || isOverhead(o.type) || isWallMounted(o.type)) continue
+    if (getItem(o.type).isUnderlay || isOverhead(o.type) || isWallMounted(o.type)) continue
     const b = rectOf(o.type, o.rotation, o.x, o.z)
     const bcx = (b.x0 + b.x1) / 2
     const bcz = (b.z0 + b.z1) / 2
