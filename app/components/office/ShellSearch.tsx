@@ -2,8 +2,8 @@ import { Popover } from "@heroui/react"
 import { Armchair, Search } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { MemberAvatar, PANEL, PANEL_HOVER, nameOf, type ShellMember } from "./shell-ui"
-import { useEditorStore } from "~/components/OfficeEditor/store"
-import { isSeatable } from "~/components/OfficeEditor/office/catalog"
+import { useEditorStore } from "~/editor/store"
+import { isSeatable } from "~/office/catalog"
 import { useI18n } from "~/i18n/I18nProvider"
 
 interface Result {

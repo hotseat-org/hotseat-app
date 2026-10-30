@@ -31,7 +31,7 @@
 /* ============================================================
    Hotseat "Warm office" theme — makes the app match the 3D office
    editor's soft, rounded, pastel look. Colors are derived from
-   app/components/OfficeEditor/palette.ts. These override HeroUI v3
+   app/editor/palette.ts. These override HeroUI v3
    semantic tokens; kept UNLAYERED so they win over @heroui/styles'
    `theme` layer. HeroUI's hover/soft variants auto-recompute from
    these base colors (they color-mix off var(--accent) etc.).
@@ -842,7 +842,7 @@ input:-webkit-autofill:focus {
   }
 }
 
-/* ── SkySlider (OfficeEditor/ui/SkySlider.tsx): time of day as a 24 h sky ── */
+/* ── SkySlider (app/editor/ui/SkySlider.tsx): time of day as a 24 h sky ── */
 .sky-slider {
   --ss-h: 18px; /* track height */
   --ss-k: 26px; /* knob height */

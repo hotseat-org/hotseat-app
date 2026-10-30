@@ -1,12 +1,12 @@
 import { lazy, Suspense } from "react"
 import { ClientOnly } from "remix-utils/client-only"
 import type { MetaFunction } from "react-router"
-import { EditorBoundary } from "~/components/OfficeEditor/EditorBoundary"
+import { EditorBoundary } from "~/editor/EditorBoundary"
 import { metaTranslator } from "~/i18n/translate"
 import { useI18n } from "~/i18n/I18nProvider"
 
 // three / R3F are browser-only — keep them out of the server bundle.
-const OfficeEditor = lazy(() => import("~/components/OfficeEditor/OfficeEditor.client"))
+const OfficeEditor = lazy(() => import("~/office/OfficeEditor.client"))
 
 export const meta: MetaFunction = ({ matches }) => [
   { title: `${metaTranslator(matches).t("Office Editor")} · Hotseat` },

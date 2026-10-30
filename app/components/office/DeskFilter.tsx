@@ -1,10 +1,10 @@
 import clsx from "clsx"
 import { ArrowUpFromLine, Check, type LucideIcon } from "lucide-react"
 import { useMemo, type ReactNode } from "react"
-import { useEditorStore } from "~/components/OfficeEditor/store"
-import { DESK_FEATURES, type DeskFeature } from "~/components/OfficeEditor/office/deskFeatures"
-import { isSeatable } from "~/components/OfficeEditor/office/catalog"
-import { ZONE_FILTER_PREFIX, getZones } from "~/components/OfficeEditor/office/zones"
+import { useEditorStore } from "~/editor/store"
+import { DESK_FEATURES, type DeskFeature } from "~/office/deskFeatures"
+import { isSeatable } from "~/office/catalog"
+import { ZONE_FILTER_PREFIX, getZones } from "~/office/zones"
 import { useI18n } from "~/i18n/I18nProvider"
 
 const FEATURE_ICONS: Record<DeskFeature, LucideIcon> = { standing: ArrowUpFromLine }

@@ -17,11 +17,11 @@ import { getCore } from "~/core/get-core"
 import { redirectToRenamedPage } from "~/utils/loader-helpers/redirectToRenamed"
 import { requireProfile } from "~/utils/loader-helpers/requireProfile"
 import { revalidateOn } from "~/utils/revalidation"
-import { layoutSchema } from "~/components/OfficeEditor/office/schema"
-import { EditorBoundary } from "~/components/OfficeEditor/EditorBoundary"
-import type { SceneObject } from "~/components/OfficeEditor/types"
-import type { Kit, KitLibrary } from "~/components/OfficeEditor/kits"
-import type { PreferenceChange } from "~/components/OfficeEditor/office/store"
+import { layoutSchema } from "~/office/schema"
+import { EditorBoundary } from "~/editor/EditorBoundary"
+import type { SceneObject } from "~/editor/types"
+import type { Kit, KitLibrary } from "~/editor/kits"
+import type { PreferenceChange } from "~/office/store"
 import { SpatialShell, type ShellMember } from "~/components/office/SpatialShell"
 import { nameOf } from "~/components/office/shell-ui"
 import type { Profile } from "~/core/profile/types"
@@ -42,7 +42,7 @@ import {
 } from "~/utils/booking"
 
 // three / R3F are browser-only — keep them out of the server bundle.
-const OfficeEditor = lazy(() => import("~/components/OfficeEditor/OfficeEditor.client"))
+const OfficeEditor = lazy(() => import("~/office/OfficeEditor.client"))
 
 const toMember = (p: Profile): ShellMember => ({
   userEmail: p.userEmail,
