@@ -1,8 +1,8 @@
 import type { Panel, PanelProps } from "../editor/module"
-import { useRouteLink } from "../editor/useRouteLink"
-import { CustomBooking } from "../ui/CustomBooking"
-import { HeatmapPill } from "../ui/HeatmapPill"
-import { RoutePill } from "../ui/RoutePill"
+import { useRouteLink } from "./useRouteLink"
+import { CustomBooking } from "./ui/CustomBooking"
+import { HeatmapPill } from "./ui/HeatmapPill"
+import { RoutePill } from "./ui/RoutePill"
 import { MOBILE_CHROME } from "~/components/office/mobile"
 
 /**

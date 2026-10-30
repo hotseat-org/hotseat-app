@@ -1,7 +1,7 @@
 import { randomModelId } from "../models"
 import { useEditorStore } from "../store"
 import { isSeatable, type SceneObject } from "../types"
-import { DateStepper } from "../ui/DateStepper"
+import { DateStepper } from "./ui/DateStepper"
 import { asNewDesks } from "./store"
 import type { Translator } from "~/i18n/translate"
 

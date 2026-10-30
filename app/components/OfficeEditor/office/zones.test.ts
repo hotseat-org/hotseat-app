@@ -1,7 +1,7 @@
 /// <reference types="bun" />
 import { describe, expect, test } from "bun:test"
-import { roomEdges } from "./layout"
-import type { ObjectType, SceneObject } from "./types"
+import { roomEdges } from "../layout"
+import type { ObjectType, SceneObject } from "../types"
 import { composeZoneAreas, getZones, numberDesksByZone } from "./zones"
 
 let nextId = 0

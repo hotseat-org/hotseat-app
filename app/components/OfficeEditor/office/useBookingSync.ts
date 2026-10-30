@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect } from "react"
-import type { People } from "../people"
-import type { DeskPreferences, PreferenceChange } from "../office/store"
 import { useEditorStore, useEditorStoreApi } from "../store"
+import type { People } from "./people"
+import type { DeskPreferences, PreferenceChange } from "./store"
 import { groupBookings, type BookingRow, type Day, type DeskDays } from "~/utils/booking"
 
 /** Desk booking data + actions for a real office, from the route. */

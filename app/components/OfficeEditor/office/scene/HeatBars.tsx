@@ -3,10 +3,10 @@ import { useEffect, useLayoutEffect, useMemo, useRef } from "react"
 import * as THREE from "three"
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js"
 import { HEAT_BAR, heatColor } from "../heatmap"
-import { useSurfaces } from "../sceneTheme"
-import { useEditorStore } from "../store"
-import { isSeatable } from "../types"
-import { markShadowsDirty } from "./shadows"
+import { useSurfaces } from "../../sceneTheme"
+import { useEditorStore } from "../../store"
+import { isSeatable } from "../../types"
+import { markShadowsDirty } from "../../scene/shadows"
 
 /** How long a bar takes to grow (s), and the stagger between desks. */
 const GROW = 0.7

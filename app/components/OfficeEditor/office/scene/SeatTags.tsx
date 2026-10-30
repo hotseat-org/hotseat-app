@@ -1,7 +1,7 @@
 import { Html } from "@react-three/drei"
 import { Pin } from "lucide-react"
 import { heatBarTop } from "../heatmap"
-import { useEditorStore } from "../store"
+import { useEditorStore } from "../../store"
 import { personByEmail, usePeople } from "../people"
 import { SeatAvatar } from "../SeatAvatar"
 import { useDeskFilter, useDesksOnDay } from "../useBooking"

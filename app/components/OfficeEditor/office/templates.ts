@@ -1,5 +1,5 @@
-import { wallRun } from "./layout"
-import type { ObjectType, SceneObject } from "./types"
+import { wallRun } from "../layout"
+import type { ObjectType, SceneObject } from "../types"
 import { msg } from "~/i18n/msg"
 
 const HALF = Math.PI / 2

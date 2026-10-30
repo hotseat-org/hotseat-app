@@ -1,11 +1,11 @@
 import { Suspense, useMemo, useState } from "react"
 import { useCursor } from "@react-three/drei"
 import type { ThreeEvent } from "@react-three/fiber"
-import { useEditorStore } from "../store"
+import { useEditorStore } from "../../store"
 import { useDesksOnDay } from "../useBooking"
-import { petFor } from "../models"
+import { petFor } from "../../models"
 import { personByEmail, usePeople } from "../people"
-import { WiggleModel } from "../objects/WiggleModel"
+import { WiggleModel } from "../../objects/WiggleModel"
 import { spotFor, type Spot } from "../seatSpot"
 
 const PET_SCALE = 0.4

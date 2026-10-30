@@ -1,6 +1,6 @@
-import { edgeDirection, footprintCells, unitEdges } from "./layout"
-import { GRID, isSeatable, type SceneObject } from "./types"
-import { getEdge } from "./catalog"
+import { edgeDirection, footprintCells, unitEdges } from "../layout"
+import { GRID, isSeatable, type SceneObject } from "../types"
+import { getEdge } from "../catalog"
 
 /**
  * Zones (neighbourhoods): a team's part of the office — a name on its desks.

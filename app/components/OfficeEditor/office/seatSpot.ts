@@ -1,5 +1,5 @@
-import { DESKMATE_SEAT_Z, SEAT, WORKSTATION_SEAT_Z } from "./objects/dimensions"
-import type { SceneObject } from "./types"
+import { DESKMATE_SEAT_Z, SEAT, WORKSTATION_SEAT_Z } from "../objects/dimensions"
+import type { SceneObject } from "../types"
 
 /** How far in front of a plain desk its chair usually stands (local z). */
 const DESK_CHAIR_Z = 0.9

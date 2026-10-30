@@ -2,7 +2,7 @@ import { Html } from "@react-three/drei"
 import { useThree } from "@react-three/fiber"
 import { useEffect, useLayoutEffect, useMemo } from "react"
 import { Color, DataTexture, NearestFilter, RedFormat, ShaderMaterial, Vector2 } from "three"
-import { useEditorStore } from "../store"
+import { useEditorStore } from "../../store"
 import { ZONE_CELL, ZONE_RADIUS, composeZoneAreas } from "../zones"
 
 /** Just above the interior floor's tint (0.006), below rugs and highlights. */

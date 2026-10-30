@@ -1,8 +1,8 @@
 import { Editor, type EditorProps } from "./editor/Editor"
-import type { EditorBooking } from "./editor/useBookingSync"
+import type { EditorBooking } from "./office/useBookingSync"
 import { officeModule } from "./office/module"
 import { OfficeSync } from "./office/OfficeSync"
-import type { People } from "./people"
+import type { People } from "./office/people"
 
 /** The editor runs with the office's module. */
 const MODULES = [officeModule]

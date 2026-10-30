@@ -1,5 +1,5 @@
 import type { EmptyStateProps } from "../editor/module"
-import { EmptyOffice } from "../ui/EmptyOffice"
+import { EmptyOffice } from "./ui/EmptyOffice"
 import { OfficeNotSetUp } from "./OfficeNotSetUp"
 
 /**

@@ -13,10 +13,10 @@ import {
   Undo2,
 } from "lucide-react"
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
-import { useEditorStore } from "./store"
+import { useEditorStore } from "../store"
 import { personByEmail, usePeople, type Person } from "./people"
 import { deskName } from "./useBooking"
-import { DESK_FEATURES } from "./office/deskFeatures"
+import { DESK_FEATURES } from "./deskFeatures"
 import { MemberAvatar } from "~/components/office/shell-ui"
 import { bookingPresets, deskState, type BookingPreset, type Day } from "~/utils/booking"
 import { useI18n } from "~/i18n/I18nProvider"

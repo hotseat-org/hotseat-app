@@ -29,7 +29,7 @@ import {
   useGivenUpDesk,
   useWaitlist,
   useWeekPresence,
-} from "~/components/OfficeEditor/useBooking"
+} from "~/components/OfficeEditor/office/useBooking"
 import { useI18n } from "~/i18n/I18nProvider"
 import { useSettings } from "~/components/settings/useSettings"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"

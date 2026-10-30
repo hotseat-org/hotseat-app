@@ -1,5 +1,5 @@
-import { composeZoneOutline, type ZoneArea } from "../../zones"
-import { shade } from "../shapes"
+import { composeZoneOutline, type ZoneArea } from "../zones"
+import { shade } from "../../plan/shapes"
 
 /** A zone's outline, inside its edge: this wide on screen (px), at any zoom. */
 const ZONE_LINE_PX = 2

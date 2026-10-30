@@ -8,7 +8,7 @@ import {
   type SetStateAction,
 } from "react"
 import { useEditorStore } from "../store"
-import { routeBounds } from "../wayfinding"
+import { routeBounds } from "../office/wayfinding"
 import { MAX_K, fitView, type Bounds, type Insets, type View } from "./planView"
 
 /** Bringing a desk into view: at least this zoom (px per plan unit)… */

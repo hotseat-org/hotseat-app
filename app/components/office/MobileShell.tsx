@@ -12,7 +12,7 @@ import { NotificationsBell } from "./Notifications"
 import { WeekDots } from "./WeekDots"
 import { MOBILE_CHROME } from "./mobile"
 import { MapMenu } from "~/components/OfficeEditor/ui/MapMenu"
-import { MonthCalendar } from "~/components/OfficeEditor/ui/DateStepper"
+import { MonthCalendar } from "~/components/OfficeEditor/office/ui/DateStepper"
 import { useEditorStore } from "~/components/OfficeEditor/store"
 import {
   dayPhrase,
@@ -21,7 +21,7 @@ import {
   useGivenUpDesk,
   useWaitlist,
   useWeekPresence,
-} from "~/components/OfficeEditor/useBooking"
+} from "~/components/OfficeEditor/office/useBooking"
 import { useSettings } from "~/components/settings/useSettings"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { daysBetween, isWeekend, type Day } from "~/utils/booking"

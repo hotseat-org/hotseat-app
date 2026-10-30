@@ -1,7 +1,7 @@
 import clsx from "clsx"
 import { ArrowLeftRight, Check, Footprints, Link2, X } from "lucide-react"
 import { useEffect, useState } from "react"
-import { useEditorStore } from "../store"
+import { useEditorStore } from "../../store"
 import { deskName } from "../useBooking"
 import { useRoute, walkTime } from "../wayfinding"
 import { useI18n } from "~/i18n/I18nProvider"

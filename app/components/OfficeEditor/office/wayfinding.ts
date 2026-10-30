@@ -6,12 +6,12 @@ import {
   isDiagonalEdge,
   runsAlongX,
   unitEdges,
-} from "./layout"
-import { spotFor } from "./seatSpot"
-import { useEditorStore } from "./store"
+} from "../layout"
+import { useEditorStore } from "../store"
+import { GRID, isEdgeType, isMarker, isOverhead, isWallMounted, type SceneObject } from "../types"
+import { getEdge, getItem } from "../catalog"
 import { useDesksOnDay } from "./useBooking"
-import { GRID, isEdgeType, isMarker, isOverhead, isWallMounted, type SceneObject } from "./types"
-import { getEdge, getItem } from "./catalog"
+import { spotFor } from "./seatSpot"
 import type { Translator } from "~/i18n/translate"
 
 /**

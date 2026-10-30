@@ -8,10 +8,10 @@ import {
   wallJointNodes,
 } from "./layout"
 import { getStructureBounds } from "./structureField"
-import { TEMPLATES } from "./templates"
+import { TEMPLATES } from "./office/templates"
 import { isEdgeType, isMarker, isSeatable, isWallMounted, type SceneObject } from "./types"
-import { getRoute } from "./wayfinding"
-import { composeZoneAreas } from "./zones"
+import { getRoute } from "./office/wayfinding"
+import { composeZoneAreas } from "./office/zones"
 
 /**
  * A safety net for refactoring the layout logic: what it makes of every

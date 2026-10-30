@@ -11,10 +11,10 @@ import {
   type LucideIcon,
 } from "lucide-react"
 import { useMemo, useState } from "react"
-import { numberUnlabelledDesks } from "../office/store"
-import { useEditorStore } from "../store"
+import { numberUnlabelledDesks } from "../store"
+import { useEditorStore } from "../../store"
 import { TEMPLATES, type OfficeTemplate } from "../templates"
-import { isSeatable } from "../types"
+import { isSeatable } from "../../types"
 import { useI18n } from "~/i18n/I18nProvider"
 import type { Translator } from "~/i18n/translate"
 import { Button } from "~/components/Button"
