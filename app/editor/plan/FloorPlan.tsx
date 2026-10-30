@@ -50,7 +50,7 @@ export const FloorPlan = ({
   const box = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState<{ width: number; height: number } | null>(null)
   const [view, setView] = useState<View | null>(null)
-  const { moved, onPointerDown } = usePlanGestures(box, setView, turnBy)
+  const { moved } = usePlanGestures(box, setView, turnBy)
 
   // A piece clicked in the drawing, not the end of a pan.
   const onPiece = useCallback(
@@ -128,7 +128,6 @@ export const FloorPlan = ({
       ref={box}
       className="absolute inset-0 touch-none select-none overflow-hidden"
       style={{ background: surfaces.planBackdrop }}
-      onPointerDown={onPointerDown}
       // A click anywhere but a piece (they stop it) or a card is the modules'
       // floor click (it closes the desk card); the end of a pan isn't.
       onClick={() => {
