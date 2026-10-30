@@ -150,11 +150,19 @@ const EditorInner = ({
     isBusy,
     busyLabel,
   } = useEditorMode({ canEdit, initialMode })
-  const commands = useMemo(() => composeCommands(() => switchMode("display")), [switchMode])
+  const modules = useModules()
+  const commands = useMemo(
+    () =>
+      composeCommands(
+        modules.flatMap((module) => module.commands ?? []),
+        () => switchMode("display")
+      ),
+    [modules, switchMode]
+  )
   useEditorShortcuts(readOnly)
   const { guardPanels } = useAutosave({ initialObjects, onSave, saveFailed })
   // The modules' panels for the mode.
-  const panels = useModules()
+  const panels = modules
     .flatMap((module) => module.panels ?? [])
     .filter((panel) => panel.when === "always" || (panel.when === "viewing") === readOnly)
 

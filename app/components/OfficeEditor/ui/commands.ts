@@ -3,7 +3,6 @@ import {
   ClipboardPaste,
   Copy,
   GraduationCap,
-  Hash,
   LayoutGrid,
   LogOut,
   Maximize,
@@ -19,9 +18,8 @@ import {
   type LucideIcon,
 } from "lucide-react"
 import { furnitureInRoomAt } from "../layout"
-import { getZones } from "../zones"
 import type { EditorState } from "../store"
-import { isEdgeType, isMarker, isSeatable, type SceneObject } from "../types"
+import { isEdgeType, isMarker, type SceneObject } from "../types"
 import { CATEGORIES, TOOL_META, isRepeatable } from "./categories"
 import { msg } from "~/i18n/msg"
 
@@ -39,9 +37,11 @@ export interface Command {
   shortcut?: string
   isAvailable: (state: EditorState) => boolean
   run: (state: EditorState) => void
+  /** Also offered on the floor's right-click menu (office-wide, not about a piece). */
+  isOnFloorMenu?: boolean
 }
 
-const GROUP = {
+export const GROUP = {
   selection: msg("Selection"),
   edit: msg("Edit"),
   place: msg("Place"),
@@ -58,7 +58,7 @@ const primaryOf = (state: EditorState) =>
   state.objects.find((object) => object.id === state.selectedId)
 
 /** Select these (and switch to Select, so the selection shows and can be moved). */
-const selectAll = (state: EditorState, ids: string[]) => {
+export const selectAll = (state: EditorState, ids: string[]) => {
   state.setTool("select")
   state.selectMany(ids)
 }
@@ -161,18 +161,7 @@ export const EDIT_COMMANDS: Command[] = [
     shortcut: "⌘V",
     isAvailable: (state) => state.clipboard.length > 0,
     run: (state) => state.paste(),
-  },
-  {
-    id: "selectDesks",
-    label: msg("Select all desks"),
-    group: GROUP.edit,
-    icon: SquareDashedMousePointer,
-    isAvailable: (state) => state.objects.some((object) => isSeatable(object.type)),
-    run: (state) =>
-      selectAll(
-        state,
-        state.objects.filter((object) => isSeatable(object.type)).map((object) => object.id)
-      ),
+    isOnFloorMenu: true,
   },
   {
     id: "selectFurniture",
@@ -186,23 +175,6 @@ export const EDIT_COMMANDS: Command[] = [
         state.objects.filter(isFurniture).map((object) => object.id)
       ),
   },
-  {
-    id: "numberDesks",
-    label: msg("Number the unnumbered desks"),
-    group: GROUP.edit,
-    icon: Hash,
-    isAvailable: (state) =>
-      state.objects.some((object) => isSeatable(object.type) && !object.label),
-    run: (state) => state.numberDesks(),
-  },
-  {
-    id: "numberDesksByZone",
-    label: msg("Number desks by zone"),
-    group: GROUP.edit,
-    icon: Hash,
-    isAvailable: (state) => getZones(state.objects).length > 0,
-    run: (state) => state.numberDesksByZone(),
-  },
 ]
 
 export const VIEW_COMMANDS: Command[] = [
@@ -214,6 +186,7 @@ export const VIEW_COMMANDS: Command[] = [
     shortcut: "F",
     isAvailable: always,
     run: (state) => state.requestFit(),
+    isOnFloorMenu: true,
   },
   {
     id: "measureHints",
@@ -295,10 +268,11 @@ const PLACE_COMMANDS: Command[] = CATEGORIES.flatMap((category) =>
   })
 )
 
-/** Everything the command search offers; `onDone` leaves editing. */
-export const composeCommands = (onDone?: () => void): Command[] => [
+/** Everything the command search offers, the modules' with the edit ones; `onDone` leaves editing. */
+export const composeCommands = (moduleCommands: Command[], onDone?: () => void): Command[] => [
   ...SELECTION_COMMANDS,
   ...EDIT_COMMANDS,
+  ...moduleCommands,
   ...TOOL_COMMANDS,
   ...PLACE_COMMANDS,
   ...VIEW_COMMANDS,

@@ -5,6 +5,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from
 import { composeKit, useKitLibrary } from "../kits"
 import { furnitureInRoomAt } from "../layout"
 import { useEditorStore, useEditorStoreApi, type EditorState } from "../store"
+import { useModules } from "../editor/modules"
 import { EDIT_COMMANDS, SELECTION_COMMANDS, VIEW_COMMANDS, type Command } from "./commands"
 import { useI18n } from "~/i18n/I18nProvider"
 import { msg } from "~/i18n/msg"
@@ -13,8 +14,6 @@ import { msg } from "~/i18n/msg"
 const EDGE_GAP = 8
 
 type Menu = NonNullable<EditorState["contextMenu"]>
-
-const FLOOR_COMMAND_IDS = new Set(["paste", "selectDesks", "numberDesks", "fit"])
 
 /** The floor menu's "this room": the room under the pointer, not the selection's. */
 const selectRoomAt = (menu: Menu): Command => ({
@@ -44,14 +43,14 @@ const saveRoomAt = (menu: Menu): Command => ({
 const SAVED_FOR = 1600
 
 /** What a right-click offers: the selection's actions on a piece, the room's on the floor. */
-const commandsFor = (menu: Menu): Command[] =>
+const commandsFor = (menu: Menu, moduleCommands: Command[]): Command[] =>
   menu.targetId
     ? [...SELECTION_COMMANDS, saveRoomAt(menu)]
     : [
         selectRoomAt(menu),
         saveRoomAt(menu),
-        ...[...EDIT_COMMANDS, ...VIEW_COMMANDS].filter((command) =>
-          FLOOR_COMMAND_IDS.has(command.id)
+        ...[...EDIT_COMMANDS, ...moduleCommands, ...VIEW_COMMANDS].filter(
+          (command) => command.isOnFloorMenu
         ),
       ]
 
@@ -74,7 +73,10 @@ const ContextMenuPanel = ({ menu }: { menu: Menu }) => {
   const [position, setPosition] = useState({ left: menu.x, top: menu.y })
   const [step, setStep] = useState<"menu" | "naming" | "saved">("menu")
   const close = () => store.getState().closeContextMenu()
-  const commands = commandsFor(menu).filter((command) => command.isAvailable(store.getState()))
+  const moduleCommands = useModules().flatMap((module) => module.commands ?? [])
+  const commands = commandsFor(menu, moduleCommands).filter((command) =>
+    command.isAvailable(store.getState())
+  )
 
   // Opens towards the window's middle when it wouldn't fit at the pointer.
   useLayoutEffect(() => {

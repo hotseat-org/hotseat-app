@@ -3,6 +3,7 @@ import "./objectFields"
 import { useOfficePieceStyles, useOfficePlanDrawings } from "./plan"
 import { OfficePlanOverlays, OfficeRoutePath } from "./planOverlays"
 import { OFFICE_SCENE_LAYERS, useOfficePieceStates, useOfficeViewClicks } from "./scene"
+import { OFFICE_COMMANDS } from "./commands"
 import { OFFICE_PANELS } from "./panels"
 import { useLayoutImpactGuard } from "./saveGuard"
 import { asNewDesks, createOfficeSlice } from "./store"
@@ -26,4 +27,5 @@ export const officeModule: EditorModule = {
   },
   panels: OFFICE_PANELS,
   useSaveGuard: useLayoutImpactGuard,
+  commands: OFFICE_COMMANDS,
 }

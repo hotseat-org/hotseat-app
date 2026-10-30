@@ -3,6 +3,7 @@ import type { Frame } from "../plan/useFraming"
 import type { View } from "../plan/planView"
 import type { GetState, SetState } from "../store/state"
 import type { SceneObject } from "../types"
+import type { Command } from "../ui/commands"
 
 /**
  * An editor module: what it adds to an editor instance (see office/module.ts).
@@ -41,6 +42,8 @@ export interface EditorModule {
    * bookings away waits for the admin's choice). See SaveGuard.
    */
   useSaveGuard?: (autosave: AutosaveControls) => SaveGuard
+  /** Its commands (the command search; `isOnFloorMenu` ones on the floor's right-click menu too). */
+  commands?: Command[]
 }
 
 /** A module's panel over the editor, shown while viewing, editing, or always. */
