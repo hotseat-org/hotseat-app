@@ -15,6 +15,7 @@ import type { EditorState, EditorStore, StoreHooks } from "./state"
 import { createToolsSlice } from "./tools"
 import { createViewSlice } from "./view"
 import { createWallsSlice } from "./walls"
+import { CORE_LAYERS, type Layers } from "./preferences"
 
 const makeInitializer =
   (initialObjects: SceneObject[], modules: EditorModule[]): StateCreator<EditorState> =>
@@ -32,6 +33,14 @@ const makeInitializer =
           (pieces, module) => module.prepareNewPieces?.(existing, pieces) ?? pieces,
           fresh
         ),
+      defaultLayers: {
+        ...CORE_LAYERS,
+        ...Object.fromEntries(
+          modules
+            .flatMap((module) => module.mapLayers ?? [])
+            .map((layer) => [layer.id, layer.isOnByDefault])
+        ),
+      } as Layers,
     }
     // The modules' slices: typed through ModuleState, which each one extends.
     const moduleSlices = Object.assign(
@@ -45,7 +54,7 @@ const makeInitializer =
       ...createWallsSlice(set, get),
       ...createSelectionSlice(set, get, hooks),
       ...createToolsSlice(set, get),
-      ...createViewSlice(set, get),
+      ...createViewSlice(set, get, hooks),
       ...createPanelsSlice(set, get),
       ...history,
     }

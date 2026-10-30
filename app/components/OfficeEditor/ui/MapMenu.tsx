@@ -6,16 +6,14 @@ import {
   Layers as LayersIcon,
   Proportions,
   Ruler,
-  Shapes,
-  Tag,
   type LucideIcon,
 } from "lucide-react"
-import { useMemo } from "react"
+import { Fragment } from "react"
 import { useEditorStore, type Layers } from "../store"
 import { hasWebGL } from "../webgl"
-import { getZones } from "../zones"
+import { useModules } from "../editor/modules"
+import type { SceneObject } from "../types"
 import { REVEAL_LABEL } from "./revealLabel"
-import { DeskFilterOptions, useDeskFilterOptions } from "~/components/office/DeskFilter"
 import { useI18n } from "~/i18n/I18nProvider"
 import { msg } from "~/i18n/msg"
 
@@ -26,14 +24,10 @@ interface LayerRow {
   hint: string
   icon: LucideIcon
   shortcut?: string
+  /** A hint instead, for this layout (a module's layer: see MapLayer.hintFor). */
+  hintFor?: (objects: SceneObject[]) => string | null
 }
 
-const ZONES: LayerRow = {
-  id: "zones",
-  label: msg("Zones"),
-  hint: msg("Team areas and their names"),
-  icon: Shapes,
-}
 const FRAME_RATE: LayerRow = {
   id: "frameRate",
   label: msg("Frame rate"),
@@ -41,18 +35,8 @@ const FRAME_RATE: LayerRow = {
   icon: Activity,
 }
 
-const VIEW_ROWS: LayerRow[] = [
-  ZONES,
-  {
-    id: "deskTags",
-    label: msg("Desk tags"),
-    hint: msg("Who sits where, and free desks"),
-    icon: Tag,
-  },
-]
-
+/** The editor's own rows while editing (after the modules' layers). */
 const EDIT_ROWS: LayerRow[] = [
-  ZONES,
   {
     id: "roomSizes",
     label: msg("Room sizes"),
@@ -100,11 +84,28 @@ export const MapMenu = ({
   const isFrameRateShown = useEditorStore((state) => state.isFrameRateShown)
   const toggleFrameRate = useEditorStore((state) => state.toggleFrameRate)
   const objects = useEditorStore((state) => state.objects)
-  const zoneCount = useMemo(() => getZones(objects).length, [objects])
-  const filter = useDeskFilterOptions()
-  const hasFilter = !isEditing && filter.hasOptions
+  const modules = useModules()
+  // The modules' sections at the foot (the office: which desks), viewing only.
+  // Each one's hooks, in a loop: safe, the list is fixed (see ModulesContext).
+  const sections = modules.flatMap((module) =>
+    module.mapMenuSection
+      ? [
+          {
+            ...module.mapMenuSection,
+            isShown: module.mapMenuSection.useIsShown(),
+            changeCount: module.mapMenuSection.useChangeCount(),
+          },
+        ]
+      : []
+  )
+  const shownSections = isEditing ? [] : sections.filter((section) => section.isShown)
 
-  const rows = [...(isEditing ? EDIT_ROWS : VIEW_ROWS), ...(is3d ? [FRAME_RATE] : [])]
+  // The modules' layers for the mode, then the editor's own, then the frame rate.
+  const moduleRows: LayerRow[] = modules
+    .flatMap((module) => module.mapLayers ?? [])
+    .filter((layer) => layer.when === "always" || (layer.when === "editing") === isEditing)
+    .map((layer) => ({ ...layer, id: layer.id as keyof Layers }))
+  const rows = [...moduleRows, ...(isEditing ? EDIT_ROWS : []), ...(is3d ? [FRAME_RATE] : [])]
   const isOn = (row: LayerRow) =>
     row.id === "measurements"
       ? measureHints
@@ -119,7 +120,8 @@ export const MapMenu = ({
         : toggleLayer(row.id)
   // The frame rate is off by default: on isn't a change worth a badge.
   const hiddenCount = rows.filter((row) => row.id !== "frameRate" && !isOn(row)).length
-  const changedCount = hiddenCount + (hasFilter ? filter.activeCount : 0)
+  const changedCount =
+    hiddenCount + shownSections.reduce((sum, section) => sum + section.changeCount, 0)
   const label = changedCount ? tn(changedCount, "Map ({n} change)", "Map ({n} changes)") : t("Map")
 
   return (
@@ -162,10 +164,7 @@ export const MapMenu = ({
             {rows.map((row) => {
               const isLayerOn = isOn(row)
               const Icon = row.icon
-              const hint =
-                row.id === "zones" && zoneCount === 0
-                  ? t("None yet — give desks a zone")
-                  : t(row.hint)
+              const hint = t(row.hintFor?.(objects) ?? row.hint)
               return (
                 <li key={row.id}>
                   <button
@@ -200,13 +199,13 @@ export const MapMenu = ({
               )
             })}
           </ul>
-          {hasFilter && (
-            <>
+          {shownSections.map(({ heading, Component }, index) => (
+            <Fragment key={index}>
               <div className="mx-2.5 my-1.5 h-px bg-separator" />
-              <Heading>{t("Show only")}</Heading>
-              <DeskFilterOptions />
-            </>
-          )}
+              <Heading>{t(heading)}</Heading>
+              <Component />
+            </Fragment>
+          ))}
         </Popover.Dialog>
       </Popover.Content>
     </Popover>

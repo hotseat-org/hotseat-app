@@ -19,25 +19,26 @@ export const readMeasurePref = () => {
 }
 export const writeMeasurePref = (on: boolean) => writePref(MEASURE_KEY, on ? "on" : "off")
 
-/** What the map shows on top of the office — each can be hidden (Layers). */
+/**
+ * What the map shows on top of the layout — each can be hidden (the Map
+ * menu). Modules add theirs (`declare module`, see EditorModule.mapLayers).
+ */
 export interface Layers {
-  /** Team zones: their floor and names. */
-  zones: boolean
-  /** Viewing: who sits where, and which desks are free. */
-  deskTags: boolean
-  /** Editing: each room's floor area and desk count. */
+  /** Editing: each room's floor area (and what the modules say about it). */
   roomSizes: boolean
   /** Editing: the build grid. */
   grid: boolean
 }
 
-const DEFAULT_LAYERS: Layers = { zones: true, deskTags: true, roomSizes: true, grid: true }
+/** The editor's own layers, on by default. */
+export const CORE_LAYERS = { roomSizes: true, grid: true }
 const LAYERS_KEY = "office-editor:layers"
-export const readLayers = (): Layers => {
+/** This browser's layers, over `defaults` (the core's and the modules'). */
+export const readLayers = (defaults: Layers): Layers => {
   try {
-    return { ...DEFAULT_LAYERS, ...JSON.parse(localStorage.getItem(LAYERS_KEY) ?? "{}") }
+    return { ...defaults, ...JSON.parse(localStorage.getItem(LAYERS_KEY) ?? "{}") }
   } catch {
-    return DEFAULT_LAYERS
+    return defaults
   }
 }
 export const writeLayers = (layers: Layers) => writePref(LAYERS_KEY, JSON.stringify(layers))

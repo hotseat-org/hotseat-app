@@ -10,7 +10,7 @@ import {
   type Layers,
   type OfficeView,
 } from "./preferences"
-import type { GetState, SetState } from "./state"
+import type { GetState, SetState, StoreHooks } from "./state"
 
 /** How the office is shown: time of day, view, layers, and where to look. */
 export interface ViewSlice {
@@ -45,6 +45,9 @@ export interface ViewSlice {
   /** Bumped to ask the camera to frame the whole office (see CameraFit). */
   fitNonce: number
   requestFit: () => void
+  /** An area the camera is asked to frame (see CameraFit) — a module's: the way to a desk. */
+  frameRequest: { bounds: { x0: number; x1: number; z0: number; z1: number }; nonce: number } | null
+  requestFrame: (bounds: { x0: number; x1: number; z0: number; z1: number }) => void
 }
 
 /** The viewer's local wall-clock time in hours [0,24), minute precision. */
@@ -53,7 +56,7 @@ export const nowHours = () => {
   return now.getHours() + now.getMinutes() / 60
 }
 
-export const createViewSlice = (set: SetState, get: GetState): ViewSlice => ({
+export const createViewSlice = (set: SetState, get: GetState, hooks: StoreHooks): ViewSlice => ({
   // Server-safe default; the real time is applied on mount (client clock + TZ).
   timeOfDay: 13,
   setTimeOfDay: (hour) => set({ timeOfDay: ((hour % 24) + 24) % 24, syncTime: false }),
@@ -67,7 +70,7 @@ export const createViewSlice = (set: SetState, get: GetState): ViewSlice => ({
     writeViewPref(view)
     set({ view })
   },
-  layers: readLayers(),
+  layers: readLayers(hooks.defaultLayers),
   toggleLayer: (layer) =>
     set((state) => {
       const layers = { ...state.layers, [layer]: !state.layers[layer] }
@@ -91,4 +94,7 @@ export const createViewSlice = (set: SetState, get: GetState): ViewSlice => ({
   toggleFrameRate: () => set((state) => ({ isFrameRateShown: !state.isFrameRateShown })),
   fitNonce: 0,
   requestFit: () => set((state) => ({ fitNonce: state.fitNonce + 1 })),
+  frameRequest: null,
+  requestFrame: (bounds) =>
+    set((state) => ({ frameRequest: { bounds, nonce: (state.frameRequest?.nonce ?? 0) + 1 } })),
 })

@@ -4,7 +4,6 @@ import { useThree } from "@react-three/fiber"
 import { MOUSE } from "three"
 import { useEditorStore, useEditorStoreApi, useObjectsWithPaintPreview } from "../store"
 import { composeWallColors, snapPlacement, wallMount } from "../layout"
-import { randomModelId } from "../models"
 import { daylight, DaylightContext } from "../daylight"
 import { SURFACES } from "../palette"
 import { SceneThemeContext } from "../sceneTheme"
@@ -270,8 +269,6 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
         z: placement.z,
         rotation: placement.rotation ?? placementRotation,
         color: placementColor ?? undefined,
-        // A deskmate gets a random animal on its chair.
-        model: tool === "deskmate" ? randomModelId() : undefined,
       })
     }
   }

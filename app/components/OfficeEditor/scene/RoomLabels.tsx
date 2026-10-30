@@ -2,7 +2,7 @@ import { Html } from "@react-three/drei"
 import { useMemo } from "react"
 import { SEG, enclosedRegions, type FloorCell } from "../layout"
 import { useEditorStore } from "../store"
-import { isSeatable } from "../types"
+import { describePieces, useModules } from "../editor/modules"
 import { useI18n } from "~/i18n/I18nProvider"
 
 /** Rooms smaller than this (m²) — a cupboard, a shaft — get no label. */
@@ -22,17 +22,20 @@ const shareOf = (cell: FloorCell) => {
  */
 export const RoomLabels = () => {
   // Bridged into the canvas; the text is made here, outside <Html>'s own root.
-  const { tn, format } = useI18n()
+  const i18n = useI18n()
+  const { format } = i18n
+  const modules = useModules()
   const objects = useEditorStore((state) => state.objects)
   const rooms = useMemo(() => {
-    const desks = objects.filter((object) => isSeatable(object.type))
     return enclosedRegions(objects).flatMap((cells) => {
       const area = cells.reduce((sum, cell) => sum + shareOf(cell), 0) * SEG * SEG
       if (area < MIN_AREA) return []
       const inside = new Set(cells.map((cell) => `${cell.x},${cell.z}`))
-      const deskCount = desks.filter((desk) =>
-        inside.has(`${Math.floor(desk.x / SEG) * SEG},${Math.floor(desk.z / SEG) * SEG}`)
-      ).length
+      const pieces = objects.filter((object) =>
+        inside.has(`${Math.floor(object.x / SEG) * SEG},${Math.floor(object.z / SEG) * SEG}`)
+      )
+      // What the modules say about it (the office: its desks).
+      const description = describePieces(modules, pieces, i18n)
       // On the room's own floor: the square nearest its middle (an L-shaped
       // room's middle can be outside it).
       const centreX = cells.reduce((sum, cell) => sum + cell.x, 0) / cells.length + SEG / 2
@@ -43,9 +46,9 @@ export const RoomLabels = () => {
           ? cell
           : best
       )
-      return [{ x: spot.x + SEG / 2, z: spot.z + SEG / 2, area, deskCount }]
+      return [{ x: spot.x + SEG / 2, z: spot.z + SEG / 2, area, description }]
     })
-  }, [objects])
+  }, [objects, modules, i18n])
 
   return (
     <>
@@ -61,11 +64,7 @@ export const RoomLabels = () => {
             <span className="text-xs font-bold tabular-nums">
               {format.number(Math.round(room.area * 10) / 10)} m²
             </span>
-            {room.deskCount > 0 && (
-              <span className="text-[10px] text-muted">
-                {tn(room.deskCount, "{n} desk", "{n} desks")}
-              </span>
-            )}
+            {room.description && <span className="text-[10px] text-muted">{room.description}</span>}
           </span>
         </Html>
       ))}

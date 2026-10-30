@@ -96,6 +96,7 @@ import {
 } from "../../ui/categoryIcons"
 import { registerCategories } from "../categories"
 import { registerRenderers } from "../renderers"
+import { DeskmatePreview } from "../../objects/DeskmatePreview"
 import { FURNITURE_SYMBOLS } from "./furnitureSymbols"
 import { msg } from "~/i18n/msg"
 
@@ -311,6 +312,8 @@ registerRenderers({
   },
   deskmate: {
     Mesh: Deskmate,
+    // A still stand-in: the real one floats a name tag and wiggles.
+    Thumbnail: DeskmatePreview,
     drawSymbol: FURNITURE_SYMBOLS.deskmate,
     tile: { label: msg("Desk with pet"), icon: PawPrintIcon },
   },

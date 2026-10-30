@@ -41,6 +41,8 @@ export interface ItemRenderer {
   planRun?: { color?: string; thickness: number; opacity: number }
   /** How the editor names and offers it. */
   tile?: ItemTile
+  /** Its catalogue thumbnail's model, when the Mesh doesn't suit a still (unset: the Mesh). */
+  Thumbnail?: (props: { color?: string }) => ReactElement
 }
 
 /** A kind's tile in the catalogue (and its name everywhere else: the Inspector, commands). */

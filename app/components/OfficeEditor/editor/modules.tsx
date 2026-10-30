@@ -8,6 +8,7 @@ import type {
   PlanPieceStyle,
   ViewClicks,
 } from "./module"
+import type { Translator } from "~/i18n/translate"
 
 /**
  * The modules an editor runs with, for its components (and, bridged, the 3D
@@ -85,3 +86,12 @@ export const usePlanDrawings = (context: PlanDrawingContext): PlanDrawings[] => 
   )
   return useMemo(() => drawings, drawings)
 }
+
+/** What the modules say about some pieces ("8 desks"), joined; null when none says anything. */
+export const describePieces = (
+  modules: EditorModule[],
+  objects: SceneObject[],
+  translator: Translator
+) =>
+  modules.flatMap((module) => module.describePieces?.(objects, translator) ?? []).join(" · ") ||
+  null

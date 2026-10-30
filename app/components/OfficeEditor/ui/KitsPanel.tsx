@@ -3,7 +3,7 @@ import { MousePointerClick, Trash2 } from "lucide-react"
 import { useState, type CSSProperties } from "react"
 import { useKitLibrary } from "../kits"
 import { useEditorStore } from "../store"
-import { isSeatable } from "../types"
+import { describePieces, useModules } from "../editor/modules"
 import { KitPlan } from "./KitPlan"
 import { useI18n } from "~/i18n/I18nProvider"
 
@@ -13,7 +13,9 @@ import { useI18n } from "~/i18n/I18nProvider"
  * right-click menu inside a room.
  */
 export const KitsPanel = ({ style }: { style?: CSSProperties }) => {
-  const { t, tn, format } = useI18n()
+  const i18n = useI18n()
+  const { t, format } = i18n
+  const modules = useModules()
   const { kits, deleteKit } = useKitLibrary()
   const armedKit = useEditorStore((state) => state.armedKit)
   const armKit = useEditorStore((state) => state.armKit)
@@ -43,7 +45,8 @@ export const KitsPanel = ({ style }: { style?: CSSProperties }) => {
       <div className="-mr-2 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-contain pr-2 [scrollbar-width:thin]">
         {kits.map((kit) => {
           const isArmed = armedKit?.id === kit.id
-          const deskCount = kit.objects.filter((object) => isSeatable(object.type)).length
+          // What the modules say about it (the office: its desks).
+          const description = describePieces(modules, kit.objects, i18n)
           const isConfirming = confirmingId === kit.id
           return (
             <div key={kit.id} className="group relative">
@@ -62,7 +65,7 @@ export const KitsPanel = ({ style }: { style?: CSSProperties }) => {
                 <span className="truncate text-xs font-semibold text-foreground">{kit.name}</span>
                 <span className="text-[11px] text-muted">
                   {format.number(Math.round(kit.area * 10) / 10)} m²
-                  {deskCount > 0 && ` · ${tn(deskCount, "{n} desk", "{n} desks")}`}
+                  {description && ` · ${description}`}
                 </span>
               </button>
               <button

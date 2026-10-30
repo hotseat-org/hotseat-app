@@ -8,6 +8,7 @@ import type { SelectionSlice } from "./selection"
 import type { ToolsSlice } from "./tools"
 import type { ViewSlice } from "./view"
 import type { WallsSlice } from "./walls"
+import type { Layers } from "./preferences"
 
 /**
  * The state modules add (see EditorModule.createSlice): each extends this with
@@ -39,4 +40,6 @@ export type EditorStore = StoreApi<EditorState>
 export interface StoreHooks {
   /** New pieces, before they join `existing`: what they keep of what they were copied from. */
   prepareNewPieces: (existing: SceneObject[], fresh: SceneObject[]) => SceneObject[]
+  /** Every layer's default (the core's and the modules'). */
+  defaultLayers: Layers
 }

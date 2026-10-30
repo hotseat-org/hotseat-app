@@ -16,7 +16,6 @@ import { Inspector } from "../ui/Inspector"
 import { TopBar } from "../ui/TopBar"
 import { TimeOfDay } from "../ui/TimeOfDay"
 import { FloorPlan } from "../plan/FloorPlan"
-import { EmptyOffice } from "../ui/EmptyOffice"
 import { ControlsGuide } from "../ui/ControlsGuide"
 import { SceneLoading } from "../ui/SceneLoading"
 import { CommandSearch } from "../ui/CommandSearch"
@@ -26,7 +25,6 @@ import { GuidedTour } from "../ui/GuidedTour"
 import { MapControls } from "../ui/MapControls"
 import { KitLibraryContext, type KitLibrary } from "../kits"
 import { FrameRateReadout } from "./FrameRateReadout"
-import { OfficeNotSetUp } from "./OfficeNotSetUp"
 import { SelectionBox } from "./SelectionBox"
 import { useAutosave } from "./useAutosave"
 import { useEditorMode, type Mode } from "./useEditorMode"
@@ -162,6 +160,8 @@ const EditorInner = ({
   useEditorShortcuts(readOnly)
   const { guardPanels } = useAutosave({ initialObjects, onSave, saveFailed })
   // The modules' panels for the mode.
+  // An empty layout's screen: the first module's that has one.
+  const EmptyState = modules.find((module) => module.EmptyState)?.EmptyState
   const panels = modules
     .flatMap((module) => module.panels ?? [])
     .filter((panel) => panel.when === "always" || (panel.when === "viewing") === readOnly)
@@ -312,15 +312,15 @@ const EditorInner = ({
 
         {/* Empty-office first run: offer templates or a blank start (admins),
             or explain why there's nothing here yet (everyone else). */}
-        {isEmpty && canEdit && (
-          <EmptyOffice
+        {isEmpty && EmptyState && (
+          <EmptyState
+            canEdit={canEdit}
             readOnly={readOnly}
             isEditable={editable}
             onEnterEdit={enterEdit}
             onDismiss={() => setEmptyDismissed(true)}
           />
         )}
-        {isEmpty && !canEdit && <OfficeNotSetUp />}
       </div>
     </div>
   )

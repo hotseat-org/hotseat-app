@@ -2,8 +2,8 @@ import clsx from "clsx"
 import type { ReactNode } from "react"
 import { useEditorStore } from "../store"
 import { hasWebGL } from "../webgl"
+import { useModules } from "../editor/modules"
 import { SkySlider } from "./SkySlider"
-import { DateStepper } from "./DateStepper"
 import { useI18n } from "~/i18n/I18nProvider"
 
 /**
@@ -27,14 +27,17 @@ export const TimeOfDay = ({
   const setTimeOfDay = useEditorStore((state) => state.setTimeOfDay)
   const syncTime = useEditorStore((state) => state.syncTime)
   const setSyncTime = useEditorStore((state) => state.setSyncTime)
-  const booking = useEditorStore((state) => state.booking.enabled)
+  const items = useModules().flatMap((module) => module.bottomBarItems ?? [])
   const view = useEditorStore((state) => state.view)
   // The flat plan has no lighting: no time-of-day there.
   const flat = isViewing && (view === "2d" || !hasWebGL())
 
   return (
     <div className="pointer-events-auto absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-2xl border border-border bg-overlay/90 p-2 text-foreground shadow-overlay backdrop-blur-md">
-      {booking && <DateStepper />}
+      {/* The modules' (the office: the day shown). */}
+      {items.map((Item, index) => (
+        <Item key={index} />
+      ))}
       {!flat && (
         <div className="flex items-center gap-1.5">
           <SkySlider value={timeOfDay} onChange={setTimeOfDay} className="mx-1 w-56" />

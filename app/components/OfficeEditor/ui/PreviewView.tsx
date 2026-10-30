@@ -12,11 +12,8 @@ import {
   type WebGLRenderer,
 } from "three"
 import { ObjectMesh } from "../objects/ObjectMesh"
-import { Desk } from "../objects/Desk"
-import { Seat } from "../objects/Seat"
-import { Model } from "../objects/Model"
-import { SEAT } from "../objects/dimensions"
-import type { CatalogItem } from "../types"
+import { getRenderer } from "../catalog/rendering"
+import type { CatalogItem, ObjectType } from "../types"
 import { Wall } from "../objects/Wall"
 import {
   addThumbnail,
@@ -25,6 +22,12 @@ import {
   useNextThumbnailRequest,
   useThumbnail,
 } from "./thumbnails"
+
+/** A kind's own thumbnail model if it has one (see ItemRenderer.Thumbnail), else its mesh. */
+const Thumbnail = ({ type, color }: { type: ObjectType; color?: string }) => {
+  const { Thumbnail: Own } = getRenderer(type)
+  return Own ? <Own color={color} /> : <ObjectMesh type={type} color={color} />
+}
 
 const CAMERA = { fov: 32, position: [3.4, 2.6, 3.4] as [number, number, number] }
 
@@ -46,25 +49,6 @@ const Spin = ({ spinning, children }: { spinning: boolean; children: React.React
   })
   return <group ref={groupRef}>{children}</group>
 }
-
-/**
- * Static stand-in for a deskmate: the real component floats a drei <Html> name
- * tag and runs wiggle timers, neither of which belongs in a thumbnail. Mirrors
- * Deskmate's layout with a still animal so the type stays recognisable.
- */
-const DeskmatePreview = ({ color }: { color?: string }) => (
-  <group>
-    <group position={[0, 0, -0.35]}>
-      <Desk color={color} />
-    </group>
-    <group position={[0, 0, 0.4]} rotation={[0, Math.PI, 0]}>
-      <Seat />
-    </group>
-    <group position={[0, SEAT.seatHeight + 0.06, 0.4]} rotation={[0, Math.PI, 0]}>
-      <Model url={`${import.meta.env.BASE_URL}models/animal-cat.glb`} scale={0.4} />
-    </group>
-  </group>
-)
 
 /** Viewing direction (from the object towards the camera) — a 3/4 hero angle. */
 const VIEW_DIR = new Vector3(3.4, 2.6, 3.4).normalize()
@@ -172,10 +156,8 @@ const Contents = ({
         <Spin spinning={spinning}>
           {type === "room" ? (
             <RoomPreview color={color} />
-          ) : type === "deskmate" ? (
-            <DeskmatePreview color={color} />
           ) : (
-            <ObjectMesh type={type} color={color} />
+            <Thumbnail type={type} color={color} />
           )}
         </Spin>
       </FitCamera>

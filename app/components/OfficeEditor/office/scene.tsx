@@ -10,6 +10,7 @@ import { ZoneFloor } from "../scene/ZoneFloor"
 import { useEditorStore, useEditorStoreApi } from "../store"
 import { isSeatable } from "../types"
 import { useDesksOnDay } from "../useBooking"
+import { routeBounds, useRoute } from "../wayfinding"
 
 /** Who sits where, while the Desk tags layer is on. */
 const SeatTagsLayer = () => {
@@ -32,6 +33,18 @@ const SeatCardReset = ({ isEditing }: SceneLayerProps) => {
   return null
 }
 
+/** The way to a desk: framed once shown (or asked for again). */
+const RouteFraming = () => {
+  const route = useRoute()
+  const requestFrame = useEditorStore((state) => state.requestFrame)
+  const routeNonce = route?.path ? route.nonce : null
+  useEffect(() => {
+    if (route?.path) requestFrame(routeBounds(route.path.points))
+    // Only when a way is asked for — not as it's recomputed.
+  }, [routeNonce])
+  return null
+}
+
 /** What the office draws in the 3D scene. */
 export const OFFICE_SCENE_LAYERS: SceneLayer[] = [
   { Component: SeatCardReset, when: "always" },
@@ -39,6 +52,7 @@ export const OFFICE_SCENE_LAYERS: SceneLayer[] = [
   { Component: DeskPets, when: "viewing" },
   { Component: SeatPopup, when: "viewing" },
   { Component: RouteLine, when: "viewing" },
+  { Component: RouteFraming, when: "viewing" },
   { Component: HeatPads, when: "viewing" },
   { Component: HeatBars, when: "viewing" },
   { Component: ZoneFloorLayer, when: "always" },

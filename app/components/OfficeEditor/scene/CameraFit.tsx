@@ -7,7 +7,6 @@ import { edgeNodes, footprintCells } from "../layout"
 import { GRID, isEdgeType, isMarker } from "../types"
 import { WALL } from "../objects/dimensions"
 import { isTypingTarget } from "../keyboard"
-import { routeBounds, useRoute } from "../wayfinding"
 
 /** Share of the viewport the office fills (room for the floating panels). */
 const FILL = 0.78
@@ -94,17 +93,16 @@ export const CameraFit = ({ insets = NO_INSETS }: { insets?: FitInsets }) => {
     frame(box, instant)
   }, [nonce, controls, hasObjects])
 
-  // The way to a desk: frame the route, from the entrance to the chair.
-  const route = useRoute()
-  const routeNonce = route?.path ? route.nonce : null
+  // An area asked for (a module's — the way to a desk, from the entrance to the chair).
+  const frameRequest = useEditorStore((state) => state.frameRequest)
   useEffect(() => {
-    if (!controls || !route?.path) return
-    const bounds = routeBounds(route.path.points)
+    if (!controls || !frameRequest) return
+    const { bounds } = frameRequest
     frame(
       new Box3(new Vector3(bounds.x0, 0, bounds.z0), new Vector3(bounds.x1, 1, bounds.z1)),
       false
     )
-  }, [routeNonce, controls])
+  }, [frameRequest?.nonce, controls])
 
   /** Move the view onto `box` (animated unless `instant`), keeping the angle. */
   function frame(box: Box3, instant: boolean) {

@@ -1,9 +1,10 @@
 import { Button } from "@heroui/react"
 import clsx from "clsx"
 import { ArrowRight, Check } from "lucide-react"
-import { useEffect, useLayoutEffect, useState } from "react"
+import { useEffect, useLayoutEffect, useState, useMemo } from "react"
 import { useEditorStore, useEditorStoreApi, type EditorState } from "../store"
-import { isSeatable, isWall } from "../types"
+import { isWall } from "../types"
+import { useModules } from "../editor/modules"
 import { useI18n } from "~/i18n/I18nProvider"
 import { msg } from "~/i18n/msg"
 
@@ -11,7 +12,9 @@ const STORAGE_KEY = "office-editor:tour-done"
 /** Room round a highlighted control (px). */
 const RING_GAP = 6
 
-interface TourStep {
+export interface TourStep {
+  /** Others are placed after it by this (see EditorModule.tourSteps). */
+  id: string
   title: string
   body: string
   /** The control it's about (`data-tour` value), ringed while it shows. */
@@ -22,8 +25,6 @@ interface TourStep {
 
 const wallCount = (state: EditorState) =>
   state.objects.filter((object) => isWall(object.type)).length
-const deskCount = (state: EditorState) =>
-  state.objects.filter((object) => isSeatable(object.type)).length
 /** What's selected, and where it stands. */
 const selectionKey = (state: EditorState) =>
   state.objects
@@ -31,12 +32,14 @@ const selectionKey = (state: EditorState) =>
     .map((object) => `${object.id}@${object.x},${object.z},${object.rotation}`)
     .join("|")
 
-const STEPS: TourStep[] = [
+const CORE_STEPS: TourStep[] = [
   {
+    id: "welcome",
     title: msg("Welcome to the editor"),
     body: msg("Six quick steps. Try each one as you go — the tour moves on by itself."),
   },
   {
+    id: "drawRoom",
     title: msg("Draw a room"),
     body: msg(
       "Open Structure, pick Room and drag across the floor. Later, drag a wall by its foot to resize the room."
@@ -45,14 +48,7 @@ const STEPS: TourStep[] = [
     isDone: (now, start) => wallCount(now) >= wallCount(start) + 4,
   },
   {
-    title: msg("Add desks"),
-    body: msg(
-      "In Desks, pick the desk and click the floor. Choose Row or Pod and drag to lay many at once."
-    ),
-    target: "catalog",
-    isDone: (now, start) => deskCount(now) > deskCount(start),
-  },
-  {
+    id: "select",
     title: msg("Select, move, turn"),
     body: msg(
       "Click a piece to select it, drag to move it, press R to turn it. Right-click for more — like saving a room to use again."
@@ -61,16 +57,11 @@ const STEPS: TourStep[] = [
     isDone: (now, start) => now.selection.length > 0 && selectionKey(now) !== selectionKey(start),
   },
   {
+    id: "find",
     title: msg("Find anything"),
     body: msg("Press ⌘K (Ctrl+K) to search every command and every piece by name."),
     target: "search",
     isDone: (now) => now.isCommandSearchOpen,
-  },
-  {
-    title: msg("Teams and booking"),
-    body: msg(
-      "Select desks and give them a zone, so each team finds and books its own area. Everything saves as you go."
-    ),
   },
 ]
 
@@ -89,6 +80,19 @@ export const isTourDone = () => {
  * they're done for real (a room drawn, a desk placed…); Next and Skip are
  * always there. Seen once per browser; ⌘K → "Show the tour" brings it back.
  */
+/** The core's steps with each module's placed after the step it follows. */
+const useTourSteps = () => {
+  const modules = useModules()
+  return useMemo(() => {
+    const steps = [...CORE_STEPS]
+    for (const { after, step } of modules.flatMap((module) => module.tourSteps ?? [])) {
+      const index = steps.findIndex((candidate) => candidate.id === after)
+      steps.splice(index < 0 ? steps.length : index + 1, 0, step)
+    }
+    return steps
+  }, [modules])
+}
+
 export const GuidedTour = () => {
   const isOpen = useEditorStore((state) => state.isTourOpen)
   if (!isOpen) return null
@@ -96,11 +100,12 @@ export const GuidedTour = () => {
 }
 
 const TourCard = () => {
+  const steps = useTourSteps()
   const { t } = useI18n()
   const store = useEditorStoreApi()
   const [index, setIndex] = useState(0)
-  const step = STEPS[index]
-  const isLast = index === STEPS.length - 1
+  const step = steps[index]
+  const isLast = index === steps.length - 1
 
   const finish = () => {
     try {
@@ -118,7 +123,7 @@ const TourCard = () => {
     const start = store.getState()
     return store.subscribe((now) => {
       // From this step only: several updates in a row mustn't skip the next.
-      if (isDone(now, start)) setIndex((i) => (i === index ? Math.min(i + 1, STEPS.length - 1) : i))
+      if (isDone(now, start)) setIndex((i) => (i === index ? Math.min(i + 1, steps.length - 1) : i))
     })
   }, [index, step, store])
 
@@ -160,14 +165,14 @@ const TourCard = () => {
               {t(step.title)}
             </h2>
             <span className="shrink-0 text-xs font-semibold tabular-nums text-muted">
-              {t("{n} of {count}", { n: index + 1, count: STEPS.length })}
+              {t("{n} of {count}", { n: index + 1, count: steps.length })}
             </span>
           </div>
           {/* Fixed height: the card doesn't jump between steps. */}
           <p className="mt-1 min-h-[3.75rem] text-sm leading-snug text-muted">{t(step.body)}</p>
           <div className="mt-3 flex items-center gap-2">
             <div className="flex flex-1 gap-1" aria-hidden>
-              {STEPS.map((_, i) => (
+              {steps.map((_, i) => (
                 <span
                   key={i}
                   className={clsx(

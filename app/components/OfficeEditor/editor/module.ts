@@ -1,9 +1,12 @@
 import type { ComponentType, ReactNode, RefObject } from "react"
+import type { LucideIcon } from "lucide-react"
 import type { Frame } from "../plan/useFraming"
 import type { View } from "../plan/planView"
 import type { GetState, SetState } from "../store/state"
 import type { SceneObject } from "../types"
 import type { Command } from "../ui/commands"
+import type { TourStep } from "../ui/GuidedTour"
+import type { Translator } from "~/i18n/translate"
 
 /**
  * An editor module: what it adds to an editor instance (see office/module.ts).
@@ -46,6 +49,56 @@ export interface EditorModule {
   commands?: Command[]
   /** Its sections in the Inspector (editing), for the selection. */
   inspectorSections?: ComponentType<InspectorSectionProps>[]
+  /** Its layers in the Map menu (shown or hidden, remembered in the browser). */
+  mapLayers?: MapLayer[]
+  /** Its section at the foot of the Map menu while viewing (the office: which desks). */
+  mapMenuSection?: MapMenuSection
+  /** What it adds to the bottom bar, before the time of day (the office: the day). */
+  bottomBarItems?: ComponentType[]
+  /** Its steps in the editor's guided tour, each after the step it follows. */
+  tourSteps?: { after: string; step: TourStep }[]
+  /**
+   * What matters about some pieces, in a few words — a room's, a saved
+   * room's, a template's (the office: "8 desks"); null when nothing does.
+   */
+  describePieces?: (objects: SceneObject[], translator: Translator) => string | null
+  /** What an empty layout shows (the office: start from a template). */
+  EmptyState?: ComponentType<EmptyStateProps>
+}
+
+/** A layer of the map: shown or hidden from the Map menu. */
+export interface MapLayer {
+  id: string
+  /** Translatable (msg). */
+  label: string
+  hint: string
+  icon: LucideIcon
+  when: "viewing" | "editing" | "always"
+  isOnByDefault: boolean
+  /** A hint instead, for this layout (the Zones layer, with none yet). */
+  hintFor?: (objects: SceneObject[]) => string | null
+}
+
+export interface MapMenuSection {
+  /** Translatable heading (msg). */
+  heading: string
+  Component: ComponentType
+  /** A hook: whether it has anything to offer. */
+  useIsShown: () => boolean
+  /** A hook: how many of its settings are changed (counted on the Map button). */
+  useChangeCount: () => number
+}
+
+export interface EmptyStateProps {
+  /** May this person lay the office out? */
+  canEdit: boolean
+  /** Viewing (picking anything drops into editing first). */
+  readOnly: boolean
+  /** Whether the editor can open here (not on a phone, or without WebGL). */
+  isEditable: boolean
+  onEnterEdit: () => void
+  /** Start from a blank floor: dismiss the empty state. */
+  onDismiss: () => void
 }
 
 export interface InspectorSectionProps {
