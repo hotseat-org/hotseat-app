@@ -6,7 +6,6 @@ import {
   isEdgeType,
   isOpening,
   isOverhead,
-  isSeatable,
   isWallMounted,
   variantOf,
   type SceneObject,
@@ -40,7 +39,8 @@ interface Props {
   /** A press on furniture (Select tool): a drag from here moves it. */
   onStartDrag: (id: string, event: ThreeEvent<PointerEvent>) => void
   /** View mode: clicked a desk (opens its seat card). */
-  onSeatClick?: (id: string) => void
+  /** Viewing: what a click on this piece does (a module's — a desk opens its card). */
+  onViewClick?: (id: string) => void
   /** Shift-click: toggle this piece in the multi-selection. */
   onToggleSelect?: (id: string) => void
   /** A right-press on furniture: the right-click menu, if it's let go in place. */
@@ -84,14 +84,14 @@ export const ObjectRenderer = memo(function ObjectRenderer({
   onPickOpening,
   onToggleSelect,
   onMenuPress,
-  onSeatClick,
+  onViewClick,
   occupied,
   wallFront,
   wallBack,
 }: Props) {
   const [hovered, setHovered] = useState(false)
   // View mode: desks are clickable (seat card).
-  const clickable = !interactive && !!onSeatClick && isSeatable(object.type)
+  const clickable = !interactive && !!onViewClick
   // Edit mode: with the Select tool, everything that renders here (furniture,
   // doors, windows) can be clicked/picked up.
   const selectable = interactive && tool === "select" && !carried
@@ -235,11 +235,11 @@ export const ObjectRenderer = memo(function ObjectRenderer({
       // View mode: desks are clickable (seat card). A drag (camera pan) isn't
       // a click — R3F's `delta` is the pointer travel in px.
       onClick={
-        clickable && onSeatClick
+        clickable && onViewClick
           ? (event) => {
               if (event.delta > 4) return
               event.stopPropagation()
-              onSeatClick(object.id)
+              onViewClick(object.id)
             }
           : undefined
       }

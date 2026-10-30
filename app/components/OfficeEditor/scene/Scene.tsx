@@ -8,29 +8,19 @@ import { randomModelId } from "../models"
 import { daylight, DaylightContext } from "../daylight"
 import { SURFACES } from "../palette"
 import { SceneThemeContext } from "../sceneTheme"
-import { useDesksOnDay } from "../useBooking"
-import {
-  isMarker,
-  isObjectType,
-  isSeatable,
-  isWallMounted,
-  type Cell,
-  type ObjectType,
-} from "../types"
+import { isMarker, isObjectType, isWallMounted, type Cell, type ObjectType } from "../types"
 import { ObjectRenderer } from "../objects/ObjectRenderer"
 import { StaticBatch } from "../objects/StaticBatch"
 import { CURSORS, CursorHintContext, getToolCursor, type CursorHint } from "../cursors"
 import { canPlaceKit, composeKitAt } from "../kits"
 import { getRenderer } from "../catalog/rendering"
+import { useModules, usePieceStates, useViewClicks } from "../editor/modules"
 import { Lighting } from "./Lighting"
 import { StudioEnvironment } from "./StudioEnvironment"
 import { PostFx } from "./PostFx"
 import { ShaderWarmup } from "./ShaderWarmup"
 import { Ground } from "./Ground"
 import { Contours } from "./Contours"
-import { RouteLine } from "./RouteLine"
-import { HeatBars } from "./HeatBars"
-import { HeatPads } from "./HeatPads"
 import { CAMERA_OFFSET } from "./viewCentre"
 import { InteriorFloor } from "./InteriorFloor"
 import { ContactBlobs } from "./ContactBlobs"
@@ -44,15 +34,11 @@ import { CameraControls, type FloorPan } from "./CameraControls"
 import { WallXray } from "./WallXray"
 import { WallResize, type WallResizeHandle } from "./WallResize"
 import { RoomLabels } from "./RoomLabels"
-import { ZoneFloor } from "./ZoneFloor"
 import { CameraFit, type FitInsets } from "./CameraFit"
-import { SeatTags } from "./SeatTags"
-import { SeatPopup } from "./SeatPopup"
 import { BoxSelect } from "./BoxSelect"
 import { PaintController } from "./PaintController"
 import { NudgeKeys } from "./NudgeKeys"
 import { OpeningCarry } from "./OpeningCarry"
-import { DeskPets } from "./DeskPets"
 import { aimAtWallHeight } from "./wallAim"
 import { KitGhost } from "./KitGhost"
 import { PlacementPreviews } from "./PlacementPreviews"
@@ -145,18 +131,12 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
   const removeObject = useEditorStore((state) => state.removeObject)
   const select = useEditorStore((state) => state.select)
   const toggleSelect = useEditorStore((state) => state.toggleSelect)
-  const openSeatCard = useEditorStore((state) => state.openSeatCard)
   const refusedTurn = useEditorStore((state) => state.refusedTurn)
 
   const raycaster = useThree((state) => state.raycaster)
   const pointer = useThree((state) => state.pointer)
   const camera = useThree((state) => state.camera)
   const storeApi = useEditorStoreApi()
-  // The desk card lives in the scene (follows its desk); just close it when
-  // switching modes.
-  useEffect(() => {
-    storeApi.getState().closeSeatCard()
-  }, [readOnly, storeApi])
   useCachedShadows(readOnly, dark)
 
   // Where the armed piece would go (wall items also carry the way they face).
@@ -189,13 +169,14 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
     return snapPlacement(objects, type, placementRotation, x, z)
   }
 
-  // View mode: who's in at each desk on the shown day (clutter, monitor, pet).
-  const { desks } = useDesksOnDay()
-  const occupied = useMemo(
-    () =>
-      readOnly ? new Map(desks.map((seat) => [seat.desk.id, seat.state.kind !== "free"])) : null,
-    [readOnly, desks]
-  )
+  // The modules': how they see each piece (a lived-in desk), what clicks do
+  // while viewing, and what they draw in the scene.
+  const pieceStates = usePieceStates(readOnly)
+  const viewClicks = useViewClicks()
+  const modules = useModules()
+  const sceneLayers = modules
+    .flatMap((module) => module.sceneLayers ?? [])
+    .filter((layer) => layer.when === "always" || (layer.when === "viewing") === readOnly)
 
   const floorPan = useRef<FloorPan | null>(null)
   const wallResize = useRef<WallResizeHandle>(null)
@@ -357,9 +338,6 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
 
             <Lighting profile={profile} centre={officeArea.centre} reach={officeArea.reach} />
 
-            {readOnly && layers.deskTags && <SeatTags />}
-            {readOnly && <DeskPets />}
-            {readOnly && <SeatPopup />}
             {readOnly && <StudioEnvironment intensity={profile.envIntensity} />}
 
             <Ground
@@ -370,12 +348,13 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
                 setHover(null)
                 wallResize.current?.hover(Infinity, Infinity)
               }}
-              // View mode: a click on bare floor closes the desk card (a drag that
-              // pans the camera doesn't). Desk clicks stop propagation first.
+              // View mode: a click on bare floor (not a drag that pans the
+              // camera) is the modules' — it closes the desk card. Piece
+              // clicks stop propagation first.
               onClick={
                 readOnly
                   ? (delta) => {
-                      if (delta <= 4) storeApi.getState().closeSeatCard()
+                      if (delta <= 4) viewClicks.onFloor()
                     }
                   : undefined
               }
@@ -384,14 +363,13 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
 
             {/* The land round the office: its plateau and contour lines. */}
             <Contours isEditing={!readOnly} />
-            {readOnly && <RouteLine />}
-            {readOnly && <HeatPads />}
-            {readOnly && <HeatBars />}
 
             {/* Tint the floor enclosed by walls (the office interior). */}
             <InteriorFloor />
-            {/* Team zones: their floor tinted, their names. */}
-            {layers.zones && <ZoneFloor isEditing={!readOnly} isDark={dark} />}
+            {/* The modules' layers (the office: zones, desk tags, the heatmap, the way to a desk). */}
+            {sceneLayers.map(({ Component }, index) => (
+              <Component key={index} isEditing={!readOnly} isDark={dark} />
+            ))}
             {/* Editing: each room's area and desks. */}
             {!readOnly && layers.roomSizes && <RoomLabels />}
             {/* A saved room about to be placed. */}
@@ -400,7 +378,7 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
             <ContactBlobs />
             {/* Sunlight through the windows, and glows on screens and lamps. */}
             <WindowLight profile={profile} />
-            <Halos occupied={occupied} />
+            <Halos pieceStates={pieceStates} />
 
             {/* Walls render as merged runs (seamless); everything else individually. */}
             <Walls />
@@ -430,8 +408,10 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
                     onPickOpening={onPickOpening}
                     onToggleSelect={toggleSelect}
                     onMenuPress={readOnly ? undefined : onMenuPress}
-                    onSeatClick={readOnly ? openSeatCard : undefined}
-                    occupied={isSeatable(object.type) ? occupied?.get(object.id) : undefined}
+                    onViewClick={
+                      readOnly && viewClicks.isClickable(object) ? viewClicks.onPiece : undefined
+                    }
+                    occupied={pieceStates?.get(object.id)?.isOccupied}
                     wallFront={wallColors.openings.get(object.id)?.[0]}
                     wallBack={wallColors.openings.get(object.id)?.[1]}
                   />

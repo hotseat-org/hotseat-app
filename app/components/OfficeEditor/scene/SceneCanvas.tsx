@@ -2,6 +2,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber"
 import { Suspense, useEffect, useRef } from "react"
 import { EditorStoreContextProvider, type EditorStore } from "../store"
 import { PeopleContext, type People } from "../people"
+import { ModulesContext, useModules, useViewClicks } from "../editor/modules"
 import { Scene } from "./Scene"
 import { FpsMeter, type FrameStats } from "./FpsMeter"
 import type { FitInsets } from "./CameraFit"
@@ -37,6 +38,8 @@ const SceneCanvas = ({
   onReady,
 }: Props) => {
   const i18n = useI18n()
+  const modules = useModules()
+  const viewClicks = useViewClicks()
   return (
     <Canvas
       // PCF, which three.js uses anyway: asking for PCFSoft (`shadows`), it
@@ -48,7 +51,7 @@ const SceneCanvas = ({
       dpr={[1, 1.5]}
       gl={{ antialias: true, powerPreference: "high-performance" }}
       frameloop={showStats ? "always" : "demand"}
-      onPointerMissed={() => store.getState().closeSeatCard()}
+      onPointerMissed={() => viewClicks.onFloor()}
       // Checking each new shader for errors makes the browser finish compiling
       // it on the spot (a long stall when a big office first renders, or on
       // switching to editing). Development keeps the checks and their messages.
@@ -59,11 +62,13 @@ const SceneCanvas = ({
       <Suspense fallback={null}>
         {/* Bridge the store into the R3F tree — context doesn't cross the Canvas. */}
         <EditorStoreContextProvider value={store}>
-          <PeopleContext.Provider value={people}>
-            <I18nBridge value={i18n}>
-              <Scene readOnly={readOnly} dark={dark} fitInsets={fitInsets} />
-            </I18nBridge>
-          </PeopleContext.Provider>
+          <ModulesContext.Provider value={modules}>
+            <PeopleContext.Provider value={people}>
+              <I18nBridge value={i18n}>
+                <Scene readOnly={readOnly} dark={dark} fitInsets={fitInsets} />
+              </I18nBridge>
+            </PeopleContext.Provider>
+          </ModulesContext.Provider>
         </EditorStoreContextProvider>
         {showStats && <FpsMeter onSample={onStats} />}
         {onReady && <ReadySignal readOnly={readOnly} onReady={onReady} />}

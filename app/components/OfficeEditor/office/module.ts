@@ -1,5 +1,6 @@
 import type { EditorModule } from "../editor/module"
 import "./objectFields"
+import { OFFICE_SCENE_LAYERS, useOfficePieceStates, useOfficeViewClicks } from "./scene"
 import { asNewDesks, createOfficeSlice } from "./store"
 
 /**
@@ -10,4 +11,7 @@ export const officeModule: EditorModule = {
   id: "office",
   createSlice: createOfficeSlice,
   prepareNewPieces: asNewDesks,
+  sceneLayers: OFFICE_SCENE_LAYERS,
+  usePieceStates: useOfficePieceStates,
+  useViewClicks: useOfficeViewClicks,
 }

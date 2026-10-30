@@ -13,6 +13,7 @@ import { DaylightContext } from "../daylight"
 import { DESK } from "../objects/dimensions"
 import { ACCENT } from "../palette"
 import type { SceneObject } from "../types"
+import type { PieceState } from "../editor/module"
 import { useLampsOn } from "./ShaderWarmup"
 
 /** A desk's screen, in its own space (see objects/Desk.tsx), a hair in front. */
@@ -61,7 +62,8 @@ const createHaloMaterial = (color: string) =>
 
 interface Props {
   /** Desks in view mode: whether someone sits there on the shown day (lit screen). */
-  occupied: Map<string, boolean> | null
+  /** The modules' view of each piece: a free desk's lamp is off. */
+  pieceStates: ReadonlyMap<string, PieceState> | null
 }
 
 /**
@@ -69,7 +71,7 @@ interface Props {
  * desks in use (faint by day, stronger after dark) and on every lamp's bulb
  * once the lamps are on. Two instanced draw calls.
  */
-export const Halos = ({ occupied }: Props) => {
+export const Halos = ({ pieceStates }: Props) => {
   const objects = useEditorStore((state) => state.objects)
   const nightness = useContext(DaylightContext)
   const isLampOn = useLampsOn()
@@ -78,7 +80,10 @@ export const Halos = ({ occupied }: Props) => {
   const screens = useMemo(
     () =>
       objects
-        .filter((object) => object.type in DESK_OFFSET && occupied?.get(object.id) !== false)
+        .filter(
+          (object) =>
+            object.type in DESK_OFFSET && pieceStates?.get(object.id)?.isOccupied !== false
+        )
         .map((object) =>
           point
             .copy(SCREEN)
@@ -87,7 +92,7 @@ export const Halos = ({ occupied }: Props) => {
             .add(at(object))
             .clone()
         ),
-    [objects, occupied]
+    [objects, pieceStates]
   )
   const bulbs = useMemo(
     () =>

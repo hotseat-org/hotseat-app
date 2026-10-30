@@ -40,6 +40,7 @@ import { useEditorShortcuts } from "./editor/useEditorShortcuts"
 import { useRouteLink } from "./editor/useRouteLink"
 import type { EditorModule } from "./editor/module"
 import { officeModule } from "./office/module"
+import { ModulesContext } from "./editor/modules"
 import { MOBILE_CHROME } from "~/components/office/mobile"
 import { ContourBackdrop } from "~/components/ui/ContourBackdrop"
 
@@ -97,11 +98,12 @@ const SHELL_INSETS = { left: 100, right: 340 }
  * standalone editor persists to a localStorage key.
  */
 export const OfficeEditor = (props: Props) => {
+  // One module list for the editor's life (their hooks are called in order).
+  const [modules] = useState(() => props.modules ?? [officeModule])
   const storeRef = useRef<EditorStore>(undefined)
   if (!storeRef.current) {
     // DB-backed offices are born with their saved layout (no load race); the
     // standalone editor persists to localStorage instead.
-    const modules = props.modules ?? [officeModule]
     storeRef.current = props.onSave
       ? createEditorStore({ initialObjects: props.initialObjects, modules })
       : createEditorStore({ persistKey: "office-editor:v1", modules })
@@ -109,11 +111,13 @@ export const OfficeEditor = (props: Props) => {
 
   return (
     <EditorStoreContextProvider value={storeRef.current}>
-      <PeopleContext.Provider value={props.people ?? NO_PEOPLE}>
-        <KitLibraryContext.Provider value={props.kitLibrary ?? null}>
-          <OfficeEditorInner {...props} />
-        </KitLibraryContext.Provider>
-      </PeopleContext.Provider>
+      <ModulesContext.Provider value={modules}>
+        <PeopleContext.Provider value={props.people ?? NO_PEOPLE}>
+          <KitLibraryContext.Provider value={props.kitLibrary ?? null}>
+            <OfficeEditorInner {...props} />
+          </KitLibraryContext.Provider>
+        </PeopleContext.Provider>
+      </ModulesContext.Provider>
     </EditorStoreContextProvider>
   )
 }
