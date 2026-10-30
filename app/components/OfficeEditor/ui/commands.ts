@@ -20,7 +20,7 @@ import {
 import { furnitureInRoomAt } from "../layout"
 import type { EditorState } from "../store"
 import { isEdgeType, isMarker, type SceneObject } from "../types"
-import { CATEGORIES, TOOL_META, isRepeatable } from "./categories"
+import { getCatalogCategories, getToolMeta, isRepeatable } from "./categories"
 import { msg } from "~/i18n/msg"
 
 /**
@@ -228,9 +228,9 @@ const PATTERN_COMMANDS: Command[] = (
   run: (state) => state.setPlacementPattern(pattern),
 }))
 
-const TOOL_COMMANDS: Command[] = [
+const composeToolCommands = (): Command[] => [
   ...(["select", "delete"] as const).map((tool) => {
-    const meta = TOOL_META.get(tool)!
+    const meta = getToolMeta(tool)!
     return {
       id: `tool-${tool}`,
       label: meta.label,
@@ -253,28 +253,29 @@ const TOOL_COMMANDS: Command[] = [
 ]
 
 /** Every catalog piece, by name: arming it opens its category. */
-const PLACE_COMMANDS: Command[] = CATEGORIES.flatMap((category) =>
-  category.types.map((type) => {
-    const meta = TOOL_META.get(type)!
-    return {
-      id: `place-${type}`,
-      label: meta.label,
-      group: GROUP.place,
-      icon: meta.icon,
-      shortcut: meta.key || undefined,
-      isAvailable: (state: EditorState) => state.tool !== type,
-      run: (state: EditorState) => state.setTool(type),
-    }
-  })
-)
+const composePlaceCommands = (): Command[] =>
+  getCatalogCategories().flatMap((category) =>
+    category.types.map((type) => {
+      const meta = getToolMeta(type)!
+      return {
+        id: `place-${type}`,
+        label: meta.label,
+        group: GROUP.place,
+        icon: meta.icon,
+        shortcut: meta.key || undefined,
+        isAvailable: (state: EditorState) => state.tool !== type,
+        run: (state: EditorState) => state.setTool(type),
+      }
+    })
+  )
 
 /** Everything the command search offers, the modules' with the edit ones; `onDone` leaves editing. */
 export const composeCommands = (moduleCommands: Command[], onDone?: () => void): Command[] => [
   ...SELECTION_COMMANDS,
   ...EDIT_COMMANDS,
   ...moduleCommands,
-  ...TOOL_COMMANDS,
-  ...PLACE_COMMANDS,
+  ...composeToolCommands(),
+  ...composePlaceCommands(),
   ...VIEW_COMMANDS,
   ...(onDone
     ? [

@@ -10,18 +10,12 @@ import {
 } from "three"
 import { useEditorStore } from "../store"
 import { DaylightContext } from "../daylight"
-import { DESK } from "../objects/dimensions"
 import { ACCENT } from "../palette"
 import type { SceneObject } from "../types"
 import type { PieceState } from "../editor/module"
+import { getRenderer } from "../catalog/rendering"
 import { useLampsOn } from "./ShaderWarmup"
 
-/** A desk's screen, in its own space (see objects/Desk.tsx), a hair in front. */
-const SCREEN = new Vector3(0, DESK.height + 0.44, -DESK.depth / 2 + 0.2)
-/** Where each kind of desk puts its Desk (see Workstation.tsx, Deskmate.tsx). */
-const DESK_OFFSET = { desk: 0, workstation: -0.25, deskmate: -0.35 }
-/** Where a lamp's glow sits: inside a pendant's bulb, inside a floor lamp's shade. */
-const BULB_HEIGHT = { ceilingLight: 2.18, floorLamp: 1.55 }
 const UP = new Vector3(0, 1, 0)
 const dummy = new Object3D()
 const point = new Vector3()
@@ -79,28 +73,13 @@ export const Halos = ({ pieceStates }: Props) => {
 
   const screens = useMemo(
     () =>
-      objects
-        .filter(
-          (object) =>
-            object.type in DESK_OFFSET && pieceStates?.get(object.id)?.isOccupied !== false
-        )
-        .map((object) =>
-          point
-            .copy(SCREEN)
-            .setZ(SCREEN.z + DESK_OFFSET[object.type as keyof typeof DESK_OFFSET])
-            .applyAxisAngle(UP, object.rotation)
-            .add(at(object))
-            .clone()
-        ),
+      objects.flatMap((object) =>
+        // A screen glows while someone's there (or nobody says otherwise).
+        pieceStates?.get(object.id)?.isOccupied === false ? [] : glowsOf(object, "screen")
+      ),
     [objects, pieceStates]
   )
-  const bulbs = useMemo(
-    () =>
-      objects
-        .filter((object) => object.type === "ceilingLight" || object.type === "floorLamp")
-        .map((object) => at(object).setY(BULB_HEIGHT[object.type as keyof typeof BULB_HEIGHT])),
-    [objects]
-  )
+  const bulbs = useMemo(() => objects.flatMap((object) => glowsOf(object, "bulb")), [objects])
 
   return (
     <>
@@ -125,6 +104,18 @@ export const Halos = ({ pieceStates }: Props) => {
 }
 
 const at = (object: SceneObject) => new Vector3(object.x, 0, object.z)
+
+/** A piece's glows of one kind, placed in the world (see ItemRenderer.glows). */
+const glowsOf = (object: SceneObject, kind: "screen" | "bulb") =>
+  (getRenderer(object.type).glows ?? [])
+    .filter((glow) => glow.kind === kind)
+    .map((glow) =>
+      point
+        .set(...glow.position)
+        .applyAxisAngle(UP, object.rotation)
+        .add(at(object))
+        .clone()
+    )
 
 /** One kind of halo, at every point: an instanced quad. */
 const HaloSet = ({

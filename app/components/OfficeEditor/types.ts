@@ -1,12 +1,4 @@
-import {
-  getItemTypes,
-  findItem,
-  getItem,
-  hasTag,
-  type ObjectType,
-  type WallType,
-  type OpeningType,
-} from "./catalog"
+import { findItem, hasTag, type ObjectType, type WallType, type OpeningType } from "./catalog"
 
 export type { ObjectType, OpeningType, WallType }
 
@@ -52,11 +44,11 @@ export interface SceneObject extends ObjectFields {
   variant?: number
 }
 
-/** The set of build tools: every kind of piece but data markers. */
-export const OBJECT_TYPES = getItemTypes().filter((type) => getItem(type).mount !== "marker")
-
-export const isObjectType = (tool: Tool): tool is ObjectType =>
-  (OBJECT_TYPES as string[]).includes(tool)
+/** A tool that places a piece (a registered kind, not a data marker). */
+export const isObjectType = (tool: Tool): tool is ObjectType => {
+  const item = findItem(tool)
+  return !!item && item.mount !== "marker"
+}
 
 /** Size of one grid cell in world units. */
 export const CELL = 1

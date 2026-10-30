@@ -97,14 +97,26 @@ import {
 import { registerCategories } from "../categories"
 import { registerRenderers } from "../renderers"
 import { DeskmatePreview } from "../../objects/DeskmatePreview"
+import { DESK } from "../../objects/dimensions"
 import { FURNITURE_SYMBOLS } from "./furnitureSymbols"
 import { msg } from "~/i18n/msg"
 
 // In catalogue order: each category offers its kinds in the order registered.
+/** A desk's screen, in its Desk's space (see objects/Desk.tsx), a hair in front — for a Desk this far back. */
+const screenAt = (deskOffset: number) => [
+  {
+    kind: "screen" as const,
+    position: [0, DESK.height + 0.44, -DESK.depth / 2 + 0.2 + deskOffset] as const,
+  },
+]
+/** A lamp's bulb: inside a pendant's bulb, inside a floor lamp's shade. */
+const bulbAt = (height: number) => [{ kind: "bulb" as const, position: [0, height, 0] as const }]
+
 registerRenderers({
   // The one bookable desk: a desk with its chair (what people book is a seat).
   workstation: {
     Mesh: Workstation,
+    glows: screenAt(-0.25),
     drawSymbol: FURNITURE_SYMBOLS.workstation,
     tile: { label: msg("Desk with chair"), icon: LampDeskIcon, key: "4", category: "desks" },
   },
@@ -285,11 +297,13 @@ registerRenderers({
   },
   floorLamp: {
     Mesh: FloorLamp,
+    glows: bulbAt(1.55),
     drawSymbol: FURNITURE_SYMBOLS.floorLamp,
     tile: { label: msg("Floor lamp"), icon: LampCeilingIcon, category: "decor" },
   },
   ceilingLight: {
     Mesh: CeilingLight,
+    glows: bulbAt(2.18),
     drawSymbol: FURNITURE_SYMBOLS.ceilingLight,
     tile: { label: msg("Ceiling light"), icon: LampWallDownIcon, category: "decor" },
   },
@@ -307,6 +321,7 @@ registerRenderers({
   // only named — a desk without a chair, and one with a pet always in it.
   desk: {
     Mesh: Desk,
+    glows: screenAt(0),
     drawSymbol: FURNITURE_SYMBOLS.desk,
     tile: { label: msg("Desk without chair"), icon: Table2Icon },
   },
@@ -314,6 +329,7 @@ registerRenderers({
     Mesh: Deskmate,
     // A still stand-in: the real one floats a name tag and wiggles.
     Thumbnail: DeskmatePreview,
+    glows: screenAt(-0.35),
     drawSymbol: FURNITURE_SYMBOLS.deskmate,
     tile: { label: msg("Desk with pet"), icon: PawPrintIcon },
   },
@@ -333,6 +349,8 @@ registerCategories([
     label: msg("Seating"),
     icon: SeatingIcon,
     hint: msg("Not bookable — for meeting tables and lounges."),
+    // Chairs aren't bookable: point at the desk that is.
+    hintAction: { label: msg("Place a bookable desk"), tool: "workstation" },
   },
   {
     id: "tables",

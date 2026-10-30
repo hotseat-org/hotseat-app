@@ -12,7 +12,9 @@ const STRENGTH = 0.34
 /** Blobs reach a little past the piece's footprint. */
 const SPREAD = 1.12
 /** Not grounded: flat on the floor already, or hanging from above. */
-const UNGROUNDED = new Set<ObjectType>(["rug", "ceilingLight"])
+/** Lies flat on the floor (a rug) or hangs overhead: no shadow at its foot. */
+const isUngrounded = (type: ObjectType) =>
+  getItem(type).isUnderlay || getItem(type).mount === "ceiling"
 
 const dummy = new Object3D()
 
@@ -60,7 +62,7 @@ export const ContactBlobs = () => {
           !isEdgeType(object.type) &&
           !isMarker(object.type) &&
           !isWallMounted(object.type) &&
-          !UNGROUNDED.has(object.type)
+          !isUngrounded(object.type)
       ),
     [objects]
   )

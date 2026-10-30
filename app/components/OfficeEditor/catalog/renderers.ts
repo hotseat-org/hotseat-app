@@ -41,6 +41,11 @@ export interface ItemRenderer {
   planRun?: { color?: string; thickness: number; opacity: number }
   /** How the editor names and offers it. */
   tile?: ItemTile
+  /**
+   * Its glows, in its own frame: a screen's (lit while someone's there, see
+   * PieceState) or a lamp's bulb (lit once the lamps are on).
+   */
+  glows?: { kind: "screen" | "bulb"; position: readonly [number, number, number] }[]
   /** Its catalogue thumbnail's model, when the Mesh doesn't suit a still (unset: the Mesh). */
   Thumbnail?: (props: { color?: string }) => ReactElement
 }

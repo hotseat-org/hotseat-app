@@ -2,9 +2,7 @@ import { useEffect } from "react"
 import { isTypingTarget } from "../keyboard"
 import { useEditorStoreApi } from "../store"
 import { isEdgeType } from "../types"
-import { TOOLS } from "../ui/tools"
-
-const KEY_TO_TOOL = new Map(TOOLS.map((tool) => [tool.key, tool.tool]))
+import { getTools } from "../ui/tools"
 
 /** Keyboard shortcuts (tools, undo, clipboard, rotate, delete, deselect) — edit only. */
 export const useEditorShortcuts = (readOnly: boolean) => {
@@ -39,7 +37,8 @@ export const useEditorShortcuts = (readOnly: boolean) => {
 
       const state = store.getState()
 
-      const mapped = KEY_TO_TOOL.get(event.key)
+      // The tool on this number key, if any.
+      const mapped = getTools().find((meta) => meta.key && meta.key === event.key)?.tool
       if (mapped) {
         state.setTool(mapped)
         return

@@ -13,6 +13,8 @@ export interface CategoryDefinition {
   hint?: string
   /** Tools offered first that place no single piece (the Room tool). */
   leadingTools?: CatalogItem[]
+  /** A link after the hint that arms another tool (Seating's: "Place a bookable desk"). */
+  hintAction?: { label: string; tool: CatalogItem }
 }
 
 export interface Category extends CategoryDefinition {

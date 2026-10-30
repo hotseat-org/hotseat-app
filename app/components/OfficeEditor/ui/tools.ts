@@ -15,9 +15,17 @@ export interface ToolMeta {
  * Every tool: Select and Room, each kind with a tile in the catalogue (see
  * ItemRenderer.tile, registered by the presets), and Erase.
  */
-export const TOOLS: ToolMeta[] = [
-  { tool: "select", label: msg("Select"), icon: MousePointer2, key: "1" },
-  { tool: "room", label: msg("Room"), icon: SquareDashed, key: "" },
-  ...getTiles().map(({ type, label, icon, key }) => ({ tool: type, label, icon, key: key ?? "" })),
-  { tool: "delete", label: msg("Erase"), icon: Eraser, key: "0" },
-]
+let tools: ToolMeta[] | null = null
+/** Built on first use, once every preset has registered its kinds. */
+export const getTools = (): ToolMeta[] =>
+  (tools ??= [
+    { tool: "select", label: msg("Select"), icon: MousePointer2, key: "1" },
+    { tool: "room", label: msg("Room"), icon: SquareDashed, key: "" },
+    ...getTiles().map(({ type, label, icon, key }) => ({
+      tool: type,
+      label,
+      icon,
+      key: key ?? "",
+    })),
+    { tool: "delete", label: msg("Erase"), icon: Eraser, key: "0" },
+  ])

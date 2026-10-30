@@ -7,7 +7,14 @@ import { composeWallColors, snapPlacement, wallMount } from "../layout"
 import { daylight, DaylightContext } from "../daylight"
 import { SURFACES } from "../palette"
 import { SceneThemeContext } from "../sceneTheme"
-import { isMarker, isObjectType, isWallMounted, type Cell, type ObjectType } from "../types"
+import {
+  isEdgeType,
+  isMarker,
+  isObjectType,
+  isWallMounted,
+  type Cell,
+  type ObjectType,
+} from "../types"
 import { ObjectRenderer } from "../objects/ObjectRenderer"
 import { StaticBatch } from "../objects/StaticBatch"
 import { CURSORS, CursorHintContext, getToolCursor, type CursorHint } from "../cursors"
@@ -66,51 +73,6 @@ type Buttons = { LEFT: MOUSE; MIDDLE: MOUSE; RIGHT: MOUSE }
 const EDIT_BUTTONS = { LEFT: -1, MIDDLE: MOUSE.PAN, RIGHT: MOUSE.ROTATE } as unknown as Buttons
 const VIEW_BUTTONS: Buttons = { LEFT: MOUSE.PAN, MIDDLE: MOUSE.PAN, RIGHT: MOUSE.ROTATE }
 
-const FURNITURE = new Set([
-  "desk",
-  "seat",
-  "plant",
-  "workstation",
-  "deskmate",
-  "sofa",
-  "coffeeTable",
-  "meetingTable",
-  "bookshelf",
-  "rug",
-  "cooler",
-  "filingCabinet",
-  "lockers",
-  "printer",
-  "tvScreen",
-  "whiteboard",
-  "vendingMachine",
-  "floorLamp",
-  "trashBin",
-  "kitchenCounter",
-  "fridge",
-  "armchair",
-  "ceilingLight",
-  "wardrobe",
-  "barStool",
-  "barTable",
-  "toilet",
-  "shower",
-  "bathroomSink",
-  "roundTable",
-  "squareTable",
-  "ovalTable",
-  "ovalBarTable",
-  "serverRack",
-  "shelvingUnit",
-  "wallTv",
-  "wallArt",
-  "wallClock",
-  "wallShelf",
-  "coatRack",
-  "planterBox",
-  "divider",
-])
-
 export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
   const objects = useEditorStore((state) => state.objects)
   // Doors and windows wear their wall line's paint (or the Paint tool's, hovered).
@@ -147,7 +109,8 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
     [armedKit, hover]
   )
   const doesKitFit = useMemo(() => !!kitPlan && canPlaceKit(objects, kitPlan), [kitPlan, objects])
-  const isFurniture = FURNITURE.has(tool)
+  // A tool that places a piece of furniture (not an edge, not a marker).
+  const isFurniture = isObjectType(tool) && !isEdgeType(tool) && !isMarker(tool)
   const { repeat, setRepeat, isRepeating, repeatPlan, repeatBlocked } = useRepeatPlacement(
     tool,
     isFurniture

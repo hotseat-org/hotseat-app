@@ -18,8 +18,8 @@ import { FLOOR_SWATCHES, SWATCHES } from "../palette"
 import type { PlacementPattern } from "../layout"
 import { getItem } from "../catalog"
 import {
-  CATEGORIES,
-  TOOL_META,
+  getCatalogCategories,
+  getToolMeta,
   categoryOf,
   colorKey,
   isCatalogItem,
@@ -64,7 +64,7 @@ export const Catalog = () => {
   // Pre-render every tile's still in the background, so categories open
   // instantly (tiles on screen jump the queue).
   useEffect(() => {
-    for (const entry of CATEGORIES)
+    for (const entry of getCatalogCategories())
       for (const type of entry.types) requestThumbnail(type, placementColors[colorKey(type)])
     // Once, with the colours as they are on opening the editor.
   }, [])
@@ -75,7 +75,7 @@ export const Catalog = () => {
   }, [])
 
   const [openId, setOpenId] = useState<string | null>(null)
-  const category = CATEGORIES.find((entry) => entry.id === openId)
+  const category = getCatalogCategories().find((entry) => entry.id === openId)
   // Arming an asset any other way (number keys) opens its category.
   useEffect(() => {
     const toolCategory = isCatalogItem(tool) ? categoryOf(tool) : undefined
@@ -157,7 +157,7 @@ export const Catalog = () => {
         <div className="h-px shrink-0 bg-separator" />
 
         <div className="grid grid-cols-2 gap-1.5">
-          {CATEGORIES.map((entry) => (
+          {getCatalogCategories().map((entry) => (
             <CategoryButton
               key={entry.id}
               category={entry}
@@ -210,16 +210,16 @@ export const Catalog = () => {
           {category.hint && (
             <p className="mb-2 shrink-0 px-1 text-[11px] leading-snug text-muted">
               {t(category.hint)}
-              {/* Chairs aren't bookable: point at the desk that is. */}
-              {category.id === "seating" && (
+              {/* A link to another tool (Seating's: the bookable desk). */}
+              {category.hintAction && (
                 <>
                   {" "}
                   <button
                     type="button"
-                    onClick={() => setTool("workstation")}
+                    onClick={() => category.hintAction && setTool(category.hintAction.tool)}
                     className="font-semibold text-accent hover:underline"
                   >
-                    {t("Place a bookable desk")}
+                    {t(category.hintAction.label)}
                   </button>
                 </>
               )}
@@ -228,7 +228,7 @@ export const Catalog = () => {
 
           <div className="-mr-2 grid min-h-0 flex-1 grid-cols-2 content-start gap-2 overflow-y-auto overscroll-contain pr-2 [scrollbar-width:thin]">
             {category.types.map((type) => {
-              const meta = TOOL_META.get(type)
+              const meta = getToolMeta(type)
               const label = meta ? t(meta.label) : type
               const active = tool === type
               return (

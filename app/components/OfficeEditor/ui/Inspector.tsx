@@ -6,10 +6,8 @@ import { SWATCHES } from "../palette"
 import { hasLooks, isEdgeType, isRecolorable, isWallMounted } from "../types"
 import { getItem } from "../catalog"
 import { useModules } from "../editor/modules"
-import { TOOLS } from "./tools"
+import { getToolMeta } from "./categories"
 import { useI18n } from "~/i18n/I18nProvider"
-
-const TYPE_LABEL = new Map<string, string>(TOOLS.map((meta) => [meta.tool, meta.label]))
 
 export const Inspector = () => {
   const { t, tn } = useI18n()
@@ -66,7 +64,7 @@ export const Inspector = () => {
         <h3 className="text-sm font-semibold">
           {count > 1
             ? tn(count, "{n} item", "{n} items")
-            : t(TYPE_LABEL.get(selected.type) ?? selected.type)}
+            : t(getToolMeta(selected.type)?.label ?? selected.type)}
         </h3>
         <CloseButton aria-label={t("Deselect")} onPress={() => select(null)} />
       </div>
