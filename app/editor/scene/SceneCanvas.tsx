@@ -2,9 +2,9 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber"
 import { Suspense, useEffect, useRef } from "react"
 import { EditorStoreContextProvider, type EditorStore } from "../store"
 import { ModulesContext, useModules, useViewClicks } from "../modules"
+import type { FitInsets } from "../camera/CameraFit"
 import { Scene } from "./Scene"
 import { FpsMeter, type FrameStats } from "./FpsMeter"
-import type { FitInsets } from "./CameraFit"
 import { I18nBridge, useI18n } from "~/i18n/I18nProvider"
 
 interface Props {

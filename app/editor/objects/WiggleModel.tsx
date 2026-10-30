@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react"
 import { useFrame, useThree } from "@react-three/fiber"
 import type { Group } from "three"
-import { isAmbientAwake, prefersReducedMotion, subscribeAmbient } from "../ambient"
+import { isAmbientAwake, prefersReducedMotion, subscribeAmbient } from "../scene/ambient"
 import { NO_BAKE } from "./Baked"
 import { Model } from "./Model"
 

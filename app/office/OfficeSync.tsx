@@ -1,6 +1,6 @@
 import { useLayoutEffect } from "react"
-import { useBookingSync, type EditorBooking } from "./useBookingSync"
-import type { People } from "./people"
+import { useBookingSync, type EditorBooking } from "./booking/useBookingSync"
+import type { People } from "./desks/people"
 import { NO_PEOPLE } from "./store/people"
 import { useEditorStoreApi } from "~/editor/store"
 

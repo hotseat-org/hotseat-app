@@ -1,11 +1,11 @@
 import clsx from "clsx"
 import { Pin } from "lucide-react"
 import type { CSSProperties } from "react"
-import { getDeskTagTone } from "../deskTagTone"
-import { heatColor } from "../heatmap"
-import type { Person } from "../people"
-import { SeatAvatar } from "../SeatAvatar"
-import type { Zone } from "../zones"
+import { getDeskTagTone } from "../desks/deskTagTone"
+import { heatColor } from "../heatmap/heatmap"
+import type { Person } from "../desks/people"
+import { SeatAvatar } from "../desks/SeatAvatar"
+import type { Zone } from "../zones/zones"
 import { useI18n } from "~/i18n/I18nProvider"
 
 /**

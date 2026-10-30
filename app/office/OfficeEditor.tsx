@@ -1,7 +1,7 @@
-import type { EditorBooking } from "./useBookingSync"
+import type { EditorBooking } from "./booking/useBookingSync"
 import { officeModule } from "./module"
 import { OfficeSync } from "./OfficeSync"
-import type { People } from "./people"
+import type { People } from "./desks/people"
 import { Editor, type EditorProps } from "~/editor/Editor"
 import { MOBILE_CHROME } from "~/components/office/mobile"
 

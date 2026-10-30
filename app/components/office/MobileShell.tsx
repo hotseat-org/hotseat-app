@@ -11,8 +11,8 @@ import { MyBookings } from "./MyBookings"
 import { NotificationsBell } from "./Notifications"
 import { WeekDots } from "./WeekDots"
 import { MOBILE_CHROME } from "./mobile"
-import { MapMenu } from "~/editor/ui/MapMenu"
-import { MonthCalendar } from "~/office/ui/DateStepper"
+import { MapMenu } from "~/editor/ui/menus/MapMenu"
+import { MonthCalendar } from "~/office/booking/DateStepper"
 import { useEditorStore } from "~/editor/store"
 import {
   dayPhrase,
@@ -21,7 +21,7 @@ import {
   useGivenUpDesk,
   useWaitlist,
   useWeekPresence,
-} from "~/office/useBooking"
+} from "~/office/booking/useBooking"
 import { useSettings } from "~/components/settings/useSettings"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { daysBetween, isWeekend, type Day } from "~/utils/booking"

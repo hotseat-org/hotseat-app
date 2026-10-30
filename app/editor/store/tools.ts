@@ -1,4 +1,4 @@
-import type { Kit } from "../kits"
+import type { Kit } from "../kits/kits"
 import { ROTATION_STEP, toRotationStep, type PlacementPattern, type WallPaint } from "../layout"
 import type { ObjectType, Tool } from "../types"
 import type { GetState, SetState } from "./state"

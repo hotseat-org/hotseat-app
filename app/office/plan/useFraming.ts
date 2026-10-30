@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type RefObject } from "react"
-import { routeBounds } from "../wayfinding"
+import { routeBounds } from "../wayfinding/wayfinding"
 import { useEditorStore } from "~/editor/store"
 import { GLIDE_MS, type Frame } from "~/editor/plan/useFraming"
 import { MAX_ZOOM, fitView, type View } from "~/editor/plan/planView"

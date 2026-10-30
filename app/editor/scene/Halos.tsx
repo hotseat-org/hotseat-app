@@ -9,7 +9,7 @@ import {
   type InstancedMesh,
 } from "three"
 import { useEditorStore } from "../store"
-import { DaylightContext } from "../daylight"
+import { DaylightContext } from "../lighting/daylight"
 import { ACCENT } from "../palette"
 import type { SceneObject } from "../types"
 import type { PieceState } from "../module"

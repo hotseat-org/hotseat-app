@@ -1,5 +1,5 @@
 import type { WebGLProgramParametersWithUniforms } from "three"
-import { CUTAWAY_PATCHES, type CutawayKind } from "../scene/cutaway"
+import { CUTAWAY_PATCHES, type CutawayKind } from "../walls/cutaway"
 
 /**
  * Shading every solid surface gets in its shader, computed per pixel from its

@@ -1,4 +1,4 @@
-import { useSurfaces } from "../sceneTheme"
+import { useSurfaces } from "../scene/sceneTheme"
 import { GRID } from "../types"
 import { Surface } from "./Surface"
 import { WALL } from "./dimensions"

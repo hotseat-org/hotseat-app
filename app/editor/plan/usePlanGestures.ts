@@ -7,9 +7,9 @@ import {
   type SetStateAction,
 } from "react"
 import { useGesture } from "@use-gesture/react"
-import { isTypingTarget } from "../keyboard"
+import { isTypingTarget } from "../shell/keyboard"
 import { clamp } from "../math"
-import { createWheelReader, getSmoothZoomFactor, getStepZoomFactor } from "../wheel"
+import { createWheelReader, getSmoothZoomFactor, getStepZoomFactor } from "../camera/wheel"
 import { MAX_ZOOM, MIN_ZOOM, type View } from "./planView"
 
 /** A press that moves further than this is a pan, not a click (px). */

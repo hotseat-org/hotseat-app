@@ -1,7 +1,7 @@
 import { useEffect } from "react"
 import { Clone, useGLTF } from "@react-three/drei"
 import { useThree } from "@react-three/fiber"
-import { markShadowsDirty } from "../scene/shadows"
+import { markShadowsDirty } from "../lighting/shadows"
 import { NO_BAKE } from "./Baked"
 
 interface Props {

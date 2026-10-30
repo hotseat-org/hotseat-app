@@ -1,7 +1,7 @@
 import { data, type ActionFunctionArgs } from "react-router"
 import { z } from "zod"
 import { getCore } from "~/core/get-core"
-import { MODELS } from "~/editor/models"
+import { MODELS } from "~/editor/objects/models"
 import { commitSession, getSession, requireUser } from "~/services/session.server"
 
 const Intent = z.enum(["update-profile", "set-avatar", "delete-avatar", "set-pet"])

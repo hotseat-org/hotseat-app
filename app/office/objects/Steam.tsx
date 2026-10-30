@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react"
 import { useFrame, useThree } from "@react-three/fiber"
 import type { Mesh, MeshStandardMaterial } from "three"
-import { prefersReducedMotion, subscribeAmbient } from "~/editor/ambient"
+import { prefersReducedMotion, subscribeAmbient } from "~/editor/scene/ambient"
 import { NO_BAKE } from "~/editor/objects/Baked"
 
 const PUFFS = 4

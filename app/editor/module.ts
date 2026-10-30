@@ -4,8 +4,8 @@ import type { Frame } from "./plan/useFraming"
 import type { View } from "./plan/planView"
 import type { GetState, SetState } from "./store/state"
 import type { SceneObject } from "./types"
-import type { Command } from "./ui/commands"
-import type { TourStep } from "./ui/GuidedTour"
+import type { Command } from "./ui/menus/commands"
+import type { TourStep } from "./ui/guide/GuidedTour"
 import type { Translator } from "~/i18n/translate"
 
 /**

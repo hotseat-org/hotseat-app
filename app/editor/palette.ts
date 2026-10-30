@@ -70,7 +70,7 @@ export interface SurfacePalette {
    */
   planBackdrop: string
   /**
-   * The contour map round the office (see contours.ts): ordinary and index
+   * The contour map round the office (see landscape/terrain.ts): ordinary and index
    * lines, the plateau it stands on — in the plan (flat colour) and in 3D
    * (lit like the ground, so a base colour) — and the plateau's edge.
    */

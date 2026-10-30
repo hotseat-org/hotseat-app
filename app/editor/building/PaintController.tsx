@@ -1,0 +1,178 @@
+import { useFrame, useThree } from "@react-three/fiber"
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { Object3D, Plane, Vector3, type InstancedMesh } from "three"
+import { useEditorStore, useEditorStoreApi } from "../store"
+import {
+  SEG,
+  composeFacesToward,
+  enclosedRegions,
+  roomWalls,
+  wallBetweenJoints,
+  type WallPaint,
+} from "../layout"
+import { isEdgeType, type Cell } from "../types"
+import { useSurfaces } from "../scene/sceneTheme"
+import { intersectEdge } from "../walls/wallHit"
+
+const GROUND = new Plane(new Vector3(0, 1, 0), 0)
+const dummy = new Object3D()
+type Target =
+  | { kind: "wall"; targets: WallPaint[] }
+  | { kind: "floor"; cells: Cell[]; x: number; z: number }
+  | null
+
+/** Tells two targets apart: the same walls' faces, or the same room (wherever in it). */
+const getTargetKey = (target: Target) => {
+  if (!target) return ""
+  if (target.kind === "floor") {
+    return `f:${target.cells[0].x},${target.cells[0].z},${target.cells.length}`
+  }
+
+  const faces = target.targets.map((wallTarget) => `${wallTarget.id}${wallTarget.face ?? ""}`)
+
+  return `w:${faces.join(",")}`
+}
+
+/**
+ * Paint tool. Points at a wall → the face you see of it, corner to corner, with
+ * its doors and windows (Shift: the inside
+ * of the room on the side you look from — the faces of its walls facing in);
+ * otherwise at a room's floor → that room. Previews the paint, click applies.
+ */
+export const PaintController = () => {
+  const { camera, raycaster, pointer, gl: renderer, invalidate } = useThree()
+  const store = useEditorStoreApi()
+  const objects = useEditorStore((state) => state.objects)
+  const paintColor = useEditorStore((state) => state.paintColor)
+  const surfaces = useSurfaces()
+  const [target, setTarget] = useState<Target>(null)
+  const targetRef = useRef<Target>(null)
+  targetRef.current = target
+  const shift = useRef(false)
+  const lastKey = useRef("")
+  const regions = useMemo(() => enclosedRegions(objects), [objects])
+
+  // Track Shift from pointer events; redraw on move (frameloop="demand").
+  useEffect(() => {
+    const element = renderer.domElement
+    const move = (event: PointerEvent) => {
+      shift.current = event.shiftKey
+      invalidate()
+    }
+    const down = (event: PointerEvent) => {
+      const current = targetRef.current
+      if (event.button !== 0 || !current) return
+
+      const state = store.getState()
+      if (current.kind === "wall") state.paintWalls(current.targets, state.paintColor)
+      else state.paintFloor(current.x, current.z, state.paintColor)
+    }
+    // Shift switches between a wall and its room at once, without a move.
+    const key = (event: KeyboardEvent) => {
+      if (event.key !== "Shift") return
+
+      shift.current = event.type === "keydown"
+      invalidate()
+    }
+    element.addEventListener("pointermove", move)
+    element.addEventListener("pointerdown", down)
+    window.addEventListener("keydown", key)
+    window.addEventListener("keyup", key)
+
+    return () => {
+      element.removeEventListener("pointermove", move)
+      element.removeEventListener("pointerdown", down)
+      window.removeEventListener("keydown", key)
+      window.removeEventListener("keyup", key)
+    }
+  }, [renderer, invalidate, store])
+
+  const hit = useMemo(() => new Vector3(), [])
+
+  useFrame(() => {
+    raycaster.setFromCamera(pointer, camera)
+    const ray = raycaster.ray
+    const all = store.getState().objects
+
+    // Nearest wall/opening the ray passes through.
+    let best: { id: string; distance: number } | null = null
+    for (const object of all) {
+      if (!isEdgeType(object.type)) continue
+      if (!intersectEdge(ray, object, { target: hit })) continue
+
+      const distance = hit.distanceTo(ray.origin)
+      if (!best || distance < best.distance) best = { id: object.id, distance }
+    }
+
+    let next: Target = null
+    if (best) {
+      // The face you look at of a wall, corner to corner; Shift: the inside of
+      // the room on the side you look from.
+      const targets =
+        (shift.current && roomWalls(all, regions, { id: best.id, toward: ray.origin })) ||
+        composeFacesToward(all, wallBetweenJoints(all, best.id), ray.origin)
+      if (targets.length) next = { kind: "wall", targets }
+    } else if (ray.intersectPlane(GROUND, hit)) {
+      const region = regions.find((candidate) =>
+        candidate.some(
+          (cell) =>
+            cell.x <= hit.x && hit.x < cell.x + SEG && cell.z <= hit.z && hit.z < cell.z + SEG
+        )
+      )
+      if (region) next = { kind: "floor", cells: region, x: hit.x, z: hit.z }
+    }
+
+    const key = getTargetKey(next)
+    if (key !== lastKey.current) {
+      lastKey.current = key
+      setTarget(next)
+    } else if (next?.kind === "floor") {
+      // Same room, new spot — keep the click position current (no re-render).
+      targetRef.current = next
+    }
+  })
+
+  // Walls: shown in the paint on the walls themselves (merged, as they'd look —
+  // with their doors, windows and joints), not as a ghost over them.
+  const setPaintPreview = useEditorStore((state) => state.setPaintPreview)
+  useEffect(() => {
+    setPaintPreview(target?.kind === "wall" ? { targets: target.targets, color: paintColor } : null)
+  }, [target, paintColor, setPaintPreview])
+  useEffect(() => () => setPaintPreview(null), [setPaintPreview])
+
+  if (target?.kind !== "floor") return null
+
+  return <FloorPreview cells={target.cells} color={paintColor ?? surfaces.floorInside} />
+}
+
+/** Translucent overlay of a room's floor in the paint colour. */
+const FloorPreview = ({ cells, color }: { cells: Cell[]; color: string }) => {
+  const ref = useRef<InstancedMesh>(null)
+  const invalidate = useThree((state) => state.invalidate)
+  useLayoutEffect(() => {
+    const mesh = ref.current
+    if (!mesh) return
+
+    cells.forEach((cell, i) => {
+      dummy.position.set(cell.x + SEG / 2, 0.012, cell.z + SEG / 2)
+      dummy.rotation.set(-Math.PI / 2, 0, 0)
+      dummy.updateMatrix()
+      mesh.setMatrixAt(i, dummy.matrix)
+    })
+    mesh.instanceMatrix.needsUpdate = true
+    invalidate()
+  }, [cells, invalidate])
+
+  return (
+    <instancedMesh key={cells.length} ref={ref} args={[undefined, undefined, cells.length]}>
+      <planeGeometry args={[SEG, SEG]} />
+      <meshBasicMaterial
+        color={color}
+        transparent
+        opacity={0.55}
+        depthWrite={false}
+        toneMapped={false}
+      />
+    </instancedMesh>
+  )
+}

@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef, useState, type ReactNode } from "react"
 import { useThree } from "@react-three/fiber"
 import { BufferGeometry, Matrix4, Mesh, type Group, type Material, type Object3D } from "three"
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js"
-import { markShadowsDirty } from "../scene/shadows"
+import { markShadowsDirty } from "../lighting/shadows"
 import { BATCH_PART, materialKey, useBatchChanged, type AnyMaterial } from "./batching"
 
 /** Mark a subtree (e.g. an animated model) to be left out of baking. */

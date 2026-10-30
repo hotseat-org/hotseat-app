@@ -1,6 +1,6 @@
 import { createContext, useContext } from "react"
 import { DoubleSide } from "three"
-import { useCutaway } from "../scene/cutaway"
+import { useCutaway } from "../walls/cutaway"
 import { getSurfaceShader } from "./surfaceShader"
 
 /**

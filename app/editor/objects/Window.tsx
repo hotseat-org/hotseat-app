@@ -1,4 +1,4 @@
-import { useSurfaces } from "../sceneTheme"
+import { useSurfaces } from "../scene/sceneTheme"
 import { Surface } from "./Surface"
 import { WALL, FLUSH_INSET } from "./dimensions"
 

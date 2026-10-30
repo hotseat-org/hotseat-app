@@ -11,11 +11,11 @@ import {
   type SceneObject,
   type Tool,
 } from "../types"
-import { GhostObject } from "../scene/GhostObject"
+import { GhostObject } from "../building/GhostObject"
 import { edgeLength, edgeStretch } from "../layout"
-import { markShadowsDirty } from "../scene/shadows"
-import { CutawayContext } from "../scene/cutaway"
-import { CursorHintContext } from "../cursors"
+import { markShadowsDirty } from "../lighting/shadows"
+import { CutawayContext } from "../walls/cutaway"
+import { CursorHintContext } from "../shell/cursors"
 import { getItem } from "../catalog"
 import { ObjectMesh } from "./ObjectMesh"
 import { WALL } from "./dimensions"

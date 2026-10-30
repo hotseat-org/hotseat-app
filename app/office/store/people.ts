@@ -1,4 +1,4 @@
-import type { People } from "../people"
+import type { People } from "../desks/people"
 import type { GetState, SetState } from "~/editor/store/state"
 
 /** The organization's members (desk assignment, name tags, avatars) — from the app, see OfficeSync. */

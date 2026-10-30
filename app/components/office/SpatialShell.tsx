@@ -19,17 +19,17 @@ import { MobileShell } from "./MobileShell"
 import { NotificationsBell } from "./Notifications"
 import { WeekDots } from "./WeekDots"
 import { InsightsDashboard } from "./InsightsDashboard"
-import { REVEAL_LABEL } from "~/editor/ui/revealLabel"
+import { REVEAL_LABEL } from "~/editor/ui/bars/revealLabel"
 import { useEditorStore } from "~/editor/store"
-import { TimeOfDay } from "~/editor/ui/TimeOfDay"
-import { hasWebGL } from "~/editor/webgl"
+import { TimeOfDay } from "~/editor/ui/bars/TimeOfDay"
+import { hasWebGL } from "~/editor/shell/webgl"
 import {
   dayPhrase,
   useDesksOnDay,
   useGivenUpDesk,
   useWaitlist,
   useWeekPresence,
-} from "~/office/useBooking"
+} from "~/office/booking/useBooking"
 import { useI18n } from "~/i18n/I18nProvider"
 import { useSettings } from "~/components/settings/useSettings"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"

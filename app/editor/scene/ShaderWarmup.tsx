@@ -7,8 +7,8 @@ import {
   type ReactNode,
 } from "react"
 import { useThree } from "@react-three/fiber"
-import { DaylightContext } from "../daylight"
-import { markShadowsDirty } from "./shadows"
+import { DaylightContext } from "../lighting/daylight"
+import { markShadowsDirty } from "../lighting/shadows"
 
 /** How dark it must be before lamps switch on (shared by every lamp). */
 export const LAMPS_ON = 0.02

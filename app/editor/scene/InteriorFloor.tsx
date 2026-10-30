@@ -10,7 +10,7 @@ import {
 import { useEditorStore, useEditorStoreApi } from "../store"
 import { FLOOR_PART, SEG, enclosedRegions, type FloorCell } from "../layout"
 import { isEdgeType } from "../types"
-import { useSurfaces } from "../sceneTheme"
+import { useSurfaces } from "./sceneTheme"
 
 const dummy = new Object3D()
 

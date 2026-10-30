@@ -6,7 +6,7 @@ import { SWATCHES } from "../palette"
 import { hasLooks, isEdgeType, isRecolorable, isWallMounted } from "../types"
 import { getItem } from "../catalog"
 import { useModules } from "../modules"
-import { getToolMeta } from "./categories"
+import { getToolMeta } from "./catalog/categories"
 import { useI18n } from "~/i18n/I18nProvider"
 
 export const Inspector = () => {

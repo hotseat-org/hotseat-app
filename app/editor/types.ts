@@ -11,7 +11,7 @@ export type CatalogItem = ObjectType | "room"
 /**
  * Fields a module keeps on placed pieces, beyond the editor's own: modules
  * add theirs (`declare module`) — the office's desk label, resident, zone…
- * (see office/objectFields.ts). They're saved with the layout as they are.
+ * (see office/slots/objectFields.ts). They're saved with the layout as they are.
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ObjectFields {}

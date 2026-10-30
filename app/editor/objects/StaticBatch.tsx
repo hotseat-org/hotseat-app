@@ -11,8 +11,8 @@ import {
   type Mesh,
 } from "three"
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js"
-import { markShadowsDirty } from "../scene/shadows"
-import { MERGED_KIND, cutDirectionOf, setCutAttributes } from "../scene/cutaway"
+import { markShadowsDirty } from "../lighting/shadows"
+import { MERGED_KIND, cutDirectionOf, setCutAttributes } from "../walls/cutaway"
 import { getSurfaceShader } from "./surfaceShader"
 import { BATCH_PART, BatchContext, surfaceKey } from "./batching"
 

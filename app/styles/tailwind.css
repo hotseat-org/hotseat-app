@@ -842,7 +842,7 @@ input:-webkit-autofill:focus {
   }
 }
 
-/* ── SkySlider (app/editor/ui/SkySlider.tsx): time of day as a 24 h sky ── */
+/* ── SkySlider (app/editor/ui/bars/SkySlider.tsx): time of day as a 24 h sky ── */
 .sky-slider {
   --ss-h: 18px; /* track height */
   --ss-k: 26px; /* knob height */
