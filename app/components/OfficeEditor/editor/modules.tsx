@@ -1,6 +1,13 @@
 import { createContext, useContext, useMemo, useRef } from "react"
 import type { SceneObject } from "../types"
-import type { EditorModule, PieceState, ViewClicks } from "./module"
+import type {
+  EditorModule,
+  PieceState,
+  PlanDrawingContext,
+  PlanDrawings,
+  PlanPieceStyle,
+  ViewClicks,
+} from "./module"
 
 /**
  * The modules an editor runs with, for its components (and, bridged, the 3D
@@ -46,4 +53,35 @@ export const useViewClicks = (): Required<ViewClicks> => {
     }),
     []
   )
+}
+
+/** How each piece is drawn on the plan: the first module with a style for it. */
+export const usePlanPieceStyles = (objects: SceneObject[]) => {
+  const modules = useModules()
+  // Each module's hook, in a loop: safe, the list is fixed (see ModulesContext).
+  const styles = modules.flatMap((module) =>
+    module.plan?.usePieceStyles ? [module.plan.usePieceStyles(objects)] : []
+  )
+  return useMemo(
+    () =>
+      (object: SceneObject): PlanPieceStyle | undefined => {
+        for (const style of styles) {
+          const found = style(object)
+          if (found) return found
+        }
+        return undefined
+      },
+    // One function per module (the list keeps its length).
+    styles
+  )
+}
+
+/** Every module's plan drawings, in module order. */
+export const usePlanDrawings = (context: PlanDrawingContext): PlanDrawings[] => {
+  const modules = useModules()
+  // Each module's hook, in a loop: safe, the list is fixed (see ModulesContext).
+  const drawings = modules.flatMap((module) =>
+    module.plan?.useDrawings ? [module.plan.useDrawings(context)] : []
+  )
+  return useMemo(() => drawings, drawings)
 }

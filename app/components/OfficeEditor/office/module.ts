@@ -1,5 +1,7 @@
 import type { EditorModule } from "../editor/module"
 import "./objectFields"
+import { useOfficePieceStyles, useOfficePlanDrawings } from "./plan"
+import { OfficePlanOverlays, OfficeRoutePath } from "./planOverlays"
 import { OFFICE_SCENE_LAYERS, useOfficePieceStates, useOfficeViewClicks } from "./scene"
 import { asNewDesks, createOfficeSlice } from "./store"
 
@@ -14,4 +16,10 @@ export const officeModule: EditorModule = {
   sceneLayers: OFFICE_SCENE_LAYERS,
   usePieceStates: useOfficePieceStates,
   useViewClicks: useOfficeViewClicks,
+  plan: {
+    usePieceStyles: useOfficePieceStyles,
+    useDrawings: useOfficePlanDrawings,
+    svgLayers: [OfficeRoutePath],
+    overlays: [OfficePlanOverlays],
+  },
 }

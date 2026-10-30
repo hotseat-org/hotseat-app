@@ -1,3 +1,5 @@
+import { Fragment } from "react"
+import type { PlanDrawings } from "../../editor/module"
 import { composeWallColors } from "../../layout"
 import { sortBottomToTop, type Drawable, type Extent } from "../shapes"
 import type { Bounds } from "../planView"
@@ -6,7 +8,6 @@ import { drawFurniture, type FurnitureInput } from "./furniture"
 import { drawOpenings } from "./openings"
 import { createWallPieces } from "./wallPieces"
 import { drawWalls } from "./walls"
-import { drawZones, type ZonesInput } from "./zones"
 
 /** Up to this height (m) a piece lies flat on the floor (rugs): under the shadows. */
 const FLAT = 0.02
@@ -14,30 +15,31 @@ const FLAT = 0.02
 interface SceneInput extends FurnitureInput {
   /** The theme's wall colour (unpainted faces). */
   wall: string
-  /** Team zones (the Zones layer), on the floor under the furniture. */
-  zones?: ZonesInput
+  /** The modules' own drawings: on the floor under the pieces, and over them. */
+  drawings: PlanDrawings[]
 }
 
 /**
- * Everything in plan units (metres, top-down): the rooms' floor, then walls,
- * doors and furniture layered bottom to top, then desk markers for the shown
- * day — and the drawing's bounds (for fitting).
+ * Everything in plan units (metres, top-down): the rooms' floor and the
+ * modules' floor drawings, then walls, doors and furniture layered bottom to
+ * top, then the modules' drawings over them — and the drawing's bounds (for
+ * fitting).
  */
-export const buildScene = ({ wall, zones, ...furnitureInput }: SceneInput) => {
+export const buildScene = ({ wall, drawings, ...furnitureInput }: SceneInput) => {
   // Panning reuses this whole element (memoized), so React skips it entirely.
   const { objects, floorInside } = furnitureInput
   const drawables: Drawable[] = []
   const push = (extent: Extent, node: React.ReactNode) =>
-    drawables.push({ extent: extent, node, order: drawables.length })
+    drawables.push({ extent, node, order: drawables.length })
 
   const pieces = createWallPieces(push)
   const wallColors = composeWallColors(objects)
   drawWalls(objects, wall, wallColors, pieces, push)
   drawOpenings(objects, wall, wallColors, pieces, push)
-  const { shadows, markers, heatPads, occupants } = drawFurniture(furnitureInput, push)
+  const { shadows } = drawFurniture(furnitureInput, push)
 
   let bounds: Bounds | null = null
-  for (const { extent: extent } of drawables) {
+  for (const { extent } of drawables) {
     bounds = bounds
       ? {
           x0: Math.min(bounds.x0, extent.x0),
@@ -51,12 +53,12 @@ export const buildScene = ({ wall, zones, ...furnitureInput }: SceneInput) => {
   const layered = sortBottomToTop(drawables)
   return {
     bounds,
-    occupants,
     node: (
       <>
         {drawFloor(objects, floorInside)}
-        {zones && drawZones(zones)}
-        {heatPads}
+        {drawings.map((drawing, i) => (
+          <Fragment key={`floor${i}`}>{drawing.floor}</Fragment>
+        ))}
         {layered
           .filter((drawable) => drawable.extent.y1 <= FLAT)
           .map((drawable, i) => (
@@ -70,7 +72,9 @@ export const buildScene = ({ wall, zones, ...furnitureInput }: SceneInput) => {
           .map((drawable, i) => (
             <g key={i}>{drawable.node}</g>
           ))}
-        {markers}
+        {drawings.map((drawing, i) => (
+          <Fragment key={`top${i}`}>{drawing.top}</Fragment>
+        ))}
       </>
     ),
   }

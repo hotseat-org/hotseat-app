@@ -1,4 +1,6 @@
-import type { ComponentType } from "react"
+import type { ComponentType, ReactNode, RefObject } from "react"
+import type { Frame } from "../plan/useFraming"
+import type { View } from "../plan/planView"
 import type { GetState, SetState } from "../store/state"
 import type { SceneObject } from "../types"
 
@@ -30,6 +32,74 @@ export interface EditorModule {
   usePieceStates?: (isViewing: boolean) => ReadonlyMap<string, PieceState> | null
   /** A hook: what clicks do while viewing (the office: a desk opens its card). */
   useViewClicks?: () => ViewClicks
+  /** What it adds to the simple (2D) plan. */
+  plan?: PlanModule
+}
+
+/** A module's part in the 2D plan (shown while viewing; the plan turns the layout, see planView). */
+export interface PlanModule {
+  /**
+   * A hook: how each piece is drawn — given the plan's turned layout. Its
+   * result goes into the memoized drawing: keep it stable (useMemo).
+   */
+  usePieceStyles?: (objects: SceneObject[]) => (object: SceneObject) => PlanPieceStyle | undefined
+  /** A hook: SVG drawn with the plan's drawing (plan units). Keep it stable (useMemo). */
+  useDrawings?: (context: PlanDrawingContext) => PlanDrawings
+  /** Drawn in the plan's SVG over its drawing, re-rendered with the view (plan units). */
+  svgLayers?: ComponentType<PlanLayerProps>[]
+  /** HTML laid over the plan (screen pixels). */
+  overlays?: ComponentType<PlanLayerProps>[]
+}
+
+/** How a piece is drawn on the plan. */
+export interface PlanPieceStyle {
+  /** Its symbol's lived-in state (a desk: someone's there); unset, as when editing. */
+  isOccupied?: boolean
+  /** Faded far back (filtered out). */
+  isDimmed?: boolean
+  /** Blended toward the floor, so the pieces that matter stand out. */
+  isMuted?: boolean
+}
+
+export interface PlanDrawingContext {
+  /** The plan's turned layout. */
+  objects: SceneObject[]
+  isDark: boolean
+  /** Unique per plan: name SVG ids after it. */
+  idPrefix: string
+  /** A piece clicked in the drawing (not the end of a pan). */
+  onPiece: (id: string) => void
+}
+
+export interface PlanDrawings {
+  /** On the floor, under the pieces. */
+  floor?: ReactNode
+  /** Over the pieces. */
+  top?: ReactNode
+}
+
+/** What the plan's layers and overlays are given. */
+export interface PlanLayerProps {
+  plan: PlanState
+}
+
+export interface PlanState {
+  view: View
+  /** The layout turned by this many quarter turns (see turnPoint). */
+  turn: number
+  /** The plan's turned layout. */
+  objects: SceneObject[]
+  isDark: boolean
+  /** A plan point (turned) on screen, in px within the plan. */
+  screen: (x: number, z: number) => { left: number; top: number }
+  /** The press that's ending was a pan, not a click. */
+  isMoved: () => boolean
+  /** Glide the view (instant with reduced motion). */
+  glideTo: (from: View, to: View) => void
+  viewRef: RefObject<View | null>
+  frame: RefObject<Frame>
+  /** A phone: what its shell covers (px), else undefined. */
+  phoneChrome?: { top: number; bottom: number }
 }
 
 /** A module's own scene component, shown while viewing, editing, or always. */
