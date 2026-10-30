@@ -6,12 +6,12 @@ import {
   furnitureCollides,
   mountWalls,
   wallJointNodes,
-} from "./layout"
-import { getStructureBounds } from "./structureField"
-import { TEMPLATES } from "./office/templates"
-import { isEdgeType, isMarker, isSeatable, isWallMounted, type SceneObject } from "./types"
-import { getRoute } from "./office/wayfinding"
-import { composeZoneAreas } from "./office/zones"
+} from "../layout"
+import { getStructureBounds } from "../structureField"
+import { isEdgeType, isMarker, isSeatable, isWallMounted, type SceneObject } from "../types"
+import { TEMPLATES } from "./templates"
+import { getRoute } from "./wayfinding"
+import { composeZoneAreas } from "./zones"
 
 /**
  * A safety net for refactoring the layout logic: what it makes of every

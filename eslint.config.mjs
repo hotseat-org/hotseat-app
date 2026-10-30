@@ -96,4 +96,28 @@ export default [
       ],
     },
   },
+  // The editor's core knows nothing about offices: the office plugs in as a
+  // module (OfficeEditor/office/, see office/module.ts), never the other way.
+  {
+    files: ["app/components/OfficeEditor/**/*.{ts,tsx}"],
+    ignores: [
+      "app/components/OfficeEditor/office/**",
+      // The app's entry point: it loads the office's editor.
+      "app/components/OfficeEditor/OfficeEditor.client.ts",
+    ],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["**/office", "**/office/**", "~/core/office/**", "~/utils/booking"],
+              message:
+                "The editor's core can't depend on the office: add a module slot instead (see editor/module.ts).",
+            },
+          ],
+        },
+      ],
+    },
+  },
 ]

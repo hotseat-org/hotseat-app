@@ -31,7 +31,6 @@ import { useEditorMode, type Mode } from "./useEditorMode"
 import { useEditorShortcuts } from "./useEditorShortcuts"
 import type { EditorModule, SaveOptions } from "./module"
 import { ModulesContext, useModules } from "./modules"
-import { MOBILE_CHROME } from "~/components/office/mobile"
 import { ContourBackdrop } from "~/components/ui/ContourBackdrop"
 
 // three.js + the whole scene load only when the 3D view is shown.
@@ -76,6 +75,8 @@ export interface EditorProps {
   }) => ReactNode
   /** Rendered inside the editor's providers, before it (a module's data sync). */
   children?: ReactNode
+  /** On a phone with the app's shell: what the shell covers at the top and bottom (px). */
+  phoneChrome?: { top: number; bottom: number }
 }
 
 /** The office shell's floating panels (desktop): the left rail, the right column. */
@@ -120,6 +121,7 @@ const EditorInner = ({
   initialMode = "edit",
   canEdit = true,
   displayShell,
+  phoneChrome,
 }: EditorProps) => {
   const store = useEditorStoreApi()
 
@@ -195,7 +197,7 @@ const EditorInner = ({
           <FloorPlan
             dark={isDark}
             padRight={shellMode ? 340 : 40}
-            phoneChrome={shellMode && isMobile ? MOBILE_CHROME : undefined}
+            phoneChrome={shellMode && isMobile ? phoneChrome : undefined}
           />
         )}
         {!isEmpty && !flat && (
