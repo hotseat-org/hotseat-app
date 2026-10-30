@@ -1,5 +1,5 @@
 import { GRID, type ObjectType, type SceneObject } from "../types"
-import { getItem } from "../catalog/items"
+import { getItem } from "../catalog"
 import { SEG, edgeStep, isDiagonalEdge, isSolidWall, nearestEdgeId, runsAlongX } from "./edges"
 import { snapAxis } from "./placement"
 

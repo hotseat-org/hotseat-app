@@ -6,7 +6,7 @@ import { composeWallColors, wallJointNodes } from "../layout"
 import { Surface } from "../objects/Surface"
 import { WALL } from "../objects/dimensions"
 import { useSurfaces } from "../sceneTheme"
-import { getItem } from "../catalog/items"
+import { getItem } from "../catalog"
 import { CutawayContext, setCutAttributes } from "./cutaway"
 
 const SIZE = 0.15 // slightly proud of the wall thickness so it fills the corner notch

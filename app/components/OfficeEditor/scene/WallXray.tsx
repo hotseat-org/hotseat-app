@@ -5,7 +5,7 @@ import { useEditorStoreApi } from "../store"
 import { GRID, isEdgeType, isWall, isWallMounted } from "../types"
 import { WALL } from "../objects/dimensions"
 import { edgeDirection, edgeLength, footprintCells } from "../layout"
-import { getEdge } from "../catalog/items"
+import { getEdge } from "../catalog"
 import { CUT_DIRECTION, cutAxes, cutawayUniform, MAX_CUTS } from "./cutaway"
 import { intersectEdge } from "./wallHit"
 

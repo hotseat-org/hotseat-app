@@ -15,7 +15,7 @@ import {
 } from "../types"
 import { usePeople } from "../people"
 import { getZones } from "../zones"
-import { getItem } from "../catalog/items"
+import { getItem } from "../catalog"
 import { TOOLS } from "./tools"
 import type { Day } from "~/utils/booking"
 import { useI18n } from "~/i18n/I18nProvider"

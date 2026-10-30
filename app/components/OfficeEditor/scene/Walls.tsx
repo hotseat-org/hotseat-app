@@ -15,7 +15,7 @@ import {
 import { WALL } from "../objects/dimensions"
 import { GlassFrameSurface, GlassSurface, getGlassRunParts } from "../objects/GlassWall"
 import { type SceneObject } from "../types"
-import { getItem } from "../catalog/items"
+import { getItem } from "../catalog"
 import { CUT_DIRECTION, CutawayContext, setCutAttributes } from "./cutaway"
 
 export interface Run {

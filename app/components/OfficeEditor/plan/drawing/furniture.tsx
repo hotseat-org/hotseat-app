@@ -4,7 +4,7 @@ import { footprintCells } from "../../layout"
 import { spotFor } from "../../seatSpot"
 import { GRID, isEdgeType, isMarker, isSeatable, type SceneObject } from "../../types"
 import type { DeskOnDay } from "../../useBooking"
-import { drawPiece } from "../kits"
+import { drawPiece } from "../symbols"
 import { mix } from "../shapes"
 import type { Push } from "./wallPieces"
 

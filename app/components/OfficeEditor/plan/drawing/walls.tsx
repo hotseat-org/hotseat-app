@@ -11,8 +11,8 @@ import {
 } from "../../layout"
 import { WALL } from "../../objects/dimensions"
 import { isWall, type SceneObject } from "../../types"
-import { WINDOW_GLASS } from "../kits"
-import { getEdge } from "../../catalog/items"
+import { WINDOW_GLASS } from "../sketch"
+import { getEdge } from "../../catalog"
 import { HALF_WALL, type Push, type WallPieces } from "./wallPieces"
 
 /**

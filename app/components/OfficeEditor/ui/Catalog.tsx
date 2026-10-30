@@ -16,7 +16,7 @@ import { useEditorStore } from "../store"
 import { isRecolorable } from "../types"
 import { FLOOR_SWATCHES, SWATCHES } from "../palette"
 import type { PlacementPattern } from "../layout"
-import { getItem } from "../catalog/items"
+import { getItem } from "../catalog"
 import {
   CATEGORIES,
   TOOL_META,

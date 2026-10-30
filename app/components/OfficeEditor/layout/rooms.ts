@@ -1,5 +1,5 @@
 import { isEdgeType, isMarker, type Cell, type SceneObject } from "../types"
-import { getEdge } from "../catalog/items"
+import { getEdge } from "../catalog"
 import { SEG, edgeDirection, unitEdges } from "./edges"
 
 /**

@@ -1,6 +1,6 @@
 /// <reference types="bun" />
 import { describe, expect, test } from "bun:test"
-import { ITEMS, canHost, getEdge, getItem, type ObjectType } from "./items"
+import { canHost, getEdge, getItem, getItemTypes, type ObjectType } from "."
 
 describe("the catalogue", () => {
   test("walls, glass, doors and windows all close rooms", () => {
@@ -19,12 +19,12 @@ describe("the catalogue", () => {
     expect(canHost("glassWall", "window")).toBe(false)
   })
   test("only openings are cut into runs, and every opening a run hosts is an opening", () => {
-    for (const type of Object.keys(ITEMS) as ObjectType[])
+    for (const type of getItemTypes())
       for (const opening of getEdge(type)?.hosts ?? [])
         expect(getEdge(opening as ObjectType)?.role).toBe("opening")
   })
   test("edge traits belong to edge pieces only", () => {
-    for (const type of Object.keys(ITEMS) as ObjectType[])
+    for (const type of getItemTypes())
       expect(getItem(type).edge !== undefined).toBe(getItem(type).mount === "edge")
   })
 })

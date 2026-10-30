@@ -8,7 +8,7 @@ import {
 } from "../../layout"
 import { PALETTE } from "../../palette"
 import type { SceneObject } from "../../types"
-import { WINDOW_GLASS } from "../kits"
+import { WINDOW_GLASS } from "../sketch"
 import { shade } from "../shapes"
 import { isOpening } from "../../types"
 import { HALF_WALL, type Push, type WallPieces } from "./wallPieces"

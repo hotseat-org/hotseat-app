@@ -11,7 +11,7 @@ import { spotFor } from "./seatSpot"
 import { useEditorStore } from "./store"
 import { useDesksOnDay } from "./useBooking"
 import { GRID, isEdgeType, isMarker, isOverhead, isWallMounted, type SceneObject } from "./types"
-import { getEdge, getItem } from "./catalog/items"
+import { getEdge, getItem } from "./catalog"
 import type { Translator } from "~/i18n/translate"
 
 /**

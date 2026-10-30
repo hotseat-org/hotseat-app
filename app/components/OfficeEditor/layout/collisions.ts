@@ -8,7 +8,7 @@ import {
   type SceneObject,
   type WallCell,
 } from "../types"
-import { getItem } from "../catalog/items"
+import { getItem } from "../catalog"
 import { edgeLength, edgeStep, isDiagonalEdge, runsAlongX } from "./edges"
 import { mountWalls } from "./mounts"
 import { clampToFloor, footprintCells } from "./placement"

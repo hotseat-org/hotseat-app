@@ -11,7 +11,7 @@ import {
   type ObjectType,
   type SceneObject,
 } from "../types"
-import { getItem } from "../catalog/items"
+import { getItem } from "../catalog"
 
 /** Distances further than this aren't worth a label. */
 const MAX = 4

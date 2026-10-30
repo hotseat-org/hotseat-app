@@ -3,7 +3,7 @@ import { useThree } from "@react-three/fiber"
 import { CanvasTexture, Object3D, type InstancedMesh } from "three"
 import { useEditorStore } from "../store"
 import { GRID, isEdgeType, isMarker, isWallMounted, type ObjectType } from "../types"
-import { getItem } from "../catalog/items"
+import { getItem } from "../catalog"
 
 /** Just above rugs (their top is 0.014), so a piece on a rug shades it too. */
 const HEIGHT = 0.016

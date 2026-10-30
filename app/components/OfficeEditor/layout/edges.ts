@@ -8,7 +8,7 @@ import {
   type SceneObject,
   type WallCell,
 } from "../types"
-import { getEdge } from "../catalog/items"
+import { getEdge } from "../catalog"
 
 /**
  * Which way a wall/door edge runs: along X, along Z, or across a grid square

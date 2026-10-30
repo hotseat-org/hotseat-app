@@ -6,7 +6,7 @@ import {
   type OpeningType,
   type SceneObject,
 } from "../types"
-import { canHost } from "../catalog/items"
+import { canHost } from "../catalog"
 import { edgeDirection, edgeStep, unitEdges } from "./edges"
 import { composeWallColors } from "./wallColors"
 import { composeFacePaint, getOpeningPaint } from "./wallFaces"

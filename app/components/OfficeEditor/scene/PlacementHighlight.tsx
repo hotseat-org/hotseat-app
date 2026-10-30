@@ -2,7 +2,7 @@ import { useMemo } from "react"
 import { Edges } from "@react-three/drei"
 import { DoubleSide, Shape } from "three"
 import { GRID, type ObjectType } from "../types"
-import { getItem } from "../catalog/items"
+import { getItem } from "../catalog"
 
 interface Props {
   type: ObjectType

@@ -1,12 +1,12 @@
 import {
-  ITEMS,
+  getItemTypes,
   findItem,
   getItem,
   hasTag,
   type ObjectType,
   type WallType,
   type OpeningType,
-} from "./catalog/items"
+} from "./catalog"
 import { msg } from "~/i18n/msg"
 
 export type { ObjectType, OpeningType, WallType }
@@ -63,9 +63,7 @@ export const DESK_FEATURES = [
 export type DeskFeature = (typeof DESK_FEATURES)[number]["id"]
 
 /** The set of build tools: every kind of piece but data markers. */
-export const OBJECT_TYPES = (Object.keys(ITEMS) as ObjectType[]).filter(
-  (type) => getItem(type).mount !== "marker"
-)
+export const OBJECT_TYPES = getItemTypes().filter((type) => getItem(type).mount !== "marker")
 
 export const isObjectType = (tool: Tool): tool is ObjectType =>
   (OBJECT_TYPES as string[]).includes(tool)

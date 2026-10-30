@@ -8,7 +8,7 @@ import {
   type ObjectType,
   type SceneObject,
 } from "../types"
-import { getItem } from "../catalog/items"
+import { getItem } from "../catalog"
 import { edgeStep, isDiagonalEdge } from "./edges"
 import { ALONG_Z, isDiagonal, toRotationStep } from "./rotation"
 

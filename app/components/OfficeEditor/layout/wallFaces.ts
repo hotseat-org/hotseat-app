@@ -1,5 +1,5 @@
 import { isOpening, type SceneObject } from "../types"
-import { getEdge } from "../catalog/items"
+import { getEdge } from "../catalog"
 
 /** A wall's two faces' paint: its front (its +Z side as built) and back. */
 export type WallFaces = [front: string | undefined, back: string | undefined]
