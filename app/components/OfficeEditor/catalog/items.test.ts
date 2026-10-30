@@ -28,3 +28,20 @@ describe("the catalogue", () => {
       expect(getItem(type).edge !== undefined).toBe(getItem(type).mount === "edge")
   })
 })
+
+describe("trait questions about tools that place no piece", () => {
+  // Callers pass the current tool as a type: "select" or "paint" must read
+  // as "no", never crash (the old string comparisons did the same).
+  test("answer no", async () => {
+    const types = await import("../types")
+    for (const tool of ["select", "delete", "room", "paint"] as unknown as ObjectType[]) {
+      expect(types.isWallMounted(tool)).toBe(false)
+      expect(types.isOverhead(tool)).toBe(false)
+      expect(types.isEdgeType(tool)).toBe(false)
+      expect(types.isMarker(tool)).toBe(false)
+      expect(types.isSeatable(tool)).toBe(false)
+      expect(types.hasLooks(tool)).toBe(false)
+      expect(getEdge(tool)).toBeUndefined()
+    }
+  })
+})

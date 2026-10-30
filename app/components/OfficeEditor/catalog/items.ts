@@ -210,11 +210,15 @@ export const findItem = (type: string | undefined): ItemDefinition | undefined =
     ? getItem(type as ObjectType)
     : undefined
 
-/** A piece on the grid's edges: what it does to the layout. Undefined for the rest. */
-export const getEdge = (type: ObjectType): EdgeTraits | undefined => getItem(type).edge
+/**
+ * A piece on the grid's edges: what it does to the layout. Undefined for the
+ * rest — and for tools that place no piece (callers often pass the current
+ * tool), like every trait question below.
+ */
+export const getEdge = (type: ObjectType): EdgeTraits | undefined => findItem(type)?.edge
 
 /** Whether an opening of `opening`'s kind can be cut into a run of `run`'s. */
 export const canHost = (run: ObjectType, opening: ObjectType) =>
   getEdge(run)?.hosts?.includes(opening) ?? false
 
-export const hasTag = (type: ObjectType, tag: string) => getItem(type).tags.includes(tag)
+export const hasTag = (type: ObjectType, tag: string) => findItem(type)?.tags.includes(tag) ?? false

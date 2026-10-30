@@ -84,7 +84,7 @@ export const BUILD_HALF = 1000
  * colours the ROOM containing it (so it survives walls being edited). Markers
  * never render, collide, get selected or framed.
  */
-export const isMarker = (type: ObjectType) => getItem(type).mount === "marker"
+export const isMarker = (type: ObjectType) => findItem(type)?.mount === "marker"
 
 /**
  * Desks no longer placed: one without a chair, and one with a pet always in its
@@ -96,7 +96,7 @@ export const isRetiredDesk = (type: ObjectType) => hasTag(type, "retiredDesk")
 export const isSeatable = (type: ObjectType) => hasTag(type, "desk")
 
 /** Hangs on a wall face: needs solid wall behind it; collides only with other wall items. */
-export const isWallMounted = (type: ObjectType) => getItem(type).mount === "wall"
+export const isWallMounted = (type: ObjectType) => findItem(type)?.mount === "wall"
 
 /** A piece's look: its stored variant, or a stable one derived from its id. */
 export const variantOf = (object: Pick<SceneObject, "id" | "variant">) => {
@@ -107,13 +107,13 @@ export const variantOf = (object: Pick<SceneObject, "id" | "variant">) => {
 }
 
 /** Pieces that come in several looks (their props, cushions, artwork…). */
-export const hasLooks = (type: ObjectType) => getItem(type).hasLooks
+export const hasLooks = (type: ObjectType) => findItem(type)?.hasLooks === true
 
 /** Hangs overhead: collides only with other overhead items, never floor furniture or walls. */
-export const isOverhead = (type: ObjectType) => getItem(type).mount === "ceiling"
+export const isOverhead = (type: ObjectType) => findItem(type)?.mount === "ceiling"
 
 /** Walls/doors live on grid edges; everything else is furniture. */
-export const isEdgeType = (type: ObjectType) => getItem(type).mount === "edge"
+export const isEdgeType = (type: ObjectType) => findItem(type)?.mount === "edge"
 
 /** Wall runs (solid or glass) — what an opening is cut into. */
 export const isWall = (type?: Tool): type is WallType => findItem(type)?.edge?.role === "run"
