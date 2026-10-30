@@ -1,5 +1,5 @@
 import type { CoreContext } from "../types"
-import { roomKitSchema } from "~/components/OfficeEditor/schema"
+import { roomKitSchema } from "~/components/OfficeEditor/office/schema"
 import type { Kit } from "~/components/OfficeEditor/kits"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 

@@ -1,6 +1,6 @@
 import type { CoreContext } from "../types"
-import { layoutSchema } from "~/components/OfficeEditor/schema"
-import { isSeatable } from "~/components/OfficeEditor/types"
+import { layoutSchema } from "~/components/OfficeEditor/office/schema"
+import { isSeatable } from "~/components/OfficeEditor/office/catalog"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import {
   addDays,

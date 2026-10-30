@@ -4,7 +4,8 @@ import { Armchair, ArrowDown, ArrowRight, Check, X } from "lucide-react"
 import { useMemo, useState } from "react"
 import { personByEmail, usePeople } from "../../people"
 import { useEditorStore } from "../../../store"
-import { isSeatable, type SceneObject } from "../../../types"
+import { type SceneObject } from "../../../types"
+import { isSeatable } from "../../catalog"
 import { deskName } from "../../useBooking"
 import {
   DayCell,

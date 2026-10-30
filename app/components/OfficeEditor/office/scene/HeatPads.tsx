@@ -5,7 +5,8 @@ import { heatColor } from "../heatmap"
 import { footprintCells } from "../../layout"
 import { useSurfaces } from "../../sceneTheme"
 import { useEditorStore } from "../../store"
-import { GRID, isSeatable } from "../../types"
+import { GRID } from "../../types"
+import { isSeatable } from "../catalog"
 
 /** On the floor, under the furniture and above the floor paint. */
 const HEIGHT = 0.018

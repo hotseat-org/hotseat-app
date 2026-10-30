@@ -104,6 +104,8 @@ export default [
       "app/components/OfficeEditor/office/**",
       // The app's entry point: it loads the office's editor.
       "app/components/OfficeEditor/OfficeEditor.client.ts",
+      // Tests may use the office's furniture as test pieces.
+      "app/components/OfficeEditor/**/*.test.ts",
     ],
     rules: {
       "no-restricted-imports": [

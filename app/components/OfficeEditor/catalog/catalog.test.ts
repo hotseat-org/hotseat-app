@@ -1,6 +1,6 @@
 /// <reference types="bun" />
 import { describe, expect, test } from "bun:test"
-import { canHost, getEdge, getItem, getItemTypes, type ObjectType } from "."
+import { canHost, getEdge, getItem, getItemTypes, hasTag, type ObjectType } from "."
 
 describe("the catalogue", () => {
   test("walls, glass, doors and windows all close rooms", () => {
@@ -39,7 +39,7 @@ describe("trait questions about tools that place no piece", () => {
       expect(types.isOverhead(tool)).toBe(false)
       expect(types.isEdgeType(tool)).toBe(false)
       expect(types.isMarker(tool)).toBe(false)
-      expect(types.isSeatable(tool)).toBe(false)
+      expect(hasTag(tool, "desk")).toBe(false)
       expect(types.hasLooks(tool)).toBe(false)
       expect(getEdge(tool)).toBeUndefined()
     }

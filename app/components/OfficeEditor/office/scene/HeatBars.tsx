@@ -5,7 +5,7 @@ import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeom
 import { HEAT_BAR, heatColor } from "../heatmap"
 import { useSurfaces } from "../../sceneTheme"
 import { useEditorStore } from "../../store"
-import { isSeatable } from "../../types"
+import { isSeatable } from "../catalog"
 import { markShadowsDirty } from "../../scene/shadows"
 
 /** How long a bar takes to grow (s), and the stagger between desks. */

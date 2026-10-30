@@ -3,7 +3,7 @@ import type { CoreContext } from "../types"
 import { bookingContext } from "./context"
 import { reserveDesk } from "./reserve"
 import { MAX_DAYS_PER_REQUEST, ReservationError } from "./types"
-import type { LayoutObject } from "~/components/OfficeEditor/schema"
+import type { LayoutObject } from "~/components/OfficeEditor/office/schema"
 import { addDays, daysBetween, isDay, weekday, type Day } from "~/utils/booking"
 import { encodeNotification } from "~/i18n/notifications"
 

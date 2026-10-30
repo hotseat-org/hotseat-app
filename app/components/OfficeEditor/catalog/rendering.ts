@@ -4,7 +4,6 @@
  * Apart from the catalogue's index, so the layout logic never loads three.js.
  */
 import "./presets/structure.render"
-import "./presets/furniture.render"
 import "./presets/fence.render"
 
 export * from "./renderers"

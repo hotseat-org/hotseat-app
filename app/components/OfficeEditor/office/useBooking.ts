@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from "react"
 import { useEditorStore } from "../store"
-import { isSeatable, type SceneObject } from "../types"
+import { type SceneObject } from "../types"
+import { isSeatable } from "./catalog"
 import { ZONE_FILTER_PREFIX } from "./zones"
 import { addDays, deskState, weekStart, type Day, type DeskState } from "~/utils/booking"
 import type { Translator } from "~/i18n/translate"

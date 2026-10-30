@@ -1,7 +1,7 @@
 import type { CoreContext } from "../types"
 import type { Office } from "./types"
-import { layoutSchema } from "~/components/OfficeEditor/schema"
-import { isSeatable } from "~/components/OfficeEditor/types"
+import { layoutSchema } from "~/components/OfficeEditor/office/schema"
+import { isSeatable } from "~/components/OfficeEditor/office/catalog"
 import { deskState, groupBookings, todayIn } from "~/utils/booking"
 
 export interface Occupancy {

@@ -1,5 +1,7 @@
 /// <reference types="bun" />
 import { describe, expect, test } from "bun:test"
+// The office's furniture serves as the test pieces.
+import "./office/catalog"
 import { enclosedRegions, roomEdges } from "./layout"
 import type { ObjectType, SceneObject } from "./types"
 import { composeWallShift, findWallGrip } from "./wallShift"

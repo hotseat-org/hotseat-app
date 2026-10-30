@@ -1,4 +1,4 @@
-import { findItem, hasTag, type ObjectType, type WallType, type OpeningType } from "./catalog"
+import { findItem, type ObjectType, type WallType, type OpeningType } from "./catalog"
 
 export type { ObjectType, OpeningType, WallType }
 
@@ -65,15 +65,6 @@ export const BUILD_HALF = 1000
  * never render, collide, get selected or framed.
  */
 export const isMarker = (type: ObjectType) => findItem(type)?.mount === "marker"
-
-/**
- * Desks no longer placed: one without a chair, and one with a pet always in its
- * chair (a pet means someone's booked it). Older layouts still have them.
- */
-export const isRetiredDesk = (type: ObjectType) => hasTag(type, "retiredDesk")
-
-/** Desks people sit at — they carry a seat label and an assignee. */
-export const isSeatable = (type: ObjectType) => hasTag(type, "desk")
 
 /** Hangs on a wall face: needs solid wall behind it; collides only with other wall items. */
 export const isWallMounted = (type: ObjectType) => findItem(type)?.mount === "wall"

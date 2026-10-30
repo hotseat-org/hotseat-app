@@ -3,7 +3,6 @@
  * traits from here (not from registry.ts), so the presets are always loaded.
  */
 import "./presets/structure"
-import "./presets/furniture"
 import "./presets/fence"
 
 export * from "./registry"

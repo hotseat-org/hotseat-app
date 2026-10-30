@@ -8,7 +8,8 @@ import {
   wallJointNodes,
 } from "../layout"
 import { getStructureBounds } from "../structureField"
-import { isEdgeType, isMarker, isSeatable, isWallMounted, type SceneObject } from "../types"
+import { isEdgeType, isMarker, isWallMounted, type SceneObject } from "../types"
+import { isSeatable } from "./catalog"
 import { TEMPLATES } from "./templates"
 import { getRoute } from "./wayfinding"
 import { composeZoneAreas } from "./zones"

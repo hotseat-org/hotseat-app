@@ -1,6 +1,7 @@
 import { snapToFootprint } from "../../layout"
 import { findDeskChair, toWorld } from "../seatSpot"
-import { isSeatable, type SceneObject } from "../../types"
+import { type SceneObject } from "../../types"
+import { isSeatable } from "../catalog"
 import { numberDesksByZone } from "../zones"
 import type { GetState, SetState } from "../../store/state"
 

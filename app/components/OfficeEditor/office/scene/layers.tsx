@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from "react"
 import type { SceneLayer, SceneLayerProps, ViewClicks } from "../../editor/module"
 import { useEditorStore, useEditorStoreApi } from "../../store"
-import { isSeatable } from "../../types"
+import { isSeatable } from "../catalog"
 import { useDesksOnDay } from "../useBooking"
 import { routeBounds, useRoute } from "../wayfinding"
 import { DeskPets } from "./DeskPets"

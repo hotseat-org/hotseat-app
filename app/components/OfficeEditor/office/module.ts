@@ -1,4 +1,5 @@
 import type { EditorModule } from "../editor/module"
+import "./catalog/rendering"
 import "./objectFields"
 import { useOfficePieceStyles, useOfficePlanDrawings } from "./plan/drawings"
 import { OfficePlanOverlays, OfficeRoutePath } from "./plan/layers"
