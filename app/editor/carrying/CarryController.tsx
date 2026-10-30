@@ -20,7 +20,7 @@ export const CarryController = ({
   grab,
 }: {
   carryId: string | null
-  grab: { dx: number; dz: number }
+  grab: { offsetX: number; offsetZ: number }
 }) => {
   const { camera, raycaster, pointer } = useThree()
   const store = useEditorStoreApi()
@@ -45,7 +45,7 @@ export const CarryController = ({
       ...snapPlacement(
         all.filter((other) => other.id !== carried.id),
         carried,
-        { x: hit.x + grab.dx, z: hit.z + grab.dz }
+        { x: hit.x + grab.offsetX, z: hit.z + grab.offsetZ }
       ),
       rotation: carried.rotation,
     }

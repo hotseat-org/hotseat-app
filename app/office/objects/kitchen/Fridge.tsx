@@ -31,13 +31,13 @@ export const Fridge = ({ color = "#e8edf2" }: Props) => (
     {[
       [0.02, SPLIT - 0.01],
       [SPLIT + 0.01, HEIGHT - 0.02],
-    ].map(([y0, y1]) => (
+    ].map(([bottom, top]) => (
       <RoundedBox
-        key={y0}
-        args={[WIDTH - 0.02, y1 - y0, 0.04]}
+        key={bottom}
+        args={[WIDTH - 0.02, top - bottom, 0.04]}
         radius={0.03}
         smoothness={3}
-        position={[0, (y0 + y1) / 2, DEPTH / 2 - 0.03]}
+        position={[0, (bottom + top) / 2, DEPTH / 2 - 0.03]}
         castShadow
       >
         <Surface color={color} roughness={0.35} metalness={0.1} />

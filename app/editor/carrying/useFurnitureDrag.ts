@@ -19,7 +19,7 @@ export const useFurnitureDrag = (readOnly: boolean) => {
   const storeApi = useEditorStoreApi()
   const [dragId, setDragId] = useState<string | null>(null)
   /** The grab point's offset from the piece's centre (plan units). */
-  const [grab, setGrab] = useState({ dx: 0, dz: 0 })
+  const [grab, setGrab] = useState({ offsetX: 0, offsetZ: 0 })
   // Last refused drop (a timestamp) — the carried object shakes "no".
   const [blockedAt, setBlockedAt] = useState(0)
   /** Where the dragged piece started — what Esc / a refused drop restores. */
@@ -61,10 +61,12 @@ export const useFurnitureDrag = (readOnly: boolean) => {
     if (!object) return
 
     const hit = event.ray.intersectPlane(GROUND, new Vector3())
-    const offset = hit ? { dx: object.x - hit.x, dz: object.z - hit.z } : { dx: 0, dz: 0 }
-    const { clientX: x0, clientY: y0 } = event.nativeEvent
+    const offset = hit
+      ? { offsetX: object.x - hit.x, offsetZ: object.z - hit.z }
+      : { offsetX: 0, offsetZ: 0 }
+    const { clientX: startX, clientY: startY } = event.nativeEvent
     const move = (moveEvent: PointerEvent) => {
-      if (Math.hypot(moveEvent.clientX - x0, moveEvent.clientY - y0) <= DRAG_PX) return
+      if (Math.hypot(moveEvent.clientX - startX, moveEvent.clientY - startY) <= DRAG_PX) return
 
       window.removeEventListener("pointermove", move)
       dragStart.current = { id, x: object.x, z: object.z, rotation: object.rotation }

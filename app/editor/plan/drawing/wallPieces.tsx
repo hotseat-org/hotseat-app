@@ -17,7 +17,7 @@ interface PieceOptions {
   /** Half its thickness. */
   across?: number
   /** Its top (m). */
-  y1?: number
+  maxY?: number
 }
 
 /** A straight piece's line: world coords `from`..`to` along the run, `fixed` across it. */
@@ -43,20 +43,20 @@ export const createWallPieces = (push: Push) => {
   const wallPiece = (
     { alongX, fixed, from, to }: WallLine,
     color: string,
-    { opacity = 1, extend = HALF_WALL, across = HALF_WALL, y1 = WALL.height }: PieceOptions = {}
+    { opacity = 1, extend = HALF_WALL, across = HALF_WALL, maxY = WALL.height }: PieceOptions = {}
   ) => {
     const low = from - extend
     const high = to + extend
     const extent: Extent = alongX
-      ? { x0: low, x1: high, z0: fixed - across, z1: fixed + across, y0: 0, y1 }
-      : { x0: fixed - across, x1: fixed + across, z0: low, z1: high, y0: 0, y1 }
+      ? { minX: low, maxX: high, minZ: fixed - across, maxZ: fixed + across, minY: 0, maxY }
+      : { minX: fixed - across, maxX: fixed + across, minZ: low, maxZ: high, minY: 0, maxY }
     push(
       extent,
       <rect
-        x={extent.x0}
-        y={extent.z0}
-        width={extent.x1 - extent.x0}
-        height={extent.z1 - extent.z0}
+        x={extent.minX}
+        y={extent.minZ}
+        width={extent.maxX - extent.minX}
+        height={extent.maxZ - extent.minZ}
         fill={color}
         opacity={opacity < 1 ? opacity : undefined}
       />
@@ -67,7 +67,7 @@ export const createWallPieces = (push: Push) => {
   const diagonalWallPiece = (
     { start, end }: WallDiagonal,
     color: string,
-    { opacity = 1, extend = HALF_WALL, across = HALF_WALL, y1 = WALL.height }: PieceOptions = {}
+    { opacity = 1, extend = HALF_WALL, across = HALF_WALL, maxY = WALL.height }: PieceOptions = {}
   ) => {
     const length = Math.hypot(end.x - start.x, end.z - start.z)
     const [unitX, unitZ] = [(end.x - start.x) / length, (end.z - start.z) / length]
@@ -84,12 +84,12 @@ export const createWallPieces = (push: Push) => {
     const zs = corners.map((corner) => corner[1])
     push(
       {
-        x0: Math.min(...xs),
-        x1: Math.max(...xs),
-        z0: Math.min(...zs),
-        z1: Math.max(...zs),
-        y0: 0,
-        y1,
+        minX: Math.min(...xs),
+        maxX: Math.max(...xs),
+        minZ: Math.min(...zs),
+        maxZ: Math.max(...zs),
+        minY: 0,
+        maxY,
       },
       <polygon
         points={corners.map((corner) => corner.join(",")).join(" ")}

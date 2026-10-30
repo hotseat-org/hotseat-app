@@ -184,14 +184,14 @@ const CutFloor = ({ color, cells }: { color: string; cells: FloorCell[] }) => {
     const positions: number[] = []
     const y = 0.006
     for (const cell of cells) {
-      const [x0, z0, x1, z1] = [cell.x, cell.z, cell.x + SEG, cell.z + SEG]
+      const [minX, minZ, maxX, maxZ] = [cell.x, cell.z, cell.x + SEG, cell.z + SEG]
       const [centreX, centreZ] = [cell.x + SEG / 2, cell.z + SEG / 2]
       // Each quarter: its outer side, wound so the face looks up.
       const quarters: [number, [number, number], [number, number]][] = [
-        [FLOOR_PART.south, [x0, z0], [x1, z0]],
-        [FLOOR_PART.east, [x1, z0], [x1, z1]],
-        [FLOOR_PART.north, [x1, z1], [x0, z1]],
-        [FLOOR_PART.west, [x0, z1], [x0, z0]],
+        [FLOOR_PART.south, [minX, minZ], [maxX, minZ]],
+        [FLOOR_PART.east, [maxX, minZ], [maxX, maxZ]],
+        [FLOOR_PART.north, [maxX, maxZ], [minX, maxZ]],
+        [FLOOR_PART.west, [minX, maxZ], [minX, minZ]],
       ]
       for (const [part, from, to] of quarters)
         if ((cell.parts ?? 0) & part)

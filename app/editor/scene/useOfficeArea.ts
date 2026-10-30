@@ -9,19 +9,19 @@ export const useOfficeArea = (objects: SceneObject[]) =>
   useMemo((): { centre: [number, number]; reach: number } => {
     if (!objects.length) return { centre: [0, 0], reach: 0 }
 
-    let x0 = Infinity
-    let z0 = Infinity
-    let x1 = -Infinity
-    let z1 = -Infinity
+    let minX = Infinity
+    let minZ = Infinity
+    let maxX = -Infinity
+    let maxZ = -Infinity
     for (const object of objects) {
-      x0 = Math.min(x0, object.x)
-      z0 = Math.min(z0, object.z)
-      x1 = Math.max(x1, object.x)
-      z1 = Math.max(z1, object.z)
+      minX = Math.min(minX, object.x)
+      minZ = Math.min(minZ, object.z)
+      maxX = Math.max(maxX, object.x)
+      maxZ = Math.max(maxZ, object.z)
     }
 
     return {
-      centre: [Math.round((x0 + x1) / 2), Math.round((z0 + z1) / 2)],
-      reach: Math.ceil(Math.hypot(x1 - x0, z1 - z0) / 2),
+      centre: [Math.round((minX + maxX) / 2), Math.round((minZ + maxZ) / 2)],
+      reach: Math.ceil(Math.hypot(maxX - minX, maxZ - minZ) / 2),
     }
   }, [objects])

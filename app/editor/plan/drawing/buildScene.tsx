@@ -43,12 +43,12 @@ export const buildScene = ({ wall, drawings, ...furnitureInput }: SceneInput) =>
   for (const { extent } of drawables) {
     bounds = bounds
       ? {
-          x0: Math.min(bounds.x0, extent.x0),
-          x1: Math.max(bounds.x1, extent.x1),
-          y0: Math.min(bounds.y0, extent.z0),
-          y1: Math.max(bounds.y1, extent.z1),
+          minX: Math.min(bounds.minX, extent.minX),
+          maxX: Math.max(bounds.maxX, extent.maxX),
+          minY: Math.min(bounds.minY, extent.minZ),
+          maxY: Math.max(bounds.maxY, extent.maxZ),
         }
-      : { x0: extent.x0, x1: extent.x1, y0: extent.z0, y1: extent.z1 }
+      : { minX: extent.minX, maxX: extent.maxX, minY: extent.minZ, maxY: extent.maxZ }
   }
 
   const layered = sortBottomToTop(drawables)
@@ -62,7 +62,7 @@ export const buildScene = ({ wall, drawings, ...furnitureInput }: SceneInput) =>
           <Fragment key={`floor${i}`}>{drawing.floor}</Fragment>
         ))}
         {layered
-          .filter((drawable) => drawable.extent.y1 <= FLAT)
+          .filter((drawable) => drawable.extent.maxY <= FLAT)
           .map((drawable, i) => (
             <g key={`flat${i}`}>{drawable.node}</g>
           ))}
@@ -70,7 +70,7 @@ export const buildScene = ({ wall, drawings, ...furnitureInput }: SceneInput) =>
           {shadows}
         </g>
         {layered
-          .filter((drawable) => drawable.extent.y1 > FLAT)
+          .filter((drawable) => drawable.extent.maxY > FLAT)
           .map((drawable, i) => (
             <g key={i}>{drawable.node}</g>
           ))}

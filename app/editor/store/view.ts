@@ -13,6 +13,14 @@ import {
 import type { GetState, SetState, StoreHooks } from "./state"
 
 /** How the office is shown: time of day, view, layers, and where to look. */
+/** A rectangle of floor (m). */
+export interface FloorArea {
+  minX: number
+  maxX: number
+  minZ: number
+  maxZ: number
+}
+
 export interface ViewSlice {
   /** Time of day in hours [0,24) driving the scene lighting. */
   timeOfDay: number
@@ -46,8 +54,8 @@ export interface ViewSlice {
   fitNonce: number
   requestFit: () => void
   /** An area the camera is asked to frame (see CameraFit) — a module's: the way to a desk. */
-  frameRequest: { bounds: { x0: number; x1: number; z0: number; z1: number }; nonce: number } | null
-  requestFrame: (bounds: { x0: number; x1: number; z0: number; z1: number }) => void
+  frameRequest: { bounds: FloorArea; nonce: number } | null
+  requestFrame: (bounds: FloorArea) => void
 }
 
 /** The viewer's local wall-clock time in hours [0,24), minute precision. */

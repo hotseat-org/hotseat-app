@@ -93,10 +93,10 @@ const Ribbon = ({
 }
 
 interface Rect {
-  x0: number
-  x1: number
-  z0: number
-  z1: number
+  minX: number
+  maxX: number
+  minZ: number
+  maxZ: number
 }
 
 const rectOf = ({
@@ -114,10 +114,13 @@ const rectOf = ({
   const halfX = (cellsX * GRID) / 2
   const halfZ = (cellsZ * GRID) / 2
 
-  return { x0: x - halfX, x1: x + halfX, z0: z - halfZ, z1: z + halfZ }
+  return { minX: x - halfX, maxX: x + halfX, minZ: z - halfZ, maxZ: z + halfZ }
 }
 
-const centreOf = (rect: Rect) => ({ x: (rect.x0 + rect.x1) / 2, z: (rect.z0 + rect.z1) / 2 })
+const centreOf = (rect: Rect) => ({
+  x: (rect.minX + rect.maxX) / 2,
+  z: (rect.minZ + rect.maxZ) / 2,
+})
 
 type Range = [start: number, end: number]
 
@@ -156,35 +159,35 @@ const limitByEdge = (clearances: Clearances, rect: Rect, edge: SceneObject) => {
   const half = edgeLength(edge) / 2
   if (runsAlongX(edge.rotation)) {
     // A horizontal line at z = edge.z blocks ±Z when it spans our x range.
-    if (!overlaps([rect.x0, rect.x1], [edge.x - half, edge.x + half])) return
-    if (edge.z >= rect.z1 - EPSILON)
-      clearances.positiveZ = Math.min(clearances.positiveZ, edge.z - rect.z1)
-    if (edge.z <= rect.z0 + EPSILON)
-      clearances.negativeZ = Math.min(clearances.negativeZ, rect.z0 - edge.z)
+    if (!overlaps([rect.minX, rect.maxX], [edge.x - half, edge.x + half])) return
+    if (edge.z >= rect.maxZ - EPSILON)
+      clearances.positiveZ = Math.min(clearances.positiveZ, edge.z - rect.maxZ)
+    if (edge.z <= rect.minZ + EPSILON)
+      clearances.negativeZ = Math.min(clearances.negativeZ, rect.minZ - edge.z)
 
     return
   }
 
-  if (!overlaps([rect.z0, rect.z1], [edge.z - half, edge.z + half])) return
-  if (edge.x >= rect.x1 - EPSILON)
-    clearances.positiveX = Math.min(clearances.positiveX, edge.x - rect.x1)
-  if (edge.x <= rect.x0 + EPSILON)
-    clearances.negativeX = Math.min(clearances.negativeX, rect.x0 - edge.x)
+  if (!overlaps([rect.minZ, rect.maxZ], [edge.z - half, edge.z + half])) return
+  if (edge.x >= rect.maxX - EPSILON)
+    clearances.positiveX = Math.min(clearances.positiveX, edge.x - rect.maxX)
+  if (edge.x <= rect.minX + EPSILON)
+    clearances.negativeX = Math.min(clearances.negativeX, rect.minX - edge.x)
 }
 
 /** Shortens the clearances by another piece's footprint in the way. */
 const limitByPiece = (clearances: Clearances, rect: Rect, other: Rect) => {
-  if (overlaps([rect.z0, rect.z1], [other.z0, other.z1])) {
-    if (other.x0 >= rect.x1 - EPSILON)
-      clearances.positiveX = Math.min(clearances.positiveX, other.x0 - rect.x1)
-    if (other.x1 <= rect.x0 + EPSILON)
-      clearances.negativeX = Math.min(clearances.negativeX, rect.x0 - other.x1)
+  if (overlaps([rect.minZ, rect.maxZ], [other.minZ, other.maxZ])) {
+    if (other.minX >= rect.maxX - EPSILON)
+      clearances.positiveX = Math.min(clearances.positiveX, other.minX - rect.maxX)
+    if (other.maxX <= rect.minX + EPSILON)
+      clearances.negativeX = Math.min(clearances.negativeX, rect.minX - other.maxX)
   }
-  if (overlaps([rect.x0, rect.x1], [other.x0, other.x1])) {
-    if (other.z0 >= rect.z1 - EPSILON)
-      clearances.positiveZ = Math.min(clearances.positiveZ, other.z0 - rect.z1)
-    if (other.z1 <= rect.z0 + EPSILON)
-      clearances.negativeZ = Math.min(clearances.negativeZ, rect.z0 - other.z1)
+  if (overlaps([rect.minX, rect.maxX], [other.minX, other.maxX])) {
+    if (other.minZ >= rect.maxZ - EPSILON)
+      clearances.positiveZ = Math.min(clearances.positiveZ, other.minZ - rect.maxZ)
+    if (other.maxZ <= rect.minZ + EPSILON)
+      clearances.negativeZ = Math.min(clearances.negativeZ, rect.minZ - other.maxZ)
   }
 }
 
@@ -217,10 +220,10 @@ const measure = (objects: SceneObject[], rect: Rect, ignoreId?: string): (Measur
   const { positiveX, negativeX, positiveZ, negativeZ } = clearances
 
   return [
-    slot(positiveX, [rect.x1, HEIGHT, centre.z], [rect.x1 + positiveX, HEIGHT, centre.z]),
-    slot(negativeX, [rect.x0, HEIGHT, centre.z], [rect.x0 - negativeX, HEIGHT, centre.z]),
-    slot(positiveZ, [centre.x, HEIGHT, rect.z1], [centre.x, HEIGHT, rect.z1 + positiveZ]),
-    slot(negativeZ, [centre.x, HEIGHT, rect.z0], [centre.x, HEIGHT, rect.z0 - negativeZ]),
+    slot(positiveX, [rect.maxX, HEIGHT, centre.z], [rect.maxX + positiveX, HEIGHT, centre.z]),
+    slot(negativeX, [rect.minX, HEIGHT, centre.z], [rect.minX - negativeX, HEIGHT, centre.z]),
+    slot(positiveZ, [centre.x, HEIGHT, rect.maxZ], [centre.x, HEIGHT, rect.maxZ + positiveZ]),
+    slot(negativeZ, [centre.x, HEIGHT, rect.minZ], [centre.x, HEIGHT, rect.minZ - negativeZ]),
   ]
 }
 
@@ -230,30 +233,32 @@ const findSharedLine = (lines: number[], otherLines: number[]) =>
 
 /** A guide along Z where the pieces share an x line — for pieces apart along Z. */
 const composeGuideAlongZ = (rect: Rect, other: Rect): Guide | null => {
-  if (overlaps([rect.z0, rect.z1], [other.z0, other.z1])) return null
+  if (overlaps([rect.minZ, rect.maxZ], [other.minZ, other.maxZ])) return null
 
   const x = findSharedLine(
-    [rect.x0, centreOf(rect).x, rect.x1],
-    [other.x0, centreOf(other).x, other.x1]
+    [rect.minX, centreOf(rect).x, rect.maxX],
+    [other.minX, centreOf(other).x, other.maxX]
   )
   if (x === undefined) return null
 
-  const [gapStart, gapEnd] = other.z0 >= rect.z1 ? [rect.z1, other.z0] : [other.z1, rect.z0]
+  const [gapStart, gapEnd] =
+    other.minZ >= rect.maxZ ? [rect.maxZ, other.minZ] : [other.maxZ, rect.minZ]
 
   return { from: [x, HEIGHT, gapStart], to: [x, HEIGHT, gapEnd] }
 }
 
 /** A guide along X where the pieces share a z line — for pieces apart along X. */
 const composeGuideAlongX = (rect: Rect, other: Rect): Guide | null => {
-  if (overlaps([rect.x0, rect.x1], [other.x0, other.x1])) return null
+  if (overlaps([rect.minX, rect.maxX], [other.minX, other.maxX])) return null
 
   const z = findSharedLine(
-    [rect.z0, centreOf(rect).z, rect.z1],
-    [other.z0, centreOf(other).z, other.z1]
+    [rect.minZ, centreOf(rect).z, rect.maxZ],
+    [other.minZ, centreOf(other).z, other.maxZ]
   )
   if (z === undefined) return null
 
-  const [gapStart, gapEnd] = other.x0 >= rect.x1 ? [rect.x1, other.x0] : [other.x1, rect.x0]
+  const [gapStart, gapEnd] =
+    other.minX >= rect.maxX ? [rect.maxX, other.minX] : [other.maxX, rect.minX]
 
   return { from: [gapStart, HEIGHT, z], to: [gapEnd, HEIGHT, z] }
 }

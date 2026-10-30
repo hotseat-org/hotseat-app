@@ -168,20 +168,20 @@ interface Owner {
  */
 const claimSquares = (desk: SceneObject, closedSides: Set<string>, owners: Map<string, Owner>) => {
   const [cellsX, cellsZ] = footprintCells(desk.type, desk.rotation)
-  const [x0, x1] = [desk.x - (cellsX * GRID) / 2, desk.x + (cellsX * GRID) / 2]
-  const [z0, z1] = [desk.z - (cellsZ * GRID) / 2, desk.z + (cellsZ * GRID) / 2]
-  const i0 = Math.floor((x0 - ZONE_MARGIN) / ZONE_CELL + 1e-6)
-  const i1 = Math.ceil((x1 + ZONE_MARGIN) / ZONE_CELL - 1e-6)
-  const j0 = Math.floor((z0 - ZONE_MARGIN) / ZONE_CELL + 1e-6)
-  const j1 = Math.ceil((z1 + ZONE_MARGIN) / ZONE_CELL - 1e-6)
+  const [minX, maxX] = [desk.x - (cellsX * GRID) / 2, desk.x + (cellsX * GRID) / 2]
+  const [minZ, maxZ] = [desk.z - (cellsZ * GRID) / 2, desk.z + (cellsZ * GRID) / 2]
+  const i0 = Math.floor((minX - ZONE_MARGIN) / ZONE_CELL + 1e-6)
+  const i1 = Math.ceil((maxX + ZONE_MARGIN) / ZONE_CELL - 1e-6)
+  const j0 = Math.floor((minZ - ZONE_MARGIN) / ZONE_CELL + 1e-6)
+  const j1 = Math.ceil((maxZ + ZONE_MARGIN) / ZONE_CELL - 1e-6)
   /** From a square's middle to the desk's footprint (0: under it). */
   const distanceOf = (i: number, j: number) => {
     const centreX = (i + 0.5) * ZONE_CELL
     const centreZ = (j + 0.5) * ZONE_CELL
 
     return Math.hypot(
-      Math.max(x0 - centreX, 0, centreX - x1),
-      Math.max(z0 - centreZ, 0, centreZ - z1)
+      Math.max(minX - centreX, 0, centreX - maxX),
+      Math.max(minZ - centreZ, 0, centreZ - maxZ)
     )
   }
   // Spread from the squares under the desk (or, a small one, its middle's)

@@ -40,12 +40,12 @@ export const mix = (hex: string, toward: string, amount: number) => {
 
 /** World-space extent of something drawn: for layering and fitting. */
 export interface Extent {
-  x0: number
-  x1: number
-  z0: number
-  z1: number
-  y0: number
-  y1: number
+  minX: number
+  maxX: number
+  minZ: number
+  maxZ: number
+  minY: number
+  maxY: number
 }
 
 /** One thing to draw, with its extent (drawables are layered bottom to top). */
@@ -69,7 +69,7 @@ export const floorRect = (
 export const sortBottomToTop = (items: Drawable[]): Drawable[] =>
   [...items].sort(
     (first, second) =>
-      first.extent.y1 - second.extent.y1 ||
-      first.extent.y0 - second.extent.y0 ||
+      first.extent.maxY - second.extent.maxY ||
+      first.extent.minY - second.extent.minY ||
       first.order - second.order
   )

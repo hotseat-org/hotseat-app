@@ -81,8 +81,8 @@ const couch = (sketch: Sketch, { color, halfWidth, seats }: CouchOptions) => {
   const inner = halfWidth - 0.17
   const width = (inner * 2) / seats
   for (let i = 0; i < seats; i++) {
-    const x0 = -inner + i * width
-    sketch.rect(x0 + 0.015, -0.19, x0 + width - 0.015, 0.4, shade(color, 1.07), 0.06)
+    const minX = -inner + i * width
+    sketch.rect(minX + 0.015, -0.19, minX + width - 0.015, 0.4, shade(color, 1.07), 0.06)
   }
   sketch.rect(-inner + 0.06, -0.24, -inner + 0.3, -0.04, "#e8c07a", 0.05)
   if (seats > 1) sketch.rect(inner - 0.3, -0.24, inner - 0.06, -0.04, "#f3e4d0", 0.05)
@@ -292,14 +292,22 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
     return sketch.done(1.5)
   },
   rug: ({ sketch, color, halfX, halfZ }) => {
-    const x0 = -halfX + 0.05
-    const z0 = -halfZ + 0.05
-    sketch.rect(x0, z0, -x0, -z0, color, 0.04, false)
-    sketch.rect(x0 + 0.12, z0 + 0.12, -x0 - 0.12, -z0 - 0.12, shade(color, 1.1), 0.03, false)
-    sketch.rect(x0 + 0.22, z0 + 0.22, -x0 - 0.22, -z0 - 0.22, color, 0.03, false)
-    for (let x = x0 + 0.08; x < -x0 - 0.04; x += 0.12) {
-      sketch.line(x, z0 - 0.04, x, z0, shade(color, 0.85), 0.015)
-      sketch.line(x, -z0, x, -z0 + 0.04, shade(color, 0.85), 0.015)
+    const minX = -halfX + 0.05
+    const minZ = -halfZ + 0.05
+    sketch.rect(minX, minZ, -minX, -minZ, color, 0.04, false)
+    sketch.rect(
+      minX + 0.12,
+      minZ + 0.12,
+      -minX - 0.12,
+      -minZ - 0.12,
+      shade(color, 1.1),
+      0.03,
+      false
+    )
+    sketch.rect(minX + 0.22, minZ + 0.22, -minX - 0.22, -minZ - 0.22, color, 0.03, false)
+    for (let x = minX + 0.08; x < -minX - 0.04; x += 0.12) {
+      sketch.line(x, minZ - 0.04, x, minZ, shade(color, 0.85), 0.015)
+      sketch.line(x, -minZ, x, -minZ + 0.04, shade(color, 0.85), 0.015)
     }
 
     return sketch.done(0.01)
@@ -389,12 +397,12 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
   },
   shelvingUnit: ({ sketch, color }) => {
     sketch.rect(-0.6, -0.18, 0.6, 0.18, color, 0.03)
-    for (const [x0, x1, shelfColor] of [
+    for (const [minX, maxX, shelfColor] of [
       [-0.52, -0.22, "#c9a27e"],
       [-0.16, 0.12, "#b9c7d6"],
       [0.18, 0.5, "#c9a27e"],
     ] as const)
-      sketch.rect(x0, -0.12, x1, 0.12, shelfColor, 0.02)
+      sketch.rect(minX, -0.12, maxX, 0.12, shelfColor, 0.02)
     sketch.shadowRect(-0.6, -0.18, 0.6, 0.18, 0.03)
 
     return sketch.done(1.7)

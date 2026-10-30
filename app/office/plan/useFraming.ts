@@ -80,7 +80,11 @@ export const useRouteFraming = ({
     const bounds = routeBounds(routePoints)
     glideTo(
       from,
-      fitView({ x0: bounds.x0, x1: bounds.x1, y0: bounds.z0, y1: bounds.z1 }, size, padding)
+      fitView(
+        { minX: bounds.minX, maxX: bounds.maxX, minY: bounds.minZ, maxY: bounds.maxZ },
+        size,
+        padding
+      )
     )
     // Only when a way is asked for (or the plan first has a view) — not on every pan.
   }, [routeNonce, hasView])

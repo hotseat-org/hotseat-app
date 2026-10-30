@@ -12,10 +12,10 @@ const SAME = 1e-4
 const COLOR = "#ff3d8b"
 
 interface Bounds {
-  x0: number
-  x1: number
-  z0: number
-  z1: number
+  minX: number
+  maxX: number
+  minZ: number
+  maxZ: number
   /** Turned off the axes: only its centre lines up, not its edges. */
   isTurned: boolean
 }
@@ -34,17 +34,17 @@ const boundsOf = ({
   const [cellsX, cellsZ] = footprintCells(type, rotation)
 
   return {
-    x0: x - (cellsX * GRID) / 2,
-    x1: x + (cellsX * GRID) / 2,
-    z0: z - (cellsZ * GRID) / 2,
-    z1: z + (cellsZ * GRID) / 2,
+    minX: x - (cellsX * GRID) / 2,
+    maxX: x + (cellsX * GRID) / 2,
+    minZ: z - (cellsZ * GRID) / 2,
+    maxZ: z + (cellsZ * GRID) / 2,
     isTurned: isDiagonal(rotation),
   }
 }
 
 /** The lines a piece offers along one axis: its two edges and its centre. */
 const linesOf = (bounds: Bounds, axis: "x" | "z") => {
-  const [low, high] = axis === "x" ? [bounds.x0, bounds.x1] : [bounds.z0, bounds.z1]
+  const [low, high] = axis === "x" ? [bounds.minX, bounds.maxX] : [bounds.minZ, bounds.maxZ]
 
   return bounds.isTurned ? [(low + high) / 2] : [low, (low + high) / 2, high]
 }
@@ -81,7 +81,7 @@ export const AlignmentGuides = ({ objects, type, x, z, rotation, ignoreId }: Pro
     for (const axis of ["x", "z"] as const) {
       // A line at a fixed x (or z), running along the other axis.
       const across = (bounds: Bounds) =>
-        axis === "x" ? [bounds.z0, bounds.z1] : [bounds.x0, bounds.x1]
+        axis === "x" ? [bounds.minZ, bounds.maxZ] : [bounds.minX, bounds.maxX]
       for (const at of linesOf(moving, axis)) {
         const aligned = others.filter((other) =>
           linesOf(other, axis).some((value) => Math.abs(value - at) < SAME)

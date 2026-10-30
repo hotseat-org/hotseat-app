@@ -78,7 +78,7 @@ export const drawOpenings = ({
       const open = { x: hinge.x + front.x * leafLength, z: hinge.z + front.z * leafLength }
       const sweep = along.x * front.z - along.z * front.x > 0 ? 1 : 0
       push(
-        { x0: hinge.x, x1: hinge.x, z0: hinge.z, z1: hinge.z, y0: 0, y1: 0.02 },
+        { minX: hinge.x, maxX: hinge.x, minZ: hinge.z, maxZ: hinge.z, minY: 0, maxY: 0.02 },
         <DoorLeaf
           swing={`M${shut.x} ${shut.z} A${leafLength} ${leafLength} 0 0 ${sweep} ${open.x} ${open.z}`}
           hinge={[hinge.x, hinge.z]}
@@ -116,7 +116,7 @@ export const drawOpenings = ({
     const [openX, openZ] = at(hinge + leafLength, fixed)
     const [leafX, leafZ] = at(hinge, fixed + side * leafLength)
     push(
-      { x0: hingeX, x1: hingeX, z0: hingeZ, z1: hingeZ, y0: 0, y1: 0.02 },
+      { minX: hingeX, maxX: hingeX, minZ: hingeZ, maxZ: hingeZ, minY: 0, maxY: 0.02 },
       <DoorLeaf
         swing={`M${openX} ${openZ} A${leafLength} ${leafLength} 0 0 ${alongX === side > 0 ? 1 : 0} ${leafX} ${leafZ}`}
         hinge={[hingeX, hingeZ]}

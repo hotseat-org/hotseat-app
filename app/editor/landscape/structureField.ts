@@ -15,7 +15,7 @@ export interface StructureField {
   /** The plateau's outline(s): closed loops of [x, z] points (holes included). */
   plateau: [number, number][][]
   /** The distance grid itself (for a texture): metres, w × h cells of GRID. */
-  grid: { cells: Float32Array; width: number; height: number; x0: number; z0: number }
+  grid: { cells: Float32Array; width: number; height: number; minX: number; minZ: number }
 }
 
 /** The plateau reaches this far out from the structure (m). */
@@ -28,19 +28,19 @@ const FIELD_MARGIN = 24
 export const getStructureBounds = (objects: SceneObject[]) => {
   if (!objects.length) return null
 
-  let x0 = Infinity
-  let z0 = Infinity
-  let x1 = -Infinity
-  let z1 = -Infinity
+  let minX = Infinity
+  let minZ = Infinity
+  let maxX = -Infinity
+  let maxZ = -Infinity
   for (const piece of objects) {
-    x0 = Math.min(x0, piece.x)
-    z0 = Math.min(z0, piece.z)
-    x1 = Math.max(x1, piece.x)
-    z1 = Math.max(z1, piece.z)
+    minX = Math.min(minX, piece.x)
+    minZ = Math.min(minZ, piece.z)
+    maxX = Math.max(maxX, piece.x)
+    maxZ = Math.max(maxZ, piece.z)
   }
 
   // Positions are centres: allow for the pieces' own size (walls are thin).
-  return { x0: x0 - 0.3, z0: z0 - 0.3, x1: x1 + 0.3, z1: z1 + 0.3 }
+  return { minX: minX - 0.3, minZ: minZ - 0.3, maxX: maxX + 0.3, maxZ: maxZ + 0.3 }
 }
 
 /** Two-pass chamfer distance (cells; 1 straight, √2 diagonal) over `cells` in place. */
@@ -78,15 +78,15 @@ const traceLoops = ({
   cells,
   width,
   height,
-  x0,
-  z0,
+  minX,
+  minZ,
   level,
 }: {
   cells: Float32Array
   width: number
   height: number
-  x0: number
-  z0: number
+  minX: number
+  minZ: number
   level: number
 }): [number, number][][] => {
   // Segments, keyed by their endpoints (shared edges give identical points).
@@ -117,8 +117,8 @@ const traceLoops = ({
         (bottomLeft < level ? 1 : 0)
       if (code === 0 || code === 15) continue
 
-      const x = x0 + i * GRID
-      const z = z0 + j * GRID
+      const x = minX + i * GRID
+      const z = minZ + j * GRID
       const at = (start: number, end: number) => (level - start) / (end - start)
       const top = [x + at(topLeft, topRight) * GRID, z]
       const right = [x + GRID, z + at(topRight, bottomRight) * GRID]
@@ -243,10 +243,10 @@ const build = (objects: SceneObject[]): StructureField | null => {
   const bounds = getStructureBounds(objects)
   if (!bounds) return null
 
-  const x0 = Math.floor((bounds.x0 - FIELD_MARGIN) / GRID) * GRID
-  const z0 = Math.floor((bounds.z0 - FIELD_MARGIN) / GRID) * GRID
-  const width = Math.ceil((bounds.x1 + FIELD_MARGIN - x0) / GRID) + 1
-  const height = Math.ceil((bounds.z1 + FIELD_MARGIN - z0) / GRID) + 1
+  const minX = Math.floor((bounds.minX - FIELD_MARGIN) / GRID) * GRID
+  const minZ = Math.floor((bounds.minZ - FIELD_MARGIN) / GRID) * GRID
+  const width = Math.ceil((bounds.maxX + FIELD_MARGIN - minX) / GRID) + 1
+  const height = Math.ceil((bounds.maxZ + FIELD_MARGIN - minZ) / GRID) + 1
   const cells = new Float32Array(width * height).fill(1e6)
 
   // Seed: the cells each wall and piece covers, and the rooms' floors (the
@@ -257,16 +257,16 @@ const build = (objects: SceneObject[]): StructureField | null => {
       : [1, 1]
     const halfX = (Math.max(cellsX, 1) * GRID) / 2
     const halfZ = (Math.max(cellsZ, 1) * GRID) / 2
-    const i0 = Math.max(0, Math.floor((piece.x - halfX - x0) / GRID))
-    const i1 = Math.min(width - 1, Math.ceil((piece.x + halfX - x0) / GRID))
-    const j0 = Math.max(0, Math.floor((piece.z - halfZ - z0) / GRID))
-    const j1 = Math.min(height - 1, Math.ceil((piece.z + halfZ - z0) / GRID))
+    const i0 = Math.max(0, Math.floor((piece.x - halfX - minX) / GRID))
+    const i1 = Math.min(width - 1, Math.ceil((piece.x + halfX - minX) / GRID))
+    const j0 = Math.max(0, Math.floor((piece.z - halfZ - minZ) / GRID))
+    const j1 = Math.min(height - 1, Math.ceil((piece.z + halfZ - minZ) / GRID))
     for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) cells[j * width + i] = 0
   }
   for (const region of enclosedRegions(objects))
     for (const cell of region) {
-      const i = Math.round((cell.x + SEG / 2 - x0) / GRID)
-      const j = Math.round((cell.z + SEG / 2 - z0) / GRID)
+      const i = Math.round((cell.x + SEG / 2 - minX) / GRID)
+      const j = Math.round((cell.z + SEG / 2 - minZ) / GRID)
       if (i >= 0 && j >= 0 && i < width && j < height) cells[j * width + i] = 0
     }
   chamfer(cells, width, height)
@@ -274,13 +274,16 @@ const build = (objects: SceneObject[]): StructureField | null => {
 
   // Past the grid: the bounding-box distance (the shape no longer matters there).
   const boxDistance = (x: number, z: number) =>
-    Math.hypot(Math.max(bounds.x0 - x, 0, x - bounds.x1), Math.max(bounds.z0 - z, 0, z - bounds.z1))
+    Math.hypot(
+      Math.max(bounds.minX - x, 0, x - bounds.maxX),
+      Math.max(bounds.minZ - z, 0, z - bounds.maxZ)
+    )
   const soft = blur({ cells, width, height })
   // Near the grid's edge, ease into the box distance (no seam in the land).
   const EASE = 6
   const distanceAt = (x: number, z: number) => {
-    const gridI = (x - x0) / GRID
-    const gridJ = (z - z0) / GRID
+    const gridI = (x - minX) / GRID
+    const gridJ = (z - minZ) / GRID
     if (gridI < 0 || gridJ < 0 || gridI >= width - 1 || gridJ >= height - 1)
       return boxDistance(x, z)
 
@@ -301,11 +304,11 @@ const build = (objects: SceneObject[]): StructureField | null => {
     return boxDistance(x, z) * (1 - eased) + distance * eased
   }
 
-  const plateau = traceLoops({ cells: soft, width, height, x0, z0, level: PLATEAU_MARGIN }).map(
+  const plateau = traceLoops({ cells: soft, width, height, minX, minZ, level: PLATEAU_MARGIN }).map(
     (loop) => smooth(loop)
   )
 
-  return { distanceAt, plateau, grid: { cells, width, height, x0, z0 } }
+  return { distanceAt, plateau, grid: { cells, width, height, minX, minZ } }
 }
 
 /** One field per layout (the objects array is replaced on every change). */

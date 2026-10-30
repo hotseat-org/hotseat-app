@@ -24,7 +24,7 @@ export const BoxSelect = () => {
 
     const move = (event: PointerEvent) => {
       const box = store.getState().box
-      if (box) store.getState().setBox({ ...box, x1: event.clientX, y1: event.clientY })
+      if (box) store.getState().setBox({ ...box, endX: event.clientX, endY: event.clientY })
     }
     const up = () => {
       const state = store.getState()
@@ -32,12 +32,13 @@ export const BoxSelect = () => {
       state.setBox(null)
       if (!box) return
 
-      const dragged = Math.abs(box.x1 - box.x0) > THRESHOLD || Math.abs(box.y1 - box.y0) > THRESHOLD
+      const dragged =
+        Math.abs(box.endX - box.startX) > THRESHOLD || Math.abs(box.endY - box.startY) > THRESHOLD
       if (!dragged) return
 
       const rect = renderer.domElement.getBoundingClientRect()
-      const [minX, maxX] = [Math.min(box.x0, box.x1), Math.max(box.x0, box.x1)]
-      const [minY, maxY] = [Math.min(box.y0, box.y1), Math.max(box.y0, box.y1)]
+      const [minX, maxX] = [Math.min(box.startX, box.endX), Math.max(box.startX, box.endX)]
+      const [minY, maxY] = [Math.min(box.startY, box.endY), Math.max(box.startY, box.endY)]
       const vector = new Vector3()
       const hits = state.objects
         .filter((object) => !isEdgeType(object.type) && !isMarker(object.type))

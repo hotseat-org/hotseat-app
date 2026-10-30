@@ -179,10 +179,10 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
     // one — BoxSelect takes over the drag.
     if (tool === "select" && event.shiftKey) {
       storeApi.getState().setBox({
-        x0: event.clientX,
-        y0: event.clientY,
-        x1: event.clientX,
-        y1: event.clientY,
+        startX: event.clientX,
+        startY: event.clientY,
+        endX: event.clientX,
+        endY: event.clientY,
         additive: true,
       })
 

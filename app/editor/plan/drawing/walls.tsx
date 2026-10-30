@@ -141,11 +141,11 @@ export const drawWalls = ({
     if (!quarters || new Set(quarters).size === 1) continue
 
     quarters.forEach((color, quarter) => {
-      const x0 = quarter % 2 ? node.x : node.x - HALF_WALL
-      const z0 = quarter < 2 ? node.z - HALF_WALL : node.z
+      const minX = quarter % 2 ? node.x : node.x - HALF_WALL
+      const minZ = quarter < 2 ? node.z - HALF_WALL : node.z
       push(
-        { x0, x1: x0 + HALF_WALL, z0, z1: z0 + HALF_WALL, y0: 0, y1: WALL.height },
-        <rect x={x0} y={z0} width={HALF_WALL} height={HALF_WALL} fill={color ?? wall} />
+        { minX, maxX: minX + HALF_WALL, minZ, maxZ: minZ + HALF_WALL, minY: 0, maxY: WALL.height },
+        <rect x={minX} y={minZ} width={HALF_WALL} height={HALF_WALL} fill={color ?? wall} />
       )
     })
   }

@@ -168,7 +168,7 @@ export const CameraControls = ({
     return true
   }
 
-  /** Pans so the ground follows the pointer: (dx, dy) screen px, + = right / down. */
+  /** Pans so the ground follows the pointer: (deltaX, deltaY) screen px, + = right / down. */
   const panByPixels = (deltaX: number, deltaY: number) => {
     if (!controls || !setGroundAxes()) return
 

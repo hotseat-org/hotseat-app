@@ -56,12 +56,12 @@ export const drawFurniture = (
     const [cellsX, cellsZ] = footprintCells(object.type, object.rotation)
     push(
       {
-        x0: object.x - (cellsX * GRID) / 2,
-        x1: object.x + (cellsX * GRID) / 2,
-        z0: object.z - (cellsZ * GRID) / 2,
-        z1: object.z + (cellsZ * GRID) / 2,
-        y0: 0,
-        y1: piece.height,
+        minX: object.x - (cellsX * GRID) / 2,
+        maxX: object.x + (cellsX * GRID) / 2,
+        minZ: object.z - (cellsZ * GRID) / 2,
+        maxZ: object.z + (cellsZ * GRID) / 2,
+        minY: 0,
+        maxY: piece.height,
       },
       <g
         transform={`translate(${object.x} ${object.z}) rotate(${turn})`}

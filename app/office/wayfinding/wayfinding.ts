@@ -552,9 +552,9 @@ export const routeBounds = (points: [number, number][], padding = 1.5) => {
   const zs = points.map((point) => point[1])
 
   return {
-    x0: Math.min(...xs) - padding,
-    x1: Math.max(...xs) + padding,
-    z0: Math.min(...zs) - padding,
-    z1: Math.max(...zs) + padding,
+    minX: Math.min(...xs) - padding,
+    maxX: Math.max(...xs) + padding,
+    minZ: Math.min(...zs) - padding,
+    maxZ: Math.max(...zs) + padding,
   }
 }

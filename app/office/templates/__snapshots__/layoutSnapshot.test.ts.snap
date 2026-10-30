@@ -3,10 +3,10 @@
 exports[`every template reads the same full-office 1`] = `
 {
   "bounds": {
-    "x0": -0.3,
-    "x1": 16.3,
-    "z0": -0.3,
-    "z1": 11.3,
+    "maxX": 16.3,
+    "maxZ": 11.3,
+    "minX": -0.3,
+    "minZ": -0.3,
   },
   "collides": [],
   "jointNodes": [
@@ -1238,10 +1238,10 @@ exports[`every template reads the same full-office 1`] = `
 exports[`every template reads the same open-plan 1`] = `
 {
   "bounds": {
-    "x0": -0.3,
-    "x1": 10.3,
-    "z0": -0.3,
-    "z1": 7.3,
+    "maxX": 10.3,
+    "maxZ": 7.3,
+    "minX": -0.3,
+    "minZ": -0.3,
   },
   "collides": [],
   "jointNodes": [
@@ -1923,10 +1923,10 @@ exports[`every template reads the same open-plan 1`] = `
 exports[`every template reads the same meeting-rooms 1`] = `
 {
   "bounds": {
-    "x0": -0.3,
-    "x1": 12.3,
-    "z0": -0.3,
-    "z1": 7.3,
+    "maxX": 12.3,
+    "maxZ": 7.3,
+    "minX": -0.3,
+    "minZ": -0.3,
   },
   "collides": [],
   "jointNodes": [
@@ -2756,10 +2756,10 @@ exports[`every template reads the same meeting-rooms 1`] = `
 exports[`every template reads the same team-floor 1`] = `
 {
   "bounds": {
-    "x0": -0.3,
-    "x1": 24.3,
-    "z0": -0.3,
-    "z1": 14.3,
+    "maxX": 24.3,
+    "maxZ": 14.3,
+    "minX": -0.3,
+    "minZ": -0.3,
   },
   "collides": [],
   "jointNodes": [
@@ -5150,10 +5150,10 @@ exports[`every template reads the same team-floor 1`] = `
 exports[`every template reads the same headquarters 1`] = `
 {
   "bounds": {
-    "x0": -0.3,
-    "x1": 32.3,
-    "z0": -0.3,
-    "z1": 20.3,
+    "maxX": 32.3,
+    "maxZ": 20.3,
+    "minX": -0.3,
+    "minZ": -0.3,
   },
   "collides": [],
   "jointNodes": [
@@ -9076,10 +9076,10 @@ exports[`every template reads the same headquarters 1`] = `
 exports[`every template reads the same studio 1`] = `
 {
   "bounds": {
-    "x0": -0.3,
-    "x1": 20.3,
-    "z0": -0.3,
-    "z1": 12.3,
+    "maxX": 20.3,
+    "maxZ": 12.3,
+    "minX": -0.3,
+    "minZ": -0.3,
   },
   "collides": [],
   "jointNodes": [

@@ -5,15 +5,20 @@ export const SelectionBox = () => {
   const box = useEditorStore((state) => state.box)
   if (!box) return null
 
-  const width = Math.abs(box.x1 - box.x0)
-  const height = Math.abs(box.y1 - box.y0)
+  const width = Math.abs(box.endX - box.startX)
+  const height = Math.abs(box.endY - box.startY)
 
   if (width < 4 && height < 4) return null
 
   return (
     <div
       className="fixed rounded-sm border border-accent bg-accent/10"
-      style={{ left: Math.min(box.x0, box.x1), top: Math.min(box.y0, box.y1), width, height }}
+      style={{
+        left: Math.min(box.startX, box.endX),
+        top: Math.min(box.startY, box.endY),
+        width,
+        height,
+      }}
     />
   )
 }

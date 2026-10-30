@@ -106,7 +106,7 @@ export const CameraFit = ({ insets = NO_INSETS }: { insets?: FitInsets }) => {
 
     const { bounds } = frameRequest
     frame(
-      new Box3(new Vector3(bounds.x0, 0, bounds.z0), new Vector3(bounds.x1, 1, bounds.z1)),
+      new Box3(new Vector3(bounds.minX, 0, bounds.minZ), new Vector3(bounds.maxX, 1, bounds.maxZ)),
       false
     )
   }, [frameRequest?.nonce, controls])

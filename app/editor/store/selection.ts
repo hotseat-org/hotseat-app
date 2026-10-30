@@ -15,7 +15,7 @@ export interface SelectionSlice {
   /** In-memory clipboard (⌘C / ⌘V). */
   clipboard: SceneObject[]
   /** An in-progress box selection, in client (screen) pixels. */
-  box: { x0: number; y0: number; x1: number; y1: number; additive: boolean } | null
+  box: { startX: number; startY: number; endX: number; endY: number; additive: boolean } | null
   setBox: (box: SelectionSlice["box"]) => void
   select: (id: string | null) => void
   /** Shift-click: add/remove furniture to/from the selection. */

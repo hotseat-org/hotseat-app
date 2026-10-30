@@ -14,7 +14,7 @@ export interface View {
   offsetY: number
 }
 
-export type Bounds = { x0: number; x1: number; y0: number; y1: number }
+export type Bounds = { minX: number; maxX: number; minY: number; maxY: number }
 
 /** Screen space (px) kept clear around the office when fitting it. */
 export type Insets = { top: number; bottom: number; left: number; right: number }
@@ -27,8 +27,8 @@ export const fitView = (
 ): View => {
   const availableWidth = Math.max(1, width - padding.left - padding.right)
   const availableHeight = Math.max(1, height - padding.top - padding.bottom)
-  const boundsWidth = Math.max(1, bounds.x1 - bounds.x0)
-  const boundsHeight = Math.max(1, bounds.y1 - bounds.y0)
+  const boundsWidth = Math.max(1, bounds.maxX - bounds.minX)
+  const boundsHeight = Math.max(1, bounds.maxY - bounds.minY)
   const zoom = clamp(
     Math.min(availableWidth / boundsWidth, availableHeight / boundsHeight),
     MIN_ZOOM,
@@ -37,8 +37,8 @@ export const fitView = (
 
   return {
     zoom,
-    offsetX: padding.left + availableWidth / 2 - ((bounds.x0 + bounds.x1) / 2) * zoom,
-    offsetY: padding.top + availableHeight / 2 - ((bounds.y0 + bounds.y1) / 2) * zoom,
+    offsetX: padding.left + availableWidth / 2 - ((bounds.minX + bounds.maxX) / 2) * zoom,
+    offsetY: padding.top + availableHeight / 2 - ((bounds.minY + bounds.maxY) / 2) * zoom,
   }
 }
 

@@ -76,7 +76,7 @@ const buildDistanceMap = (objects: SceneObject[]) => {
   const field = getStructureField(objects)
   if (!field) return null
 
-  const { cells, width: width, height: height, x0, z0 } = field.grid
+  const { cells, width: width, height: height, minX, minZ } = field.grid
   const bytes = new Uint8Array(width * height)
   for (let index = 0; index < cells.length; index++)
     bytes[index] = Math.min(255, Math.round((cells[index] / STRUCTURE_REACH) * 255))
@@ -89,7 +89,7 @@ const buildDistanceMap = (objects: SceneObject[]) => {
   // Texel centres sit on the cell centres.
   return {
     texture,
-    origin: new Vector2(x0 - GRID / 2, z0 - GRID / 2),
+    origin: new Vector2(minX - GRID / 2, minZ - GRID / 2),
     size: new Vector2(width * GRID, height * GRID),
   }
 }
