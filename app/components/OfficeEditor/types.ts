@@ -7,7 +7,6 @@ import {
   type WallType,
   type OpeningType,
 } from "./catalog"
-import { msg } from "~/i18n/msg"
 
 export type { ObjectType, OpeningType, WallType }
 
@@ -17,8 +16,16 @@ export type Tool = "select" | "delete" | "room" | "paint" | ObjectType
 /** What a catalog tile can arm: an object type, or the Room tool. */
 export type CatalogItem = ObjectType | "room"
 
+/**
+ * Fields a module keeps on placed pieces, beyond the editor's own: modules
+ * add theirs (`declare module`) — the office's desk label, resident, zone…
+ * (see office/objectFields.ts). They're saved with the layout as they are.
+ */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface ObjectFields {}
+
 /** A single placed item. Positions are in grid units (1 unit = 1 world unit). */
-export interface SceneObject {
+export interface SceneObject extends ObjectFields {
   id: string
   type: ObjectType
   /** World X, snapped to the grid. */
@@ -38,29 +45,12 @@ export interface SceneObject {
   colorBack?: string
   /** For deskmate: which animal model sits on the chair. */
   model?: string
-  /** Desks: a seat label, e.g. "D-3". */
-  label?: string
-  /** Desks: who sits here (the member's email). */
-  assignee?: string
-  /** Desks: what it offers (DESK_FEATURES ids, e.g. "standing") — set by admins, filtered on. */
-  features?: string[]
-  /** Desks: the zone (team neighbourhood) it belongs to, by name. */
-  zone?: string
   /**
    * Which "look" of the piece to show (its props, cushions…) — so copies don't
    * all look the same. Unset → derived from the id (see `variantOf`).
    */
   variant?: number
 }
-
-/**
- * What a desk can offer, for admins to tag and people to filter the map by.
- * Add one here and it shows up in the editor and the filters.
- */
-export const DESK_FEATURES = [
-  { id: "standing", label: msg("Standing desk"), labelPlural: msg("Standing desks") },
-] as const
-export type DeskFeature = (typeof DESK_FEATURES)[number]["id"]
 
 /** The set of build tools: every kind of piece but data markers. */
 export const OBJECT_TYPES = getItemTypes().filter((type) => getItem(type).mount !== "marker")

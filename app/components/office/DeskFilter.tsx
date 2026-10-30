@@ -2,7 +2,8 @@ import clsx from "clsx"
 import { ArrowUpFromLine, Check, type LucideIcon } from "lucide-react"
 import { useMemo, type ReactNode } from "react"
 import { useEditorStore } from "~/components/OfficeEditor/store"
-import { DESK_FEATURES, isSeatable, type DeskFeature } from "~/components/OfficeEditor/types"
+import { DESK_FEATURES, type DeskFeature } from "~/components/OfficeEditor/office/deskFeatures"
+import { isSeatable } from "~/components/OfficeEditor/types"
 import { ZONE_FILTER_PREFIX, getZones } from "~/components/OfficeEditor/zones"
 import { useI18n } from "~/i18n/I18nProvider"
 
@@ -17,10 +18,12 @@ export const useDeskFilterOptions = () => {
   const filter = useEditorStore((s) => s.deskFilter)
   const features = useMemo(
     () =>
-      DESK_FEATURES.map((f) => ({
-        ...f,
-        count: objects.filter((o) => isSeatable(o.type) && o.features?.includes(f.id)).length,
-      })).filter((f) => f.count > 0),
+      DESK_FEATURES.map((feature) => ({
+        ...feature,
+        count: objects.filter(
+          (object) => isSeatable(object.type) && object.features?.includes(feature.id)
+        ).length,
+      })).filter((feature) => feature.count > 0),
     [objects]
   )
   const zones = useMemo(() => getZones(objects), [objects])
@@ -58,15 +61,15 @@ export const DeskFilterOptions = () => {
           />
         )
       })}
-      {features.map((f) => {
-        const Icon = FEATURE_ICONS[f.id]
+      {features.map((feature) => {
+        const Icon = FEATURE_ICONS[feature.id]
         return (
           <FilterRow
-            key={f.id}
-            isOn={filter.includes(f.id)}
-            onToggle={() => toggle(f.id)}
-            label={t(f.labelPlural)}
-            hint={tn(f.count, "{n} desk here", "{n} desks here")}
+            key={feature.id}
+            isOn={filter.includes(feature.id)}
+            onToggle={() => toggle(feature.id)}
+            label={t(feature.labelPlural)}
+            hint={tn(feature.count, "{n} desk here", "{n} desks here")}
             icon={<Icon className="size-4" />}
           />
         )
