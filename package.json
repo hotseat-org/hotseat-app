@@ -104,5 +104,8 @@
   },
   "engines": {
     "node": ">=25"
+  },
+  "patchedDependencies": {
+    "three@0.185.1": "patches/three@0.185.1.patch"
   }
 }

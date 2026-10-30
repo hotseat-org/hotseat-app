@@ -1,0 +1,42 @@
+diff --git a/build/three.cjs b/build/three.cjs
+index 8939a67dd76325ccd25ee8806fc4d22b1caea88a..b33a81965bfe6097ad51994b87469867bb357ba2 100644
+--- a/build/three.cjs
++++ b/build/three.cjs
+@@ -77472,7 +77472,8 @@ class WebGLRenderer {
+ 						const materialProperties = properties.get( material );
+ 						const program = materialProperties.currentProgram;
+ 
+-						if ( program.isReady() ) {
++						// A material disposed while compiling has no program any more: done with it.
++						if ( program === undefined || program.isReady() ) {
+ 
+ 							// remove any programs that report they're ready to use from the list
+ 							materials.delete( material );
+diff --git a/build/three.module.js b/build/three.module.js
+index ad13abf7d128bee607a7672646ca543327e258d3..c9dae19f23a9c94025838d661023e1f47664012b 100644
+--- a/build/three.module.js
++++ b/build/three.module.js
+@@ -17494,7 +17494,8 @@ class WebGLRenderer {
+ 						const materialProperties = properties.get( material );
+ 						const program = materialProperties.currentProgram;
+ 
+-						if ( program.isReady() ) {
++						// A material disposed while compiling has no program any more: done with it.
++						if ( program === undefined || program.isReady() ) {
+ 
+ 							// remove any programs that report they're ready to use from the list
+ 							materials.delete( material );
+diff --git a/src/renderers/WebGLRenderer.js b/src/renderers/WebGLRenderer.js
+index cc2f156939863f3ce3d524ea92bf206a740a6cdb..da6fee7245ff4f3456adb48782fe6f04af05c233 100644
+--- a/src/renderers/WebGLRenderer.js
++++ b/src/renderers/WebGLRenderer.js
+@@ -1500,7 +1500,8 @@ class WebGLRenderer {
+ 						const materialProperties = properties.get( material );
+ 						const program = materialProperties.currentProgram;
+ 
+-						if ( program.isReady() ) {
++						// A material disposed while compiling has no program any more: done with it.
++						if ( program === undefined || program.isReady() ) {
+ 
+ 							// remove any programs that report they're ready to use from the list
+ 							materials.delete( material );
