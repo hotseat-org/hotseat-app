@@ -7,9 +7,9 @@ interface Props {
   color?: string
 }
 
-const W = 1.4
-const D = 0.42
-const H = 1.7
+const WIDTH = 1.4
+const DEPTH = 0.42
+const HEIGHT = 1.7
 const SHELVES = [0.1, 0.5, 0.9, 1.3, 1.66]
 const POST = 0.035
 
@@ -32,14 +32,14 @@ const ITEMS: [number, number, number, number, string][] = [
  * storage boxes and binders on them. Works against a wall or as a divider.
  */
 export const ShelvingUnit = ({ color = "#e9e1d4" }: Props) => {
-  const px = W / 2 - POST / 2
-  const pz = D / 2 - POST / 2
+  const postOffsetX = WIDTH / 2 - POST / 2
+  const postOffsetZ = DEPTH / 2 - POST / 2
   return (
     <group>
-      {[-px, px].map((x) =>
-        [-pz, pz].map((z) => (
-          <mesh key={`${x},${z}`} position={[x, H / 2, z]} castShadow>
-            <boxGeometry args={[POST, H, POST]} />
+      {[-postOffsetX, postOffsetX].map((x) =>
+        [-postOffsetZ, postOffsetZ].map((z) => (
+          <mesh key={`${x},${z}`} position={[x, HEIGHT / 2, z]} castShadow>
+            <boxGeometry args={[POST, HEIGHT, POST]} />
             <Surface color={PALETTE.seatLeg} roughness={0.4} metalness={0.4} />
           </mesh>
         ))
@@ -47,7 +47,7 @@ export const ShelvingUnit = ({ color = "#e9e1d4" }: Props) => {
       {SHELVES.map((y) => (
         <RoundedBox
           key={y}
-          args={[W - 0.02, 0.03, D - 0.02]}
+          args={[WIDTH - 0.02, 0.03, DEPTH - 0.02]}
           radius={0.01}
           smoothness={2}
           position={[0, y, 0]}
@@ -57,16 +57,16 @@ export const ShelvingUnit = ({ color = "#e9e1d4" }: Props) => {
           <Surface color={color} roughness={0.6} />
         </RoundedBox>
       ))}
-      {ITEMS.map(([shelf, x, w, h, c], i) => (
+      {ITEMS.map(([shelf, x, width, height, itemColor], i) => (
         <RoundedBox
           key={i}
-          args={[w, h, D - 0.12]}
+          args={[width, height, DEPTH - 0.12]}
           radius={0.012}
           smoothness={2}
-          position={[x, SHELVES[shelf] + 0.015 + h / 2, 0]}
+          position={[x, SHELVES[shelf] + 0.015 + height / 2, 0]}
           castShadow
         >
-          <Surface color={c} roughness={0.75} />
+          <Surface color={itemColor} roughness={0.75} />
         </RoundedBox>
       ))}
       {/* A small plant on the top shelf */}

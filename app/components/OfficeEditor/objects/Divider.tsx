@@ -7,19 +7,19 @@ interface Props {
   color?: string
 }
 
-const W = 1.9
-const H = 1.15
-const T = 0.06
+const WIDTH = 1.9
+const HEIGHT = 1.15
+const THICKNESS = 0.06
 const FOOT = 0.12
 
 /** A free-standing acoustic felt screen on two feet — splits open-plan spaces. */
 export const Divider = ({ color = "#5f8a86" }: Props) => (
   <group>
     <RoundedBox
-      args={[W, H, T]}
+      args={[WIDTH, HEIGHT, THICKNESS]}
       radius={0.028}
       smoothness={3}
-      position={[0, FOOT + H / 2, 0]}
+      position={[0, FOOT + HEIGHT / 2, 0]}
       castShadow
       receiveShadow
     >
@@ -30,16 +30,16 @@ export const Divider = ({ color = "#5f8a86" }: Props) => (
       [-1, 1].map((side) => (
         <mesh
           key={`${x},${side}`}
-          position={[x, FOOT + H / 2, side * (T / 2 + 0.001)]}
+          position={[x, FOOT + HEIGHT / 2, side * (THICKNESS / 2 + 0.001)]}
           rotation={[0, side > 0 ? 0 : Math.PI, 0]}
         >
-          <planeGeometry args={[0.012, H - 0.12]} />
+          <planeGeometry args={[0.012, HEIGHT - 0.12]} />
           <Surface color={PALETTE.seatLeg} roughness={1} />
         </mesh>
       ))
     )}
-    {[-1, 1].map((s) => (
-      <group key={s} position={[s * (W / 2 - 0.3), 0, 0]}>
+    {[-1, 1].map((side) => (
+      <group key={side} position={[side * (WIDTH / 2 - 0.3), 0, 0]}>
         <mesh position={[0, FOOT / 2, 0]} castShadow>
           <boxGeometry args={[0.04, FOOT, 0.04]} />
           <Surface color={PALETTE.seatLeg} roughness={0.4} metalness={0.4} />

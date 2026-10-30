@@ -8,7 +8,7 @@ interface Props {
   color?: string
 }
 
-const H = 1.6
+const HEIGHT = 1.6
 
 /** A slim floor lamp: weighted base, pole and a warm glowing shade that actually
  *  casts light — brightening as the scene darkens toward night. */
@@ -41,17 +41,17 @@ export const FloorLamp = ({ color = "#f0e2c0" }: Props) => {
         <Surface color={PALETTE.seatLeg} roughness={0.5} metalness={0.3} />
       </mesh>
       {/* Pole */}
-      <mesh position={[0, H / 2, 0]} castShadow>
-        <cylinderGeometry args={[0.022, 0.022, H, 12]} />
+      <mesh position={[0, HEIGHT / 2, 0]} castShadow>
+        <cylinderGeometry args={[0.022, 0.022, HEIGHT, 12]} />
         <Surface color={PALETTE.seatLeg} roughness={0.4} metalness={0.4} />
       </mesh>
       {/* Shade */}
-      <mesh position={[0, H - 0.02, 0]} castShadow>
+      <mesh position={[0, HEIGHT - 0.02, 0]} castShadow>
         <cylinderGeometry args={[0.19, 0.24, 0.28, 24, 1, true]} />
         <Surface color={color} emissive={color} emissiveIntensity={0.5} roughness={0.6} />
       </mesh>
       {/* Warm cap so the top isn't hollow */}
-      <mesh position={[0, H + 0.11, 0]}>
+      <mesh position={[0, HEIGHT + 0.11, 0]}>
         <cylinderGeometry args={[0.19, 0.19, 0.02, 24]} />
         <Surface color={color} roughness={0.6} />
       </mesh>

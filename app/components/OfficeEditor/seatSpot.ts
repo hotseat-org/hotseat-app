@@ -17,9 +17,9 @@ export interface Spot {
 }
 
 /** A point in a piece's local space, in world space. */
-export const toWorld = (o: SceneObject, lx: number, lz: number) => ({
-  x: o.x + lx * Math.cos(o.rotation) + lz * Math.sin(o.rotation),
-  z: o.z - lx * Math.sin(o.rotation) + lz * Math.cos(o.rotation),
+export const toWorld = (object: SceneObject, localX: number, localZ: number) => ({
+  x: object.x + localX * Math.cos(object.rotation) + localZ * Math.sin(object.rotation),
+  z: object.z - localX * Math.sin(object.rotation) + localZ * Math.cos(object.rotation),
 })
 
 /**
@@ -30,8 +30,12 @@ export const toWorld = (o: SceneObject, lx: number, lz: number) => ({
 export const spotFor = (desk: SceneObject, seats: SceneObject[]): Spot => {
   const facingDesk = desk.rotation + Math.PI
   if (desk.type === "workstation" || desk.type === "deskmate") {
-    const p = toWorld(desk, 0, desk.type === "workstation" ? WORKSTATION_SEAT_Z : DESKMATE_SEAT_Z)
-    return { ...p, y: ON_SEAT, rotation: facingDesk }
+    const point = toWorld(
+      desk,
+      0,
+      desk.type === "workstation" ? WORKSTATION_SEAT_Z : DESKMATE_SEAT_Z
+    )
+    return { ...point, y: ON_SEAT, rotation: facingDesk }
   }
   const chair = findDeskChair(desk, seats)
   if (chair) return { x: chair.x, y: ON_SEAT, z: chair.z, rotation: chair.rotation }
@@ -43,7 +47,7 @@ export const spotFor = (desk: SceneObject, seats: SceneObject[]): Spot => {
 export const findDeskChair = (desk: SceneObject, seats: SceneObject[]) => {
   const front = toWorld(desk, 0, DESK_CHAIR_Z)
   return seats
-    .map((s) => ({ s, d: Math.hypot(s.x - front.x, s.z - front.z) }))
-    .filter((c) => c.d <= CHAIR_REACH)
-    .sort((a, b) => a.d - b.d)[0]?.s
+    .map((seat) => ({ s: seat, d: Math.hypot(seat.x - front.x, seat.z - front.z) }))
+    .filter((candidate) => candidate.d <= CHAIR_REACH)
+    .sort((first, second) => first.d - second.d)[0]?.s
 }

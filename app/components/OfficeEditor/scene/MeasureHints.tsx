@@ -17,10 +17,10 @@ import { getItem } from "../catalog/items"
 const MAX = 4
 /** Alignment guides look this far for a partner. */
 const GUIDE_REACH = 8
-const Y = 0.035
+const HEIGHT = 0.035
 const MEASURE = "#3b82f6"
 const GUIDE = "#3fd0ff"
-const EPS = 1e-6
+const EPSILON = 1e-6
 /** Line width (world units) and dash rhythm. */
 const WIDTH = 0.03
 const DASH = 0.14
@@ -29,12 +29,17 @@ type P3 = [number, number, number]
 
 /** A 2-texel white/clear strip: repeated along a line it draws dashes. */
 const dashTexture = () => {
-  const t = new DataTexture(new Uint8Array([255, 255, 255, 255, 0, 0, 0, 255]), 2, 1, RGBAFormat)
-  t.magFilter = NearestFilter
-  t.minFilter = NearestFilter
-  t.wrapS = RepeatWrapping
-  t.needsUpdate = true
-  return t
+  const texture = new DataTexture(
+    new Uint8Array([255, 255, 255, 255, 0, 0, 0, 255]),
+    2,
+    1,
+    RGBAFormat
+  )
+  texture.magFilter = NearestFilter
+  texture.minFilter = NearestFilter
+  texture.wrapS = RepeatWrapping
+  texture.needsUpdate = true
+  return texture
 }
 
 /**
@@ -45,35 +50,37 @@ const dashTexture = () => {
  * material whenever the points moved: hundreds of recompiles per carry).
  */
 const Ribbon = ({
-  seg,
+  segment,
   color,
   dashed,
 }: {
-  seg: { from: P3; to: P3 } | null
+  segment: { from: P3; to: P3 } | null
   color: string
   dashed?: boolean
 }) => {
-  const tex = useMemo(() => (dashed ? dashTexture() : null), [dashed])
-  const dx = seg ? seg.to[0] - seg.from[0] : 0
-  const dz = seg ? seg.to[2] - seg.from[2] : 0
-  const len = Math.hypot(dx, dz)
+  const texture = useMemo(() => (dashed ? dashTexture() : null), [dashed])
+  const deltaX = segment ? segment.to[0] - segment.from[0] : 0
+  const deltaZ = segment ? segment.to[2] - segment.from[2] : 0
+  const length = Math.hypot(deltaX, deltaZ)
   useLayoutEffect(() => {
-    if (tex) tex.repeat.set(Math.max(1, len / DASH), 1)
-  }, [tex, len])
-  useLayoutEffect(() => () => tex?.dispose(), [tex])
+    if (texture) texture.repeat.set(Math.max(1, length / DASH), 1)
+  }, [texture, length])
+  useLayoutEffect(() => () => texture?.dispose(), [texture])
   return (
     <group
-      visible={!!seg && len > 0}
+      visible={!!segment && length > 0}
       position={
-        seg ? [(seg.from[0] + seg.to[0]) / 2, Y, (seg.from[2] + seg.to[2]) / 2] : [0, -1, 0]
+        segment
+          ? [(segment.from[0] + segment.to[0]) / 2, HEIGHT, (segment.from[2] + segment.to[2]) / 2]
+          : [0, -1, 0]
       }
-      rotation={[0, -Math.atan2(dz, dx), 0]}
+      rotation={[0, -Math.atan2(deltaZ, deltaX), 0]}
     >
-      <mesh rotation={[-Math.PI / 2, 0, 0]} scale={[len || 0.001, WIDTH, 1]} renderOrder={2}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} scale={[length || 0.001, WIDTH, 1]} renderOrder={2}>
         <planeGeometry />
         <meshBasicMaterial
           color={color}
-          alphaMap={tex}
+          alphaMap={texture}
           transparent
           depthWrite={false}
           toneMapped={false}
@@ -91,14 +98,15 @@ interface Rect {
 }
 
 const rectOf = (type: ObjectType, rotation: number, x: number, z: number): Rect => {
-  const [cx, cz] = footprintCells(type, rotation)
-  const hx = (cx * GRID) / 2
-  const hz = (cz * GRID) / 2
-  return { x0: x - hx, x1: x + hx, z0: z - hz, z1: z + hz }
+  const [cellsX, cellsZ] = footprintCells(type, rotation)
+  const halfX = (cellsX * GRID) / 2
+  const halfZ = (cellsZ * GRID) / 2
+  return { x0: x - halfX, x1: x + halfX, z0: z - halfZ, z1: z + halfZ }
 }
 
 /** Open-interval overlap: touching at an end doesn't count. */
-const overlaps = (a0: number, a1: number, b0: number, b1: number) => a0 < b1 - EPS && b0 < a1 - EPS
+const overlaps = (firstStart: number, firstEnd: number, secondStart: number, secondEnd: number) =>
+  firstStart < secondEnd - EPSILON && secondStart < firstEnd - EPSILON
 
 interface Measure {
   from: [number, number, number]
@@ -116,50 +124,51 @@ interface Guide {
  * nearest wall (or door/window) or piece of floor furniture in the way, within
  * MAX. Touching (a gap of 0) isn't shown.
  */
-const measure = (objects: SceneObject[], r: Rect, ignoreId?: string): (Measure | null)[] => {
-  const cx = (r.x0 + r.x1) / 2
-  const cz = (r.z0 + r.z1) / 2
+const measure = (objects: SceneObject[], rect: Rect, ignoreId?: string): (Measure | null)[] => {
+  const centreX = (rect.x0 + rect.x1) / 2
+  const centreZ = (rect.z0 + rect.z1) / 2
   // Nearest obstacle distance per direction.
-  let px = Infinity
-  let nx = Infinity
-  let pz = Infinity
-  let nz = Infinity
-  for (const o of objects) {
-    if (o.id === ignoreId || isMarker(o.type)) continue
-    if (isEdgeType(o.type)) {
+  let positiveX = Infinity
+  let negativeX = Infinity
+  let positiveZ = Infinity
+  let negativeZ = Infinity
+  for (const object of objects) {
+    if (object.id === ignoreId || isMarker(object.type)) continue
+    if (isEdgeType(object.type)) {
       // Distances are measured straight along X and Z: diagonal walls don't count.
-      if (isDiagonalEdge(o.rotation)) continue
-      const h = edgeLength(o) / 2
-      if (runsAlongX(o.rotation)) {
+      if (isDiagonalEdge(object.rotation)) continue
+      const half = edgeLength(object) / 2
+      if (runsAlongX(object.rotation)) {
         // A horizontal line at z = o.z blocks ±Z when it spans our x range.
-        if (!overlaps(r.x0, r.x1, o.x - h, o.x + h)) continue
-        if (o.z >= r.z1 - EPS) pz = Math.min(pz, o.z - r.z1)
-        if (o.z <= r.z0 + EPS) nz = Math.min(nz, r.z0 - o.z)
+        if (!overlaps(rect.x0, rect.x1, object.x - half, object.x + half)) continue
+        if (object.z >= rect.z1 - EPSILON) positiveZ = Math.min(positiveZ, object.z - rect.z1)
+        if (object.z <= rect.z0 + EPSILON) negativeZ = Math.min(negativeZ, rect.z0 - object.z)
       } else {
-        if (!overlaps(r.z0, r.z1, o.z - h, o.z + h)) continue
-        if (o.x >= r.x1 - EPS) px = Math.min(px, o.x - r.x1)
-        if (o.x <= r.x0 + EPS) nx = Math.min(nx, r.x0 - o.x)
+        if (!overlaps(rect.z0, rect.z1, object.z - half, object.z + half)) continue
+        if (object.x >= rect.x1 - EPSILON) positiveX = Math.min(positiveX, object.x - rect.x1)
+        if (object.x <= rect.x0 + EPSILON) negativeX = Math.min(negativeX, rect.x0 - object.x)
       }
       continue
     }
-    if (getItem(o.type).isUnderlay || isOverhead(o.type) || isWallMounted(o.type)) continue
-    const b = rectOf(o.type, o.rotation, o.x, o.z)
-    if (overlaps(r.z0, r.z1, b.z0, b.z1)) {
-      if (b.x0 >= r.x1 - EPS) px = Math.min(px, b.x0 - r.x1)
-      if (b.x1 <= r.x0 + EPS) nx = Math.min(nx, r.x0 - b.x1)
+    if (getItem(object.type).isUnderlay || isOverhead(object.type) || isWallMounted(object.type))
+      continue
+    const other = rectOf(object.type, object.rotation, object.x, object.z)
+    if (overlaps(rect.z0, rect.z1, other.z0, other.z1)) {
+      if (other.x0 >= rect.x1 - EPSILON) positiveX = Math.min(positiveX, other.x0 - rect.x1)
+      if (other.x1 <= rect.x0 + EPSILON) negativeX = Math.min(negativeX, rect.x0 - other.x1)
     }
-    if (overlaps(r.x0, r.x1, b.x0, b.x1)) {
-      if (b.z0 >= r.z1 - EPS) pz = Math.min(pz, b.z0 - r.z1)
-      if (b.z1 <= r.z0 + EPS) nz = Math.min(nz, r.z0 - b.z1)
+    if (overlaps(rect.x0, rect.x1, other.x0, other.x1)) {
+      if (other.z0 >= rect.z1 - EPSILON) positiveZ = Math.min(positiveZ, other.z0 - rect.z1)
+      if (other.z1 <= rect.z0 + EPSILON) negativeZ = Math.min(negativeZ, rect.z0 - other.z1)
     }
   }
-  const slot = (d: number, from: [number, number, number], to: [number, number, number]) =>
-    d > EPS && d <= MAX ? { from, to, d } : null
+  const slot = (distance: number, from: [number, number, number], to: [number, number, number]) =>
+    distance > EPSILON && distance <= MAX ? { from, to, d: distance } : null
   return [
-    slot(px, [r.x1, Y, cz], [r.x1 + px, Y, cz]),
-    slot(nx, [r.x0, Y, cz], [r.x0 - nx, Y, cz]),
-    slot(pz, [cx, Y, r.z1], [cx, Y, r.z1 + pz]),
-    slot(nz, [cx, Y, r.z0], [cx, Y, r.z0 - nz]),
+    slot(positiveX, [rect.x1, HEIGHT, centreZ], [rect.x1 + positiveX, HEIGHT, centreZ]),
+    slot(negativeX, [rect.x0, HEIGHT, centreZ], [rect.x0 - negativeX, HEIGHT, centreZ]),
+    slot(positiveZ, [centreX, HEIGHT, rect.z1], [centreX, HEIGHT, rect.z1 + positiveZ]),
+    slot(negativeZ, [centreX, HEIGHT, rect.z0], [centreX, HEIGHT, rect.z0 - negativeZ]),
   ]
 }
 
@@ -168,33 +177,46 @@ const measure = (objects: SceneObject[], r: Rect, ignoreId?: string): (Measure |
  * with the same line of a nearby piece, a guide runs between them — the
  * closest one per axis, so it reads as "snapped in line with that".
  */
-const guides = (objects: SceneObject[], r: Rect, ignoreId?: string): (Guide | null)[] => {
-  const cx = (r.x0 + r.x1) / 2
-  const cz = (r.z0 + r.z1) / 2
+const guides = (objects: SceneObject[], rect: Rect, ignoreId?: string): (Guide | null)[] => {
+  const centreX = (rect.x0 + rect.x1) / 2
+  const centreZ = (rect.z0 + rect.z1) / 2
   let bestX: { g: Guide; d: number } | null = null
   let bestZ: { g: Guide; d: number } | null = null
-  for (const o of objects) {
-    if (o.id === ignoreId || isMarker(o.type) || isEdgeType(o.type)) continue
-    if (getItem(o.type).isUnderlay || isOverhead(o.type) || isWallMounted(o.type)) continue
-    const b = rectOf(o.type, o.rotation, o.x, o.z)
-    const bcx = (b.x0 + b.x1) / 2
-    const bcz = (b.z0 + b.z1) / 2
-    const d = Math.hypot(bcx - cx, bcz - cz)
-    if (d > GUIDE_REACH) continue
+  for (const object of objects) {
+    if (object.id === ignoreId || isMarker(object.type) || isEdgeType(object.type)) continue
+    if (getItem(object.type).isUnderlay || isOverhead(object.type) || isWallMounted(object.type))
+      continue
+    const other = rectOf(object.type, object.rotation, object.x, object.z)
+    const otherCentreX = (other.x0 + other.x1) / 2
+    const otherCentreZ = (other.z0 + other.z1) / 2
+    const distance = Math.hypot(otherCentreX - centreX, otherCentreZ - centreZ)
+    if (distance > GUIDE_REACH) continue
     // Lines along Z (constant x) shared by both, for pieces apart along Z.
-    if (!overlaps(r.z0, r.z1, b.z0, b.z1)) {
-      for (const x of [r.x0, cx, r.x1]) {
-        if (![b.x0, bcx, b.x1].some((bx) => Math.abs(bx - x) < EPS)) continue
-        const [a, c] = b.z0 >= r.z1 ? [r.z1, b.z0] : [b.z1, r.z0]
-        if (!bestX || d < bestX.d) bestX = { d, g: { from: [x, Y, a], to: [x, Y, c] } }
+    if (!overlaps(rect.z0, rect.z1, other.z0, other.z1)) {
+      for (const x of [rect.x0, centreX, rect.x1]) {
+        if (
+          ![other.x0, otherCentreX, other.x1].some(
+            (coordinate) => Math.abs(coordinate - x) < EPSILON
+          )
+        )
+          continue
+        const [gapStart, gapEnd] = other.z0 >= rect.z1 ? [rect.z1, other.z0] : [other.z1, rect.z0]
+        if (!bestX || distance < bestX.d)
+          bestX = { d: distance, g: { from: [x, HEIGHT, gapStart], to: [x, HEIGHT, gapEnd] } }
         break
       }
     }
-    if (!overlaps(r.x0, r.x1, b.x0, b.x1)) {
-      for (const z of [r.z0, cz, r.z1]) {
-        if (![b.z0, bcz, b.z1].some((bz) => Math.abs(bz - z) < EPS)) continue
-        const [a, c] = b.x0 >= r.x1 ? [r.x1, b.x0] : [b.x1, r.x0]
-        if (!bestZ || d < bestZ.d) bestZ = { d, g: { from: [a, Y, z], to: [c, Y, z] } }
+    if (!overlaps(rect.x0, rect.x1, other.x0, other.x1)) {
+      for (const z of [rect.z0, centreZ, rect.z1]) {
+        if (
+          ![other.z0, otherCentreZ, other.z1].some(
+            (coordinate) => Math.abs(coordinate - z) < EPSILON
+          )
+        )
+          continue
+        const [gapStart, gapEnd] = other.x0 >= rect.x1 ? [rect.x1, other.x0] : [other.x1, rect.x0]
+        if (!bestZ || distance < bestZ.d)
+          bestZ = { d: distance, g: { from: [gapStart, HEIGHT, z], to: [gapEnd, HEIGHT, z] } }
         break
       }
     }
@@ -202,7 +224,8 @@ const guides = (objects: SceneObject[], r: Rect, ignoreId?: string): (Guide | nu
   return [bestX?.g ?? null, bestZ?.g ?? null]
 }
 
-const fmt = (d: number) => `${Number.isInteger(d) ? d : d.toFixed(1)} m`
+const formatDistance = (distance: number) =>
+  `${Number.isInteger(distance) ? distance : distance.toFixed(1)} m`
 
 interface Props {
   objects: SceneObject[]
@@ -223,28 +246,28 @@ export const MeasureHints = ({ objects, type, x, z, rotation, ignoreId }: Props)
   const { gaps, lines } = useMemo(() => {
     if (isOverhead(type) || isWallMounted(type) || isMarker(type))
       return { gaps: [null, null, null, null], lines: [null, null] }
-    const r = rectOf(type, rotation, x, z)
-    return { gaps: measure(objects, r, ignoreId), lines: guides(objects, r, ignoreId) }
+    const rect = rectOf(type, rotation, x, z)
+    return { gaps: measure(objects, rect, ignoreId), lines: guides(objects, rect, ignoreId) }
   }, [objects, type, x, z, rotation, ignoreId])
 
   // Every line stays mounted (hidden when unused) — see Ribbon.
   return (
     <group>
-      {lines.map((g, i) => (
-        <Ribbon key={`g${i}`} seg={g} color={GUIDE} />
+      {lines.map((guide, i) => (
+        <Ribbon key={`g${i}`} segment={guide} color={GUIDE} />
       ))}
-      {gaps.map((m, i) => (
+      {gaps.map((gap, i) => (
         <group key={`m${i}`}>
-          <Ribbon seg={m} color={MEASURE} dashed />
-          {m && (
+          <Ribbon segment={gap} color={MEASURE} dashed />
+          {gap && (
             <Html
-              position={[(m.from[0] + m.to[0]) / 2, Y, (m.from[2] + m.to[2]) / 2]}
+              position={[(gap.from[0] + gap.to[0]) / 2, HEIGHT, (gap.from[2] + gap.to[2]) / 2]}
               center
               zIndexRange={[20, 10]}
               style={{ pointerEvents: "none" }}
             >
               <span className="whitespace-nowrap rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-bold text-accent-foreground shadow-sm">
-                {fmt(m.d)}
+                {formatDistance(gap.d)}
               </span>
             </Html>
           )}

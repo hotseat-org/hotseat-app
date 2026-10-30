@@ -22,25 +22,29 @@ export interface DayProfile {
 }
 
 const clamp01 = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x)
-const lerp = (a: number, b: number, t: number) => a + (b - a) * t
+const lerp = (from: number, to: number, amount: number) => from + (to - from) * amount
 // Hex colours mixed in linear light (as three's Color.lerp does) — kept
 // three-free so the simple view's sky slider doesn't pull three.js in.
-const toLinear = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)
-const toSrgb = (c: number) => (c <= 0.0031308 ? c * 12.92 : 1.055 * c ** (1 / 2.4) - 0.055)
+const toLinear = (channel: number) =>
+  channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4
+const toSrgb = (channel: number) =>
+  channel <= 0.0031308 ? channel * 12.92 : 1.055 * channel ** (1 / 2.4) - 0.055
 /** "#rrggbb" or "rgb(r,g,b)" (mix's own output, fed back in) → linear RGB. */
 const channels = (color: string) => {
   let rgb: number[]
   if (color.startsWith("#")) {
-    const n = parseInt(color.slice(1), 16)
-    rgb = [(n >> 16) & 255, (n >> 8) & 255, n & 255]
+    const value = parseInt(color.slice(1), 16)
+    rgb = [(value >> 16) & 255, (value >> 8) & 255, value & 255]
   } else rgb = color.slice(4, -1).split(",").map(Number)
-  return rgb.map((v) => toLinear(v / 255))
+  return rgb.map((channel) => toLinear(channel / 255))
 }
-const mix = (a: string, b: string, t: number) => {
-  const ca = channels(a)
-  const cb = channels(b)
-  const [r, g, bl] = ca.map((v, i) => Math.round(toSrgb(lerp(v, cb[i], clamp01(t))) * 255))
-  return `rgb(${r},${g},${bl})`
+const mix = (first: string, second: string, amount: number) => {
+  const firstChannels = channels(first)
+  const secondChannels = channels(second)
+  const [red, green, blue] = firstChannels.map((channel, i) =>
+    Math.round(toSrgb(lerp(channel, secondChannels[i], clamp01(amount))) * 255)
+  )
+  return `rgb(${red},${green},${blue})`
 }
 
 // Sky colour across 24h (linearly interpolated between stops).
@@ -57,11 +61,12 @@ const SKY: [number, string][] = [
   [24, "#0a0e18"],
 ]
 
-const sampleSky = (t: number) => {
+const sampleSky = (hour: number) => {
   for (let i = 0; i < SKY.length - 1; i++) {
-    const [t0, c0] = SKY[i]
-    const [t1, c1] = SKY[i + 1]
-    if (t >= t0 && t <= t1) return mix(c0, c1, (t - t0) / (t1 - t0))
+    const [startTime, startColor] = SKY[i]
+    const [endTime, endColor] = SKY[i + 1]
+    if (hour >= startTime && hour <= endTime)
+      return mix(startColor, endColor, (hour - startTime) / (endTime - startTime))
   }
   return SKY[0][1]
 }
@@ -71,38 +76,38 @@ const sampleSky = (t: number) => {
  * noon and sets ~18:00; `nightness` ramps up around dusk so lamps switch on.
  */
 export const daylight = (time: number, nightDepth = 0): DayProfile => {
-  const t = ((time % 24) + 24) % 24
-  const theta = ((t - 6) / 12) * Math.PI // 0 at 06:00, PI at 18:00
-  const elev = Math.sin(theta) // >0 above horizon (day), <0 below (night)
-  const day = clamp01((elev + 0.12) / 0.4)
+  const hour = ((time % 24) + 24) % 24
+  const theta = ((hour - 6) / 12) * Math.PI // 0 at 06:00, PI at 18:00
+  const elevation = Math.sin(theta) // >0 above horizon (day), <0 below (night)
+  const day = clamp01((elevation + 0.12) / 0.4)
   const nightness = 1 - day
 
-  const sunUp = Math.max(0, elev)
-  const warmth = 1 - clamp01(elev / 0.6) // orange near the horizon, white high up
-  const sky = sampleSky(t)
+  const sunUp = Math.max(0, elevation)
+  const warmth = 1 - clamp01(elevation / 0.6) // orange near the horizon, white high up
+  const sky = sampleSky(hour)
 
   // Night keeps the office readable: a cool "moonlight" key takes over from the
   // sun (mirrored across the sky, so it's up when the sun is down) and the
   // ambient/hemi fill only dims to ~70% — night reads through the blue tint,
   // dark sky and lamps switching on, not through darkness.
-  const moonUp = Math.max(0, -elev)
+  const moonUp = Math.max(0, -elevation)
   // Night-end values: depth 0 = readable, 1 = deep, >1 keeps getting darker
   // (intensities extrapolate, floored at 0; the tint is deepest at 1).
-  const d = Math.max(0, nightDepth)
-  const dim = (readable: number, deep: number) => Math.max(0, lerp(readable, deep, d))
+  const darkness = Math.max(0, nightDepth)
+  const dim = (readable: number, deep: number) => Math.max(0, lerp(readable, deep, darkness))
   const night = {
     ambient: dim(0.42, 0.24),
     hemi: dim(0.52, 0.3),
     moon: dim(1.1, 0.85),
     fill: dim(0.16, 0.1),
     env: dim(0.14, 0.08),
-    ambientColor: mix("#9aa8cc", "#7384b0", d),
-    hemiSky: mix("#7f93c4", "#5d70a3", d),
-    hemiGround: mix("#2c344c", "#1c2236", d),
+    ambientColor: mix("#9aa8cc", "#7384b0", darkness),
+    hemiSky: mix("#7f93c4", "#5d70a3", darkness),
+    hemiGround: mix("#2c344c", "#1c2236", darkness),
   }
   const moonIntensity = nightness * night.moon
   const keyIsMoon = moonIntensity > sunUp * 2.6
-  const keyElev = keyIsMoon ? moonUp : elev
+  const keyElev = keyIsMoon ? moonUp : elevation
   const keyTheta = keyIsMoon ? theta + Math.PI : theta
 
   return {

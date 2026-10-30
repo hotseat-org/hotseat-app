@@ -91,15 +91,15 @@ export const MapMenu = ({
   onOpenChange,
 }: Props) => {
   const { t, tn } = useI18n()
-  const view = useEditorStore((s) => s.view)
+  const view = useEditorStore((state) => state.view)
   const is3d = is3dProp ?? (isEditing || (hasWebGL() && view === "3d"))
-  const layers = useEditorStore((s) => s.layers)
-  const toggleLayer = useEditorStore((s) => s.toggleLayer)
-  const measureHints = useEditorStore((s) => s.measureHints)
-  const toggleMeasureHints = useEditorStore((s) => s.toggleMeasureHints)
-  const isFrameRateShown = useEditorStore((s) => s.isFrameRateShown)
-  const toggleFrameRate = useEditorStore((s) => s.toggleFrameRate)
-  const objects = useEditorStore((s) => s.objects)
+  const layers = useEditorStore((state) => state.layers)
+  const toggleLayer = useEditorStore((state) => state.toggleLayer)
+  const measureHints = useEditorStore((state) => state.measureHints)
+  const toggleMeasureHints = useEditorStore((state) => state.toggleMeasureHints)
+  const isFrameRateShown = useEditorStore((state) => state.isFrameRateShown)
+  const toggleFrameRate = useEditorStore((state) => state.toggleFrameRate)
+  const objects = useEditorStore((state) => state.objects)
   const zoneCount = useMemo(() => getZones(objects).length, [objects])
   const filter = useDeskFilterOptions()
   const hasFilter = !isEditing && filter.hasOptions
@@ -160,7 +160,7 @@ export const MapMenu = ({
           <Heading>{t("Show on the map")}</Heading>
           <ul className="flex flex-col gap-0.5">
             {rows.map((row) => {
-              const on = isOn(row)
+              const isLayerOn = isOn(row)
               const Icon = row.icon
               const hint =
                 row.id === "zones" && zoneCount === 0
@@ -171,14 +171,14 @@ export const MapMenu = ({
                   <button
                     type="button"
                     role="switch"
-                    aria-checked={on}
+                    aria-checked={isLayerOn}
                     onClick={() => toggle(row)}
                     className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left transition-colors hover:bg-foreground/5"
                   >
                     <span
                       className={clsx(
                         "grid size-8 shrink-0 place-items-center rounded-lg transition-colors",
-                        on ? "bg-accent/15 text-accent" : "bg-foreground/[0.07] text-muted"
+                        isLayerOn ? "bg-accent/15 text-accent" : "bg-foreground/[0.07] text-muted"
                       )}
                     >
                       <Icon className="size-4" />
@@ -194,7 +194,7 @@ export const MapMenu = ({
                       </span>
                       <span className="block text-xs leading-snug text-muted">{hint}</span>
                     </span>
-                    <Switch isOn={on} />
+                    <Switch isOn={isLayerOn} />
                   </button>
                 </li>
               )

@@ -28,9 +28,9 @@ export const Plant = ({ color = PALETTE.plantLeaf }: Props) => {
         <Surface color="#5b463a" roughness={1} />
       </mesh>
       {/* Foliage */}
-      {blobs.map(([x, y, z, r], i) => (
+      {blobs.map(([x, y, z, radius], i) => (
         <mesh key={i} position={[x, y, z]} castShadow>
-          <icosahedronGeometry args={[r, 1]} />
+          <icosahedronGeometry args={[radius, 1]} />
           <Surface
             color={i % 2 === 0 ? color : PALETTE.plantLeafDark}
             roughness={0.9}

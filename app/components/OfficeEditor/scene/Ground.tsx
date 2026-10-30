@@ -16,7 +16,7 @@ const GROUND_SIZE = BUILD_HALF * 4
 
 interface Props {
   // Raw ground coordinates — Scene snaps them per-object (footprint aware).
-  onDown: (x: number, z: number, button: number, e: PointerEvent) => void
+  onDown: (x: number, z: number, button: number, event: PointerEvent) => void
   onMove: (x: number, z: number) => void
   onUp: (x: number, z: number, button: number) => void
   onLeave: () => void
@@ -32,31 +32,33 @@ interface Props {
  */
 export const Ground = ({ onDown, onMove, onUp, onLeave, onClick, showGrid = true }: Props) => {
   const surfaces = useSurfaces()
-  const invalidate = useThree((s) => s.invalidate)
+  const invalidate = useThree((state) => state.invalidate)
   return (
     <group>
       <mesh
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, 0, 0]}
         receiveShadow
-        onPointerDown={(e: ThreeEvent<PointerEvent>) =>
-          onDown(e.point.x, e.point.z, e.button, e.nativeEvent)
+        onPointerDown={(event: ThreeEvent<PointerEvent>) =>
+          onDown(event.point.x, event.point.z, event.button, event.nativeEvent)
         }
-        onPointerMove={(e: ThreeEvent<PointerEvent>) => {
-          onMove(e.point.x, e.point.z)
+        onPointerMove={(event: ThreeEvent<PointerEvent>) => {
+          onMove(event.point.x, event.point.z)
           // The grid's patch round the cursor follows it (needs a frame).
           if (showGrid) {
-            moveBuildCursor(e.point.x, e.point.z)
+            moveBuildCursor(event.point.x, event.point.z)
             invalidate()
           }
         }}
-        onPointerUp={(e: ThreeEvent<PointerEvent>) => onUp(e.point.x, e.point.z, e.button)}
+        onPointerUp={(event: ThreeEvent<PointerEvent>) =>
+          onUp(event.point.x, event.point.z, event.button)
+        }
         onPointerLeave={() => {
           onLeave()
           hideBuildCursor()
           invalidate()
         }}
-        onClick={onClick ? (e: ThreeEvent<MouseEvent>) => onClick(e.delta) : undefined}
+        onClick={onClick ? (event: ThreeEvent<MouseEvent>) => onClick(event.delta) : undefined}
       >
         <planeGeometry args={[GROUND_SIZE, GROUND_SIZE]} />
         <meshStandardMaterial color={surfaces.floor} roughness={0.95} fog={false} />

@@ -127,30 +127,30 @@ const FURNITURE = new Set([
 ])
 
 export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
-  const objects = useEditorStore((s) => s.objects)
+  const objects = useEditorStore((state) => state.objects)
   // Doors and windows wear their wall line's paint (or the Paint tool's, hovered).
   const paintedObjects = useObjectsWithPaintPreview()
   const wallColors = useMemo(() => composeWallColors(paintedObjects), [paintedObjects])
-  const selection = useEditorStore((s) => s.selection)
-  const tool = useEditorStore((s) => s.tool)
-  const placementRotation = useEditorStore((s) => s.placementRotation)
-  const placementColors = useEditorStore((s) => s.placementColors)
-  const layers = useEditorStore((s) => s.layers)
+  const selection = useEditorStore((state) => state.selection)
+  const tool = useEditorStore((state) => state.tool)
+  const placementRotation = useEditorStore((state) => state.placementRotation)
+  const placementColors = useEditorStore((state) => state.placementColors)
+  const layers = useEditorStore((state) => state.layers)
   const placementColor = isObjectType(tool) ? placementColors[tool] : undefined
-  const timeOfDay = useEditorStore((s) => s.timeOfDay)
+  const timeOfDay = useEditorStore((state) => state.timeOfDay)
   const surfaces = dark ? SURFACES.dark : SURFACES.light
   const profile = daylight(timeOfDay, surfaces.nightDepth)
   const officeArea = useOfficeArea(objects)
-  const addObject = useEditorStore((s) => s.addObject)
-  const removeObject = useEditorStore((s) => s.removeObject)
-  const select = useEditorStore((s) => s.select)
-  const toggleSelect = useEditorStore((s) => s.toggleSelect)
-  const openSeatCard = useEditorStore((s) => s.openSeatCard)
-  const refusedTurn = useEditorStore((s) => s.refusedTurn)
+  const addObject = useEditorStore((state) => state.addObject)
+  const removeObject = useEditorStore((state) => state.removeObject)
+  const select = useEditorStore((state) => state.select)
+  const toggleSelect = useEditorStore((state) => state.toggleSelect)
+  const openSeatCard = useEditorStore((state) => state.openSeatCard)
+  const refusedTurn = useEditorStore((state) => state.refusedTurn)
 
-  const raycaster = useThree((s) => s.raycaster)
-  const pointer = useThree((s) => s.pointer)
-  const camera = useThree((s) => s.camera)
+  const raycaster = useThree((state) => state.raycaster)
+  const pointer = useThree((state) => state.pointer)
+  const camera = useThree((state) => state.camera)
   const storeApi = useEditorStoreApi()
   // The desk card lives in the scene (follows its desk); just close it when
   // switching modes.
@@ -162,7 +162,7 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
   // Where the armed piece would go (wall items also carry the way they face).
   const [hover, setHover] = useState<(Cell & { rotation?: number }) | null>(null)
   // A saved room on the cursor: where it'd land, and whether it fits there.
-  const armedKit = useEditorStore((s) => s.armedKit)
+  const armedKit = useEditorStore((state) => state.armedKit)
   const kitPlan = useMemo(
     () => (armedKit && hover ? composeKitAt(armedKit, hover.x, hover.z) : null),
     [armedKit, hover]
@@ -183,8 +183,8 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
   const placeAt = (type: ObjectType, x: number, z: number): Cell & { rotation?: number } => {
     if (isWallMounted(type)) {
       const aim = aimAtWallHeight(raycaster, pointer, camera) ?? { x, z }
-      const m = wallMount(objects, type, aim.x, aim.z)
-      if (m) return m
+      const mount = wallMount(objects, type, aim.x, aim.z)
+      if (mount) return mount
     }
     return snapPlacement(objects, type, placementRotation, x, z)
   }
@@ -192,7 +192,8 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
   // View mode: who's in at each desk on the shown day (clutter, monitor, pet).
   const { desks } = useDesksOnDay()
   const occupied = useMemo(
-    () => (readOnly ? new Map(desks.map((d) => [d.desk.id, d.state.kind !== "free"])) : null),
+    () =>
+      readOnly ? new Map(desks.map((seat) => [seat.desk.id, seat.state.kind !== "free"])) : null,
     [readOnly, desks]
   )
 
@@ -216,8 +217,8 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
   }, [])
   // Wall + Erase tools are owned by BuildController; here we handle select and
   // furniture placement only. All no-ops in display mode.
-  const handleDown = (x: number, z: number, button: number, e: PointerEvent) => {
-    if (!readOnly && button === 2) return pressMenu(null, { x, z }, e)
+  const handleDown = (x: number, z: number, button: number, event: PointerEvent) => {
+    if (!readOnly && button === 2) return pressMenu(null, { x, z }, event)
     if (readOnly || button !== 0) return
     if (dragId) return // mid-drag (another button/finger): the release decides
     if (carriedOpening) return
@@ -230,23 +231,27 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
     }
     // Bare floor, Select tool + Shift: a box selection, added to the current
     // one — BoxSelect takes over the drag.
-    if (tool === "select" && e.shiftKey) {
-      storeApi
-        .getState()
-        .setBox({ x0: e.clientX, y0: e.clientY, x1: e.clientX, y1: e.clientY, additive: true })
+    if (tool === "select" && event.shiftKey) {
+      storeApi.getState().setBox({
+        x0: event.clientX,
+        y0: event.clientY,
+        x1: event.clientX,
+        y1: event.clientY,
+        additive: true,
+      })
       return
     }
     // A saved room on the cursor: a click places it, a drag pans.
     if (armedKit) {
       isFloorPress.current = true
-      floorPan.current?.start(e)
+      floorPan.current?.start(event)
       return
     }
     // Select, at a wall's foot: drag the wall sideways.
     if (tool === "select" && wallResize.current?.press(x, z)) return
     // Otherwise a drag pans (Select, furniture); a click acts on pointerup.
     isFloorPress.current = true
-    if (tool === "select" || isFurniture) floorPan.current?.start(e)
+    if (tool === "select" || isFurniture) floorPan.current?.start(event)
   }
 
   const handleMove = (x: number, z: number) => {
@@ -261,9 +266,9 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
     if (readOnly || button !== 0 || dragId) return
     if (repeat) {
       storeApi.getState().addObjects(
-        repeatPlan.map((p) => ({
+        repeatPlan.map((placement) => ({
           type: tool as ObjectType,
-          ...p,
+          ...placement,
           color: placementColor ?? undefined,
         }))
       )
@@ -277,12 +282,12 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
     }
     if (tool === "select" && isFloorPress.current) select(null) // click on bare floor
     if (isFurniture) {
-      const p = placeAt(tool as ObjectType, x, z)
+      const placement = placeAt(tool as ObjectType, x, z)
       addObject({
         type: tool as ObjectType,
-        x: p.x,
-        z: p.z,
-        rotation: p.rotation ?? placementRotation,
+        x: placement.x,
+        z: placement.z,
+        rotation: placement.rotation ?? placementRotation,
         color: placementColor ?? undefined,
         // A deskmate gets a random animal on its chair.
         model: tool === "deskmate" ? randomModelId() : undefined,
@@ -290,7 +295,7 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
     }
   }
 
-  const carried = dragId ? objects.find((o) => o.id === dragId) : undefined
+  const carried = dragId ? objects.find((object) => object.id === dragId) : undefined
   // Canvas cursor between camera gestures: the tool's, a closed hand while
   // carrying a piece, the plain arrow in display mode.
   const cursor = readOnly
@@ -401,17 +406,17 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
             <Walls />
             <StaticBatch enabled={readOnly}>
               {objects
-                .filter((obj) => !isWall(obj.type) && !isMarker(obj.type))
-                .map((obj) => (
+                .filter((object) => !isWall(object.type) && !isMarker(object.type))
+                .map((object) => (
                   <ObjectRenderer
-                    key={obj.id}
-                    obj={obj}
-                    selected={!readOnly && selection.includes(obj.id)}
-                    carried={!readOnly && obj.id === dragId}
+                    key={object.id}
+                    object={object}
+                    selected={!readOnly && selection.includes(object.id)}
+                    carried={!readOnly && object.id === dragId}
                     blockedAt={
-                      obj.id === dragId
+                      object.id === dragId
                         ? blockedAt
-                        : obj.id === refusedTurn?.id
+                        : object.id === refusedTurn?.id
                           ? refusedTurn.at
                           : 0
                     }
@@ -424,9 +429,9 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
                     onToggleSelect={toggleSelect}
                     onMenuPress={readOnly ? undefined : onMenuPress}
                     onSeatClick={readOnly ? openSeatCard : undefined}
-                    occupied={isSeatable(obj.type) ? occupied?.get(obj.id) : undefined}
-                    wallFront={wallColors.openings.get(obj.id)?.[0]}
-                    wallBack={wallColors.openings.get(obj.id)?.[1]}
+                    occupied={isSeatable(object.type) ? occupied?.get(object.id) : undefined}
+                    wallFront={wallColors.openings.get(object.id)?.[0]}
+                    wallBack={wallColors.openings.get(object.id)?.[1]}
                   />
                 ))}
             </StaticBatch>

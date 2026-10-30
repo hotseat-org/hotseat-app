@@ -8,25 +8,25 @@ import type { ReactNode } from "react"
 
 /** A colour darkened (factor < 1) — edges and shadows. */
 export const shade = (hex: string, factor: number) => {
-  const n = parseInt(hex.replace("#", ""), 16)
-  const c = (v: number) =>
-    Math.round(Math.min(255, v * factor))
+  const value = parseInt(hex.replace("#", ""), 16)
+  const toHex = (channel: number) =>
+    Math.round(Math.min(255, channel * factor))
       .toString(16)
       .padStart(2, "0")
-  return `#${c((n >> 16) & 255)}${c((n >> 8) & 255)}${c(n & 255)}`
+  return `#${toHex((value >> 16) & 255)}${toHex((value >> 8) & 255)}${toHex(value & 255)}`
 }
 
 /** A colour blended `amount` (0…1) of the way toward another. */
 export const mix = (hex: string, toward: string, amount: number) => {
-  const rgb = (h: string) => {
-    const n = parseInt(h.replace("#", ""), 16)
-    return [(n >> 16) & 255, (n >> 8) & 255, n & 255]
+  const rgb = (color: string) => {
+    const value = parseInt(color.replace("#", ""), 16)
+    return [(value >> 16) & 255, (value >> 8) & 255, value & 255]
   }
-  const a = rgb(hex)
-  const b = rgb(toward)
-  return `#${a
-    .map((v, i) =>
-      Math.round(v + (b[i] - v) * amount)
+  const first = rgb(hex)
+  const second = rgb(toward)
+  return `#${first
+    .map((channel, i) =>
+      Math.round(channel + (second[i] - channel) * amount)
         .toString(16)
         .padStart(2, "0")
     )
@@ -45,7 +45,7 @@ export interface Extent {
 
 /** One thing to draw, with its extent (drawables are layered bottom to top). */
 export interface Drawable {
-  ext: Extent
+  extent: Extent
   node: ReactNode
   /** Insertion order: the tie-break between parts at the same height. */
   order: number
@@ -63,4 +63,9 @@ export const floorRect = (
 
 /** Bottom to top: what stands higher covers what's under it. */
 export const sortBottomToTop = (items: Drawable[]): Drawable[] =>
-  [...items].sort((a, b) => a.ext.y1 - b.ext.y1 || a.ext.y0 - b.ext.y0 || a.order - b.order)
+  [...items].sort(
+    (first, second) =>
+      first.extent.y1 - second.extent.y1 ||
+      first.extent.y0 - second.extent.y0 ||
+      first.order - second.order
+  )

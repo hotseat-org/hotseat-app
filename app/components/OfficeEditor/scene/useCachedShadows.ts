@@ -10,16 +10,19 @@ import { markShadowsDirty } from "./shadows"
  * update: a desk card or a route is no reason to redraw every shadow.
  */
 export const useCachedShadows = (readOnly: boolean, dark: boolean) => {
-  const gl = useThree((s) => s.gl)
-  const invalidate = useThree((s) => s.invalidate)
+  const renderer = useThree((state) => state.gl)
+  const invalidate = useThree((state) => state.invalidate)
   const storeApi = useEditorStoreApi()
   useLayoutEffect(() => {
-    gl.shadowMap.autoUpdate = false
-    markShadowsDirty(gl, invalidate)
+    renderer.shadowMap.autoUpdate = false
+    markShadowsDirty(renderer, invalidate)
     return storeApi.subscribe((state, prev) => {
       if (state.objects !== prev.objects || state.timeOfDay !== prev.timeOfDay)
-        markShadowsDirty(gl, invalidate)
+        markShadowsDirty(renderer, invalidate)
     })
-  }, [gl, invalidate, storeApi])
-  useLayoutEffect(() => markShadowsDirty(gl, invalidate), [gl, invalidate, dark, readOnly])
+  }, [renderer, invalidate, storeApi])
+  useLayoutEffect(
+    () => markShadowsDirty(renderer, invalidate),
+    [renderer, invalidate, dark, readOnly]
+  )
 }

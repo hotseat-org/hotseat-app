@@ -28,10 +28,10 @@ type Target =
  * otherwise at a room's floor → that room. Previews the paint, click applies.
  */
 export const PaintController = () => {
-  const { camera, raycaster, pointer, gl, invalidate } = useThree()
+  const { camera, raycaster, pointer, gl: renderer, invalidate } = useThree()
   const store = useEditorStoreApi()
-  const objects = useEditorStore((s) => s.objects)
-  const paintColor = useEditorStore((s) => s.paintColor)
+  const objects = useEditorStore((state) => state.objects)
+  const paintColor = useEditorStore((state) => state.paintColor)
   const surfaces = useSurfaces()
   const [target, setTarget] = useState<Target>(null)
   const targetRef = useRef<Target>(null)
@@ -42,35 +42,35 @@ export const PaintController = () => {
 
   // Track Shift from pointer events; redraw on move (frameloop="demand").
   useEffect(() => {
-    const el = gl.domElement
-    const move = (e: PointerEvent) => {
-      shift.current = e.shiftKey
+    const element = renderer.domElement
+    const move = (event: PointerEvent) => {
+      shift.current = event.shiftKey
       invalidate()
     }
-    const down = (e: PointerEvent) => {
-      const t = targetRef.current
-      if (e.button !== 0 || !t) return
-      const s = store.getState()
-      if (t.kind === "wall") s.paintWalls(t.targets, s.paintColor)
-      else s.paintFloor(t.x, t.z, s.paintColor)
+    const down = (event: PointerEvent) => {
+      const current = targetRef.current
+      if (event.button !== 0 || !current) return
+      const state = store.getState()
+      if (current.kind === "wall") state.paintWalls(current.targets, state.paintColor)
+      else state.paintFloor(current.x, current.z, state.paintColor)
     }
     // Shift switches between a wall and its room at once, without a move.
-    const key = (e: KeyboardEvent) => {
-      if (e.key !== "Shift") return
-      shift.current = e.type === "keydown"
+    const key = (event: KeyboardEvent) => {
+      if (event.key !== "Shift") return
+      shift.current = event.type === "keydown"
       invalidate()
     }
-    el.addEventListener("pointermove", move)
-    el.addEventListener("pointerdown", down)
+    element.addEventListener("pointermove", move)
+    element.addEventListener("pointerdown", down)
     window.addEventListener("keydown", key)
     window.addEventListener("keyup", key)
     return () => {
-      el.removeEventListener("pointermove", move)
-      el.removeEventListener("pointerdown", down)
+      element.removeEventListener("pointermove", move)
+      element.removeEventListener("pointerdown", down)
       window.removeEventListener("keydown", key)
       window.removeEventListener("keyup", key)
     }
-  }, [gl, invalidate, store])
+  }, [renderer, invalidate, store])
 
   const hit = useMemo(() => new Vector3(), [])
 
@@ -81,11 +81,11 @@ export const PaintController = () => {
 
     // Nearest wall/opening the ray passes through.
     let best: { id: string; d: number } | null = null
-    for (const o of all) {
-      if (!isEdgeType(o.type)) continue
-      if (!intersectEdge(ray, o, hit)) continue
-      const d = hit.distanceTo(ray.origin)
-      if (!best || d < best.d) best = { id: o.id, d }
+    for (const object of all) {
+      if (!isEdgeType(object.type)) continue
+      if (!intersectEdge(ray, object, hit)) continue
+      const distance = hit.distanceTo(ray.origin)
+      if (!best || distance < best.d) best = { id: object.id, d: distance }
     }
 
     let next: Target = null
@@ -97,8 +97,11 @@ export const PaintController = () => {
         composeFacesToward(all, wallBetweenJoints(all, best.id), ray.origin)
       if (targets.length) next = { kind: "wall", targets }
     } else if (ray.intersectPlane(GROUND, hit)) {
-      const region = regions.find((r) =>
-        r.some((c) => c.x <= hit.x && hit.x < c.x + SEG && c.z <= hit.z && hit.z < c.z + SEG)
+      const region = regions.find((candidate) =>
+        candidate.some(
+          (cell) =>
+            cell.x <= hit.x && hit.x < cell.x + SEG && cell.z <= hit.z && hit.z < cell.z + SEG
+        )
       )
       if (region) next = { kind: "floor", cells: region, x: hit.x, z: hit.z }
     }
@@ -106,7 +109,7 @@ export const PaintController = () => {
     const key = !next
       ? ""
       : next.kind === "wall"
-        ? `w:${next.targets.map((t) => `${t.id}${t.face ?? ""}`).join(",")}`
+        ? `w:${next.targets.map((wallTarget) => `${wallTarget.id}${wallTarget.face ?? ""}`).join(",")}`
         : `f:${next.cells[0].x},${next.cells[0].z},${next.cells.length}`
     if (key !== lastKey.current) {
       lastKey.current = key
@@ -119,7 +122,7 @@ export const PaintController = () => {
 
   // Walls: shown in the paint on the walls themselves (merged, as they'd look —
   // with their doors, windows and joints), not as a ghost over them.
-  const setPaintPreview = useEditorStore((s) => s.setPaintPreview)
+  const setPaintPreview = useEditorStore((state) => state.setPaintPreview)
   useEffect(() => {
     setPaintPreview(target?.kind === "wall" ? { targets: target.targets, color: paintColor } : null)
   }, [target, paintColor, setPaintPreview])
@@ -132,12 +135,12 @@ export const PaintController = () => {
 /** Translucent overlay of a room's floor in the paint colour. */
 const FloorPreview = ({ cells, color }: { cells: Cell[]; color: string }) => {
   const ref = useRef<InstancedMesh>(null)
-  const invalidate = useThree((s) => s.invalidate)
+  const invalidate = useThree((state) => state.invalidate)
   useLayoutEffect(() => {
     const mesh = ref.current
     if (!mesh) return
-    cells.forEach((c, i) => {
-      dummy.position.set(c.x + SEG / 2, 0.012, c.z + SEG / 2)
+    cells.forEach((cell, i) => {
+      dummy.position.set(cell.x + SEG / 2, 0.012, cell.z + SEG / 2)
       dummy.rotation.set(-Math.PI / 2, 0, 0)
       dummy.updateMatrix()
       mesh.setMatrixAt(i, dummy.matrix)

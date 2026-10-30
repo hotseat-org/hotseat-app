@@ -99,11 +99,11 @@ export const isSeatable = (type: ObjectType) => hasTag(type, "desk")
 export const isWallMounted = (type: ObjectType) => getItem(type).mount === "wall"
 
 /** A piece's look: its stored variant, or a stable one derived from its id. */
-export const variantOf = (o: Pick<SceneObject, "id" | "variant">) => {
-  if (o.variant !== undefined) return o.variant
-  let h = 0
-  for (let i = 0; i < o.id.length; i++) h = (h * 31 + o.id.charCodeAt(i)) >>> 0
-  return h % 1000
+export const variantOf = (object: Pick<SceneObject, "id" | "variant">) => {
+  if (object.variant !== undefined) return object.variant
+  let hash = 0
+  for (let i = 0; i < object.id.length; i++) hash = (hash * 31 + object.id.charCodeAt(i)) >>> 0
+  return hash % 1000
 }
 
 /** Pieces that come in several looks (their props, cushions, artwork…). */

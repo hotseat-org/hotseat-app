@@ -18,16 +18,16 @@ interface Props {
  */
 export const Model = ({ url, scale = 1, yOffset = 0, rotationOffset = 0 }: Props) => {
   const { scene } = useGLTF(url)
-  const invalidate = useThree((s) => s.invalidate)
-  const gl = useThree((s) => s.gl)
+  const invalidate = useThree((state) => state.invalidate)
+  const renderer = useThree((state) => state.gl)
   // Under frameloop="demand", force a render once the (async) model is ready,
   // otherwise it loads but never draws until the next interaction.
   // Shadows are cached, so they need a redraw to include it too — and to drop
   // it when it goes (a desk pet leaves with its booking).
   useEffect(() => {
-    markShadowsDirty(gl, invalidate)
-    return () => markShadowsDirty(gl, invalidate)
-  }, [scene, gl, invalidate])
+    markShadowsDirty(renderer, invalidate)
+    return () => markShadowsDirty(renderer, invalidate)
+  }, [scene, renderer, invalidate])
 
   return (
     // GLB meshes (loaded async, shared scene graph) stay out of batching.

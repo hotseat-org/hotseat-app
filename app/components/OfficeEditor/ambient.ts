@@ -33,21 +33,22 @@ export const prefersReducedMotion = () =>
 export const subscribeAmbient = (invalidate: () => void) => {
   if (!timer) {
     lastInput = performance.now()
-    for (const e of INPUTS) window.addEventListener(e, handleInput, { passive: true })
+    for (const eventName of INPUTS)
+      window.addEventListener(eventName, handleInput, { passive: true })
     timer = setInterval(() => {
       if (!isAmbientAwake()) return
-      for (const inv of canvases.keys()) inv()
+      for (const invalidateCanvas of canvases.keys()) invalidateCanvas()
     }, 1000 / FPS)
   }
   canvases.set(invalidate, (canvases.get(invalidate) ?? 0) + 1)
   return () => {
-    const n = (canvases.get(invalidate) ?? 1) - 1
-    if (n > 0) canvases.set(invalidate, n)
+    const count = (canvases.get(invalidate) ?? 1) - 1
+    if (count > 0) canvases.set(invalidate, count)
     else canvases.delete(invalidate)
     if (!canvases.size && timer) {
       clearInterval(timer)
       timer = null
-      for (const e of INPUTS) window.removeEventListener(e, handleInput)
+      for (const eventName of INPUTS) window.removeEventListener(eventName, handleInput)
     }
   }
 }

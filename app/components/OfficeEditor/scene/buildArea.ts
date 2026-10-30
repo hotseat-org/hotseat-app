@@ -75,11 +75,11 @@ export const BUILD_AREA_GLSL = /* glsl */ `
 const buildDistanceMap = (objects: SceneObject[]) => {
   const field = getStructureField(objects)
   if (!field) return null
-  const { cells, w, h, x0, z0 } = field.grid
-  const bytes = new Uint8Array(w * h)
-  for (let k = 0; k < cells.length; k++)
-    bytes[k] = Math.min(255, Math.round((cells[k] / STRUCTURE_REACH) * 255))
-  const texture = new DataTexture(bytes, w, h, RedFormat, UnsignedByteType)
+  const { cells, width: width, height: height, x0, z0 } = field.grid
+  const bytes = new Uint8Array(width * height)
+  for (let index = 0; index < cells.length; index++)
+    bytes[index] = Math.min(255, Math.round((cells[index] / STRUCTURE_REACH) * 255))
+  const texture = new DataTexture(bytes, width, height, RedFormat, UnsignedByteType)
   texture.minFilter = LinearFilter
   texture.magFilter = LinearFilter
   texture.unpackAlignment = 1
@@ -88,7 +88,7 @@ const buildDistanceMap = (objects: SceneObject[]) => {
   return {
     texture,
     origin: new Vector2(x0 - GRID / 2, z0 - GRID / 2),
-    size: new Vector2(w * GRID, h * GRID),
+    size: new Vector2(width * GRID, height * GRID),
   }
 }
 
@@ -101,8 +101,8 @@ const isPlacing = (tool: Tool, carryingId: string | null) =>
  * with createBuildAreaUniforms — set on every render (cheap: plain values).
  */
 export const useBuildArea = () => {
-  const objects = useEditorStore((s) => s.objects)
-  const placing = useEditorStore((s) => isPlacing(s.tool, s.carryingId))
+  const objects = useEditorStore((state) => state.objects)
+  const placing = useEditorStore((state) => isPlacing(state.tool, state.carryingId))
   const map = useMemo(() => buildDistanceMap(objects), [objects])
   useEffect(() => () => map?.texture.dispose(), [map])
   // A ShaderMaterial's uniforms (made with createBuildAreaUniforms).

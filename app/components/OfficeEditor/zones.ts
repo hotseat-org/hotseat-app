@@ -28,7 +28,7 @@ export interface Zone {
 
 const hashOf = (text: string) => {
   let hash = 0
-  for (const char of text) hash = (hash * 31 + char.charCodeAt(0)) >>> 0
+  for (const character of text) hash = (hash * 31 + character.charCodeAt(0)) >>> 0
   return hash
 }
 
@@ -39,11 +39,12 @@ const hashOf = (text: string) => {
  */
 export const getZones = (objects: SceneObject[]): Zone[] => {
   const counts = new Map<string, number>()
-  for (const o of objects)
-    if (isSeatable(o.type) && o.zone) counts.set(o.zone, (counts.get(o.zone) ?? 0) + 1)
+  for (const piece of objects)
+    if (isSeatable(piece.type) && piece.zone)
+      counts.set(piece.zone, (counts.get(piece.zone) ?? 0) + 1)
   const taken = new Set<number>()
   return [...counts.keys()]
-    .sort((a, b) => a.localeCompare(b))
+    .sort((first, second) => first.localeCompare(second))
     .map((name) => {
       let index = hashOf(name) % ZONE_COLORS.length
       for (let i = 0; i < ZONE_COLORS.length && taken.has(index); i++)
@@ -76,23 +77,25 @@ export const numberDesksByZone = (objects: SceneObject[]): SceneObject[] => {
       length++
     let prefix = letters.slice(0, length)
     // Still taken (or "D", the unzoned desks'): number it.
-    for (let n = 2; prefix === "D" || [...prefixes.values()].includes(prefix); n++)
-      prefix = `${letters.slice(0, length)}${n}`
+    for (let suffix = 2; prefix === "D" || [...prefixes.values()].includes(prefix); suffix++)
+      prefix = `${letters.slice(0, length)}${suffix}`
     prefixes.set(zone, prefix)
   }
   const counters = new Map<string, number>()
   const labels = new Map(
     objects
-      .filter((o) => isSeatable(o.type))
-      .sort((a, b) => a.z - b.z || a.x - b.x)
-      .map((o) => {
-        const prefix = (o.zone && prefixes.get(o.zone)) || "D"
-        const n = (counters.get(prefix) ?? 0) + 1
-        counters.set(prefix, n)
-        return [o.id, `${prefix}-${n}`]
+      .filter((piece) => isSeatable(piece.type))
+      .sort((first, second) => first.z - second.z || first.x - second.x)
+      .map((piece) => {
+        const prefix = (piece.zone && prefixes.get(piece.zone)) || "D"
+        const number = (counters.get(prefix) ?? 0) + 1
+        counters.set(prefix, number)
+        return [piece.id, `${prefix}-${number}`]
       })
   )
-  return objects.map((o) => (labels.has(o.id) ? { ...o, label: labels.get(o.id) } : o))
+  return objects.map((piece) =>
+    labels.has(piece.id) ? { ...piece, label: labels.get(piece.id) } : piece
+  )
 }
 
 /** The desk filter keeps zones as `zone:<name>` (features are plain ids). */
@@ -121,13 +124,13 @@ export interface ZoneArea {
  */
 const getClosedSides = (objects: SceneObject[]) => {
   const sides = new Set<string>()
-  for (const o of objects) {
-    if (!getEdge(o.type)?.encloses) continue
-    const direction = edgeDirection(o.rotation)
+  for (const piece of objects) {
+    if (!getEdge(piece.type)?.encloses) continue
+    const direction = edgeDirection(piece.rotation)
     if (direction !== "x" && direction !== "z") continue
-    for (const e of unitEdges(o)) {
-      const i = Math.round(e.x / ZONE_CELL - (direction === "x" ? 0.5 : 0))
-      const j = Math.round(e.z / ZONE_CELL - (direction === "z" ? 0.5 : 0))
+    for (const edge of unitEdges(piece)) {
+      const i = Math.round(edge.x / ZONE_CELL - (direction === "x" ? 0.5 : 0))
+      const j = Math.round(edge.z / ZONE_CELL - (direction === "z" ? 0.5 : 0))
       sides.add(`${direction}:${i},${j}`)
     }
   }
@@ -157,18 +160,21 @@ export const composeZoneAreas = (objects: SceneObject[]): ZoneArea[] => {
   >()
   for (const desk of objects) {
     if (!isSeatable(desk.type)) continue
-    const [w, d] = footprintCells(desk.type, desk.rotation)
-    const [x0, x1] = [desk.x - (w * GRID) / 2, desk.x + (w * GRID) / 2]
-    const [z0, z1] = [desk.z - (d * GRID) / 2, desk.z + (d * GRID) / 2]
+    const [cellsX, cellsZ] = footprintCells(desk.type, desk.rotation)
+    const [x0, x1] = [desk.x - (cellsX * GRID) / 2, desk.x + (cellsX * GRID) / 2]
+    const [z0, z1] = [desk.z - (cellsZ * GRID) / 2, desk.z + (cellsZ * GRID) / 2]
     const i0 = Math.floor((x0 - ZONE_MARGIN) / ZONE_CELL + 1e-6)
     const i1 = Math.ceil((x1 + ZONE_MARGIN) / ZONE_CELL - 1e-6)
     const j0 = Math.floor((z0 - ZONE_MARGIN) / ZONE_CELL + 1e-6)
     const j1 = Math.ceil((z1 + ZONE_MARGIN) / ZONE_CELL - 1e-6)
     /** From a square's middle to the desk's footprint (0: under it). */
     const distanceOf = (i: number, j: number) => {
-      const cx = (i + 0.5) * ZONE_CELL
-      const cz = (j + 0.5) * ZONE_CELL
-      return Math.hypot(Math.max(x0 - cx, 0, cx - x1), Math.max(z0 - cz, 0, cz - z1))
+      const centreX = (i + 0.5) * ZONE_CELL
+      const centreZ = (j + 0.5) * ZONE_CELL
+      return Math.hypot(
+        Math.max(x0 - centreX, 0, centreX - x1),
+        Math.max(z0 - centreZ, 0, centreZ - z1)
+      )
     }
     // Spread from the squares under the desk (or, a small one, its middle's)
     // to its margin, never through a wall.
@@ -193,23 +199,31 @@ export const composeZoneAreas = (objects: SceneObject[]): ZoneArea[] => {
         (distance === owner.distance && toMiddle < owner.toMiddle)
       )
         owners.set(key, { zone: desk.zone, distance, toMiddle, cell: [i, j] })
-      for (const [ni, nj, side] of getNeighbours(i, j)) {
-        const next = `${ni},${nj}`
-        if (reached.has(next) || !isInMargin(ni, nj) || closedSides.has(side)) continue
+      for (const [neighbourI, neighbourJ, side] of getNeighbours(i, j)) {
+        const next = `${neighbourI},${neighbourJ}`
+        if (reached.has(next) || !isInMargin(neighbourI, neighbourJ) || closedSides.has(side))
+          continue
         reached.add(next)
-        queue.push([ni, nj])
+        queue.push([neighbourI, neighbourJ])
       }
     }
   }
   return getZones(objects).flatMap((zone) => {
-    const cells = [...owners.values()].filter((o) => o.zone === zone.name).map((o) => o.cell)
+    const cells = [...owners.values()]
+      .filter((owner) => owner.zone === zone.name)
+      .map((owner) => owner.cell)
     if (cells.length === 0) return [] // every square nearer another zone's desks
-    const ci = cells.reduce((sum, [i]) => sum + i, 0) / cells.length
-    const cj = cells.reduce((sum, [, j]) => sum + j, 0) / cells.length
-    const [li, lj] = cells.reduce((best, c) =>
-      Math.hypot(c[0] - ci, c[1] - cj) < Math.hypot(best[0] - ci, best[1] - cj) ? c : best
+    const centreI = cells.reduce((sum, [i]) => sum + i, 0) / cells.length
+    const centreJ = cells.reduce((sum, [, j]) => sum + j, 0) / cells.length
+    const [labelI, labelJ] = cells.reduce((best, cell) =>
+      Math.hypot(cell[0] - centreI, cell[1] - centreJ) <
+      Math.hypot(best[0] - centreI, best[1] - centreJ)
+        ? cell
+        : best
     )
-    return [{ zone, cells, label: { x: (li + 0.5) * ZONE_CELL, z: (lj + 0.5) * ZONE_CELL } }]
+    return [
+      { zone, cells, label: { x: (labelI + 0.5) * ZONE_CELL, z: (labelJ + 0.5) * ZONE_CELL } },
+    ]
   })
 }
 
@@ -239,18 +253,18 @@ export const composeZoneOutline = (cells: [number, number][]): string => {
     if (!list?.length) return null
     // Where two squares touch only at a corner: turn left, staying with the
     // square we're going round, so each keeps its own rounded corner.
-    const turn = (e: Edge) => {
+    const turn = (candidate: Edge) => {
       if (!direction) return 0
-      const d = [e.to[0] - e.from[0], e.to[1] - e.from[1]]
-      const cross = direction[0] * d[1] - direction[1] * d[0]
+      const delta = [candidate.to[0] - candidate.from[0], candidate.to[1] - candidate.from[1]]
+      const cross = direction[0] * delta[1] - direction[1] * delta[0]
       return cross > 0 ? 0 : cross === 0 ? 1 : 2
     }
-    const edge = [...list].sort((a, b) => turn(a) - turn(b))[0]
+    const edge = [...list].sort((first, second) => turn(first) - turn(second))[0]
     list.splice(list.indexOf(edge), 1)
     return edge
   }
 
-  const r = ZONE_RADIUS * ZONE_CELL
+  const radius = ZONE_RADIUS * ZONE_CELL
   const loops: string[] = []
   for (const key of starts.keys()) {
     for (let first = take(key); first; first = take(key)) {
@@ -262,7 +276,8 @@ export const composeZoneOutline = (cells: [number, number][]): string => {
         first.to[1] - first.from[1],
       ]
       let direction = firstDirection
-      const isStart = (p: [number, number]) => p[0] === first.from[0] && p[1] === first.from[1]
+      const isStart = (point: [number, number]) =>
+        point[0] === first.from[0] && point[1] === first.from[1]
       while (edge && !isStart(edge.to)) {
         const next = take(`${edge.to[0]},${edge.to[1]}`, direction)
         if (!next) break
@@ -279,17 +294,17 @@ export const composeZoneOutline = (cells: [number, number][]): string => {
       if (direction[0] !== firstDirection[0] || direction[1] !== firstDirection[1])
         corners.push(first.from)
       if (corners.length < 4) continue
-      const at = (k: number) => corners[(k + corners.length) % corners.length]
-      const parts = corners.map((corner, k) => {
-        const [px, pz] = at(k - 1)
-        const [nx, nz] = at(k + 1)
-        const a = [Math.sign(corner[0] - px), Math.sign(corner[1] - pz)]
-        const b = [Math.sign(nx - corner[0]), Math.sign(nz - corner[1])]
+      const at = (index: number) => corners[(index + corners.length) % corners.length]
+      const parts = corners.map((corner, index) => {
+        const [prevX, prevZ] = at(index - 1)
+        const [nextX, nextZ] = at(index + 1)
+        const incoming = [Math.sign(corner[0] - prevX), Math.sign(corner[1] - prevZ)]
+        const outgoing = [Math.sign(nextX - corner[0]), Math.sign(nextZ - corner[1])]
         const [x, z] = [corner[0] * ZONE_CELL, corner[1] * ZONE_CELL]
-        const sweep = a[0] * b[1] - a[1] * b[0] > 0 ? 1 : 0
-        const enter = `${x - a[0] * r} ${z - a[1] * r}`
-        const leave = `${x + b[0] * r} ${z + b[1] * r}`
-        return `${k === 0 ? "M" : "L"}${enter}A${r} ${r} 0 0 ${sweep} ${leave}`
+        const sweep = incoming[0] * outgoing[1] - incoming[1] * outgoing[0] > 0 ? 1 : 0
+        const enter = `${x - incoming[0] * radius} ${z - incoming[1] * radius}`
+        const leave = `${x + outgoing[0] * radius} ${z + outgoing[1] * radius}`
+        return `${index === 0 ? "M" : "L"}${enter}A${radius} ${radius} 0 0 ${sweep} ${leave}`
       })
       loops.push(`${parts.join("")}Z`)
     }

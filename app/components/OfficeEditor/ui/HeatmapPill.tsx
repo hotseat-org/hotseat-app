@@ -11,14 +11,14 @@ import { useI18n } from "~/i18n/I18nProvider"
  */
 export const HeatmapPill = ({ isDark, className }: { isDark: boolean; className?: string }) => {
   const { t } = useI18n()
-  const heatmap = useEditorStore((s) => s.heatmap)
-  const setHeatmap = useEditorStore((s) => s.setHeatmap)
-  const setInsightsOpen = useEditorStore((s) => s.setInsightsOpen)
-  const isInsightsOpen = useEditorStore((s) => s.isInsightsOpen)
+  const heatmap = useEditorStore((state) => state.heatmap)
+  const setHeatmap = useEditorStore((state) => state.setHeatmap)
+  const setInsightsOpen = useEditorStore((state) => state.setInsightsOpen)
+  const isInsightsOpen = useEditorStore((state) => state.isInsightsOpen)
 
   useEffect(() => {
     if (!heatmap || isInsightsOpen) return
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setHeatmap(null)
+    const onKey = (event: KeyboardEvent) => event.key === "Escape" && setHeatmap(null)
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
   }, [heatmap, isInsightsOpen, setHeatmap])

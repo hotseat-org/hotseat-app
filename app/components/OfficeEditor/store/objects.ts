@@ -15,9 +15,11 @@ export interface ObjectsSlice {
 
 /** Wall items whose wall has gone (erased, or a door cut in behind them) come down too. */
 export const dropOrphanMounts = (objects: SceneObject[]) =>
-  objects.some((o) => isWallMounted(o.type))
+  objects.some((piece) => isWallMounted(piece.type))
     ? objects.filter(
-        (o) => !isWallMounted(o.type) || mountWalls(objects, o.type, o.x, o.z, o.rotation)
+        (piece) =>
+          !isWallMounted(piece.type) ||
+          mountWalls(objects, piece.type, piece.x, piece.z, piece.rotation)
       )
     : objects
 
@@ -30,20 +32,21 @@ export const createObjectsSlice = (
   load: (objects) => set({ objects: normalizeEdges(objects), selectedId: null }),
   clear: () => set({ objects: [], selectedId: null }),
   placeKit: (placed) =>
-    set((s) => {
+    set((state) => {
       const taken = new Set(
-        s.objects
-          .filter((o) => isEdgeType(o.type))
+        state.objects
+          .filter((piece) => isEdgeType(piece.type))
           .flatMap(unitEdges)
           .map(edgeKey)
       )
       const edges = placed.filter(
-        (o) => isEdgeType(o.type) && !unitEdges(o).some((e) => taken.has(edgeKey(e)))
+        (piece) =>
+          isEdgeType(piece.type) && !unitEdges(piece).some((unit) => taken.has(edgeKey(unit)))
       )
       const furniture = asNewDesks(
-        s.objects,
-        placed.filter((o) => !isEdgeType(o.type))
+        state.objects,
+        placed.filter((piece) => !isEdgeType(piece.type))
       )
-      return { objects: [...s.objects, ...edges, ...furniture] }
+      return { objects: [...state.objects, ...edges, ...furniture] }
     }),
 })

@@ -10,12 +10,12 @@ const facing = (rotation: number) => ({ x: Math.sin(rotation), z: Math.cos(rotat
 const ON_LINE = 0.02
 
 /** The plain solid wall segment a point on a wall's line falls on, if any. */
-const solidWallAt = (walls: SceneObject[], px: number, pz: number) =>
-  walls.find((o) => {
-    const [sx, sz] = edgeStep(o.rotation)
-    const length = Math.hypot(sx, sz)
-    const along = ((px - o.x) * sx + (pz - o.z) * sz) / length
-    const across = ((px - o.x) * -sz + (pz - o.z) * sx) / length
+const solidWallAt = (walls: SceneObject[], pointX: number, pointZ: number) =>
+  walls.find((segment) => {
+    const [stepX, stepZ] = edgeStep(segment.rotation)
+    const length = Math.hypot(stepX, stepZ)
+    const along = ((pointX - segment.x) * stepX + (pointZ - segment.z) * stepZ) / length
+    const across = ((pointX - segment.x) * -stepZ + (pointZ - segment.z) * stepX) / length
     return Math.abs(across) <= ON_LINE && Math.abs(along) <= length / 2 + 1e-6
   })
 
@@ -32,18 +32,18 @@ export const mountWalls = (
   z: number,
   rotation: number
 ): string[] | null => {
-  const [w, d] = getItem(type).footprint
-  const f = facing(rotation)
+  const [widthCells, depthCells] = getItem(type).footprint
+  const front = facing(rotation)
   // Back-edge centre, and the direction along it (the piece's local X).
-  const bx = x - (f.x * d * GRID) / 2
-  const bz = z - (f.z * d * GRID) / 2
-  const along = { x: f.z, z: -f.x }
+  const backX = x - (front.x * depthCells * GRID) / 2
+  const backZ = z - (front.z * depthCells * GRID) / 2
+  const along = { x: front.z, z: -front.x }
   const walls = objects.filter(isSolidWall)
   const ids = new Set<string>()
   // Points along the back edge, a grid step apart, each on solid wall.
-  for (let i = 0; i < w; i++) {
-    const off = (i - (w - 1) / 2) * SEG
-    const wall = solidWallAt(walls, bx + along.x * off, bz + along.z * off)
+  for (let i = 0; i < widthCells; i++) {
+    const offset = (i - (widthCells - 1) / 2) * SEG
+    const wall = solidWallAt(walls, backX + along.x * offset, backZ + along.z * offset)
     if (!wall) return null
     ids.add(wall.id)
   }
@@ -51,45 +51,50 @@ export const mountWalls = (
 }
 
 /**
- * Where a wall item goes for a cursor at (px, pz): against the face of the
+ * Where a wall item goes for a cursor at (pointX, pointZ): against the face of the
  * nearest solid wall (within reach), facing the cursor's side, slid along the
  * wall to the cursor. Null when no wall is near.
  */
 export const wallMount = (
   objects: SceneObject[],
   type: ObjectType,
-  px: number,
-  pz: number
+  pointX: number,
+  pointZ: number
 ): { x: number; z: number; rotation: number } | null => {
-  const id = nearestEdgeId(objects, px, pz, 0.8, isSolidWall)
-  const wall = id && objects.find((o) => o.id === id)
+  const id = nearestEdgeId(objects, pointX, pointZ, 0.8, isSolidWall)
+  const wall = id && objects.find((candidate) => candidate.id === id)
   if (!wall) return null
-  const [w, d] = getItem(type).footprint
-  const depth = (d * GRID) / 2
+  const [widthCells, depthCells] = getItem(type).footprint
+  const depth = (depthCells * GRID) / 2
   if (isDiagonalEdge(wall.rotation)) {
     // Along the diagonal's line in half-segment steps, out from its face.
-    const [sx, sz] = edgeStep(wall.rotation)
-    const length = Math.hypot(sx, sz)
-    const u = { x: sx / length, z: sz / length }
-    const n = { x: -u.z, z: u.x }
-    const side = (px - wall.x) * n.x + (pz - wall.z) * n.z >= 0 ? 1 : -1
+    const [stepX, stepZ] = edgeStep(wall.rotation)
+    const length = Math.hypot(stepX, stepZ)
+    const direction = { x: stepX / length, z: stepZ / length }
+    const normal = { x: -direction.z, z: direction.x }
+    const side = (pointX - wall.x) * normal.x + (pointZ - wall.z) * normal.z >= 0 ? 1 : -1
     const step = length / 2
-    const t = Math.round(((px - wall.x) * u.x + (pz - wall.z) * u.z) / step) * step
+    const snappedAlong =
+      Math.round(((pointX - wall.x) * direction.x + (pointZ - wall.z) * direction.z) / step) * step
     return {
-      x: wall.x + u.x * t + n.x * side * depth,
-      z: wall.z + u.z * t + n.z * side * depth,
+      x: wall.x + direction.x * snappedAlong + normal.x * side * depth,
+      z: wall.z + direction.z * snappedAlong + normal.z * side * depth,
       // Facing (sin r, cos r) = out from the wall.
-      rotation: Math.atan2(n.x * side, n.z * side),
+      rotation: Math.atan2(normal.x * side, normal.z * side),
     }
   }
   if (runsAlongX(wall.rotation)) {
-    const side = pz >= wall.z ? 1 : -1
-    return { x: snapAxis(px, w), z: wall.z + side * depth, rotation: side > 0 ? 0 : Math.PI }
+    const side = pointZ >= wall.z ? 1 : -1
+    return {
+      x: snapAxis(pointX, widthCells),
+      z: wall.z + side * depth,
+      rotation: side > 0 ? 0 : Math.PI,
+    }
   }
-  const side = px >= wall.x ? 1 : -1
+  const side = pointX >= wall.x ? 1 : -1
   return {
     x: wall.x + side * depth,
-    z: snapAxis(pz, w),
+    z: snapAxis(pointZ, widthCells),
     rotation: side > 0 ? Math.PI / 2 : (Math.PI * 3) / 2,
   }
 }

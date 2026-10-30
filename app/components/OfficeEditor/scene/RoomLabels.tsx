@@ -11,9 +11,9 @@ const MIN_AREA = 2
 /** How much of a grid square is floor: all of it, or the triangles a diagonal leaves. */
 const shareOf = (cell: FloorCell) => {
   if (cell.parts === undefined) return 1
-  let n = 0
-  for (let bits = cell.parts; bits; bits >>= 1) n += bits & 1
-  return n / 4
+  let count = 0
+  for (let bits = cell.parts; bits; bits >>= 1) count += bits & 1
+  return count / 4
 }
 
 /**
@@ -23,24 +23,24 @@ const shareOf = (cell: FloorCell) => {
 export const RoomLabels = () => {
   // Bridged into the canvas; the text is made here, outside <Html>'s own root.
   const { tn, format } = useI18n()
-  const objects = useEditorStore((s) => s.objects)
+  const objects = useEditorStore((state) => state.objects)
   const rooms = useMemo(() => {
-    const desks = objects.filter((o) => isSeatable(o.type))
+    const desks = objects.filter((object) => isSeatable(object.type))
     return enclosedRegions(objects).flatMap((cells) => {
-      const area = cells.reduce((sum, c) => sum + shareOf(c), 0) * SEG * SEG
+      const area = cells.reduce((sum, cell) => sum + shareOf(cell), 0) * SEG * SEG
       if (area < MIN_AREA) return []
-      const inside = new Set(cells.map((c) => `${c.x},${c.z}`))
-      const deskCount = desks.filter((d) =>
-        inside.has(`${Math.floor(d.x / SEG) * SEG},${Math.floor(d.z / SEG) * SEG}`)
+      const inside = new Set(cells.map((cell) => `${cell.x},${cell.z}`))
+      const deskCount = desks.filter((desk) =>
+        inside.has(`${Math.floor(desk.x / SEG) * SEG},${Math.floor(desk.z / SEG) * SEG}`)
       ).length
       // On the room's own floor: the square nearest its middle (an L-shaped
       // room's middle can be outside it).
-      const cx = cells.reduce((sum, c) => sum + c.x, 0) / cells.length + SEG / 2
-      const cz = cells.reduce((sum, c) => sum + c.z, 0) / cells.length + SEG / 2
-      const spot = cells.reduce((best, c) =>
-        Math.hypot(c.x + SEG / 2 - cx, c.z + SEG / 2 - cz) <
-        Math.hypot(best.x + SEG / 2 - cx, best.z + SEG / 2 - cz)
-          ? c
+      const centreX = cells.reduce((sum, cell) => sum + cell.x, 0) / cells.length + SEG / 2
+      const centreZ = cells.reduce((sum, cell) => sum + cell.z, 0) / cells.length + SEG / 2
+      const spot = cells.reduce((best, cell) =>
+        Math.hypot(cell.x + SEG / 2 - centreX, cell.z + SEG / 2 - centreZ) <
+        Math.hypot(best.x + SEG / 2 - centreX, best.z + SEG / 2 - centreZ)
+          ? cell
           : best
       )
       return [{ x: spot.x + SEG / 2, z: spot.z + SEG / 2, area, deskCount }]

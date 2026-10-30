@@ -185,16 +185,16 @@ const segmentsGeometry = (minor: Float32Array, major: Float32Array) => {
       [x1, z1, x0, z0, 1, 1],
       [x1, z1, x0, z0, -1, 1],
     ]
-    corners.forEach(([x, z, ox, oz, side, isEnd], k) => {
-      const v = i * 4 + k
-      positions.set([x, LINE_Y, z], v * 3)
-      others.set([ox, LINE_Y, oz], v * 3)
-      sides[v] = side
-      ends[v] = isEnd
-      majors[v] = isMajor ? 1 : 0
+    corners.forEach(([x, z, offsetX, offsetZ, side, isEnd], cornerIndex) => {
+      const vertex = i * 4 + cornerIndex
+      positions.set([x, LINE_Y, z], vertex * 3)
+      others.set([offsetX, LINE_Y, offsetZ], vertex * 3)
+      sides[vertex] = side
+      ends[vertex] = isEnd
+      majors[vertex] = isMajor ? 1 : 0
     })
-    const v = i * 4
-    indices.set([v, v + 1, v + 2, v + 1, v + 3, v + 2], i * 6)
+    const vertex = i * 4
+    indices.set([vertex, vertex + 1, vertex + 2, vertex + 1, vertex + 3, vertex + 2], i * 6)
   }
   const geometry = new THREE.BufferGeometry()
   geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3))
@@ -209,10 +209,14 @@ const segmentsGeometry = (minor: Float32Array, major: Float32Array) => {
 /** Is the point inside the closed loop (even-odd ray cast)? */
 const isInside = ([x, z]: [number, number], loop: [number, number][]) => {
   let inside = false
-  for (let i = 0, k = loop.length - 1; i < loop.length; k = i++) {
-    const [xi, zi] = loop[i]
-    const [xk, zk] = loop[k]
-    if (zi > z !== zk > z && x < ((xk - xi) * (z - zi)) / (zk - zi) + xi) inside = !inside
+  for (let i = 0, prevIndex = loop.length - 1; i < loop.length; prevIndex = i++) {
+    const [currentX, currentZ] = loop[i]
+    const [prevX, prevZ] = loop[prevIndex]
+    if (
+      currentZ > z !== prevZ > z &&
+      x < ((prevX - currentX) * (z - currentZ)) / (prevZ - currentZ) + currentX
+    )
+      inside = !inside
   }
   return inside
 }
@@ -228,7 +232,9 @@ const plateauGeometry = (loops: [number, number][][]) => {
     return path
   }
   const shapes: THREE.Shape[] = []
-  const outers = loops.filter((l) => !loops.some((o) => o !== l && isInside(l[0], o)))
+  const outers = loops.filter(
+    (inner) => !loops.some((outer) => outer !== inner && isInside(inner[0], outer))
+  )
   for (const outer of outers) {
     const shape = toPath(outer, new THREE.Shape()) as THREE.Shape
     for (const hole of loops)
@@ -247,13 +253,13 @@ type TileGeometry = {
   lines: THREE.BufferGeometry
   stars: THREE.BufferGeometry
 }
-const toGeometry = (t: ContourTile): TileGeometry => ({
-  lines: segmentsGeometry(t.minor, t.major),
-  stars: starsGeometry(t.stars),
+const toGeometry = (tile: ContourTile): TileGeometry => ({
+  lines: segmentsGeometry(tile.minor, tile.major),
+  stars: starsGeometry(tile.stars),
 })
-const disposeGeometry = (g: TileGeometry) => {
-  g.lines.dispose()
-  g.stars.dispose()
+const disposeGeometry = (geometry: TileGeometry) => {
+  geometry.lines.dispose()
+  geometry.stars.dispose()
 }
 
 const viewCentre = new THREE.Vector3()
@@ -265,7 +271,7 @@ const viewCentre = new THREE.Vector3()
  * to the grid's area round the structure, fading back in beyond it.
  */
 export const Contours = ({ isEditing = false }: { isEditing?: boolean }) => {
-  const objects = useEditorStore((s) => s.objects)
+  const objects = useEditorStore((state) => state.objects)
   const surfaces = useSurfaces()
   const nightness = useContext(DaylightContext)
   const land = useLandscape(objects)
@@ -274,50 +280,50 @@ export const Contours = ({ isEditing = false }: { isEditing?: boolean }) => {
   const [centreTile, setCentreTile] = useState<[number, number]>([0, 0])
   const linesMaterial = useMemo(lineMaterial, [])
   const starsMaterial = useMemo(starMaterial, [])
-  const pixelRatio = useThree((s) => s.viewport.dpr)
-  const size = useThree((s) => s.size)
+  const pixelRatio = useThree((state) => state.viewport.dpr)
+  const size = useThree((state) => state.size)
   const applyBuildArea = useBuildArea()
-  for (const m of [linesMaterial, starsMaterial]) {
-    m.uniforms.isEditing.value = isEditing
-    applyBuildArea(m.uniforms)
+  for (const material of [linesMaterial, starsMaterial]) {
+    material.uniforms.isEditing.value = isEditing
+    applyBuildArea(material.uniforms)
   }
   linesMaterial.uniforms.resolution.value.set(size.width * pixelRatio, size.height * pixelRatio)
   useFrame(({ camera }) => {
     if (!getViewCentre(camera, viewCentre)) return
-    const tx = Math.floor(viewCentre.x / TILE)
-    const tz = Math.floor(viewCentre.z / TILE)
-    if (tx !== centreTile[0] || tz !== centreTile[1]) setCentreTile([tx, tz])
+    const tileX = Math.floor(viewCentre.x / TILE)
+    const tileZ = Math.floor(viewCentre.z / TILE)
+    if (tileX !== centreTile[0] || tileZ !== centreTile[1]) setCentreTile([tileX, tileZ])
   })
 
   // Geometry per tile, cached while it's near; dropped (and freed) once far.
   const geometries = useRef(new Map<string, TileGeometry>())
   const cacheFor = useRef<unknown>(null)
   if (cacheFor.current !== land) {
-    for (const g of geometries.current.values()) disposeGeometry(g)
+    for (const geometry of geometries.current.values()) disposeGeometry(geometry)
     geometries.current.clear()
     cacheFor.current = land
   }
-  const [cx, cz] = centreTile
+  const [cellsX, cellsZ] = centreTile
   const tiles = tilesCovering(
-    (cx - REACH) * TILE,
-    (cz - REACH) * TILE,
-    (cx + REACH) * TILE,
-    (cz + REACH) * TILE
-  ).map(([tx, tz]) => {
-    const key = `${tx},${tz}`
-    let g = geometries.current.get(key)
-    if (!g) {
-      g = toGeometry(land.tile(tx, tz))
-      geometries.current.set(key, g)
+    (cellsX - REACH) * TILE,
+    (cellsZ - REACH) * TILE,
+    (cellsX + REACH) * TILE,
+    (cellsZ + REACH) * TILE
+  ).map(([tileX, tileZ]) => {
+    const key = `${tileX},${tileZ}`
+    let geometry = geometries.current.get(key)
+    if (!geometry) {
+      geometry = toGeometry(land.tile(tileX, tileZ))
+      geometries.current.set(key, geometry)
     }
-    return { key, ...g }
+    return { key, ...geometry }
   })
   // Free tiles that drifted out of reach.
   useEffect(() => {
-    const keep = new Set(tiles.map((t) => t.key))
-    for (const [key, g] of geometries.current)
+    const keep = new Set(tiles.map((tile) => tile.key))
+    for (const [key, geometry] of geometries.current)
       if (!keep.has(key)) {
-        disposeGeometry(g)
+        disposeGeometry(geometry)
         geometries.current.delete(key)
       }
   })
@@ -359,11 +365,11 @@ export const Contours = ({ isEditing = false }: { isEditing?: boolean }) => {
           side={THREE.DoubleSide}
         />
       </mesh>
-      {tiles.map((t) => (
-        <group key={t.key}>
-          <mesh geometry={t.lines} material={linesMaterial} raycast={() => null} />
+      {tiles.map((tile) => (
+        <group key={tile.key}>
+          <mesh geometry={tile.lines} material={linesMaterial} raycast={() => null} />
           <points
-            geometry={t.stars}
+            geometry={tile.stars}
             material={starsMaterial}
             visible={starAmount > 0}
             raycast={() => null}

@@ -30,7 +30,8 @@ type Cell =
   | { kind: "free"; day: Day; isWeekend: boolean; currentDesk?: SceneObject }
   | { kind: "taken"; day: Day; holder: string; alternative?: SceneObject }
 
-const distance = (a: SceneObject, b: SceneObject) => Math.hypot(a.x - b.x, a.z - b.z)
+const distance = (first: SceneObject, second: SceneObject) =>
+  Math.hypot(first.x - second.x, first.z - second.z)
 
 /** The free desk closest to `desk` on a day, for when `desk` itself is taken. */
 const findNearestFreeDesk = (
@@ -41,8 +42,11 @@ const findNearestFreeDesk = (
   released: BookingsByDay
 ) =>
   desks
-    .filter((d) => d.id !== desk.id && deskState(d, day, byDay, released).kind === "free")
-    .sort((a, b) => distance(a, desk) - distance(b, desk))[0]
+    .filter(
+      (candidate) =>
+        candidate.id !== desk.id && deskState(candidate, day, byDay, released).kind === "free"
+    )
+    .sort((first, second) => distance(first, desk) - distance(second, desk))[0]
 
 /**
  * Booking a desk on any days: the bookable weeks as a calendar (Mon–Sun), with
@@ -50,10 +54,10 @@ const findNearestFreeDesk = (
  * A day someone else has can be picked too — it books the nearest free desk.
  */
 export const CustomBooking = () => {
-  const customBooking = useEditorStore((s) => s.customBooking)
-  const close = useEditorStore((s) => s.closeCustomBooking)
-  const objects = useEditorStore((s) => s.objects)
-  const desk = customBooking ? objects.find((o) => o.id === customBooking.id) : undefined
+  const customBooking = useEditorStore((state) => state.customBooking)
+  const close = useEditorStore((state) => state.closeCustomBooking)
+  const objects = useEditorStore((state) => state.objects)
+  const desk = customBooking ? objects.find((object) => object.id === customBooking.id) : undefined
   const isPhone = useIsMobile()
   if (!desk) return null
   return (
@@ -90,25 +94,25 @@ const CustomBookingBody = ({
   isPhone: boolean
   onClose: () => void
 }) => {
-  const objects = useEditorStore((s) => s.objects)
-  const booking = useEditorStore((s) => s.booking)
-  const applyReserve = useEditorStore((s) => s.applyReserve)
+  const objects = useEditorStore((state) => state.objects)
+  const booking = useEditorStore((state) => state.booking)
+  const applyReserve = useEditorStore((state) => state.applyReserve)
   const people = usePeople()
   const i18n = useI18n()
   const { t, tn, format } = i18n
   const { me, today, lastDay, byDay, released } = booking
 
   const weeks = useMemo(() => {
-    const desks = objects.filter((o) => isSeatable(o.type))
+    const desks = objects.filter((object) => isSeatable(object.type))
     const describe = (day: Day): Cell => {
       if (day < today) return { kind: "closed", day, label: "" }
       if (day > lastDay) return { kind: "closed", day, label: t("Not open") }
       const state = deskState(desk, day, byDay, released)
       if (state.kind !== "free" && state.email === me) return { kind: "yours", day }
       // Where you already sit that day (booking here moves you).
-      const currentDesk = desks.find((d) => {
-        const s = deskState(d, day, byDay, released)
-        return s.kind !== "free" && s.email === me
+      const currentDesk = desks.find((resident) => {
+        const status = deskState(resident, day, byDay, released)
+        return status.kind !== "free" && status.email === me
       })
       if (state.kind === "free")
         return { kind: "free", day, isWeekend: isWeekend(day), currentDesk }
@@ -119,24 +123,25 @@ const CustomBookingBody = ({
         : findNearestFreeDesk(desk, desks, day, byDay, released)
       return { kind: "taken", day, holder, alternative }
     }
-    const out: { start: Day; number: number; cells: Cell[] }[] = []
+    const generatedWeeks: { start: Day; number: number; cells: Cell[] }[] = []
     for (let start = weekStart(today); start <= lastDay; start = addDays(start, 7))
-      out.push({
+      generatedWeeks.push({
         start,
         number: weekNumber(start),
         cells: [0, 1, 2, 3, 4, 5, 6].map((i) => describe(addDays(start, i))),
       })
-    return out
+    return generatedWeeks
   }, [objects, desk, today, lastDay, byDay, released, me, people, t])
 
-  const cells = weeks.flatMap((w) => w.cells)
+  const cells = weeks.flatMap((week) => week.cells)
   // Days you can pick: free ones, and taken ones with a desk to move to.
-  const isPickable = (c: Cell) => c.kind === "free" || (c.kind === "taken" && !!c.alternative)
+  const isPickable = (cell: Cell) =>
+    cell.kind === "free" || (cell.kind === "taken" && !!cell.alternative)
   // Weekday headings and whole weeks take working days only.
-  const isWorkday = (c: Cell) => isPickable(c) && !(c.kind === "free" && c.isWeekend)
+  const isWorkday = (cell: Cell) => isPickable(cell) && !(cell.kind === "free" && cell.isWeekend)
 
   const [picked, setPicked] = useState<Set<Day>>(() => {
-    const shown = cells.find((c) => c.day === booking.day)
+    const shown = cells.find((cell) => cell.day === booking.day)
     return new Set(shown && isPickable(shown) ? [shown.day] : [])
   })
   const toggle = (day: Day) =>
@@ -150,10 +155,10 @@ const CustomBookingBody = ({
   const toggleAll = (group: Cell[]) =>
     setPicked((prev) => {
       const next = new Set(prev)
-      const isFull = group.every((c) => next.has(c.day))
-      for (const c of group) {
-        if (isFull) next.delete(c.day)
-        else next.add(c.day)
+      const isFull = group.every((cell) => next.has(cell.day))
+      for (const cell of group) {
+        if (isFull) next.delete(cell.day)
+        else next.add(cell.day)
       }
       return next
     })
@@ -162,19 +167,19 @@ const CustomBookingBody = ({
   const columns = format.weekShort().map((short, i) => ({
     short,
     every: format.everyWeekday(addDays(weekStart(today), i)),
-    days: i < 5 ? weeks.map((w) => w.cells[i]).filter(isWorkday) : [],
+    days: i < 5 ? weeks.map((week) => week.cells[i]).filter(isWorkday) : [],
   }))
-  const pickedCells = cells.filter((c) => picked.has(c.day))
+  const pickedCells = cells.filter((cell) => picked.has(cell.day))
 
   const reserve = () => {
     if (!me) return
     const byDesk = new Map<string, Day[]>()
-    for (const c of pickedCells) {
-      const deskId = c.kind === "taken" ? c.alternative?.id : desk.id
-      if (deskId) byDesk.set(deskId, [...(byDesk.get(deskId) ?? []), c.day])
+    for (const cell of pickedCells) {
+      const deskId = cell.kind === "taken" ? cell.alternative?.id : desk.id
+      if (deskId) byDesk.set(deskId, [...(byDesk.get(deskId) ?? []), cell.day])
     }
     const picks: DeskDays[] = [...byDesk].map(([deskId, dates]) => ({ deskId, dates }))
-    for (const p of picks) applyReserve(p.deskId, me, p.dates)
+    for (const pick of picks) applyReserve(pick.deskId, me, pick.dates)
     booking.reserve(picks)
     onClose()
   }
@@ -189,7 +194,7 @@ const CustomBookingBody = ({
         desk={desk}
         lastDay={lastDay}
         weeks={weeks}
-        columns={columns.filter((c) => c.days.length)}
+        columns={columns.filter((column) => column.days.length)}
         picked={picked}
         isPickable={isPickable}
         isWorkday={isWorkday}
@@ -232,17 +237,18 @@ const CustomBookingBody = ({
           <div className="flex flex-col gap-1.5">
             <div className={GRID}>
               <span />
-              {columns.map((c) => {
-                const isFull = c.days.length > 0 && c.days.every((d) => picked.has(d.day))
-                const tip = isFull
-                  ? t("Clear {every}", { every: lowerFirst(c.every) })
-                  : t("Pick {every}", { every: lowerFirst(c.every) })
-                return c.days.length ? (
-                  <WithTooltip key={c.short} tip={tip}>
+              {columns.map((column) => {
+                const isFull =
+                  column.days.length > 0 && column.days.every((cell) => picked.has(cell.day))
+                const tooltip = isFull
+                  ? t("Clear {every}", { every: lowerFirst(column.every) })
+                  : t("Pick {every}", { every: lowerFirst(column.every) })
+                return column.days.length ? (
+                  <WithTooltip key={column.short} tip={tooltip}>
                     <button
                       type="button"
-                      aria-label={tip}
-                      onClick={() => toggleAll(c.days)}
+                      aria-label={tooltip}
+                      onClick={() => toggleAll(column.days)}
                       className={clsx(
                         WEEKDAY,
                         PICK_ALL,
@@ -250,33 +256,33 @@ const CustomBookingBody = ({
                         isFull ? PICK_ALL_ON : PICK_ALL_OFF
                       )}
                     >
-                      {c.short}
+                      {column.short}
                       <ArrowDown className="size-3 shrink-0" strokeWidth={2.6} />
                     </button>
                   </WithTooltip>
                 ) : (
                   <span
-                    key={c.short}
+                    key={column.short}
                     aria-hidden
                     className={clsx(WEEKDAY, "border-[1.5px] border-transparent py-1 text-muted")}
                   >
-                    {c.short}
+                    {column.short}
                   </span>
                 )
               })}
             </div>
-            {weeks.map((w) => {
-              const workdays = w.cells.filter(isWorkday)
-              const isFull = workdays.length > 0 && workdays.every((c) => picked.has(c.day))
-              const tip = isFull
-                ? t("Clear week {n}", { n: w.number })
-                : t("Pick all of week {n}", { n: w.number })
+            {weeks.map((week) => {
+              const workdays = week.cells.filter(isWorkday)
+              const isFull = workdays.length > 0 && workdays.every((cell) => picked.has(cell.day))
+              const tooltip = isFull
+                ? t("Clear week {n}", { n: week.number })
+                : t("Pick all of week {n}", { n: week.number })
               return (
-                <div key={w.start} className={GRID}>
-                  <WithTooltip tip={workdays.length ? tip : undefined}>
+                <div key={week.start} className={GRID}>
+                  <WithTooltip tip={workdays.length ? tooltip : undefined}>
                     <button
                       type="button"
-                      aria-label={tip}
+                      aria-label={tooltip}
                       disabled={!workdays.length}
                       onClick={() => toggleAll(workdays)}
                       className={clsx(
@@ -285,18 +291,18 @@ const CustomBookingBody = ({
                         isFull ? PICK_ALL_ON : PICK_ALL_OFF
                       )}
                     >
-                      {t("W{n}", { n: w.number })}
+                      {t("W{n}", { n: week.number })}
                       <ArrowRight className="size-3 shrink-0" strokeWidth={2.6} />
                     </button>
                   </WithTooltip>
-                  {w.cells.map((c) => (
+                  {week.cells.map((cell) => (
                     <DayCell
-                      key={c.day}
+                      key={cell.day}
                       i18n={i18n}
-                      cell={c}
-                      isPicked={picked.has(c.day)}
-                      isPickable={isPickable(c)}
-                      onToggle={() => toggle(c.day)}
+                      cell={cell}
+                      isPicked={picked.has(cell.day)}
+                      isPickable={isPickable(cell)}
+                      onToggle={() => toggle(cell.day)}
                     />
                   ))}
                 </div>
@@ -367,12 +373,12 @@ const FOOTER_BUTTON =
 /** Week number + Mon–Sun, square 68px days. */
 const GRID = "grid grid-cols-[40px_repeat(7,68px)] gap-1.5"
 
-const WithTooltip = ({ tip, children }: { tip?: string; children: ReactNode }) =>
-  tip ? (
+const WithTooltip = ({ tip: tooltip, children }: { tip?: string; children: ReactNode }) =>
+  tooltip ? (
     <Tooltip delay={300}>
       {children}
       <Tooltip.Content className="max-w-56 rounded-lg bg-foreground px-2.5 py-1.5 text-xs font-semibold text-background shadow-overlay">
-        {tip}
+        {tooltip}
       </Tooltip.Content>
     </Tooltip>
   ) : (
@@ -386,20 +392,20 @@ const getDayLook = (i18n: Translator, cell: Cell, isPicked: boolean) => {
   const isMove = cell.kind === "free" && !!cell.currentDesk
   const isElsewhere = cell.kind === "taken" && isPicked
   let label: string
-  let tip: string | undefined
+  let tooltip: string | undefined
   let tone: string
   if (cell.kind === "closed") {
     label = cell.label
     tone = "border-transparent text-muted/60"
   } else if (cell.kind === "yours") {
     label = t("Yours")
-    tip = t("You already have this desk {when}.", { when })
+    tooltip = t("You already have this desk {when}.", { when })
     tone = "border-dashed border-accent bg-accent/8 text-accent"
   } else if (cell.kind === "taken") {
     const alternative = cell.alternative ? deskName(i18n, cell.alternative) : undefined
     const holder = cell.holder
     label = isPicked && alternative ? alternative : holder
-    tip = !alternative
+    tooltip = !alternative
       ? t("{holder} has this desk {when}.", { holder, when })
       : isPicked
         ? t(
@@ -418,7 +424,7 @@ const getDayLook = (i18n: Translator, cell: Cell, isPicked: boolean) => {
     // Plain days need no words: the colour (and a check when picked) says it.
     label = isPicked ? (isMove ? t("Moves you") : "") : (current ?? "")
     if (current)
-      tip = isPicked
+      tooltip = isPicked
         ? t("You sit at {desk} {when}. Booking moves you here.", { desk: current, when })
         : t("You sit at {desk} {when}. Picking it moves you here.", { desk: current, when })
     tone = isPicked
@@ -434,7 +440,7 @@ const getDayLook = (i18n: Translator, cell: Cell, isPicked: boolean) => {
       /, $/,
       ""
     )
-  return { label, tip, tone, aria, isMove, isElsewhere }
+  return { label, tip: tooltip, tone, aria, isMove, isElsewhere }
 }
 
 /** The small icon in a day's corner: picked, moves you, or another desk. */
@@ -469,10 +475,10 @@ const DayCell = ({
   const date = Number(cell.day.slice(8, 10))
   // "1 Nov" on the first of a month.
   const number = date === 1 ? i18n.format.dayMonth(cell.day) : String(date)
-  const { label, tip, tone, aria } = getDayLook(i18n, cell, isPicked)
+  const { label, tip: tooltip, tone, aria } = getDayLook(i18n, cell, isPicked)
 
   return (
-    <WithTooltip tip={tip}>
+    <WithTooltip tip={tooltip}>
       <button
         type="button"
         aria-pressed={isPickable ? isPicked : undefined}
@@ -531,8 +537,8 @@ const PhoneLayout = ({
   weeks: Week[]
   columns: { short: string; every: string; days: Cell[] }[]
   picked: Set<Day>
-  isPickable: (c: Cell) => boolean
-  isWorkday: (c: Cell) => boolean
+  isPickable: (cell: Cell) => boolean
+  isWorkday: (cell: Cell) => boolean
   onToggle: (day: Day) => void
   onToggleAll: (group: Cell[]) => void
   onClear: () => void
@@ -541,7 +547,8 @@ const PhoneLayout = ({
   isPending: boolean
   onClose: () => void
 }) => {
-  const isAllPicked = (group: Cell[]) => group.length > 0 && group.every((c) => picked.has(c.day))
+  const isAllPicked = (group: Cell[]) =>
+    group.length > 0 && group.every((cell) => picked.has(cell.day))
   const { t, format } = i18n
   return (
     <>
@@ -569,42 +576,42 @@ const PhoneLayout = ({
         <span className="mr-0.5 shrink-0 text-[11px] font-extrabold uppercase tracking-[0.08em] text-muted">
           {t("Every")}
         </span>
-        {columns.map((c) => {
-          const isOn = isAllPicked(c.days)
+        {columns.map((column) => {
+          const isOn = isAllPicked(column.days)
           return (
             <button
-              key={c.short}
+              key={column.short}
               type="button"
               aria-pressed={isOn}
-              aria-label={c.every}
-              onClick={() => onToggleAll(c.days)}
+              aria-label={column.every}
+              onClick={() => onToggleAll(column.days)}
               className={clsx(
                 PICK_ALL,
                 "h-9 shrink-0 rounded-full px-3.5 text-[13px] font-extrabold",
                 isOn ? PICK_ALL_ON : PICK_ALL_OFF
               )}
             >
-              {c.short}
+              {column.short}
             </button>
           )
         })}
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-[18px] overflow-y-auto px-4 py-3.5">
-        {weeks.map((w) => {
-          const workdays = w.cells.filter(isWorkday)
+        {weeks.map((week) => {
+          const workdays = week.cells.filter(isWorkday)
           const isOn = isAllPicked(workdays)
-          const first = w.cells[0].day
-          const last = w.cells[6].day
+          const first = week.cells[0].day
+          const last = week.cells[6].day
           return (
             <section
-              key={w.start}
-              aria-label={t("Week {n}", { n: w.number })}
+              key={week.start}
+              aria-label={t("Week {n}", { n: week.number })}
               className="flex flex-col gap-2"
             >
               <div className="flex items-center justify-between gap-2">
                 <p className="truncate text-sm font-extrabold">
-                  {t("W{n}", { n: w.number })}{" "}
+                  {t("W{n}", { n: week.number })}{" "}
                   <span className="font-semibold text-muted">
                     · {format.dayMonth(first)} – {format.dayMonth(last)}
                   </span>
@@ -625,16 +632,16 @@ const PhoneLayout = ({
                 )}
               </div>
               <div className="grid grid-cols-[repeat(5,minmax(0,1fr))_30px_30px] gap-[5px]">
-                {w.cells.map((c, i) => (
+                {week.cells.map((cell, i) => (
                   <PhoneDayCell
-                    key={c.day}
+                    key={cell.day}
                     i18n={i18n}
-                    cell={c}
+                    cell={cell}
                     weekday={format.weekShort()[i]}
                     isNarrow={i >= 5}
-                    isPicked={picked.has(c.day)}
-                    isPickable={isPickable(c)}
-                    onToggle={() => onToggle(c.day)}
+                    isPicked={picked.has(cell.day)}
+                    isPickable={isPickable(cell)}
+                    onToggle={() => onToggle(cell.day)}
                   />
                 ))}
               </div>

@@ -93,7 +93,8 @@ export const MODELS: ModelDef[] = ANIMALS.map((name) => ({
 /** A pet's picture for 2D UI (the settings picker): rendered from its GLB. */
 export const petThumb = (id: string) => `${import.meta.env.BASE_URL}pets/${id}.png`
 
-export const modelById = (id: string): ModelDef | undefined => MODELS.find((m) => m.id === id)
+export const modelById = (id: string): ModelDef | undefined =>
+  MODELS.find((model) => model.id === id)
 
 /** A random model id (used when placing a deskmate). */
 export const randomModelId = (): string => MODELS[Math.floor(Math.random() * MODELS.length)].id
@@ -106,7 +107,7 @@ export const randomModelId = (): string => MODELS[Math.floor(Math.random() * MOD
 export const petFor = (email: string, chosen?: string): ModelDef => {
   const own = chosen ? modelById(chosen) : undefined
   if (own) return own
-  let h = 0
-  for (let i = 0; i < email.length; i++) h = (h * 31 + email.charCodeAt(i)) >>> 0
-  return MODELS[h % MODELS.length]
+  let hash = 0
+  for (let i = 0; i < email.length; i++) hash = (hash * 31 + email.charCodeAt(i)) >>> 0
+  return MODELS[hash % MODELS.length]
 }

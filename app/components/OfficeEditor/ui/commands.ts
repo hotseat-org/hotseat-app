@@ -37,8 +37,8 @@ export interface Command {
   group: string
   icon: LucideIcon
   shortcut?: string
-  isAvailable: (s: EditorState) => boolean
-  run: (s: EditorState) => void
+  isAvailable: (state: EditorState) => boolean
+  run: (state: EditorState) => void
 }
 
 const GROUP = {
@@ -50,16 +50,17 @@ const GROUP = {
 }
 
 const always = () => true
-const isFurniture = (o: SceneObject) => !isEdgeType(o.type) && !isMarker(o.type)
-const selectedFurniture = (s: EditorState) =>
-  s.objects.filter((o) => s.selection.includes(o.id) && isFurniture(o))
-const hasSelection = (s: EditorState) => selectedFurniture(s).length > 0
-const primaryOf = (s: EditorState) => s.objects.find((o) => o.id === s.selectedId)
+const isFurniture = (object: SceneObject) => !isEdgeType(object.type) && !isMarker(object.type)
+const selectedFurniture = (state: EditorState) =>
+  state.objects.filter((object) => state.selection.includes(object.id) && isFurniture(object))
+const hasSelection = (state: EditorState) => selectedFurniture(state).length > 0
+const primaryOf = (state: EditorState) =>
+  state.objects.find((object) => object.id === state.selectedId)
 
 /** Select these (and switch to Select, so the selection shows and can be moved). */
-const selectAll = (s: EditorState, ids: string[]) => {
-  s.setTool("select")
-  s.selectMany(ids)
+const selectAll = (state: EditorState, ids: string[]) => {
+  state.setTool("select")
+  state.selectMany(ids)
 }
 
 export const SELECTION_COMMANDS: Command[] = [
@@ -70,7 +71,7 @@ export const SELECTION_COMMANDS: Command[] = [
     icon: RotateCw,
     shortcut: "R",
     isAvailable: hasSelection,
-    run: (s) => s.rotateSelection(),
+    run: (state) => state.rotateSelection(),
   },
   {
     id: "duplicate",
@@ -79,7 +80,7 @@ export const SELECTION_COMMANDS: Command[] = [
     icon: Copy,
     shortcut: "⌘D",
     isAvailable: hasSelection,
-    run: (s) => s.duplicateSelection(),
+    run: (state) => state.duplicateSelection(),
   },
   {
     id: "copy",
@@ -88,19 +89,19 @@ export const SELECTION_COMMANDS: Command[] = [
     icon: Clipboard,
     shortcut: "⌘C",
     isAvailable: hasSelection,
-    run: (s) => s.copySelection(),
+    run: (state) => state.copySelection(),
   },
   {
     id: "selectSameType",
     label: msg("Select all like this"),
     group: GROUP.selection,
     icon: SquareDashedMousePointer,
-    isAvailable: (s) => !!primaryOf(s) && isFurniture(primaryOf(s)!),
-    run: (s) => {
-      const type = primaryOf(s)?.type
+    isAvailable: (state) => !!primaryOf(state) && isFurniture(primaryOf(state)!),
+    run: (state) => {
+      const type = primaryOf(state)?.type
       selectAll(
-        s,
-        s.objects.filter((o) => o.type === type).map((o) => o.id)
+        state,
+        state.objects.filter((object) => object.type === type).map((object) => object.id)
       )
     },
   },
@@ -109,13 +110,17 @@ export const SELECTION_COMMANDS: Command[] = [
     label: msg("Select everything in this room"),
     group: GROUP.selection,
     icon: SquareDashedMousePointer,
-    isAvailable: (s) => {
-      const o = primaryOf(s)
-      return !!o && isFurniture(o) && furnitureInRoomAt(s.objects, o.x, o.z).length > 0
+    isAvailable: (state) => {
+      const object = primaryOf(state)
+      return (
+        !!object &&
+        isFurniture(object) &&
+        furnitureInRoomAt(state.objects, object.x, object.z).length > 0
+      )
     },
-    run: (s) => {
-      const o = primaryOf(s)
-      if (o) selectAll(s, furnitureInRoomAt(s.objects, o.x, o.z))
+    run: (state) => {
+      const object = primaryOf(state)
+      if (object) selectAll(state, furnitureInRoomAt(state.objects, object.x, object.z))
     },
   },
   {
@@ -125,7 +130,7 @@ export const SELECTION_COMMANDS: Command[] = [
     icon: Trash2,
     shortcut: "Del",
     isAvailable: hasSelection,
-    run: (s) => s.removeSelection(),
+    run: (state) => state.removeSelection(),
   },
 ]
 
@@ -136,8 +141,8 @@ export const EDIT_COMMANDS: Command[] = [
     group: GROUP.edit,
     icon: Undo2,
     shortcut: "⌘Z",
-    isAvailable: (s) => s.past.length > 0,
-    run: (s) => s.undo(),
+    isAvailable: (state) => state.past.length > 0,
+    run: (state) => state.undo(),
   },
   {
     id: "redo",
@@ -145,8 +150,8 @@ export const EDIT_COMMANDS: Command[] = [
     group: GROUP.edit,
     icon: Redo2,
     shortcut: "⇧⌘Z",
-    isAvailable: (s) => s.future.length > 0,
-    run: (s) => s.redo(),
+    isAvailable: (state) => state.future.length > 0,
+    run: (state) => state.redo(),
   },
   {
     id: "paste",
@@ -154,19 +159,19 @@ export const EDIT_COMMANDS: Command[] = [
     group: GROUP.edit,
     icon: ClipboardPaste,
     shortcut: "⌘V",
-    isAvailable: (s) => s.clipboard.length > 0,
-    run: (s) => s.paste(),
+    isAvailable: (state) => state.clipboard.length > 0,
+    run: (state) => state.paste(),
   },
   {
     id: "selectDesks",
     label: msg("Select all desks"),
     group: GROUP.edit,
     icon: SquareDashedMousePointer,
-    isAvailable: (s) => s.objects.some((o) => isSeatable(o.type)),
-    run: (s) =>
+    isAvailable: (state) => state.objects.some((object) => isSeatable(object.type)),
+    run: (state) =>
       selectAll(
-        s,
-        s.objects.filter((o) => isSeatable(o.type)).map((o) => o.id)
+        state,
+        state.objects.filter((object) => isSeatable(object.type)).map((object) => object.id)
       ),
   },
   {
@@ -174,11 +179,11 @@ export const EDIT_COMMANDS: Command[] = [
     label: msg("Select all furniture"),
     group: GROUP.edit,
     icon: SquareDashedMousePointer,
-    isAvailable: (s) => s.objects.some(isFurniture),
-    run: (s) =>
+    isAvailable: (state) => state.objects.some(isFurniture),
+    run: (state) =>
       selectAll(
-        s,
-        s.objects.filter(isFurniture).map((o) => o.id)
+        state,
+        state.objects.filter(isFurniture).map((object) => object.id)
       ),
   },
   {
@@ -186,16 +191,17 @@ export const EDIT_COMMANDS: Command[] = [
     label: msg("Number the unnumbered desks"),
     group: GROUP.edit,
     icon: Hash,
-    isAvailable: (s) => s.objects.some((o) => isSeatable(o.type) && !o.label),
-    run: (s) => s.numberDesks(),
+    isAvailable: (state) =>
+      state.objects.some((object) => isSeatable(object.type) && !object.label),
+    run: (state) => state.numberDesks(),
   },
   {
     id: "numberDesksByZone",
     label: msg("Number desks by zone"),
     group: GROUP.edit,
     icon: Hash,
-    isAvailable: (s) => getZones(s.objects).length > 0,
-    run: (s) => s.numberDesksByZone(),
+    isAvailable: (state) => getZones(state.objects).length > 0,
+    run: (state) => state.numberDesksByZone(),
   },
 ]
 
@@ -207,7 +213,7 @@ export const VIEW_COMMANDS: Command[] = [
     icon: Maximize,
     shortcut: "F",
     isAvailable: always,
-    run: (s) => s.requestFit(),
+    run: (state) => state.requestFit(),
   },
   {
     id: "measureHints",
@@ -216,20 +222,23 @@ export const VIEW_COMMANDS: Command[] = [
     icon: Ruler,
     shortcut: "M",
     isAvailable: always,
-    run: (s) => s.toggleMeasureHints(),
+    run: (state) => state.toggleMeasureHints(),
   },
   {
     id: "tour",
     label: msg("Show the tour"),
     group: GROUP.view,
     icon: GraduationCap,
-    isAvailable: (s) => !s.isTourOpen,
-    run: (s) => s.setTourOpen(true),
+    isAvailable: (state) => !state.isTourOpen,
+    run: (state) => state.setTourOpen(true),
   },
 ]
 
-const isArmedRepeatable = (s: EditorState) =>
-  s.tool !== "select" && s.tool !== "delete" && s.tool !== "paint" && isRepeatable(s.tool)
+const isArmedRepeatable = (state: EditorState) =>
+  state.tool !== "select" &&
+  state.tool !== "delete" &&
+  state.tool !== "paint" &&
+  isRepeatable(state.tool)
 
 const PATTERN_COMMANDS: Command[] = (
   [
@@ -242,8 +251,8 @@ const PATTERN_COMMANDS: Command[] = (
   label,
   group: GROUP.tools,
   icon,
-  isAvailable: (s) => isArmedRepeatable(s) && s.placementPattern !== pattern,
-  run: (s) => s.setPlacementPattern(pattern),
+  isAvailable: (state) => isArmedRepeatable(state) && state.placementPattern !== pattern,
+  run: (state) => state.setPlacementPattern(pattern),
 }))
 
 const TOOL_COMMANDS: Command[] = [
@@ -255,8 +264,8 @@ const TOOL_COMMANDS: Command[] = [
       group: GROUP.tools,
       icon: meta.icon,
       shortcut: meta.key || undefined,
-      isAvailable: (s: EditorState) => s.tool !== tool,
-      run: (s: EditorState) => s.setTool(tool),
+      isAvailable: (state: EditorState) => state.tool !== tool,
+      run: (state: EditorState) => state.setTool(tool),
     }
   }),
   {
@@ -264,8 +273,8 @@ const TOOL_COMMANDS: Command[] = [
     label: msg("Paint"),
     group: GROUP.tools,
     icon: PaintBucket,
-    isAvailable: (s) => s.tool !== "paint",
-    run: (s) => s.setTool("paint"),
+    isAvailable: (state) => state.tool !== "paint",
+    run: (state) => state.setTool("paint"),
   },
   ...PATTERN_COMMANDS,
 ]
@@ -280,8 +289,8 @@ const PLACE_COMMANDS: Command[] = CATEGORIES.flatMap((category) =>
       group: GROUP.place,
       icon: meta.icon,
       shortcut: meta.key || undefined,
-      isAvailable: (s: EditorState) => s.tool !== type,
-      run: (s: EditorState) => s.setTool(type),
+      isAvailable: (state: EditorState) => state.tool !== type,
+      run: (state: EditorState) => state.setTool(type),
     }
   })
 )
@@ -323,7 +332,7 @@ export const scoreMatch = (label: string, query: string): number => {
   const labelWords = text.split(/[\s/()·-]+/)
   let score = 0
   for (const word of words) {
-    if (labelWords.some((w) => w.startsWith(word))) score += 2
+    if (labelWords.some((labelWord) => labelWord.startsWith(word))) score += 2
     else if (text.includes(word)) score += 1
     else return 0
   }

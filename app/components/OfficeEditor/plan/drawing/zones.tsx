@@ -14,19 +14,19 @@ export interface ZonesInput {
 /** Team zones (the Zones layer): a tint on their floor, and a line just inside their edge. */
 export const drawZones = ({ areas, isDark, clipId }: ZonesInput) =>
   areas.map(({ zone, cells }, i) => {
-    const d = composeZoneOutline(cells)
+    const path = composeZoneOutline(cells)
     const zoneClipId = `${clipId}-${i}`
     // The light floor washes a pale tint out: a deeper shade there.
     const color = isDark ? zone.color : shade(zone.color, 0.65)
     return (
       <g key={zone.name}>
         <clipPath id={zoneClipId}>
-          <path d={d} />
+          <path d={path} />
         </clipPath>
-        <path d={d} fill={color} fillOpacity={isDark ? 0.1 : 0.16} />
+        <path d={path} fill={color} fillOpacity={isDark ? 0.1 : 0.16} />
         {/* A line just inside its edge (clipped), so zones that meet keep apart. */}
         <path
-          d={d}
+          d={path}
           fill="none"
           stroke={color}
           strokeOpacity={isDark ? 0.55 : 0.85}

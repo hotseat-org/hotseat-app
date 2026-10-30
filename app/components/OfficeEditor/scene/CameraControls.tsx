@@ -27,7 +27,7 @@ const FLASH_DURATION = 350
 
 /** Lets Scene start a pan from a press on bare floor (see the drag effect below). */
 export interface FloorPan {
-  start: (e: PointerEvent) => void
+  start: (event: PointerEvent) => void
   /** Whether the latest drag panned — still true in its pointerup handlers. */
   hasMoved: () => boolean
 }
@@ -62,10 +62,10 @@ export const CameraControls = ({
   isHintShown = true,
   readOnly = false,
 }: Props) => {
-  const camera = useThree((s) => s.camera) as OrthographicCamera
-  const controls = useThree((s) => s.controls) as OrbitControlsImpl | null
-  const gl = useThree((s) => s.gl)
-  const invalidate = useThree((s) => s.invalidate)
+  const camera = useThree((state) => state.camera) as OrthographicCamera
+  const controls = useThree((state) => state.controls) as OrbitControlsImpl | null
+  const renderer = useThree((state) => state.gl)
+  const invalidate = useThree((state) => state.invalidate)
   const keys = useRef<Set<string>>(new Set())
 
   const forward = useRef(new Vector3())
@@ -84,9 +84,9 @@ export const CameraControls = ({
   const applyCursor = () => {
     const { base, isHintShown, hints, held, flash } = cursorState.current
     const heldGestures = Object.values(held)
-    const gesture = GESTURES.find((g) => heldGestures.includes(g)) ?? flash
+    const gesture = GESTURES.find((candidate) => heldGestures.includes(candidate)) ?? flash
     const hint = isHintShown ? hints.values().next().value : undefined
-    gl.domElement.style.cursor = gesture ? CURSORS[gesture] : hint ? CURSORS[hint] : base
+    renderer.domElement.style.cursor = gesture ? CURSORS[gesture] : hint ? CURSORS[hint] : base
   }
   const setHeldGesture = (source: GestureSource, gesture: Gesture | null) => {
     const { held } = cursorState.current
@@ -126,13 +126,13 @@ export const CameraControls = ({
     }
   }, [setCursorHint])
   useEffect(() => {
-    const el = gl.domElement
+    const element = renderer.domElement
     const state = cursorState.current
     return () => {
       window.clearTimeout(state.flashTimer)
-      el.style.cursor = ""
+      element.style.cursor = ""
     }
-  }, [gl])
+  }, [renderer])
 
   // --- Camera moves ---------------------------------------------------------
   /** Camera forward/right, flattened onto the ground. False when looking straight down. */
@@ -146,16 +146,17 @@ export const CameraControls = ({
   }
 
   /** Pans so the ground follows the pointer: (dx, dy) screen px, + = right / down. */
-  const panByPixels = (dx: number, dy: number) => {
+  const panByPixels = (deltaX: number, deltaY: number) => {
     if (!controls || !setGroundAxes()) return
-    const worldPerPixel = (camera.top - camera.bottom) / camera.zoom / gl.domElement.clientHeight
+    const worldPerPixel =
+      (camera.top - camera.bottom) / camera.zoom / renderer.domElement.clientHeight
     // Ground depth is foreshortened on screen by the camera's tilt.
     const screenUp = new Vector3().setFromMatrixColumn(camera.matrixWorld, 1)
     const tilt = Math.max(0.2, forward.current.dot(screenUp))
     move.current
       .copy(right.current)
-      .multiplyScalar(dx * worldPerPixel)
-      .addScaledVector(forward.current, (-dy * worldPerPixel) / tilt)
+      .multiplyScalar(deltaX * worldPerPixel)
+      .addScaledVector(forward.current, (-deltaY * worldPerPixel) / tilt)
     camera.position.add(move.current)
     controls.target.add(move.current)
     invalidate()
@@ -170,7 +171,7 @@ export const CameraControls = ({
     camera.updateProjectionMatrix()
     const applied = camera.zoom / prevZoom
     if (x !== undefined && y !== undefined) {
-      const { clientWidth, clientHeight } = gl.domElement
+      const { clientWidth, clientHeight } = renderer.domElement
       panByPixels((x - clientWidth / 2) * (applied - 1), (y - clientHeight / 2) * (applied - 1))
     }
     invalidate()
@@ -196,20 +197,20 @@ export const CameraControls = ({
         "keys",
         keys.current.has("q") || keys.current.has("e") ? "orbit" : null
       )
-    const down = (e: KeyboardEvent) => {
+    const down = (event: KeyboardEvent) => {
       // Not while typing, and not with modifiers: on macOS the keyup of a key
       // released while ⌘ is held never fires, so ⌘+A/⌘+S would pan forever.
-      if (isTypingTarget(e.target) || e.metaKey || e.ctrlKey || e.altKey) return
-      const zoomFactor = ZOOM_KEYS[e.key]
+      if (isTypingTarget(event.target) || event.metaKey || event.ctrlKey || event.altKey) return
+      const zoomFactor = ZOOM_KEYS[event.key]
       if (zoomFactor) return actions.current.zoomAt(zoomFactor)
-      const k = e.key.toLowerCase()
-      if (!PAN_KEYS[k] && !ORBIT_KEYS[k]) return
-      keys.current.add(k)
+      const key = event.key.toLowerCase()
+      if (!PAN_KEYS[key] && !ORBIT_KEYS[key]) return
+      keys.current.add(key)
       setOrbitCursor()
       invalidate() // frameloop="demand": start the render loop for the move
     }
-    const up = (e: KeyboardEvent) => {
-      keys.current.delete(e.key.toLowerCase())
+    const up = (event: KeyboardEvent) => {
+      keys.current.delete(event.key.toLowerCase())
       setOrbitCursor()
     }
     const clear = () => {
@@ -230,60 +231,66 @@ export const CameraControls = ({
   // event). Capturing runs first on the canvas, so the event can be stopped
   // before OrbitControls' listener — whose touch pinch-zoom stays on.
   useEffect(() => {
-    const el = gl.domElement
+    const element = renderer.domElement
     const readWheel = createWheelReader()
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault()
-      e.stopImmediatePropagation()
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault()
+      event.stopImmediatePropagation()
       const { zoomAt, orbit, flashGesture } = actions.current
-      const intent = readWheel(e)
+      const intent = readWheel(event)
       if (intent === "rotate") {
         flashGesture("orbit")
-        return orbit((e.deltaX || e.deltaY) * SCROLL_ORBIT)
+        return orbit((event.deltaX || event.deltaY) * SCROLL_ORBIT)
       }
       // A purely sideways scroll has nothing to zoom by.
-      if (e.deltaY === 0) return
+      if (event.deltaY === 0) return
       const factor =
-        intent === "smoothZoom" ? getSmoothZoomFactor(e.deltaY) : getStepZoomFactor(e.deltaY)
-      zoomAt(factor, e.offsetX, e.offsetY)
+        intent === "smoothZoom"
+          ? getSmoothZoomFactor(event.deltaY)
+          : getStepZoomFactor(event.deltaY)
+      zoomAt(factor, event.offsetX, event.offsetY)
     }
-    el.addEventListener("wheel", onWheel, { capture: true, passive: false })
-    return () => el.removeEventListener("wheel", onWheel, { capture: true })
-  }, [gl])
+    element.addEventListener("wheel", onWheel, { capture: true, passive: false })
+    return () => element.removeEventListener("wheel", onWheel, { capture: true })
+  }, [renderer])
 
   // OrbitControls' own drags, for the cursor only: right-drag orbits (with
   // Shift/⌘/Ctrl it pans), middle-drag pans, and in display mode so does a
   // left-drag — once it moves, so a click on a desk stays a plain click.
   useEffect(() => {
-    const el = gl.domElement
+    const element = renderer.domElement
     let leftStart: { x: number; y: number } | null = null
-    const onPointerDown = (e: PointerEvent) => {
+    const onPointerDown = (event: PointerEvent) => {
       const { setHeldGesture } = actions.current
-      if (e.button === 2) {
-        setHeldGesture("button", e.shiftKey || e.ctrlKey || e.metaKey ? "panning" : "orbit")
-      } else if (e.button === 1) setHeldGesture("button", "panning")
-      else if (e.button === 0 && readOnly) leftStart = { x: e.clientX, y: e.clientY }
+      if (event.button === 2) {
+        setHeldGesture(
+          "button",
+          event.shiftKey || event.ctrlKey || event.metaKey ? "panning" : "orbit"
+        )
+      } else if (event.button === 1) setHeldGesture("button", "panning")
+      else if (event.button === 0 && readOnly) leftStart = { x: event.clientX, y: event.clientY }
     }
-    const onPointerMove = (e: PointerEvent) => {
+    const onPointerMove = (event: PointerEvent) => {
       if (!leftStart) return
-      if (Math.hypot(e.clientX - leftStart.x, e.clientY - leftStart.y) <= DRAG_THRESHOLD) return
+      if (Math.hypot(event.clientX - leftStart.x, event.clientY - leftStart.y) <= DRAG_THRESHOLD)
+        return
       actions.current.setHeldGesture("button", "panning")
     }
     const onPointerUp = () => {
       leftStart = null
       actions.current.setHeldGesture("button", null)
     }
-    el.addEventListener("pointerdown", onPointerDown)
+    element.addEventListener("pointerdown", onPointerDown)
     window.addEventListener("pointermove", onPointerMove)
     window.addEventListener("pointerup", onPointerUp)
     window.addEventListener("blur", onPointerUp)
     return () => {
-      el.removeEventListener("pointerdown", onPointerDown)
+      element.removeEventListener("pointerdown", onPointerDown)
       window.removeEventListener("pointermove", onPointerMove)
       window.removeEventListener("pointerup", onPointerUp)
       window.removeEventListener("blur", onPointerUp)
     }
-  }, [gl, readOnly])
+  }, [renderer, readOnly])
 
   // Left-drag panning, two ways in:
   // - Space + drag: caught on the window before the canvas sees it, so the
@@ -292,7 +299,7 @@ export const CameraControls = ({
   //   furniture tools). That press still reaches the tools; the drag only pans
   //   once it travels past DRAG_THRESHOLD, and `hasMoved` tells a click from a pan.
   useEffect(() => {
-    const el = gl.domElement
+    const element = renderer.domElement
     let isSpaceHeld = false
     let drag: { x: number; y: number; startX: number; startY: number; isSpace: boolean } | null =
       null
@@ -302,21 +309,27 @@ export const CameraControls = ({
       setHeldGesture("space", isSpaceHeld ? "pan" : null)
       setHeldGesture("drag", drag && hasMoved ? "panning" : null)
     }
-    const startDrag = (e: PointerEvent, isSpace: boolean) => {
-      drag = { x: e.clientX, y: e.clientY, startX: e.clientX, startY: e.clientY, isSpace }
+    const startDrag = (event: PointerEvent, isSpace: boolean) => {
+      drag = {
+        x: event.clientX,
+        y: event.clientY,
+        startX: event.clientX,
+        startY: event.clientY,
+        isSpace,
+      }
       hasMoved = isSpace
       setDragCursor()
     }
 
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.code !== "Space" || isTypingTarget(e.target)) return
-      e.preventDefault() // no page scroll, no pressing a focused button
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.code !== "Space" || isTypingTarget(event.target)) return
+      event.preventDefault() // no page scroll, no pressing a focused button
       isSpaceHeld = true
       setDragCursor()
     }
-    const onKeyUp = (e: KeyboardEvent) => {
-      if (e.code !== "Space") return
-      if (!isTypingTarget(e.target)) e.preventDefault()
+    const onKeyUp = (event: KeyboardEvent) => {
+      if (event.code !== "Space") return
+      if (!isTypingTarget(event.target)) event.preventDefault()
       isSpaceHeld = false
       setDragCursor()
     }
@@ -325,33 +338,34 @@ export const CameraControls = ({
       drag = null
       setDragCursor()
     }
-    const onPointerDown = (e: PointerEvent) => {
-      if (!isSpaceHeld || e.button !== 0 || e.target !== el) return
-      e.stopPropagation()
-      e.preventDefault()
-      startDrag(e, true)
+    const onPointerDown = (event: PointerEvent) => {
+      if (!isSpaceHeld || event.button !== 0 || event.target !== element) return
+      event.stopPropagation()
+      event.preventDefault()
+      startDrag(event, true)
     }
-    const onPointerMove = (e: PointerEvent) => {
+    const onPointerMove = (event: PointerEvent) => {
       if (!drag) return
       if (!hasMoved) {
-        if (Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY) <= DRAG_THRESHOLD) return
+        if (Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) <= DRAG_THRESHOLD)
+          return
         hasMoved = true
         setDragCursor()
       }
-      actions.current.panByPixels(drag.x - e.clientX, drag.y - e.clientY)
-      drag.x = e.clientX
-      drag.y = e.clientY
+      actions.current.panByPixels(drag.x - event.clientX, drag.y - event.clientY)
+      drag.x = event.clientX
+      drag.y = event.clientY
     }
-    const onPointerUp = (e: PointerEvent) => {
-      if (!drag || e.button !== 0) return
-      if (drag.isSpace) e.stopPropagation()
+    const onPointerUp = (event: PointerEvent) => {
+      if (!drag || event.button !== 0) return
+      if (drag.isSpace) event.stopPropagation()
       drag = null
       setDragCursor()
     }
 
     if (floorPan) {
       floorPan.current = {
-        start: (e) => startDrag(e, false),
+        start: (event) => startDrag(event, false),
         hasMoved: () => hasMoved,
       }
     }
@@ -370,13 +384,13 @@ export const CameraControls = ({
       window.removeEventListener("pointermove", onPointerMove)
       window.removeEventListener("pointerup", onPointerUp, { capture: true })
     }
-  }, [gl, floorPan])
+  }, [renderer, floorPan])
 
-  useFrame((_, dt) => {
+  useFrame((_, delta) => {
     if (!controls || keys.current.size === 0) return
 
     const turn = (keys.current.has("e") ? 1 : 0) - (keys.current.has("q") ? 1 : 0)
-    if (turn) orbit(turn * ORBIT_SPEED * dt)
+    if (turn) orbit(turn * ORBIT_SPEED * delta)
 
     if (!setGroundAxes()) return
     move.current.set(0, 0, 0)
@@ -385,7 +399,7 @@ export const CameraControls = ({
     if (keys.current.has("d")) move.current.add(right.current)
     if (keys.current.has("a")) move.current.sub(right.current)
     if (move.current.lengthSq() > 0) {
-      const speed = (420 / camera.zoom) * dt
+      const speed = (420 / camera.zoom) * delta
       move.current.normalize().multiplyScalar(speed)
       camera.position.add(move.current)
       controls.target.add(move.current)

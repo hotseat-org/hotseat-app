@@ -34,8 +34,8 @@ export const enclosedCells = (objects: SceneObject[]): FloorCell[] =>
  * can close a room as well as one on the square's sides.
  */
 export const enclosedRegions = (objects: SceneObject[]): FloorCell[][] => {
-  const blockedH = new Set<string>() // `i,j` blocks cells (i,j-1) ↔ (i,j)
-  const blockedV = new Set<string>() // `i,j` blocks cells (i-1,j) ↔ (i,j)
+  const blockedAlongX = new Set<string>() // `i,j` blocks cells (i,j-1) ↔ (i,j)
+  const blockedAlongZ = new Set<string>() // `i,j` blocks cells (i-1,j) ↔ (i,j)
   const diagonals = new Map<string, number>() // cell `i,j` → 1 rising, 2 falling (bits)
   let minI = Infinity
   let maxI = -Infinity
@@ -48,27 +48,27 @@ export const enclosedRegions = (objects: SceneObject[]): FloorCell[][] => {
     if (j > maxJ) maxJ = j
   }
 
-  for (const o of objects) {
-    if (!getEdge(o.type)?.encloses) continue
-    for (const e of unitEdges(o)) {
-      const direction = edgeDirection(e.rotation)
+  for (const object of objects) {
+    if (!getEdge(object.type)?.encloses) continue
+    for (const edge of unitEdges(object)) {
+      const direction = edgeDirection(edge.rotation)
       if (direction === "x") {
-        const i = Math.round((e.x - SEG / 2) / SEG)
-        const j = Math.round(e.z / SEG)
-        blockedH.add(`${i},${j}`)
+        const i = Math.round((edge.x - SEG / 2) / SEG)
+        const j = Math.round(edge.z / SEG)
+        blockedAlongX.add(`${i},${j}`)
         touch(i, j - 1)
         touch(i, j)
       } else if (direction === "z") {
-        const i = Math.round(e.x / SEG)
-        const j = Math.round((e.z - SEG / 2) / SEG)
-        blockedV.add(`${i},${j}`)
+        const i = Math.round(edge.x / SEG)
+        const j = Math.round((edge.z - SEG / 2) / SEG)
+        blockedAlongZ.add(`${i},${j}`)
         touch(i - 1, j)
         touch(i, j)
       } else {
-        const i = Math.floor(e.x / SEG)
-        const j = Math.floor(e.z / SEG)
-        const k = `${i},${j}`
-        diagonals.set(k, (diagonals.get(k) ?? 0) | (direction === "rising" ? 1 : 2))
+        const i = Math.floor(edge.x / SEG)
+        const j = Math.floor(edge.z / SEG)
+        const key = `${i},${j}`
+        diagonals.set(key, (diagonals.get(key) ?? 0) | (direction === "rising" ? 1 : 2))
         touch(i, j)
       }
     }
@@ -80,39 +80,40 @@ export const enclosedRegions = (objects: SceneObject[]): FloorCell[][] => {
   const loJ = minJ - 1
   const width = maxI - minI + 3
   const height = maxJ - minJ + 3
-  const S = 0
-  const E = 1
-  const N = 2
-  const W = 3
-  const index = (i: number, j: number, t: number) => ((i - loI) * height + (j - loJ)) * 4 + t
+  const SOUTH = 0
+  const EAST = 1
+  const NORTH = 2
+  const WEST = 3
+  const index = (i: number, j: number, triangle: number) =>
+    ((i - loI) * height + (j - loJ)) * 4 + triangle
   const inGrid = (i: number, j: number) =>
     i >= loI && i < loI + width && j >= loJ && j < loJ + height
 
   /** Triangles a triangle opens onto: its cell's two neighbours, and across the cell side. */
-  const neighbours = (i: number, j: number, t: number, out: [number, number, number][]) => {
+  const neighbours = (i: number, j: number, triangle: number, out: [number, number, number][]) => {
     out.length = 0
-    const d = diagonals.get(`${i},${j}`) ?? 0
-    const isRising = (d & 1) !== 0 // SW–NE: parts S|W and N|E
-    const isFalling = (d & 2) !== 0 // NW–SE: parts N|W and S|E
-    const inner = (u: number, blocked: boolean) => {
-      if (!blocked) out.push([i, j, u])
+    const diagonalBits = diagonals.get(`${i},${j}`) ?? 0
+    const isRising = (diagonalBits & 1) !== 0 // SW–NE: parts S|W and N|E
+    const isFalling = (diagonalBits & 2) !== 0 // NW–SE: parts N|W and S|E
+    const inner = (target: number, blocked: boolean) => {
+      if (!blocked) out.push([i, j, target])
     }
-    if (t === S) {
-      inner(E, isFalling)
-      inner(W, isRising)
-      if (!blockedH.has(`${i},${j}`)) out.push([i, j - 1, N])
-    } else if (t === E) {
-      inner(S, isFalling)
-      inner(N, isRising)
-      if (!blockedV.has(`${i + 1},${j}`)) out.push([i + 1, j, W])
-    } else if (t === N) {
-      inner(E, isRising)
-      inner(W, isFalling)
-      if (!blockedH.has(`${i},${j + 1}`)) out.push([i, j + 1, S])
+    if (triangle === SOUTH) {
+      inner(EAST, isFalling)
+      inner(WEST, isRising)
+      if (!blockedAlongX.has(`${i},${j}`)) out.push([i, j - 1, NORTH])
+    } else if (triangle === EAST) {
+      inner(SOUTH, isFalling)
+      inner(NORTH, isRising)
+      if (!blockedAlongZ.has(`${i + 1},${j}`)) out.push([i + 1, j, WEST])
+    } else if (triangle === NORTH) {
+      inner(EAST, isRising)
+      inner(WEST, isFalling)
+      if (!blockedAlongX.has(`${i},${j + 1}`)) out.push([i, j + 1, SOUTH])
     } else {
-      inner(S, isRising)
-      inner(N, isFalling)
-      if (!blockedV.has(`${i},${j}`)) out.push([i - 1, j, E])
+      inner(SOUTH, isRising)
+      inner(NORTH, isFalling)
+      if (!blockedAlongZ.has(`${i},${j}`)) out.push([i - 1, j, EAST])
     }
     return out
   }
@@ -120,20 +121,23 @@ export const enclosedRegions = (objects: SceneObject[]): FloorCell[][] => {
   const outside = new Uint8Array(width * height * 4)
   const stack: [number, number, number][] = []
   const next: [number, number, number][] = []
-  const visitOutside = (i: number, j: number, t: number) => {
+  const visitOutside = (i: number, j: number, triangle: number) => {
     if (!inGrid(i, j)) return
-    const k = index(i, j, t)
-    if (outside[k]) return
-    outside[k] = 1
-    stack.push([i, j, t])
+    const triangleIndex = index(i, j, triangle)
+    if (outside[triangleIndex]) return
+    outside[triangleIndex] = 1
+    stack.push([i, j, triangle])
   }
   for (let i = loI; i < loI + width; i++)
-    for (const j of [loJ, loJ + height - 1]) for (let t = 0; t < 4; t++) visitOutside(i, j, t)
+    for (const j of [loJ, loJ + height - 1])
+      for (let triangle = 0; triangle < 4; triangle++) visitOutside(i, j, triangle)
   for (let j = loJ; j < loJ + height; j++)
-    for (const i of [loI, loI + width - 1]) for (let t = 0; t < 4; t++) visitOutside(i, j, t)
+    for (const i of [loI, loI + width - 1])
+      for (let triangle = 0; triangle < 4; triangle++) visitOutside(i, j, triangle)
   while (stack.length) {
-    const [i, j, t] = stack.pop() as [number, number, number]
-    for (const [ni, nj, nt] of neighbours(i, j, t, next)) visitOutside(ni, nj, nt)
+    const [i, j, triangle] = stack.pop() as [number, number, number]
+    for (const [nextI, nextJ, nextTriangle] of neighbours(i, j, triangle, next))
+      visitOutside(nextI, nextJ, nextTriangle)
   }
 
   // Rooms: each unvisited triangle's component, gathered per square.
@@ -141,27 +145,36 @@ export const enclosedRegions = (objects: SceneObject[]): FloorCell[][] => {
   const regions: FloorCell[][] = []
   for (let i = minI; i <= maxI; i++)
     for (let j = minJ; j <= maxJ; j++)
-      for (let t = 0; t < 4; t++) {
-        const k0 = index(i, j, t)
-        if (outside[k0] || seen[k0]) continue
+      for (let triangle = 0; triangle < 4; triangle++) {
+        const startIndex = index(i, j, triangle)
+        if (outside[startIndex] || seen[startIndex]) continue
         const parts = new Map<string, FloorCell>()
-        const queue: [number, number, number][] = [[i, j, t]]
-        seen[k0] = 1
+        const queue: [number, number, number][] = [[i, j, triangle]]
+        seen[startIndex] = 1
         while (queue.length) {
-          const [ci, cj, ct] = queue.pop() as [number, number, number]
-          const key = `${ci},${cj}`
-          const cell = parts.get(key) ?? { x: ci * SEG, z: cj * SEG, parts: 0 }
-          cell.parts = (cell.parts ?? 0) | (1 << ct)
+          const [currentI, currentJ, currentTriangle] = queue.pop() as [number, number, number]
+          const key = `${currentI},${currentJ}`
+          const cell = parts.get(key) ?? { x: currentI * SEG, z: currentJ * SEG, parts: 0 }
+          cell.parts = (cell.parts ?? 0) | (1 << currentTriangle)
           parts.set(key, cell)
-          for (const [ni, nj, nt] of neighbours(ci, cj, ct, next)) {
-            if (!inGrid(ni, nj)) continue
-            const k = index(ni, nj, nt)
-            if (outside[k] || seen[k]) continue
-            seen[k] = 1
-            queue.push([ni, nj, nt])
+          for (const [nextI, nextJ, nextTriangle] of neighbours(
+            currentI,
+            currentJ,
+            currentTriangle,
+            next
+          )) {
+            if (!inGrid(nextI, nextJ)) continue
+            const neighbourIndex = index(nextI, nextJ, nextTriangle)
+            if (outside[neighbourIndex] || seen[neighbourIndex]) continue
+            seen[neighbourIndex] = 1
+            queue.push([nextI, nextJ, nextTriangle])
           }
         }
-        regions.push([...parts.values()].map((c) => (c.parts === WHOLE ? { x: c.x, z: c.z } : c)))
+        regions.push(
+          [...parts.values()].map((floorCell) =>
+            floorCell.parts === WHOLE ? { x: floorCell.x, z: floorCell.z } : floorCell
+          )
+        )
       }
   return regions
 }
@@ -174,18 +187,18 @@ export const cellAt = (x: number, z: number): Cell => ({
 
 /** Whether a floor point lies in a region's cells (a split square: its parts). */
 export const isInRegion = (cells: Map<string, FloorCell>, x: number, z: number) => {
-  const { x: cx, z: cz } = cellAt(x, z)
-  const cell = cells.get(`${cx},${cz}`)
+  const { x: cellX, z: cellZ } = cellAt(x, z)
+  const cell = cells.get(`${cellX},${cellZ}`)
   if (!cell) return false
   if (cell.parts === undefined) return true
-  const u = (x - cx) / SEG
-  const v = (z - cz) / SEG
+  const offsetX = (x - cellX) / SEG
+  const offsetZ = (z - cellZ) / SEG
   const part =
-    v < u && v < 1 - u
+    offsetZ < offsetX && offsetZ < 1 - offsetX
       ? FLOOR_PART.south
-      : v > u && v > 1 - u
+      : offsetZ > offsetX && offsetZ > 1 - offsetX
         ? FLOOR_PART.north
-        : u > v
+        : offsetX > offsetZ
           ? FLOOR_PART.east
           : FLOOR_PART.west
   return (cell.parts & part) !== 0
@@ -196,17 +209,17 @@ export const isInRegion = (cells: Map<string, FloorCell>, x: number, z: number) 
  * centre is on that room's floor. Empty when the point isn't inside a room.
  */
 export const furnitureInRoomAt = (objects: SceneObject[], x: number, z: number): string[] => {
-  const room = enclosedRegions(objects).find((r) =>
-    r.some((c) => c.x <= x && x < c.x + SEG && c.z <= z && z < c.z + SEG)
+  const room = enclosedRegions(objects).find((region) =>
+    region.some((cell) => cell.x <= x && x < cell.x + SEG && cell.z <= z && z < cell.z + SEG)
   )
   if (!room) return []
-  const cells = new Set(room.map((c) => `${c.x},${c.z}`))
+  const cells = new Set(room.map((cell) => `${cell.x},${cell.z}`))
   return objects
     .filter(
-      (o) =>
-        !isEdgeType(o.type) &&
-        !isMarker(o.type) &&
-        cells.has(`${Math.floor(o.x / SEG) * SEG},${Math.floor(o.z / SEG) * SEG}`)
+      (piece) =>
+        !isEdgeType(piece.type) &&
+        !isMarker(piece.type) &&
+        cells.has(`${Math.floor(piece.x / SEG) * SEG},${Math.floor(piece.z / SEG) * SEG}`)
     )
-    .map((o) => o.id)
+    .map((piece) => piece.id)
 }

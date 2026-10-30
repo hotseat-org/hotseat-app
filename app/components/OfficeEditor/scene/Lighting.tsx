@@ -37,22 +37,22 @@ const getShadowArea = (reach: number, maxMapSize: number) => {
   return { half, mapSize: Math.min(maxMapSize, Math.max(1024, wanted)) }
 }
 
-export const Lighting = ({ profile: p, centre = [0, 0], reach = 0 }: Props) => {
+export const Lighting = ({ profile: profile, centre = [0, 0], reach = 0 }: Props) => {
   // Dark theme swaps the sky for the app background; lighting is unchanged.
-  const bg = useSurfaces().background
+  const background = useSurfaces().background
   // The sun (and its shadow area) sits over the office, wherever on the endless
   // ground it's built: light and target move together.
   const sun = useRef<THREE.DirectionalLight>(null)
-  const [cx, cz] = centre
+  const [centreX, centreZ] = centre
   useLayoutEffect(() => {
     const light = sun.current
     if (!light) return
-    light.target.position.set(cx, 0, cz)
+    light.target.position.set(centreX, 0, centreZ)
     light.target.updateMatrixWorld()
-  }, [cx, cz])
-  const gl = useThree((s) => s.gl)
-  const invalidate = useThree((s) => s.invalidate)
-  const maxMapSize = gl.capabilities.maxTextureSize >= 16384 ? 4096 : 2048
+  }, [centreX, centreZ])
+  const renderer = useThree((state) => state.gl)
+  const invalidate = useThree((state) => state.invalidate)
+  const maxMapSize = renderer.capabilities.maxTextureSize >= 16384 ? 4096 : 2048
   const { half, mapSize } = getShadowArea(reach, maxMapSize)
   useLayoutEffect(() => {
     const light = sun.current
@@ -69,20 +69,31 @@ export const Lighting = ({ profile: p, centre = [0, 0], reach = 0 }: Props) => {
       light.shadow.map?.dispose()
       light.shadow.map = null
     }
-    markShadowsDirty(gl, invalidate)
-  }, [half, mapSize, gl, invalidate])
+    markShadowsDirty(renderer, invalidate)
+  }, [half, mapSize, renderer, invalidate])
   return (
     <>
-      <color attach="background" args={[bg ?? p.sky]} />
-      <fog attach="fog" args={[bg ?? p.fog, p.fogNear + FOG_SHIFT, p.fogFar + FOG_SHIFT]} />
+      <color attach="background" args={[background ?? profile.sky]} />
+      <fog
+        attach="fog"
+        args={[background ?? profile.fog, profile.fogNear + FOG_SHIFT, profile.fogFar + FOG_SHIFT]}
+      />
 
-      <ambientLight intensity={p.ambientIntensity} color={p.ambientColor} />
-      <hemisphereLight color={p.hemiSky} groundColor={p.hemiGround} intensity={p.hemiIntensity} />
+      <ambientLight intensity={profile.ambientIntensity} color={profile.ambientColor} />
+      <hemisphereLight
+        color={profile.hemiSky}
+        groundColor={profile.hemiGround}
+        intensity={profile.hemiIntensity}
+      />
       <directionalLight
         ref={sun}
-        position={[p.sunPosition[0] + cx, p.sunPosition[1], p.sunPosition[2] + cz]}
-        intensity={p.sunIntensity}
-        color={p.sunColor}
+        position={[
+          profile.sunPosition[0] + centreX,
+          profile.sunPosition[1],
+          profile.sunPosition[2] + centreZ,
+        ]}
+        intensity={profile.sunIntensity}
+        color={profile.sunColor}
         castShadow
         // Soft PCF edges: a few texels of penumbra (~3.5 cm).
         shadow-radius={3}
@@ -93,7 +104,7 @@ export const Lighting = ({ profile: p, centre = [0, 0], reach = 0 }: Props) => {
         <orthographicCamera attach="shadow-camera" args={[-18, 18, 18, -18, 0.1, 50]} />
       </directionalLight>
       {/* Cool fill from the opposite side (dims at night) */}
-      <directionalLight position={[-8, 6, -6]} intensity={p.fillIntensity} color="#aebfe0" />
+      <directionalLight position={[-8, 6, -6]} intensity={profile.fillIntensity} color="#aebfe0" />
       {/* Hint of outrun: a faint neon accent rim */}
       <directionalLight position={[-5, 3, 8]} intensity={0.22} color={ACCENT} />
     </>

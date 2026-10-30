@@ -74,7 +74,7 @@ export const useEditorMode = ({
   }, [editable, switchMode])
 
   // Simple mode: the 2D floor plan instead of the 3D scene (view mode only).
-  const view = useEditorStore((s) => s.view)
+  const view = useEditorStore((state) => state.view)
   const flat = readOnly && (view === "2d" || !webglOk || isMobile)
   // Leaving the 3D scene (for the plan) unmounts it: it builds afresh next time.
   useEffect(() => {

@@ -17,20 +17,20 @@ const PET_SCALE = 0.4
  */
 export const DeskPets = () => {
   const { desks } = useDesksOnDay()
-  const objects = useEditorStore((s) => s.objects)
-  const openSeatCard = useEditorStore((s) => s.openSeatCard)
+  const objects = useEditorStore((state) => state.objects)
+  const openSeatCard = useEditorStore((state) => state.openSeatCard)
   const people = usePeople()
   const pets = useMemo(() => {
-    const seats = objects.filter((o) => o.type === "seat")
+    const seats = objects.filter((object) => object.type === "seat")
     return desks
-      .filter((d) => d.state.kind !== "free")
-      .map((d) => {
-        const email = d.state.kind === "free" ? "" : d.state.email
+      .filter((desk) => desk.state.kind !== "free")
+      .map((desk) => {
+        const email = desk.state.kind === "free" ? "" : desk.state.email
         return {
-          desk: d.desk,
+          desk: desk.desk,
           // Their own pick (settings → Desk pet), else one derived from the email.
           pet: petFor(email, personByEmail(people, email)?.pet),
-          spot: spotFor(d.desk, seats),
+          spot: spotFor(desk.desk, seats),
         }
       })
   }, [desks, objects, people])
@@ -51,14 +51,14 @@ const Pet = ({ url, spot, onClick }: { url: string; spot: Spot; onClick: () => v
     <group
       position={[spot.x, spot.y, spot.z]}
       rotation={[0, spot.rotation, 0]}
-      onPointerOver={(e) => {
-        e.stopPropagation()
+      onPointerOver={(event) => {
+        event.stopPropagation()
         setHovered(true)
       }}
       onPointerOut={() => setHovered(false)}
-      onClick={(e: ThreeEvent<MouseEvent>) => {
-        if (e.delta > 4) return // a camera drag, not a click
-        e.stopPropagation()
+      onClick={(event: ThreeEvent<MouseEvent>) => {
+        if (event.delta > 4) return // a camera drag, not a click
+        event.stopPropagation()
         onClick()
       }}
     >

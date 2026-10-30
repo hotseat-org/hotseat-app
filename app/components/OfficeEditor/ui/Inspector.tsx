@@ -20,51 +20,53 @@ import { TOOLS } from "./tools"
 import type { Day } from "~/utils/booking"
 import { useI18n } from "~/i18n/I18nProvider"
 
-const TYPE_LABEL = new Map<string, string>(TOOLS.map((t) => [t.tool, t.label]))
+const TYPE_LABEL = new Map<string, string>(TOOLS.map((meta) => [meta.tool, meta.label]))
 
 export const Inspector = () => {
   const { t, tn } = useI18n()
-  const selectedId = useEditorStore((s) => s.selectedId)
-  const obj = useEditorStore((s) => s.objects.find((o) => o.id === s.selectedId) ?? null)
-  const count = useEditorStore((s) => s.selection.length)
+  const selectedId = useEditorStore((state) => state.selectedId)
+  const selected = useEditorStore(
+    (state) => state.objects.find((object) => object.id === state.selectedId) ?? null
+  )
+  const count = useEditorStore((state) => state.selection.length)
   // Group actions work for a single piece too (a selection of one).
-  const rotateSelection = useEditorStore((s) => s.rotateSelection)
-  const colorSelection = useEditorStore((s) => s.colorSelection)
-  const duplicateSelection = useEditorStore((s) => s.duplicateSelection)
-  const removeSelection = useEditorStore((s) => s.removeSelection)
-  const select = useEditorStore((s) => s.select)
-  const shuffleLook = useEditorStore((s) => s.shuffleLook)
-  const selection = useEditorStore((s) => s.selection)
+  const rotateSelection = useEditorStore((state) => state.rotateSelection)
+  const colorSelection = useEditorStore((state) => state.colorSelection)
+  const duplicateSelection = useEditorStore((state) => state.duplicateSelection)
+  const removeSelection = useEditorStore((state) => state.removeSelection)
+  const select = useEditorStore((state) => state.select)
+  const shuffleLook = useEditorStore((state) => state.shuffleLook)
+  const selection = useEditorStore((state) => state.selection)
   // Retired desks aren't copied: a copy would place one anew.
-  const hasRetiredDesk = useEditorStore((s) =>
-    s.selection.some((id) => {
-      const o = s.objects.find((x) => x.id === id)
-      return !!o && isRetiredDesk(o.type)
+  const hasRetiredDesk = useEditorStore((state) =>
+    state.selection.some((id) => {
+      const object = state.objects.find((candidate) => candidate.id === id)
+      return !!object && isRetiredDesk(object.type)
     })
   )
   // Shuffle when every selected piece comes in several looks.
-  const shufflable = useEditorStore((s) =>
-    s.selection.every((id) => {
-      const o = s.objects.find((x) => x.id === id)
-      return !!o && hasLooks(o.type)
+  const shufflable = useEditorStore((state) =>
+    state.selection.every((id) => {
+      const object = state.objects.find((candidate) => candidate.id === id)
+      return !!object && hasLooks(object.type)
     })
   )
 
   // Doors are always wood: no colour to pick while one is selected.
-  const canColor = useEditorStore((s) =>
-    s.selection.every((id) => {
-      const o = s.objects.find((x) => x.id === id)
-      return !!o && isRecolorable(o.type)
+  const canColor = useEditorStore((state) =>
+    state.selection.every((id) => {
+      const object = state.objects.find((candidate) => candidate.id === id)
+      return !!object && isRecolorable(object.type)
     })
   )
 
-  if (!selectedId || !obj) return null
+  if (!selectedId || !selected) return null
 
-  const current = obj.color ?? getItem(obj.type).defaultColor
+  const current = selected.color ?? getItem(selected.type).defaultColor
   // Walls/doors sit on grid edges: they can't be turned or copied in place.
-  const edge = isEdgeType(obj.type)
+  const edge = isEdgeType(selected.type)
 
-  const canRotate = !edge && !isWallMounted(obj.type)
+  const canRotate = !edge && !isWallMounted(selected.type)
   const canCopy = !edge && !hasRetiredDesk
   const otherActionCount = [canRotate, shufflable, canCopy].filter(Boolean).length
 
@@ -72,7 +74,9 @@ export const Inspector = () => {
     <div className="pointer-events-auto w-64 rounded-2xl border border-border bg-overlay/90 p-4 text-foreground shadow-overlay backdrop-blur-md">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-semibold">
-          {count > 1 ? tn(count, "{n} item", "{n} items") : t(TYPE_LABEL.get(obj.type) ?? obj.type)}
+          {count > 1
+            ? tn(count, "{n} item", "{n} items")
+            : t(TYPE_LABEL.get(selected.type) ?? selected.type)}
         </h3>
         <CloseButton aria-label={t("Deselect")} onPress={() => select(null)} />
       </div>
@@ -83,12 +87,12 @@ export const Inspector = () => {
           <ColorSwatchPicker
             aria-label={t("Colour")}
             value={current}
-            onChange={(c) => colorSelection(c.toString("hex").toLowerCase())}
+            onChange={(color) => colorSelection(color.toString("hex").toLowerCase())}
             className="mb-4 grid grid-cols-5 justify-items-center gap-1.5"
           >
-            {SWATCHES.map((c) => (
+            {SWATCHES.map((color) => (
               // Size the item (its 2px ring included); the swatch fills it.
-              <ColorSwatchPicker.Item key={c} color={c} className="size-9 rounded-xl">
+              <ColorSwatchPicker.Item key={color} color={color} className="size-9 rounded-xl">
                 <ColorSwatchPicker.Swatch />
                 <ColorSwatchPicker.Indicator />
               </ColorSwatchPicker.Item>
@@ -97,9 +101,13 @@ export const Inspector = () => {
         </>
       )}
 
-      {count === 1 && isRetiredDesk(obj.type) && <RetiredDeskNote id={obj.id} type={obj.type} />}
+      {count === 1 && isRetiredDesk(selected.type) && (
+        <RetiredDeskNote id={selected.id} type={selected.type} />
+      )}
       <ZoneSection />
-      {count === 1 && isSeatable(obj.type) && <SeatSection key={obj.id} id={obj.id} />}
+      {count === 1 && isSeatable(selected.type) && (
+        <SeatSection key={selected.id} id={selected.id} />
+      )}
 
       {/* Two columns (four labelled buttons don't fit one row); Delete spans
           the row when it would be left on its own. */}
@@ -149,38 +157,39 @@ export const Inspector = () => {
  * office). A resident desk is theirs every day and can't be booked.
  */
 const SeatSection = ({ id }: { id: string }) => {
-  const seat = useEditorStore((s) => s.objects.find((o) => o.id === id))
-  const setSeatLabel = useEditorStore((s) => s.setSeatLabel)
-  const assignSeat = useEditorStore((s) => s.assignSeat)
-  const numberDesks = useEditorStore((s) => s.numberDesks)
-  const toggleDeskFeature = useEditorStore((s) => s.toggleDeskFeature)
+  const seat = useEditorStore((state) => state.objects.find((object) => object.id === id))
+  const setSeatLabel = useEditorStore((state) => state.setSeatLabel)
+  const assignSeat = useEditorStore((state) => state.assignSeat)
+  const numberDesks = useEditorStore((state) => state.numberDesks)
+  const toggleDeskFeature = useEditorStore((state) => state.toggleDeskFeature)
   const people = usePeople()
   const { t, format } = useI18n()
   // Upcoming bookings on this desk: giving it a resident (or deleting it)
   // cancels them — said before it happens, not after.
-  const byDay = useEditorStore((s) => s.booking.byDay)
-  const today = useEditorStore((s) => s.booking.today)
-  const isBookingOn = useEditorStore((s) => s.booking.enabled)
+  const byDay = useEditorStore((state) => state.booking.byDay)
+  const today = useEditorStore((state) => state.booking.today)
+  const isBookingOn = useEditorStore((state) => state.booking.enabled)
   const bookings = useMemo(
     () =>
       isBookingOn
         ? Object.entries(byDay)
-            .filter(([d, desks]) => d >= today && desks[id])
-            .sort(([a], [b]) => a.localeCompare(b))
-            .map(([d, desks]) => ({ day: d as Day, email: desks[id] }))
+            .filter(([date, desks]) => date >= today && desks[id])
+            .sort(([firstDate], [secondDate]) => firstDate.localeCompare(secondDate))
+            .map(([date, desks]) => ({ day: date as Day, email: desks[id] }))
         : [],
     [isBookingOn, byDay, today, id]
   )
   /** A resident picked whose assignment would cancel someone's bookings: confirm first. */
   const [pendingResident, setPendingResident] = useState<string | null>(null)
-  const nameOf = (email: string) => people.members.find((p) => p.email === email)?.name ?? email
-  const lostTo = (resident: string) => bookings.filter((b) => b.email !== resident)
+  const nameOf = (email: string) =>
+    people.members.find((member) => member.email === email)?.name ?? email
+  const lostTo = (resident: string) => bookings.filter((booking) => booking.email !== resident)
   /** The new resident's own upcoming bookings in this office (any desk): they go too. */
   const ownDays = (resident: string) =>
     isBookingOn
       ? Object.entries(byDay)
-          .filter(([d, desks]) => d >= today && Object.values(desks).includes(resident))
-          .map(([d]) => d as Day)
+          .filter(([date, desks]) => date >= today && Object.values(desks).includes(resident))
+          .map(([date]) => date as Day)
           .sort()
       : []
   const cancels = (resident: string) =>
@@ -196,7 +205,7 @@ const SeatSection = ({ id }: { id: string }) => {
       .filter(Boolean)
       .join(t(" and "))
   const describe = (list: typeof bookings) =>
-    list.map((b) => `${nameOf(b.email)} (${format.short(b.day)})`).join(", ")
+    list.map((booking) => `${nameOf(booking.email)} (${format.short(booking.day)})`).join(", ")
   if (!seat) return null
   return (
     <div className="mb-4 flex flex-col gap-2">
@@ -217,29 +226,29 @@ const SeatSection = ({ id }: { id: string }) => {
         defaultValue={seat.label ?? ""}
         placeholder={t("Label, e.g. D-12")}
         maxLength={24}
-        onBlur={(e) => setSeatLabel(seat.id, e.currentTarget.value)}
-        onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+        onBlur={(event) => setSeatLabel(seat.id, event.currentTarget.value)}
+        onKeyDown={(event) => event.key === "Enter" && event.currentTarget.blur()}
         className="h-8 rounded-lg border border-border bg-surface px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-focus"
       />
       {/* What it offers — people can filter the map by these. */}
       <p className="mt-1 text-xs font-medium text-muted">{t("Features")}</p>
       <div className="flex flex-wrap gap-1.5">
-        {DESK_FEATURES.map((f) => {
-          const on = !!seat.features?.includes(f.id)
+        {DESK_FEATURES.map((feature) => {
+          const isActive = !!seat.features?.includes(feature.id)
           return (
             <button
-              key={f.id}
+              key={feature.id}
               type="button"
-              aria-pressed={on}
-              onClick={() => toggleDeskFeature(seat.id, f.id)}
+              aria-pressed={isActive}
+              onClick={() => toggleDeskFeature(seat.id, feature.id)}
               className={clsx(
                 "h-7 rounded-full border px-2.5 text-xs font-bold transition-colors",
-                on
+                isActive
                   ? "border-accent bg-accent/15 text-accent"
                   : "border-border text-muted hover:border-muted hover:text-foreground"
               )}
             >
-              {t(f.label)}
+              {t(feature.label)}
             </button>
           )
         })}
@@ -252,8 +261,8 @@ const SeatSection = ({ id }: { id: string }) => {
           <select
             id={`resident-${seat.id}`}
             value={seat.assignee ?? ""}
-            onChange={(e) => {
-              const email = e.currentTarget.value || null
+            onChange={(event) => {
+              const email = event.currentTarget.value || null
               if (email && (lostTo(email).length > 0 || ownDays(email).length > 0))
                 setPendingResident(email)
               else assignSeat(seat.id, email)
@@ -261,9 +270,9 @@ const SeatSection = ({ id }: { id: string }) => {
             className="h-8 rounded-lg border border-border bg-surface px-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-focus"
           >
             <option value="">{t("None (anyone can book it)")}</option>
-            {people.members.map((p) => (
-              <option key={p.email} value={p.email}>
-                {p.name}
+            {people.members.map((member) => (
+              <option key={member.email} value={member.email}>
+                {member.name}
               </option>
             ))}
           </select>
@@ -317,7 +326,7 @@ const SeatSection = ({ id }: { id: string }) => {
  */
 const RetiredDeskNote = ({ id, type }: { id: string; type: string }) => {
   const { t } = useI18n()
-  const replaceWithWorkstation = useEditorStore((s) => s.replaceWithWorkstation)
+  const replaceWithWorkstation = useEditorStore((state) => state.replaceWithWorkstation)
   return (
     <div className="mb-4 rounded-xl bg-warning/10 p-3 text-xs leading-snug text-foreground">
       <p>
@@ -346,19 +355,19 @@ const RetiredDeskNote = ({ id, type }: { id: string; type: string }) => {
  */
 const ZoneSection = () => {
   const { t, tn } = useI18n()
-  const objects = useEditorStore((s) => s.objects)
-  const selection = useEditorStore((s) => s.selection)
-  const setZone = useEditorStore((s) => s.setZone)
-  const numberDesksByZone = useEditorStore((s) => s.numberDesksByZone)
+  const objects = useEditorStore((state) => state.objects)
+  const selection = useEditorStore((state) => state.selection)
+  const setZone = useEditorStore((state) => state.setZone)
+  const numberDesksByZone = useEditorStore((state) => state.numberDesksByZone)
   const zones = useMemo(() => getZones(objects), [objects])
   const desks = useMemo(() => {
     const ids = new Set(selection)
-    return objects.filter((o) => ids.has(o.id) && isSeatable(o.type))
+    return objects.filter((object) => ids.has(object.id) && isSeatable(object.type))
   }, [objects, selection])
   const [draft, setDraft] = useState("")
   if (desks.length === 0) return null
-  const ids = desks.map((d) => d.id)
-  const zoneNames = new Set(desks.map((d) => d.zone ?? ""))
+  const ids = desks.map((desk) => desk.id)
+  const zoneNames = new Set(desks.map((desk) => desk.zone ?? ""))
   const current = zoneNames.size === 1 ? [...zoneNames][0] : null
 
   return (
@@ -402,9 +411,9 @@ const ZoneSection = () => {
       </div>
       <input
         value={draft}
-        onChange={(e) => setDraft(e.currentTarget.value)}
-        onKeyDown={(e) => {
-          if (e.key !== "Enter" || !draft.trim()) return
+        onChange={(event) => setDraft(event.currentTarget.value)}
+        onKeyDown={(event) => {
+          if (event.key !== "Enter" || !draft.trim()) return
           setZone(ids, draft)
           setDraft("")
         }}

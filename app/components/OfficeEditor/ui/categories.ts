@@ -111,15 +111,15 @@ export const CATEGORIES: Category[] = [
 ]
 
 /** Label / icon / shortcut for a given tool (from the shared TOOLS list). */
-export const TOOL_META = new Map(TOOLS.map((t) => [t.tool, t]))
+export const TOOL_META = new Map(TOOLS.map((meta) => [meta.tool, meta]))
 
 /** The category that contains a given object type (for tool ↔ tab syncing). */
 export const categoryOf = (type: CatalogItem): Category | undefined =>
-  CATEGORIES.find((c) => c.types.includes(type))
+  CATEGORIES.find((category) => category.types.includes(type))
 
 /** Whether a tool is something a catalog tile arms. */
 export const isCatalogItem = (tool: string): tool is CatalogItem =>
-  CATEGORIES.some((c) => (c.types as string[]).includes(tool))
+  CATEGORIES.some((category) => (category.types as string[]).includes(tool))
 
 /** The object type whose placement colour an item uses (a Room builds walls). */
 export const colorKey = (item: CatalogItem): ObjectType => (item === "room" ? "wall" : item)

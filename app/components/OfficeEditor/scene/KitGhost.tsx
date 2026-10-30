@@ -9,20 +9,22 @@ const BLOCKED = "#ef4444"
 export const KitGhost = ({ plan, doesFit }: { plan: SceneObject[]; doesFit: boolean }) => (
   <>
     <GhostWalls
-      edges={plan.flatMap((o) =>
-        isWall(o.type) ? [{ ...o, type: o.type, tint: doesFit ? undefined : BLOCKED }] : []
+      edges={plan.flatMap((piece) =>
+        isWall(piece.type)
+          ? [{ ...piece, type: piece.type, tint: doesFit ? undefined : BLOCKED }]
+          : []
       )}
     />
     {plan
-      .filter((o) => !isWall(o.type))
-      .map((o, i) => (
+      .filter((piece) => !isWall(piece.type))
+      .map((piece, i) => (
         <GhostObject
           key={i}
-          type={o.type}
-          x={o.x}
-          z={o.z}
-          rotation={o.rotation}
-          color={o.color}
+          type={piece.type}
+          x={piece.x}
+          z={piece.z}
+          rotation={piece.rotation}
+          color={piece.color}
           tint={doesFit ? undefined : BLOCKED}
         />
       ))}

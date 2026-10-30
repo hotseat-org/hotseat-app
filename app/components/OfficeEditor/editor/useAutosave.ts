@@ -6,8 +6,8 @@ import { getLostBookings, planRehoming, type ReleasedBy } from "~/core/office/la
 /** How long the layout must sit still before it's saved (ms). */
 const SAVE_DELAY = 800
 
-const bookingKey = (b: { deskId: string; date: string; userEmail: string }) =>
-  `${b.deskId}|${b.date}|${b.userEmail}`
+const bookingKey = (booking: { deskId: string; date: string; userEmail: string }) =>
+  `${booking.deskId}|${booking.date}|${booking.userEmail}`
 
 /**
  * Debounced autosave of the scene (DB-backed offices: with `onSave`). A change
@@ -26,7 +26,7 @@ export const useAutosave = ({
   saveFailed: boolean | undefined
 }) => {
   const store = useEditorStoreApi()
-  const objects = useEditorStore((s) => s.objects)
+  const objects = useEditorStore((state) => state.objects)
   // What's already persisted, so autosave doesn't re-save the freshly-loaded scene.
   const lastSaved = useRef<string>(JSON.stringify(initialObjects ?? []))
   const onSaveRef = useRef(onSave)
@@ -34,7 +34,7 @@ export const useAutosave = ({
 
   // What an unsaved change would do to upcoming bookings: who'd lose their
   // desk, and where they could move.
-  const bookingState = useEditorStore((s) => s.booking)
+  const bookingState = useEditorStore((state) => state.booking)
   const impact = useMemo(() => {
     const booking = bookingState
     if (!onSave || !booking.enabled || !booking.today) return null
@@ -52,11 +52,11 @@ export const useAutosave = ({
         ])
       )
     )
-    const after = objects.filter((o) => isSeatable(o.type))
+    const after = objects.filter((piece) => isSeatable(piece.type))
     const lost = getLostBookings(after, bookings, releasedBy)
     if (lost.length === 0) return null
-    const before = (JSON.parse(lastSaved.current || "[]") as SceneObject[]).filter((o) =>
-      isSeatable(o.type)
+    const before = (JSON.parse(lastSaved.current || "[]") as SceneObject[]).filter((piece) =>
+      isSeatable(piece.type)
     )
     return { before, moves: planRehoming({ before, after, bookings, lost, releasedBy }) }
   }, [objects, bookingState, onSave])
@@ -66,7 +66,7 @@ export const useAutosave = ({
   const [resolvedKeys, setResolvedKeys] = useState<Set<string>>(() => new Set())
   const serializedObjects = useMemo(() => JSON.stringify(objects), [objects])
   const isImpactPending =
-    !!impact && impact.moves.some((m) => !resolvedKeys.has(bookingKey(m.booking)))
+    !!impact && impact.moves.some((move) => !resolvedKeys.has(bookingKey(move.booking)))
   const impactRef = useRef(isImpactPending)
   impactRef.current = isImpactPending
   const resolveImpact = (choice: "move" | "cancel" | "undo") => {
@@ -75,7 +75,7 @@ export const useAutosave = ({
       return
     }
     setResolvedKeys(
-      (keys) => new Set([...keys, ...(impact?.moves ?? []).map((m) => bookingKey(m.booking))])
+      (keys) => new Set([...keys, ...(impact?.moves ?? []).map((move) => bookingKey(move.booking))])
     )
     lastSaved.current = serializedObjects
     onSave?.(objects, { shouldRehome: choice === "move" })
@@ -85,11 +85,11 @@ export const useAutosave = ({
     if (!onSave || isImpactPending) return // waiting on the admin's choice
     const serialized = JSON.stringify(objects)
     if (serialized === lastSaved.current) return
-    const t = setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       lastSaved.current = serialized
       onSave(objects)
     }, SAVE_DELAY)
-    return () => clearTimeout(t)
+    return () => clearTimeout(timeoutId)
   }, [objects, onSave, isImpactPending])
 
   // A failed save means what's on screen isn't persisted: forget the "saved"
@@ -102,8 +102,8 @@ export const useAutosave = ({
   // last edit — flush it on unmount, and warn before closing the tab.
   useEffect(() => {
     const unsaved = () => JSON.stringify(store.getState().objects) !== lastSaved.current
-    const onBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (onSaveRef.current && unsaved()) e.preventDefault()
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (onSaveRef.current && unsaved()) event.preventDefault()
     }
     window.addEventListener("beforeunload", onBeforeUnload)
     return () => {

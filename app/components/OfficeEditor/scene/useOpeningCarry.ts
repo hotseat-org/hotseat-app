@@ -17,14 +17,14 @@ export const useOpeningCarry = (readOnly: boolean, tool: Tool, dragId: string | 
   const pickOpening = (id: string) => {
     if (dragId || carriedOpening) return
     storeApi.getState().beginBatch() // lift → carry → drop = one undo step
-    const o = storeApi.getState().liftOpening(id)
-    if (o) setCarriedOpening(o)
+    const opening = storeApi.getState().liftOpening(id)
+    if (opening) setCarriedOpening(opening)
     else storeApi.getState().endBatch()
   }
   const restoreOpening = () => {
-    const o = carriedOpeningRef.current
-    if (!o) return
-    storeApi.getState().placeOpening(o, o.x, o.z)
+    const opening = carriedOpeningRef.current
+    if (!opening) return
+    storeApi.getState().placeOpening(opening, opening.x, opening.z)
     setCarriedOpening(null)
     storeApi.getState().endBatch()
   }
@@ -40,7 +40,7 @@ export const useOpeningCarry = (readOnly: boolean, tool: Tool, dragId: string | 
   }, [tool, readOnly])
   useEffect(() => {
     if (!carriedOpening) return
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && restoreOpening()
+    const onKey = (event: KeyboardEvent) => event.key === "Escape" && restoreOpening()
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
   }, [carriedOpening])

@@ -31,9 +31,9 @@ export const useLampsOn = () => {
   const nightness = useContext(DaylightContext)
   const forced = useContext(WarmupContext)
   const isOn = forced ?? nightness > LAMPS_ON
-  const gl = useThree((s) => s.gl)
-  const invalidate = useThree((s) => s.invalidate)
-  useLayoutEffect(() => markShadowsDirty(gl, invalidate), [isOn, gl, invalidate])
+  const renderer = useThree((state) => state.gl)
+  const invalidate = useThree((state) => state.invalidate)
+  useLayoutEffect(() => markShadowsDirty(renderer, invalidate), [isOn, renderer, invalidate])
   return isOn
 }
 
@@ -49,8 +49,8 @@ export const useLampsOn = () => {
  */
 export const ShaderWarmup = ({ children }: { children: ReactNode }) => {
   const nightness = useContext(DaylightContext)
-  const { gl, scene, camera, invalidate, get } = useThree()
-  const setFrameloop = useThree((s) => s.setFrameloop)
+  const { gl: renderer, scene, camera, invalidate, get } = useThree()
+  const setFrameloop = useThree((state) => state.setFrameloop)
   const [forced, setForced] = useState<boolean | null>(null)
 
   // Once, after the office has loaded.
@@ -66,7 +66,8 @@ export const ShaderWarmup = ({ children }: { children: ReactNode }) => {
     let isDone = false
     const { frameloop } = get()
     setFrameloop("never")
-    gl.compileAsync(scene, camera)
+    renderer
+      .compileAsync(scene, camera)
       .catch(() => {}) // A failed warm-up just means compiling later, as before.
       .finally(() => {
         if (isDone) return
@@ -74,14 +75,14 @@ export const ShaderWarmup = ({ children }: { children: ReactNode }) => {
         setFrameloop(frameloop)
         setForced(null)
         // The lamps flip back: their shadows must be drawn afresh.
-        markShadowsDirty(gl, invalidate)
+        markShadowsDirty(renderer, invalidate)
       })
     return () => {
       // Left mid-way (unmounted): don't leave rendering paused.
       if (!isDone) setFrameloop(frameloop)
       isDone = true
     }
-  }, [forced, gl, scene, camera, get, setFrameloop, invalidate])
+  }, [forced, renderer, scene, camera, get, setFrameloop, invalidate])
 
   return <WarmupContext.Provider value={forced}>{children}</WarmupContext.Provider>
 }

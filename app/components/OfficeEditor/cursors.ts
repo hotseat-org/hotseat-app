@@ -9,32 +9,32 @@ const HALO = "#fbf6ee"
 const ACCENT = "#4a6fae"
 
 /** A stroked line drawing, haloed. */
-const line = (d: string, color = INK) =>
-  `<path d="${d}" fill="none" stroke="${HALO}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>` +
-  `<path d="${d}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`
+const line = (path: string, color = INK) =>
+  `<path d="${path}" fill="none" stroke="${HALO}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>` +
+  `<path d="${path}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`
 
 /** A filled shape, haloed. */
-const shape = (d: string, color = INK) =>
-  `<path d="${d}" fill="none" stroke="${HALO}" stroke-width="3" stroke-linejoin="round"/>` +
-  `<path d="${d}" fill="${color}" stroke="${color}" stroke-width="1" stroke-linejoin="round"/>`
+const shape = (path: string, color = INK) =>
+  `<path d="${path}" fill="none" stroke="${HALO}" stroke-width="3" stroke-linejoin="round"/>` +
+  `<path d="${path}" fill="${color}" stroke="${color}" stroke-width="1" stroke-linejoin="round"/>`
 
 /**
  * A multi-stroke icon (lucide's hands): a light palm, one halo under all
  * strokes, then the ink — so the hand reads solid on a dark floor too.
  */
 const PALM = "M6 11 H22 V15 A7 7 0 0 1 15 22 H11.5 A5.5 5.5 0 0 1 6 16.5 Z"
-const glyph = (ds: string[]) =>
+const glyph = (paths: string[]) =>
   `<path d="${PALM}" fill="${HALO}"/>` +
-  ds
+  paths
     .map(
-      (d) =>
-        `<path d="${d}" fill="none" stroke="${HALO}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>`
+      (path) =>
+        `<path d="${path}" fill="none" stroke="${HALO}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>`
     )
     .join("") +
-  ds
+  paths
     .map(
-      (d) =>
-        `<path d="${d}" fill="none" stroke="${INK}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>`
+      (path) =>
+        `<path d="${path}" fill="none" stroke="${INK}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>`
     )
     .join("")
 

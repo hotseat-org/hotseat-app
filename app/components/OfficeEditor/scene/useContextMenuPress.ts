@@ -17,33 +17,33 @@ export const useContextMenuPress = (readOnly: boolean) => {
   const menuPress = useRef<{ targetId: string | null; point: Cell; x: number; y: number } | null>(
     null
   )
-  const pressMenu = useCallback((targetId: string | null, point: Cell, e: PointerEvent) => {
-    menuPress.current = { targetId, point, x: e.clientX, y: e.clientY }
+  const pressMenu = useCallback((targetId: string | null, point: Cell, event: PointerEvent) => {
+    menuPress.current = { targetId, point, x: event.clientX, y: event.clientY }
   }, [])
   const onMenuPress = useCallback(
-    (id: string, e: ThreeEvent<PointerEvent>) =>
-      pressMenu(id, { x: e.point.x, z: e.point.z }, e.nativeEvent),
+    (id: string, event: ThreeEvent<PointerEvent>) =>
+      pressMenu(id, { x: event.point.x, z: event.point.z }, event.nativeEvent),
     [pressMenu]
   )
   useEffect(() => {
     if (readOnly) return
-    const handleMove = (e: PointerEvent) => {
+    const handleMove = (event: PointerEvent) => {
       const press = menuPress.current
-      if (press && Math.hypot(e.clientX - press.x, e.clientY - press.y) > MENU_SLOP)
+      if (press && Math.hypot(event.clientX - press.x, event.clientY - press.y) > MENU_SLOP)
         menuPress.current = null
     }
-    const handleUp = (e: PointerEvent) => {
+    const handleUp = (event: PointerEvent) => {
       const press = menuPress.current
       menuPress.current = null
-      if (!press || e.button !== 2) return
-      const s = storeApi.getState()
-      if (press.targetId && !s.selection.includes(press.targetId)) {
-        s.setTool("select")
-        s.select(press.targetId)
+      if (!press || event.button !== 2) return
+      const state = storeApi.getState()
+      if (press.targetId && !state.selection.includes(press.targetId)) {
+        state.setTool("select")
+        state.select(press.targetId)
       }
-      s.openContextMenu({
-        x: e.clientX,
-        y: e.clientY,
+      state.openContextMenu({
+        x: event.clientX,
+        y: event.clientY,
         targetId: press.targetId,
         point: press.point,
       })

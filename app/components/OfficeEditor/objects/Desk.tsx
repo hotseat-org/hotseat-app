@@ -14,10 +14,10 @@ interface Props {
 
 const TOP = DESK.height + DESK.topThickness / 2
 /** Spots on the desktop: back-left, back-right, right, front-left. */
-const BL: [number, number, number] = [-0.62, TOP, -0.26]
-const BR: [number, number, number] = [0.64, TOP, -0.28]
-const R: [number, number, number] = [0.52, TOP, -0.06]
-const FL: [number, number, number] = [-0.6, TOP, 0.12]
+const BACK_LEFT: [number, number, number] = [-0.62, TOP, -0.26]
+const BACK_RIGHT: [number, number, number] = [0.64, TOP, -0.28]
+const RIGHT: [number, number, number] = [0.52, TOP, -0.06]
+const FRONT_LEFT: [number, number, number] = [-0.6, TOP, 0.12]
 
 /** The clutter of an occupied desk, one arrangement per look. */
 const Clutter = ({ look }: { look: number }) => {
@@ -25,9 +25,9 @@ const Clutter = ({ look }: { look: number }) => {
     case 0:
       return (
         <>
-          <Papers position={R} turn={0.2} />
-          <PenCup position={BL} />
-          <Succulent position={BR} />
+          <Papers position={RIGHT} turn={0.2} />
+          <PenCup position={BACK_LEFT} />
+          <Succulent position={BACK_RIGHT} />
           <StickyNote position={[0.27, DESK.height + 0.56, -DESK.depth / 2 + 0.185]} />
           <StickyNote
             color="#f5a7b8"
@@ -38,18 +38,18 @@ const Clutter = ({ look }: { look: number }) => {
     case 1:
       return (
         <>
-          <Mug color="#6d90c9" position={FL} turn={2.4} />
-          <Books colors={["#5f8a86", "#e8c07a"]} position={BL} turn={0.2} />
-          <Notebook position={R} turn={-0.3} />
-          <Succulent pot="#f3f1ec" position={BR} />
+          <Mug color="#6d90c9" position={FRONT_LEFT} turn={2.4} />
+          <Books colors={["#5f8a86", "#e8c07a"]} position={BACK_LEFT} turn={0.2} />
+          <Notebook position={RIGHT} turn={-0.3} />
+          <Succulent pot="#f3f1ec" position={BACK_RIGHT} />
         </>
       )
     case 2:
       return (
         <>
-          <Papers position={R} turn={-0.15} />
-          <Mug color="#e9876a" position={FL} turn={0.8} />
-          <Flowers vase="#f3f1ec" position={BR} />
+          <Papers position={RIGHT} turn={-0.15} />
+          <Mug color="#e9876a" position={FRONT_LEFT} turn={0.8} />
+          <Flowers vase="#f3f1ec" position={BACK_RIGHT} />
           <StickyNote
             color="#9fd6c2"
             position={[-0.27, DESK.height + 0.56, -DESK.depth / 2 + 0.185]}
@@ -59,9 +59,9 @@ const Clutter = ({ look }: { look: number }) => {
     default:
       return (
         <>
-          <Notebook color="#b96f6f" position={R} turn={0.25} />
-          <PenCup color="#e8c07a" position={BR} />
-          <Mug position={FL} turn={1.4} />
+          <Notebook color="#b96f6f" position={RIGHT} turn={0.25} />
+          <PenCup color="#e8c07a" position={BACK_RIGHT} />
+          <Mug position={FRONT_LEFT} turn={1.4} />
         </>
       )
   }
@@ -71,13 +71,13 @@ const Clutter = ({ look }: { look: number }) => {
 export const Desk = ({ color = PALETTE.deskTop, variant, occupied }: Props) => {
   const inUse = occupied !== false
   const legY = (DESK.height - DESK.topThickness) / 2
-  const lx = DESK.width / 2 - DESK.legThickness / 2 - 0.05
-  const lz = DESK.depth / 2 - DESK.legThickness / 2 - 0.05
+  const legOffsetX = DESK.width / 2 - DESK.legThickness / 2 - 0.05
+  const legOffsetZ = DESK.depth / 2 - DESK.legThickness / 2 - 0.05
   const legs: [number, number][] = [
-    [-lx, -lz],
-    [lx, -lz],
-    [-lx, lz],
-    [lx, lz],
+    [-legOffsetX, -legOffsetZ],
+    [legOffsetX, -legOffsetZ],
+    [-legOffsetX, legOffsetZ],
+    [legOffsetX, legOffsetZ],
   ]
 
   return (

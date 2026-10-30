@@ -8,14 +8,15 @@ import { useEditorStore, useEditorStoreApi } from "../store"
  */
 export const useRouteLink = (readOnly: boolean) => {
   const store = useEditorStoreApi()
-  const routeDesk = useEditorStore((s) => s.route?.deskId)
-  const hasLayout = useEditorStore((s) => s.objects.length > 0)
+  const routeDesk = useEditorStore((state) => state.route?.deskId)
+  const hasLayout = useEditorStore((state) => state.objects.length > 0)
   const askedRoute = useRef(false)
   useEffect(() => {
     if (askedRoute.current || !hasLayout) return
     askedRoute.current = true
     const to = new URL(window.location.href).searchParams.get("to")
-    if (to && store.getState().objects.some((o) => o.id === to)) store.getState().showRoute(to)
+    if (to && store.getState().objects.some((piece) => piece.id === to))
+      store.getState().showRoute(to)
   }, [hasLayout, store])
   useEffect(() => {
     if (!askedRoute.current) return

@@ -50,7 +50,7 @@ interface Props {
  * numbers that the walls' shader reads (see cutaway.ts): nothing re-renders.
  */
 export const WallXray = ({ enabled, isEditing }: Props) => {
-  const { camera, raycaster, pointer, gl, invalidate } = useThree()
+  const { camera, raycaster, pointer, gl: renderer, invalidate } = useThree()
   const store = useEditorStoreApi()
   const box = useMemo(() => new Box3(), [])
   const min = useMemo(() => new Vector3(), [])
@@ -62,7 +62,7 @@ export const WallXray = ({ enabled, isEditing }: Props) => {
   // Track whether the cursor is over the canvas (clear when it leaves), and
   // redraw on move so the cutaway follows under frameloop="demand".
   useEffect(() => {
-    const el = gl.domElement
+    const element = renderer.domElement
     const move = () => {
       inside.current = true
       invalidate()
@@ -71,18 +71,18 @@ export const WallXray = ({ enabled, isEditing }: Props) => {
       inside.current = false
       invalidate()
     }
-    el.addEventListener("pointermove", move)
-    el.addEventListener("pointerleave", leave)
+    element.addEventListener("pointermove", move)
+    element.addEventListener("pointerleave", leave)
     return () => {
-      el.removeEventListener("pointermove", move)
-      el.removeEventListener("pointerleave", leave)
+      element.removeEventListener("pointermove", move)
+      element.removeEventListener("pointerleave", leave)
     }
-  }, [gl, invalidate])
+  }, [renderer, invalidate])
 
   // Switching tools on/off: kick a frame so the cut eases out (or in).
   useEffect(() => invalidate(), [enabled, invalidate])
   // Unmounted (leaving the office): no cut left behind for the next scene.
-  useEffect(() => () => cutawayUniform.value.forEach((v) => v.set(0, 0, 0, 0)), [])
+  useEffect(() => () => cutawayUniform.value.forEach((vector) => vector.set(0, 0, 0, 0)), [])
 
   /** The wall lines the cursor ray passes through, nearest first (one per line). */
   const getAims = (): Aim[] => {
@@ -93,11 +93,11 @@ export const WallXray = ({ enabled, isEditing }: Props) => {
 
     // Pointing at a wall item (a TV, a picture…) keeps its wall up, so it can
     // be seen and picked — like pointing at a door.
-    for (const o of objects) {
-      if (!isWallMounted(o.type)) continue
-      const [cx, cz] = footprintCells(o.type, o.rotation)
-      min.set(o.x - (cx * GRID) / 2, MOUNT_BOTTOM, o.z - (cz * GRID) / 2)
-      max.set(o.x + (cx * GRID) / 2, WALL.height, o.z + (cz * GRID) / 2)
+    for (const object of objects) {
+      if (!isWallMounted(object.type)) continue
+      const [cellsX, cellsZ] = footprintCells(object.type, object.rotation)
+      min.set(object.x - (cellsX * GRID) / 2, MOUNT_BOTTOM, object.z - (cellsZ * GRID) / 2)
+      max.set(object.x + (cellsX * GRID) / 2, WALL.height, object.z + (cellsZ * GRID) / 2)
       if (ray.intersectsBox(box.set(min, max))) return []
     }
 
@@ -106,17 +106,17 @@ export const WallXray = ({ enabled, isEditing }: Props) => {
     // Viewing, there's nothing to pick up: doors and windows cut too. Glass
     // partitions never do — you can see through them already.
     const hits: (Aim & { distance: number })[] = []
-    for (const o of objects) {
-      if (!isEdgeType(o.type) || getEdge(o.type)?.isSeeThrough) continue
-      if (isEditing && !isWall(o.type)) continue
-      if (!intersectEdge(ray, o, hitPoint, SLACK)) continue
-      const half = edgeLength(o) / 2
-      const axis = CUT_DIRECTION[edgeDirection(o.rotation)]
+    for (const object of objects) {
+      if (!isEdgeType(object.type) || getEdge(object.type)?.isSeeThrough) continue
+      if (isEditing && !isWall(object.type)) continue
+      if (!intersectEdge(ray, object, hitPoint, SLACK)) continue
+      const half = edgeLength(object) / 2
+      const axis = CUT_DIRECTION[edgeDirection(object.rotation)]
       const { along, across } = cutAxes(axis)
-      const middle = o.x * along[0] + o.z * along[1]
+      const middle = object.x * along[0] + object.z * along[1]
       hits.push({
         axis,
-        line: o.x * across[0] + o.z * across[1],
+        line: object.x * across[0] + object.z * across[1],
         // Where the ray meets the wall, clamped to this segment.
         centre: Math.min(
           middle + half,
@@ -125,23 +125,26 @@ export const WallXray = ({ enabled, isEditing }: Props) => {
         distance: hitPoint.distanceTo(ray.origin),
       })
     }
-    hits.sort((a, b) => a.distance - b.distance)
+    hits.sort((first, second) => first.distance - second.distance)
     const aims: Aim[] = []
-    for (const h of hits)
-      if (!aims.some((a) => a.axis === h.axis && a.line === h.line)) aims.push(h)
+    for (const hit of hits)
+      if (!aims.some((existing) => existing.axis === hit.axis && existing.line === hit.line))
+        aims.push(hit)
     return aims.slice(0, MAX_CUTS)
   }
 
   // Ease the cuts toward where the cursor points; write them to the shader.
   // It follows the cursor while the camera moves too: a ray test and a few
   // numbers per frame, nothing rebuilt.
-  useFrame((_, dt) => {
+  useFrame((_, delta) => {
     const aims = getAims()
 
     const list = cuts.current
     for (const cut of list) cut.target = 0
     for (const aim of aims) {
-      const cut = list.find((c) => c.axis === aim.axis && c.line === aim.line)
+      const cut = list.find(
+        (candidate) => candidate.axis === aim.axis && candidate.line === aim.line
+      )
       if (cut) {
         cut.target = 1
         cut.targetCentre = aim.centre
@@ -149,23 +152,23 @@ export const WallXray = ({ enabled, isEditing }: Props) => {
         if (cut.amount < 0.05) cut.centre = aim.centre
       } else list.push({ ...aim, targetCentre: aim.centre, amount: 0, target: 1 })
     }
-    const kIn = 1 - Math.exp(-dt * RATE_IN)
-    const kOut = 1 - Math.exp(-dt * RATE_OUT)
-    const kGlide = 1 - Math.exp(-dt * RATE_GLIDE)
+    const blendIn = 1 - Math.exp(-delta * RATE_IN)
+    const blendOut = 1 - Math.exp(-delta * RATE_OUT)
+    const blendGlide = 1 - Math.exp(-delta * RATE_GLIDE)
     let isAnimating = false
     for (const cut of list) {
-      cut.amount += (cut.target - cut.amount) * (cut.target > cut.amount ? kIn : kOut)
-      cut.centre += (cut.targetCentre - cut.centre) * kGlide
+      cut.amount += (cut.target - cut.amount) * (cut.target > cut.amount ? blendIn : blendOut)
+      cut.centre += (cut.targetCentre - cut.centre) * blendGlide
       if (Math.abs(cut.target - cut.amount) < 0.005) cut.amount = cut.target
       if (Math.abs(cut.targetCentre - cut.centre) < 0.002) cut.centre = cut.targetCentre
       if (cut.amount !== cut.target || cut.centre !== cut.targetCentre) isAnimating = true
     }
     // Gone once fully restored; the newest win if there are too many.
-    cuts.current = list.filter((c) => c.target > 0 || c.amount > 0).slice(-MAX_CUTS)
-    cutawayUniform.value.forEach((v, i) => {
+    cuts.current = list.filter((cut) => cut.target > 0 || cut.amount > 0).slice(-MAX_CUTS)
+    cutawayUniform.value.forEach((vector, i) => {
       const cut = cuts.current[i]
-      if (cut) v.set(cut.axis, cut.line, cut.centre, cut.amount)
-      else v.set(0, 0, 0, 0)
+      if (cut) vector.set(cut.axis, cut.line, cut.centre, cut.amount)
+      else vector.set(0, 0, 0, 0)
     })
     if (isAnimating) invalidate() // keep easing under frameloop="demand"
   })

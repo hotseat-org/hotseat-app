@@ -24,14 +24,14 @@ const nodeKey = (x: number, z: number) => `${Math.round(x * 1000)},${Math.round(
  */
 export const findWallGrip = (objects: SceneObject[], x: number, z: number): string | null => {
   let best: { id: string; distance: number } | null = null
-  for (const o of objects) {
-    if (!isWall(o.type)) continue
-    const direction = edgeDirection(o.rotation)
+  for (const piece of objects) {
+    if (!isWall(piece.type)) continue
+    const direction = edgeDirection(piece.rotation)
     if (direction !== "x" && direction !== "z") continue
-    const along = direction === "x" ? Math.abs(x - o.x) : Math.abs(z - o.z)
-    const across = direction === "x" ? Math.abs(z - o.z) : Math.abs(x - o.x)
+    const along = direction === "x" ? Math.abs(x - piece.x) : Math.abs(z - piece.z)
+    const across = direction === "x" ? Math.abs(z - piece.z) : Math.abs(x - piece.x)
     if (along > SEG / 2 || across > GRIP) continue
-    if (!best || across < best.distance) best = { id: o.id, distance: across }
+    if (!best || across < best.distance) best = { id: piece.id, distance: across }
   }
   return best?.id ?? null
 }
@@ -56,7 +56,7 @@ export const composeWallShift = (
   gripId: string,
   offset: number
 ): WallShift | null => {
-  const grip = objects.find((o) => o.id === gripId)
+  const grip = objects.find((piece) => piece.id === gripId)
   if (!grip || offset === 0) return null
   const direction = edgeDirection(grip.rotation)
   if (direction !== "x" && direction !== "z") return null
@@ -65,15 +65,15 @@ export const composeWallShift = (
   const sign = Math.sign(offset)
   const steps = Math.round(Math.abs(offset) / SEG)
 
-  const edges = objects.filter((o) => isEdgeType(o.type))
+  const edges = objects.filter((piece) => isEdgeType(piece.type))
   const atNode = new Map<string, SceneObject[]>()
-  for (const e of edges)
-    for (const n of edgeNodes(e)) {
-      const key = nodeKey(n.x, n.z)
-      atNode.set(key, [...(atNode.get(key) ?? []), e])
+  for (const edge of edges)
+    for (const node of edgeNodes(edge)) {
+      const key = nodeKey(node.x, node.z)
+      atNode.set(key, [...(atNode.get(key) ?? []), edge])
     }
-  const isOnLine = (o: SceneObject) =>
-    edgeDirection(o.rotation) === direction && Math.abs(o[across] - grip[across]) < 1e-6
+  const isOnLine = (edge: SceneObject) =>
+    edgeDirection(edge.rotation) === direction && Math.abs(edge[across] - grip[across]) < 1e-6
 
   // The run: straight on from the grip while nothing else meets it.
   const run = new Set([grip])
@@ -81,25 +81,25 @@ export const composeWallShift = (
   for (const start of edgeNodes(grip)) {
     let node = start
     for (;;) {
-      const others = (atNode.get(nodeKey(node.x, node.z)) ?? []).filter((e) => !run.has(e))
+      const others = (atNode.get(nodeKey(node.x, node.z)) ?? []).filter((edge) => !run.has(edge))
       const next = others.length === 1 && isOnLine(others[0]) ? others[0] : null
       if (!next) {
         ends.push(node)
         break
       }
       run.add(next)
-      const [a, b] = edgeNodes(next)
-      node = nodeKey(a.x, a.z) === nodeKey(node.x, node.z) ? b : a
+      const [startNode, endNode] = edgeNodes(next)
+      node = nodeKey(startNode.x, startNode.z) === nodeKey(node.x, node.z) ? endNode : startNode
     }
   }
 
   const byUnit = new Map<string, SceneObject>()
-  for (const e of edges) for (const u of unitEdges(e)) byUnit.set(edgeKey(u), e)
+  for (const edge of edges) for (const unit of unitEdges(edge)) byUnit.set(edgeKey(unit), edge)
   const crossRotation = EDGE_ROTATION[crossDirection]
   /** The unit edges between an end and where it moves to. */
   const spanOf = (end: { x: number; z: number }) =>
-    Array.from({ length: steps }, (_, k) => {
-      const at = end[across] + sign * (k + 0.5) * SEG
+    Array.from({ length: steps }, (_, index) => {
+      const at = end[across] + sign * (index + 0.5) * SEG
       return across === "z"
         ? { x: end.x, z: at, rotation: crossRotation }
         : { x: at, z: end.z, rotation: crossRotation }
@@ -109,14 +109,14 @@ export const composeWallShift = (
   const added: SceneObject[] = []
   const runType = grip.type
   for (const end of ends) {
-    const attached = (atNode.get(nodeKey(end.x, end.z)) ?? []).filter((e) => !run.has(e))
+    const attached = (atNode.get(nodeKey(end.x, end.z)) ?? []).filter((edge) => !run.has(edge))
     if (attached.length === 0) continue // a free end
     const span = spanOf(end)
     const first = byUnit.get(edgeKey(span[0]))
-    const rest = attached.filter((e) => e !== first)
+    const rest = attached.filter((edge) => edge !== first)
     if (rest.length > 0) {
       // Something else still meets the old corner: a wall joins it to the new one.
-      const template = first ?? rest.find((e) => isWall(e.type)) ?? grip
+      const template = first ?? rest.find((edge) => isWall(edge.type)) ?? grip
       for (const unit of span) {
         if (byUnit.has(edgeKey(unit))) continue
         added.push({
@@ -130,49 +130,53 @@ export const composeWallShift = (
     } else {
       // Only the wall ahead meets it: that wall shrinks — all of it plain wall,
       // with nothing else joining it on the way.
-      for (const [k, unit] of span.entries()) {
+      for (const [index, unit] of span.entries()) {
         const wall = byUnit.get(edgeKey(unit))
         if (!wall || isOpening(wall.type)) return null
         removed.add(wall)
         const node =
           across === "z"
-            ? { x: end.x, z: end.z + sign * k * SEG }
-            : { x: end.x + sign * k * SEG, z: end.z }
+            ? { x: end.x, z: end.z + sign * index * SEG }
+            : { x: end.x + sign * index * SEG, z: end.z }
         const joining = (atNode.get(nodeKey(node.x, node.z)) ?? []).filter(
-          (e) => !run.has(e) && edgeDirection(e.rotation) !== crossDirection
+          (edge) => !run.has(edge) && edgeDirection(edge.rotation) !== crossDirection
         )
-        if (k > 0 && joining.length > 0) return null
+        if (index > 0 && joining.length > 0) return null
       }
     }
   }
 
-  const runIds = new Set([...run].map((o) => o.id))
-  const removedIds = new Set([...removed].map((o) => o.id))
+  const runIds = new Set([...run].map((piece) => piece.id))
+  const removedIds = new Set([...removed].map((piece) => piece.id))
   // What hangs on the run moves with it; nothing may hang on wall that goes.
   const shiftedMounts = new Set<string>()
-  for (const o of objects) {
-    if (!isWallMounted(o.type)) continue
-    const walls = mountWalls(objects, o.type, o.x, o.z, o.rotation) ?? []
+  for (const piece of objects) {
+    if (!isWallMounted(piece.type)) continue
+    const walls = mountWalls(objects, piece.type, piece.x, piece.z, piece.rotation) ?? []
     if (walls.some((id) => removedIds.has(id))) return null
-    if (walls.some((id) => runIds.has(id))) shiftedMounts.add(o.id)
+    if (walls.some((id) => runIds.has(id))) shiftedMounts.add(piece.id)
   }
 
-  const shift = (o: SceneObject) => ({ ...o, [across]: o[across] + sign * steps * SEG })
+  const shift = (piece: SceneObject) => ({ ...piece, [across]: piece[across] + sign * steps * SEG })
   const moved = [...run].map(shift)
-  const kept = objects.filter((o) => !runIds.has(o.id) && !removedIds.has(o.id))
+  const kept = objects.filter((piece) => !runIds.has(piece.id) && !removedIds.has(piece.id))
   // The moved run may not land on another wall…
   const taken = new Set(
     kept
-      .filter((o) => isEdgeType(o.type))
+      .filter((piece) => isEdgeType(piece.type))
       .flatMap(unitEdges)
       .map(edgeKey)
   )
   const fresh = [...moved, ...added].flatMap(unitEdges)
-  if (fresh.some((u) => taken.has(edgeKey(u)))) return null
+  if (fresh.some((unit) => taken.has(edgeKey(unit)))) return null
   // …nor through furniture.
-  const furniture = kept.filter((o) => !isEdgeType(o.type) && !shiftedMounts.has(o.id))
-  if (fresh.some((u) => edgeBlocked(furniture, u))) return null
+  const furniture = kept.filter((piece) => !isEdgeType(piece.type) && !shiftedMounts.has(piece.id))
+  if (fresh.some((unit) => edgeBlocked(furniture, unit))) return null
 
-  const next = [...kept.map((o) => (shiftedMounts.has(o.id) ? shift(o) : o)), ...moved, ...added]
+  const next = [
+    ...kept.map((piece) => (shiftedMounts.has(piece.id) ? shift(piece) : piece)),
+    ...moved,
+    ...added,
+  ]
   return { objects: next, runIds: [...runIds] }
 }

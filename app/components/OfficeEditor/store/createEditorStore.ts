@@ -62,11 +62,15 @@ export const createEditorStore = ({
         persist(initializer, {
           name: persistKey,
           // Only the layout is durable — tool/selection are per-session.
-          partialize: (s) => ({ objects: s.objects }),
+          partialize: (state) => ({ objects: state.objects }),
           // Upgrade layouts saved with old 1-unit wall segments.
           merge: (persisted, current) => {
-            const p = persisted as Partial<EditorState> | undefined
-            return { ...current, ...p, objects: normalizeEdges(p?.objects ?? current.objects) }
+            const persistedState = persisted as Partial<EditorState> | undefined
+            return {
+              ...current,
+              ...persistedState,
+              objects: normalizeEdges(persistedState?.objects ?? current.objects),
+            }
           },
         })
       )

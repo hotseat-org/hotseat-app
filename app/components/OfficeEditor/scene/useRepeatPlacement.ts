@@ -11,9 +11,9 @@ export type RepeatDrag = { start: Cell & { rotation?: number }; end: Cell }
  * against the office and the copies before it). Wall items hang one at a time.
  */
 export const useRepeatPlacement = (tool: Tool, isFurniture: boolean) => {
-  const objects = useEditorStore((s) => s.objects)
-  const placementPattern = useEditorStore((s) => s.placementPattern)
-  const placementRotation = useEditorStore((s) => s.placementRotation)
+  const objects = useEditorStore((state) => state.objects)
+  const placementPattern = useEditorStore((state) => state.placementPattern)
+  const placementRotation = useEditorStore((state) => state.placementRotation)
   const [repeat, setRepeat] = useState<RepeatDrag | null>(null)
   const isRepeating =
     isFurniture && placementPattern !== "single" && !isWallMounted(tool as ObjectType)
@@ -29,15 +29,16 @@ export const useRepeatPlacement = (tool: Tool, isFurniture: boolean) => {
   }, [repeat, placementPattern, tool, placementRotation])
   const repeatBlocked = useMemo(() => {
     const placed: SceneObject[] = []
-    return repeatPlan.map((p) => {
+    return repeatPlan.map((point) => {
       const isBlocked = furnitureCollides(
         [...objects, ...placed],
         tool as ObjectType,
-        p.x,
-        p.z,
-        p.rotation
+        point.x,
+        point.z,
+        point.rotation
       )
-      if (!isBlocked) placed.push({ id: `plan-${placed.length}`, type: tool as ObjectType, ...p })
+      if (!isBlocked)
+        placed.push({ id: `plan-${placed.length}`, type: tool as ObjectType, ...point })
       return isBlocked
     })
   }, [repeatPlan, objects, tool])

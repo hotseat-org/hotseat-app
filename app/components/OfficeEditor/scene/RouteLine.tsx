@@ -4,7 +4,7 @@ import * as THREE from "three"
 import { useRoute } from "../wayfinding"
 
 /** Just above the floor and its paint, under the furniture. */
-const Y = 0.02
+const HEIGHT = 0.02
 /** The ribbon's full width (m): a soft halo, with the bright line at its heart. */
 const WIDTH = 0.9
 /** Light pulses running along the line: one every PERIOD m, at SPEED m/s. */
@@ -23,28 +23,38 @@ const HDR = 2.2
  * side. `distance` runs along it, `across` from −1 to 1 over its width.
  */
 const ribbon = (points: [number, number][], width: number) => {
-  const n = points.length
-  const positions = new Float32Array(n * 2 * 3)
-  const distance = new Float32Array(n * 2)
-  const across = new Float32Array(n * 2)
+  const count = points.length
+  const positions = new Float32Array(count * 2 * 3)
+  const distance = new Float32Array(count * 2)
+  const across = new Float32Array(count * 2)
   const index: number[] = []
   let run = 0
-  for (let i = 0; i < n; i++) {
+  for (let i = 0; i < count; i++) {
     const [x, z] = points[i]
     if (i > 0) run += Math.hypot(x - points[i - 1][0], z - points[i - 1][1])
     // The direction here: averaged over the segments either side.
-    const [ax, az] = points[Math.max(0, i - 1)]
-    const [bx, bz] = points[Math.min(n - 1, i + 1)]
-    const len = Math.hypot(bx - ax, bz - az) || 1
-    const nx = -(bz - az) / len
-    const nz = (bx - ax) / len
-    const h = width / 2
-    positions.set([x + nx * h, Y, z + nz * h, x - nx * h, Y, z - nz * h], i * 6)
+    const [prevX, prevZ] = points[Math.max(0, i - 1)]
+    const [nextX, nextZ] = points[Math.min(count - 1, i + 1)]
+    const length = Math.hypot(nextX - prevX, nextZ - prevZ) || 1
+    const normalX = -(nextZ - prevZ) / length
+    const normalZ = (nextX - prevX) / length
+    const half = width / 2
+    positions.set(
+      [
+        x + normalX * half,
+        HEIGHT,
+        z + normalZ * half,
+        x - normalX * half,
+        HEIGHT,
+        z - normalZ * half,
+      ],
+      i * 6
+    )
     distance.set([run, run], i * 2)
     across.set([1, -1], i * 2)
-    if (i < n - 1) {
-      const a = i * 2
-      index.push(a, a + 1, a + 2, a + 1, a + 3, a + 2)
+    if (i < count - 1) {
+      const vertex = i * 2
+      index.push(vertex, vertex + 1, vertex + 2, vertex + 1, vertex + 3, vertex + 2)
     }
   }
   const geometry = new THREE.BufferGeometry()
@@ -156,7 +166,7 @@ const accentColor = () =>
 export const RouteLine = () => {
   const route = useRoute()
   const points = route?.path?.points
-  const invalidate = useThree((s) => s.invalidate)
+  const invalidate = useThree((state) => state.invalidate)
   const [isStill, setIsStill] = useState(false)
   useEffect(() => setIsStill(matchMedia("(prefers-reduced-motion: reduce)").matches), [])
 
@@ -174,7 +184,7 @@ export const RouteLine = () => {
     [line, dot, ring]
   )
   const accent = accentColor()
-  for (const m of [line, dot, ring]) m.uniforms.color.value.set(accent)
+  for (const material of [line, dot, ring]) material.uniforms.color.value.set(accent)
   if (strip) line.uniforms.routeLength.value = strip.length
 
   // Pulses run (and the desk's ring breathes) for a while after a way is shown.
@@ -184,11 +194,11 @@ export const RouteLine = () => {
     flowing.current = 0
     invalidate()
   }, [points, invalidate])
-  useFrame((_, dt) => {
+  useFrame((_, delta) => {
     if (!points || isStill || flowing.current >= FLOW_SECONDS) return
-    flowing.current += dt
+    flowing.current += delta
     const isDone = flowing.current >= FLOW_SECONDS
-    line.uniforms.time.value += dt * SPEED
+    line.uniforms.time.value += delta * SPEED
     ringMesh.current?.scale.setScalar(
       isDone ? 1 : 1 + 0.12 * Math.sin(line.uniforms.time.value * 3.5)
     )
@@ -196,18 +206,23 @@ export const RouteLine = () => {
   })
 
   if (!points || !strip) return null
-  const [sx, sz] = points[0]
-  const [ex, ez] = points[points.length - 1]
+  const [startX, startZ] = points[0]
+  const [endX, endZ] = points[points.length - 1]
   return (
     <group raycast={() => null}>
       <mesh geometry={strip.geometry} material={line} renderOrder={2} />
       {/* Where you come in, and where you're going. */}
-      <mesh position={[sx, Y + 0.002, sz]} rotation-x={-Math.PI / 2} material={dot} renderOrder={3}>
+      <mesh
+        position={[startX, HEIGHT + 0.002, startZ]}
+        rotation-x={-Math.PI / 2}
+        material={dot}
+        renderOrder={3}
+      >
         <planeGeometry args={[1.1, 1.1]} />
       </mesh>
       <mesh
         ref={ringMesh}
-        position={[ex, Y + 0.002, ez]}
+        position={[endX, HEIGHT + 0.002, endZ]}
         rotation-x={-Math.PI / 2}
         material={ring}
         renderOrder={3}

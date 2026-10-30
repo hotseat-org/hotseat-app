@@ -20,33 +20,34 @@ const noRaycast = () => {}
 const meshRaycast = Mesh.prototype.raycast
 
 /** Stop (or restart) three.js recomputing a mesh's matrices every frame. */
-const freeze = (m: Mesh) => {
-  m.matrixAutoUpdate = false
-  m.matrixWorldAutoUpdate = false
+const freeze = (mesh: Mesh) => {
+  mesh.matrixAutoUpdate = false
+  mesh.matrixWorldAutoUpdate = false
 }
-const thaw = (m: Mesh) => {
-  m.matrixAutoUpdate = true
-  m.matrixWorldAutoUpdate = true
+const thaw = (mesh: Mesh) => {
+  mesh.matrixAutoUpdate = true
+  mesh.matrixWorldAutoUpdate = true
 }
 
 /** An original merged into the baked meshes: hidden, not hit, frozen — or back to normal. */
-const setOriginal = (m: Mesh, isMerged: boolean) => {
-  m.visible = !isMerged
-  m.raycast = isMerged ? noRaycast : meshRaycast
-  if (isMerged) freeze(m)
-  else thaw(m)
+const setOriginal = (mesh: Mesh, isMerged: boolean) => {
+  mesh.visible = !isMerged
+  mesh.raycast = isMerged ? noRaycast : meshRaycast
+  if (isMerged) freeze(mesh)
+  else thaw(mesh)
 }
 
 /** The meshes to bake (skipping NO_BAKE subtrees and our own merged output). */
 const collect = (root: Object3D, skip: Object3D | null): Mesh[] => {
-  const out: Mesh[] = []
-  const walk = (o: Object3D) => {
-    if (o === skip || o.userData.noBake) return
-    if ((o as Mesh).isMesh && !Array.isArray((o as Mesh).material)) out.push(o as Mesh)
-    for (const c of o.children) walk(c)
+  const collected: Mesh[] = []
+  const walk = (object: Object3D) => {
+    if (object === skip || object.userData.noBake) return
+    if ((object as Mesh).isMesh && !Array.isArray((object as Mesh).material))
+      collected.push(object as Mesh)
+    for (const child of object.children) walk(child)
   }
-  for (const c of root.children) walk(c)
-  return out
+  for (const child of root.children) walk(child)
+  return collected
 }
 
 /**
@@ -81,30 +82,30 @@ export const Baked = ({
   // swapping materials, which happens constantly while hovering walls.
   const shapeFingerprint = useRef("")
   const shapeChanged = useRef(false)
-  const gl = useThree((s) => s.gl)
-  const invalidate = useThree((s) => s.invalidate)
+  const renderer = useThree((state) => state.gl)
+  const invalidate = useThree((state) => state.invalidate)
   const handleBatchChanged = useBatchChanged()
   const shouldBatch = isBatchable && !!handleBatchChanged
 
   useLayoutEffect(() => {
-    const g = root.current
-    if (!g) return
-    const meshes = collect(g, output.current)
-    const fp = meshes
+    const group = root.current
+    if (!group) return
+    const meshes = collect(group, output.current)
+    const nextFingerprint = meshes
       .map(
-        (m) =>
+        (mesh) =>
           // Material look included: recolouring mutates a material in place.
-          `${m.geometry.uuid}:${(m.material as Material).uuid}:${materialKey(m.material as AnyMaterial)}:${m.position.toArray()}:${m.rotation.toArray()}:${m.scale.toArray()}`
+          `${mesh.geometry.uuid}:${(mesh.material as Material).uuid}:${materialKey(mesh.material as AnyMaterial)}:${mesh.position.toArray()}:${mesh.rotation.toArray()}:${mesh.scale.toArray()}`
       )
       .join(";")
     // Hide and freeze originals every time (newly mounted ones included); cheap.
-    for (const m of meshes) setOriginal(m, true)
-    if (fp === fingerprint.current) return
-    fingerprint.current = fp
+    for (const mesh of meshes) setOriginal(mesh, true)
+    if (nextFingerprint === fingerprint.current) return
+    fingerprint.current = nextFingerprint
     const shape = meshes
       .map(
-        (m) =>
-          `${m.geometry.uuid}:${m.position.toArray()}:${m.rotation.toArray()}:${m.scale.toArray()}:${m.castShadow}`
+        (mesh) =>
+          `${mesh.geometry.uuid}:${mesh.position.toArray()}:${mesh.rotation.toArray()}:${mesh.scale.toArray()}:${mesh.castShadow}`
       )
       .join(";")
     if (shape !== shapeFingerprint.current) {
@@ -113,43 +114,44 @@ export const Baked = ({
     }
 
     // Fresh matrices for the merge (frozen again below).
-    for (const m of meshes) thaw(m)
-    g.updateWorldMatrix(true, true)
-    for (const m of meshes) freeze(m)
-    const inv = new Matrix4().copy(g.matrixWorld).invert()
+    for (const mesh of meshes) thaw(mesh)
+    group.updateWorldMatrix(true, true)
+    for (const mesh of meshes) freeze(mesh)
+    const inverse = new Matrix4().copy(group.matrixWorld).invert()
     const groups = new Map<string, { meshes: Mesh[]; material: Material }>()
-    for (const m of meshes) {
-      const mat = m.material as AnyMaterial
-      const key = `${materialKey(mat)}|${m.castShadow}|${m.receiveShadow}`
-      const grp = groups.get(key)
-      if (grp) grp.meshes.push(m)
-      else groups.set(key, { meshes: [m], material: mat })
+    for (const mesh of meshes) {
+      const meshMaterial = mesh.material as AnyMaterial
+      const key = `${materialKey(meshMaterial)}|${mesh.castShadow}|${mesh.receiveShadow}`
+      const existing = groups.get(key)
+      if (existing) existing.meshes.push(mesh)
+      else groups.set(key, { meshes: [mesh], material: meshMaterial })
     }
 
     const next: Part[] = []
-    for (const [key, { meshes: ms, material }] of groups) {
-      const geoms = ms.map((m) => {
-        const src = m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone()
+    for (const [key, { meshes: groupMeshes, material }] of groups) {
+      const geoms = groupMeshes.map((mesh) => {
+        const source = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry.clone()
         // Keep only what our (texture-less) materials use, so attributes match.
-        const geo = new BufferGeometry()
-        geo.setAttribute("position", src.getAttribute("position"))
-        if (src.getAttribute("normal")) geo.setAttribute("normal", src.getAttribute("normal"))
-        else geo.computeVertexNormals()
-        src.dispose()
-        return geo.applyMatrix4(new Matrix4().multiplyMatrices(inv, m.matrixWorld))
+        const geometry = new BufferGeometry()
+        geometry.setAttribute("position", source.getAttribute("position"))
+        if (source.getAttribute("normal"))
+          geometry.setAttribute("normal", source.getAttribute("normal"))
+        else geometry.computeVertexNormals()
+        source.dispose()
+        return geometry.applyMatrix4(new Matrix4().multiplyMatrices(inverse, mesh.matrixWorld))
       })
       const merged = mergeGeometries(geoms, false)
       geoms.forEach((x) => x.dispose())
       if (!merged) {
-        ms.forEach((m) => setOriginal(m, false)) // couldn't merge: leave them as-is
+        groupMeshes.forEach((mesh) => setOriginal(mesh, false)) // couldn't merge: leave them as-is
         continue
       }
       next.push({
         key,
         geometry: merged,
         material,
-        castShadow: ms[0].castShadow,
-        receiveShadow: ms[0].receiveShadow,
+        castShadow: groupMeshes[0].castShadow,
+        receiveShadow: groupMeshes[0].receiveShadow,
       })
     }
     setParts(next)
@@ -159,26 +161,26 @@ export const Baked = ({
   useLayoutEffect(() => {
     if (shapeChanged.current) {
       shapeChanged.current = false
-      markShadowsDirty(gl, invalidate)
+      markShadowsDirty(renderer, invalidate)
     } else invalidate()
     // Only a piece in the office-wide batch changes it: doors and windows
     // re-bake all the time in the wall cutaway, and each call re-merges the
     // whole office.
     if (shouldBatch) handleBatchChanged?.()
-    return () => parts.forEach((p) => p.geometry.dispose())
-  }, [parts, gl, invalidate, handleBatchChanged, shouldBatch])
+    return () => parts.forEach((part) => part.geometry.dispose())
+  }, [parts, renderer, invalidate, handleBatchChanged, shouldBatch])
 
   return (
     <group ref={root}>
       {children}
       <group ref={output}>
-        {parts.map((p) => (
+        {parts.map((part) => (
           <mesh
-            key={p.key + p.geometry.uuid}
-            geometry={p.geometry}
-            material={p.material}
-            castShadow={p.castShadow}
-            receiveShadow={p.receiveShadow}
+            key={part.key + part.geometry.uuid}
+            geometry={part.geometry}
+            material={part.material}
+            castShadow={part.castShadow}
+            receiveShadow={part.receiveShadow}
             userData={shouldBatch ? { [BATCH_PART]: true } : {}}
           />
         ))}

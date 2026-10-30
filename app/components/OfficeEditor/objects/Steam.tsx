@@ -20,7 +20,7 @@ interface Props {
  * and stays out of furniture baking (it animates).
  */
 export const Steam = ({ position, size = 1 }: Props) => {
-  const invalidate = useThree((s) => s.invalidate)
+  const invalidate = useThree((state) => state.invalidate)
   const puffs = useRef<(Mesh | null)[]>([])
   // Each plume starts at its own point in the loop so neighbours don't pulse in step.
   const seed = useRef(Math.random() * PERIOD)
@@ -37,15 +37,19 @@ export const Steam = ({ position, size = 1 }: Props) => {
   }, [invalidate])
 
   useFrame(({ clock }) => {
-    const t = reduced.current ? 1 : clock.elapsedTime + seed.current
-    puffs.current.forEach((m, i) => {
-      if (!m) return
-      const p = (t / PERIOD + i / PUFFS) % 1
-      m.position.set(Math.sin(p * 5 + i) * 0.025, p * RISE, Math.cos(p * 4 + i * 2) * 0.015)
-      m.scale.setScalar(0.035 + p * 0.07)
+    const time = reduced.current ? 1 : clock.elapsedTime + seed.current
+    puffs.current.forEach((puff, i) => {
+      if (!puff) return
+      const progress = (time / PERIOD + i / PUFFS) % 1
+      puff.position.set(
+        Math.sin(progress * 5 + i) * 0.025,
+        progress * RISE,
+        Math.cos(progress * 4 + i * 2) * 0.015
+      )
+      puff.scale.setScalar(0.035 + progress * 0.07)
       // Fade in quickly, then out as it rises.
-      const mat = m.material as MeshStandardMaterial
-      mat.opacity = Math.min(p / 0.15, 1) * (1 - p) * 0.7
+      const material = puff.material as MeshStandardMaterial
+      material.opacity = Math.min(progress / 0.15, 1) * (1 - progress) * 0.7
     })
   })
 
@@ -58,8 +62,8 @@ export const Steam = ({ position, size = 1 }: Props) => {
           // puff would inflate bounds measured before the first frame — e.g. a
           // catalog still framing the whole table tiny around it.
           scale={0.035}
-          ref={(m) => {
-            puffs.current[i] = m
+          ref={(puff) => {
+            puffs.current[i] = puff
           }}
         >
           <icosahedronGeometry args={[1, 1]} />

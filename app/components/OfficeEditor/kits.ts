@@ -69,7 +69,7 @@ export interface KitLibrary {
 export const KitLibraryContext = createContext<KitLibrary | null>(null)
 
 const addLocalKit = (kit: Kit) => writeKits([kit, ...readKits()])
-const deleteLocalKit = (id: string) => writeKits(readKits().filter((k) => k.id !== id))
+const deleteLocalKit = (id: string) => writeKits(readKits().filter((kit) => kit.id !== id))
 
 /** The saved rooms: the office's organization's, or (standalone) this browser's. */
 export const useKitLibrary = (): KitLibrary => {
@@ -82,22 +82,26 @@ const cellKey = (x: number, z: number) =>
   `${Math.floor(x / SEG) * SEG},${Math.floor(z / SEG) * SEG}`
 
 /** Whether a wall/door edge borders (or, diagonally, crosses) one of the room's squares. */
-const bordersRoom = (o: SceneObject, cells: Set<string>) =>
-  unitEdges(o).some((e) => {
-    const direction = edgeDirection(e.rotation)
+const bordersRoom = (object: SceneObject, cells: Set<string>) =>
+  unitEdges(object).some((edge) => {
+    const direction = edgeDirection(edge.rotation)
     if (direction === "x")
-      return cells.has(cellKey(e.x, e.z - SEG / 2)) || cells.has(cellKey(e.x, e.z + SEG / 2))
+      return (
+        cells.has(cellKey(edge.x, edge.z - SEG / 2)) || cells.has(cellKey(edge.x, edge.z + SEG / 2))
+      )
     if (direction === "z")
-      return cells.has(cellKey(e.x - SEG / 2, e.z)) || cells.has(cellKey(e.x + SEG / 2, e.z))
-    return cells.has(cellKey(e.x, e.z))
+      return (
+        cells.has(cellKey(edge.x - SEG / 2, edge.z)) || cells.has(cellKey(edge.x + SEG / 2, edge.z))
+      )
+    return cells.has(cellKey(edge.x, edge.z))
   })
 
 const areaOf = (room: FloorCell[]) =>
-  room.reduce((sum, c) => {
-    if (c.parts === undefined) return sum + 1
-    let n = 0
-    for (let bits = c.parts; bits; bits >>= 1) n += bits & 1
-    return sum + n / 4
+  room.reduce((sum, cell) => {
+    if (cell.parts === undefined) return sum + 1
+    let count = 0
+    for (let bits = cell.parts; bits; bits >>= 1) count += bits & 1
+    return sum + count / 4
   }, 0) *
   SEG *
   SEG
@@ -108,41 +112,50 @@ export const composeKit = (
   x: number,
   z: number
 ): Omit<Kit, "name"> | null => {
-  const room = enclosedRegions(objects).find((r) =>
-    r.some((c) => cellKey(x, z) === `${c.x},${c.z}`)
+  const room = enclosedRegions(objects).find((region) =>
+    region.some((cell) => cellKey(x, z) === `${cell.x},${cell.z}`)
   )
   if (!room) return null
-  const cells = new Set(room.map((c) => `${c.x},${c.z}`))
+  const cells = new Set(room.map((cell) => `${cell.x},${cell.z}`))
   const inside = new Set(furnitureInRoomAt(objects, x, z))
-  const picked = objects.filter((o) =>
-    isEdgeType(o.type) ? bordersRoom(o, cells) : inside.has(o.id) && !isMarker(o.type)
+  const picked = objects.filter((object) =>
+    isEdgeType(object.type)
+      ? bordersRoom(object, cells)
+      : inside.has(object.id) && !isMarker(object.type)
   )
   // Centred on the room, by whole grid steps, so everything stays on the grid.
-  const xs = room.map((c) => c.x)
-  const zs = room.map((c) => c.z)
-  const cx = Math.round((Math.min(...xs) + Math.max(...xs) + SEG) / 2 / SEG) * SEG
-  const cz = Math.round((Math.min(...zs) + Math.max(...zs) + SEG) / 2 / SEG) * SEG
+  const xs = room.map((cell) => cell.x)
+  const zs = room.map((cell) => cell.z)
+  const centreX = Math.round((Math.min(...xs) + Math.max(...xs) + SEG) / 2 / SEG) * SEG
+  const centreZ = Math.round((Math.min(...zs) + Math.max(...zs) + SEG) / 2 / SEG) * SEG
   return {
     id: nanoid(8),
     area: areaOf(room),
-    objects: picked.map(({ id, type, x: ox, z: oz, rotation, color, variant, features }) => ({
-      id,
-      type,
-      x: ox - cx,
-      z: oz - cz,
-      rotation,
-      color,
-      variant,
-      features,
-    })),
+    objects: picked.map(
+      ({ id, type, x: pieceX, z: pieceZ, rotation, color, variant, features }) => ({
+        id,
+        type,
+        x: pieceX - centreX,
+        z: pieceZ - centreZ,
+        rotation,
+        color,
+        variant,
+        features,
+      })
+    ),
   }
 }
 
 /** A kit's pieces where it'd land, with the cursor at (x, z) — fresh ids. */
 export const composeKitAt = (kit: Kit, x: number, z: number): SceneObject[] => {
-  const dx = Math.round(x / SEG) * SEG
-  const dz = Math.round(z / SEG) * SEG
-  return kit.objects.map((o) => ({ ...o, id: nanoid(8), x: o.x + dx, z: o.z + dz }))
+  const deltaX = Math.round(x / SEG) * SEG
+  const deltaZ = Math.round(z / SEG) * SEG
+  return kit.objects.map((piece) => ({
+    ...piece,
+    id: nanoid(8),
+    x: piece.x + deltaX,
+    z: piece.z + deltaZ,
+  }))
 }
 
 /**
@@ -150,10 +163,10 @@ export const composeKitAt = (kit: Kit, x: number, z: number): SceneObject[] => {
  * nothing may cut through furniture, and its furniture may not collide.
  */
 export const canPlaceKit = (objects: SceneObject[], placed: SceneObject[]) => {
-  const edges = placed.filter((o) => isEdgeType(o.type))
-  if (edges.flatMap(unitEdges).some((e) => edgeBlocked(objects, e))) return false
+  const edges = placed.filter((piece) => isEdgeType(piece.type))
+  if (edges.flatMap(unitEdges).some((edge) => edgeBlocked(objects, edge))) return false
   const withEdges = [...objects, ...edges]
   return placed
-    .filter((o) => !isEdgeType(o.type))
-    .every((o) => !furnitureCollides(withEdges, o.type, o.x, o.z, o.rotation))
+    .filter((piece) => !isEdgeType(piece.type))
+    .every((piece) => !furnitureCollides(withEdges, piece.type, piece.x, piece.z, piece.rotation))
 }

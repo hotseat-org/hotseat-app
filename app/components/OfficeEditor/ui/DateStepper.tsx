@@ -15,15 +15,15 @@ import { useI18n } from "~/i18n/I18nProvider"
  */
 export const DateStepper = () => {
   const { t, format } = useI18n()
-  const day = useEditorStore((s) => s.booking.day)
-  const today = useEditorStore((s) => s.booking.today)
-  const from = useEditorStore((s) => s.booking.from)
-  const lastDay = useEditorStore((s) => s.booking.lastDay)
-  const setDay = useEditorStore((s) => s.setBookingDay)
+  const day = useEditorStore((state) => state.booking.day)
+  const today = useEditorStore((state) => state.booking.today)
+  const from = useEditorStore((state) => state.booking.from)
+  const lastDay = useEditorStore((state) => state.booking.lastDay)
+  const setDay = useEditorStore((state) => state.setBookingDay)
   const [open, setOpen] = useState(false)
 
-  const step = (n: number) => {
-    const next = addDays(day, n)
+  const step = (offset: number) => {
+    const next = addDays(day, offset)
     if (next >= from && next <= lastDay) setDay(next)
   }
 
@@ -56,8 +56,8 @@ export const DateStepper = () => {
         <Popover.Content placement="top" offset={14} className="rounded-2xl">
           <Popover.Dialog aria-label={t("Pick a day")} className="p-4 outline-none">
             <MonthCalendar
-              onPick={(d) => {
-                setDay(d)
+              onPick={(pickedDay) => {
+                setDay(pickedDay)
                 setOpen(false)
               }}
             />
@@ -80,10 +80,10 @@ export const DateStepper = () => {
 
 /** First day of the day's month. */
 const monthOf = (day: Day) => `${day.slice(0, 8)}01`
-const shiftMonth = (month: Day, n: number) => {
-  const [y, m] = month.split("-").map(Number)
-  const d = new Date(Date.UTC(y, m - 1 + n, 1))
-  return d.toISOString().slice(0, 10)
+const shiftMonth = (month: Day, offset: number) => {
+  const [year, monthNumber] = month.split("-").map(Number)
+  const shifted = new Date(Date.UTC(year, monthNumber - 1 + offset, 1))
+  return shifted.toISOString().slice(0, 10)
 }
 
 /**
@@ -97,32 +97,32 @@ export const MonthCalendar = ({
   onPick: (day: Day) => void
   className?: string
 }) => {
-  const day = useEditorStore((s) => s.booking.day)
-  const today = useEditorStore((s) => s.booking.today)
-  const from = useEditorStore((s) => s.booking.from)
-  const lastDay = useEditorStore((s) => s.booking.lastDay)
-  const byDay = useEditorStore((s) => s.booking.byDay)
-  const objects = useEditorStore((s) => s.objects)
-  const me = useEditorStore((s) => s.booking.me)
+  const day = useEditorStore((state) => state.booking.day)
+  const today = useEditorStore((state) => state.booking.today)
+  const from = useEditorStore((state) => state.booking.from)
+  const lastDay = useEditorStore((state) => state.booking.lastDay)
+  const byDay = useEditorStore((state) => state.booking.byDay)
+  const objects = useEditorStore((state) => state.objects)
+  const me = useEditorStore((state) => state.booking.me)
   const { t, format } = useI18n()
   const [month, setMonth] = useState(() => monthOf(day))
 
   // How full each day is: permanent residents every day + bookings on the rest.
   const { seats, residents, myResident, bookable } = useMemo(() => {
-    const desks = objects.filter((o) => isSeatable(o.type))
-    const resident = desks.filter((d) => d.assignee)
+    const desks = objects.filter((object) => isSeatable(object.type))
+    const resident = desks.filter((desk) => desk.assignee)
     return {
       seats: desks.length,
       residents: resident.length,
-      myResident: !!me && resident.some((d) => d.assignee === me),
-      bookable: new Set(desks.filter((d) => !d.assignee).map((d) => d.id)),
+      myResident: !!me && resident.some((desk) => desk.assignee === me),
+      bookable: new Set(desks.filter((desk) => !desk.assignee).map((desk) => desk.id)),
     }
   }, [objects, me])
-  const fill = (d: Day) => {
-    const booked = Object.keys(byDay[d] ?? {}).filter((id) => bookable.has(id)).length
+  const fill = (shownDay: Day) => {
+    const booked = Object.keys(byDay[shownDay] ?? {}).filter((id) => bookable.has(id)).length
     return seats ? (residents + booked) / seats : 0
   }
-  const mine = (d: Day) => myResident || (!!me && Object.values(byDay[d] ?? {}).includes(me))
+  const mine = (desk: Day) => myResident || (!!me && Object.values(byDay[desk] ?? {}).includes(me))
 
   // Always six rows, so the popover never changes height between months.
   const start = weekStart(month)
@@ -156,23 +156,23 @@ export const MonthCalendar = ({
         </Button>
       </div>
       <div className="grid grid-cols-7 gap-0.5 text-center">
-        {format.weekLetters().map((w, i) => (
+        {format.weekLetters().map((letter, i) => (
           <span key={i} className="pb-1 text-[0.64rem] font-black text-muted">
-            {w}
+            {letter}
           </span>
         ))}
-        {cells.map((d) => {
-          const inMonth = d.slice(0, 7) === month.slice(0, 7)
-          const enabled = inMonth && d >= from && d <= lastDay
-          const selected = d === day
-          const isMine = enabled && mine(d)
+        {cells.map((cellDay) => {
+          const inMonth = cellDay.slice(0, 7) === month.slice(0, 7)
+          const enabled = inMonth && cellDay >= from && cellDay <= lastDay
+          const selected = cellDay === day
+          const isMine = enabled && mine(cellDay)
           return (
             <button
-              key={d}
+              key={cellDay}
               type="button"
               disabled={!enabled}
-              onClick={() => onPick(d)}
-              aria-label={format.long(d)}
+              onClick={() => onPick(cellDay)}
+              aria-label={format.long(cellDay)}
               aria-pressed={selected}
               className={clsx(
                 "flex h-10 flex-col items-center justify-center gap-1 rounded-lg text-[0.8rem] font-extrabold tabular-nums outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus",
@@ -182,10 +182,10 @@ export const MonthCalendar = ({
                   : enabled
                     ? "text-foreground hover:bg-surface-secondary"
                     : "text-muted opacity-40",
-                !selected && d === today && "text-accent"
+                !selected && cellDay === today && "text-accent"
               )}
             >
-              {Number(d.slice(8))}
+              {Number(cellDay.slice(8))}
               <span
                 className={clsx(
                   "h-[3px] w-5 overflow-hidden rounded-full",
@@ -198,7 +198,7 @@ export const MonthCalendar = ({
                     "block h-full rounded-full",
                     selected ? "bg-accent-foreground" : isMine ? "bg-accent" : "bg-muted"
                   )}
-                  style={{ width: `${Math.round(fill(d) * 100)}%` }}
+                  style={{ width: `${Math.round(fill(cellDay) * 100)}%` }}
                 />
               </span>
             </button>

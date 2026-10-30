@@ -25,7 +25,7 @@ interface Props {
 export const LayoutImpact = ({ moves, labelOf, onMove, onCancel, onUndo }: Props) => {
   const { t, tn, format } = useI18n()
   const people = usePeople()
-  const movable = moves.filter((m) => m.to).length
+  const movable = moves.filter((move) => move.to).length
   const nameOf = (email: string) => personByEmail(people, email)?.name ?? email.split("@")[0]
 
   return (

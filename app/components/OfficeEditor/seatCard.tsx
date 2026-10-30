@@ -40,20 +40,20 @@ interface Option {
  * scene) and the 2D floor plan's card. Null when no card is open.
  */
 export const useSeatCard = () => {
-  const card = useEditorStore((s) => s.seatCard)
-  const objects = useEditorStore((s) => s.objects)
-  const booking = useEditorStore((s) => s.booking)
-  const closeSeatCard = useEditorStore((s) => s.closeSeatCard)
-  const applyReserve = useEditorStore((s) => s.applyReserve)
-  const applyCancel = useEditorStore((s) => s.applyCancel)
-  const openCustomBooking = useEditorStore((s) => s.openCustomBooking)
-  const showRoute = useEditorStore((s) => s.showRoute)
-  const applyFavorite = useEditorStore((s) => s.applyFavorite)
+  const card = useEditorStore((editorState) => editorState.seatCard)
+  const objects = useEditorStore((editorState) => editorState.objects)
+  const booking = useEditorStore((editorState) => editorState.booking)
+  const closeSeatCard = useEditorStore((editorState) => editorState.closeSeatCard)
+  const applyReserve = useEditorStore((editorState) => editorState.applyReserve)
+  const applyCancel = useEditorStore((editorState) => editorState.applyCancel)
+  const openCustomBooking = useEditorStore((editorState) => editorState.openCustomBooking)
+  const showRoute = useEditorStore((editorState) => editorState.showRoute)
+  const applyFavorite = useEditorStore((editorState) => editorState.applyFavorite)
   const people = usePeople()
   const i18n = useI18n()
   const { t, tn, format } = i18n
   const [closing, setClosing] = useState(false)
-  const seat = card ? objects.find((o) => o.id === card.id) : undefined
+  const seat = card ? objects.find((piece) => piece.id === card.id) : undefined
 
   // A new desk (or reopening) starts fresh.
   useEffect(() => setClosing(false), [card?.id])
@@ -66,7 +66,7 @@ export const useSeatCard = () => {
 
   useEffect(() => {
     if (!card) return
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close()
+    const onKey = (event: KeyboardEvent) => event.key === "Escape" && close()
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
   }, [card])
@@ -82,10 +82,12 @@ export const useSeatCard = () => {
   const person = state.kind === "free" ? null : personByEmail(people, state.email)
   const mine = !!me && state.kind !== "free" && state.email === me
   const past = booking.enabled && day < today
-  const myResidentDesk = me ? objects.find((o) => o.assignee === me && o.id !== seat.id) : undefined
+  const myResidentDesk = me
+    ? objects.find((piece) => piece.assignee === me && piece.id !== seat.id)
+    : undefined
   // Your own permanent desk: give it up on days away, or take a day back.
   const isMyDesk = booking.enabled && !!me && seat.assignee === me
-  const isGivenUp = (d: Day) => released[d]?.[seat.id] === me
+  const isGivenUp = (date: Day) => released[date]?.[seat.id] === me
   let releaseChoices: { label: string; days: Day[] }[] = []
   let canReclaim = false
   if (isMyDesk && !past) {
@@ -99,8 +101,8 @@ export const useSeatCard = () => {
           days: presets.week,
         },
       ]
-        .map((c) => ({ ...c, days: c.days.filter((d) => !isGivenUp(d)) }))
-        .filter((c, i) => c.days.length > 0 && (i === 0 || c.days.length > 1))
+        .map((choice) => ({ ...choice, days: choice.days.filter((date) => !isGivenUp(date)) }))
+        .filter((choice, i) => choice.days.length > 0 && (i === 0 || choice.days.length > 1))
     }
   }
 
@@ -124,12 +126,12 @@ export const useSeatCard = () => {
     else {
       const presets = bookingPresets(day, today, lastDay)
       const describe = (days: Day[]) => {
-        const free = days.filter((d) => deskState(seat, d, byDay, released).kind === "free")
-        const taken = days.flatMap((d) => {
-          const st = deskState(seat, d, byDay, released)
-          return st.kind === "booked" && st.email !== me
+        const free = days.filter((date) => deskState(seat, date, byDay, released).kind === "free")
+        const taken = days.flatMap((date) => {
+          const dayState = deskState(seat, date, byDay, released)
+          return dayState.kind === "booked" && dayState.email !== me
             ? [
-                `${format.dow(d)} ${personByEmail(people, st.email)?.name.split(" ")[0] ?? t("taken")}`,
+                `${format.dow(date)} ${personByEmail(people, dayState.email)?.name.split(" ")[0] ?? t("taken")}`,
               ]
             : []
         })
@@ -141,15 +143,15 @@ export const useSeatCard = () => {
               : tn(days.length, "All {n} day free", "All {n} days free")
             : t("Some are already yours")
         // Booking moves you: say so when you already sit elsewhere on those days.
-        const moves = free.some((d) => Object.values(byDay[d] ?? {}).includes(me))
+        const moves = free.some((date) => Object.values(byDay[date] ?? {}).includes(me))
         return { free, detail: moves ? t("{detail} · moves you here", { detail }) : detail }
       }
-      const all: [BookingPreset, string][] = [
+      const presetChoices: [BookingPreset, string][] = [
         ["one", t("Just {day}", { day: format.short(day) })],
         ["week", t("Rest of the week ({from}–Fri)", { from: format.dow(day) })],
         ["every", format.everyWeekday(day)],
       ]
-      options = all
+      options = presetChoices
         // A preset that's the same as a shorter one adds nothing.
         .filter(([key]) => key === "one" || presets[key].length > 1)
         .map(([key, title]) => {
@@ -167,7 +169,7 @@ export const useSeatCard = () => {
             free,
           }
         })
-        .filter((o) => o.free.length > 0 || o.key !== "one")
+        .filter((option) => option.free.length > 0 || option.key !== "one")
     }
   }
 
@@ -175,13 +177,15 @@ export const useSeatCard = () => {
   const { favorites, usual } = booking.preferences
   const isFavorite = favorites.includes(seat.id)
   const isMyUsual = usual?.deskId === seat.id
-  const iAmResident = !!me && objects.some((o) => o.assignee === me)
+  const iAmResident = !!me && objects.some((piece) => piece.assignee === me)
   const usualElsewhere =
-    usual && !isMyUsual ? objects.find((o) => o.id === usual.deskId) : undefined
+    usual && !isMyUsual ? objects.find((piece) => piece.id === usual.deskId) : undefined
   const body: BodyProps = {
     i18n,
     title: deskName(i18n, seat),
-    features: DESK_FEATURES.filter((f) => seat.features?.includes(f.id)).map((f) => t(f.label)),
+    features: DESK_FEATURES.filter((feature) => seat.features?.includes(feature.id)).map(
+      (feature) => t(feature.label)
+    ),
     canFavorite: booking.enabled && !!me,
     isFavorite,
     onToggleFavorite: () => {
@@ -199,7 +203,7 @@ export const useSeatCard = () => {
             replaces: usualElsewhere ? deskName(i18n, usualElsewhere) : undefined,
             // A new one starts on the shown day's weekday (Monday–Friday).
             suggested: [((new Date(`${day}T00:00:00Z`).getUTCDay() + 6) % 7) + 1].filter(
-              (w) => w <= 5
+              (weekday) => weekday <= 5
             ),
           }
         : null,
@@ -291,13 +295,13 @@ export interface BodyProps {
   onReclaim: () => void
 }
 
-const stop = (e: { stopPropagation: () => void }) => e.stopPropagation()
+const stop = (event: { stopPropagation: () => void }) => event.stopPropagation()
 
 /** ISO weekdays (1 = Monday) as short names: "Mon, Wed". */
 const weekdayNames = ({ format }: Translator, weekdays: number[]) =>
   weekdays
-    .filter((w) => w <= 5)
-    .map((w) => format.workdays()[w - 1])
+    .filter((weekday) => weekday <= 5)
+    .map((weekday) => format.workdays()[weekday - 1])
     .join(", ")
 
 /** One of the card's actions: an icon, a label (and maybe a detail), a step on (chevron). */
@@ -426,16 +430,16 @@ export const SeatCardBody = ({
 
   // Above the desk by default; a desk near the top of the screen gets the card
   // below it instead, so it's never cut off. Decided once, before paint.
-  const ref = useRef<HTMLDivElement>(null)
+  const cardRef = useRef<HTMLDivElement>(null)
   const [below, setBelow] = useState(false)
   useLayoutEffect(() => {
-    const top = ref.current?.getBoundingClientRect().top ?? 0
+    const top = cardRef.current?.getBoundingClientRect().top ?? 0
     if (!isSheet && top < 8) setBelow(true)
   }, [isSheet])
 
   // The shown day alone, and the longer choices (for "Book more days").
-  const one = options.find((o) => o.key === "one" && o.free.length > 0)
-  const more = options.filter((o) => o.key !== "one")
+  const one = options.find((option) => option.key === "one" && option.free.length > 0)
+  const more = options.filter((option) => option.key !== "one")
   const showWayFirst = mine && !one
   const shortDay = dayLabel?.split(" ").slice(0, 2).join(" ")
   const status = past
@@ -494,14 +498,14 @@ export const SeatCardBody = ({
       {!showWayFirst && (
         <Row isSheet={isSheet} icon={Footprints} label={t("Show the way")} onPress={onShowWay} />
       )}
-      {releaseChoices.map((c) => (
+      {releaseChoices.map((choice) => (
         <Row
-          key={c.label}
+          key={choice.label}
           isSheet={isSheet}
           icon={CalendarX}
-          label={t("Away? Give it up · {choice}", { choice: c.label })}
+          label={t("Away? Give it up · {choice}", { choice: choice.label })}
           isDisabled={pending}
-          onPress={() => onRelease(c.days)}
+          onPress={() => onRelease(choice.days)}
         />
       ))}
       {canReclaim && (
@@ -536,15 +540,15 @@ export const SeatCardBody = ({
         title={one ? t("Book more days") : t("Book it on other days")}
         onBack={() => setStep("main")}
       />
-      {more.map((o) => (
+      {more.map((option) => (
         <Row
-          key={o.key}
+          key={option.key}
           isSheet={isSheet}
           icon={CalendarDays}
-          label={o.title}
-          detail={o.detail}
-          isDisabled={pending || o.free.length === 0}
-          onPress={() => onReserve(o.free)}
+          label={option.title}
+          detail={option.detail}
+          isDisabled={pending || option.free.length === 0}
+          onPress={() => onReserve(option.free)}
         />
       ))}
       <Row
@@ -562,7 +566,7 @@ export const SeatCardBody = ({
     // Click-through: only the controls take the pointer — the card body sits
     // over the desks BEHIND this one (isometric), and must not block them.
     <div
-      ref={ref}
+      ref={cardRef}
       className={clsx(
         "pointer-events-none",
         isSheet ? "w-full" : clsx("-translate-x-1/2", below ? "pt-3" : "-translate-y-full pb-3")
@@ -712,15 +716,19 @@ const UsualStep = ({
       <StepHeader i18n={i18n} title={t("Your usual desk")} onBack={onBack} />
       <div className="flex gap-1 px-1">
         {format.workdays().map((name, i) => {
-          const w = i + 1
-          const on = days.includes(w)
+          const weekday = i + 1
+          const on = days.includes(weekday)
           return (
             <button
               key={name}
               type="button"
               aria-pressed={on}
               onClick={() =>
-                setDays(on ? days.filter((d) => d !== w) : [...days, w].sort((a, b) => a - b))
+                setDays(
+                  on
+                    ? days.filter((selected) => selected !== weekday)
+                    : [...days, weekday].sort((first, second) => first - second)
+                )
               }
               className={clsx(
                 "flex-1 rounded-lg border text-xs font-bold transition-colors",

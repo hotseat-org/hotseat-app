@@ -24,7 +24,7 @@ export const WiggleModel = ({ url, scale = 1, yOffset = 0, rotationOffset = 0 }:
   const ref = useRef<Group>(null)
   const elapsed = useRef<number | null>(null) // time within the current wiggle, or null when idle
   const stopFrames = useRef<(() => void) | null>(null)
-  const invalidate = useThree((s) => s.invalidate)
+  const invalidate = useThree((state) => state.invalidate)
 
   useEffect(() => {
     if (prefersReducedMotion()) return
@@ -50,23 +50,23 @@ export const WiggleModel = ({ url, scale = 1, yOffset = 0, rotationOffset = 0 }:
   }, [invalidate])
 
   useFrame((state, delta) => {
-    const g = ref.current
-    if (!g || elapsed.current === null) return
+    const group = ref.current
+    if (!group || elapsed.current === null) return
     elapsed.current += Math.min(delta, 0.05)
-    const t = elapsed.current
-    if (t >= DURATION) {
-      g.rotation.set(0, 0, 0)
-      g.position.set(0, 0, 0)
+    const seconds = elapsed.current
+    if (seconds >= DURATION) {
+      group.rotation.set(0, 0, 0)
+      group.position.set(0, 0, 0)
       elapsed.current = null
       stopFrames.current?.()
       stopFrames.current = null
       return
     }
-    const decay = 1 - t / DURATION
-    const wob = Math.sin(t * 24) * 0.16 * decay
-    g.rotation.z = wob
-    g.rotation.y = wob * 0.6
-    g.position.y = Math.abs(Math.sin(t * 12)) * 0.05 * decay
+    const decay = 1 - seconds / DURATION
+    const wobble = Math.sin(seconds * 24) * 0.16 * decay
+    group.rotation.z = wobble
+    group.rotation.y = wobble * 0.6
+    group.position.y = Math.abs(Math.sin(seconds * 12)) * 0.05 * decay
     // The ticker fell asleep mid-wiggle: finish it, don't freeze mid-tilt.
     if (!isAmbientAwake()) state.invalidate()
   })

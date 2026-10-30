@@ -25,7 +25,7 @@ export const ContourLines = ({
   layout: SceneObject[]
   turn: number
   view: View
-  size: { w: number; h: number }
+  size: { width: number; height: number }
   colors: SurfacePalette["contour"]
 }) => {
   const land = useLandscape(layout)
@@ -41,36 +41,43 @@ export const ContourLines = ({
   // panning a little doesn't re-render).
   const corners = [
     [0, 0],
-    [size.w, 0],
-    [0, size.h],
-    [size.w, size.h],
-  ].map(([px, py]) => turnPoint((px - view.tx) / view.k, (py - view.ty) / view.k, (4 - turn) % 4))
-  const snap = (v: number, up: boolean) =>
-    (up ? Math.ceil(v / VISIBLE_STEP) : Math.floor(v / VISIBLE_STEP)) * VISIBLE_STEP
-  const x0 = snap(Math.min(...corners.map((c) => c[0])), false)
-  const x1 = snap(Math.max(...corners.map((c) => c[0])), true)
-  const z0 = snap(Math.min(...corners.map((c) => c[1])), false)
-  const z1 = snap(Math.max(...corners.map((c) => c[1])), true)
+    [size.width, 0],
+    [0, size.height],
+    [size.width, size.height],
+  ].map(([viewX, viewY]) =>
+    turnPoint(
+      (viewX - view.offsetX) / view.zoom,
+      (viewY - view.offsetY) / view.zoom,
+      (4 - turn) % 4
+    )
+  )
+  const snap = (value: number, shouldRoundUp: boolean) =>
+    (shouldRoundUp ? Math.ceil(value / VISIBLE_STEP) : Math.floor(value / VISIBLE_STEP)) *
+    VISIBLE_STEP
+  const x0 = snap(Math.min(...corners.map((corner) => corner[0])), false)
+  const x1 = snap(Math.max(...corners.map((corner) => corner[0])), true)
+  const z0 = snap(Math.min(...corners.map((corner) => corner[1])), false)
+  const z1 = snap(Math.max(...corners.map((corner) => corner[1])), true)
 
   const tiles = useMemo(() => tilesCovering(x0, z0, x1, z1), [x0, z0, x1, z1])
   const toPath = (segments: Float32Array) => {
-    let d = ""
+    let path = ""
     for (let i = 0; i < segments.length; i += 4) {
-      const [ax, az] = turnPoint(segments[i], segments[i + 1], turn)
-      const [bx, bz] = turnPoint(segments[i + 2], segments[i + 3], turn)
-      d += `M${ax.toFixed(2)} ${az.toFixed(2)}L${bx.toFixed(2)} ${bz.toFixed(2)}`
+      const [fromX, fromZ] = turnPoint(segments[i], segments[i + 1], turn)
+      const [toX, toZ] = turnPoint(segments[i + 2], segments[i + 3], turn)
+      path += `M${fromX.toFixed(2)} ${fromZ.toFixed(2)}L${toX.toFixed(2)} ${toZ.toFixed(2)}`
     }
-    return d
+    return path
   }
-  const pathsOf = (tx: number, tz: number) => {
-    const key = `${tx},${tz},${turn}`
-    let p = paths.current.get(key)
-    if (!p) {
-      const t = land.tile(tx, tz)
-      p = { minor: toPath(t.minor), major: toPath(t.major) }
-      paths.current.set(key, p)
+  const pathsOf = (tileX: number, tileZ: number) => {
+    const key = `${tileX},${tileZ},${turn}`
+    let tilePaths = paths.current.get(key)
+    if (!tilePaths) {
+      const tile = land.tile(tileX, tileZ)
+      tilePaths = { minor: toPath(tile.minor), major: toPath(tile.major) }
+      paths.current.set(key, tilePaths)
     }
-    return p
+    return tilePaths
   }
 
   // The plateau hugs the building: its outline(s), turned with the view
@@ -80,8 +87,8 @@ export const ContourLines = ({
       (loop) =>
         loop
           .map(([x, z], i) => {
-            const [tx, tz] = turnPoint(x, z, turn)
-            return `${i ? "L" : "M"}${tx.toFixed(2)} ${tz.toFixed(2)}`
+            const [turnedX, turnedZ] = turnPoint(x, z, turn)
+            return `${i ? "L" : "M"}${turnedX.toFixed(2)} ${turnedZ.toFixed(2)}`
           })
           .join("") + "Z"
     )
@@ -97,19 +104,19 @@ export const ContourLines = ({
         strokeWidth={2}
         vectorEffect="non-scaling-stroke"
       />
-      {tiles.map(([tx, tz]) => {
-        const t = pathsOf(tx, tz)
+      {tiles.map(([tileX, tileZ]) => {
+        const tilePaths = pathsOf(tileX, tileZ)
         return (
-          <g key={`${tx},${tz}`} opacity={PLAN_CONTOUR_OPACITY}>
+          <g key={`${tileX},${tileZ}`} opacity={PLAN_CONTOUR_OPACITY}>
             <path
-              d={t.minor}
+              d={tilePaths.minor}
               stroke={colors.minor}
               strokeWidth={1.2}
               fill="none"
               vectorEffect="non-scaling-stroke"
             />
             <path
-              d={t.major}
+              d={tilePaths.major}
               stroke={colors.major}
               strokeWidth={2}
               fill="none"

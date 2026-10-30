@@ -35,18 +35,18 @@ export interface WallsSlice {
    * cursor's side) into an opening of `kind`, an opening of that kind back into
    * two wall halves, or swap a door ⇄ window.
    */
-  toggleOpening: (id: string, kind: OpeningType, px?: number, pz?: number) => void
+  toggleOpening: (id: string, kind: OpeningType, pointX?: number, pointZ?: number) => void
   /**
    * Pick a door/window up to move it: it's removed and the wall is closed
    * behind it (two wall halves). Returns the lifted opening (to place later).
    */
   liftOpening: (id: string) => SceneObject | null
   /**
-   * Put a lifted opening into the wall pair nearest (px,pz) — keeping its id and
+   * Put a lifted opening into the wall pair nearest (pointX, pointZ) — keeping its id and
    * colour, and selecting it. False when there's no wall pair there. A no-op
    * (true) if it's already in the scene, so a restore can never duplicate it.
    */
-  placeOpening: (o: SceneObject, px: number, pz: number) => boolean
+  placeOpening: (opening: SceneObject, pointX: number, pointZ: number) => boolean
   /** Recolour walls, or one face of each (null = theme default). */
   paintWalls: (targets: WallPaint[], color: string | null) => void
   /** Paint the floor of the room containing (x, z); null removes its paint. */
@@ -55,49 +55,51 @@ export interface WallsSlice {
 
 export const createWallsSlice = (set: SetState, get: GetState): WallsSlice => ({
   addWalls: (cells, type = "wall") =>
-    set((s) => {
+    set((state) => {
       // Key by cell AND orientation so a corner node can hold both a
       // horizontal and a vertical segment — that overlap fills the corner.
       const taken = new Set(
-        s.objects
-          .filter((o) => isEdgeType(o.type))
+        state.objects
+          .filter((object) => isEdgeType(object.type))
           .flatMap(unitEdges)
           .map(edgeKey)
       )
       const color = get().placementColors[type]
       const fresh: SceneObject[] = []
-      for (const c of cells) {
-        const k = edgeKey(c)
+      for (const cell of cells) {
+        const key = edgeKey(cell)
         // Skip existing edges, and never build a wall through furniture.
-        if (taken.has(k) || edgeBlocked(s.objects, c)) continue
-        taken.add(k)
-        fresh.push({ id: nanoid(8), type, x: c.x, z: c.z, rotation: c.rotation, color })
+        if (taken.has(key) || edgeBlocked(state.objects, cell)) continue
+        taken.add(key)
+        fresh.push({ id: nanoid(8), type, x: cell.x, z: cell.z, rotation: cell.rotation, color })
       }
-      return fresh.length ? { objects: [...s.objects, ...fresh] } : s
+      return fresh.length ? { objects: [...state.objects, ...fresh] } : state
     }),
 
   removeEdges: (cells) =>
-    set((s) => {
+    set((state) => {
       const kill = new Set(cells.map(edgeKey))
       // A door goes if the run touches either of its halves.
-      const isKilled = (o: SceneObject) =>
-        isEdgeType(o.type) && unitEdges(o).some((e) => kill.has(edgeKey(e)))
-      const objects = dropOrphanMounts(s.objects.filter((o) => !isKilled(o)))
-      if (objects.length === s.objects.length) return s
+      const isKilled = (object: SceneObject) =>
+        isEdgeType(object.type) && unitEdges(object).some((unit) => kill.has(edgeKey(unit)))
+      const objects = dropOrphanMounts(state.objects.filter((object) => !isKilled(object)))
+      if (objects.length === state.objects.length) return state
       return {
         objects,
-        selectedId: objects.some((o) => o.id === s.selectedId) ? s.selectedId : null,
+        selectedId: objects.some((object) => object.id === state.selectedId)
+          ? state.selectedId
+          : null,
       }
     }),
 
-  toggleOpening: (id, kind, px, pz) =>
-    set((s) => {
-      const plan = openingPlan(s.objects, id, kind, px, pz)
-      if (!plan) return s
-      const added = plan.add.map((o) => ({ ...o, id: nanoid(8) }))
+  toggleOpening: (id, kind, pointX, pointZ) =>
+    set((state) => {
+      const plan = openingPlan(state.objects, id, kind, pointX, pointZ)
+      if (!plan) return state
+      const added = plan.add.map((piece) => ({ ...piece, id: nanoid(8) }))
       return {
         objects: dropOrphanMounts([
-          ...s.objects.filter((o) => !plan.remove.includes(o.id)),
+          ...state.objects.filter((piece) => !plan.remove.includes(piece.id)),
           ...added,
         ]),
         selectedId: null,
@@ -105,50 +107,58 @@ export const createWallsSlice = (set: SetState, get: GetState): WallsSlice => ({
     }),
 
   liftOpening: (id) => {
-    const o = get().objects.find((obj) => obj.id === id)
-    if (!o || !isOpening(o.type)) return null
-    const plan = openingPlan(get().objects, id, o.type)
+    const opening = get().objects.find((candidate) => candidate.id === id)
+    if (!opening || !isOpening(opening.type)) return null
+    const plan = openingPlan(get().objects, id, opening.type)
     if (!plan) return null
-    set((s) => ({
+    set((state) => ({
       objects: [
-        ...s.objects.filter((obj) => obj.id !== id),
-        ...plan.add.map((w) => ({ ...w, id: nanoid(8) })),
+        ...state.objects.filter((candidate) => candidate.id !== id),
+        ...plan.add.map((piece) => ({ ...piece, id: nanoid(8) })),
       ],
-      selectedId: s.selectedId === id ? null : s.selectedId,
+      selectedId: state.selectedId === id ? null : state.selectedId,
     }))
-    return o
+    return opening
   },
 
-  placeOpening: (o, px, pz) => {
-    const s = get()
-    if (s.objects.some((obj) => obj.id === o.id)) return true
-    if (!isOpening(o.type)) return false
-    const wallId = nearestEdgeId(s.objects, px, pz, 0.6, (w) => isWall(w.type))
-    const plan = wallId && openingPlan(s.objects, wallId, o.type, px, pz)
+  placeOpening: (opening, pointX, pointZ) => {
+    const state = get()
+    if (state.objects.some((candidate) => candidate.id === opening.id)) return true
+    if (!isOpening(opening.type)) return false
+    const wallId = nearestEdgeId(state.objects, pointX, pointZ, 0.6, (wall) => isWall(wall.type))
+    const plan = wallId && openingPlan(state.objects, wallId, opening.type, pointX, pointZ)
     if (!plan) return false
     set({
       objects: [
-        ...s.objects.filter((obj) => !plan.remove.includes(obj.id)),
-        { ...plan.add[0], id: o.id, color: o.color, ...getOpeningPaint(o) },
+        ...state.objects.filter((candidate) => !plan.remove.includes(candidate.id)),
+        { ...plan.add[0], id: opening.id, color: opening.color, ...getOpeningPaint(opening) },
       ],
-      selectedId: o.id,
+      selectedId: opening.id,
     })
     return true
   },
 
   paintWalls: (targets, color) =>
-    set((s) => ({ objects: paintWallFaces(s.objects, targets, color) })),
+    set((state) => ({ objects: paintWallFaces(state.objects, targets, color) })),
 
   paintFloor: (x, z, color) => {
     const all = get().objects
-    const region = enclosedRegions(all).find((r) =>
-      r.some((c) => c.x <= x && x < c.x + SEG && c.z <= z && z < c.z + SEG)
+    const region = enclosedRegions(all).find((candidate) =>
+      candidate.some(
+        (square) => square.x <= x && x < square.x + SEG && square.z <= z && z < square.z + SEG
+      )
     )
     if (!region) return // outside any room
-    const inRegion = (px: number, pz: number) =>
-      region.some((c) => c.x <= px && px < c.x + SEG && c.z <= pz && pz < c.z + SEG)
+    const inRegion = (pointX: number, pointZ: number) =>
+      region.some(
+        (square) =>
+          square.x <= pointX &&
+          pointX < square.x + SEG &&
+          square.z <= pointZ &&
+          pointZ < square.z + SEG
+      )
     // One paint per room: replace any marker already in it.
-    const kept = all.filter((o) => !(o.type === "floorPaint" && inRegion(o.x, o.z)))
+    const kept = all.filter((piece) => !(piece.type === "floorPaint" && inRegion(piece.x, piece.z)))
     const cell = cellAt(x, z)
     set({
       objects: color

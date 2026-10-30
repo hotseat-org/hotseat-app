@@ -112,15 +112,15 @@ const Storage = ({ className }: IconProps) => (
       <rect key={y} x="8" y={y} width="24" height="1.8" fill={PALETTE.deskLeg} />
     ))}
     {[14, 24].map((shelf, row) =>
-      BOOKS.map(([x, h, c], i) => (
+      BOOKS.map(([x, height, color], i) => (
         <rect
           key={`${row}-${i}`}
           x={row ? x + 1.2 : x}
-          y={shelf - (row ? h - 0.6 : h)}
+          y={shelf - (row ? height - 0.6 : height)}
           width="2.2"
-          height={row ? h - 0.6 : h}
+          height={row ? height - 0.6 : height}
           rx="0.5"
-          fill={c}
+          fill={color}
         />
       ))
     )}
@@ -156,15 +156,15 @@ const Kitchen = ({ className }: IconProps) => (
     <rect x="8" y="2" width="24" height="3" rx="1.5" fill="#d9706a" />
     <rect x="10.5" y="6.5" width="13.5" height="22" rx="1.2" fill="#2c313c" />
     {[0, 1, 2, 3].map((row) =>
-      [0, 1, 2].map((col) => (
+      [0, 1, 2].map((column) => (
         <rect
-          key={`${row}-${col}`}
-          x={12 + col * 4}
+          key={`${row}-${column}`}
+          x={12 + column * 4}
           y={8.5 + row * 5}
           width="2.8"
           height="3.4"
           rx="0.7"
-          fill={SNACKS[(row + col) % SNACKS.length]}
+          fill={SNACKS[(row + column) % SNACKS.length]}
         />
       ))
     )}

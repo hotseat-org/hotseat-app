@@ -15,8 +15,8 @@ import { useI18n } from "~/i18n/I18nProvider"
 export const KitsPanel = ({ style }: { style?: CSSProperties }) => {
   const { t, tn, format } = useI18n()
   const { kits, deleteKit } = useKitLibrary()
-  const armedKit = useEditorStore((s) => s.armedKit)
-  const armKit = useEditorStore((s) => s.armKit)
+  const armedKit = useEditorStore((state) => state.armedKit)
+  const armKit = useEditorStore((state) => state.armKit)
   // Deleting asks once more, on the same button (there's no undo for it).
   const [confirmingId, setConfirmingId] = useState<string | null>(null)
 
@@ -43,7 +43,7 @@ export const KitsPanel = ({ style }: { style?: CSSProperties }) => {
       <div className="-mr-2 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-contain pr-2 [scrollbar-width:thin]">
         {kits.map((kit) => {
           const isArmed = armedKit?.id === kit.id
-          const deskCount = kit.objects.filter((o) => isSeatable(o.type)).length
+          const deskCount = kit.objects.filter((object) => isSeatable(object.type)).length
           const isConfirming = confirmingId === kit.id
           return (
             <div key={kit.id} className="group relative">

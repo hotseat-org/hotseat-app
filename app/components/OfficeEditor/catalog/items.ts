@@ -52,8 +52,8 @@ const DEFAULTS = {
 } as const
 
 /** A definition with the defaults filled in, keeping its literal types (for WallType…). */
-const define = <const T extends Definition>(d: T) =>
-  ({ ...DEFAULTS, ...d }) as Omit<typeof DEFAULTS, keyof T> & T
+const define = <const T extends Definition>(definition: T) =>
+  ({ ...DEFAULTS, ...definition }) as Omit<typeof DEFAULTS, keyof T> & T
 
 const OPENINGS = ["door", "glassDoor", "window"] as const
 

@@ -20,13 +20,15 @@ interface TourStep {
   isDone?: (now: EditorState, start: EditorState) => boolean
 }
 
-const wallCount = (s: EditorState) => s.objects.filter((o) => isWall(o.type)).length
-const deskCount = (s: EditorState) => s.objects.filter((o) => isSeatable(o.type)).length
+const wallCount = (state: EditorState) =>
+  state.objects.filter((object) => isWall(object.type)).length
+const deskCount = (state: EditorState) =>
+  state.objects.filter((object) => isSeatable(object.type)).length
 /** What's selected, and where it stands. */
-const selectionKey = (s: EditorState) =>
-  s.objects
-    .filter((o) => s.selection.includes(o.id))
-    .map((o) => `${o.id}@${o.x},${o.z},${o.rotation}`)
+const selectionKey = (state: EditorState) =>
+  state.objects
+    .filter((object) => state.selection.includes(object.id))
+    .map((object) => `${object.id}@${object.x},${object.z},${object.rotation}`)
     .join("|")
 
 const STEPS: TourStep[] = [
@@ -88,7 +90,7 @@ export const isTourDone = () => {
  * always there. Seen once per browser; ⌘K → "Show the tour" brings it back.
  */
 export const GuidedTour = () => {
-  const isOpen = useEditorStore((s) => s.isTourOpen)
+  const isOpen = useEditorStore((state) => state.isTourOpen)
   if (!isOpen) return null
   return <TourCard />
 }

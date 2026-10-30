@@ -24,32 +24,36 @@ export const CarryController = ({
 }) => {
   const { camera, raycaster, pointer } = useThree()
   const store = useEditorStoreApi()
-  const moveObject = useEditorStore((s) => s.moveObject)
+  const moveObject = useEditorStore((state) => state.moveObject)
   const hit = useMemo(() => new Vector3(), [])
 
   useFrame((state) => {
     if (!carryId) return
-    const o = store.getState().objects.find((obj) => obj.id === carryId)
-    if (!o) return
+    const carried = store.getState().objects.find((object) => object.id === carryId)
+    if (!carried) return
     raycaster.setFromCamera(pointer, camera)
     if (!raycaster.ray.intersectPlane(GROUND, hit)) return
     // Wall items hop along wall faces (turning to face out); off a wall they
     // follow the cursor and can't be dropped.
     const all = store.getState().objects
-    const aim = isWallMounted(o.type) ? aimAtWallHeight(raycaster, pointer, camera) : null
-    const p = (aim && wallMount(all, o.type, aim.x, aim.z)) || {
+    const aim = isWallMounted(carried.type) ? aimAtWallHeight(raycaster, pointer, camera) : null
+    const placement = (aim && wallMount(all, carried.type, aim.x, aim.z)) || {
       // Flush against a diagonal wall when turned beside one (see snapPlacement).
       ...snapPlacement(
-        all.filter((other) => other.id !== o.id),
-        o.type,
-        o.rotation,
+        all.filter((other) => other.id !== carried.id),
+        carried.type,
+        carried.rotation,
         hit.x + grab.dx,
         hit.z + grab.dz
       ),
-      rotation: o.rotation,
+      rotation: carried.rotation,
     }
-    if (p.x !== o.x || p.z !== o.z || p.rotation !== o.rotation)
-      moveObject(carryId, p.x, p.z, p.rotation)
+    if (
+      placement.x !== carried.x ||
+      placement.z !== carried.z ||
+      placement.rotation !== carried.rotation
+    )
+      moveObject(carryId, placement.x, placement.z, placement.rotation)
     state.invalidate() // keep following under frameloop="demand"
   })
 

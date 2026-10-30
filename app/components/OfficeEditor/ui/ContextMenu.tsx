@@ -22,10 +22,10 @@ const selectRoomAt = (menu: Menu): Command => ({
   label: msg("Select everything in this room"),
   group: msg("Selection"),
   icon: SquareDashedMousePointer,
-  isAvailable: (s) => furnitureInRoomAt(s.objects, menu.point.x, menu.point.z).length > 0,
-  run: (s) => {
-    s.setTool("select")
-    s.selectMany(furnitureInRoomAt(s.objects, menu.point.x, menu.point.z))
+  isAvailable: (state) => furnitureInRoomAt(state.objects, menu.point.x, menu.point.z).length > 0,
+  run: (state) => {
+    state.setTool("select")
+    state.selectMany(furnitureInRoomAt(state.objects, menu.point.x, menu.point.z))
   },
 })
 
@@ -36,7 +36,7 @@ const saveRoomAt = (menu: Menu): Command => ({
   label: msg("Save this room…"),
   group: msg("Edit"),
   icon: LayoutTemplate,
-  isAvailable: (s) => !!composeKit(s.objects, menu.point.x, menu.point.z),
+  isAvailable: (state) => !!composeKit(state.objects, menu.point.x, menu.point.z),
   run: () => {},
 })
 
@@ -50,7 +50,9 @@ const commandsFor = (menu: Menu): Command[] =>
     : [
         selectRoomAt(menu),
         saveRoomAt(menu),
-        ...[...EDIT_COMMANDS, ...VIEW_COMMANDS].filter((c) => FLOOR_COMMAND_IDS.has(c.id)),
+        ...[...EDIT_COMMANDS, ...VIEW_COMMANDS].filter((command) =>
+          FLOOR_COMMAND_IDS.has(command.id)
+        ),
       ]
 
 /**
@@ -59,7 +61,7 @@ const commandsFor = (menu: Menu): Command[] =>
  * Arrow keys move through it, Enter runs, Esc or a click elsewhere closes it.
  */
 export const ContextMenu = () => {
-  const menu = useEditorStore((s) => s.contextMenu)
+  const menu = useEditorStore((state) => state.contextMenu)
   if (!menu) return null
   // A new menu (another right-click) starts fresh: focus, position.
   return <ContextMenuPanel key={`${menu.x},${menu.y}`} menu={menu} />
@@ -68,31 +70,31 @@ export const ContextMenu = () => {
 const ContextMenuPanel = ({ menu }: { menu: Menu }) => {
   const { t } = useI18n()
   const store = useEditorStoreApi()
-  const ref = useRef<HTMLDivElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
   const [position, setPosition] = useState({ left: menu.x, top: menu.y })
   const [step, setStep] = useState<"menu" | "naming" | "saved">("menu")
   const close = () => store.getState().closeContextMenu()
-  const commands = commandsFor(menu).filter((c) => c.isAvailable(store.getState()))
+  const commands = commandsFor(menu).filter((command) => command.isAvailable(store.getState()))
 
   // Opens towards the window's middle when it wouldn't fit at the pointer.
   useLayoutEffect(() => {
-    const el = ref.current
-    const parent = el?.offsetParent?.getBoundingClientRect()
-    if (!el || !parent) return
-    const { width, height } = el.getBoundingClientRect()
+    const element = menuRef.current
+    const parent = element?.offsetParent?.getBoundingClientRect()
+    if (!element || !parent) return
+    const { width, height } = element.getBoundingClientRect()
     const x = menu.x - parent.left
     const y = menu.y - parent.top
     setPosition({
       left: x + width + EDGE_GAP > parent.width ? Math.max(EDGE_GAP, x - width) : x,
       top: y + height + EDGE_GAP > parent.height ? Math.max(EDGE_GAP, y - height) : y,
     })
-    el.querySelector<HTMLElement>("[role=menuitem]")?.focus()
+    element.querySelector<HTMLElement>("[role=menuitem]")?.focus()
   }, [menu, step])
 
   // A press anywhere else, the wheel, or the window losing focus closes it.
   useEffect(() => {
-    const handlePress = (e: PointerEvent) => {
-      if (!ref.current?.contains(e.target as Node)) close()
+    const handlePress = (event: PointerEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) close()
     }
     window.addEventListener("pointerdown", handlePress, true)
     window.addEventListener("wheel", close, { passive: true })
@@ -116,33 +118,33 @@ const ContextMenuPanel = ({ menu }: { menu: Menu }) => {
     command.run(store.getState())
   }
 
-  const handleKeyDown = (e: KeyboardEvent) => {
+  const handleKeyDown = (event: KeyboardEvent) => {
     // The editor's own shortcuts (arrows nudge, Esc deselects) stay out of it.
-    e.stopPropagation()
-    const items = [...(ref.current?.querySelectorAll<HTMLElement>("[role=menuitem]") ?? [])]
+    event.stopPropagation()
+    const items = [...(menuRef.current?.querySelectorAll<HTMLElement>("[role=menuitem]") ?? [])]
     const index = items.indexOf(document.activeElement as HTMLElement)
-    if (e.key === "Escape" || e.key === "Tab") {
-      e.preventDefault()
+    if (event.key === "Escape" || event.key === "Tab") {
+      event.preventDefault()
       return close()
     }
-    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-      e.preventDefault()
-      const step = e.key === "ArrowDown" ? 1 : -1
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault()
+      const step = event.key === "ArrowDown" ? 1 : -1
       items[(index + step + items.length) % items.length]?.focus()
     }
-    if (e.key === "Home") items[0]?.focus()
-    if (e.key === "End") items[items.length - 1]?.focus()
+    if (event.key === "Home") items[0]?.focus()
+    if (event.key === "End") items[items.length - 1]?.focus()
   }
 
   if (commands.length === 0) return null
   if (step !== "menu")
     return (
       <div
-        ref={ref}
+        ref={menuRef}
         style={position}
-        onKeyDown={(e) => {
-          e.stopPropagation()
-          if (e.key === "Escape") close()
+        onKeyDown={(event) => {
+          event.stopPropagation()
+          if (event.key === "Escape") close()
         }}
         className="pointer-events-auto absolute z-40 w-64 rounded-xl border border-border bg-overlay/95 p-2.5 text-foreground shadow-overlay backdrop-blur-md"
       >
@@ -158,11 +160,11 @@ const ContextMenuPanel = ({ menu }: { menu: Menu }) => {
     )
   return (
     <div
-      ref={ref}
+      ref={menuRef}
       role="menu"
       aria-label={menu.targetId ? t("Selection") : t("Floor")}
       onKeyDown={handleKeyDown}
-      onContextMenu={(e) => e.preventDefault()}
+      onContextMenu={(event) => event.preventDefault()}
       style={position}
       className="pointer-events-auto absolute z-40 min-w-56 rounded-xl border border-border bg-overlay/95 p-1 text-foreground shadow-overlay backdrop-blur-md"
     >
@@ -210,8 +212,8 @@ const SaveRoomForm = ({
   if (!kit) return null
   return (
     <form
-      onSubmit={(e) => {
-        e.preventDefault()
+      onSubmit={(event) => {
+        event.preventDefault()
         addKit({ ...kit, name: name.trim() || t("Room") })
         onSaved()
       }}
@@ -222,8 +224,8 @@ const SaveRoomForm = ({
         <input
           autoFocus
           value={name}
-          onChange={(e) => setName(e.target.value)}
-          onFocus={(e) => e.currentTarget.select()}
+          onChange={(event) => setName(event.target.value)}
+          onFocus={(event) => event.currentTarget.select()}
           className="h-9 rounded-lg border border-border bg-surface px-2.5 text-sm font-normal text-foreground outline-none focus:border-accent focus:ring-2 focus:ring-focus/40"
         />
       </label>

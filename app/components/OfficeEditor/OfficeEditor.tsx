@@ -164,7 +164,7 @@ const OfficeEditorInner = ({
   const [emptyDismissed, setEmptyDismissed] = useState(false)
   // A brand-new office (no layout, first-run card showing): no scene and no
   // editor/scene chrome — only the template card and the app essentials.
-  const hasLayout = useEditorStore((s) => s.objects.length > 0)
+  const hasLayout = useEditorStore((state) => state.objects.length > 0)
   const isEmpty = !hasLayout && !emptyDismissed
   // Mouse / trackpad controls: no use on a touch phone.
   const guide = isMobile ? null : (
@@ -174,7 +174,7 @@ const OfficeEditorInner = ({
   // Perf HUD. While on, the Canvas renders continuously (`frameloop="always"`)
   // so the reading reflects a true, comparable FPS instead of only the frames
   // that on-demand rendering happens to produce.
-  const isFrameRateShown = useEditorStore((s) => s.isFrameRateShown)
+  const isFrameRateShown = useEditorStore((state) => state.isFrameRateShown)
   const [stats, setStats] = useState<FrameStats | null>(null)
   const dbMode = !!onSave
 
@@ -238,7 +238,7 @@ const OfficeEditorInner = ({
           <div className="absolute inset-x-0 flex justify-center px-4" style={{ top: 84 }}>
             <LayoutImpact
               moves={impact.moves}
-              labelOf={(id) => impact.before.find((d) => d.id === id)?.label}
+              labelOf={(id) => impact.before.find((entry) => entry.id === id)?.label}
               onMove={() => resolveImpact("move")}
               onCancel={() => resolveImpact("cancel")}
               onUndo={() => resolveImpact("undo")}

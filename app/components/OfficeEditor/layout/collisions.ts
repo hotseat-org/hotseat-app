@@ -18,26 +18,29 @@ import { isDiagonal } from "./rotation"
 interface Rect {
   x: number
   z: number
-  hx: number
-  hz: number
+  halfX: number
+  halfZ: number
   /** 0 for a piece on the grid's axes (hx/hz already swapped for a quarter turn). */
   angle: number
 }
 
 /** A rectangle's own axes in the world (a piece's local X and Z, turned). */
-const axesOf = (r: Rect): [[number, number], [number, number]] => {
-  const c = Math.cos(r.angle)
-  const s = Math.sin(r.angle)
+const axesOf = (rect: Rect): [[number, number], [number, number]] => {
+  const cosine = Math.cos(rect.angle)
+  const sine = Math.sin(rect.angle)
   return [
-    [c, -s],
-    [s, c],
+    [cosine, -sine],
+    [sine, cosine],
   ]
 }
 
 /** How far a rectangle reaches along a direction from its centre. */
-const reachAlong = (r: Rect, [nx, nz]: [number, number]) => {
-  const [u, v] = axesOf(r)
-  return r.hx * Math.abs(u[0] * nx + u[1] * nz) + r.hz * Math.abs(v[0] * nx + v[1] * nz)
+const reachAlong = (rect: Rect, [directionX, directionZ]: [number, number]) => {
+  const [firstAxis, secondAxis] = axesOf(rect)
+  return (
+    rect.halfX * Math.abs(firstAxis[0] * directionX + firstAxis[1] * directionZ) +
+    rect.halfZ * Math.abs(secondAxis[0] * directionX + secondAxis[1] * directionZ)
+  )
 }
 
 /** Overlaps must be deeper than this to count: pieces may touch, flush. */
@@ -48,32 +51,37 @@ const TOUCH = 1e-6
  * compare boxes; a turned one is tested along each rectangle's axes — two
  * rectangles are apart exactly when they're apart along one of those.
  */
-const rectsOverlap = (a: Rect, b: Rect) => {
-  if (a.angle === 0 && b.angle === 0)
-    return Math.abs(b.x - a.x) < a.hx + b.hx && Math.abs(b.z - a.z) < a.hz + b.hz
-  const dx = b.x - a.x
-  const dz = b.z - a.z
-  return [...axesOf(a), ...axesOf(b)].every(
-    (n) => Math.abs(dx * n[0] + dz * n[1]) < reachAlong(a, n) + reachAlong(b, n) - TOUCH
+const rectsOverlap = (first: Rect, second: Rect) => {
+  if (first.angle === 0 && second.angle === 0)
+    return (
+      Math.abs(second.x - first.x) < first.halfX + second.halfX &&
+      Math.abs(second.z - first.z) < first.halfZ + second.halfZ
+    )
+  const deltaX = second.x - first.x
+  const deltaZ = second.z - first.z
+  return [...axesOf(first), ...axesOf(second)].every(
+    (axis) =>
+      Math.abs(deltaX * axis[0] + deltaZ * axis[1]) <
+      reachAlong(first, axis) + reachAlong(second, axis) - TOUCH
   )
 }
 
 const footprintRect = (type: ObjectType, rotation: number, x: number, z: number): Rect => {
   if (isDiagonal(rotation)) {
-    const [wx, wz] = getItem(type).footprint
-    return { x, z, hx: (wx * GRID) / 2, hz: (wz * GRID) / 2, angle: rotation }
+    const [cellsX, cellsZ] = getItem(type).footprint
+    return { x, z, halfX: (cellsX * GRID) / 2, halfZ: (cellsZ * GRID) / 2, angle: rotation }
   }
-  const [cx, cz] = footprintCells(type, rotation)
-  return { x, z, hx: (cx * GRID) / 2, hz: (cz * GRID) / 2, angle: 0 }
+  const [cellsX, cellsZ] = footprintCells(type, rotation)
+  return { x, z, halfX: (cellsX * GRID) / 2, halfZ: (cellsZ * GRID) / 2, angle: 0 }
 }
 
 /** Whether a piece's footprint (turned as it is) overlaps the grid square centred at (x, z). */
-export const footprintOverlapsSquare = (o: SceneObject, x: number, z: number) =>
-  rectsOverlap(footprintRect(o.type, o.rotation, o.x, o.z), {
+export const footprintOverlapsSquare = (piece: SceneObject, x: number, z: number) =>
+  rectsOverlap(footprintRect(piece.type, piece.rotation, piece.x, piece.z), {
     x,
     z,
-    hx: GRID / 2,
-    hz: GRID / 2,
+    halfX: GRID / 2,
+    halfZ: GRID / 2,
     angle: 0,
   })
 
@@ -83,29 +91,37 @@ export const footprintOverlapsSquare = (o: SceneObject, x: number, z: number) =>
  * stand flush against a wall (touching it), but never straddle one.
  */
 const edgeCrossesRect = (
-  e: { x: number; z: number; rotation: number; type?: ObjectType },
-  r: Rect
+  edge: { x: number; z: number; rotation: number; type?: ObjectType },
+  rect: Rect
 ) => {
-  const h = edgeLength(e) / 2
-  if (r.angle !== 0 || isDiagonalEdge(e.rotation)) {
+  const halfLength = edgeLength(edge) / 2
+  if (rect.angle !== 0 || isDiagonalEdge(edge.rotation)) {
     // A turned footprint, or a diagonal wall: the wall as a line (no
     // thickness), tested along its direction, across it, and the footprint's
     // own axes.
-    const [sx, sz] = edgeStep(e.rotation)
-    const length = Math.hypot(sx, sz)
-    const along: [number, number] = [sx / length, sz / length]
+    const [stepX, stepZ] = edgeStep(edge.rotation)
+    const length = Math.hypot(stepX, stepZ)
+    const along: [number, number] = [stepX / length, stepZ / length]
     const across: [number, number] = [-along[1], along[0]]
-    const dx = r.x - e.x
-    const dz = r.z - e.z
-    return [along, across, ...axesOf(r)].every(
-      (n) =>
-        Math.abs(dx * n[0] + dz * n[1]) <
-        h * Math.abs(along[0] * n[0] + along[1] * n[1]) + reachAlong(r, n) - TOUCH
+    const deltaX = rect.x - edge.x
+    const deltaZ = rect.z - edge.z
+    return [along, across, ...axesOf(rect)].every(
+      (axis) =>
+        Math.abs(deltaX * axis[0] + deltaZ * axis[1]) <
+        halfLength * Math.abs(along[0] * axis[0] + along[1] * axis[1]) +
+          reachAlong(rect, axis) -
+          TOUCH
     )
   }
-  return runsAlongX(e.rotation)
-    ? r.z - r.hz < e.z && e.z < r.z + r.hz && r.x - r.hx < e.x + h && e.x - h < r.x + r.hx
-    : r.x - r.hx < e.x && e.x < r.x + r.hx && r.z - r.hz < e.z + h && e.z - h < r.z + r.hz
+  return runsAlongX(edge.rotation)
+    ? rect.z - rect.halfZ < edge.z &&
+        edge.z < rect.z + rect.halfZ &&
+        rect.x - rect.halfX < edge.x + halfLength &&
+        edge.x - halfLength < rect.x + rect.halfX
+    : rect.x - rect.halfX < edge.x &&
+        edge.x < rect.x + rect.halfX &&
+        rect.z - rect.halfZ < edge.z + halfLength &&
+        edge.z - halfLength < rect.z + rect.halfZ
 }
 
 /** Which collision layer a piece lives in: the floor, the ceiling or a wall face. */
@@ -130,17 +146,18 @@ export const furnitureCollides = (
   if (isMarker(type)) return false
   // Wall items need solid wall behind their whole width.
   if (isWallMounted(type) && !mountWalls(objects, type, x, z, rotation)) return true
-  const a = footprintRect(type, rotation, x, z)
-  for (const o of objects) {
-    if (o.id === ignoreId || isMarker(o.type)) continue
-    if (isEdgeType(o.type)) {
-      if (!isOverhead(type) && edgeCrossesRect(o, a)) return true
+  const moving = footprintRect(type, rotation, x, z)
+  for (const other of objects) {
+    if (other.id === ignoreId || isMarker(other.type)) continue
+    if (isEdgeType(other.type)) {
+      if (!isOverhead(type) && edgeCrossesRect(other, moving)) return true
       continue
     }
     // Overhead items (ceiling lights) and wall items only bump into their own kind.
-    if (layerOf(type) !== layerOf(o.type)) continue
-    if (getItem(type).isUnderlay || getItem(o.type).isUnderlay) continue
-    if (rectsOverlap(a, footprintRect(o.type, o.rotation, o.x, o.z))) return true
+    if (layerOf(type) !== layerOf(other.type)) continue
+    if (getItem(type).isUnderlay || getItem(other.type).isUnderlay) continue
+    if (rectsOverlap(moving, footprintRect(other.type, other.rotation, other.x, other.z)))
+      return true
   }
   return false
 }
@@ -150,22 +167,22 @@ export const furnitureCollides = (
  * anything not in the group, or with each other — or leave the floor.
  */
 export const groupCollides = (objects: SceneObject[], moved: SceneObject[]): boolean => {
-  const ids = new Set(moved.map((m) => m.id))
-  const others = objects.filter((o) => !ids.has(o.id))
-  return moved.some((m) => {
-    const p = clampToFloor(m.type, m.rotation, { x: m.x, z: m.z })
-    if (p.x !== m.x || p.z !== m.z) return true
-    const rest = [...others, ...moved.filter((o) => o.id !== m.id)]
-    return furnitureCollides(rest, m.type, m.x, m.z, m.rotation)
+  const ids = new Set(moved.map((piece) => piece.id))
+  const others = objects.filter((other) => !ids.has(other.id))
+  return moved.some((piece) => {
+    const clamped = clampToFloor(piece.type, piece.rotation, { x: piece.x, z: piece.z })
+    if (clamped.x !== piece.x || clamped.z !== piece.z) return true
+    const rest = [...others, ...moved.filter((other) => other.id !== piece.id)]
+    return furnitureCollides(rest, piece.type, piece.x, piece.z, piece.rotation)
   })
 }
 
 /** Whether a wall/door edge would cut through any placed furniture (rugs included). */
-export const edgeBlocked = (objects: SceneObject[], e: WallCell): boolean =>
+export const edgeBlocked = (objects: SceneObject[], edge: WallCell): boolean =>
   objects.some(
-    (o) =>
-      !isEdgeType(o.type) &&
-      !isOverhead(o.type) &&
-      !isMarker(o.type) &&
-      edgeCrossesRect(e, footprintRect(o.type, o.rotation, o.x, o.z))
+    (piece) =>
+      !isEdgeType(piece.type) &&
+      !isOverhead(piece.type) &&
+      !isMarker(piece.type) &&
+      edgeCrossesRect(edge, footprintRect(piece.type, piece.rotation, piece.x, piece.z))
   )

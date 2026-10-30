@@ -19,13 +19,13 @@ import { ALONG_Z, isDiagonal, toRotationStep } from "./rotation"
  * the turned shape itself (see footprintRect).
  */
 export const footprintCells = (type: ObjectType, rotation: number): [number, number] => {
-  const [wx, wz] = getItem(type).footprint
+  const [widthCells, depthCells] = getItem(type).footprint
   if (isDiagonal(rotation)) {
-    const side = Math.ceil((wx + wz) * Math.SQRT1_2 - 1e-6)
+    const side = Math.ceil((widthCells + depthCells) * Math.SQRT1_2 - 1e-6)
     return [side, side]
   }
   const turned = Math.abs(Math.round(rotation / ALONG_Z)) % 2 === 1
-  return turned ? [wz, wx] : [wx, wz]
+  return turned ? [depthCells, widthCells] : [widthCells, depthCells]
 }
 
 /**
@@ -35,15 +35,15 @@ export const footprintCells = (type: ObjectType, rotation: number): [number, num
  * count and down into an even one, so a piece turned full circle ends up
  * exactly where it started instead of creeping a quarter square per turn.
  */
-export const snapAxis = (v: number, cells: number) =>
+export const snapAxis = (value: number, cells: number) =>
   cells % 2 === 0
-    ? Math.ceil(v / GRID - 0.5) * GRID // even: centre on a grid line (ties down)
-    : (Math.round(v / GRID - 0.5) + 0.5) * GRID // odd: centre in a square (ties up)
+    ? Math.ceil(value / GRID - 0.5) * GRID // even: centre on a grid line (ties down)
+    : (Math.round(value / GRID - 0.5) + 0.5) * GRID // odd: centre in a square (ties up)
 
 /** Snap a position so the object's footprint occupies whole grid squares. */
 export const snapToFootprint = (type: ObjectType, rotation: number, x: number, z: number): Cell => {
-  const [cx, cz] = footprintCells(type, rotation)
-  return { x: snapAxis(x, cx), z: snapAxis(z, cz) }
+  const [cellsX, cellsZ] = footprintCells(type, rotation)
+  return { x: snapAxis(x, cellsX), z: snapAxis(z, cellsZ) }
 }
 
 /** How a furniture tool places: one piece, a row of copies, or a back-to-back pod of two rows. */
@@ -65,20 +65,20 @@ export const composeRepeat = (
   end: Cell,
   pattern: Exclude<PlacementPattern, "single">
 ): { x: number; z: number; rotation: number }[] => {
-  const [w, d] = getItem(type).footprint
+  const [width, depth] = getItem(type).footprint
   // The piece's own axes in the world: X (its width) and Z (its depth, front +Z).
-  const ax = { x: Math.cos(rotation), z: -Math.sin(rotation) }
-  const az = { x: Math.sin(rotation), z: Math.cos(rotation) }
-  const dx = end.x - start.x
-  const dz = end.z - start.z
-  const alongWidth = (dx * ax.x + dz * ax.z) / (w * GRID)
-  const alongDepth = (dx * az.x + dz * az.z) / (d * GRID)
+  const axisX = { x: Math.cos(rotation), z: -Math.sin(rotation) }
+  const axisZ = { x: Math.sin(rotation), z: Math.cos(rotation) }
+  const deltaX = end.x - start.x
+  const deltaZ = end.z - start.z
+  const alongWidth = (deltaX * axisX.x + deltaZ * axisX.z) / (width * GRID)
+  const alongDepth = (deltaX * axisZ.x + deltaZ * axisZ.z) / (depth * GRID)
   // Rows run along the width unless the drag goes clearly more along the depth.
   const isAlongWidth = Math.abs(alongWidth) >= Math.abs(alongDepth) || pattern === "pod"
   const steps = isAlongWidth ? alongWidth : alongDepth
   const count = Math.min(MAX_REPEAT, Math.floor(Math.abs(steps) + 0.5) + 1)
-  const axis = isAlongWidth ? ax : az
-  const stride = (isAlongWidth ? w : d) * GRID * Math.sign(steps || 1)
+  const axis = isAlongWidth ? axisX : axisZ
+  const stride = (isAlongWidth ? width : depth) * GRID * Math.sign(steps || 1)
   const row = Array.from({ length: count }, (_, i) => ({
     x: start.x + axis.x * stride * i,
     z: start.z + axis.z * stride * i,
@@ -86,12 +86,12 @@ export const composeRepeat = (
   }))
   if (pattern === "row") return row
   // Back to back: the second row behind the first (its −Z side), facing away.
-  const behind = d * GRID
+  const behind = depth * GRID
   return [
     ...row,
-    ...row.map((p) => ({
-      x: p.x - az.x * behind,
-      z: p.z - az.z * behind,
+    ...row.map((copy) => ({
+      x: copy.x - axisZ.x * behind,
+      z: copy.z - axisZ.z * behind,
       rotation: toRotationStep(rotation + Math.PI),
     })),
   ]
@@ -116,41 +116,47 @@ export const snapPlacement = (
 ): Cell => {
   const onGrid = clampToFloor(type, rotation, snapToFootprint(type, rotation, x, z))
   if (!isDiagonal(rotation) || isWallMounted(type) || isOverhead(type)) return onGrid
-  const [wx, wz] = getItem(type).footprint
+  const [widthCells, depthCells] = getItem(type).footprint
   // The piece's own axes in the world: X (its width) and Z (its depth).
-  const ax = { x: Math.cos(rotation), z: -Math.sin(rotation) }
-  let best: { d: number; p: Cell } | null = null
-  for (const o of objects) {
-    if (!isEdgeType(o.type) || !isDiagonalEdge(o.rotation)) continue
-    const [sx, sz] = edgeStep(o.rotation)
-    const length = Math.hypot(sx, sz)
-    const u = { x: sx / length, z: sz / length }
-    const n = { x: -u.z, z: u.x }
+  const axisX = { x: Math.cos(rotation), z: -Math.sin(rotation) }
+  let best: { gap: number; point: Cell } | null = null
+  for (const segment of objects) {
+    if (!isEdgeType(segment.type) || !isDiagonalEdge(segment.rotation)) continue
+    const [stepX, stepZ] = edgeStep(segment.rotation)
+    const length = Math.hypot(stepX, stepZ)
+    const direction = { x: stepX / length, z: stepZ / length }
+    const normal = { x: -direction.z, z: direction.x }
     // Width along the wall (back to it) or across it (side to it).
-    const isBackToWall = Math.abs(ax.x * u.x + ax.z * u.z) > 0.99
-    const flush = ((isBackToWall ? wz : wx) * GRID) / 2
-    const across = (x - o.x) * n.x + (z - o.z) * n.z
-    const along = (x - o.x) * u.x + (z - o.z) * u.z
+    const isBackToWall = Math.abs(axisX.x * direction.x + axisX.z * direction.z) > 0.99
+    const flush = ((isBackToWall ? depthCells : widthCells) * GRID) / 2
+    const across = (x - segment.x) * normal.x + (z - segment.z) * normal.z
+    const along = (x - segment.x) * direction.x + (z - segment.z) * direction.z
     // Near this segment's face, beside it along the wall (with some slack).
     if (Math.abs(across) > flush + FLUSH_REACH) continue
     if (Math.abs(along) > length / 2 + flush + FLUSH_REACH) continue
     const gap = Math.abs(Math.abs(across) - flush)
-    if (best && gap >= best.d) continue
+    if (best && gap >= best.gap) continue
     const step = length / 2
-    const t = Math.round(along / step) * step
+    const snappedAlong = Math.round(along / step) * step
     const side = across >= 0 ? 1 : -1
     best = {
-      d: gap,
-      p: { x: o.x + u.x * t + n.x * side * flush, z: o.z + u.z * t + n.z * side * flush },
+      gap: gap,
+      point: {
+        x: segment.x + direction.x * snappedAlong + normal.x * side * flush,
+        z: segment.z + direction.z * snappedAlong + normal.z * side * flush,
+      },
     }
   }
-  return best ? best.p : onGrid
+  return best ? best.point : onGrid
 }
 
 /** Keep a footprint centred at (x,z) fully on the buildable floor. */
-export const clampToFloor = (type: ObjectType, rotation: number, p: Cell): Cell => {
-  const [cx, cz] = footprintCells(type, rotation)
-  const hx = BUILD_HALF - (cx * GRID) / 2
-  const hz = BUILD_HALF - (cz * GRID) / 2
-  return { x: Math.max(-hx, Math.min(hx, p.x)), z: Math.max(-hz, Math.min(hz, p.z)) }
+export const clampToFloor = (type: ObjectType, rotation: number, position: Cell): Cell => {
+  const [cellsX, cellsZ] = footprintCells(type, rotation)
+  const halfX = BUILD_HALF - (cellsX * GRID) / 2
+  const halfZ = BUILD_HALF - (cellsZ * GRID) / 2
+  return {
+    x: Math.max(-halfX, Math.min(halfX, position.x)),
+    z: Math.max(-halfZ, Math.min(halfZ, position.z)),
+  }
 }

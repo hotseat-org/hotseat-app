@@ -34,17 +34,17 @@ const CAMERA = { fov: 32, position: [3.4, 2.6, 3.4] as [number, number, number] 
  * costs nothing per frame.
  */
 const Spin = ({ spinning, children }: { spinning: boolean; children: React.ReactNode }) => {
-  const ref = useRef<Group>(null)
-  const invalidate = useThree((s) => s.invalidate)
+  const groupRef = useRef<Group>(null)
+  const invalidate = useThree((state) => state.invalidate)
   useEffect(() => {
     if (spinning) invalidate() // kick the demand loop
   }, [spinning, invalidate])
-  useFrame((state, dt) => {
-    if (!spinning || !ref.current) return
-    ref.current.rotation.y += Math.min(dt, 0.05) * 0.55
+  useFrame((state, delta) => {
+    if (!spinning || !groupRef.current) return
+    groupRef.current.rotation.y += Math.min(delta, 0.05) * 0.55
     state.invalidate()
   })
-  return <group ref={ref}>{children}</group>
+  return <group ref={groupRef}>{children}</group>
 }
 
 /**
@@ -79,44 +79,46 @@ const MARGIN = 1.08
  * framing stays steady at every angle.
  */
 const FitCamera = ({ children }: { children: React.ReactNode }) => {
-  const ref = useRef<Group>(null)
-  const camera = useThree((s) => s.camera) as PerspectiveCameraImpl
-  const size = useThree((s) => s.size)
-  const invalidate = useThree((s) => s.invalidate)
+  const groupRef = useRef<Group>(null)
+  const camera = useThree((state) => state.camera) as PerspectiveCameraImpl
+  const size = useThree((state) => state.size)
+  const invalidate = useThree((state) => state.invalidate)
 
   useLayoutEffect(() => {
-    if (!ref.current) return
-    const sphere = new Box3().setFromObject(ref.current).getBoundingSphere(new Sphere())
-    const vFov = (camera.fov * Math.PI) / 180
-    const hFov = 2 * Math.atan(Math.tan(vFov / 2) * (size.width / Math.max(1, size.height)))
-    const dist = (sphere.radius * MARGIN) / Math.sin(Math.min(vFov, hFov) / 2)
-    camera.position.copy(sphere.center).addScaledVector(VIEW_DIR, dist)
-    camera.near = Math.max(0.01, dist - sphere.radius * 2)
-    camera.far = dist + sphere.radius * 2
+    if (!groupRef.current) return
+    const sphere = new Box3().setFromObject(groupRef.current).getBoundingSphere(new Sphere())
+    const verticalFieldOfView = (camera.fov * Math.PI) / 180
+    const horizontalFieldOfView =
+      2 * Math.atan(Math.tan(verticalFieldOfView / 2) * (size.width / Math.max(1, size.height)))
+    const distance =
+      (sphere.radius * MARGIN) / Math.sin(Math.min(verticalFieldOfView, horizontalFieldOfView) / 2)
+    camera.position.copy(sphere.center).addScaledVector(VIEW_DIR, distance)
+    camera.near = Math.max(0.01, distance - sphere.radius * 2)
+    camera.far = distance + sphere.radius * 2
     camera.lookAt(sphere.center)
     camera.updateProjectionMatrix()
     invalidate()
   }, [camera, size.width, size.height, invalidate])
 
-  return <group ref={ref}>{children}</group>
+  return <group ref={groupRef}>{children}</group>
 }
 
 /** Room tool thumbnail: a small square of walls (one segment = 0.5). */
 const RoomPreview = ({ color }: { color?: string }) => {
-  const segs = [-0.5, 0, 0.5]
+  const offsets = [-0.5, 0, 0.5]
   return (
     <group>
-      {segs.flatMap((t) => [
-        <group key={`n${t}`} position={[t, 0, -0.75]}>
+      {offsets.flatMap((offset) => [
+        <group key={`n${offset}`} position={[offset, 0, -0.75]}>
           <Wall color={color} />
         </group>,
-        <group key={`s${t}`} position={[t, 0, 0.75]}>
+        <group key={`s${offset}`} position={[offset, 0, 0.75]}>
           <Wall color={color} />
         </group>,
-        <group key={`w${t}`} position={[-0.75, 0, t]} rotation={[0, Math.PI / 2, 0]}>
+        <group key={`w${offset}`} position={[-0.75, 0, offset]} rotation={[0, Math.PI / 2, 0]}>
           <Wall color={color} />
         </group>,
-        <group key={`e${t}`} position={[0.75, 0, t]} rotation={[0, Math.PI / 2, 0]}>
+        <group key={`e${offset}`} position={[0.75, 0, offset]} rotation={[0, Math.PI / 2, 0]}>
           <Wall color={color} />
         </group>,
       ])}
@@ -128,8 +130,8 @@ type ReadyHandler = (gl: WebGLRenderer, scene: Scene, camera: Camera) => void
 
 /** Calls back once its Suspense boundary has resolved and the camera is framed. */
 const OnReady = ({ onReady }: { onReady: ReadyHandler }) => {
-  const { gl, scene, camera } = useThree()
-  useLayoutEffect(() => onReady(gl, scene, camera), [onReady, gl, scene, camera])
+  const { gl: renderer, scene, camera } = useThree()
+  useLayoutEffect(() => onReady(renderer, scene, camera), [onReady, renderer, scene, camera])
   return null
 }
 
@@ -203,10 +205,10 @@ export const ThumbnailStudio = () => {
   const key = request?.key
   const handleReady = useRef<ReadyHandler>(() => {})
   const isUrgent = request?.isUrgent ?? false
-  handleReady.current = (gl, scene, camera) => {
+  handleReady.current = (renderer, scene, camera) => {
     if (!key) return
-    gl.render(scene, camera)
-    gl.domElement.toBlob((blob) => {
+    renderer.render(scene, camera)
+    renderer.domElement.toBlob((blob) => {
       if (!blob) return
       const add = () => addThumbnail(key, URL.createObjectURL(blob))
       // A tile is waiting: now. The background pre-render: in idle time.
@@ -216,7 +218,7 @@ export const ThumbnailStudio = () => {
   }
   // Stable, so OnReady's effect runs once per item, not per studio render.
   const onReady = useCallback<ReadyHandler>(
-    (gl, scene, camera) => handleReady.current(gl, scene, camera),
+    (renderer, scene, camera) => handleReady.current(renderer, scene, camera),
     []
   )
 

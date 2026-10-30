@@ -20,7 +20,7 @@ const SKY = [
   [21, "#262a44"],
   [24, "#151a2b"],
 ] as const
-const GRADIENT = `linear-gradient(90deg, ${SKY.map(([h, c]) => `${c} ${(h / 24) * 100}%`).join(", ")})`
+const GRADIENT = `linear-gradient(90deg, ${SKY.map(([hour, color]) => `${color} ${(hour / 24) * 100}%`).join(", ")})`
 
 /** Stars over the night stretches of the track: [left %, top %, size px, delay s]. */
 const STARS: [number, number, number, number][] = [
@@ -33,10 +33,10 @@ const STARS: [number, number, number, number][] = [
   [96, 42, 1, 1.7],
 ]
 
-const fmt = (t: number) => {
-  const h = Math.floor(t) % 24
-  const m = Math.round((t - Math.floor(t)) * 60)
-  return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`
+const formatHour = (t: number) => {
+  const hours = Math.floor(t) % 24
+  const minutes = Math.round((t - Math.floor(t)) * 60)
+  return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`
 }
 
 /**
@@ -64,15 +64,15 @@ export const SkySlider = ({
       style={{ "--sky-t": value / 24, "--sky-night": night } as CSSProperties}
     >
       <span className="ss-track" style={{ background: GRADIENT }} aria-hidden>
-        {STARS.map(([left, top, px, delay]) => (
+        {STARS.map(([left, top, size, delay]) => (
           <span
             key={`${left}-${top}`}
             className="ss-star"
             style={{
               left: `${left}%`,
               top: `${top}%`,
-              width: px,
-              height: px,
+              width: size,
+              height: size,
               animationDelay: `${delay}s`,
             }}
           />
@@ -83,7 +83,7 @@ export const SkySlider = ({
           <Sun className="ss-sun" strokeWidth={2.5} />
           <Moon className="ss-moon" fill="currentColor" strokeWidth={2} />
         </span>
-        {fmt(value)}
+        {formatHour(value)}
       </span>
       <input
         type="range"
@@ -91,9 +91,9 @@ export const SkySlider = ({
         max={24}
         step={0.25}
         value={value}
-        onChange={(e) => onChange(Number(e.currentTarget.value))}
+        onChange={(event) => onChange(Number(event.currentTarget.value))}
         aria-label={t("Time of day")}
-        aria-valuetext={fmt(value)}
+        aria-valuetext={formatHour(value)}
         className="ss-input"
       />
     </div>

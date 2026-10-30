@@ -14,39 +14,39 @@ const THRESHOLD = 4
  * selection). A press that never moves is just a click (deselect).
  */
 export const BoxSelect = () => {
-  const active = useEditorStore((s) => s.box !== null)
+  const active = useEditorStore((state) => state.box !== null)
   const store = useEditorStoreApi()
-  const camera = useThree((s) => s.camera)
-  const gl = useThree((s) => s.gl)
+  const camera = useThree((state) => state.camera)
+  const renderer = useThree((state) => state.gl)
 
   useEffect(() => {
     if (!active) return
-    const move = (e: PointerEvent) => {
+    const move = (event: PointerEvent) => {
       const box = store.getState().box
-      if (box) store.getState().setBox({ ...box, x1: e.clientX, y1: e.clientY })
+      if (box) store.getState().setBox({ ...box, x1: event.clientX, y1: event.clientY })
     }
     const up = () => {
-      const s = store.getState()
-      const box = s.box
-      s.setBox(null)
+      const state = store.getState()
+      const box = state.box
+      state.setBox(null)
       if (!box) return
       const dragged = Math.abs(box.x1 - box.x0) > THRESHOLD || Math.abs(box.y1 - box.y0) > THRESHOLD
       if (!dragged) return
-      const rect = gl.domElement.getBoundingClientRect()
+      const rect = renderer.domElement.getBoundingClientRect()
       const [minX, maxX] = [Math.min(box.x0, box.x1), Math.max(box.x0, box.x1)]
       const [minY, maxY] = [Math.min(box.y0, box.y1), Math.max(box.y0, box.y1)]
-      const v = new Vector3()
-      const hits = s.objects
-        .filter((o) => !isEdgeType(o.type) && !isMarker(o.type))
-        .filter((o) => {
-          v.set(o.x, 0.4, o.z).project(camera)
-          const sx = rect.left + ((v.x + 1) / 2) * rect.width
-          const sy = rect.top + ((1 - v.y) / 2) * rect.height
-          return sx >= minX && sx <= maxX && sy >= minY && sy <= maxY
+      const vector = new Vector3()
+      const hits = state.objects
+        .filter((object) => !isEdgeType(object.type) && !isMarker(object.type))
+        .filter((object) => {
+          vector.set(object.x, 0.4, object.z).project(camera)
+          const screenX = rect.left + ((vector.x + 1) / 2) * rect.width
+          const screenY = rect.top + ((1 - vector.y) / 2) * rect.height
+          return screenX >= minX && screenX <= maxX && screenY >= minY && screenY <= maxY
         })
-        .map((o) => o.id)
-      const ids = box.additive ? [...new Set([...s.selection, ...hits])] : hits
-      s.selectMany(ids)
+        .map((object) => object.id)
+      const ids = box.additive ? [...new Set([...state.selection, ...hits])] : hits
+      state.selectMany(ids)
     }
     window.addEventListener("pointermove", move)
     window.addEventListener("pointerup", up)
@@ -54,7 +54,7 @@ export const BoxSelect = () => {
       window.removeEventListener("pointermove", move)
       window.removeEventListener("pointerup", up)
     }
-  }, [active, store, camera, gl])
+  }, [active, store, camera, renderer])
 
   return null
 }

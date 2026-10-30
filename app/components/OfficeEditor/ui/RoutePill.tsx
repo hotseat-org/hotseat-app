@@ -16,14 +16,14 @@ export const RoutePill = ({ className }: { className?: string }) => {
   const i18n = useI18n()
   const { t } = i18n
   const route = useRoute()
-  const clearRoute = useEditorStore((s) => s.clearRoute)
-  const setRouteFrom = useEditorStore((s) => s.setRouteFrom)
+  const clearRoute = useEditorStore((state) => state.clearRoute)
+  const setRouteFrom = useEditorStore((state) => state.setRouteFrom)
   const [isCopied, setIsCopied] = useState(false)
   useEffect(() => setIsCopied(false), [route?.deskId])
 
   useEffect(() => {
     if (!route) return
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && clearRoute()
+    const onKey = (event: KeyboardEvent) => event.key === "Escape" && clearRoute()
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
   }, [route, clearRoute])

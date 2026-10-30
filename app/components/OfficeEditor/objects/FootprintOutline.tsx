@@ -27,23 +27,23 @@ export const FootprintOutline = ({
 }) => {
   const shape = useMemo(() => outline(width + MARGIN * 2, depth + MARGIN * 2), [width, depth])
   const mesh = useRef<Mesh>(null)
-  const amt = useRef(0)
+  const amount = useRef(0)
 
-  useFrame((state, dt) => {
-    const m = mesh.current
-    if (!m) return
+  useFrame((state, delta) => {
+    const outlineMesh = mesh.current
+    if (!outlineMesh) return
     const target = hovered || selected ? 1 : 0
-    amt.current += (target - amt.current) * Math.min(1, dt * 14)
-    const a = amt.current
-    m.visible = a > 0.01
-    if (!m.visible) return
+    amount.current += (target - amount.current) * Math.min(1, delta * 14)
+    const strength = amount.current
+    outlineMesh.visible = strength > 0.01
+    if (!outlineMesh.visible) return
     // Only a hover breathes; a selection holds still.
     const breathe = hovered && !selected ? Math.sin(state.clock.elapsedTime * 4) * 0.012 : 0
-    m.scale.setScalar(0.92 + 0.08 * a + breathe)
-    ;(m.material as MeshBasicMaterial).opacity = (selected ? 1 : 0.8) * a
+    outlineMesh.scale.setScalar(0.92 + 0.08 * strength + breathe)
+    ;(outlineMesh.material as MeshBasicMaterial).opacity = (selected ? 1 : 0.8) * strength
     // Keep animating under frameloop="demand" while easing or breathing (a
     // settled selection doesn't need frames).
-    if (Math.abs(target - a) > 0.005 || breathe !== 0) state.invalidate()
+    if (Math.abs(target - strength) > 0.005 || breathe !== 0) state.invalidate()
   })
 
   return (
@@ -65,23 +65,28 @@ const MARGIN = 0.06
 const THICK = 0.06
 
 /** A rounded-rectangle band (w × d outer size) centred on the origin. */
-const outline = (w: number, d: number) => {
-  const rect = (target: Shape | Path, hw: number, hd: number, r: number) => {
-    target.moveTo(-hw + r, -hd)
-    target.lineTo(hw - r, -hd)
-    target.quadraticCurveTo(hw, -hd, hw, -hd + r)
-    target.lineTo(hw, hd - r)
-    target.quadraticCurveTo(hw, hd, hw - r, hd)
-    target.lineTo(-hw + r, hd)
-    target.quadraticCurveTo(-hw, hd, -hw, hd - r)
-    target.lineTo(-hw, -hd + r)
-    target.quadraticCurveTo(-hw, -hd, -hw + r, -hd)
+const outline = (outlineWidth: number, outlineDepth: number) => {
+  const rect = (target: Shape | Path, halfWidth: number, halfDepth: number, radius: number) => {
+    target.moveTo(-halfWidth + radius, -halfDepth)
+    target.lineTo(halfWidth - radius, -halfDepth)
+    target.quadraticCurveTo(halfWidth, -halfDepth, halfWidth, -halfDepth + radius)
+    target.lineTo(halfWidth, halfDepth - radius)
+    target.quadraticCurveTo(halfWidth, halfDepth, halfWidth - radius, halfDepth)
+    target.lineTo(-halfWidth + radius, halfDepth)
+    target.quadraticCurveTo(-halfWidth, halfDepth, -halfWidth, halfDepth - radius)
+    target.lineTo(-halfWidth, -halfDepth + radius)
+    target.quadraticCurveTo(-halfWidth, -halfDepth, -halfWidth + radius, -halfDepth)
     return target
   }
-  const r = Math.min(0.22, w / 4, d / 4)
-  const shape = rect(new Shape(), w / 2, d / 2, r) as Shape
+  const cornerRadius = Math.min(0.22, outlineWidth / 4, outlineDepth / 4)
+  const shape = rect(new Shape(), outlineWidth / 2, outlineDepth / 2, cornerRadius) as Shape
   shape.holes.push(
-    rect(new Path(), w / 2 - THICK, d / 2 - THICK, Math.max(0.02, r - THICK)) as Path
+    rect(
+      new Path(),
+      outlineWidth / 2 - THICK,
+      outlineDepth / 2 - THICK,
+      Math.max(0.02, cornerRadius - THICK)
+    ) as Path
   )
   return shape
 }

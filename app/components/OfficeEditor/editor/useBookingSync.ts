@@ -89,7 +89,7 @@ export const useBookingSync = (booking: EditorBooking | undefined, people: Peopl
     store,
   ])
   // Plain replaceState: no loader round-trip.
-  const shownDay = useEditorStore((s) => (s.booking.enabled ? s.booking.day : null))
+  const shownDay = useEditorStore((state) => (state.booking.enabled ? state.booking.day : null))
   useEffect(() => {
     if (!shownDay || !today) return
     const url = new URL(window.location.href)

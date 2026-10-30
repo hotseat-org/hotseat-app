@@ -69,22 +69,26 @@ export const edgeStretch = (type: ObjectType, rotation: number): [number, number
   isEdgeType(type) && isDiagonalEdge(rotation) ? [Math.SQRT2, 1, 1] : [1, 1, 1]
 
 /** Length (world units) of a wall/door edge: a unit edge is SEG, or SEG·√2 diagonally. */
-export const edgeLength = (o: { type?: ObjectType; rotation?: number }) =>
-  (isOpening(o.type) ? DOOR_SEGS : 1) *
-  (o.rotation !== undefined && isDiagonalEdge(o.rotation) ? SEG * Math.SQRT2 : SEG)
+export const edgeLength = (edge: { type?: ObjectType; rotation?: number }) =>
+  (isOpening(edge.type) ? DOOR_SEGS : 1) *
+  (edge.rotation !== undefined && isDiagonalEdge(edge.rotation) ? SEG * Math.SQRT2 : SEG)
 
 /**
  * The unit (SEG-long) edges an edge object covers: a wall is one, a door two.
  * Everything that reasons about "which edges are taken/blocked" uses these.
  */
-export const unitEdges = (o: SceneObject): WallCell[] => {
-  if (!isOpening(o.type)) return [{ x: o.x, z: o.z, rotation: o.rotation }]
-  const [sx, sz] = edgeStep(o.rotation)
-  return [-0.5, 0.5].map((k) => ({ x: o.x + k * sx, z: o.z + k * sz, rotation: o.rotation }))
+export const unitEdges = (edge: SceneObject): WallCell[] => {
+  if (!isOpening(edge.type)) return [{ x: edge.x, z: edge.z, rotation: edge.rotation }]
+  const [stepX, stepZ] = edgeStep(edge.rotation)
+  return [-0.5, 0.5].map((fraction) => ({
+    x: edge.x + fraction * stepX,
+    z: edge.z + fraction * stepZ,
+    rotation: edge.rotation,
+  }))
 }
 
 /** Stable key of a unit edge (position + direction). */
-export const edgeKey = (e: WallCell) => `${e.x},${e.z},${edgeDirection(e.rotation)}`
+export const edgeKey = (edge: WallCell) => `${edge.x},${edge.z},${edgeDirection(edge.rotation)}`
 
 /**
  * Upgrade layouts saved with the old 1-unit wall segments: each becomes two
@@ -93,74 +97,81 @@ export const edgeKey = (e: WallCell) => `${e.x},${e.z},${edgeDirection(e.rotatio
  * idempotent. Doors kept their 1-unit size, so they need no change.
  */
 export const normalizeEdges = (objects: SceneObject[]): SceneObject[] => {
-  if (!objects.some((o) => o.type === "wall" && isLegacyWall(o))) return objects
-  return objects.flatMap((o) => {
-    if (o.type !== "wall" || !isLegacyWall(o)) return [o]
-    const d = SEG / 2
-    const alongX = runsAlongX(o.rotation)
-    return [-d, d].map((off, i) => ({
-      ...o,
-      id: `${o.id}${i ? "b" : "a"}`,
-      x: alongX ? o.x + off : o.x,
-      z: alongX ? o.z : o.z + off,
+  if (!objects.some((wall) => wall.type === "wall" && isLegacyWall(wall))) return objects
+  return objects.flatMap((wall) => {
+    if (wall.type !== "wall" || !isLegacyWall(wall)) return [wall]
+    const half = SEG / 2
+    const alongX = runsAlongX(wall.rotation)
+    return [-half, half].map((offset, i) => ({
+      ...wall,
+      id: `${wall.id}${i ? "b" : "a"}`,
+      x: alongX ? wall.x + offset : wall.x,
+      z: alongX ? wall.z : wall.z + offset,
     }))
   })
 }
-const isLegacyWall = (o: SceneObject) => {
-  if (isDiagonalEdge(o.rotation)) return false // diagonals came later
-  const along = runsAlongX(o.rotation) ? o.x : o.z
+const isLegacyWall = (wall: SceneObject) => {
+  if (isDiagonalEdge(wall.rotation)) return false // diagonals came later
+  const along = runsAlongX(wall.rotation) ? wall.x : wall.z
   return Math.round(along * 4) % 2 === 0
 }
 
 /** A glass partition, or an opening cut into one. */
-export const isGlassEdge = (o: SceneObject) =>
-  !!getEdge(o.type)?.isSeeThrough || o.model === GLASS_HOST
+export const isGlassEdge = (edge: SceneObject) =>
+  !!getEdge(edge.type)?.isSeeThrough || edge.model === GLASS_HOST
 
 /** A solid wall run: what windows show the paint of, and what wall items hang on. */
-export const isSolidWall = (o: SceneObject) => {
-  const edge = getEdge(o.type)
+export const isSolidWall = (segment: SceneObject) => {
+  const edge = getEdge(segment.type)
   return edge?.role === "run" && !edge.isSeeThrough
 }
 
 /** The two grid nodes at the ends of a wall/door edge. */
-export const edgeNodes = (o: SceneObject): [Cell, Cell] => {
-  const [sx, sz] = edgeStep(o.rotation)
-  const k = (isOpening(o.type) ? DOOR_SEGS : 1) / 2
+export const edgeNodes = (edge: SceneObject): [Cell, Cell] => {
+  const [stepX, stepZ] = edgeStep(edge.rotation)
+  const half = (isOpening(edge.type) ? DOOR_SEGS : 1) / 2
   return [
-    { x: o.x - k * sx, z: o.z - k * sz },
-    { x: o.x + k * sx, z: o.z + k * sz },
+    { x: edge.x - half * stepX, z: edge.z - half * stepZ },
+    { x: edge.x + half * stepX, z: edge.z + half * stepZ },
   ]
 }
 
 /** Shortest distance from a point to a line segment. */
-const distToSegment = (px: number, pz: number, ax: number, az: number, bx: number, bz: number) => {
-  const dx = bx - ax
-  const dz = bz - az
-  const lenSq = dx * dx + dz * dz || 1
-  let t = ((px - ax) * dx + (pz - az) * dz) / lenSq
-  t = Math.max(0, Math.min(1, t))
-  const cx = ax + t * dx
-  const cz = az + t * dz
-  return Math.hypot(px - cx, pz - cz)
+const distToSegment = (
+  pointX: number,
+  pointZ: number,
+  startX: number,
+  startZ: number,
+  endX: number,
+  endZ: number
+) => {
+  const deltaX = endX - startX
+  const deltaZ = endZ - startZ
+  const lengthSquared = deltaX * deltaX + deltaZ * deltaZ || 1
+  let fraction = ((pointX - startX) * deltaX + (pointZ - startZ) * deltaZ) / lengthSquared
+  fraction = Math.max(0, Math.min(1, fraction))
+  const closestX = startX + fraction * deltaX
+  const closestZ = startZ + fraction * deltaZ
+  return Math.hypot(pointX - closestX, pointZ - closestZ)
 }
 
-/** Id of the wall/door segment nearest a point, within `maxDist`, else null. */
+/** Id of the wall/door segment nearest a point, within `maxDistance`, else null. */
 export const nearestEdgeId = (
   objects: SceneObject[],
-  px: number,
-  pz: number,
-  maxDist = 0.45,
-  accept: (o: SceneObject) => boolean = (o) => isEdgeType(o.type)
+  pointX: number,
+  pointZ: number,
+  maxDistance = 0.45,
+  accept: (edge: SceneObject) => boolean = (edge) => isEdgeType(edge.type)
 ): string | null => {
   let best: string | null = null
-  let bestD = maxDist
-  for (const o of objects) {
-    if (!accept(o)) continue
-    const [a, b] = edgeNodes(o)
-    const d = distToSegment(px, pz, a.x, a.z, b.x, b.z)
-    if (d < bestD) {
-      bestD = d
-      best = o.id
+  let bestDistance = maxDistance
+  for (const edge of objects) {
+    if (!accept(edge)) continue
+    const [start, end] = edgeNodes(edge)
+    const distance = distToSegment(pointX, pointZ, start.x, start.z, end.x, end.z)
+    if (distance < bestDistance) {
+      bestDistance = distance
+      best = edge.id
     }
   }
   return best
@@ -174,15 +185,17 @@ export const nearestEdgeId = (
  */
 export const wallJointNodes = (objects: SceneObject[]): Cell[] => {
   const map = new Map<string, { cell: Cell; directions: Set<EdgeDirection> }>()
-  for (const o of objects) {
-    if (!isEdgeType(o.type)) continue
-    const direction = edgeDirection(o.rotation)
-    for (const n of edgeNodes(o)) {
-      const k = `${n.x},${n.z}`
-      const e = map.get(k) ?? { cell: n, directions: new Set<EdgeDirection>() }
-      e.directions.add(direction)
-      map.set(k, e)
+  for (const edge of objects) {
+    if (!isEdgeType(edge.type)) continue
+    const direction = edgeDirection(edge.rotation)
+    for (const node of edgeNodes(edge)) {
+      const key = `${node.x},${node.z}`
+      const junction = map.get(key) ?? { cell: node, directions: new Set<EdgeDirection>() }
+      junction.directions.add(direction)
+      map.set(key, junction)
     }
   }
-  return [...map.values()].filter((e) => e.directions.size > 1).map((e) => e.cell)
+  return [...map.values()]
+    .filter((junction) => junction.directions.size > 1)
+    .map((junction) => junction.cell)
 }

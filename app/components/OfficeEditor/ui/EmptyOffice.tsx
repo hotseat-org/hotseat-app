@@ -45,11 +45,13 @@ const TEMPLATE_ICONS: Record<string, LucideIcon> = {
 
 /** The complete offices first, small to large; the simple starters after. */
 const ORDER = ["full-office", "studio", "team-floor", "headquarters", "open-plan", "meeting-rooms"]
-const PICKS = [...TEMPLATES].sort((a, b) => ORDER.indexOf(a.id) - ORDER.indexOf(b.id))
+const PICKS = [...TEMPLATES].sort(
+  (first, second) => ORDER.indexOf(first.id) - ORDER.indexOf(second.id)
+)
 
 /** "24 desks" — or, for a layout without any, what it is instead. */
 const sizeOf = ({ t, tn }: Translator, template: OfficeTemplate) => {
-  const desks = template.build().filter((o) => isSeatable(o.type)).length
+  const desks = template.build().filter((object) => isSeatable(object.type)).length
   return desks ? tn(desks, "{n} desk", "{n} desks") : t("Meeting rooms only")
 }
 
@@ -59,10 +61,10 @@ const sizeOf = ({ t, tn }: Translator, template: OfficeTemplate) => {
  * (no editor) the layouts are the only way, so they show straight away.
  */
 export const EmptyOffice = ({ readOnly, isEditable, onEnterEdit, onDismiss }: Props) => {
-  const load = useEditorStore((s) => s.load)
+  const load = useEditorStore((state) => state.load)
   const i18n = useI18n()
   const { t } = i18n
-  const sizes = useMemo(() => PICKS.map((p) => sizeOf(i18n, p)), [i18n])
+  const sizes = useMemo(() => PICKS.map((pick) => sizeOf(i18n, pick)), [i18n])
   const [isShowingTemplates, setIsShowingTemplates] = useState(!isEditable)
 
   const pickTemplate = (template: OfficeTemplate) => {

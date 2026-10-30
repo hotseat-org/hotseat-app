@@ -9,9 +9,9 @@ interface Props {
   variant?: number
 }
 
-const W = 1.3
-const H = 0.74
-const Y = 0.84
+const WIDTH = 1.3
+const HEIGHT = 0.74
+const HANG_HEIGHT = 0.84
 
 /** What's on screen per look: a dashboard, a video call, or off. */
 const SCREENS: { bg: string; glow: number; tiles: [number, number, number, number, string][] }[] = [
@@ -41,9 +41,9 @@ const SCREENS: { bg: string; glow: number; tiles: [number, number, number, numbe
 export const WallTv = ({ color = "#2c313c", variant }: Props) => {
   const screen = SCREENS[look(variant, SCREENS.length)]
   return (
-    <group position={[0, Y, WALL_FACE]}>
+    <group position={[0, HANG_HEIGHT, WALL_FACE]}>
       <RoundedBox
-        args={[W, H, 0.05]}
+        args={[WIDTH, HEIGHT, 0.05]}
         radius={0.015}
         smoothness={2}
         position={[0, 0, 0.025]}
@@ -52,7 +52,7 @@ export const WallTv = ({ color = "#2c313c", variant }: Props) => {
         <Surface color={color} roughness={0.4} metalness={0.3} />
       </RoundedBox>
       <mesh position={[0, 0, 0.0505]}>
-        <planeGeometry args={[W - 0.06, H - 0.06]} />
+        <planeGeometry args={[WIDTH - 0.06, HEIGHT - 0.06]} />
         <Surface
           color={screen.bg}
           roughness={0.2}
@@ -60,14 +60,19 @@ export const WallTv = ({ color = "#2c313c", variant }: Props) => {
           emissiveIntensity={screen.glow}
         />
       </mesh>
-      {screen.tiles.map(([x, y, w, h, c], i) => (
+      {screen.tiles.map(([x, y, width, height, tileColor], i) => (
         <mesh key={i} position={[x, y, 0.051]}>
-          <planeGeometry args={[w, h]} />
-          <Surface color={c} emissive={c} emissiveIntensity={0.45} roughness={0.4} />
+          <planeGeometry args={[width, height]} />
+          <Surface
+            color={tileColor}
+            emissive={tileColor}
+            emissiveIntensity={0.45}
+            roughness={0.4}
+          />
         </mesh>
       ))}
       {/* A tiny status light */}
-      <mesh position={[W / 2 - 0.05, -H / 2 + 0.02, 0.051]}>
+      <mesh position={[WIDTH / 2 - 0.05, -HEIGHT / 2 + 0.02, 0.051]}>
         <planeGeometry args={[0.012, 0.012]} />
         <Surface
           color={screen.glow ? ACCENT : "#c9564f"}

@@ -14,7 +14,7 @@ const STAGGER = 0.04
 /** The plate under each bar: the "0" every bar stands on. */
 const PLATE = { width: 0.62, height: 0.04 }
 
-const easeOut = (t: number) => 1 - (1 - t) ** 3
+const easeOut = (progress: number) => 1 - (1 - progress) ** 3
 
 /** A column's instance matrix: on its plate, `grown` (0–1) of its full height. */
 const columnMatrix = (
@@ -57,22 +57,22 @@ const columnMaterial = (isDark: boolean) => {
  * Every column in one draw, every plate in another. View mode only.
  */
 export const HeatBars = () => {
-  const heatmap = useEditorStore((s) => s.heatmap)
-  const objects = useEditorStore((s) => s.objects)
+  const heatmap = useEditorStore((state) => state.heatmap)
+  const objects = useEditorStore((state) => state.objects)
   const isDark = useSurfaces().nightDepth === 0
-  const gl = useThree((s) => s.gl)
-  const invalidate = useThree((s) => s.invalidate)
+  const renderer = useThree((state) => state.gl)
+  const invalidate = useThree((state) => state.invalidate)
 
   const bars = useMemo(() => {
     if (!heatmap) return []
     return objects
-      .filter((o) => isSeatable(o.type) && o.id in heatmap.ratios)
-      .map((o, i) => ({
-        x: o.x,
-        z: o.z,
+      .filter((object) => isSeatable(object.type) && object.id in heatmap.ratios)
+      .map((object, i) => ({
+        x: object.x,
+        z: object.z,
         delay: i * STAGGER,
-        height: 0.06 + heatmap.ratios[o.id] * HEAT_BAR.maxHeight,
-        color: new THREE.Color(heatColor(heatmap.ratios[o.id], isDark)),
+        height: 0.06 + heatmap.ratios[object.id] * HEAT_BAR.maxHeight,
+        color: new THREE.Color(heatColor(heatmap.ratios[object.id], isDark)),
       }))
   }, [heatmap, objects, isDark])
 
@@ -117,18 +117,18 @@ export const HeatBars = () => {
   const isGrowing = useRef(true)
   // Colours and plates are set once per heatmap; the columns' heights animate.
   useLayoutEffect(() => {
-    const c = columns.current
-    const p = plates.current
-    if (!c || !p) return
-    bars.forEach((b, i) => {
-      c.setColorAt(i, b.color)
-      p.setMatrixAt(i, matrix.makeTranslation(b.x, HEAT_BAR.base, b.z))
+    const columnMesh = columns.current
+    const plateMesh = plates.current
+    if (!columnMesh || !plateMesh) return
+    bars.forEach((bar, i) => {
+      columnMesh.setColorAt(i, bar.color)
+      plateMesh.setMatrixAt(i, matrix.makeTranslation(bar.x, HEAT_BAR.base, bar.z))
       // Not growing (the theme changed: new meshes): straight to full height.
-      if (!isGrowing.current) c.setMatrixAt(i, columnMatrix(matrix, b, 1))
+      if (!isGrowing.current) columnMesh.setMatrixAt(i, columnMatrix(matrix, bar, 1))
     })
-    if (c.instanceColor) c.instanceColor.needsUpdate = true
-    c.instanceMatrix.needsUpdate = true
-    p.instanceMatrix.needsUpdate = true
+    if (columnMesh.instanceColor) columnMesh.instanceColor.needsUpdate = true
+    columnMesh.instanceMatrix.needsUpdate = true
+    plateMesh.instanceMatrix.needsUpdate = true
   }, [bars, matrix])
 
   // Grow in each time the heatmap changes (not when only the theme does).
@@ -140,21 +140,21 @@ export const HeatBars = () => {
   }, [heatmap, invalidate])
   const duration = GROW + bars.length * STAGGER
   useFrame(({ clock }) => {
-    const c = columns.current
-    if (!c || !isGrowing.current) return
+    const columnMesh = columns.current
+    if (!columnMesh || !isGrowing.current) return
     startedAt.current ??= clock.elapsedTime
-    const t = clock.elapsedTime - startedAt.current
-    bars.forEach((b, i) => {
-      const grown = Math.max(0.001, easeOut(Math.min(1, (t - b.delay) / GROW)))
-      c.setMatrixAt(i, columnMatrix(matrix, b, grown))
+    const elapsed = clock.elapsedTime - startedAt.current
+    bars.forEach((bar, i) => {
+      const grown = Math.max(0.001, easeOut(Math.min(1, (elapsed - bar.delay) / GROW)))
+      columnMesh.setMatrixAt(i, columnMatrix(matrix, bar, grown))
     })
-    c.instanceMatrix.needsUpdate = true
+    columnMesh.instanceMatrix.needsUpdate = true
     // frameloop="demand": keep frames coming until every bar has grown — then
     // the (cached) shadows once, with the bars at full height.
-    if (t < duration) invalidate()
+    if (elapsed < duration) invalidate()
     else {
       isGrowing.current = false
-      markShadowsDirty(gl, invalidate)
+      markShadowsDirty(renderer, invalidate)
     }
   })
 

@@ -21,7 +21,7 @@ const SEAM = 0.1
 /** Each plank's tone varies by up to this much either way. */
 const TONE = 0.035
 
-const glsl = (n: number) => n.toFixed(4)
+const glsl = (value: number) => value.toFixed(4)
 
 /**
  * Faint planks on the interior floor, computed in its shader (no texture): rows
@@ -80,10 +80,13 @@ const planksKey = () => "interior-planks"
 export const InteriorFloor = () => {
   // Rooms depend only on walls/doors/windows and floor paints — a key of those,
   // so moving furniture doesn't re-run the flood fill.
-  const key = useEditorStore((s) =>
-    s.objects
-      .filter((o) => isEdgeType(o.type) || o.type === "floorPaint")
-      .map((o) => `${o.type}:${o.x}:${o.z}:${o.rotation}:${o.color ?? ""}`)
+  const key = useEditorStore((state) =>
+    state.objects
+      .filter((object) => isEdgeType(object.type) || object.type === "floorPaint")
+      .map(
+        (object) =>
+          `${object.type}:${object.x}:${object.z}:${object.rotation}:${object.color ?? ""}`
+      )
       .join("|")
   )
   const store = useEditorStoreApi()
@@ -91,14 +94,20 @@ export const InteriorFloor = () => {
   const groups = useMemo(() => {
     void key // recompute exactly when the rooms can have changed
     const objects = store.getState().objects
-    const paints = objects.filter((o) => o.type === "floorPaint" && o.color)
+    const paints = objects.filter((object) => object.type === "floorPaint" && object.color)
     const byColor = new Map<string, FloorCell[]>()
     for (const region of enclosedRegions(objects)) {
       // Last paint inside the room wins.
       const paint = [...paints]
         .reverse()
-        .find((p) =>
-          region.some((c) => c.x <= p.x && p.x < c.x + SEG && c.z <= p.z && p.z < c.z + SEG)
+        .find((floorPaint) =>
+          region.some(
+            (cell) =>
+              cell.x <= floorPaint.x &&
+              floorPaint.x < cell.x + SEG &&
+              cell.z <= floorPaint.z &&
+              floorPaint.z < cell.z + SEG
+          )
         )
       const color = paint?.color ?? surfaces.floorInside
       byColor.set(color, [...(byColor.get(color) ?? []), ...region])
@@ -117,16 +126,16 @@ export const InteriorFloor = () => {
 
 /** One colour's worth of interior floor: whole squares as tiles, cut ones as triangles. */
 const FloorTiles = ({ color, cells: all }: { color: string; cells: FloorCell[] }) => {
-  const invalidate = useThree((s) => s.invalidate)
+  const invalidate = useThree((state) => state.invalidate)
   const ref = useRef<InstancedMesh>(null)
-  const cells = useMemo(() => all.filter((c) => c.parts === undefined), [all])
-  const cutCells = useMemo(() => all.filter((c) => c.parts !== undefined), [all])
+  const cells = useMemo(() => all.filter((cell) => cell.parts === undefined), [all])
+  const cutCells = useMemo(() => all.filter((cell) => cell.parts !== undefined), [all])
 
   useLayoutEffect(() => {
     const mesh = ref.current
     if (!mesh) return
-    cells.forEach((c, i) => {
-      dummy.position.set(c.x + SEG / 2, 0.006, c.z + SEG / 2)
+    cells.forEach((cell, i) => {
+      dummy.position.set(cell.x + SEG / 2, 0.006, cell.z + SEG / 2)
       dummy.rotation.set(-Math.PI / 2, 0, 0)
       dummy.updateMatrix()
       mesh.setMatrixAt(i, dummy.matrix)
@@ -172,9 +181,9 @@ const CutFloor = ({ color, cells }: { color: string; cells: FloorCell[] }) => {
   const geometry = useMemo(() => {
     const positions: number[] = []
     const y = 0.006
-    for (const c of cells) {
-      const [x0, z0, x1, z1] = [c.x, c.z, c.x + SEG, c.z + SEG]
-      const [cx, cz] = [c.x + SEG / 2, c.z + SEG / 2]
+    for (const cell of cells) {
+      const [x0, z0, x1, z1] = [cell.x, cell.z, cell.x + SEG, cell.z + SEG]
+      const [centreX, centreZ] = [cell.x + SEG / 2, cell.z + SEG / 2]
       // Each quarter: its outer side, wound so the face looks up.
       const quarters: [number, [number, number], [number, number]][] = [
         [FLOOR_PART.south, [x0, z0], [x1, z0]],
@@ -182,13 +191,14 @@ const CutFloor = ({ color, cells }: { color: string; cells: FloorCell[] }) => {
         [FLOOR_PART.north, [x1, z1], [x0, z1]],
         [FLOOR_PART.west, [x0, z1], [x0, z0]],
       ]
-      for (const [part, a, b] of quarters)
-        if ((c.parts ?? 0) & part) positions.push(a[0], y, a[1], cx, y, cz, b[0], y, b[1])
+      for (const [part, from, to] of quarters)
+        if ((cell.parts ?? 0) & part)
+          positions.push(from[0], y, from[1], centreX, y, centreZ, to[0], y, to[1])
     }
-    const g = new BufferGeometry()
-    g.setAttribute("position", new Float32BufferAttribute(positions, 3))
-    g.computeVertexNormals()
-    return g
+    const cutGeometry = new BufferGeometry()
+    cutGeometry.setAttribute("position", new Float32BufferAttribute(positions, 3))
+    cutGeometry.computeVertexNormals()
+    return cutGeometry
   }, [cells])
   useEffect(() => () => geometry.dispose(), [geometry])
   return (

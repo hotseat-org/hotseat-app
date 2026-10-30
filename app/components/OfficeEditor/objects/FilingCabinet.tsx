@@ -6,29 +6,29 @@ interface Props {
   color?: string
 }
 
-const W = 0.46
-const D = 0.52
-const H = 0.72
+const WIDTH = 0.46
+const DEPTH = 0.52
+const HEIGHT = 0.72
 
 /** A two-drawer filing cabinet with recessed drawer fronts and pull handles. */
 export const FilingCabinet = ({ color = "#8f9aa6" }: Props) => (
   <group>
     {/* Body */}
     <RoundedBox
-      args={[W, H, D]}
+      args={[WIDTH, HEIGHT, DEPTH]}
       radius={0.03}
       smoothness={4}
-      position={[0, H / 2, 0]}
+      position={[0, HEIGHT / 2, 0]}
       castShadow
       receiveShadow
     >
       <Surface color={color} roughness={0.5} metalness={0.15} />
     </RoundedBox>
     {/* Drawers */}
-    {[0.28, 0.72].map((f) => (
-      <group key={f} position={[0, H * f, D / 2]}>
+    {[0.28, 0.72].map((fraction) => (
+      <group key={fraction} position={[0, HEIGHT * fraction, DEPTH / 2]}>
         <RoundedBox
-          args={[W - 0.08, H * 0.36, 0.03]}
+          args={[WIDTH - 0.08, HEIGHT * 0.36, 0.03]}
           radius={0.02}
           smoothness={3}
           position={[0, 0, 0.01]}

@@ -27,7 +27,7 @@ export const Occupant = ({
   isMine: boolean
   size: number
   style: CSSProperties
-  onClick: (e: React.MouseEvent) => void
+  onClick: (event: React.MouseEvent) => void
 }) => {
   const { t } = useI18n()
   const name = person ? (isMine ? t("You") : person.name) : t("Taken")
@@ -159,8 +159,8 @@ export const PhoneControls = ({
     <div
       className="absolute right-4 flex gap-1 rounded-xl border border-chrome-border bg-chrome/95 p-1 shadow-overlay backdrop-blur-md"
       style={{ bottom }}
-      onPointerDown={(e) => e.stopPropagation()}
-      onClick={(e) => e.stopPropagation()}
+      onPointerDown={(event) => event.stopPropagation()}
+      onClick={(event) => event.stopPropagation()}
     >
       <Button
         isIconOnly

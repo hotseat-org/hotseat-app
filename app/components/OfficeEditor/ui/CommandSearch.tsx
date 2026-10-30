@@ -16,7 +16,7 @@ interface Props {
  * (in either language, accents optional) and run with Enter.
  */
 export const CommandSearch = ({ commands }: Props) => {
-  const isOpen = useEditorStore((s) => s.isCommandSearchOpen)
+  const isOpen = useEditorStore((state) => state.isCommandSearchOpen)
   if (!isOpen) return null
   return <CommandSearchDialog commands={commands} />
 }
@@ -30,18 +30,18 @@ const CommandSearchDialog = ({ commands }: Props) => {
   const close = () => store.getState().setCommandSearchOpen(false)
 
   const results = useMemo(() => {
-    const s = store.getState()
+    const state = store.getState()
     return commands
-      .filter((c) => c.isAvailable(s))
-      .map((c, order) => ({
-        command: c,
+      .filter((command) => command.isAvailable(state))
+      .map((command, order) => ({
+        command: command,
         order,
         // Found by its shown (translated) name or its English one.
-        score: Math.max(scoreMatch(t(c.label), query), scoreMatch(c.label, query)),
+        score: Math.max(scoreMatch(t(command.label), query), scoreMatch(command.label, query)),
       }))
-      .filter((r) => r.score > 0)
-      .sort((a, b) => b.score - a.score || a.order - b.order)
-      .map((r) => r.command)
+      .filter((result) => result.score > 0)
+      .sort((first, second) => second.score - first.score || first.order - second.order)
+      .map((result) => result.command)
   }, [commands, query, store, t])
 
   useEffect(() => setActiveIndex(0), [query])
@@ -56,18 +56,18 @@ const CommandSearchDialog = ({ commands }: Props) => {
     command.run(store.getState())
   }
 
-  const handleKeyDown = (e: KeyboardEvent) => {
+  const handleKeyDown = (event: KeyboardEvent) => {
     // The editor's own shortcuts (arrows nudge, Esc deselects) stay out of it.
-    e.stopPropagation()
-    if (e.key === "Escape") return close()
-    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-      e.preventDefault()
-      const step = e.key === "ArrowDown" ? 1 : -1
+    event.stopPropagation()
+    if (event.key === "Escape") return close()
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault()
+      const step = event.key === "ArrowDown" ? 1 : -1
       setActiveIndex((i) => (results.length ? (i + step + results.length) % results.length : 0))
       return
     }
-    if (e.key === "Enter" && results[activeIndex]) {
-      e.preventDefault()
+    if (event.key === "Enter" && results[activeIndex]) {
+      event.preventDefault()
       run(results[activeIndex])
     }
   }
@@ -75,8 +75,8 @@ const CommandSearchDialog = ({ commands }: Props) => {
   return (
     <div
       className="pointer-events-auto absolute inset-0 z-50 flex justify-center bg-black/20 px-4 pt-[12vh]"
-      onPointerDown={(e) => {
-        if (e.target === e.currentTarget) close()
+      onPointerDown={(event) => {
+        if (event.target === event.currentTarget) close()
       }}
     >
       <div
@@ -97,11 +97,12 @@ const CommandSearchDialog = ({ commands }: Props) => {
             }
             aria-autocomplete="list"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(event) => setQuery(event.target.value)}
             onKeyDown={handleKeyDown}
-            onBlur={(e) => {
+            onBlur={(event) => {
               // Clicking a result keeps the dialog; clicking away closes it.
-              if (!e.currentTarget.closest("[role=dialog]")?.contains(e.relatedTarget)) close()
+              if (!event.currentTarget.closest("[role=dialog]")?.contains(event.relatedTarget))
+                close()
             }}
             placeholder={t("Search commands and pieces…")}
             className="h-12 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted"

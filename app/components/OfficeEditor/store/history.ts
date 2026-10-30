@@ -30,7 +30,10 @@ interface HistoryInternals {
 const stripIds = (objects: SceneObject[]) =>
   objects
     .map(({ id: _id, ...rest }) => rest)
-    .sort((a, b) => a.x - b.x || a.z - b.z || a.type.localeCompare(b.type))
+    .sort(
+      (first, second) =>
+        first.x - second.x || first.z - second.z || first.type.localeCompare(second.type)
+    )
 
 /**
  * Undo / redo, and the `set` every other slice is given. Every change to
@@ -48,7 +51,7 @@ export const createHistory = (
   const history: HistoryInternals = { applying: false, batch: null }
   const set: SetState = (partial, replace?: boolean) => {
     const before = get().objects
-    ;(rawSet as (p: typeof partial, r?: boolean) => void)(partial, replace)
+    ;(rawSet as (update: typeof partial, shouldReplace?: boolean) => void)(partial, replace)
     const after = get().objects
     afterSet()
     if (after === before || history.applying || history.batch) return
@@ -68,7 +71,7 @@ export const createHistory = (
         objects: prev,
         past: past.slice(0, -1),
         future: [...future, objects],
-        selectedId: prev.some((o) => o.id === selectedId) ? selectedId : null,
+        selectedId: prev.some((piece) => piece.id === selectedId) ? selectedId : null,
       })
       history.applying = false
     },
@@ -82,7 +85,7 @@ export const createHistory = (
         objects: next,
         past: [...past, objects],
         future: future.slice(0, -1),
-        selectedId: next.some((o) => o.id === selectedId) ? selectedId : null,
+        selectedId: next.some((piece) => piece.id === selectedId) ? selectedId : null,
       })
       history.applying = false
     },

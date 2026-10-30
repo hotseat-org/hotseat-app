@@ -8,7 +8,7 @@ import { useEditorStore } from "../store"
 import { GRID, isSeatable } from "../types"
 
 /** On the floor, under the furniture and above the floor paint. */
-const Y = 0.018
+const HEIGHT = 0.018
 /** How far a pad reaches past its desk (m). */
 const MARGIN = 0.3
 
@@ -57,25 +57,25 @@ const padMaterial = () =>
  * was in use in the chosen period. View mode only.
  */
 export const HeatPads = () => {
-  const heatmap = useEditorStore((s) => s.heatmap)
-  const objects = useEditorStore((s) => s.objects)
+  const heatmap = useEditorStore((state) => state.heatmap)
+  const objects = useEditorStore((state) => state.objects)
   const isDark = useSurfaces().nightDepth === 0
-  const invalidate = useThree((s) => s.invalidate)
+  const invalidate = useThree((state) => state.invalidate)
   const material = useMemo(padMaterial, [])
   useEffect(() => () => material.dispose(), [material])
 
   const pads = useMemo(() => {
     if (!heatmap) return []
     return objects
-      .filter((o) => isSeatable(o.type) && o.id in heatmap.ratios)
-      .map((o) => {
-        const [cx, cz] = footprintCells(o.type, o.rotation)
-        const ratio = heatmap.ratios[o.id]
+      .filter((object) => isSeatable(object.type) && object.id in heatmap.ratios)
+      .map((object) => {
+        const [cellsX, cellsZ] = footprintCells(object.type, object.rotation)
+        const ratio = heatmap.ratios[object.id]
         return {
-          x: o.x,
-          z: o.z,
-          w: cx * GRID + MARGIN * 2,
-          d: cz * GRID + MARGIN * 2,
+          x: object.x,
+          z: object.z,
+          w: cellsX * GRID + MARGIN * 2,
+          d: cellsZ * GRID + MARGIN * 2,
           color: new THREE.Color(heatColor(ratio, isDark)),
           // Dark: the busiest desks bright enough for the bloom to make them glow.
           glow: isDark ? 1 + ratio * 0.8 : 1,
@@ -84,38 +84,41 @@ export const HeatPads = () => {
   }, [heatmap, objects, isDark])
 
   const geometry = useMemo(() => {
-    const g = new THREE.PlaneGeometry(1, 1)
-    g.rotateX(-Math.PI / 2)
-    g.setAttribute(
+    const plane = new THREE.PlaneGeometry(1, 1)
+    plane.rotateX(-Math.PI / 2)
+    plane.setAttribute(
       "padSize",
       new THREE.InstancedBufferAttribute(new Float32Array(pads.length * 2), 2)
     )
-    g.setAttribute(
+    plane.setAttribute(
       "padColor",
       new THREE.InstancedBufferAttribute(new Float32Array(pads.length * 3), 3)
     )
-    g.setAttribute("padGlow", new THREE.InstancedBufferAttribute(new Float32Array(pads.length), 1))
-    return g
+    plane.setAttribute(
+      "padGlow",
+      new THREE.InstancedBufferAttribute(new Float32Array(pads.length), 1)
+    )
+    return plane
   }, [pads.length])
   useEffect(() => () => geometry.dispose(), [geometry])
 
   const mesh = useRef<THREE.InstancedMesh>(null)
   useLayoutEffect(() => {
-    const m = mesh.current
-    if (!m) return
+    const padMesh = mesh.current
+    if (!padMesh) return
     const size = geometry.getAttribute("padSize") as THREE.InstancedBufferAttribute
     const color = geometry.getAttribute("padColor") as THREE.InstancedBufferAttribute
     const glow = geometry.getAttribute("padGlow") as THREE.InstancedBufferAttribute
     const matrix = new THREE.Matrix4()
-    pads.forEach((p, i) => {
-      m.setMatrixAt(i, matrix.makeScale(p.w, 1, p.d).setPosition(p.x, Y, p.z))
-      size.setXY(i, p.w, p.d)
-      color.setXYZ(i, p.color.r, p.color.g, p.color.b)
-      glow.setX(i, p.glow)
+    pads.forEach((pad, i) => {
+      padMesh.setMatrixAt(i, matrix.makeScale(pad.w, 1, pad.d).setPosition(pad.x, HEIGHT, pad.z))
+      size.setXY(i, pad.w, pad.d)
+      color.setXYZ(i, pad.color.r, pad.color.g, pad.color.b)
+      glow.setX(i, pad.glow)
     })
-    m.instanceMatrix.needsUpdate = true
+    padMesh.instanceMatrix.needsUpdate = true
     size.needsUpdate = color.needsUpdate = glow.needsUpdate = true
-    m.computeBoundingSphere()
+    padMesh.computeBoundingSphere()
     invalidate()
   }, [pads, geometry, invalidate])
 

@@ -29,20 +29,20 @@ export const Posts = () => {
   const meshes = useMemo(() => {
     const solid = new Map<string, BoxGeometry[]>()
     const glass: BoxGeometry[] = []
-    for (const n of nodes) {
-      const key = `${n.x},${n.z}`
+    for (const node of nodes) {
+      const key = `${node.x},${node.z}`
       const isSolid = joints.has(key)
       const size = isSolid ? SIZE : GLASS_SIZE
       const box = new BoxGeometry(size, WALL.height + WALL.sink, size)
-      box.translate(n.x, (WALL.height - WALL.sink) / 2, n.z)
-      setCutAttributes(box, new Vector3(n.x, 0, n.z), 0)
+      box.translate(node.x, (WALL.height - WALL.sink) / 2, node.z)
+      setCutAttributes(box, new Vector3(node.x, 0, node.z), 0)
       if (!isSolid) {
         glass.push(box)
         continue
       }
       // One post — or, the walls' faces round it painted apart, four quarter
       // pillars, each in the paint of the faces looking into its corner.
-      const quarters = (joints.get(key) ?? []).map((c) => c ?? surfaces.wall)
+      const quarters = (joints.get(key) ?? []).map((color) => color ?? surfaces.wall)
       const add = (color: string, geometry: BoxGeometry) =>
         solid.set(color, [...(solid.get(color) ?? []), geometry])
       if (new Set(quarters).size === 1) {
@@ -50,18 +50,18 @@ export const Posts = () => {
         continue
       }
       box.dispose()
-      quarters.forEach((color, q) => {
+      quarters.forEach((color, quarterIndex) => {
         const quarter = new BoxGeometry(SIZE / 2, WALL.height + WALL.sink, SIZE / 2)
-        const dx = (q % 2 ? 1 : -1) * (SIZE / 4)
-        const dz = (q < 2 ? -1 : 1) * (SIZE / 4)
-        quarter.translate(n.x + dx, (WALL.height - WALL.sink) / 2, n.z + dz)
-        setCutAttributes(quarter, new Vector3(n.x, 0, n.z), 0)
+        const deltaX = (quarterIndex % 2 ? 1 : -1) * (SIZE / 4)
+        const deltaZ = (quarterIndex < 2 ? -1 : 1) * (SIZE / 4)
+        quarter.translate(node.x + deltaX, (WALL.height - WALL.sink) / 2, node.z + deltaZ)
+        setCutAttributes(quarter, new Vector3(node.x, 0, node.z), 0)
         add(color, quarter)
       })
     }
     const merge = (boxes: BoxGeometry[]) => {
       const geometry = boxes.length ? mergeGeometries(boxes, false) : null
-      boxes.forEach((b) => b.dispose())
+      boxes.forEach((box) => box.dispose())
       return geometry
     }
     return {
@@ -71,7 +71,7 @@ export const Posts = () => {
   }, [nodes, joints, surfaces.wall])
   useEffect(
     () => () => {
-      meshes.solid.forEach((m) => m.geometry?.dispose())
+      meshes.solid.forEach((mesh) => mesh.geometry?.dispose())
       meshes.glass?.dispose()
     },
     [meshes]
@@ -80,9 +80,9 @@ export const Posts = () => {
   // Sliced with the walls by the cursor cutaway.
   return (
     <CutawayContext.Provider value="mergedWall">
-      {meshes.solid.map((m) => (
-        <mesh key={m.color} geometry={m.geometry ?? undefined} castShadow receiveShadow>
-          <Surface color={m.color} roughness={0.85} isRecessed />
+      {meshes.solid.map((mesh) => (
+        <mesh key={mesh.color} geometry={mesh.geometry ?? undefined} castShadow receiveShadow>
+          <Surface color={mesh.color} roughness={0.85} isRecessed />
         </mesh>
       ))}
       {meshes.glass && (

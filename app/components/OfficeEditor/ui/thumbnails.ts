@@ -44,7 +44,7 @@ export const requestThumbnail = (type: CatalogItem, color?: string, isUrgent = f
   const isQueued = queue.some((request) => request.key === key)
   if (isQueued && (!isUrgent || queue[0]?.key === key)) return
   const request = { key, type, color, isUrgent }
-  const rest = queue.filter((r) => r.key !== key)
+  const rest = queue.filter((queued) => queued.key !== key)
   queue = isUrgent ? [request, ...rest] : [...rest, request]
   notify()
 }

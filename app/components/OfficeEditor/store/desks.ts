@@ -28,12 +28,12 @@ export interface DesksSlice {
 
 /** Desk labels: "D-1", "D-2"… — the first numbers not already used. */
 const freeDeskLabels = (objects: SceneObject[]) => {
-  const taken = new Set(objects.map((o) => o.label).filter(Boolean))
-  let n = 1
+  const taken = new Set(objects.map((piece) => piece.label).filter(Boolean))
+  let counter = 1
   return () => {
-    while (taken.has(`D-${n}`)) n++
-    taken.add(`D-${n}`)
-    return `D-${n}`
+    while (taken.has(`D-${counter}`)) counter++
+    taken.add(`D-${counter}`)
+    return `D-${counter}`
   }
 }
 
@@ -42,12 +42,14 @@ export const numberUnlabelledDesks = (objects: SceneObject[]): SceneObject[] => 
   const next = freeDeskLabels(objects)
   const labels = new Map(
     objects
-      .filter((o) => isSeatable(o.type) && !o.label)
-      .sort((a, b) => a.z - b.z || a.x - b.x)
-      .map((o) => [o.id, next()])
+      .filter((piece) => isSeatable(piece.type) && !piece.label)
+      .sort((first, second) => first.z - second.z || first.x - second.x)
+      .map((piece) => [piece.id, next()])
   )
   return labels.size
-    ? objects.map((o) => (labels.has(o.id) ? { ...o, label: labels.get(o.id) } : o))
+    ? objects.map((piece) =>
+        labels.has(piece.id) ? { ...piece, label: labels.get(piece.id) } : piece
+      )
     : objects
 }
 
@@ -57,72 +59,78 @@ export const numberUnlabelledDesks = (objects: SceneObject[]): SceneObject[] => 
  */
 export const asNewDesks = (existing: SceneObject[], fresh: SceneObject[]): SceneObject[] => {
   const next = freeDeskLabels(existing)
-  return fresh.map((o) => (isSeatable(o.type) ? { ...o, label: next(), assignee: undefined } : o))
+  return fresh.map((piece) =>
+    isSeatable(piece.type) ? { ...piece, label: next(), assignee: undefined } : piece
+  )
 }
 
 export const createDesksSlice = (set: SetState, _get: GetState): DesksSlice => ({
   setSeatLabel: (id, label) =>
-    set((s) => ({
-      objects: s.objects.map((o) => (o.id === id ? { ...o, label: label.trim() || undefined } : o)),
+    set((state) => ({
+      objects: state.objects.map((piece) =>
+        piece.id === id ? { ...piece, label: label.trim() || undefined } : piece
+      ),
     })),
   assignSeat: (id, email) =>
-    set((s) => ({
-      objects: s.objects.map((o) => {
-        if (o.id === id) return { ...o, assignee: email ?? undefined }
+    set((state) => ({
+      objects: state.objects.map((piece) => {
+        if (piece.id === id) return { ...piece, assignee: email ?? undefined }
         // One desk per person: free their previous desk.
-        if (email && o.assignee === email) return { ...o, assignee: undefined }
-        return o
+        if (email && piece.assignee === email) return { ...piece, assignee: undefined }
+        return piece
       }),
     })),
   numberDesks: () =>
-    set((s) => {
-      const objects = numberUnlabelledDesks(s.objects)
-      return objects === s.objects ? s : { objects }
+    set((state) => {
+      const objects = numberUnlabelledDesks(state.objects)
+      return objects === state.objects ? state : { objects }
     }),
   setZone: (ids, zone) =>
-    set((s) => {
+    set((state) => {
       const targets = new Set(ids)
       const name = zone?.trim().slice(0, 32) || undefined
       return {
-        objects: s.objects.map((o) =>
-          targets.has(o.id) && isSeatable(o.type) ? { ...o, zone: name } : o
+        objects: state.objects.map((piece) =>
+          targets.has(piece.id) && isSeatable(piece.type) ? { ...piece, zone: name } : piece
         ),
       }
     }),
-  numberDesksByZone: () => set((s) => ({ objects: numberDesksByZone(s.objects) })),
+  numberDesksByZone: () => set((state) => ({ objects: numberDesksByZone(state.objects) })),
   toggleDeskFeature: (id, feature) =>
-    set((s) => ({
-      objects: s.objects.map((o) => {
-        if (o.id !== id) return o
-        const has = o.features?.includes(feature)
+    set((state) => ({
+      objects: state.objects.map((piece) => {
+        if (piece.id !== id) return piece
+        const has = piece.features?.includes(feature)
         const features = has
-          ? (o.features ?? []).filter((f) => f !== feature)
-          : [...(o.features ?? []), feature]
-        return { ...o, features: features.length ? features : undefined }
+          ? (piece.features ?? []).filter((existing) => existing !== feature)
+          : [...(piece.features ?? []), feature]
+        return { ...piece, features: features.length ? features : undefined }
       }),
     })),
   replaceWithWorkstation: (id) =>
-    set((s) => {
-      const desk = s.objects.find((o) => o.id === id)
-      if (!desk || (desk.type !== "desk" && desk.type !== "deskmate")) return s
+    set((state) => {
+      const desk = state.objects.find((piece) => piece.id === id)
+      if (!desk || (desk.type !== "desk" && desk.type !== "deskmate")) return state
       // A workstation's desk sits 0.25 m back from its centre; a deskmate's 0.35.
       const shift = desk.type === "desk" ? 0.25 : 0.1
       const centre = toWorld(desk, 0, shift)
-      const p = snapToFootprint("workstation", desk.rotation, centre.x, centre.z)
+      const snapped = snapToFootprint("workstation", desk.rotation, centre.x, centre.z)
       const chair =
         desk.type === "desk"
           ? findDeskChair(
               desk,
-              s.objects.filter((o) => o.type === "seat")
+              state.objects.filter((piece) => piece.type === "seat")
             )
           : undefined
       return {
-        objects: s.objects
-          .filter((o) => o.id !== chair?.id)
-          .map((o) =>
-            o.id === id ? { ...o, type: "workstation" as const, ...p, model: undefined } : o
+        objects: state.objects
+          .filter((piece) => piece.id !== chair?.id)
+          .map((piece) =>
+            piece.id === id
+              ? { ...piece, type: "workstation" as const, ...snapped, model: undefined }
+              : piece
           ),
-        selection: s.selection.filter((selected) => selected !== chair?.id),
+        selection: state.selection.filter((selected) => selected !== chair?.id),
       }
     }),
 })

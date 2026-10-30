@@ -45,7 +45,8 @@ export interface GlassPart {
 export const getGlassRunParts = (length: number): GlassPart[] => {
   const paneH = WALL.height - BASE - HEAD
   const mullions: number[] = []
-  for (let a = 0; a < length - 1e-6; a += GLASS_BAY) mullions.push(-length / 2 + a)
+  for (let offset = 0; offset < length - 1e-6; offset += GLASS_BAY)
+    mullions.push(-length / 2 + offset)
   mullions.push(length / 2)
   return [
     {

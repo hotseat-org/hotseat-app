@@ -15,15 +15,15 @@ interface Props {
 
 /** A flat chevron pointing +Y in its own plane (laid on the floor pointing +Z). */
 const chevron = () => {
-  const s = new Shape()
-  s.moveTo(0, 0.16)
-  s.lineTo(0.2, -0.02)
-  s.lineTo(0.12, -0.08)
-  s.lineTo(0, 0.03)
-  s.lineTo(-0.12, -0.08)
-  s.lineTo(-0.2, -0.02)
-  s.closePath()
-  return s
+  const shape = new Shape()
+  shape.moveTo(0, 0.16)
+  shape.lineTo(0.2, -0.02)
+  shape.lineTo(0.12, -0.08)
+  shape.lineTo(0, 0.03)
+  shape.lineTo(-0.12, -0.08)
+  shape.lineTo(-0.2, -0.02)
+  shape.closePath()
+  return shape
 }
 
 /**
@@ -36,9 +36,9 @@ const chevron = () => {
 export const PlacementHighlight = ({ type, x, z, rotation, valid = true }: Props) => {
   const color = valid ? "#22c55e" : "#ef4444"
   // Footprint and front marker in the piece's own (unrotated) frame: front = +Z.
-  const [fw, fd] = getItem(type).footprint
-  const width = fw * GRID
-  const halfDepth = (fd * GRID) / 2
+  const [footprintWidth, footprintDepth] = getItem(type).footprint
+  const width = footprintWidth * GRID
+  const halfDepth = (footprintDepth * GRID) / 2
   const shape = useMemo(chevron, [])
 
   return (

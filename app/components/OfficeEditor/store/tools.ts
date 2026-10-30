@@ -40,11 +40,13 @@ export const createToolsSlice = (set: SetState, get: GetState): ToolsSlice => ({
     set({ tool, selectedId: tool === "select" ? get().selectedId : null, armedKit: null }),
   placementRotation: 0,
   rotatePlacement: () =>
-    set((s) => ({ placementRotation: toRotationStep(s.placementRotation + ROTATION_STEP) })),
+    set((state) => ({
+      placementRotation: toRotationStep(state.placementRotation + ROTATION_STEP),
+    })),
   placementColors: {},
   setPlacementColor: (type, color) =>
-    set((s) => {
-      const placementColors = { ...s.placementColors }
+    set((state) => {
+      const placementColors = { ...state.placementColors }
       if (color === null) delete placementColors[type]
       else placementColors[type] = color
       return { placementColors }

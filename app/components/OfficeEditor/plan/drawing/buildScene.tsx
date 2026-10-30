@@ -27,8 +27,8 @@ export const buildScene = ({ wall, zones, ...furnitureInput }: SceneInput) => {
   // Panning reuses this whole element (memoized), so React skips it entirely.
   const { objects, floorInside } = furnitureInput
   const drawables: Drawable[] = []
-  const push = (ext: Extent, node: React.ReactNode) =>
-    drawables.push({ ext, node, order: drawables.length })
+  const push = (extent: Extent, node: React.ReactNode) =>
+    drawables.push({ extent: extent, node, order: drawables.length })
 
   const pieces = createWallPieces(push)
   const wallColors = composeWallColors(objects)
@@ -37,15 +37,15 @@ export const buildScene = ({ wall, zones, ...furnitureInput }: SceneInput) => {
   const { shadows, markers, heatPads, occupants } = drawFurniture(furnitureInput, push)
 
   let bounds: Bounds | null = null
-  for (const { ext: e } of drawables) {
+  for (const { extent: extent } of drawables) {
     bounds = bounds
       ? {
-          x0: Math.min(bounds.x0, e.x0),
-          x1: Math.max(bounds.x1, e.x1),
-          y0: Math.min(bounds.y0, e.z0),
-          y1: Math.max(bounds.y1, e.z1),
+          x0: Math.min(bounds.x0, extent.x0),
+          x1: Math.max(bounds.x1, extent.x1),
+          y0: Math.min(bounds.y0, extent.z0),
+          y1: Math.max(bounds.y1, extent.z1),
         }
-      : { x0: e.x0, x1: e.x1, y0: e.z0, y1: e.z1 }
+      : { x0: extent.x0, x1: extent.x1, y0: extent.z0, y1: extent.z1 }
   }
 
   const layered = sortBottomToTop(drawables)
@@ -58,17 +58,17 @@ export const buildScene = ({ wall, zones, ...furnitureInput }: SceneInput) => {
         {zones && drawZones(zones)}
         {heatPads}
         {layered
-          .filter((d) => d.ext.y1 <= FLAT)
-          .map((d, i) => (
-            <g key={`flat${i}`}>{d.node}</g>
+          .filter((drawable) => drawable.extent.y1 <= FLAT)
+          .map((drawable, i) => (
+            <g key={`flat${i}`}>{drawable.node}</g>
           ))}
         <g fill="#000000" opacity={0.13}>
           {shadows}
         </g>
         {layered
-          .filter((d) => d.ext.y1 > FLAT)
-          .map((d, i) => (
-            <g key={i}>{d.node}</g>
+          .filter((drawable) => drawable.extent.y1 > FLAT)
+          .map((drawable, i) => (
+            <g key={i}>{drawable.node}</g>
           ))}
         {markers}
       </>

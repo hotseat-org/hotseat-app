@@ -58,56 +58,56 @@ export const StaticBatch = ({ enabled, children }: { enabled: boolean; children:
   const root = useRef<Group>(null)
   const output = useRef<Group>(null)
   const [parts, setParts] = useState<Part[]>([])
-  const [version, handleChanged] = useReducer((n: number) => n + 1, 0)
+  const [version, handleChanged] = useReducer((count: number) => count + 1, 0)
   const notify = useCallback(() => handleChanged(), [])
   // What we hid: shown again before each rebuild (and when editing starts —
   // by then the pieces have already dropped their batch mark).
   const hidden = useRef<Mesh[]>([])
-  const gl = useThree((s) => s.gl)
-  const invalidate = useThree((s) => s.invalidate)
+  const renderer = useThree((state) => state.gl)
+  const invalidate = useThree((state) => state.invalidate)
 
   useLayoutEffect(() => {
-    const g = root.current
-    if (!g) return
+    const group = root.current
+    if (!group) return
     const sources: Mesh[] = []
-    g.traverse((o) => {
-      if ((o as Mesh).isMesh && o.userData[BATCH_PART]) sources.push(o as Mesh)
+    group.traverse((object) => {
+      if ((object as Mesh).isMesh && object.userData[BATCH_PART]) sources.push(object as Mesh)
     })
-    for (const m of hidden.current) m.visible = true
+    for (const mesh of hidden.current) mesh.visible = true
     hidden.current = []
     if (!enabled) {
       setParts([]) // editing: every piece draws its own meshes again
       return
     }
-    g.updateWorldMatrix(true, true)
-    const inverse = new Matrix4().copy(g.matrixWorld).invert()
+    group.updateWorldMatrix(true, true)
+    const inverse = new Matrix4().copy(group.matrixWorld).invert()
     const groups = new Map<string, Mesh[]>()
-    for (const m of sources) {
+    for (const mesh of sources) {
       // Opacity too: unlike within one piece, two pieces' glass can differ.
-      const material = m.material as Material
-      const key = `${surfaceKey(material)}|${material.opacity}|${m.castShadow}|${m.receiveShadow}|${cutawayOf(material) ?? ""}`
-      groups.set(key, [...(groups.get(key) ?? []), m])
+      const material = mesh.material as Material
+      const key = `${surfaceKey(material)}|${material.opacity}|${mesh.castShadow}|${mesh.receiveShadow}|${cutawayOf(material) ?? ""}`
+      groups.set(key, [...(groups.get(key) ?? []), mesh])
     }
     const next: Part[] = []
     for (const [key, meshes] of groups) {
       const cutaway = cutawayOf(meshes[0].material as Material)
-      const geometries = meshes.map((m) => {
-        const toBatch = new Matrix4().multiplyMatrices(inverse, m.matrixWorld)
+      const geometries = meshes.map((mesh) => {
+        const toBatch = new Matrix4().multiplyMatrices(inverse, mesh.matrixWorld)
         const geometry = withColor(
-          m.geometry.clone().applyMatrix4(toBatch),
-          (m.material as Material & { color: Color }).color
+          mesh.geometry.clone().applyMatrix4(toBatch),
+          (mesh.material as Material & { color: Color }).color
         )
         if (!cutaway) return geometry
         // Cut by the wall cutaway: each vertex keeps its piece's anchor (its
         // origin) and the way it runs (its local X), as its own mesh gave them.
-        const e = toBatch.elements
-        const axis = cutDirectionOf(e[0], e[2])
+        const elements = toBatch.elements
+        const axis = cutDirectionOf(elements[0], elements[2])
         return setCutAttributes(geometry, new Vector3().setFromMatrixPosition(toBatch), axis)
       })
       const merged = mergeGeometries(geometries, false)
       geometries.forEach((x) => x.dispose())
       if (!merged) continue // couldn't merge: those keep drawing themselves
-      meshes.forEach((m) => (m.visible = false))
+      meshes.forEach((mesh) => (mesh.visible = false))
       hidden.current.push(...meshes)
       // The look of the first, in white: the colours come from the vertices.
       const material = (meshes[0].material as Material & { color: Color }).clone()
@@ -129,25 +129,25 @@ export const StaticBatch = ({ enabled, children }: { enabled: boolean; children:
 
   // New batch → the cached shadow maps must include it; free the old one.
   useLayoutEffect(() => {
-    markShadowsDirty(gl, invalidate)
+    markShadowsDirty(renderer, invalidate)
     return () =>
-      parts.forEach((p) => {
-        p.geometry.dispose()
-        p.material.dispose()
+      parts.forEach((part) => {
+        part.geometry.dispose()
+        part.material.dispose()
       })
-  }, [parts, gl, invalidate])
+  }, [parts, renderer, invalidate])
 
   return (
     <BatchContext.Provider value={enabled ? notify : null}>
       <group ref={root}>{children}</group>
       <group ref={output}>
-        {parts.map((p) => (
+        {parts.map((part) => (
           <mesh
-            key={p.key + p.geometry.uuid}
-            geometry={p.geometry}
-            material={p.material}
-            castShadow={p.castShadow}
-            receiveShadow={p.receiveShadow}
+            key={part.key + part.geometry.uuid}
+            geometry={part.geometry}
+            material={part.material}
+            castShadow={part.castShadow}
+            receiveShadow={part.receiveShadow}
             raycast={() => null}
           />
         ))}

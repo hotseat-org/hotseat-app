@@ -94,27 +94,27 @@ const FOOD: Record<Food, { base: string; bits: string[] }> = {
 
 /** A plate of food; `hot` dishes steam. */
 export const Plate = ({ food, hot, ...at }: At & { food?: Food; hot?: boolean }) => {
-  const f = food && FOOD[food]
+  const serving = food && FOOD[food]
   return (
     <Place {...at}>
       <mesh position={[0, 0.008, 0]} receiveShadow>
         <cylinderGeometry args={[0.12, 0.09, 0.016, 20]} />
         <Surface color={CERAMIC} roughness={0.35} />
       </mesh>
-      {f && (
+      {serving && (
         <>
           <mesh position={[0, 0.026, 0]} scale={[1, 0.38, 1]} castShadow>
             <sphereGeometry args={[0.07, 12, 8]} />
-            <Surface color={f.base} roughness={0.7} />
+            <Surface color={serving.base} roughness={0.7} />
           </mesh>
-          {f.bits.map((c, i) => (
+          {serving.bits.map((bitColor, i) => (
             <mesh
               key={i}
               position={[Math.cos(i * 2.3) * 0.045, 0.045, Math.sin(i * 2.3) * 0.045]}
               castShadow
             >
               <icosahedronGeometry args={[0.018, 0]} />
-              <Surface color={c} roughness={0.7} flatShading />
+              <Surface color={bitColor} roughness={0.7} flatShading />
             </mesh>
           ))}
         </>
@@ -148,8 +148,8 @@ export const Pot = ({ color = "#c9564f", ...at }: At & { color?: string }) => (
       <cylinderGeometry args={[0.1, 0.1, 0.004, 20]} />
       <Surface color="#d98a3a" roughness={0.6} />
     </mesh>
-    {[-1, 1].map((s) => (
-      <mesh key={s} position={[s * 0.125, 0.09, 0]} castShadow>
+    {[-1, 1].map((side) => (
+      <mesh key={side} position={[side * 0.125, 0.09, 0]} castShadow>
         <boxGeometry args={[0.04, 0.018, 0.05]} />
         <Surface color={color} roughness={0.35} />
       </mesh>
@@ -206,10 +206,10 @@ export const FruitBowl = (at: At) => (
         [-0.05, 0.09, 0.02, "#7fa66a"],
         [0.01, 0.09, -0.05, "#d98a3a"],
       ] as [number, number, number, string][]
-    ).map(([x, y, z, c]) => (
-      <mesh key={c} position={[x, y, z]} castShadow>
+    ).map(([x, y, z, berryColor]) => (
+      <mesh key={berryColor} position={[x, y, z]} castShadow>
         <sphereGeometry args={[0.04, 10, 8]} />
-        <Surface color={c} roughness={0.5} />
+        <Surface color={berryColor} roughness={0.5} />
       </mesh>
     ))}
   </Place>
@@ -231,14 +231,14 @@ export const Books = ({
   ...at
 }: At & { colors?: string[] }) => (
   <Place {...at}>
-    {colors.map((c, i) => (
+    {colors.map((layerColor, i) => (
       <group
         key={i}
         position={[0, 0.018 + i * 0.036, 0]}
         rotation={[0, (i % 2 ? 1 : -1) * 0.12 * i, 0]}
       >
         <RoundedBox args={[0.2, 0.034, 0.14]} radius={0.006} smoothness={2} castShadow>
-          <Surface color={c} roughness={0.8} />
+          <Surface color={layerColor} roughness={0.8} />
         </RoundedBox>
         {/* Pages edge */}
         <mesh position={[0.004, 0, 0.066]}>
@@ -267,11 +267,11 @@ export const Magazine = ({ color = "#b96f6f", ...at }: At & { color?: string }) 
 /** Loose sheets of paper. */
 export const Papers = (at: At) => (
   <Place {...at}>
-    {[0, 0.25, -0.18].map((r, i) => (
+    {[0, 0.25, -0.18].map((angle, i) => (
       <mesh
         key={i}
         position={[i * 0.02, 0.002 + i * 0.002, i * 0.015]}
-        rotation={[0, r, 0]}
+        rotation={[0, angle, 0]}
         receiveShadow
       >
         <boxGeometry args={[0.21, 0.002, 0.29]} />
@@ -373,15 +373,15 @@ export const Flowers = ({ vase = "#6d90c9", ...at }: At & { vase?: string }) => 
         [0, 0.26, -0.03, "#f3f1ec"],
         [0.03, 0.2, 0.03, "#b96f6f"],
       ] as [number, number, number, string][]
-    ).map(([x, y, z, c]) => (
-      <group key={c}>
+    ).map(([x, y, z, stemColor]) => (
+      <group key={stemColor}>
         <mesh position={[x / 2, (0.12 + y) / 2, z / 2]} rotation={[z * 3, 0, -x * 3]}>
           <cylinderGeometry args={[0.004, 0.004, y - 0.12, 5]} />
           <Surface color={PALETTE.plantLeafDark} roughness={0.8} />
         </mesh>
         <mesh position={[x, y, z]} castShadow>
           <icosahedronGeometry args={[0.028, 0]} />
-          <Surface color={c} roughness={0.7} flatShading />
+          <Surface color={stemColor} roughness={0.7} flatShading />
         </mesh>
       </group>
     ))}
@@ -420,10 +420,10 @@ export const PenCup = ({ color = "#5f8a86", ...at }: At & { color?: string }) =>
         [-0.012, -0.15, ACCENT],
         [0, 0.05, "#c9564f"],
       ] as [number, number, string][]
-    ).map(([x, r, c]) => (
-      <mesh key={c} position={[x, 0.11, 0]} rotation={[0, 0, r]}>
+    ).map(([x, angle, petalColor]) => (
+      <mesh key={petalColor} position={[x, 0.11, 0]} rotation={[0, 0, angle]}>
         <cylinderGeometry args={[0.004, 0.004, 0.13, 6]} />
-        <Surface color={c} roughness={0.5} />
+        <Surface color={petalColor} roughness={0.5} />
       </mesh>
     ))}
   </Place>

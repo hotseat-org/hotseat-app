@@ -17,7 +17,7 @@ const GRADIENT_LOW = 0.94
 const GRADIENT_HIGH = 1.03
 const GRADIENT_REACH = 1.6
 
-const glsl = (n: number) => n.toFixed(4)
+const glsl = (value: number) => value.toFixed(4)
 
 const patchShading = (shader: WebGLProgramParametersWithUniforms) => {
   shader.vertexShader = shader.vertexShader
@@ -65,12 +65,12 @@ export const getSurfaceShader = (cutaway: CutawayKind | null) => {
   const id = cutaway ?? "plain"
   let props = cache.get(id)
   if (!props) {
-    const cut = cutaway ? CUTAWAY_PATCHES[cutaway] : null
-    const key = `surface${cut ? `-${cut.key}` : ""}`
+    const cutawayPatch = cutaway ? CUTAWAY_PATCHES[cutaway] : null
+    const key = `surface${cutawayPatch ? `-${cutawayPatch.key}` : ""}`
     props = {
       onBeforeCompile: (shader) => {
         patchShading(shader)
-        cut?.patch(shader)
+        cutawayPatch?.patch(shader)
       },
       customProgramCacheKey: () => key,
     }

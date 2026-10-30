@@ -13,7 +13,7 @@ interface Props {
 /** Window opening, in wall-local heights (the wall is WALL.height = 1.4 tall). */
 const SILL = 0.55
 const HEAD = 1.2
-const W = WALL.width // 1 unit: two wall half-segments
+const WIDTH = WALL.width // 1 unit: two wall half-segments
 const FRAME = 0.05
 const FRAME_D = WALL.depth + 0.03
 
@@ -48,11 +48,11 @@ export const Window = ({ color = "#f4efe6", wallFront, wallBack }: Props) => {
       {/* Frame: sill, head, two jambs and a centre mullion */}
       {[SILL + FRAME / 2, HEAD - FRAME / 2].map((y) => (
         <mesh key={y} position={[0, y, 0]} castShadow>
-          <boxGeometry args={[W, FRAME, FRAME_D]} />
+          <boxGeometry args={[WIDTH, FRAME, FRAME_D]} />
           <Surface color={color} roughness={0.5} />
         </mesh>
       ))}
-      {[-(W / 2 - FRAME / 2), 0, W / 2 - FRAME / 2].map((x) => (
+      {[-(WIDTH / 2 - FRAME / 2), 0, WIDTH / 2 - FRAME / 2].map((x) => (
         <mesh key={x} position={[x, (SILL + HEAD) / 2, 0]} castShadow>
           {/* Between the sill and head bars, not through them: they'd share
               their faces (z-fighting) */}
@@ -62,13 +62,13 @@ export const Window = ({ color = "#f4efe6", wallFront, wallBack }: Props) => {
       ))}
       {/* Protruding sill ledge */}
       <mesh position={[0, SILL - 0.015, 0]} castShadow receiveShadow>
-        <boxGeometry args={[W + 0.04, 0.03, WALL.depth + 0.12]} />
+        <boxGeometry args={[WIDTH + 0.04, 0.03, WALL.depth + 0.12]} />
         <Surface color={color} roughness={0.5} />
       </mesh>
 
       {/* Glass — no shadow, so daylight streams through */}
       <mesh position={[0, (SILL + HEAD) / 2, 0]}>
-        <boxGeometry args={[W - FRAME * 2, glassH - FRAME * 2, 0.02]} />
+        <boxGeometry args={[WIDTH - FRAME * 2, glassH - FRAME * 2, 0.02]} />
         <Surface color="#bfe0ee" roughness={0.05} metalness={0.2} opacity={0.3} />
       </mesh>
     </group>
@@ -89,7 +89,7 @@ const WallPiece = ({
 }) =>
   front === back ? (
     <mesh position={[0, y, 0]} castShadow receiveShadow>
-      <boxGeometry args={[W, height, WALL.depth]} />
+      <boxGeometry args={[WIDTH, height, WALL.depth]} />
       <Surface color={front} roughness={0.85} />
     </mesh>
   ) : (
@@ -101,7 +101,7 @@ const WallPiece = ({
         ] as const
       ).map(([color, side]) => (
         <mesh key={side} position={[0, y, (side * WALL.depth) / 4]} castShadow receiveShadow>
-          <boxGeometry args={[W, height, WALL.depth / 2]} />
+          <boxGeometry args={[WIDTH, height, WALL.depth / 2]} />
           <Surface color={color} roughness={0.85} />
         </mesh>
       ))}

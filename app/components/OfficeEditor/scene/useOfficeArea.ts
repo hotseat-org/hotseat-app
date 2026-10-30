@@ -12,11 +12,11 @@ export const useOfficeArea = (objects: SceneObject[]) =>
     let z0 = Infinity
     let x1 = -Infinity
     let z1 = -Infinity
-    for (const o of objects) {
-      x0 = Math.min(x0, o.x)
-      z0 = Math.min(z0, o.z)
-      x1 = Math.max(x1, o.x)
-      z1 = Math.max(z1, o.z)
+    for (const object of objects) {
+      x0 = Math.min(x0, object.x)
+      z0 = Math.min(z0, object.z)
+      x1 = Math.max(x1, object.x)
+      z1 = Math.max(z1, object.z)
     }
     return {
       centre: [Math.round((x0 + x1) / 2), Math.round((z0 + z1) / 2)],

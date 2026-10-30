@@ -15,24 +15,25 @@ export type AnyMaterial = Material & {
  * How a material LOOKS — materials that render identically share a batch.
  * Not opacity: StaticBatch adds it (two pieces' glass can differ).
  */
-export const materialKey = (m: AnyMaterial) => `${m.color?.getHexString()}|${surfaceKey(m)}`
+export const materialKey = (material: AnyMaterial) =>
+  `${material.color?.getHexString()}|${surfaceKey(material)}`
 
 /**
  * How a material looks apart from its colour: surfaces that differ only in
  * colour can share one mesh, their colours carried per vertex (see StaticBatch).
  */
-export const surfaceKey = (m: AnyMaterial) =>
+export const surfaceKey = (material: AnyMaterial) =>
   [
-    m.type,
-    m.roughness,
-    m.metalness,
-    m.emissive?.getHexString(),
-    m.emissiveIntensity,
-    m.flatShading,
-    m.transparent,
-    m.depthWrite,
-    m.side,
-    m.clippingPlanes?.length ?? 0,
+    material.type,
+    material.roughness,
+    material.metalness,
+    material.emissive?.getHexString(),
+    material.emissiveIntensity,
+    material.flatShading,
+    material.transparent,
+    material.depthWrite,
+    material.side,
+    material.clippingPlanes?.length ?? 0,
   ].join("|")
 
 /** Marks a Baked output mesh that may join the office-wide batch (see StaticBatch). */

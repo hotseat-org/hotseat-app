@@ -29,11 +29,11 @@ const place = (type: ObjectType, x: number, z: number, rotation = 0): SceneObjec
   rotation,
 })
 const walls = (cells: WallCell[], type: ObjectType = "wall") =>
-  cells.map((c) => place(type, c.x, c.z, c.rotation))
+  cells.map((cell) => place(type, cell.x, cell.z, cell.rotation))
 /** A closed rectangle of walls between two grid nodes. */
 const room = (x0: number, z0: number, x1: number, z1: number) =>
   walls(roomEdges({ x: x0, z: z0 }, { x: x1, z: z1 }))
-const cellCount = (regions: { parts?: number }[][]) => regions.map((r) => r.length)
+const cellCount = (regions: { parts?: number }[][]) => regions.map((region) => region.length)
 const QUARTER = Math.PI / 2
 
 describe("rotation", () => {
@@ -57,10 +57,11 @@ describe("footprint", () => {
     expect(footprintCells("desk", Math.PI / 4)).toEqual([5, 5])
   })
   test("a piece turned full circle ends where it started", () => {
-    let p = snapToFootprint("toilet", 0, 0.3, 0.3)
-    const start = p
-    for (let i = 1; i <= 4; i++) p = snapToFootprint("toilet", i * QUARTER, p.x, p.z)
-    expect(p).toEqual(start)
+    let position = snapToFootprint("toilet", 0, 0.3, 0.3)
+    const start = position
+    for (let i = 1; i <= 4; i++)
+      position = snapToFootprint("toilet", i * QUARTER, position.x, position.z)
+    expect(position).toEqual(start)
   })
 })
 
@@ -71,17 +72,17 @@ describe("wall runs", () => {
   test("a straight drag lays one segment per half metre", () => {
     const run = wallRun({ x: 0, z: 0 }, { x: 2, z: 0 })
     expect(run).toHaveLength(4)
-    expect(run.every((e) => edgeDirection(e.rotation) === "x")).toBe(true)
+    expect(run.every((edge) => edgeDirection(edge.rotation) === "x")).toBe(true)
   })
   test("a drag off both axes turns one corner", () => {
     const run = wallRun({ x: 0, z: 0 }, { x: 3, z: 1 })
     expect(run).toHaveLength(8)
-    expect(new Set(run.map((e) => edgeDirection(e.rotation)))).toEqual(new Set(["x", "z"]))
+    expect(new Set(run.map((edge) => edgeDirection(edge.rotation)))).toEqual(new Set(["x", "z"]))
   })
   test("a drag near 45° runs diagonally", () => {
     const run = wallRun({ x: 0, z: 0 }, { x: 1, z: 1 })
     expect(run).toHaveLength(2)
-    expect(run.every((e) => edgeDirection(e.rotation) === "rising")).toBe(true)
+    expect(run.every((edge) => edgeDirection(edge.rotation) === "rising")).toBe(true)
   })
   test("the room tool lays the rectangle's four sides", () => {
     expect(roomEdges({ x: 0, z: 0 }, { x: 2, z: 1 })).toHaveLength(12)
@@ -102,13 +103,13 @@ describe("rooms", () => {
   })
   test("a door still closes a room", () => {
     const objects = room(0, 0, 2, 1)
-    const wall = objects.find((o) => o.z === 0 && o.x === 0.75) as SceneObject
+    const wall = objects.find((segment) => segment.z === 0 && segment.x === 0.75) as SceneObject
     const plan = openingPlan(objects, wall.id, "door", 0.8, 0) as NonNullable<
       ReturnType<typeof openingPlan>
     >
     const withDoor = [
-      ...objects.filter((o) => !plan.remove.includes(o.id)),
-      ...plan.add.map((o, i) => ({ ...o, id: `door${i}` })),
+      ...objects.filter((object) => !plan.remove.includes(object.id)),
+      ...plan.add.map((object, i) => ({ ...object, id: `door${i}` })),
     ]
     expect(cellCount(enclosedRegions(withDoor))).toEqual([8])
   })
@@ -124,7 +125,7 @@ describe("rooms", () => {
       ...walls(wallRun({ x: 0, z: 1 }, { x: 1, z: 0 })),
     ]
     const [region] = enclosedRegions(triangle)
-    expect(region.some((c) => c.parts !== undefined)).toBe(true)
+    expect(region.some((cell) => cell.parts !== undefined)).toBe(true)
   })
 })
 
@@ -169,17 +170,17 @@ describe("wall items", () => {
 describe("openings", () => {
   test("a door takes two wall halves, and gives them back", () => {
     const objects = room(0, 0, 2, 2)
-    const wall = objects.find((o) => o.z === 0 && o.x === 0.75) as SceneObject
+    const wall = objects.find((segment) => segment.z === 0 && segment.x === 0.75) as SceneObject
     const cut = openingPlan(objects, wall.id, "door", 0.8, 0)
     expect(cut?.remove).toHaveLength(2)
     expect(cut?.add).toEqual([{ type: "door", x: 1, z: 0, rotation: 0 }])
     const door = place("door", 1, 0)
     const filled = openingPlan([...objects, door], door.id, "door")
-    expect(filled?.add.map((o) => o.type)).toEqual(["wall", "wall"])
+    expect(filled?.add.map((object) => object.type)).toEqual(["wall", "wall"])
   })
   test("a window needs solid wall: none in glass", () => {
     const glass = walls(roomEdges({ x: 0, z: 0 }, { x: 2, z: 2 }), "glassWall")
-    const wall = glass.find((o) => o.z === 0 && o.x === 0.75) as SceneObject
+    const wall = glass.find((segment) => segment.z === 0 && segment.x === 0.75) as SceneObject
     expect(openingPlan(glass, wall.id, "window", 0.8, 0)).toBeNull()
     expect(openingPlan(glass, wall.id, "door", 0.8, 0)?.add[0]).toMatchObject({
       type: "door",
@@ -192,10 +193,12 @@ describe("wall paint", () => {
   test("a window shows the paint of the wall round it", () => {
     const line = walls(wallRun({ x: 0, z: 0 }, { x: 3, z: 0 }))
     const window = place("window", 1.5, 0)
-    const objects = [...line.filter((o) => o.x !== 1.25 && o.x !== 1.75), window]
+    const objects = [...line.filter((object) => object.x !== 1.25 && object.x !== 1.75), window]
     const painted = paintWallFaces(
       objects,
-      objects.filter((o) => o.type === "wall").map((o) => ({ id: o.id, face: "front" as const })),
+      objects
+        .filter((object) => object.type === "wall")
+        .map((object) => ({ id: object.id, face: "front" as const })),
       "#ff0000"
     )
     expect(composeWallColors(painted).openings.get(window.id)).toEqual(["#ff0000", undefined])
@@ -210,7 +213,7 @@ describe("saved layouts", () => {
   test("old 1-unit walls become two halves, once", () => {
     const old = [place("wall", 1, 0)]
     const upgraded = normalizeEdges(old)
-    expect(upgraded.map((o) => o.x)).toEqual([0.75, 1.25])
+    expect(upgraded.map((object) => object.x)).toEqual([0.75, 1.25])
     expect(normalizeEdges(upgraded)).toBe(upgraded)
   })
 })

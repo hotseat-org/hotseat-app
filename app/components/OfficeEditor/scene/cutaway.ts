@@ -59,24 +59,24 @@ type CutDirection = (typeof CUT_DIRECTION)[keyof typeof CUT_DIRECTION]
 export const cutAxes = (
   direction: number
 ): { along: [number, number]; across: [number, number] } => {
-  const h = Math.SQRT1_2
+  const diagonal = Math.SQRT1_2
   switch (direction) {
     case CUT_DIRECTION.z:
       return { along: [0, 1], across: [1, 0] }
     case CUT_DIRECTION.rising:
-      return { along: [h, h], across: [-h, h] }
+      return { along: [diagonal, diagonal], across: [-diagonal, diagonal] }
     case CUT_DIRECTION.falling:
-      return { along: [h, -h], across: [h, h] }
+      return { along: [diagonal, -diagonal], across: [diagonal, diagonal] }
     default:
       return { along: [1, 0], across: [0, 1] }
   }
 }
 
 /** The direction a piece runs, from its local X axis in the world (x, z). */
-export const cutDirectionOf = (ax: number, az: number): CutDirection => {
-  const length = Math.hypot(ax, az) || 1
-  const x = ax / length
-  const z = az / length
+export const cutDirectionOf = (directionX: number, directionZ: number): CutDirection => {
+  const length = Math.hypot(directionX, directionZ) || 1
+  const x = directionX / length
+  const z = directionZ / length
   if (Math.abs(x) > 0.92) return CUT_DIRECTION.x
   if (Math.abs(z) > 0.92) return CUT_DIRECTION.z
   return x * z > 0 ? CUT_DIRECTION.rising : CUT_DIRECTION.falling
@@ -99,7 +99,7 @@ const CUT_AXES_GLSL = /* glsl */ `
     else { along = vec2(h, -h); across = vec2(h, h); }
   }`
 
-const glsl = (n: number) => n.toFixed(4)
+const glsl = (value: number) => value.toFixed(4)
 
 /**
  * Where each piece is anchored and which way it runs: from its own transform

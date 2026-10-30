@@ -23,14 +23,14 @@ import { composeZoneAreas } from "./zones"
 
 /** A template with ids that stay the same from run to run, and some paint and zones. */
 const buildStable = (build: () => SceneObject[]) =>
-  build().map((o, i) => ({
-    ...o,
-    id: `${o.type}-${i}`,
-    ...(o.type === "wall" && i % 5 === 0 && { colorFront: "#aa3344", colorBack: "#3344aa" }),
-    ...(isSeatable(o.type) && i % 3 === 0 && { zone: i % 2 ? "Eng" : "Ops" }),
+  build().map((object, i) => ({
+    ...object,
+    id: `${object.type}-${i}`,
+    ...(object.type === "wall" && i % 5 === 0 && { colorFront: "#aa3344", colorBack: "#3344aa" }),
+    ...(isSeatable(object.type) && i % 3 === 0 && { zone: i % 2 ? "Eng" : "Ops" }),
   }))
 
-const round = (n: number) => Math.round(n * 1000) / 1000
+const round = (value: number) => Math.round(value * 1000) / 1000
 
 /** A short fingerprint of a long list: any change to it changes this. */
 const checksum = (values: unknown[]) => {
@@ -43,26 +43,35 @@ describe("every template reads the same", () => {
   for (const template of TEMPLATES)
     test(template.id, () => {
       const objects = buildStable(template.build)
-      const furniture = objects.filter((o) => !isEdgeType(o.type) && !isMarker(o.type))
+      const furniture = objects.filter((piece) => !isEdgeType(piece.type) && !isMarker(piece.type))
       const colors = composeWallColors(objects)
       expect({
-        rooms: enclosedRegions(objects).map((r) => [r.length, checksum(r)]),
+        rooms: enclosedRegions(objects).map((region) => [region.length, checksum(region)]),
         openings: [...colors.openings],
         joints: [...colors.joints],
         jointNodes: wallJointNodes(objects),
         collides: furniture
-          .filter((o) => furnitureCollides(objects, o.type, o.x, o.z, o.rotation, o.id))
-          .map((o) => o.id),
+          .filter((piece) =>
+            furnitureCollides(objects, piece.type, piece.x, piece.z, piece.rotation, piece.id)
+          )
+          .map((piece) => piece.id),
         mounts: furniture
-          .filter((o) => isWallMounted(o.type))
-          .map((o) => [o.id, mountWalls(objects, o.type, o.x, o.z, o.rotation)]),
-        zones: composeZoneAreas(objects).map((a) => [a.zone.name, a.cells.length, a.label]),
+          .filter((piece) => isWallMounted(piece.type))
+          .map((piece) => [
+            piece.id,
+            mountWalls(objects, piece.type, piece.x, piece.z, piece.rotation),
+          ]),
+        zones: composeZoneAreas(objects).map((area) => [
+          area.zone.name,
+          area.cells.length,
+          area.label,
+        ]),
         bounds: getStructureBounds(objects),
         routes: furniture
-          .filter((o) => isSeatable(o.type))
-          .map((o) => {
-            const route = getRoute(objects, o.id)
-            return [o.id, route ? round(route.length) : null]
+          .filter((piece) => isSeatable(piece.type))
+          .map((piece) => {
+            const route = getRoute(objects, piece.id)
+            return [piece.id, route ? round(route.length) : null]
           }),
       }).toMatchSnapshot()
     })

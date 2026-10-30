@@ -16,16 +16,16 @@ type Props = Omit<ThreeElements["mesh"], "args" | "ref"> & {
   children?: ReactNode
 }
 
-const EPS = 0.00001
+const EPSILON = 0.00001
 
 /** The box's outline: a rounded rectangle, as drei draws it. */
 const createShape = (width: number, height: number, radius0: number) => {
   const shape = new Shape()
-  const radius = radius0 - EPS
-  shape.absarc(EPS, EPS, EPS, -Math.PI / 2, -Math.PI, true)
-  shape.absarc(EPS, height - radius * 2, EPS, Math.PI, Math.PI / 2, true)
-  shape.absarc(width - radius * 2, height - radius * 2, EPS, Math.PI / 2, 0, true)
-  shape.absarc(width - radius * 2, EPS, EPS, 0, -Math.PI / 2, true)
+  const radius = radius0 - EPSILON
+  shape.absarc(EPSILON, EPSILON, EPSILON, -Math.PI / 2, -Math.PI, true)
+  shape.absarc(EPSILON, height - radius * 2, EPSILON, Math.PI, Math.PI / 2, true)
+  shape.absarc(width - radius * 2, height - radius * 2, EPSILON, Math.PI / 2, 0, true)
+  shape.absarc(width - radius * 2, EPSILON, EPSILON, 0, -Math.PI / 2, true)
   return shape
 }
 
@@ -56,7 +56,7 @@ const getRoundedBoxGeometry = (
       bevelEnabled: true,
       bevelSegments: bevelSegments * 2,
       steps,
-      bevelSize: radius - EPS,
+      bevelSize: radius - EPSILON,
       bevelThickness: radius,
       curveSegments: smoothness,
     })

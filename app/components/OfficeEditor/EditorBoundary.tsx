@@ -44,9 +44,9 @@ export class EditorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error) {
-    const msg = String(error?.message ?? "")
+    const message = String(error?.message ?? "")
     const isChunkAbort =
-      /dynamically imported module|Importing a module script failed|Failed to fetch/i.test(msg)
+      /dynamically imported module|Importing a module script failed|Failed to fetch/i.test(message)
     if (!isChunkAbort || typeof sessionStorage === "undefined") return
 
     // Reload at most once per window. Crucially we do NOT clear this on mount —

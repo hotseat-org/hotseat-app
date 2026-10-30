@@ -33,23 +33,23 @@ export const GhostWalls = ({ edges, grow = 0 }: Props) => {
   const runs = useMemo(() => {
     const asObjects = (type: "wall" | "glassWall") =>
       edges
-        .filter((e) => e.type === type)
+        .filter((edge) => edge.type === type)
         .map(
-          (e, i): SceneObject => ({
-            ...e,
+          (edge, i): SceneObject => ({
+            ...edge,
             id: String(i),
-            color: e.tint ? TINT + e.tint : TRANSLUCENT + (e.color ?? ""),
+            color: edge.tint ? TINT + edge.tint : TRANSLUCENT + (edge.color ?? ""),
           })
         )
     return [
-      ...buildRuns(asObjects("wall"), TRANSLUCENT).map((r) => ({ ...r, isGlass: false })),
-      ...buildRuns(asObjects("glassWall"), TRANSLUCENT).map((r) => ({ ...r, isGlass: true })),
+      ...buildRuns(asObjects("wall"), TRANSLUCENT).map((run) => ({ ...run, isGlass: false })),
+      ...buildRuns(asObjects("glassWall"), TRANSLUCENT).map((run) => ({ ...run, isGlass: true })),
     ]
   }, [edges])
   return (
     <>
-      {runs.map((r) => (
-        <GhostRun key={`${r.isGlass}|${r.key}`} run={r} grow={grow} />
+      {runs.map((run) => (
+        <GhostRun key={`${run.isGlass}|${run.key}`} run={run} grow={grow} />
       ))}
     </>
   )
@@ -67,8 +67,8 @@ const GhostRun = ({ run, grow }: { run: Run & { isGlass: boolean }; grow: number
   // Previews never cast shadows (a cached shadow map would keep them).
   const ref = useRef<Group>(null)
   useLayoutEffect(() => {
-    ref.current?.traverse((o) => {
-      o.castShadow = false
+    ref.current?.traverse((object) => {
+      object.castShadow = false
     })
   })
   const margin = isTinted ? grow : 0

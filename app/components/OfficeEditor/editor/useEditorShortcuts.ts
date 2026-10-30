@@ -4,72 +4,72 @@ import { useEditorStoreApi } from "../store"
 import { isEdgeType } from "../types"
 import { TOOLS } from "../ui/tools"
 
-const KEY_TO_TOOL = new Map(TOOLS.map((t) => [t.key, t.tool]))
+const KEY_TO_TOOL = new Map(TOOLS.map((tool) => [tool.key, tool.tool]))
 
 /** Keyboard shortcuts (tools, undo, clipboard, rotate, delete, deselect) — edit only. */
 export const useEditorShortcuts = (readOnly: boolean) => {
   const store = useEditorStoreApi()
   useEffect(() => {
     if (readOnly) return
-    const onKey = (e: KeyboardEvent) => {
+    const onKey = (event: KeyboardEvent) => {
       // Undo / redo: ⌘Z / ⇧⌘Z (Ctrl on Windows/Linux), plus ⌘Y.
-      if ((e.metaKey || e.ctrlKey) && !e.altKey && !isTypingTarget(e.target)) {
-        const k = e.key.toLowerCase()
+      if ((event.metaKey || event.ctrlKey) && !event.altKey && !isTypingTarget(event.target)) {
+        const key = event.key.toLowerCase()
         // The command search: ⌘K (Ctrl+K).
-        if (k === "k") {
-          e.preventDefault()
+        if (key === "k") {
+          event.preventDefault()
           return store.getState().setCommandSearchOpen(true)
         }
-        if (k === "z" || k === "y") {
-          e.preventDefault()
-          if (k === "y" || e.shiftKey) store.getState().redo()
+        if (key === "z" || key === "y") {
+          event.preventDefault()
+          if (key === "y" || event.shiftKey) store.getState().redo()
           else store.getState().undo()
           return
         }
         // Clipboard + duplicate for the selection (furniture).
-        if (k === "c") return store.getState().copySelection()
-        if (k === "v") return store.getState().paste()
-        if (k === "d") {
-          e.preventDefault() // not the browser's bookmark shortcut
+        if (key === "c") return store.getState().copySelection()
+        if (key === "v") return store.getState().paste()
+        if (key === "d") {
+          event.preventDefault() // not the browser's bookmark shortcut
           return store.getState().duplicateSelection()
         }
       }
-      if (e.metaKey || e.ctrlKey || e.altKey) return
-      if (isTypingTarget(e.target)) return
+      if (event.metaKey || event.ctrlKey || event.altKey) return
+      if (isTypingTarget(event.target)) return
 
-      const s = store.getState()
+      const state = store.getState()
 
-      const mapped = KEY_TO_TOOL.get(e.key)
+      const mapped = KEY_TO_TOOL.get(event.key)
       if (mapped) {
-        s.setTool(mapped)
+        state.setTool(mapped)
         return
       }
 
-      if (e.key === "m" || e.key === "M") {
-        s.toggleMeasureHints()
+      if (event.key === "m" || event.key === "M") {
+        state.toggleMeasureHints()
         return
       }
 
-      if (e.key === "r" || e.key === "R") {
+      if (event.key === "r" || event.key === "R") {
         // Rotate the selected furniture (each piece in place); with nothing
         // turnable selected (or a wall/door), rotate the next placement.
-        const sel = s.objects.find((o) => o.id === s.selectedId)
-        if (sel && !isEdgeType(sel.type)) s.rotateSelection()
-        else s.rotatePlacement()
+        const selection = state.objects.find((piece) => piece.id === state.selectedId)
+        if (selection && !isEdgeType(selection.type)) state.rotateSelection()
+        else state.rotatePlacement()
         return
       }
 
-      if (e.key === "Delete" || e.key === "Backspace") {
-        if (s.selection.length) {
-          e.preventDefault()
-          s.removeSelection()
+      if (event.key === "Delete" || event.key === "Backspace") {
+        if (state.selection.length) {
+          event.preventDefault()
+          state.removeSelection()
         }
         return
       }
 
-      if (e.key === "Escape") {
-        s.select(null)
-        s.setTool("select")
+      if (event.key === "Escape") {
+        state.select(null)
+        state.setTool("select")
       }
     }
     window.addEventListener("keydown", onKey)

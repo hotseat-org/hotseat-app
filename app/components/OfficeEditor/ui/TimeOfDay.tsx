@@ -23,12 +23,12 @@ export const TimeOfDay = ({
   isViewing?: boolean
 }) => {
   const { t } = useI18n()
-  const timeOfDay = useEditorStore((s) => s.timeOfDay)
-  const setTimeOfDay = useEditorStore((s) => s.setTimeOfDay)
-  const syncTime = useEditorStore((s) => s.syncTime)
-  const setSyncTime = useEditorStore((s) => s.setSyncTime)
-  const booking = useEditorStore((s) => s.booking.enabled)
-  const view = useEditorStore((s) => s.view)
+  const timeOfDay = useEditorStore((state) => state.timeOfDay)
+  const setTimeOfDay = useEditorStore((state) => state.setTimeOfDay)
+  const syncTime = useEditorStore((state) => state.syncTime)
+  const setSyncTime = useEditorStore((state) => state.setSyncTime)
+  const booking = useEditorStore((state) => state.booking.enabled)
+  const view = useEditorStore((state) => state.view)
   // The flat plan has no lighting: no time-of-day there.
   const flat = isViewing && (view === "2d" || !hasWebGL())
 

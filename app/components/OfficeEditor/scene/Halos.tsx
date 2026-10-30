@@ -70,21 +70,21 @@ interface Props {
  * once the lamps are on. Two instanced draw calls.
  */
 export const Halos = ({ occupied }: Props) => {
-  const objects = useEditorStore((s) => s.objects)
+  const objects = useEditorStore((state) => state.objects)
   const nightness = useContext(DaylightContext)
   const isLampOn = useLampsOn()
-  const invalidate = useThree((s) => s.invalidate)
+  const invalidate = useThree((state) => state.invalidate)
 
   const screens = useMemo(
     () =>
       objects
-        .filter((o) => o.type in DESK_OFFSET && occupied?.get(o.id) !== false)
-        .map((o) =>
+        .filter((object) => object.type in DESK_OFFSET && occupied?.get(object.id) !== false)
+        .map((object) =>
           point
             .copy(SCREEN)
-            .setZ(SCREEN.z + DESK_OFFSET[o.type as keyof typeof DESK_OFFSET])
-            .applyAxisAngle(UP, o.rotation)
-            .add(at(o))
+            .setZ(SCREEN.z + DESK_OFFSET[object.type as keyof typeof DESK_OFFSET])
+            .applyAxisAngle(UP, object.rotation)
+            .add(at(object))
             .clone()
         ),
     [objects, occupied]
@@ -92,8 +92,8 @@ export const Halos = ({ occupied }: Props) => {
   const bulbs = useMemo(
     () =>
       objects
-        .filter((o) => o.type === "ceilingLight" || o.type === "floorLamp")
-        .map((o) => at(o).setY(BULB_HEIGHT[o.type as keyof typeof BULB_HEIGHT])),
+        .filter((object) => object.type === "ceilingLight" || object.type === "floorLamp")
+        .map((object) => at(object).setY(BULB_HEIGHT[object.type as keyof typeof BULB_HEIGHT])),
     [objects]
   )
 
@@ -119,7 +119,7 @@ export const Halos = ({ occupied }: Props) => {
   )
 }
 
-const at = (o: SceneObject) => new Vector3(o.x, 0, o.z)
+const at = (object: SceneObject) => new Vector3(object.x, 0, object.z)
 
 /** One kind of halo, at every point: an instanced quad. */
 const HaloSet = ({
@@ -144,8 +144,8 @@ const HaloSet = ({
   useLayoutEffect(() => {
     const mesh = ref.current
     if (!mesh) return
-    points.forEach((p, i) => {
-      dummy.position.copy(p)
+    points.forEach((position, i) => {
+      dummy.position.copy(position)
       dummy.updateMatrix()
       mesh.setMatrixAt(i, dummy.matrix)
     })

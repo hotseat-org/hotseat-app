@@ -57,7 +57,7 @@ const useLighterWhileMoving = () => {
   const tiltShift = useRef<TiltShiftEffect>(null)
   const view = useRef({ world: new Matrix4(), projection: new Matrix4() })
   const settle = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const invalidate = useThree((s) => s.invalidate)
+  const invalidate = useThree((state) => state.invalidate)
   useEffect(() => () => clearTimeout(settle.current ?? undefined), [])
   // Default priority: runs before the composer renders this frame.
   useFrame(({ camera }) => {

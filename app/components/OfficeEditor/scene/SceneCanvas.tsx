@@ -52,8 +52,8 @@ const SceneCanvas = ({
       // Checking each new shader for errors makes the browser finish compiling
       // it on the spot (a long stall when a big office first renders, or on
       // switching to editing). Development keeps the checks and their messages.
-      onCreated={({ gl }) => {
-        gl.debug.checkShaderErrors = import.meta.env.DEV
+      onCreated={({ gl: renderer }) => {
+        renderer.debug.checkShaderErrors = import.meta.env.DEV
       }}
     >
       <Suspense fallback={null}>
@@ -88,7 +88,7 @@ const ReadySignal = ({
   onReady: (readOnly: boolean) => void
 }) => {
   const frames = useRef(0)
-  const invalidate = useThree((s) => s.invalidate)
+  const invalidate = useThree((state) => state.invalidate)
   useEffect(() => {
     frames.current = 0
     invalidate() // under frameloop="demand", make sure those frames come

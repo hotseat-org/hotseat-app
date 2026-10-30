@@ -60,29 +60,29 @@ export const FloorPlan = ({
   phoneChrome?: { top: number; bottom: number }
 }) => {
   const { t } = useI18n()
-  const layout = useEditorStore((s) => s.objects)
-  const fitNonce = useEditorStore((s) => s.fitNonce)
-  const requestFit = useEditorStore((s) => s.requestFit)
-  const openSeatCard = useEditorStore((s) => s.openSeatCard)
-  const closeSeatCard = useEditorStore((s) => s.closeSeatCard)
-  const bookingOn = useEditorStore((s) => s.booking.enabled)
-  const past = useEditorStore((s) => s.booking.day < s.booking.today)
+  const layout = useEditorStore((state) => state.objects)
+  const fitNonce = useEditorStore((state) => state.fitNonce)
+  const requestFit = useEditorStore((state) => state.requestFit)
+  const openSeatCard = useEditorStore((state) => state.openSeatCard)
+  const closeSeatCard = useEditorStore((state) => state.closeSeatCard)
+  const bookingOn = useEditorStore((state) => state.booking.enabled)
+  const past = useEditorStore((state) => state.booking.day < state.booking.today)
   const { desks: deskStates } = useDesksOnDay()
   const matchesFilter = useDeskFilter()
   // Insights' heatmap: desks on coloured pads, tagged with their share of days.
-  const heatmap = useEditorStore((s) => s.heatmap)
-  const layers = useEditorStore((s) => s.layers)
+  const heatmap = useEditorStore((state) => state.heatmap)
+  const layers = useEditorStore((state) => state.layers)
   const zoneClipId = useId()
   const people = usePeople()
   const card = useSeatCard()
   const surfaces = dark ? SURFACES.dark : SURFACES.light
 
   // View angle: the whole layout turned by quarter turns (see turnObject).
-  const turn = useEditorStore((s) => s.planTurn)
-  const turnBy = useEditorStore((s) => s.turnPlan)
-  const objects = useMemo(() => layout.map((o) => turnObject(o, turn)), [layout, turn])
+  const turn = useEditorStore((state) => state.planTurn)
+  const turnBy = useEditorStore((state) => state.turnPlan)
+  const objects = useMemo(() => layout.map((object) => turnObject(object, turn)), [layout, turn])
   const desks = useMemo(
-    () => deskStates.map((d) => ({ ...d, desk: turnObject(d.desk, turn) })),
+    () => deskStates.map((deskState) => ({ ...deskState, desk: turnObject(deskState.desk, turn) })),
     [deskStates, turn]
   )
   const zoneAreas = useMemo(
@@ -91,7 +91,7 @@ export const FloorPlan = ({
   )
 
   const box = useRef<HTMLDivElement>(null)
-  const [size, setSize] = useState<{ w: number; h: number } | null>(null)
+  const [size, setSize] = useState<{ width: number; height: number } | null>(null)
   const [view, setView] = useState<View | null>(null)
   const { moved, onPointerDown } = usePlanGestures(box, setView, turnBy)
 
@@ -131,13 +131,13 @@ export const FloorPlan = ({
   )
 
   useLayoutEffect(() => {
-    const el = box.current
-    if (!el) return
-    const ro = new ResizeObserver(([e]) =>
-      setSize({ w: e.contentRect.width, h: e.contentRect.height })
+    const element = box.current
+    if (!element) return
+    const resizeObserver = new ResizeObserver(([entry]) =>
+      setSize({ width: entry.contentRect.width, height: entry.contentRect.height })
     )
-    ro.observe(el)
-    return () => ro.disconnect()
+    resizeObserver.observe(element)
+    return () => resizeObserver.disconnect()
   }, [])
 
   // Frame the office on open, on Fit, and when the layout first gets content —
@@ -150,8 +150,8 @@ export const FloorPlan = ({
   const hasContent = !!scene.bounds
   const measured = size !== null
   useLayoutEffect(() => {
-    const { size: s, bounds: b, insets: pad } = frame.current
-    if (s && b) setView(fitView(b, s.w, s.h, pad))
+    const { size: frameSize, bounds: bounds, insets: padding } = frame.current
+    if (frameSize && bounds) setView(fitView(bounds, frameSize.width, frameSize.height, padding))
   }, [fitNonce, hasContent, measured, turn])
 
   const viewRef = useRef(view)
@@ -160,7 +160,8 @@ export const FloorPlan = ({
   const glideTo = useGlide(setView)
   /** Where a desk is: its occupant's chair, else the desk. */
   const findSpot = useCallback(
-    (id: string) => scene.occupants.get(id) ?? desks.find((d) => d.desk.id === id)?.desk,
+    (id: string) =>
+      scene.occupants.get(id) ?? desks.find((deskState) => deskState.desk.id === id)?.desk,
     [scene, desks]
   )
   const highlightId = useSpotlight({ viewRef, frame, hasView, findSpot, glideTo })
@@ -177,11 +178,11 @@ export const FloorPlan = ({
   /** A world point on screen (px, within the plan). */
   const screen = (x: number, z: number) => {
     if (!view) return { left: 0, top: 0 }
-    return { left: x * view.k + view.tx, top: z * view.k + view.ty }
+    return { left: x * view.zoom + view.offsetX, top: z * view.zoom + view.offsetY }
   }
   const openId = card?.seat.id
   const avatarSize = view
-    ? Math.min(MAX_AVATAR_PX, Math.max(MIN_AVATAR_PX, AVATAR_SIZE * view.k))
+    ? Math.min(MAX_AVATAR_PX, Math.max(MIN_AVATAR_PX, AVATAR_SIZE * view.zoom))
     : MIN_AVATAR_PX
   // The card's desk comes from the store, so it's turned here to match.
   const cardAt = card && turnPoint(card.seat.x, card.seat.z, turn)
@@ -201,7 +202,7 @@ export const FloorPlan = ({
     >
       <svg className="absolute inset-0 size-full" aria-label="Office" role="img">
         {view && (
-          <g transform={`translate(${view.tx} ${view.ty}) scale(${view.k})`}>
+          <g transform={`translate(${view.offsetX} ${view.offsetY}) scale(${view.zoom})`}>
             {size && (
               <ContourLines
                 layout={layout}
@@ -212,7 +213,7 @@ export const FloorPlan = ({
               />
             )}
             {scene.node}
-            {routePoints && <RoutePath points={routePoints} k={view.k} />}
+            {routePoints && <RoutePath points={routePoints} k={view.zoom} />}
           </g>
         )}
       </svg>
@@ -231,18 +232,18 @@ export const FloorPlan = ({
       {/* Who sits where — HTML, at least MIN_AVATAR_PX at any zoom. */}
       {view &&
         !heatmap &&
-        [...scene.occupants.values()].map((o) =>
-          o.id === openId ? null : (
+        [...scene.occupants.values()].map((piece) =>
+          piece.id === openId ? null : (
             <Occupant
-              key={o.id}
-              person={personByEmail(people, o.email)}
-              email={o.email}
-              isMine={o.email === people.me?.email}
+              key={piece.id}
+              person={personByEmail(people, piece.email)}
+              email={piece.email}
+              isMine={piece.email === people.me?.email}
               size={avatarSize}
-              style={screen(o.x, o.z)}
-              onClick={(e) => {
-                e.stopPropagation()
-                if (!moved.current) openSeatCard(o.id)
+              style={screen(piece.x, piece.z)}
+              onClick={(event) => {
+                event.stopPropagation()
+                if (!moved.current) openSeatCard(piece.id)
               }}
             />
           )
@@ -272,7 +273,7 @@ export const FloorPlan = ({
       {view &&
         !heatmap &&
         layers.deskTags &&
-        view.k >= TAG_ZOOM &&
+        view.zoom >= TAG_ZOOM &&
         desks.map(({ desk, state }) => {
           if (desk.id === openId) return null
           const person = state.kind === "free" ? null : personByEmail(people, state.email)
@@ -318,9 +319,9 @@ export const FloorPlan = ({
                   type="button"
                   aria-label={t("Close desk")}
                   className="absolute inset-0 bg-scrim"
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onClick={(e) => {
-                    e.stopPropagation()
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation()
                     card.body.onClose()
                   }}
                 />

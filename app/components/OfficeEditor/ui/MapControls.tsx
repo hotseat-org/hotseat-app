@@ -14,10 +14,10 @@ import { useI18n } from "~/i18n/I18nProvider"
  */
 export const MapControls = ({ isEditing = false }: { isEditing?: boolean }) => {
   const { t } = useI18n()
-  const requestFit = useEditorStore((s) => s.requestFit)
-  const view = useEditorStore((s) => s.view)
-  const setView = useEditorStore((s) => s.setView)
-  const turnPlan = useEditorStore((s) => s.turnPlan)
+  const requestFit = useEditorStore((state) => state.requestFit)
+  const view = useEditorStore((state) => state.view)
+  const setView = useEditorStore((state) => state.setView)
+  const turnPlan = useEditorStore((state) => state.turnPlan)
   const webgl = hasWebGL()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   // Editing is always 3D; without WebGL, viewing is the simple view.

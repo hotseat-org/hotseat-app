@@ -21,7 +21,7 @@ export const PeopleContext = createContext<People>({ me: null, members: [] })
 export const usePeople = () => useContext(PeopleContext)
 
 export const personByEmail = (people: People, email?: string) =>
-  email ? (people.members.find((p) => p.email === email) ?? null) : null
+  email ? (people.members.find((member) => member.email === email) ?? null) : null
 
 export const initials = (name: string) => {
   const parts = name.split(/[\s.@_-]+/).filter(Boolean)

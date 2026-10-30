@@ -20,7 +20,7 @@ const SPOTLIGHT_MS = 2700
 /** What framing goes by, as of the last render (read in effects, so it doesn't re-run them). */
 export interface Frame {
   /** The plan's size on screen (px), once measured. */
-  size: { w: number; h: number } | null
+  size: { width: number; height: number } | null
   /** The drawing's bounds (plan units), once it has content. */
   bounds: Bounds | null
   insets: Insets
@@ -35,14 +35,14 @@ export const useGlide = (setView: Dispatch<SetStateAction<View | null>>) => {
       const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches
       const start = performance.now()
       const step = (now: number) => {
-        const t = reduced ? 1 : Math.min(1, (now - start) / SPOTLIGHT_GLIDE_MS)
-        const e = 1 - (1 - t) ** 3
+        const progress = reduced ? 1 : Math.min(1, (now - start) / SPOTLIGHT_GLIDE_MS)
+        const eased = 1 - (1 - progress) ** 3
         setView({
-          k: from.k + (to.k - from.k) * e,
-          tx: from.tx + (to.tx - from.tx) * e,
-          ty: from.ty + (to.ty - from.ty) * e,
+          zoom: from.zoom + (to.zoom - from.zoom) * eased,
+          offsetX: from.offsetX + (to.offsetX - from.offsetX) * eased,
+          offsetY: from.offsetY + (to.offsetY - from.offsetY) * eased,
         })
-        if (t < 1) frame.current = requestAnimationFrame(step)
+        if (progress < 1) frame.current = requestAnimationFrame(step)
       }
       cancelAnimationFrame(frame.current)
       frame.current = requestAnimationFrame(step)
@@ -69,22 +69,22 @@ export const useSpotlight = ({
   findSpot: (id: string) => { x: number; z: number } | undefined
   glideTo: (from: View, to: View) => void
 }) => {
-  const spotlight = useEditorStore((s) => s.spotlight)
-  const resetSpotlight = useEditorStore((s) => s.resetSpotlight)
+  const spotlight = useEditorStore((state) => state.spotlight)
+  const resetSpotlight = useEditorStore((state) => state.resetSpotlight)
   const [highlightId, setHighlightId] = useState<string | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
   useEffect(() => () => clearTimeout(timer.current), [])
   useEffect(() => {
     const from = viewRef.current
-    const { size: s, insets: pad } = frame.current
-    if (!spotlight || !from || !s) return
+    const { size: size, insets: padding } = frame.current
+    if (!spotlight || !from || !size) return
     resetSpotlight()
     const target = findSpot(spotlight.id)
     if (!target) return
-    const k = Math.min(MAX_K, Math.max(from.k, SPOTLIGHT_K))
-    const cx = pad.left + (s.w - pad.left - pad.right) / 2
-    const cy = pad.top + (s.h - pad.top - pad.bottom) / 2
-    const to = { k, tx: cx - target.x * k, ty: cy - target.z * k }
+    const zoom = Math.min(MAX_K, Math.max(from.zoom, SPOTLIGHT_K))
+    const centreX = padding.left + (size.width - padding.left - padding.right) / 2
+    const centreY = padding.top + (size.height - padding.top - padding.bottom) / 2
+    const to = { zoom, offsetX: centreX - target.x * zoom, offsetY: centreY - target.z * zoom }
     // Clearing the request re-runs this effect: the glide outlives it.
     clearTimeout(timer.current)
     glideTo(from, to)
@@ -113,10 +113,18 @@ export const useRouteFraming = ({
 }) => {
   useEffect(() => {
     const from = viewRef.current
-    const { size: s, insets: pad } = frame.current
-    if (!routePoints || !from || !s) return
-    const b = routeBounds(routePoints)
-    glideTo(from, fitView({ x0: b.x0, x1: b.x1, y0: b.z0, y1: b.z1 }, s.w, s.h, pad))
+    const { size: size, insets: padding } = frame.current
+    if (!routePoints || !from || !size) return
+    const bounds = routeBounds(routePoints)
+    glideTo(
+      from,
+      fitView(
+        { x0: bounds.x0, x1: bounds.x1, y0: bounds.z0, y1: bounds.z1 },
+        size.width,
+        size.height,
+        padding
+      )
+    )
     // Only when a way is asked for (or the plan first has a view) — not on every pan.
   }, [routeNonce, hasView])
 }

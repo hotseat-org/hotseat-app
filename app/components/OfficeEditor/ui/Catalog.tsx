@@ -55,17 +55,17 @@ const PANEL_MIN_HEIGHT = 560
 
 export const Catalog = () => {
   const { t } = useI18n()
-  const tool = useEditorStore((s) => s.tool)
-  const setTool = useEditorStore((s) => s.setTool)
-  const armedKit = useEditorStore((s) => s.armedKit)
-  const placementColors = useEditorStore((s) => s.placementColors)
-  const setPlacementColor = useEditorStore((s) => s.setPlacementColor)
+  const tool = useEditorStore((state) => state.tool)
+  const setTool = useEditorStore((state) => state.setTool)
+  const armedKit = useEditorStore((state) => state.armedKit)
+  const placementColors = useEditorStore((state) => state.placementColors)
+  const setPlacementColor = useEditorStore((state) => state.setPlacementColor)
 
   // Pre-render every tile's still in the background, so categories open
   // instantly (tiles on screen jump the queue).
   useEffect(() => {
-    for (const c of CATEGORIES)
-      for (const type of c.types) requestThumbnail(type, placementColors[colorKey(type)])
+    for (const entry of CATEGORIES)
+      for (const type of entry.types) requestThumbnail(type, placementColors[colorKey(type)])
     // Once, with the colours as they are on opening the editor.
   }, [])
 
@@ -75,11 +75,11 @@ export const Catalog = () => {
   }, [])
 
   const [openId, setOpenId] = useState<string | null>(null)
-  const category = CATEGORIES.find((c) => c.id === openId)
+  const category = CATEGORIES.find((entry) => entry.id === openId)
   // Arming an asset any other way (number keys) opens its category.
   useEffect(() => {
-    const c = isCatalogItem(tool) ? categoryOf(tool) : undefined
-    if (c) setOpenId(c.id)
+    const toolCategory = isCatalogItem(tool) ? categoryOf(tool) : undefined
+    if (toolCategory) setOpenId(toolCategory.id)
   }, [tool])
 
   // The armed asset, if it's in the open category (drives the colour picker).
@@ -93,18 +93,18 @@ export const Catalog = () => {
   const toggleCategory = (id: string) => {
     // Don't leave an asset from another (or the closing) category armed.
     if (isCatalogItem(tool) || armedKit) setTool("select")
-    setOpenId((cur) => (cur === id ? null : id))
+    setOpenId((currentId) => (currentId === id ? null : id))
   }
   // The panel is as tall as the tray — but at least PANEL_MIN_HEIGHT (the
   // two-column tray is short), within the screen; tiles scroll inside it.
   const railRef = useRef<HTMLDivElement>(null)
   const [railHeight, setRailHeight] = useState(0)
   useEffect(() => {
-    const el = railRef.current
-    if (!el) return
-    const ro = new ResizeObserver(() => setRailHeight(el.offsetHeight))
-    ro.observe(el)
-    return () => ro.disconnect()
+    const element = railRef.current
+    if (!element) return
+    const observer = new ResizeObserver(() => setRailHeight(element.offsetHeight))
+    observer.observe(element)
+    return () => observer.disconnect()
   }, [])
   const panelStyle = railHeight
     ? { height: Math.max(railHeight, PANEL_MIN_HEIGHT), maxHeight: "calc(100dvh - 10rem)" }
@@ -157,13 +157,13 @@ export const Catalog = () => {
         <div className="h-px shrink-0 bg-separator" />
 
         <div className="grid grid-cols-2 gap-1.5">
-          {CATEGORIES.map((c) => (
+          {CATEGORIES.map((entry) => (
             <CategoryButton
-              key={c.id}
-              category={c}
-              label={t(c.label)}
-              active={openId === c.id}
-              onClick={() => toggleCategory(c.id)}
+              key={entry.id}
+              category={entry}
+              label={t(entry.label)}
+              active={openId === entry.id}
+              onClick={() => toggleCategory(entry.id)}
             />
           ))}
         </div>
@@ -304,14 +304,14 @@ export const Catalog = () => {
                   <Ban className="size-3.5 text-slate-900/70" strokeWidth={2.5} />
                 </span>
               </Swatch>
-              {SWATCHES.map((c) => (
+              {SWATCHES.map((color) => (
                 <Swatch
-                  key={c}
-                  title={c}
-                  selected={activeColor === c}
-                  onClick={() => colorType && setPlacementColor(colorType, c)}
+                  key={color}
+                  title={color}
+                  selected={activeColor === color}
+                  onClick={() => colorType && setPlacementColor(colorType, color)}
                 >
-                  <span className="block size-full rounded-md" style={{ background: c }} />
+                  <span className="block size-full rounded-md" style={{ background: color }} />
                 </Swatch>
               ))}
             </div>
@@ -424,8 +424,8 @@ const RailButton = ({ label, shortcut, active, danger, onClick, children }: Rail
  */
 const PaintPanel = ({ style }: { style?: React.CSSProperties }) => {
   const { t } = useI18n()
-  const paintColor = useEditorStore((s) => s.paintColor)
-  const setPaintColor = useEditorStore((s) => s.setPaintColor)
+  const paintColor = useEditorStore((state) => state.paintColor)
+  const setPaintColor = useEditorStore((state) => state.setPaintColor)
   return (
     <div
       style={style}
@@ -474,14 +474,14 @@ const SwatchGroup = ({
   title: string
   colors: readonly string[]
   value: string | null
-  onPick: (c: string) => void
+  onPick: (color: string) => void
 }) => (
   <div className="mb-3">
     <div className="mb-1.5 px-1 text-[11px] font-medium text-muted">{title}</div>
     <div className="flex flex-wrap gap-1.5 px-1">
-      {colors.map((c) => (
-        <Swatch key={c} title={c} selected={value === c} onClick={() => onPick(c)}>
-          <span className="block size-full rounded-md" style={{ background: c }} />
+      {colors.map((color) => (
+        <Swatch key={color} title={color} selected={value === color} onClick={() => onPick(color)}>
+          <span className="block size-full rounded-md" style={{ background: color }} />
         </Swatch>
       ))}
     </div>
@@ -494,8 +494,8 @@ const SwatchGroup = ({
  */
 const PatternSwitch = () => {
   const { t } = useI18n()
-  const pattern = useEditorStore((s) => s.placementPattern)
-  const setPattern = useEditorStore((s) => s.setPlacementPattern)
+  const pattern = useEditorStore((state) => state.placementPattern)
+  const setPattern = useEditorStore((state) => state.setPlacementPattern)
   const options: { id: PlacementPattern; label: string; icon: LucideIcon }[] = [
     { id: "single", label: t("Single"), icon: Square },
     { id: "row", label: t("Row"), icon: Rows3 },

@@ -6,7 +6,7 @@ import { GRID, isEdgeType, isMarker, isWallMounted, type ObjectType } from "../t
 import { getItem } from "../catalog/items"
 
 /** Just above rugs (their top is 0.014), so a piece on a rug shades it too. */
-const Y = 0.016
+const HEIGHT = 0.016
 /** How dark the middle of a blob gets. */
 const STRENGTH = 0.34
 /** Blobs reach a little past the piece's footprint. */
@@ -27,13 +27,13 @@ const createBlobTexture = () => {
     for (let y = 0; y < size; y++)
       for (let x = 0; x < size; x++) {
         // Distance from the middle in a rounded square (a superellipse), 0…1.
-        const u = Math.abs((x + 0.5) / size - 0.5) * 2
-        const v = Math.abs((y + 0.5) / size - 0.5) * 2
-        const d = Math.pow(u ** 4 + v ** 4, 0.25)
-        const t = Math.min(1, Math.max(0, (d - 0.35) / 0.65))
-        const a = 1 - t * t * (3 - 2 * t)
+        const offsetX = Math.abs((x + 0.5) / size - 0.5) * 2
+        const offsetY = Math.abs((y + 0.5) / size - 0.5) * 2
+        const distance = Math.pow(offsetX ** 4 + offsetY ** 4, 0.25)
+        const falloff = Math.min(1, Math.max(0, (distance - 0.35) / 0.65))
+        const alpha = 1 - falloff * falloff * (3 - 2 * falloff)
         // An alpha map is read from the green channel: grey levels, not alpha.
-        const level = Math.round(a * 255)
+        const level = Math.round(alpha * 255)
         image.data.set([level, level, level, 255], (y * size + x) * 4)
       }
     context.putImageData(image, 0, 0)
@@ -47,8 +47,8 @@ const createBlobTexture = () => {
  * mesh for the whole office — a single draw call.
  */
 export const ContactBlobs = () => {
-  const objects = useEditorStore((s) => s.objects)
-  const invalidate = useThree((s) => s.invalidate)
+  const objects = useEditorStore((state) => state.objects)
+  const invalidate = useThree((state) => state.invalidate)
   const ref = useRef<InstancedMesh>(null)
   const texture = useMemo(createBlobTexture, [])
   useEffect(() => () => texture.dispose(), [texture])
@@ -56,11 +56,11 @@ export const ContactBlobs = () => {
   const pieces = useMemo(
     () =>
       objects.filter(
-        (o) =>
-          !isEdgeType(o.type) &&
-          !isMarker(o.type) &&
-          !isWallMounted(o.type) &&
-          !UNGROUNDED.has(o.type)
+        (object) =>
+          !isEdgeType(object.type) &&
+          !isMarker(object.type) &&
+          !isWallMounted(object.type) &&
+          !UNGROUNDED.has(object.type)
       ),
     [objects]
   )
@@ -68,12 +68,12 @@ export const ContactBlobs = () => {
   useLayoutEffect(() => {
     const mesh = ref.current
     if (!mesh) return
-    pieces.forEach((o, i) => {
+    pieces.forEach((object, i) => {
       // The piece's own footprint, turned with it (on the diagonal too).
-      const [cx, cz] = getItem(o.type).footprint
-      dummy.position.set(o.x, Y, o.z)
-      dummy.rotation.set(-Math.PI / 2, 0, o.rotation, "YXZ")
-      dummy.scale.set(cx * GRID * SPREAD, cz * GRID * SPREAD, 1)
+      const [cellsX, cellsZ] = getItem(object.type).footprint
+      dummy.position.set(object.x, HEIGHT, object.z)
+      dummy.rotation.set(-Math.PI / 2, 0, object.rotation, "YXZ")
+      dummy.scale.set(cellsX * GRID * SPREAD, cellsZ * GRID * SPREAD, 1)
       dummy.updateMatrix()
       mesh.setMatrixAt(i, dummy.matrix)
     })

@@ -10,29 +10,29 @@ import { composeFacePaint, getWallFaces, isPaintable, type WallFaces } from "./w
  * the way (through doors, not into glass). Returns their ids.
  */
 export const wallBetweenJoints = (objects: SceneObject[], id: string): string[] => {
-  const o = objects.find((obj) => obj.id === id)
-  if (!o || !isEdgeType(o.type)) return []
-  const direction = edgeDirection(o.rotation)
-  const [sx, sz] = edgeStep(o.rotation)
+  const edge = objects.find((candidate) => candidate.id === id)
+  if (!edge || !isEdgeType(edge.type)) return []
+  const direction = edgeDirection(edge.rotation)
+  const [stepX, stepZ] = edgeStep(edge.rotation)
   // Unit edges in this direction, by position → owning object; and the grid
   // nodes where an edge of another direction ends (a corner, a T, a cross).
   const owner = new Map<string, SceneObject>()
   const joints = new Set<string>()
-  for (const w of objects) {
-    if (!isEdgeType(w.type)) continue
-    if (edgeDirection(w.rotation) === direction)
-      for (const e of unitEdges(w)) owner.set(`${e.x},${e.z}`, w)
-    else for (const n of edgeNodes(w)) joints.add(`${n.x},${n.z}`)
+  for (const segment of objects) {
+    if (!isEdgeType(segment.type)) continue
+    if (edgeDirection(segment.rotation) === direction)
+      for (const unit of unitEdges(segment)) owner.set(`${unit.x},${unit.z}`, segment)
+    else for (const node of edgeNodes(segment)) joints.add(`${node.x},${node.z}`)
   }
   // Walk both ways from the segment (an opening, from one of its halves).
-  const [start] = unitEdges(o)
+  const [start] = unitEdges(edge)
   const ids = new Set<string>()
-  for (const dir of [1, -1])
-    for (let x = start.x, z = start.z; ; x += dir * sx, z += dir * sz) {
-      const w = owner.get(`${x},${z}`)
-      if (!w || isGlassEdge(w)) break
-      if (isPaintable(w)) ids.add(w.id)
-      if (joints.has(`${x + (dir * sx) / 2},${z + (dir * sz) / 2}`)) break
+  for (const sign of [1, -1])
+    for (let x = start.x, z = start.z; ; x += sign * stepX, z += sign * stepZ) {
+      const segment = owner.get(`${x},${z}`)
+      if (!segment || isGlassEdge(segment)) break
+      if (isPaintable(segment)) ids.add(segment.id)
+      if (joints.has(`${x + (sign * stepX) / 2},${z + (sign * stepZ) / 2}`)) break
     }
   return [...ids]
 }
@@ -43,11 +43,13 @@ export const composeFacesToward = (
   ids: string[],
   toward: { x: number; z: number }
 ): WallPaint[] => {
-  const byId = new Map(objects.map((o) => [o.id, o]))
+  const byId = new Map(objects.map((object) => [object.id, object]))
   return ids.flatMap((id) => {
-    const o = byId.get(id)
-    if (!o) return []
-    const side = Math.sin(o.rotation) * (toward.x - o.x) + Math.cos(o.rotation) * (toward.z - o.z)
+    const object = byId.get(id)
+    if (!object) return []
+    const side =
+      Math.sin(object.rotation) * (toward.x - object.x) +
+      Math.cos(object.rotation) * (toward.z - object.z)
     return [{ id, face: side >= 0 ? "front" : "back" }]
   })
 }
@@ -65,31 +67,32 @@ export const roomWalls = (
   id: string,
   toward: { x: number; z: number }
 ): WallPaint[] | null => {
-  const o = objects.find((obj) => obj.id === id)
-  if (!o || !isEdgeType(o.type)) return null
+  const edge = objects.find((candidate) => candidate.id === id)
+  if (!edge || !isEdgeType(edge.type)) return null
   // Just off a segment's middle, to one side (and a hair along it, off the
   // diagonals a split square's parts meet on).
-  const probe = (w: SceneObject, side: number) => ({
-    x: w.x + Math.sin(w.rotation) * 0.1 * side + Math.cos(w.rotation) * 0.03,
-    z: w.z + Math.cos(w.rotation) * 0.1 * side - Math.sin(w.rotation) * 0.03,
+  const probe = (segment: SceneObject, side: number) => ({
+    x: segment.x + Math.sin(segment.rotation) * 0.1 * side + Math.cos(segment.rotation) * 0.03,
+    z: segment.z + Math.cos(segment.rotation) * 0.1 * side - Math.sin(segment.rotation) * 0.03,
   })
   const facing =
-    Math.sign(Math.sin(o.rotation) * (toward.x - o.x) + Math.cos(o.rotation) * (toward.z - o.z)) ||
-    1
-  const regions = rooms.map((cells) => new Map(cells.map((c) => [`${c.x},${c.z}`, c])))
+    Math.sign(
+      Math.sin(edge.rotation) * (toward.x - edge.x) + Math.cos(edge.rotation) * (toward.z - edge.z)
+    ) || 1
+  const regions = rooms.map((cells) => new Map(cells.map((cell) => [`${cell.x},${cell.z}`, cell])))
   for (const side of [facing, -facing]) {
-    const at = probe(o, side)
+    const at = probe(edge, side)
     const room = regions.find((cells) => isInRegion(cells, at.x, at.z))
     if (!room) continue
-    return objects.flatMap((w): WallPaint[] => {
-      if (!isPaintable(w)) return []
+    return objects.flatMap((segment): WallPaint[] => {
+      if (!isPaintable(segment)) return []
       const [isFrontIn, isBackIn] = [1, -1].map((side) => {
-        const p = probe(w, side)
-        return isInRegion(room, p.x, p.z)
+        const point = probe(segment, side)
+        return isInRegion(room, point.x, point.z)
       })
-      if (isFrontIn && isBackIn) return [{ id: w.id }]
-      if (isFrontIn) return [{ id: w.id, face: "front" }]
-      if (isBackIn) return [{ id: w.id, face: "back" }]
+      if (isFrontIn && isBackIn) return [{ id: segment.id }]
+      if (isFrontIn) return [{ id: segment.id, face: "front" }]
+      if (isBackIn) return [{ id: segment.id, face: "back" }]
       return []
     })
   }
@@ -108,22 +111,22 @@ export const paintWallFaces = (
   targets: WallPaint[],
   color: string | null
 ): SceneObject[] => {
-  const faceOf = new Map(targets.map((t) => [t.id, t.face]))
+  const faceOf = new Map(targets.map((target) => [target.id, target.face]))
   const paint = color ?? undefined
   // A window shows its wall's paint until painted itself: one face
   // painted keeps the other as it showed.
-  const shown = objects.some((o) => faceOf.has(o.id) && isOpening(o.type))
+  const shown = objects.some((object) => faceOf.has(object.id) && isOpening(object.type))
     ? composeWallColors(objects).openings
     : null
-  return objects.map((o) => {
-    if (!faceOf.has(o.id)) return o
-    const isOpeningPaint = isOpening(o.type)
-    const [front, back] = (isOpeningPaint && shown?.get(o.id)) || getWallFaces(o)
-    const face = faceOf.get(o.id)
+  return objects.map((object) => {
+    if (!faceOf.has(object.id)) return object
+    const isOpeningPaint = isOpening(object.type)
+    const [front, back] = (isOpeningPaint && shown?.get(object.id)) || getWallFaces(object)
+    const face = faceOf.get(object.id)
     const faces: WallFaces =
       face === "front" ? [paint, back] : face === "back" ? [front, paint] : [paint, paint]
     const paintFields = composeFacePaint(faces, isOpeningPaint)
-    const repainted = { ...o, ...paintFields }
+    const repainted = { ...object, ...paintFields }
     // Drop the paint fields the new faces don't use (never a window's frame colour).
     const keys = isOpeningPaint
       ? (["colorFront", "colorBack"] as const)

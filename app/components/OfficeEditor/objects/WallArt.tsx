@@ -8,10 +8,10 @@ interface Props {
   variant?: number
 }
 
-const W = 0.72
-const H = 0.52
-const Y = 0.86
-const F = 0.035
+const WIDTH = 0.72
+const HEIGHT = 0.52
+const HANG_HEIGHT = 0.86
+const FRAME_WIDTH = 0.035
 
 type Shape = ["rect" | "circle", number, number, number, number, string]
 
@@ -47,28 +47,32 @@ const ARTS: { bg: string; shapes: Shape[] }[] = [
 export const WallArt = ({ color = "#c9946a", variant }: Props) => {
   const art = ARTS[look(variant, ARTS.length)]
   return (
-    <group position={[0, Y, WALL_FACE]}>
+    <group position={[0, HANG_HEIGHT, WALL_FACE]}>
       {/* Frame: the sides fit between the top and bottom bars — overlapping
           at the corners, their faces would share a plane and flicker */}
       {[
-        [0, H / 2 - F / 2, W, F],
-        [0, -H / 2 + F / 2, W, F],
-        [-W / 2 + F / 2, 0, F, H - F * 2],
-        [W / 2 - F / 2, 0, F, H - F * 2],
-      ].map(([x, y, w, h], i) => (
+        [0, HEIGHT / 2 - FRAME_WIDTH / 2, WIDTH, FRAME_WIDTH],
+        [0, -HEIGHT / 2 + FRAME_WIDTH / 2, WIDTH, FRAME_WIDTH],
+        [-WIDTH / 2 + FRAME_WIDTH / 2, 0, FRAME_WIDTH, HEIGHT - FRAME_WIDTH * 2],
+        [WIDTH / 2 - FRAME_WIDTH / 2, 0, FRAME_WIDTH, HEIGHT - FRAME_WIDTH * 2],
+      ].map(([x, y, width, height], i) => (
         <mesh key={i} position={[x, y, 0.02]} castShadow>
-          <boxGeometry args={[w, h, 0.04]} />
+          <boxGeometry args={[width, height, 0.04]} />
           <Surface color={color} roughness={0.6} />
         </mesh>
       ))}
       <mesh position={[0, 0, 0.012]}>
-        <planeGeometry args={[W - F * 2, H - F * 2]} />
+        <planeGeometry args={[WIDTH - FRAME_WIDTH * 2, HEIGHT - FRAME_WIDTH * 2]} />
         <Surface color={art.bg} roughness={0.8} />
       </mesh>
-      {art.shapes.map(([kind, x, y, a, b, c], i) => (
+      {art.shapes.map(([kind, x, y, shapeWidth, shapeHeight, shapeColor], i) => (
         <mesh key={i} position={[x, y, 0.014 + i * 0.001]}>
-          {kind === "circle" ? <circleGeometry args={[a, 24]} /> : <planeGeometry args={[a, b]} />}
-          <Surface color={c} roughness={0.8} />
+          {kind === "circle" ? (
+            <circleGeometry args={[shapeWidth, 24]} />
+          ) : (
+            <planeGeometry args={[shapeWidth, shapeHeight]} />
+          )}
+          <Surface color={shapeColor} roughness={0.8} />
         </mesh>
       ))}
     </group>

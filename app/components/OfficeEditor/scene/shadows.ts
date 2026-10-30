@@ -10,7 +10,7 @@ import type { WebGLRenderer } from "three"
  * Anything that moves a shadow caster outside of a store update (animations,
  * async model loads, the wall cutaway) must call this.
  */
-export const markShadowsDirty = (gl: WebGLRenderer, invalidate?: () => void) => {
-  gl.shadowMap.needsUpdate = true
+export const markShadowsDirty = (renderer: WebGLRenderer, invalidate?: () => void) => {
+  renderer.shadowMap.needsUpdate = true
   invalidate?.()
 }

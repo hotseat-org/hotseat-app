@@ -3,16 +3,16 @@ import { EDGE_ROTATION, SEG } from "./edges"
 import { ALONG_Z } from "./rotation"
 
 /** Wall edges between two nodes on one line: along an axis, or exactly diagonal. */
-const straightEdges = (a: Cell, b: Cell): WallCell[] => {
+const straightEdges = (start: Cell, end: Cell): WallCell[] => {
   const edges: WallCell[] = []
-  const dx = b.x - a.x
-  const dz = b.z - a.z
-  if (dx !== 0 && Math.abs(Math.abs(dx) - Math.abs(dz)) < 1e-9) {
+  const deltaX = end.x - start.x
+  const deltaZ = end.z - start.z
+  if (deltaX !== 0 && Math.abs(Math.abs(deltaX) - Math.abs(deltaZ)) < 1e-9) {
     // Corner to corner across squares: from the node with the smaller x.
-    const [from, to] = dx > 0 ? [a, b] : [b, a]
+    const [from, to] = deltaX > 0 ? [start, end] : [end, start]
     const isRising = to.z > from.z
-    const n = Math.round(Math.abs(dx) / SEG)
-    for (let i = 0; i < n; i++)
+    const count = Math.round(Math.abs(deltaX) / SEG)
+    for (let i = 0; i < count; i++)
       edges.push({
         x: from.x + (i + 0.5) * SEG,
         z: from.z + (isRising ? 1 : -1) * (i + 0.5) * SEG,
@@ -20,14 +20,16 @@ const straightEdges = (a: Cell, b: Cell): WallCell[] => {
       })
     return edges
   }
-  if (a.z === b.z) {
-    const n = Math.round(Math.abs(b.x - a.x) / SEG)
-    const lo = Math.min(a.x, b.x)
-    for (let i = 0; i < n; i++) edges.push({ x: lo + (i + 0.5) * SEG, z: a.z, rotation: 0 })
-  } else if (a.x === b.x) {
-    const n = Math.round(Math.abs(b.z - a.z) / SEG)
-    const lo = Math.min(a.z, b.z)
-    for (let i = 0; i < n; i++) edges.push({ x: a.x, z: lo + (i + 0.5) * SEG, rotation: ALONG_Z })
+  if (start.z === end.z) {
+    const count = Math.round(Math.abs(end.x - start.x) / SEG)
+    const minX = Math.min(start.x, end.x)
+    for (let i = 0; i < count; i++)
+      edges.push({ x: minX + (i + 0.5) * SEG, z: start.z, rotation: 0 })
+  } else if (start.x === end.x) {
+    const count = Math.round(Math.abs(end.z - start.z) / SEG)
+    const minZ = Math.min(start.z, end.z)
+    for (let i = 0; i < count; i++)
+      edges.push({ x: start.x, z: minZ + (i + 0.5) * SEG, rotation: ALONG_Z })
   }
   return edges
 }
@@ -38,25 +40,31 @@ const straightEdges = (a: Cell, b: Cell): WallCell[] => {
  * other axis. Each edge sits at its midpoint so perpendicular segments meet
  * flush at shared nodes. A straight drag (one axis) yields a straight run.
  */
-export const wallRun = (a: Cell, b: Cell): WallCell[] => {
+export const wallRun = (start: Cell, end: Cell): WallCell[] => {
   // A single click (no drag) drops one segment heading east, for feedback.
-  if (a.x === b.x && a.z === b.z) return [{ x: a.x + SEG / 2, z: a.z, rotation: 0 }]
+  if (start.x === end.x && start.z === end.z)
+    return [{ x: start.x + SEG / 2, z: start.z, rotation: 0 }]
 
-  const dx = b.x - a.x
-  const dz = b.z - a.z
+  const deltaX = end.x - start.x
+  const deltaZ = end.z - start.z
   // Dragged nearer 45° than either axis: a diagonal run, as long as the drag.
-  const ratio = Math.min(Math.abs(dx), Math.abs(dz)) / Math.max(Math.abs(dx), Math.abs(dz))
+  const ratio =
+    Math.min(Math.abs(deltaX), Math.abs(deltaZ)) / Math.max(Math.abs(deltaX), Math.abs(deltaZ))
   if (ratio > Math.tan(Math.PI / 8)) {
-    const n = Math.max(1, Math.round((Math.abs(dx) + Math.abs(dz)) / 2 / SEG))
-    return straightEdges(a, { x: a.x + Math.sign(dx) * n * SEG, z: a.z + Math.sign(dz) * n * SEG })
+    const count = Math.max(1, Math.round((Math.abs(deltaX) + Math.abs(deltaZ)) / 2 / SEG))
+    return straightEdges(start, {
+      x: start.x + Math.sign(deltaX) * count * SEG,
+      z: start.z + Math.sign(deltaZ) * count * SEG,
+    })
   }
-  const corner: Cell = Math.abs(dx) >= Math.abs(dz) ? { x: b.x, z: a.z } : { x: a.x, z: b.z }
+  const corner: Cell =
+    Math.abs(deltaX) >= Math.abs(deltaZ) ? { x: end.x, z: start.z } : { x: start.x, z: end.z }
 
   const seen = new Set<string>()
-  return [...straightEdges(a, corner), ...straightEdges(corner, b)].filter((e) => {
-    const k = `${e.x},${e.z},${Math.round(e.rotation * 100)}`
-    if (seen.has(k)) return false
-    seen.add(k)
+  return [...straightEdges(start, corner), ...straightEdges(corner, end)].filter((edge) => {
+    const key = `${edge.x},${edge.z},${Math.round(edge.rotation * 100)}`
+    if (seen.has(key)) return false
+    seen.add(key)
     return true
   })
 }
@@ -65,14 +73,15 @@ export const wallRun = (a: Cell, b: Cell): WallCell[] => {
  * The four walls of the rectangle between two grid nodes (Room tool). A drag
  * along one axis degenerates to a straight run, like the Wall tool.
  */
-export const roomEdges = (a: Cell, b: Cell): WallCell[] => {
-  if (a.x === b.x || a.z === b.z) return a.x === b.x && a.z === b.z ? [] : wallRun(a, b)
-  const c1 = { x: b.x, z: a.z }
-  const c2 = { x: a.x, z: b.z }
+export const roomEdges = (start: Cell, end: Cell): WallCell[] => {
+  if (start.x === end.x || start.z === end.z)
+    return start.x === end.x && start.z === end.z ? [] : wallRun(start, end)
+  const firstCorner = { x: end.x, z: start.z }
+  const secondCorner = { x: start.x, z: end.z }
   return [
-    ...straightEdges(a, c1),
-    ...straightEdges(c1, b),
-    ...straightEdges(c2, b),
-    ...straightEdges(a, c2),
+    ...straightEdges(start, firstCorner),
+    ...straightEdges(firstCorner, end),
+    ...straightEdges(secondCorner, end),
+    ...straightEdges(start, secondCorner),
   ]
 }

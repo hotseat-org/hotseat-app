@@ -25,18 +25,18 @@ export const createWheelReader = () => {
   let device: "mouse" | "trackpad" = isMac() ? "trackpad" : "mouse"
   let prevTime = -Infinity
 
-  return (e: WheelEvent): WheelIntent => {
-    const isGestureStart = e.timeStamp - prevTime > GESTURE_GAP
-    prevTime = e.timeStamp
-    if (e.ctrlKey) return "smoothZoom"
+  return (event: WheelEvent): WheelIntent => {
+    const isGestureStart = event.timeStamp - prevTime > GESTURE_GAP
+    prevTime = event.timeStamp
+    if (event.ctrlKey) return "smoothZoom"
 
     // Shift + wheel turns a mouse's vertical scroll sideways — not a trackpad sign.
-    const isSideways = e.deltaX !== 0 && !e.shiftKey
-    const isNotch = isGestureStart && !isSideways && Math.abs(e.deltaY) >= MIN_NOTCH
-    if (e.deltaMode !== WheelEvent.DOM_DELTA_PIXEL || isNotch) device = "mouse"
+    const isSideways = event.deltaX !== 0 && !event.shiftKey
+    const isNotch = isGestureStart && !isSideways && Math.abs(event.deltaY) >= MIN_NOTCH
+    if (event.deltaMode !== WheelEvent.DOM_DELTA_PIXEL || isNotch) device = "mouse"
     else if (isSideways) device = "trackpad"
 
-    if (e.altKey) return "rotate"
+    if (event.altKey) return "rotate"
     return device === "mouse" ? "stepZoom" : "smoothZoom"
   }
 }

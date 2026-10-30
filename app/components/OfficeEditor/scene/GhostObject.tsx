@@ -37,8 +37,8 @@ export const GhostObject = ({
   // would get baked in and linger after it moves on.
   const ref = useRef<Group>(null)
   useLayoutEffect(() => {
-    ref.current?.traverse((o) => {
-      o.castShadow = false
+    ref.current?.traverse((object) => {
+      object.castShadow = false
     })
   })
   return (

@@ -14,7 +14,7 @@ const place = (type: ObjectType, x: number, z: number, extra: Partial<SceneObjec
   ...extra,
 })
 const wallsAlong = (cells: { x: number; z: number; rotation: number }[]) =>
-  cells.map((c) => place("wall", c.x, c.z, { rotation: c.rotation }))
+  cells.map((cell) => place("wall", cell.x, cell.z, { rotation: cell.rotation }))
 
 describe("zones", () => {
   test("are listed by name, with how many desks each has", () => {
@@ -24,7 +24,7 @@ describe("zones", () => {
       place("workstation", 8, 0, { zone: "Eng" }),
       place("plant", 0, 4, { zone: "Eng" }),
     ])
-    expect(zones.map((z) => [z.name, z.deskCount])).toEqual([
+    expect(zones.map((zone) => [zone.name, zone.deskCount])).toEqual([
       ["Eng", 2],
       ["Sales", 1],
     ])
@@ -33,14 +33,14 @@ describe("zones", () => {
     const eng = place("workstation", 0, 0, { zone: "Eng" })
     const alone = getZones([eng])[0].color
     const withOthers = getZones([eng, place("workstation", 4, 0, { zone: "Ops" })])
-    expect(withOthers.find((z) => z.name === "Eng")?.color).toBe(alone)
+    expect(withOthers.find((zone) => zone.name === "Eng")?.color).toBe(alone)
   })
   test("number their desks after the zone, the rest D-1…", () => {
     const labels = numberDesksByZone([
       place("workstation", 0, 0, { zone: "Účetnictví" }),
       place("workstation", 4, 0, { zone: "Účetnictví" }),
       place("workstation", 8, 0),
-    ]).map((o) => o.label)
+    ]).map((desk) => desk.label)
     expect(labels).toEqual(["UCE-1", "UCE-2", "D-1"])
   })
   test("spread over the floor round their desks, but not through a wall", () => {
@@ -59,7 +59,7 @@ describe("zones", () => {
       place("workstation", 0, 0, { zone: "Eng" }),
       place("workstation", 2, 0, { zone: "Ops" }),
     ])
-    const [eng, ops] = areas.map((a) => new Set(a.cells.map(([i, j]) => `${i},${j}`)))
-    expect([...eng].some((c) => ops.has(c))).toBe(false)
+    const [eng, ops] = areas.map((area) => new Set(area.cells.map(([i, j]) => `${i},${j}`)))
+    expect([...eng].some((key) => ops.has(key))).toBe(false)
   })
 })

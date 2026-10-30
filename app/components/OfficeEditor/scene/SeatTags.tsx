@@ -19,12 +19,12 @@ export const SeatTags = () => {
   const people = usePeople()
   const { desks } = useDesksOnDay()
   const matchesFilter = useDeskFilter()
-  const booking = useEditorStore((s) => s.booking.enabled)
-  const past = useEditorStore((s) => s.booking.day < s.booking.today)
+  const booking = useEditorStore((state) => state.booking.enabled)
+  const past = useEditorStore((state) => state.booking.day < state.booking.today)
   // The open desk's card replaces its tag.
-  const openId = useEditorStore((s) => s.seatCard?.id)
+  const openId = useEditorStore((state) => state.seatCard?.id)
   // Insights' heatmap: every desk's share of days in use, instead of who's in.
-  const heatmap = useEditorStore((s) => s.heatmap)
+  const heatmap = useEditorStore((state) => state.heatmap)
   if (heatmap)
     return (
       <>

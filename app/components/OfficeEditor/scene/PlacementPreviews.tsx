@@ -35,17 +35,17 @@ export const PlacementPreviews = ({
   dragId: string | null
   carried: SceneObject | undefined
 }) => {
-  const objects = useEditorStore((s) => s.objects)
-  const tool = useEditorStore((s) => s.tool)
-  const placementRotation = useEditorStore((s) => s.placementRotation)
-  const placementColor = useEditorStore((s) =>
-    isObjectType(s.tool) ? s.placementColors[s.tool] : undefined
+  const objects = useEditorStore((state) => state.objects)
+  const tool = useEditorStore((state) => state.tool)
+  const placementRotation = useEditorStore((state) => state.placementRotation)
+  const placementColor = useEditorStore((state) =>
+    isObjectType(state.tool) ? state.placementColors[state.tool] : undefined
   )
-  const measureHints = useEditorStore((s) => s.measureHints)
-  const pendingTurnId = useEditorStore((s) => s.pendingTurn?.id)
+  const measureHints = useEditorStore((state) => state.measureHints)
+  const pendingTurnId = useEditorStore((state) => state.pendingTurn?.id)
   const turnedInto =
     pendingTurnId && pendingTurnId !== dragId
-      ? objects.find((o) => o.id === pendingTurnId)
+      ? objects.find((object) => object.id === pendingTurnId)
       : undefined
   const type = tool as ObjectType
   // The armed piece under the cursor — not while carrying or laying a row.
@@ -57,13 +57,13 @@ export const PlacementPreviews = ({
     <>
       {/* Row / Pod: every copy the drag would lay — red where blocked. */}
       {isRepeatDragging &&
-        repeatPlan.map((p, i) => (
+        repeatPlan.map((placement, i) => (
           <GhostObject
             key={i}
             type={type}
-            x={p.x}
-            z={p.z}
-            rotation={p.rotation}
+            x={placement.x}
+            z={placement.z}
+            rotation={placement.rotation}
             tint={repeatBlocked[i] ? BLOCKED : undefined}
             color={placementColor ?? undefined}
           />

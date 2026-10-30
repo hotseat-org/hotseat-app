@@ -89,34 +89,36 @@ export interface BookingSlice {
 
 export const createBookingSlice = (set: SetState, _get: GetState): BookingSlice => ({
   booking: NO_BOOKING,
-  setBooking: (patch) => set((s) => ({ booking: { ...s.booking, ...patch } })),
-  setBookingDay: (day) => set((s) => ({ booking: { ...s.booking, day } })),
+  setBooking: (patch) => set((state) => ({ booking: { ...state.booking, ...patch } })),
+  setBookingDay: (day) => set((state) => ({ booking: { ...state.booking, day } })),
   applyReserve: (deskId, email, dates) =>
-    set((s) => {
-      const byDay = { ...s.booking.byDay }
-      for (const d of dates) {
-        const day = { ...byDay[d] }
+    set((state) => {
+      const byDay = { ...state.booking.byDay }
+      for (const date of dates) {
+        const day = { ...byDay[date] }
         if (day[deskId] && day[deskId] !== email) continue // taken: the server reports it
-        for (const k of Object.keys(day)) if (day[k] === email) delete day[k]
+        for (const key of Object.keys(day)) if (day[key] === email) delete day[key]
         day[deskId] = email
-        byDay[d] = day
+        byDay[date] = day
       }
-      return { booking: { ...s.booking, byDay } }
+      return { booking: { ...state.booking, byDay } }
     }),
   applyCancel: (email, dates) =>
-    set((s) => {
-      const byDay = { ...s.booking.byDay }
-      for (const d of dates) {
-        const day = { ...byDay[d] }
-        for (const k of Object.keys(day)) if (day[k] === email) delete day[k]
-        byDay[d] = day
+    set((state) => {
+      const byDay = { ...state.booking.byDay }
+      for (const date of dates) {
+        const day = { ...byDay[date] }
+        for (const key of Object.keys(day)) if (day[key] === email) delete day[key]
+        byDay[date] = day
       }
-      return { booking: { ...s.booking, byDay } }
+      return { booking: { ...state.booking, byDay } }
     }),
   applyFavorite: (deskId, isFavorite) =>
-    set((s) => {
-      const favorites = s.booking.preferences.favorites.filter((id) => id !== deskId)
+    set((state) => {
+      const favorites = state.booking.preferences.favorites.filter((id) => id !== deskId)
       if (isFavorite) favorites.push(deskId)
-      return { booking: { ...s.booking, preferences: { ...s.booking.preferences, favorites } } }
+      return {
+        booking: { ...state.booking, preferences: { ...state.booking.preferences, favorites } },
+      }
     }),
 })

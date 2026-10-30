@@ -69,8 +69,8 @@ export interface ViewSlice {
 
 /** The viewer's local wall-clock time in hours [0,24), minute precision. */
 export const nowHours = () => {
-  const d = new Date()
-  return d.getHours() + d.getMinutes() / 60
+  const now = new Date()
+  return now.getHours() + now.getMinutes() / 60
 }
 
 export const createViewSlice = (set: SetState, get: GetState): ViewSlice => ({
@@ -89,32 +89,32 @@ export const createViewSlice = (set: SetState, get: GetState): ViewSlice => ({
   },
   layers: readLayers(),
   toggleLayer: (layer) =>
-    set((s) => {
-      const layers = { ...s.layers, [layer]: !s.layers[layer] }
+    set((state) => {
+      const layers = { ...state.layers, [layer]: !state.layers[layer] }
       writeLayers(layers)
       return { layers }
     }),
   planTurn: readPlanTurn(),
   turnPlan: (quarters) =>
-    set((s) => {
-      const planTurn = (s.planTurn + quarters) & 3
+    set((state) => {
+      const planTurn = (state.planTurn + quarters) & 3
       writePlanTurn(planTurn)
       return { planTurn }
     }),
   measureHints: readMeasurePref(),
   toggleMeasureHints: () =>
-    set((s) => {
-      writeMeasurePref(!s.measureHints)
-      return { measureHints: !s.measureHints }
+    set((state) => {
+      writeMeasurePref(!state.measureHints)
+      return { measureHints: !state.measureHints }
     }),
   isFrameRateShown: false,
-  toggleFrameRate: () => set((s) => ({ isFrameRateShown: !s.isFrameRateShown })),
+  toggleFrameRate: () => set((state) => ({ isFrameRateShown: !state.isFrameRateShown })),
   deskFilter: [],
   toggleDeskFilter: (feature) =>
-    set((s) => ({
-      deskFilter: s.deskFilter.includes(feature)
-        ? s.deskFilter.filter((f) => f !== feature)
-        : [...s.deskFilter, feature],
+    set((state) => ({
+      deskFilter: state.deskFilter.includes(feature)
+        ? state.deskFilter.filter((active) => active !== feature)
+        : [...state.deskFilter, feature],
     })),
   heatmap: null,
   setHeatmap: (heatmap) => set({ heatmap, seatCard: null }),
@@ -123,13 +123,15 @@ export const createViewSlice = (set: SetState, get: GetState): ViewSlice => ({
   resetSpotlight: () => set({ spotlight: null }),
   route: null,
   showRoute: (deskId) =>
-    set((s) => ({
-      route: { deskId, from: "desk", nonce: (s.route?.nonce ?? 0) + 1 },
+    set((state) => ({
+      route: { deskId, from: "desk", nonce: (state.route?.nonce ?? 0) + 1 },
       seatCard: null,
     })),
   setRouteFrom: (from) =>
-    set((s) => (s.route ? { route: { ...s.route, from, nonce: s.route.nonce + 1 } } : {})),
+    set((state) =>
+      state.route ? { route: { ...state.route, from, nonce: state.route.nonce + 1 } } : {}
+    ),
   clearRoute: () => set({ route: null }),
   fitNonce: 0,
-  requestFit: () => set((s) => ({ fitNonce: s.fitNonce + 1 })),
+  requestFit: () => set((state) => ({ fitNonce: state.fitNonce + 1 })),
 })

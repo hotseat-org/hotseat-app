@@ -10,8 +10,8 @@ interface Props {
   variant?: number
 }
 
-const W = 2.0
-const D = 0.9
+const WIDTH = 2.0
+const DEPTH = 0.9
 const SEAT = 0.4
 
 /** Cushion colours (and throw, if any) per look. */
@@ -24,17 +24,17 @@ const SOFA_LOOKS: [string, string, string?][] = [
 /** A two-seat couch: base, cushions, backrest, armrests, little feet. */
 export const Sofa = ({ color = "#5f8a86", variant }: Props) => {
   const feet: [number, number][] = [
-    [-W / 2 + 0.14, -D / 2 + 0.14],
-    [W / 2 - 0.14, -D / 2 + 0.14],
-    [-W / 2 + 0.14, D / 2 - 0.14],
-    [W / 2 - 0.14, D / 2 - 0.14],
+    [-WIDTH / 2 + 0.14, -DEPTH / 2 + 0.14],
+    [WIDTH / 2 - 0.14, -DEPTH / 2 + 0.14],
+    [-WIDTH / 2 + 0.14, DEPTH / 2 - 0.14],
+    [WIDTH / 2 - 0.14, DEPTH / 2 - 0.14],
   ]
   return (
     <group>
       {/* Seat base */}
       <RoundedBox
         // Inset from the armrests' faces (see FLUSH_INSET).
-        args={[W - 2 * FLUSH_INSET, SEAT, D - 2 * FLUSH_INSET]}
+        args={[WIDTH - 2 * FLUSH_INSET, SEAT, DEPTH - 2 * FLUSH_INSET]}
         radius={0.08}
         smoothness={4}
         position={[0, SEAT / 2 + 0.08, 0]}
@@ -44,13 +44,13 @@ export const Sofa = ({ color = "#5f8a86", variant }: Props) => {
         <Surface color={color} roughness={0.9} />
       </RoundedBox>
       {/* Seat cushions */}
-      {[-1, 1].map((s) => (
+      {[-1, 1].map((side) => (
         <RoundedBox
-          key={s}
-          args={[W / 2 - 0.26, 0.12, D - 0.3]}
+          key={side}
+          args={[WIDTH / 2 - 0.26, 0.12, DEPTH - 0.3]}
           radius={0.05}
           smoothness={4}
-          position={[s * (W / 4 - 0.03), SEAT + 0.14, 0.06]}
+          position={[side * (WIDTH / 4 - 0.03), SEAT + 0.14, 0.06]}
           castShadow
         >
           <Surface color={color} roughness={0.9} />
@@ -58,22 +58,22 @@ export const Sofa = ({ color = "#5f8a86", variant }: Props) => {
       ))}
       {/* Backrest */}
       <RoundedBox
-        args={[W - 2 * FLUSH_INSET, 0.5, 0.18]}
+        args={[WIDTH - 2 * FLUSH_INSET, 0.5, 0.18]}
         radius={0.08}
         smoothness={4}
-        position={[0, SEAT + 0.33, -D / 2 + 0.09 + FLUSH_INSET]}
+        position={[0, SEAT + 0.33, -DEPTH / 2 + 0.09 + FLUSH_INSET]}
         castShadow
       >
         <Surface color={color} roughness={0.9} />
       </RoundedBox>
       {/* Armrests */}
-      {[-1, 1].map((s) => (
+      {[-1, 1].map((side) => (
         <RoundedBox
-          key={s}
-          args={[0.18, SEAT + 0.22, D]}
+          key={side}
+          args={[0.18, SEAT + 0.22, DEPTH]}
           radius={0.08}
           smoothness={4}
-          position={[s * (W / 2 - 0.09), (SEAT + 0.22) / 2 + 0.08, 0]}
+          position={[side * (WIDTH / 2 - 0.09), (SEAT + 0.22) / 2 + 0.08, 0]}
           castShadow
         >
           <Surface color={color} roughness={0.9} />
@@ -88,12 +88,22 @@ export const Sofa = ({ color = "#5f8a86", variant }: Props) => {
       ))}
       {/* Lived-in: cushions (and maybe a throw); colours per look */}
       {(() => {
-        const [a, b, t] = SOFA_LOOKS[look(variant, SOFA_LOOKS.length)]
+        const [firstColor, secondColor, throwColor] = SOFA_LOOKS[look(variant, SOFA_LOOKS.length)]
         return (
           <>
-            <Cushion color={a} position={[-W / 2 + 0.38, SEAT + 0.2, -D / 2 + 0.3]} turn={0.25} />
-            <Cushion color={b} position={[W / 2 - 0.4, SEAT + 0.2, -D / 2 + 0.3]} turn={-0.2} />
-            {t && <Throw color={t} position={[W / 2 - 0.09, SEAT + 0.3, 0.05]} />}
+            <Cushion
+              color={firstColor}
+              position={[-WIDTH / 2 + 0.38, SEAT + 0.2, -DEPTH / 2 + 0.3]}
+              turn={0.25}
+            />
+            <Cushion
+              color={secondColor}
+              position={[WIDTH / 2 - 0.4, SEAT + 0.2, -DEPTH / 2 + 0.3]}
+              turn={-0.2}
+            />
+            {throwColor && (
+              <Throw color={throwColor} position={[WIDTH / 2 - 0.09, SEAT + 0.3, 0.05]} />
+            )}
           </>
         )
       })()}

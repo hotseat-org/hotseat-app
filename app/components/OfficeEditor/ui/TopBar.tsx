@@ -47,13 +47,15 @@ interface Props {
 
 export const TopBar = ({ dbMode, saving, saveFailed, onRetrySave }: Props) => {
   const { t, tn } = useI18n()
-  const setCommandSearchOpen = useEditorStore((s) => s.setCommandSearchOpen)
-  const canUndo = useEditorStore((s) => s.past.length > 0)
-  const canRedo = useEditorStore((s) => s.future.length > 0)
-  const undo = useEditorStore((s) => s.undo)
-  const redo = useEditorStore((s) => s.redo)
-  const count = useEditorStore((s) => s.objects.filter((o) => !isMarker(o.type)).length)
-  const clear = useEditorStore((s) => s.clear)
+  const setCommandSearchOpen = useEditorStore((state) => state.setCommandSearchOpen)
+  const canUndo = useEditorStore((state) => state.past.length > 0)
+  const canRedo = useEditorStore((state) => state.future.length > 0)
+  const undo = useEditorStore((state) => state.undo)
+  const redo = useEditorStore((state) => state.redo)
+  const count = useEditorStore(
+    (state) => state.objects.filter((object) => !isMarker(object.type)).length
+  )
+  const clear = useEditorStore((state) => state.clear)
 
   return (
     <>
@@ -133,11 +135,11 @@ export const TopBar = ({ dbMode, saving, saveFailed, onRetrySave }: Props) => {
                 {t("Shortcuts")}
               </h4>
               <dl className="flex flex-col gap-1.5 text-sm">
-                {SHORTCUTS.map(([k, v]) => (
-                  <div key={k} className="flex items-center justify-between gap-3">
-                    <dt className="text-muted">{t(v)}</dt>
+                {SHORTCUTS.map(([shortcut, description]) => (
+                  <div key={shortcut} className="flex items-center justify-between gap-3">
+                    <dt className="text-muted">{t(description)}</dt>
                     <dd>
-                      <Kbd>{t(k)}</Kbd>
+                      <Kbd>{t(shortcut)}</Kbd>
                     </dd>
                   </div>
                 ))}

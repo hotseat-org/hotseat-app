@@ -4,11 +4,11 @@ import { msg } from "~/i18n/msg"
 
 const HALF = Math.PI / 2
 
-let seq = 0
-const oid = () => `tpl-${(seq++).toString(36)}`
+let sequence = 0
+const createId = () => `tpl-${(sequence++).toString(36)}`
 
 const make = (type: ObjectType, x: number, z: number, rotation = 0): SceneObject => ({
-  id: oid(),
+  id: createId(),
   type,
   x,
   z,
@@ -17,11 +17,15 @@ const make = (type: ObjectType, x: number, z: number, rotation = 0): SceneObject
 
 /** Wall half-segments along a straight line between two grid nodes. */
 const line = (x0: number, z0: number, x1: number, z1: number): SceneObject[] =>
-  wallRun({ x: x0, z: z0 }, { x: x1, z: z1 }).map((e) => make("wall", e.x, e.z, e.rotation))
+  wallRun({ x: x0, z: z0 }, { x: x1, z: z1 }).map((placement) =>
+    make("wall", placement.x, placement.z, placement.rotation)
+  )
 
 /** The same, as glass (meeting rooms and booths you can see into). */
 const glassLine = (x0: number, z0: number, x1: number, z1: number): SceneObject[] =>
-  wallRun({ x: x0, z: z0 }, { x: x1, z: z1 }).map((e) => make("glassWall", e.x, e.z, e.rotation))
+  wallRun({ x: x0, z: z0 }, { x: x1, z: z1 }).map((placement) =>
+    make("glassWall", placement.x, placement.z, placement.rotation)
+  )
 
 /** Wall half-segments around the rectangle spanning grid nodes (x0,z0)-(x1,z1). */
 const roomWalls = (x0: number, z0: number, x1: number, z1: number): SceneObject[] => [
@@ -45,10 +49,10 @@ const withOpening = (
   z: number,
   vertical = false
 ): SceneObject[] => [
-  ...walls.filter((w) =>
+  ...walls.filter((wall) =>
     vertical
-      ? !(w.rotation === HALF && w.x === x && Math.abs(w.z - z) < 0.5)
-      : !(w.rotation === 0 && w.z === z && Math.abs(w.x - x) < 0.5)
+      ? !(wall.rotation === HALF && wall.x === x && Math.abs(wall.z - z) < 0.5)
+      : !(wall.rotation === 0 && wall.z === z && Math.abs(wall.x - x) < 0.5)
   ),
   make(kind, x, z, vertical ? HALF : 0),
 ]
@@ -62,14 +66,14 @@ const withOpenings = (
   openings: [OpeningKind, number, number, boolean?][]
 ): SceneObject[] => {
   const seen = new Set<string>()
-  const unique = walls.filter((w) => {
-    const key = `${w.x},${w.z},${w.rotation}`
+  const unique = walls.filter((wall) => {
+    const key = `${wall.x},${wall.z},${wall.rotation}`
     if (seen.has(key)) return false
     seen.add(key)
     return true
   })
   return openings.reduce(
-    (acc, [kind, x, z, vertical]) => withOpening(kind, acc, x, z, vertical),
+    (current, [kind, x, z, vertical]) => withOpening(kind, current, x, z, vertical),
     unique
   )
 }
@@ -96,8 +100,8 @@ const pod = (x: number, z: number, pairs: number): SceneObject[] =>
  * `dir` which way the stalls open (−1: the wall is to the south, doors north).
  * Returns the partitions (walls) and the toilets; doors are cut by the caller.
  */
-const stalls = (x: number, back: number, count: number, dir: 1 | -1) => {
-  const front = back + dir * 1.5
+const stalls = (x: number, back: number, count: number, direction: 1 | -1) => {
+  const front = back + direction * 1.5
   const walls = [
     ...line(x, front, x + count * 1.5, front),
     ...Array.from({ length: count + 1 }, (_, i) => i)
@@ -105,7 +109,7 @@ const stalls = (x: number, back: number, count: number, dir: 1 | -1) => {
       .flatMap((i) => line(x + i * 1.5, Math.min(back, front), x + i * 1.5, Math.max(back, front))),
   ]
   const toilets = Array.from({ length: count }, (_, i) =>
-    make("toilet", x + i * 1.5 + 0.75, back + dir * 0.5, dir > 0 ? FACE_S : FACE_N)
+    make("toilet", x + i * 1.5 + 0.75, back + direction * 0.5, direction > 0 ? FACE_S : FACE_N)
   )
   const doors: [OpeningKind, number, number][] = Array.from({ length: count }, (_, i) => [
     "door",
@@ -136,7 +140,7 @@ export const TEMPLATES: OfficeTemplate[] = [
     label: msg("Full office"),
     description: msg("Desks, meeting room, kitchen & lounge"),
     build: () => {
-      seq = 0
+      sequence = 0
       // 16 × 11 shell with the entrance on the south wall. A meeting room sits in
       // the north-east corner (partition at x = 11 and z = 5.5, door on the
       // south side); the kitchen corner and lounge are open-plan.
@@ -225,7 +229,7 @@ export const TEMPLATES: OfficeTemplate[] = [
     id: "open-plan",
     label: msg("Open plan"),
     build: () => {
-      seq = 0
+      sequence = 0
       // Entrance door on the bottom edge, windows on the other three sides.
       const walls = withOpenings(roomWalls(0, 0, 10, 7), [
         ["door", 4.5, 7],
@@ -253,7 +257,7 @@ export const TEMPLATES: OfficeTemplate[] = [
     id: "meeting-rooms",
     label: msg("Meeting rooms"),
     build: () => {
-      seq = 0
+      sequence = 0
       // Entrance door on the bottom edge, plus an interior partition at x = 5
       // with a 1-unit doorway gap (z 3–4).
       const walls = [
@@ -284,7 +288,7 @@ export const TEMPLATES: OfficeTemplate[] = [
     label: msg("Team floor"),
     description: msg("24 desks, meeting & focus rooms, kitchen, restrooms"),
     build: () => {
-      seq = 0
+      sequence = 0
       // 24 × 14 m. Open workspace (west); a meeting room and two focus rooms
       // (east); along the south: restrooms, a lounge by the entrance, and the
       // kitchen with a dining table.
@@ -400,7 +404,7 @@ export const TEMPLATES: OfficeTemplate[] = [
     label: msg("Headquarters"),
     description: msg("36 desks, boardroom, booths, kitchen, two restrooms"),
     build: () => {
-      seq = 0
+      sequence = 0
       // 32 × 20 m. North: boardroom, two meeting rooms, phone booths and the
       // server room, off a corridor. Middle: the workspace, and the kitchen to
       // the east. South: restrooms at both ends, a lounge, and reception at
@@ -541,7 +545,7 @@ export const TEMPLATES: OfficeTemplate[] = [
     label: msg("Studio"),
     description: msg("20 desks, glass meeting room & booths, coffee bar"),
     build: () => {
-      seq = 0
+      sequence = 0
       // 20 × 12 m. Two benches of desks; glass meeting room and two glass
       // booths in the north-east; along the south: restrooms, a lounge by the
       // entrance and a coffee bar.

@@ -42,25 +42,28 @@ export const useFurnitureDrag = (readOnly: boolean) => {
     const start = dragStart.current
     if (!start) return
     const all = storeApi.getState().objects
-    const o = all.find((obj) => obj.id === start.id)
-    if (o && furnitureCollides(all, o.type, o.x, o.z, o.rotation, o.id)) {
+    const object = all.find((candidate) => candidate.id === start.id)
+    if (
+      object &&
+      furnitureCollides(all, object.type, object.x, object.z, object.rotation, object.id)
+    ) {
       setBlockedAt(performance.now())
       return putBack()
     }
     endDrag()
   }
 
-  const handlePick = (id: string, e: ThreeEvent<PointerEvent>) => {
+  const handlePick = (id: string, event: ThreeEvent<PointerEvent>) => {
     if (dragStart.current) return
-    const o = storeApi.getState().objects.find((obj) => obj.id === id)
-    if (!o) return
-    const hit = e.ray.intersectPlane(GROUND, new Vector3())
-    const offset = hit ? { dx: o.x - hit.x, dz: o.z - hit.z } : { dx: 0, dz: 0 }
-    const { clientX: x0, clientY: y0 } = e.nativeEvent
-    const move = (ev: PointerEvent) => {
-      if (Math.hypot(ev.clientX - x0, ev.clientY - y0) <= DRAG_PX) return
+    const object = storeApi.getState().objects.find((candidate) => candidate.id === id)
+    if (!object) return
+    const hit = event.ray.intersectPlane(GROUND, new Vector3())
+    const offset = hit ? { dx: object.x - hit.x, dz: object.z - hit.z } : { dx: 0, dz: 0 }
+    const { clientX: x0, clientY: y0 } = event.nativeEvent
+    const move = (moveEvent: PointerEvent) => {
+      if (Math.hypot(moveEvent.clientX - x0, moveEvent.clientY - y0) <= DRAG_PX) return
       window.removeEventListener("pointermove", move)
-      dragStart.current = { id, x: o.x, z: o.z, rotation: o.rotation }
+      dragStart.current = { id, x: object.x, z: object.z, rotation: object.rotation }
       setGrab(offset)
       storeApi.getState().beginBatch()
       setDragId(id)
@@ -92,13 +95,13 @@ export const useFurnitureDrag = (readOnly: boolean) => {
   // Esc while dragging: back where it was.
   useEffect(() => {
     if (!dragId) return
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && latest.current.putBack()
+    const onKey = (event: KeyboardEvent) => event.key === "Escape" && latest.current.putBack()
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
   }, [dragId])
 
   const onStartDrag = useCallback(
-    (id: string, e: ThreeEvent<PointerEvent>) => latest.current.handlePick(id, e),
+    (id: string, event: ThreeEvent<PointerEvent>) => latest.current.handlePick(id, event),
     []
   )
   return { dragId, grab, blockedAt, onStartDrag }

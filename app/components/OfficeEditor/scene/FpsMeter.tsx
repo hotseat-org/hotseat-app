@@ -33,53 +33,53 @@ const FIRST = -1000
  * draw calls count every one of them.
  */
 export const FpsMeter = ({ onSample }: Props) => {
-  const gl = useThree((s) => s.gl)
-  const scene = useThree((s) => s.scene)
+  const renderer = useThree((state) => state.gl)
+  const scene = useThree((state) => state.scene)
   const last = useRef(performance.now())
   const totals = useRef({ frames: 0, elapsed: 0, cpu: 0, drawCalls: 0, triangles: 0 })
   const frame = useRef({ start: 0, renderEnd: 0 })
 
   // Count every render call of the frame, not just the last one.
   useEffect(() => {
-    const info = gl.info
+    const info = renderer.info
     info.autoReset = false
-    const render = gl.render
-    gl.render = function (...args) {
+    const render = renderer.render
+    renderer.render = function (...args) {
       render.apply(this, args)
       frame.current.renderEnd = performance.now()
     }
     return () => {
-      gl.render = render
+      renderer.render = render
       info.autoReset = true
     }
-  }, [gl])
+  }, [renderer])
 
   useFrame(() => {
     const now = performance.now()
-    const t = totals.current
-    const f = frame.current
+    const sums = totals.current
+    const timing = frame.current
     // The previous frame, now complete.
-    if (f.start && f.renderEnd > f.start) {
-      t.cpu += f.renderEnd - f.start
-      t.drawCalls += gl.info.render.calls
-      t.triangles += gl.info.render.triangles
-      t.frames += 1
-      t.elapsed += now - last.current
+    if (timing.start && timing.renderEnd > timing.start) {
+      sums.cpu += timing.renderEnd - timing.start
+      sums.drawCalls += renderer.info.render.calls
+      sums.triangles += renderer.info.render.triangles
+      sums.frames += 1
+      sums.elapsed += now - last.current
     }
-    gl.info.reset()
+    renderer.info.reset()
     last.current = now
-    f.start = now
+    timing.start = now
 
     // Report on a fixed ~200ms cadence so the readout is stable, not jittery.
-    if (t.elapsed >= 200 && t.frames > 0) {
+    if (sums.elapsed >= 200 && sums.frames > 0) {
       let objects = 0
       scene.traverse(() => objects++)
       onSample({
-        fps: (t.frames * 1000) / t.elapsed,
-        ms: t.elapsed / t.frames,
-        cpuMs: t.cpu / t.frames,
-        drawCalls: Math.round(t.drawCalls / t.frames),
-        triangles: Math.round(t.triangles / t.frames),
+        fps: (sums.frames * 1000) / sums.elapsed,
+        ms: sums.elapsed / sums.frames,
+        cpuMs: sums.cpu / sums.frames,
+        drawCalls: Math.round(sums.drawCalls / sums.frames),
+        triangles: Math.round(sums.triangles / sums.frames),
         objects,
       })
       totals.current = { frames: 0, elapsed: 0, cpu: 0, drawCalls: 0, triangles: 0 }

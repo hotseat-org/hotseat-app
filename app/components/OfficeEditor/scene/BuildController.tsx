@@ -31,11 +31,11 @@ const ERASE = "#ef4444"
 const GROUND = new Plane(new Vector3(0, 1, 0), 0)
 
 /** Wall nodes stay on the buildable floor (same bounds as furniture). */
-const clampNode = (v: number) =>
-  Math.max(-BUILD_HALF, Math.min(BUILD_HALF, Math.round(v / SEG) * SEG))
+const clampNode = (value: number) =>
+  Math.max(-BUILD_HALF, Math.min(BUILD_HALF, Math.round(value / SEG) * SEG))
 
-const same = (a: Cell | null, b: Cell | null) =>
-  (!a && !b) || (!!a && !!b && a.x === b.x && a.z === b.z)
+const same = (first: Cell | null, second: Cell | null) =>
+  (!first && !second) || (!!first && !!second && first.x === second.x && first.z === second.z)
 
 const isBuildTool = (tool: Tool) =>
   tool === "room" || tool === "delete" || isWall(tool) || isOpening(tool)
@@ -46,12 +46,12 @@ const isBuildTool = (tool: Tool) =>
  * previews of what will be added / removed, committing on release.
  */
 export const BuildController = () => {
-  const tool = useEditorStore((s) => s.tool)
-  const objects = useEditorStore((s) => s.objects)
+  const tool = useEditorStore((state) => state.tool)
+  const objects = useEditorStore((state) => state.objects)
   const store = useEditorStoreApi()
   const active = isBuildTool(tool)
 
-  const { camera, raycaster, pointer, gl } = useThree()
+  const { camera, raycaster, pointer, gl: renderer } = useThree()
 
   const [hover, setHover] = useState<Cell | null>(null)
   const [start, setStart] = useState<Cell | null>(null)
@@ -84,32 +84,32 @@ export const BuildController = () => {
   // Start / commit the drag from the canvas directly (bypasses occluders).
   useEffect(() => {
     if (!active) return
-    const el = gl.domElement
+    const element = renderer.domElement
 
-    const onDown = (e: PointerEvent) => {
-      if (e.button !== 0 || !hoverRef.current) return
+    const onDown = (event: PointerEvent) => {
+      if (event.button !== 0 || !hoverRef.current) return
       downObjectsRef.current = store.getState().objects
       setStart(hoverRef.current)
       setEnd(hoverRef.current)
     }
 
-    const onUp = (e: PointerEvent) => {
-      if (e.button !== 0) return
-      const s = startRef.current
-      const eNode = endRef.current
-      if (s && eNode) {
+    const onUp = (event: PointerEvent) => {
+      if (event.button !== 0) return
+      const startNode = startRef.current
+      const endNode = endRef.current
+      if (startNode && endNode) {
         const state = store.getState()
         const raw = hoverRawRef.current
         if (isWall(state.tool)) {
-          state.addWalls(wallRun(s, eNode), state.tool)
+          state.addWalls(wallRun(startNode, endNode), state.tool)
         } else if (state.tool === "room") {
-          state.addWalls(roomEdges(s, eNode))
+          state.addWalls(roomEdges(startNode, endNode))
         } else if (isOpening(state.tool)) {
           // Toggle the segment nearest the click: wall → opening, opening of
           // this kind → wall, the other kind → swapped (door ⇄ window).
           const id = raw && nearestEdgeId(state.objects, raw.x, raw.z)
           if (id) state.toggleOpening(id, state.tool, raw.x, raw.z)
-        } else if (same(s, eNode)) {
+        } else if (same(startNode, endNode)) {
           // A click (no drag): remove the single segment under the cursor —
           // unless that click already erased a piece of furniture (handled by
           // ObjectRenderer; R3F's stopPropagation doesn't reach this DOM
@@ -118,20 +118,20 @@ export const BuildController = () => {
           const id = !erasedFurniture && raw && nearestEdgeId(state.objects, raw.x, raw.z)
           if (id) state.removeObject(id)
         } else {
-          state.removeEdges(wallRun(s, eNode))
+          state.removeEdges(wallRun(startNode, endNode))
         }
       }
       setStart(null)
       setEnd(null)
     }
 
-    el.addEventListener("pointerdown", onDown)
+    element.addEventListener("pointerdown", onDown)
     window.addEventListener("pointerup", onUp)
     return () => {
-      el.removeEventListener("pointerdown", onDown)
+      element.removeEventListener("pointerdown", onDown)
       window.removeEventListener("pointerup", onUp)
     }
-  }, [active, gl, store])
+  }, [active, renderer, store])
 
   // Reset any in-progress drag when switching tools.
   useEffect(() => {
@@ -148,11 +148,11 @@ export const BuildController = () => {
       <>
         {run ? (
           <GhostWalls
-            edges={run.map((c) => ({
-              ...c,
+            edges={run.map((edge) => ({
+              ...edge,
               type: tool === "glassWall" ? "glassWall" : "wall",
               // Red where the run would cut through furniture (skipped on commit).
-              tint: edgeBlocked(objects, c) ? ERASE : undefined,
+              tint: edgeBlocked(objects, edge) ? ERASE : undefined,
             }))}
           />
         ) : (
@@ -170,34 +170,34 @@ export const BuildController = () => {
     // opening of this kind back to walls.
     const raw = hoverRawRef.current
     const id = raw ? nearestEdgeId(objects, raw.x, raw.z) : null
-    const seg = id ? objects.find((o) => o.id === id) : null
-    if (!seg) return null
-    const plan = openingPlan(objects, seg.id, tool, raw?.x, raw?.z)
+    const segment = id ? objects.find((object) => object.id === id) : null
+    if (!segment) return null
+    const plan = openingPlan(objects, segment.id, tool, raw?.x, raw?.z)
     if (!plan) {
       // A lone half-segment with no wall neighbour can't hold an opening.
       return (
         <GhostObject
-          type={seg.type}
-          x={seg.x}
-          z={seg.z}
-          rotation={seg.rotation}
+          type={segment.type}
+          x={segment.x}
+          z={segment.z}
+          rotation={segment.rotation}
           tint={ERASE}
           scale={1.06}
         />
       )
     }
-    const reverting = seg.type === tool
-    const target = reverting ? seg : plan.add[0]
-    const [na, nb] = edgeNodes({ ...target, id: "" })
+    const reverting = segment.type === tool
+    const target = reverting ? segment : plan.add[0]
+    const [startNode, endNode] = edgeNodes({ ...target, id: "" })
     const color = reverting ? ERASE : BUILD
     return (
       <>
         {reverting ? (
           // This opening reverts to walls — highlight its two halves.
           <GhostWalls
-            edges={plan.add.map((w) => ({
-              ...w,
-              type: w.type === "glassWall" ? "glassWall" : "wall",
+            edges={plan.add.map((edge) => ({
+              ...edge,
+              type: edge.type === "glassWall" ? "glassWall" : "wall",
               tint: ERASE,
             }))}
             grow={0.03}
@@ -206,8 +206,8 @@ export const BuildController = () => {
           // The new door/window appears here — show it translucent in place.
           <GhostObject type={tool} x={target.x} z={target.z} rotation={target.rotation} />
         )}
-        <NodeMarker x={na.x} z={na.z} color={color} />
-        <NodeMarker x={nb.x} z={nb.z} color={color} />
+        <NodeMarker x={startNode.x} z={startNode.z} color={color} />
+        <NodeMarker x={endNode.x} z={endNode.z} color={color} />
       </>
     )
   }
@@ -217,31 +217,34 @@ export const BuildController = () => {
   if (run && start && end && !same(start, end)) {
     const kill = new Set(run.map(edgeKey))
     doomed = objects.filter(
-      (o) => isEdgeType(o.type) && unitEdges(o).some((e) => kill.has(edgeKey(e)))
+      (object) =>
+        isEdgeType(object.type) && unitEdges(object).some((edge) => kill.has(edgeKey(edge)))
     )
   } else if (hoverRawRef.current) {
     const id = nearestEdgeId(objects, hoverRawRef.current.x, hoverRawRef.current.z)
-    if (id) doomed = objects.filter((o) => o.id === id)
+    if (id) doomed = objects.filter((object) => object.id === id)
   }
 
   // Walls as merged runs; doors and windows as themselves.
   return (
     <>
       <GhostWalls
-        edges={doomed.flatMap((o) =>
-          o.type === "wall" || o.type === "glassWall" ? [{ ...o, type: o.type, tint: ERASE }] : []
+        edges={doomed.flatMap((object) =>
+          object.type === "wall" || object.type === "glassWall"
+            ? [{ ...object, type: object.type, tint: ERASE }]
+            : []
         )}
         grow={0.04}
       />
       {doomed
-        .filter((o) => isOpening(o.type))
-        .map((o) => (
+        .filter((object) => isOpening(object.type))
+        .map((object) => (
           <GhostObject
-            key={o.id}
-            type={o.type}
-            x={o.x}
-            z={o.z}
-            rotation={o.rotation}
+            key={object.id}
+            type={object.type}
+            x={object.x}
+            z={object.z}
+            rotation={object.rotation}
             tint={ERASE}
             scale={1.06}
           />

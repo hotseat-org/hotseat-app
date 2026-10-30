@@ -32,16 +32,16 @@ interface Props {
  */
 export const WallResize = ({ ref, setCursorHint }: Props) => {
   const store = useEditorStoreApi()
-  const camera = useThree((s) => s.camera)
-  const raycaster = useThree((s) => s.raycaster)
-  const gl = useThree((s) => s.gl)
+  const camera = useThree((state) => state.camera)
+  const raycaster = useThree((state) => state.raycaster)
+  const renderer = useThree((state) => state.gl)
   const hovered = useRef<string | null>(null)
   const cancel = useRef<(() => void) | null>(null)
   useEffect(() => () => cancel.current?.(), [])
 
   /** The floor point under a screen point. */
   const groundAt = (clientX: number, clientY: number): Cell | null => {
-    const rect = gl.domElement.getBoundingClientRect()
+    const rect = renderer.domElement.getBoundingClientRect()
     const pointer = new Vector2(
       ((clientX - rect.left) / rect.width) * 2 - 1,
       -((clientY - rect.top) / rect.height) * 2 + 1
@@ -54,9 +54,10 @@ export const WallResize = ({ ref, setCursorHint }: Props) => {
   /** The double arrow across the wall, as the camera sees it (to 45°). */
   const hintFor = (wall: SceneObject): CursorHint => {
     const across = edgeDirection(wall.rotation) === "x" ? [0, 1] : [1, 0]
-    const a = new Vector3(wall.x, 0, wall.z).project(camera)
-    const b = new Vector3(wall.x + across[0], 0, wall.z + across[1]).project(camera)
-    const degrees = (Math.atan2(-(b.y - a.y), b.x - a.x) * 180) / Math.PI
+    const centrePoint = new Vector3(wall.x, 0, wall.z).project(camera)
+    const acrossPoint = new Vector3(wall.x + across[0], 0, wall.z + across[1]).project(camera)
+    const degrees =
+      (Math.atan2(-(acrossPoint.y - centrePoint.y), acrossPoint.x - centrePoint.x) * 180) / Math.PI
     const step = (((Math.round(degrees / 45) * 45) % 180) + 180) % 180
     return `resize${step}` as CursorHint
   }
@@ -68,13 +69,13 @@ export const WallResize = ({ ref, setCursorHint }: Props) => {
       const id = tool === "select" && !armedKit ? findWallGrip(objects, x, z) : null
       if (id === hovered.current) return
       hovered.current = id
-      const wall = id ? objects.find((o) => o.id === id) : undefined
+      const wall = id ? objects.find((object) => object.id === id) : undefined
       setCursorHint(HINT_ID, wall ? hintFor(wall) : null)
     },
     press: (x, z) => {
       const base = store.getState().objects
       const gripId = findWallGrip(base, x, z)
-      const grip = gripId ? base.find((o) => o.id === gripId) : undefined
+      const grip = gripId ? base.find((object) => object.id === gripId) : undefined
       if (!grip || !gripId) return false
       const across = edgeDirection(grip.rotation) === "x" ? "z" : "x"
       const start = across === "z" ? z : x
@@ -82,10 +83,10 @@ export const WallResize = ({ ref, setCursorHint }: Props) => {
       store.getState().beginBatch()
       setCursorHint(HINT_ID, hintFor(grip))
 
-      const handleMove = (ev: PointerEvent) => {
-        const p = groundAt(ev.clientX, ev.clientY)
-        if (!p) return
-        const next = Math.round((p[across] - start) / SEG) * SEG
+      const handleMove = (event: PointerEvent) => {
+        const point = groundAt(event.clientX, event.clientY)
+        if (!point) return
+        const next = Math.round((point[across] - start) / SEG) * SEG
         if (next === offset) return
         const shift = next === 0 ? { objects: base } : composeWallShift(base, gripId, next)
         if (!shift) return // can't go there: stays at the last step that could
@@ -104,9 +105,9 @@ export const WallResize = ({ ref, setCursorHint }: Props) => {
         setCursorHint(HINT_ID, null)
       }
       const handleUp = () => finish(true)
-      const handleKey = (ev: KeyboardEvent) => {
-        if (ev.key !== "Escape") return
-        ev.stopPropagation() // not also "deselect, back to Select"
+      const handleKey = (event: KeyboardEvent) => {
+        if (event.key !== "Escape") return
+        event.stopPropagation() // not also "deselect, back to Select"
         finish(false)
       }
       window.addEventListener("pointermove", handleMove)
