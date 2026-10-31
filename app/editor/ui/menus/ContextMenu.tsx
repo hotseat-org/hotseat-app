@@ -155,7 +155,7 @@ const ContextMenuPanel = ({ menu }: { menu: Menu }) => {
           event.stopPropagation()
           if (event.key === "Escape") close()
         }}
-        className="pointer-events-auto absolute z-40 w-64 rounded-xl border border-border bg-overlay/95 p-2.5 text-foreground shadow-overlay backdrop-blur-md"
+        className="pointer-events-auto absolute z-40 w-64 rounded-xl border border-border bg-overlay p-2.5 text-foreground shadow-overlay"
       >
         {step === "naming" ? (
           <SaveRoomForm menu={menu} onSaved={() => setStep("saved")} onCancel={close} />
@@ -176,7 +176,7 @@ const ContextMenuPanel = ({ menu }: { menu: Menu }) => {
       onKeyDown={handleKeyDown}
       onContextMenu={(event) => event.preventDefault()}
       style={position}
-      className="pointer-events-auto absolute z-40 min-w-56 rounded-xl border border-border bg-overlay/95 p-1 text-foreground shadow-overlay backdrop-blur-md"
+      className="pointer-events-auto absolute z-40 min-w-56 rounded-xl border border-border bg-overlay p-1 text-foreground shadow-overlay"
     >
       {commands.map((command) => {
         const Icon = command.icon

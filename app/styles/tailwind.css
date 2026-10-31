@@ -591,6 +591,14 @@ input:-webkit-autofill:focus {
 
 /* The desk card as a phone's bottom sheet: slides up, slides away (same 140ms
    exit as the in-scene card — seatCard.tsx's EXIT_MS). */
+/* No backdrop blur over the app (HeroUI's modal and alert-dialog backdrops
+   blur by default): over a 3D scene that keeps drawing, a blur is
+   recomputed every frame — heavy on phones and laptops. The dimming stays. */
+.modal__backdrop--blur,
+.alert-dialog__backdrop--blur {
+  backdrop-filter: none;
+}
+
 /* The navigation bar along the top (NavigationProgress): it creeps towards
    the end while the next page loads, slower the further it gets. */
 @keyframes navigation-progress {

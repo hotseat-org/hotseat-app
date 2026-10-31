@@ -104,7 +104,7 @@ export const TopBar = ({ dbMode, saving, saveFailed, onRetrySave }: Props) => {
 
   return (
     <>
-      <div className="pointer-events-auto absolute left-4 top-4 flex items-center gap-3 rounded-2xl border border-border bg-overlay/90 px-4 py-2.5 text-foreground shadow-overlay backdrop-blur-md">
+      <div className="pointer-events-auto absolute left-4 top-4 flex items-center gap-3 rounded-2xl border border-border bg-overlay px-4 py-2.5 text-foreground shadow-overlay">
         <LayoutGrid className="size-5 text-accent" />
         <div className="leading-tight">
           <p className="text-sm font-semibold">{t("Office Editor")}</p>
@@ -126,13 +126,13 @@ export const TopBar = ({ dbMode, saving, saveFailed, onRetrySave }: Props) => {
           aria-label={t("Search commands (⌘K)")}
           title={t("Search commands (⌘K)")}
           onClick={() => setCommandSearchOpen(true)}
-          className="flex size-10 items-center justify-center rounded-xl border border-border bg-overlay/90 text-muted shadow-overlay backdrop-blur-md outline-none transition-colors hover:bg-surface-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
+          className="flex size-10 items-center justify-center rounded-xl border border-border bg-overlay text-muted shadow-overlay outline-none transition-colors hover:bg-surface-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
         >
           <Search className="size-5" />
         </button>
 
         {/* Undo / redo — also ⌘Z / ⇧⌘Z. */}
-        <div className="flex overflow-hidden rounded-xl border border-border bg-overlay/90 shadow-overlay backdrop-blur-md">
+        <div className="flex overflow-hidden rounded-xl border border-border bg-overlay shadow-overlay">
           <HistoryButton label={t("Undo (⌘Z)")} disabled={!canUndo} onClick={undo}>
             <Undo2 className="size-5" />
           </HistoryButton>
@@ -146,7 +146,7 @@ export const TopBar = ({ dbMode, saving, saveFailed, onRetrySave }: Props) => {
         <Popover>
           <Popover.Trigger>
             <span
-              className="cursor-pointer flex size-10 items-center justify-center rounded-xl border border-border bg-overlay/90 text-muted shadow-overlay backdrop-blur-md outline-none transition-colors hover:bg-surface-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
+              className="cursor-pointer flex size-10 items-center justify-center rounded-xl border border-border bg-overlay text-muted shadow-overlay outline-none transition-colors hover:bg-surface-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
               title={t("Shortcuts")}
               aria-label={t("Shortcuts")}
             >
@@ -175,7 +175,7 @@ export const TopBar = ({ dbMode, saving, saveFailed, onRetrySave }: Props) => {
         {/* Clear — confirm through an accessible AlertDialog instead of window.confirm. */}
         {count === 0 ? (
           <span
-            className="flex cursor-not-allowed items-center gap-2 rounded-xl border border-border bg-overlay/60 px-3 py-2.5 text-sm text-muted shadow-overlay backdrop-blur-md"
+            className="flex cursor-not-allowed items-center gap-2 rounded-xl border border-border bg-overlay px-3 py-2.5 text-sm text-muted shadow-overlay"
             title={t("Nothing to clear")}
           >
             <Trash2 className="size-4" />
@@ -185,7 +185,7 @@ export const TopBar = ({ dbMode, saving, saveFailed, onRetrySave }: Props) => {
           <AlertDialog>
             <AlertDialog.Trigger>
               <span
-                className="flex cursor-pointer items-center gap-2 rounded-xl border border-border bg-overlay/90 px-3 py-2.5 text-sm text-danger shadow-overlay backdrop-blur-md outline-none transition-colors hover:bg-[color-mix(in_oklab,var(--danger)_15%,var(--overlay))] focus-visible:ring-2 focus-visible:ring-focus"
+                className="flex cursor-pointer items-center gap-2 rounded-xl border border-border bg-overlay px-3 py-2.5 text-sm text-danger shadow-overlay outline-none transition-colors hover:bg-[color-mix(in_oklab,var(--danger)_15%,var(--overlay))] focus-visible:ring-2 focus-visible:ring-focus"
                 title={t("Clear all")}
               >
                 <Trash2 className="size-4" />

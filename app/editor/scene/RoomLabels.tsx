@@ -64,7 +64,7 @@ export const RoomLabels = () => {
           zIndexRange={[5, 0]}
           style={{ pointerEvents: "none" }}
         >
-          <span className="flex flex-col items-center whitespace-nowrap rounded-lg bg-overlay/80 px-2 py-0.5 text-center leading-tight text-foreground shadow-sm backdrop-blur-sm">
+          <span className="flex flex-col items-center whitespace-nowrap rounded-lg bg-overlay px-2 py-0.5 text-center leading-tight text-foreground shadow-sm">
             <span className="text-xs font-bold tabular-nums">
               {format.number(Math.round(room.area * 10) / 10)} m²
             </span>

@@ -147,7 +147,7 @@ export const Catalog = () => {
       <div
         ref={railRef}
         data-tour="catalog"
-        className="pointer-events-auto flex max-h-[calc(100dvh-10rem)] w-42 flex-col gap-1.5 overflow-y-auto rounded-2xl border border-border bg-overlay/90 p-2 shadow-overlay backdrop-blur-md [scrollbar-width:none]"
+        className="pointer-events-auto flex max-h-[calc(100dvh-10rem)] w-42 flex-col gap-1.5 overflow-y-auto rounded-2xl border border-border bg-overlay p-2 shadow-overlay [scrollbar-width:none]"
       >
         <div className="grid grid-cols-3 gap-1">
           <RailButton
@@ -215,7 +215,7 @@ export const Catalog = () => {
         // at the bottom, and the tile grid scrolls in between.
         <div
           style={panelStyle}
-          className="pointer-events-auto absolute left-full top-0 ml-2 flex w-60 flex-col rounded-2xl border border-border bg-overlay/90 p-3 shadow-overlay backdrop-blur-md"
+          className="pointer-events-auto absolute left-full top-0 ml-2 flex w-60 flex-col rounded-2xl border border-border bg-overlay p-3 shadow-overlay"
         >
           <h2
             className={clsx(
@@ -446,7 +446,7 @@ const PaintPanel = ({ style }: { style?: React.CSSProperties }) => {
   return (
     <div
       style={style}
-      className="pointer-events-auto absolute left-full top-0 ml-2 flex w-60 flex-col rounded-2xl border border-border bg-overlay/90 p-3 shadow-overlay backdrop-blur-md"
+      className="pointer-events-auto absolute left-full top-0 ml-2 flex w-60 flex-col rounded-2xl border border-border bg-overlay p-3 shadow-overlay"
     >
       <h2 className="mb-1 shrink-0 px-1 text-sm font-semibold text-foreground">{t("Paint")}</h2>
       <p className="mb-3 shrink-0 px-1 text-xs leading-snug text-muted">

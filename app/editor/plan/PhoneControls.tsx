@@ -19,7 +19,7 @@ export const PhoneControls = ({
 
   return (
     <div
-      className="absolute right-4 flex gap-1 rounded-xl border border-chrome-border bg-chrome/95 p-1 shadow-overlay backdrop-blur-md"
+      className="absolute right-4 flex gap-1 rounded-xl border border-chrome-border bg-chrome/95 p-1 shadow-overlay"
       style={{ bottom }}
       onPointerDown={(event) => event.stopPropagation()}
       onClick={(event) => event.stopPropagation()}

@@ -32,7 +32,7 @@ export const LayoutImpact = ({ moves, labelOf, onMove, onCancel, onUndo }: Props
     <div
       role="alertdialog"
       aria-labelledby="layout-impact-title"
-      className="pointer-events-auto w-[min(26rem,calc(100vw-2rem))] rounded-2xl border border-warning/40 bg-overlay/95 p-4 text-foreground shadow-overlay backdrop-blur-md"
+      className="pointer-events-auto w-[min(26rem,calc(100vw-2rem))] rounded-2xl border border-warning/40 bg-overlay p-4 text-foreground shadow-overlay"
     >
       <div className="flex items-start gap-3">
         <span className="grid size-9 shrink-0 place-items-center rounded-full bg-warning/15 text-warning">

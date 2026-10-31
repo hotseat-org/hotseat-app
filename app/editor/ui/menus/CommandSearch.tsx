@@ -86,7 +86,7 @@ const CommandSearchDialog = ({ commands }: Props) => {
         role="dialog"
         aria-modal="true"
         aria-label={t("Search commands")}
-        className="flex h-[min(26rem,70vh)] w-[min(34rem,100%)] flex-col overflow-hidden rounded-2xl border border-border bg-overlay/95 text-foreground shadow-overlay backdrop-blur-md"
+        className="flex h-[min(26rem,70vh)] w-[min(34rem,100%)] flex-col overflow-hidden rounded-2xl border border-border bg-overlay text-foreground shadow-overlay"
       >
         <div className="flex items-center gap-2 border-b border-border px-4">
           <Search className="size-4 shrink-0 text-muted" />

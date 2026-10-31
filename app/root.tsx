@@ -209,7 +209,7 @@ export function ErrorBoundary() {
       </head>
       <body className="h-full">
         <CenteredScreen>
-          <div className="relative w-full max-w-md rounded-2xl border border-border bg-overlay/90 p-8 text-center text-foreground shadow-overlay backdrop-blur-md">
+          <div className="relative w-full max-w-md rounded-2xl border border-border bg-overlay p-8 text-center text-foreground shadow-overlay">
             <p className="text-5xl font-extrabold tabular-nums text-accent">
               {isRouteErrorResponse(error) ? error.status : "Oops"}
             </p>

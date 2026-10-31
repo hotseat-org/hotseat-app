@@ -27,7 +27,7 @@ export const SceneLoading = ({ isVisible, label, isFirstLoad }: Props) => (
     <div
       role="status"
       className={clsx(
-        "flex items-center gap-3 rounded-full border border-border bg-overlay/90 py-2.5 pl-3 pr-5 shadow-overlay backdrop-blur-md transition-transform duration-300",
+        "flex items-center gap-3 rounded-full border border-border bg-overlay py-2.5 pl-3 pr-5 shadow-overlay transition-transform duration-300",
         isVisible ? "scale-100" : "scale-95"
       )}
     >

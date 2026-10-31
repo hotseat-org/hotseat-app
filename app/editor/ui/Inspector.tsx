@@ -62,7 +62,7 @@ export const Inspector = () => {
   const otherActionCount = [canRotate, shufflable, canCopy].filter(Boolean).length
 
   return (
-    <div className="pointer-events-auto w-64 rounded-2xl border border-border bg-overlay/90 p-4 text-foreground shadow-overlay backdrop-blur-md">
+    <div className="pointer-events-auto w-64 rounded-2xl border border-border bg-overlay p-4 text-foreground shadow-overlay">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-semibold">
           {count > 1

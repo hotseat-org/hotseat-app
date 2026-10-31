@@ -110,7 +110,7 @@ export const EmptyOffice = ({ readOnly, isEditable, onEnterEdit, onDismiss }: Pr
     // Anchored near the top, not centred: opening the templates grows the
     // card downward instead of shifting it.
     <div className="pointer-events-none absolute inset-0 flex justify-center overflow-y-auto p-6 pt-[12vh]">
-      <div className="pointer-events-auto h-fit w-full max-w-md rounded-2xl border border-border bg-overlay/90 p-6 shadow-overlay backdrop-blur-md">
+      <div className="pointer-events-auto h-fit w-full max-w-md rounded-2xl border border-border bg-overlay p-6 shadow-overlay">
         <EmptyState
           className="max-w-none"
           icon={PencilRuler}

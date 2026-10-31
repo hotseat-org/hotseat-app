@@ -13,7 +13,7 @@ export const FrameRateReadout = ({ stats }: { stats: FrameStats }) => {
   const { t, tn } = useI18n()
 
   return (
-    <div className="rounded-xl border border-border bg-overlay/95 px-3 py-2 font-mono text-sm text-foreground shadow-overlay backdrop-blur-md">
+    <div className="rounded-xl border border-border bg-overlay px-3 py-2 font-mono text-sm text-foreground shadow-overlay">
       <span className="tabular-nums">
         <span className={getFrameRateColor(stats.fps)}>{stats.fps.toFixed(0)}</span> FPS
         <span className="ml-2 text-muted">{stats.ms.toFixed(1)} ms</span>

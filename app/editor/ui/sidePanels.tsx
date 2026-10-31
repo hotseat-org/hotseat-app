@@ -112,7 +112,7 @@ export const SidePanelFlyout = ({
   return (
     <div
       style={style}
-      className="pointer-events-auto absolute left-full top-0 ml-2 flex w-60 flex-col rounded-2xl border border-border bg-overlay/90 p-3 shadow-overlay backdrop-blur-md"
+      className="pointer-events-auto absolute left-full top-0 ml-2 flex w-60 flex-col rounded-2xl border border-border bg-overlay p-3 shadow-overlay"
     >
       <h2 className="mb-0.5 shrink-0 px-1 text-sm font-semibold text-foreground">
         {t(panel.label)}
@@ -132,7 +132,7 @@ export const SidePanelRail = () => {
 
   return (
     <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2">
-      <div className="pointer-events-auto flex w-42 flex-col gap-1 rounded-2xl border border-border bg-overlay/90 p-2 shadow-overlay backdrop-blur-md">
+      <div className="pointer-events-auto flex w-42 flex-col gap-1 rounded-2xl border border-border bg-overlay p-2 shadow-overlay">
         {entries.map((entry) => (
           <SidePanelButton
             key={entry.panel.id}

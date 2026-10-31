@@ -137,7 +137,7 @@ export const HeatTag = ({
 /** A zone's name, on its floor. */
 export const ZoneName = ({ zone, style }: { zone: Zone; style: CSSProperties }) => (
   <div className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2" style={style}>
-    <span className="flex items-center gap-1.5 whitespace-nowrap rounded-full bg-overlay/85 px-2 py-0.5 text-[11px] font-bold text-foreground shadow-sm backdrop-blur-sm">
+    <span className="flex items-center gap-1.5 whitespace-nowrap rounded-full bg-overlay px-2 py-0.5 text-[11px] font-bold text-foreground shadow-sm">
       <span className="size-2 rounded-full" style={{ background: zone.color }} />
       {zone.name}
     </span>

@@ -33,7 +33,7 @@ export const TimeOfDay = ({
   const flat = isViewing && (view === "2d" || !hasWebGL())
 
   return (
-    <div className="pointer-events-auto absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-2xl border border-border bg-overlay/90 p-2 text-foreground shadow-overlay backdrop-blur-md">
+    <div className="pointer-events-auto absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-2xl border border-border bg-overlay p-2 text-foreground shadow-overlay">
       {/* The modules' (the office: the day shown). */}
       {items.map((Item, index) => (
         <Item key={index} />

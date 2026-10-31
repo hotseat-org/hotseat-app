@@ -52,7 +52,7 @@ export const ControlsGuide = ({ view }: { view: GuideView }) => {
       <Button
         size="sm"
         variant="secondary"
-        className="pointer-events-auto shadow-overlay backdrop-blur-md"
+        className="pointer-events-auto shadow-overlay"
         onPress={() => setHidden(false)}
       >
         <Mouse className="size-4" /> {t("Controls")}
@@ -61,7 +61,7 @@ export const ControlsGuide = ({ view }: { view: GuideView }) => {
   }
 
   return (
-    <div className="pointer-events-auto relative rounded-2xl border border-border bg-overlay/90 py-2.5 pl-3 pr-9 text-xs text-foreground shadow-overlay backdrop-blur-md">
+    <div className="pointer-events-auto relative rounded-2xl border border-border bg-overlay py-2.5 pl-3 pr-9 text-xs text-foreground shadow-overlay">
       <CloseButton
         aria-label={t("Hide controls")}
         className="absolute right-1.5 top-1.5"

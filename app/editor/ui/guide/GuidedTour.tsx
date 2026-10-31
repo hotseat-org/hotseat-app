@@ -173,7 +173,7 @@ const TourCard = () => {
         <section
           aria-live="polite"
           aria-labelledby="tour-title"
-          className="pointer-events-auto w-[min(26rem,100%)] rounded-2xl border border-accent/30 bg-overlay/95 p-4 text-foreground shadow-overlay backdrop-blur-md"
+          className="pointer-events-auto w-[min(26rem,100%)] rounded-2xl border border-accent/30 bg-overlay p-4 text-foreground shadow-overlay"
         >
           <div className="flex items-center justify-between gap-3">
             <h2 id="tour-title" className="text-sm font-extrabold">

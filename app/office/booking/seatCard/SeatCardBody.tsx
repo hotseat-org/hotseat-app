@@ -373,7 +373,7 @@ export const SeatCardBody = ({
                 closing ? "sheet-down" : "sheet-up"
               )
             : clsx(
-                "w-72 gap-0.5 rounded-2xl border border-border bg-overlay/95 p-2.5 shadow-overlay backdrop-blur-md",
+                "w-72 gap-0.5 rounded-2xl border border-border bg-overlay p-2.5 shadow-overlay",
                 below ? "origin-top" : "origin-bottom",
                 closing ? "seat-pop-out" : "seat-pop"
               )

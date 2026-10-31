@@ -88,7 +88,7 @@ export const MobileShell = ({ offices, me, members, empty = false }: Props) => {
 /** Where you are (office switcher), what changed (bell) and who you are (account), edge to edge. */
 export const TopBar = ({ offices }: { offices: ShellOffice[] }) => (
   <header
-    className="pointer-events-auto absolute inset-x-0 top-0 grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-1 border-b border-chrome-border bg-chrome/95 px-3 shadow-[0_2px_10px_var(--chrome-shadow)] backdrop-blur-md"
+    className="pointer-events-auto absolute inset-x-0 top-0 grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-1 border-b border-chrome-border bg-chrome/95 px-3 shadow-[0_2px_10px_var(--chrome-shadow)]"
     style={{ height: TOP_BAR_HEIGHT }}
   >
     {/* The switcher takes what the account leaves, and truncates in it. */}
@@ -235,7 +235,7 @@ const MapButtons = () => {
 
   return (
     <div
-      className="pointer-events-auto absolute left-4 flex gap-1 rounded-xl border border-chrome-border bg-chrome/95 p-1 shadow-overlay backdrop-blur-md"
+      className="pointer-events-auto absolute left-4 flex gap-1 rounded-xl border border-chrome-border bg-chrome/95 p-1 shadow-overlay"
       // Level with turn and fit (PhoneControls), just above the dock.
       style={{ bottom: MOBILE_CHROME.bottom + 12 }}
     >

@@ -35,7 +35,7 @@ export function InlineModal({
   return (
     <div
       className={clsx(
-        "modal-in-backdrop fixed inset-0 z-50 grid place-items-center bg-black/50 backdrop-blur-md",
+        "modal-in-backdrop fixed inset-0 z-50 grid place-items-center bg-black/50",
         isFullScreenOnPhone ? "p-0 md:p-4" : "p-4"
       )}
       // Only a press that starts and ends on the backdrop itself closes it (a

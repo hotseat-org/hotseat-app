@@ -21,7 +21,7 @@ export interface ShellOffice {
 
 /** Shared glass-panel styling for floating chrome. */
 export const PANEL =
-  "pointer-events-auto rounded-2xl border border-border bg-overlay/85 shadow-overlay backdrop-blur-md"
+  "pointer-events-auto rounded-2xl border border-border bg-overlay shadow-overlay"
 
 /**
  * Hover for a clickable PANEL. Must be a SOLID colour — a translucent tint (e.g.

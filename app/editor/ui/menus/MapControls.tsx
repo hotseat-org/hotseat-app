@@ -28,7 +28,7 @@ export const MapControls = ({ isEditing = false }: { isEditing?: boolean }) => {
     // slide as the bar folds up under it.
     <div
       data-open={isMenuOpen || undefined}
-      className="group/bar pointer-events-auto flex flex-col items-stretch gap-0.5 rounded-2xl border border-border bg-overlay/90 p-1 text-foreground shadow-overlay backdrop-blur-md"
+      className="group/bar pointer-events-auto flex flex-col items-stretch gap-0.5 rounded-2xl border border-border bg-overlay p-1 text-foreground shadow-overlay"
     >
       <ControlButton label={t("Fit")} title={t("Fit to office (F)")} onPress={requestFit}>
         <Focus className="size-[18px]" />
