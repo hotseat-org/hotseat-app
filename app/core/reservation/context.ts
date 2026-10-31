@@ -1,5 +1,5 @@
 import type { CoreContext } from "../types"
-import { layoutSchema } from "~/office/schema"
+import { parseLayout } from "~/office/schema"
 import { isSeatable } from "~/office/catalog"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { addDays, todayIn } from "~/utils/booking"
@@ -30,8 +30,7 @@ export const bookingContext = async (
   if (!office) throw new Error("Not Found")
 
   const today = todayIn(office.timezone)
-  const parsed = layoutSchema.safeParse(office.layout ?? [])
-  const desks = (parsed.success ? parsed.data : []).filter((o) => isSeatable(o.type))
+  const desks = parseLayout(office.layout).pieces.filter((o) => isSeatable(o.type))
 
   const lastDay = addDays(today, office.bookingWindowDays)
   // Days residents gave their desks up (bookable like any desk on those days).

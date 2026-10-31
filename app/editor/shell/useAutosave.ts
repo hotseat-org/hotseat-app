@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from "react"
+import { readSavedLayout, type Layout } from "../floors"
 import { useEditorStore, useEditorStoreApi } from "../store"
 import { composeSavedLayout } from "../store/objects"
-import type { SceneObject } from "../types"
 import type { AutosaveControls, SaveGuard, SaveOptions } from "../module"
 import { useModules } from "../modules"
 
@@ -16,33 +16,42 @@ const SAVE_DELAY = 800
  * changes warns. Returns what the guards show meanwhile.
  */
 export const useAutosave = ({
-  initialObjects,
   onSave,
   saveFailed,
 }: {
-  initialObjects: SceneObject[] | undefined
-  onSave: ((objects: SceneObject[], options?: SaveOptions) => void) | undefined
+  onSave: ((layout: Layout, options?: SaveOptions) => void) | undefined
   saveFailed: boolean | undefined
 }) => {
   const store = useEditorStoreApi()
+  const floors = useEditorStore((state) => state.floors)
+  const currentFloor = useEditorStore((state) => state.currentFloor)
   const objects = useEditorStore((state) => state.objects)
+  const otherFloorsPieces = useEditorStore((state) => state.otherFloorsPieces)
   const keptPieces = useEditorStore((state) => state.keptPieces)
-  // What's saved: what's shown, with the pieces kept aside (see ObjectsState).
-  const layout = useMemo(() => composeSavedLayout({ objects, keptPieces }), [objects, keptPieces])
-  // What's already persisted, so autosave doesn't re-save the freshly-loaded scene.
-  const lastSaved = useRef<string>(JSON.stringify(initialObjects ?? []))
+  // What's saved: every floor, with the pieces kept aside (see ObjectsState).
+  const layout = useMemo(
+    () => composeSavedLayout({ floors, currentFloor, objects, otherFloorsPieces, keptPieces }),
+    [floors, currentFloor, objects, otherFloorsPieces, keptPieces]
+  )
+  // What's already persisted, so autosave doesn't re-save the freshly loaded
+  // layout — as the store composes it (one saved before floors reads the same).
+  const lastSaved = useRef<string | null>(null)
+  if (lastSaved.current === null)
+    lastSaved.current = JSON.stringify(composeSavedLayout(store.getState()))
+
   const onSaveRef = useRef(onSave)
   onSaveRef.current = onSave
+  const getSavedLayout = () => readSavedLayout(JSON.parse(lastSaved.current || "[]"))
 
   const controls: AutosaveControls = {
     isEnabled: !!onSave,
-    objects,
-    getSavedObjects: () => JSON.parse(lastSaved.current || "[]") as SceneObject[],
+    pieces: layout.pieces,
+    getSavedPieces: () => getSavedLayout().pieces,
     saveNow: (options) => {
       lastSaved.current = JSON.stringify(layout)
       onSave?.(layout, options)
     },
-    revert: () => store.getState().load(JSON.parse(lastSaved.current || "[]")),
+    revert: () => store.getState().load(getSavedLayout()),
   }
   const modules = useModules()
   // Each module's hook, in a loop: safe, the list is fixed (see ModulesContext).

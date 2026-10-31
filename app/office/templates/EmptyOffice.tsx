@@ -14,6 +14,7 @@ import { useMemo, useState } from "react"
 import { numberUnlabelledDesks, useOfficeStore } from "../store"
 import { isSeatable } from "../catalog"
 import { TEMPLATES, type OfficeTemplate } from "./templates"
+import { composeLayout } from "~/editor/core"
 import { useI18n } from "~/i18n/I18nProvider"
 import type { Translator } from "~/i18n/translate"
 import { Button } from "~/components/Button"
@@ -69,7 +70,7 @@ export const EmptyOffice = ({ readOnly, isEditable, onEnterEdit, onDismiss }: Pr
   const [isShowingTemplates, setIsShowingTemplates] = useState(!isEditable)
 
   const pickTemplate = (template: OfficeTemplate) => {
-    load(numberUnlabelledDesks(template.build())) // desks get names right away
+    load(composeLayout(numberUnlabelledDesks(template.build()))) // desks get names right away
     if (readOnly && isEditable) onEnterEdit()
   }
 

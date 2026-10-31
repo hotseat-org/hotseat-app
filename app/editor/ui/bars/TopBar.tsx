@@ -101,6 +101,8 @@ export const TopBar = ({ dbMode, saving, saveFailed, onRetrySave }: Props) => {
     (state) => state.objects.filter((object) => !isMarker(object.type)).length
   )
   const clear = useEditorStore((state) => state.clear)
+  // With floors, Clear empties the one shown.
+  const hasFloors = useEditorStore((state) => state.floors.length > 1)
 
   return (
     <>
@@ -199,7 +201,9 @@ export const TopBar = ({ dbMode, saving, saveFailed, onRetrySave }: Props) => {
                     <>
                       <AlertDialog.Header>
                         <AlertDialog.Icon status="danger" />
-                        <AlertDialog.Heading>{t("Clear the whole office?")}</AlertDialog.Heading>
+                        <AlertDialog.Heading>
+                          {hasFloors ? t("Clear this floor?") : t("Clear the whole office?")}
+                        </AlertDialog.Heading>
                       </AlertDialog.Header>
                       <AlertDialog.Body>
                         {tn(
@@ -219,7 +223,7 @@ export const TopBar = ({ dbMode, saving, saveFailed, onRetrySave }: Props) => {
                             close()
                           }}
                         >
-                          {t("Clear office")}
+                          {hasFloors ? t("Clear floor") : t("Clear office")}
                         </Button>
                       </AlertDialog.Footer>
                     </>

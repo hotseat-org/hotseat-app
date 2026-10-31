@@ -273,6 +273,7 @@ export const cs: Messages = {
   Clear: "Vymazat",
   "Clear all": "Vymazat vše",
   "Clear the whole office?": "Vymazat celou kancelář?",
+  "Clear this floor?": "Vymazat toto patro?",
   "This removes {n} item. This can't be undone.": {
     one: "Odstraní se {n} předmět. Nejde to vrátit zpět.",
     few: "Odstraní se všechny {n} předměty. Nejde to vrátit zpět.",
@@ -281,6 +282,7 @@ export const cs: Messages = {
   },
   Cancel: "Zrušit",
   "Clear office": "Vymazat kancelář",
+  "Clear floor": "Vymazat patro",
 
   // —— Editor: controls & days ——
   Orbit: "Otáčet",

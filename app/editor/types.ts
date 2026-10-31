@@ -42,6 +42,8 @@ export interface SceneObject extends ObjectFields {
    * all look the same. Unset → derived from the id (see `variantOf`).
    */
   variant?: number
+  /** The floor it's on (a Floor's id); unset, the first (see getFloorId). */
+  floor?: string
 }
 
 /** A tool that places a piece (a registered item, not a data marker). */

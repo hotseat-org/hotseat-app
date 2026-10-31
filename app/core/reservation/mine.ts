@@ -1,5 +1,6 @@
 import type { CoreContext } from "../types"
-import { layoutSchema } from "~/office/schema"
+import { parseLayout } from "~/office/schema"
+import { getFloorLabel, type FloorLabel } from "~/editor/core"
 import { isSeatable } from "~/office/catalog"
 import { addDays, fromUtcDate, todayIn, type Day } from "~/utils/booking"
 
@@ -9,6 +10,8 @@ export interface MyBooking {
   deskId: string
   /** The desk's label ("B2"), if it has one. */
   deskLabel?: string
+  /** Its floor, in an office with more than one. */
+  deskFloor?: FloorLabel
   date: Day
   /** The office's today (for "Today" labels). */
   today: Day
@@ -19,6 +22,7 @@ export interface MyPermanentDesk {
   officeName: string
   deskId: string
   deskLabel?: string
+  deskFloor?: FloorLabel
 }
 
 export interface MyBookings {
@@ -52,28 +56,30 @@ export const getMyBookings =
 
     const byOffice = new Map(
       offices.data.map((o) => {
-        const parsed = layoutSchema.safeParse(o.layout ?? [])
-        const desks = (parsed.success ? parsed.data : []).filter((d) => isSeatable(d.type))
-        return [o.slug, { office: o, desks, today: todayIn(o.timezone) }]
+        const { floors, pieces } = parseLayout(o.layout)
+        const desks = pieces.filter((d) => isSeatable(d.type))
+        return [o.slug, { office: o, floors, desks, today: todayIn(o.timezone) }]
       })
     )
 
     const bookings = rows.flatMap((r): MyBooking[] => {
       const entry = byOffice.get(r.officeSlug)
       if (!entry || r.date < entry.today) return []
+      const desk = entry.desks.find((d) => d.id === r.deskId)
       return [
         {
           officeSlug: r.officeSlug,
           officeName: entry.office.name,
           deskId: r.deskId,
-          deskLabel: entry.desks.find((d) => d.id === r.deskId)?.label,
+          deskLabel: desk?.label,
+          deskFloor: desk && getFloorLabel(entry.floors, desk),
           date: r.date,
           today: entry.today,
         },
       ]
     })
 
-    const permanent = [...byOffice.values()].flatMap(({ office, desks }) =>
+    const permanent = [...byOffice.values()].flatMap(({ office, floors, desks }) =>
       desks
         .filter((d) => d.assignee === userEmail)
         .map((d) => ({
@@ -81,6 +87,7 @@ export const getMyBookings =
           officeName: office.name,
           deskId: d.id,
           deskLabel: d.label,
+          deskFloor: getFloorLabel(floors, d),
         }))
     )
 

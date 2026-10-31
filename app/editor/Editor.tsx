@@ -9,7 +9,7 @@ import {
   useEditorStoreApi,
   type EditorStore,
 } from "./store"
-import type { SceneObject } from "./types"
+import type { Layout } from "./floors"
 import type { FrameStats } from "./scene/FpsMeter"
 import { Catalog } from "./ui/catalog/Catalog"
 import { Inspector } from "./ui/Inspector"
@@ -47,14 +47,14 @@ export interface EditorProps {
   /** The modules this editor runs with (fixed for its life). */
   modules: EditorModule[]
   /** When provided, the editor loads/saves this layout instead of localStorage. */
-  initialObjects?: SceneObject[]
+  initialLayout?: Layout
   /** Without `onSave`: the localStorage key the layout is kept under. */
   persistKey?: string
   /**
    * Called (debounced) with the current scene whenever it changes, and with
    * what the modules' save guards send along (see SaveOptions).
    */
-  onSave?: (objects: SceneObject[], options?: SaveOptions) => void
+  onSave?: (layout: Layout, options?: SaveOptions) => void
   /** The organization's saved rooms (a real office); without it, this browser's. */
   kitLibrary?: KitLibrary
   /** Whether a save is currently in flight (for the indicator). */
@@ -105,7 +105,7 @@ export const Editor = (props: EditorProps) => {
     // DB-backed offices are born with their saved layout (no load race); the
     // standalone editor persists to localStorage instead.
     storeRef.current = props.onSave
-      ? createEditorStore({ initialObjects: props.initialObjects, modules })
+      ? createEditorStore({ initialLayout: props.initialLayout, modules })
       : createEditorStore({ persistKey: props.persistKey, modules })
   }
 
@@ -142,7 +142,6 @@ const getGuideView = ({
 }
 
 const EditorInner = ({
-  initialObjects,
   onSave,
   saving,
   saveFailed,
@@ -192,7 +191,7 @@ const EditorInner = ({
   useEditorShortcuts(readOnly)
   // Editing and viewing have their own side panels: switching starts with none open.
   useEffect(() => store.getState().closeSidePanel(), [readOnly, store])
-  const { guardPanels } = useAutosave({ initialObjects, onSave, saveFailed })
+  const { guardPanels } = useAutosave({ onSave, saveFailed })
   // The modules' panels for the mode.
   // An empty layout's screen: the first module's that has one.
   const EmptyState = modules.find((module) => module.EmptyState)?.EmptyState
@@ -206,7 +205,10 @@ const EditorInner = ({
   const [emptyDismissed, setEmptyDismissed] = useState(false)
   // A brand-new office (no layout, first-run card showing): no scene and no
   // editor/scene chrome — only the template card and the app essentials.
-  const hasLayout = useEditorStore((state) => state.objects.length > 0)
+  // On any floor: an empty floor of an office is just that floor.
+  const hasLayout = useEditorStore(
+    (state) => state.objects.length > 0 || state.otherFloorsPieces.length > 0
+  )
   const isEmpty = !hasLayout && !emptyDismissed
   // Mouse / trackpad controls: no use on a touch phone.
   const guideView = getGuideView({ isFlat: flat, isReadOnly: readOnly })

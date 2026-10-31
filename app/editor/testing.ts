@@ -3,6 +3,7 @@
  * items registered and its state in place, and a way to put pieces down.
  */
 import type { StoreApi } from "zustand"
+import { composeLayout } from "./floors"
 // The editor's own looks, as in the browser: a layout's walls and doors are
 // shown (not kept aside, see splitLayout).
 import "./catalog/rendering"
@@ -27,7 +28,7 @@ export const createTestEditor = <State extends object = object>({
   modules = [],
   objects = [],
 }: TestEditorOptions = {}) => {
-  const store = createEditorStore({ modules, initialObjects: objects }) as StoreApi<
+  const store = createEditorStore({ modules, initialLayout: composeLayout(objects) }) as StoreApi<
     EditorState & State
   >
   const place = (

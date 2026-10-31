@@ -12,6 +12,8 @@ export interface LayoutDesk {
   label?: string
   /** Permanent resident (email). */
   assignee?: string
+  /** Its floor (unset in a one-floor layout). */
+  floor?: string
 }
 
 export interface UpcomingBooking {
@@ -42,6 +44,9 @@ export const getLostBookings = <B extends UpcomingBooking>(
     return !!desk.assignee && releasedBy.get(`${b.deskId}|${b.date}`) !== desk.assignee
   })
 }
+
+/** How far a desk on another floor counts as (beyond any on the same floor). */
+const OTHER_FLOOR_DISTANCE = 10_000
 
 export interface Rehoming<B extends UpcomingBooking> {
   booking: B
@@ -92,10 +97,13 @@ export const planRehoming = <B extends UpcomingBooking>({
         return { booking, to: null }
       const from = previous.get(booking.deskId)
       const free = after.filter((d) => isFree(d, booking.date))
-      const to =
-        free.sort((a, b) =>
-          from ? Math.hypot(a.x - from.x, a.z - from.z) - Math.hypot(b.x - from.x, b.z - from.z) : 0
-        )[0] ?? null
+      // Any desk on its floor is nearer than one on another.
+      const distanceFrom = (desk: LayoutDesk) =>
+        from
+          ? Math.hypot(desk.x - from.x, desk.z - from.z) +
+            (desk.floor === from.floor ? 0 : OTHER_FLOOR_DISTANCE)
+          : 0
+      const to = free.sort((a, b) => distanceFrom(a) - distanceFrom(b))[0] ?? null
       if (to) mark(booking.date, to.id, booking.userEmail)
       return { booking, to }
     })

@@ -18,9 +18,9 @@ import { redirectToRenamedPage } from "~/utils/loader-helpers/redirectToRenamed"
 import { loadOrganization } from "~/utils/loader-helpers/loadOrganization"
 import { requireProfile } from "~/utils/loader-helpers/requireProfile"
 import { NOTIFICATION_ACTIONS, revalidateOn } from "~/utils/revalidation"
-import { layoutSchema } from "~/office/schema"
+import { layoutSchema, parseLayout } from "~/office/schema"
 import { EditorBoundary } from "~/editor"
-import { type SceneObject, type Kit, type KitLibrary } from "~/editor/core"
+import { type Kit, type KitLibrary, type Layout } from "~/editor/core"
 import type { PreferenceChange } from "~/office/store"
 import { SpatialShell, type ShellMember } from "~/components/office/SpatialShell"
 import { nameOf } from "~/components/office/shell-ui"
@@ -89,8 +89,6 @@ export const loader = async (args: LoaderFunctionArgs) => {
     core.organization.listOffices(organizationSlug),
   ])
 
-  const parsed = layoutSchema.safeParse(office.layout)
-
   // Bookings: the chosen day comes from ?day= (shareable, survives a reload).
   // Load everything bookable at once — this week so far through the end of the
   // booking window — so switching days is instant.
@@ -121,7 +119,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
   ])
 
   return {
-    initialObjects: parsed.success ? parsed.data : [],
+    initialLayout: parseLayout(office.layout),
     org: { name: org?.name ?? organizationSlug, slug: organizationSlug },
     office: {
       name: office.name,
@@ -220,7 +218,7 @@ const Fallback = () => {
 }
 
 export default function OfficeRoute() {
-  const { initialObjects, offices, me, members, canEdit, booking, kits } =
+  const { initialLayout, offices, me, members, canEdit, booking, kits } =
     useLoaderData<typeof loader>()
   const { t, tn, format } = useI18n()
   // Members as the editor's seat model sees them (email = stable seat id).
@@ -238,13 +236,13 @@ export default function OfficeRoute() {
   const fetcher = useFetcher<LayoutActionData>()
 
   // The latest layout handed to us — what a retry resubmits.
-  const latest = useRef<SceneObject[] | null>(null)
+  const latest = useRef<Layout | null>(null)
   const submit = fetcher.submit
   const onSave = useCallback(
-    (objects: SceneObject[], options?: { shouldRehome?: boolean }) => {
-      latest.current = objects
+    (layout: Layout, options?: { shouldRehome?: boolean }) => {
+      latest.current = layout
       submit(
-        { layout: JSON.stringify(objects), ...(options?.shouldRehome && { rehome: "1" }) },
+        { layout: JSON.stringify(layout), ...(options?.shouldRehome && { rehome: "1" }) },
         { method: "post", action: officeUrl }
       )
     },
@@ -420,7 +418,7 @@ export default function OfficeRoute() {
             <Suspense fallback={<Fallback />}>
               <OfficeEditor
                 key={officeSlug}
-                initialObjects={initialObjects as SceneObject[]}
+                initialLayout={initialLayout as Layout}
                 onSave={onSave}
                 kitLibrary={kitLibrary}
                 saving={fetcher.state !== "idle"}

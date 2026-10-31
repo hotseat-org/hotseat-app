@@ -2,6 +2,7 @@
 import { describe, expect, test } from "bun:test"
 import { createTestEditor } from "../testing"
 import type { SceneObject } from "../types"
+import { composeLayout } from "../floors"
 import { composeSavedLayout } from "./objects"
 
 const wall: SceneObject = { id: "wall", type: "wall", x: 0.5, z: 0, rotation: 0 }
@@ -25,14 +26,14 @@ describe("a layout with pieces this editor can't show", () => {
   test("saves them back with the layout", () => {
     const { store } = createTestEditor({ objects: [wall, stranger] })
 
-    const saved = composeSavedLayout(store.getState())
-    expect(saved[saved.length - 1].id).toBe("stranger")
+    const { pieces } = composeSavedLayout(store.getState())
+    expect(pieces[pieces.length - 1].id).toBe("stranger")
   })
 
   test("keeps them aside when a layout is loaded too", () => {
     const { store } = createTestEditor()
 
-    store.getState().load([wall, stranger])
+    store.getState().load(composeLayout([wall, stranger]))
 
     expect(store.getState().keptPieces.map((piece) => piece.id)).toEqual(["stranger"])
   })
@@ -42,6 +43,6 @@ describe("a layout with pieces this editor can't show", () => {
 
     store.getState().placeKit([stranger])
 
-    expect(composeSavedLayout(store.getState())).toHaveLength(0)
+    expect(composeSavedLayout(store.getState()).pieces).toHaveLength(0)
   })
 })

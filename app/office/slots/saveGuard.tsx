@@ -22,8 +22,8 @@ const bookingKey = (booking: { deskId: string; date: string; userEmail: string }
  */
 export const useLayoutImpactGuard = ({
   isEnabled,
-  objects,
-  getSavedObjects,
+  pieces,
+  getSavedPieces,
   saveNow,
   revert,
 }: AutosaveControls): SaveGuard => {
@@ -49,15 +49,15 @@ export const useLayoutImpactGuard = ({
         ])
       )
     )
-    const after = objects.filter((piece) => isSeatable(piece.type))
+    const after = pieces.filter((piece) => isSeatable(piece.type))
     const lost = getLostBookings(after, bookings, releasedBy)
     if (lost.length === 0) return null
 
-    const before = getSavedObjects().filter((piece) => isSeatable(piece.type))
+    const before = getSavedPieces().filter((piece) => isSeatable(piece.type))
 
     return { before, moves: planRehoming({ before, after, bookings, lost, releasedBy }) }
     // The saved layout is read as it stands when the layout or bookings change.
-  }, [objects, bookingState, isEnabled])
+  }, [pieces, bookingState, isEnabled])
   // Bookings the admin has already decided about: hidden while that saves and
   // the bookings refresh (the panel comes back only for bookings not yet
   // decided — a further change that takes more).

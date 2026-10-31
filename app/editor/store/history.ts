@@ -17,6 +17,8 @@ export interface HistoryState {
    */
   beginBatch: () => void
   endBatch: () => void
+  /** Forget every step (another floor shown: its own scene, nothing to undo there). */
+  resetHistory: () => void
 }
 
 interface HistoryInternals {
@@ -106,6 +108,7 @@ export const createHistory = (
 
       rawSet({ past: [...past, base].slice(-HISTORY_LIMIT), future: [] })
     },
+    resetHistory: () => rawSet({ past: [], future: [] }),
   }
 
   return { set, state }

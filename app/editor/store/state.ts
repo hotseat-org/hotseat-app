@@ -1,5 +1,6 @@
 import type { StateCreator, StoreApi } from "zustand"
 import type { SceneObject } from "../types"
+import type { FloorsState } from "./floors"
 import type { FurnitureState } from "./furniture"
 import type { HistoryState } from "./history"
 import type { ObjectsState } from "./objects"
@@ -14,6 +15,7 @@ import type { Layers } from "./preferences"
 export interface EditorState
   extends
     ObjectsState,
+    FloorsState,
     FurnitureState,
     WallsState,
     SelectionState,

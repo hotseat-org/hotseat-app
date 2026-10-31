@@ -177,9 +177,10 @@ export interface SaveOptions {}
 export interface AutosaveControls {
   /** Autosave is on (the layout saves somewhere — a real office). */
   isEnabled: boolean
-  objects: SceneObject[]
-  /** The layout as last saved. */
-  getSavedObjects: () => SceneObject[]
+  /** Every floor's pieces, as they are now. */
+  pieces: SceneObject[]
+  /** Every floor's pieces, as last saved. */
+  getSavedPieces: () => SceneObject[]
   /** Save the current layout now, with these options. */
   saveNow: (options?: SaveOptions) => void
   /** Put the layout back as last saved. */

@@ -6,8 +6,9 @@ import { persist } from "zustand/middleware"
 import { registerCategories } from "../catalog/categories"
 import { registerItems } from "../catalog/registry"
 import { registerRenderers } from "../catalog/renderers"
+import { composeLayout, readSavedLayout, type Layout } from "../floors"
 import type { EditorModule } from "../module"
-import type { SceneObject } from "../types"
+import { createFloorsActions } from "./floors"
 import { createFurnitureState, settleTurn } from "./furniture"
 import { createHistory } from "./history"
 import { composeSavedLayout, createObjectsState, splitLayout } from "./objects"
@@ -20,7 +21,7 @@ import { createWallsState } from "./walls"
 import { CORE_LAYERS, type Layers } from "./preferences"
 
 const makeInitializer =
-  (initialObjects: SceneObject[], modules: EditorModule[]): StateCreator<EditorState> =>
+  (initialLayout: Layout, modules: EditorModule[]): StateCreator<EditorState> =>
   (rawSet, get) => {
     // After every change: keep the selection to what exists, and settle a
     // piece turned into others once it's let go.
@@ -52,7 +53,8 @@ const makeInitializer =
 
     return {
       ...moduleStates,
-      ...createObjectsState(set, get, { initialObjects, hooks }),
+      ...createObjectsState(set, get, { initialLayout, hooks }),
+      ...createFloorsActions(set, get),
       ...createFurnitureState(set, get, hooks),
       ...createWallsState(set, get),
       ...createSelectionState(set, get, hooks),
@@ -80,8 +82,8 @@ const registerModuleCatalogs = (modules: EditorModule[]) => {
 interface CreateEditorStoreOptions {
   /** localStorage key (standalone editor). Omit for DB-backed offices. */
   persistKey?: string
-  /** Scene the store is born with (an office's saved layout), avoiding any load race. */
-  initialObjects?: SceneObject[]
+  /** The layout the store is born with (an office's saved one), avoiding any load race. */
+  initialLayout?: Layout
   /** The modules this editor runs with (their state and hooks). */
   modules?: EditorModule[]
 }
@@ -89,15 +91,15 @@ interface CreateEditorStoreOptions {
 /**
  * Create a fresh, isolated editor store — each editor instance gets its own, so
  * offices never share scene data. The store starts already populated with
- * `initialObjects` (no post-mount hydration, no empty-render race).
+ * `initialLayout` (no post-mount hydration, no empty-render race).
  */
 export const createEditorStore = ({
   persistKey,
-  initialObjects = [],
+  initialLayout = composeLayout([]),
   modules = [],
 }: CreateEditorStoreOptions = {}): EditorStore => {
   registerModuleCatalogs(modules)
-  const initializer = makeInitializer(initialObjects, modules)
+  const initializer = makeInitializer(initialLayout, modules)
 
   return persistKey
     ? createStore<EditorState>()(
@@ -105,16 +107,18 @@ export const createEditorStore = ({
           name: persistKey,
           // Only the layout is durable — tool/selection are per-session.
           // The pieces kept aside are part of the layout: saved with it.
-          partialize: (state) => ({ objects: composeSavedLayout(state) }),
-          // Upgrade layouts saved with old 1-unit wall segments, and keep
-          // aside the pieces this editor can't show (see splitLayout).
+          partialize: (state) => ({ layout: composeSavedLayout(state) }),
+          // Upgrade layouts saved with old 1-unit wall segments (or, before
+          // floors, as a list of pieces), and keep aside the pieces this
+          // editor can't show (see splitLayout).
           merge: (persisted, current) => {
-            const persistedState = persisted as Partial<EditorState> | undefined
+            const saved = persisted as { layout?: Layout; objects?: unknown } | undefined
 
             return {
               ...current,
-              ...persistedState,
-              ...splitLayout(persistedState?.objects ?? composeSavedLayout(current)),
+              ...splitLayout(
+                readSavedLayout(saved?.layout ?? saved?.objects ?? composeSavedLayout(current))
+              ),
             }
           },
         })

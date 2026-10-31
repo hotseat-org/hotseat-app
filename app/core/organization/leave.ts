@@ -2,6 +2,7 @@ import type { CoreContext } from "../types"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { LocalizedError } from "~/i18n/errors"
 import { encodeNotification } from "~/i18n/notifications"
+import { parseLayout } from "~/office/schema"
 
 export interface LeaveOrganizationArgs {
   email: string
@@ -93,14 +94,18 @@ const releasePermanentDesks = async (
 ) => {
   const offices = await mainRepository.office.findMany({ filter: { organizationSlug } })
   for (const office of offices.data) {
-    if (!Array.isArray(office.layout)) continue
-    const layout = office.layout as { assignee?: string }[]
-    if (!layout.some((o) => o?.assignee === email)) continue
+    const layout = parseLayout(office.layout)
+    if (!layout.pieces.some((o) => o.assignee === email)) continue
     await mainRepository.office.update({
       organizationSlug,
       slug: office.slug,
       data: {
-        layout: layout.map((o) => (o?.assignee === email ? { ...o, assignee: undefined } : o)),
+        layout: {
+          ...layout,
+          pieces: layout.pieces.map((o) =>
+            o.assignee === email ? { ...o, assignee: undefined } : o
+          ),
+        },
       },
     })
   }

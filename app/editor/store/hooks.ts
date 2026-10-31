@@ -1,6 +1,7 @@
 import { createContext, useContext, useMemo } from "react"
 import { useStore, type StoreApi } from "zustand"
 import { paintWallFaces } from "../layout"
+import { getAllPieces } from "./objects"
 import type { EditorState, EditorStore } from "./state"
 
 const EditorStoreContext = createContext<EditorStore | null>(null)
@@ -32,6 +33,22 @@ export const getModuleStoreHooks = <State extends object>() => ({
   ) => Selected,
   useStoreApi: useEditorStoreApi as () => StoreApi<EditorState & State>,
 })
+
+/**
+ * Every piece on every floor, each with its floor — for what's about the
+ * whole office (bookings, search), not the floor shown.
+ */
+export const useAllPieces = () => {
+  const floors = useEditorStore((state) => state.floors)
+  const currentFloor = useEditorStore((state) => state.currentFloor)
+  const objects = useEditorStore((state) => state.objects)
+  const otherFloorsPieces = useEditorStore((state) => state.otherFloorsPieces)
+
+  return useMemo(
+    () => getAllPieces({ floors, currentFloor, objects, otherFloorsPieces }),
+    [floors, currentFloor, objects, otherFloorsPieces]
+  )
+}
 
 /** The layout with the Paint tool's hovered walls in its colour, for drawing them. */
 export const useObjectsWithPaintPreview = () => {

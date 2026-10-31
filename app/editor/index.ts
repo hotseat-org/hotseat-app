@@ -36,7 +36,9 @@ export type { TourStep } from "./ui/guide/GuidedTour"
 // The store: the layout, the editor's state and each module's own.
 export {
   createEditorStore,
+  getAllPieces,
   getModuleStoreHooks,
+  useAllPieces,
   useEditorStore,
   useEditorStoreApi,
   type EditorState,

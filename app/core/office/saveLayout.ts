@@ -2,7 +2,7 @@ import { groupBookings, officeLink } from "../notification"
 import type { CoreContext } from "../types"
 import type { Office } from "./types"
 import { getLostBookings, planRehoming } from "./layoutImpact"
-import { layoutSchema } from "~/office/schema"
+import { layoutSchema, parseLayout } from "~/office/schema"
 import { type ObjectType } from "~/editor/core"
 import { isSeatable } from "~/office/catalog"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
@@ -46,8 +46,8 @@ export const saveOfficeLayout =
     const current = await mainRepository.office.find({ filter: { organizationSlug, slug } })
     if (!current) throw new Error("Not Found")
 
-    const objects = layoutSchema.parse(layout)
-    const desks = objects.filter((o) => isSeatable(o.type))
+    const saved = layoutSchema.parse(layout)
+    const desks = saved.pieces.filter((o) => isSeatable(o.type))
 
     // Permanent residents: org members, one desk each.
     const residents = desks.flatMap((d) => (d.assignee ? [d.assignee] : []))
@@ -78,7 +78,7 @@ export const saveOfficeLayout =
     const releasedBy = new Map(releases.map((r) => [`${r.deskId}|${r.date}`, r.userEmail]))
     // Who loses what (read before the save deletes it) — they're told below.
     const lost = getLostBookings(desks, upcoming, releasedBy)
-    const before = Array.isArray(current.layout) ? (current.layout as Desk[]) : []
+    const before: Desk[] = parseLayout(current.layout).pieces
     const moves = shouldRehome
       ? planRehoming({
           before: before
@@ -94,7 +94,7 @@ export const saveOfficeLayout =
     const { office, cancelled } = await mainRepository.office.saveLayout({
       organizationSlug,
       slug,
-      layout: objects,
+      layout: saved,
       cancelIds: lost.map((r) => r.id),
     })
     // The moves: each to its new desk (the old booking went with the save).
@@ -138,7 +138,15 @@ export const saveOfficeLayout =
     }
   }
 
-type Desk = { id: string; type: string; x?: number; z?: number; label?: string; assignee?: string }
+type Desk = {
+  id: string
+  type: string
+  x?: number
+  z?: number
+  label?: string
+  assignee?: string
+  floor?: string
+}
 
 /**
  * Tell people what an admin's layout change did to them (never the admin):

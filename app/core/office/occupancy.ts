@@ -1,6 +1,6 @@
 import type { CoreContext } from "../types"
 import type { Office } from "./types"
-import { layoutSchema } from "~/office/schema"
+import { parseLayout } from "~/office/schema"
 import { isSeatable } from "~/office/catalog"
 import { deskState, groupBookings, todayIn } from "~/utils/booking"
 
@@ -32,8 +32,7 @@ export const getOfficesOccupancy =
     return Object.fromEntries(
       offices.map((office) => {
         const today = todays.get(office.slug) as string
-        const parsed = layoutSchema.safeParse(office.layout ?? [])
-        const desks = (parsed.success ? parsed.data : []).filter((o) => isSeatable(o.type))
+        const desks = parseLayout(office.layout).pieces.filter((o) => isSeatable(o.type))
         const here = (r: { officeSlug: string; date: string }) =>
           r.officeSlug === office.slug && r.date === today
         const byDay = groupBookings(reservations.filter(here))

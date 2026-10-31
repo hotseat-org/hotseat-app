@@ -2,7 +2,14 @@ import { z } from "zod"
 // Registers every item a saved layout may hold, before any is checked.
 import "./catalog"
 import { NOTE_FIELDS } from "~/examples/notes/items"
-import { findItem, type ObjectType } from "~/editor/core"
+import {
+  MAX_FLOORS,
+  MAX_FLOOR_NAME,
+  composeLayout,
+  findItem,
+  type Layout,
+  type ObjectType,
+} from "~/editor/core"
 
 /**
  * Validation for a persisted office layout. Server-safe (no three/R3F imports)
@@ -29,17 +36,42 @@ export const sceneObjectSchema = z.object({
   features: z.array(z.string().max(24)).max(8).optional(),
   zone: z.string().max(32).optional(),
   variant: z.number().int().min(0).optional(),
+  // Its floor's id (see Layout): unset, the first.
+  floor: z.string().max(32).optional(),
   ...NOTE_FIELDS,
 })
 
-export const layoutSchema = z.array(sceneObjectSchema)
+/** Pieces (a saved room's, a layout's). */
+export const piecesSchema = z.array(sceneObjectSchema)
+
+const floorSchema = z.object({
+  id: z.string().min(1).max(32),
+  name: z.string().trim().max(MAX_FLOOR_NAME),
+})
+
+/**
+ * A saved office layout, as the editor sends it and the database keeps it:
+ * its floors and every piece on them — or, saved before there were floors,
+ * just its pieces (one floor).
+ */
+export const layoutSchema = z.union([
+  z.object({ floors: z.array(floorSchema).min(1).max(MAX_FLOORS), pieces: piecesSchema }),
+  piecesSchema.transform(composeLayout),
+]) as z.ZodType<Layout>
+
+/** An office's saved layout — or, unreadable (or none yet), an empty one. */
+export const parseLayout = (saved: unknown): Layout => {
+  const parsed = layoutSchema.safeParse(saved ?? [])
+
+  return parsed.success ? parsed.data : composeLayout([])
+}
 
 /** A saved room (kit), as the editor sends it and the database keeps it. */
 export const roomKitSchema = z.object({
   id: z.string().min(1).max(32),
   name: z.string().trim().min(1).max(60),
   area: z.number().nonnegative(),
-  objects: layoutSchema.max(2000),
+  objects: piecesSchema.max(2000),
 })
 
 export type LayoutObject = z.infer<typeof sceneObjectSchema>
