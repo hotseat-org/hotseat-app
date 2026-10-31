@@ -3,13 +3,19 @@ import { Route } from "./+types/join.$slug._index"
 import { getCore } from "~/core/get-core"
 import { isAuthenticated, requireUser } from "~/services/session.server"
 import { JoinCard, JoinProblem } from "~/components/JoinScreen"
-import { LoginScreen } from "~/components/LoginScreen"
+import { LOGIN_PAGE_COLOR, LoginScreen } from "~/components/LoginScreen"
 import { useI18n } from "~/i18n/I18nProvider"
 
 /**
  * An email invitation's link (and what a pasted invite code lands on): the
  * same accept screen as the universal link — or why you can't join.
  */
+// Signed out, the page is the login screen: its colour round the page too.
+export const handle = {
+  pageColor: (data: { authed?: boolean } | undefined) =>
+    data?.authed ? undefined : LOGIN_PAGE_COLOR,
+}
+
 export const loader = async ({ request, params: { slug } }: Route.LoaderArgs) => {
   const core = getCore()
   const organization = await core.organization.getForPublic({ slug })

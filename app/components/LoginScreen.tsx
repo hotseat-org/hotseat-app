@@ -6,6 +6,7 @@ import { DUSK, HotseatLockup } from "~/components/HotseatMark"
 import { useI18n } from "~/i18n/I18nProvider"
 import { LOCALES, LOCALE_NAMES } from "~/i18n/locales"
 import { useLocale } from "~/i18n/useLocale"
+import type { PageColor } from "~/utils/pageColor"
 
 /** The languages, each in itself — for someone not signed in yet. */
 const LanguageSwitch = () => {
@@ -33,6 +34,9 @@ const LanguageSwitch = () => {
 
 /** The page's night blue (a step darker than the mark's tile, so it stands on it). */
 const NIGHT = "#1f2850"
+
+/** The login screen's own colour, whatever the colour scheme: round the page on a phone too. */
+export const LOGIN_PAGE_COLOR: PageColor = { background: NIGHT, isDark: true }
 
 /**
  * The three horizon lines (the logo's, across the whole screen), each as the
