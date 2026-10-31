@@ -1,8 +1,18 @@
-import { List, StickyNote } from "lucide-react"
-import { NOTE_CATEGORIES, NOTE_ITEMS, isNote } from "./items"
-import { createNotesState, useNotesStore, type NotesState } from "./store"
-import { GROUP, defineModule, selectAll, type Command, type EditorState } from "~/editor"
-import { useI18n } from "~/i18n/I18nProvider"
+import { Eye, StickyNote } from "lucide-react"
+import { isNote } from "./items"
+import { NOTE_CATEGORIES, NOTES } from "./looks"
+import { NoteLabels } from "./NoteLabels"
+import { NoteSection } from "./NoteSection"
+import { NOTES_MENU_SECTION } from "./NotesMenu"
+import { createNotesState, type NotesState } from "./store"
+import {
+  GROUP,
+  defineModule,
+  selectAll,
+  type Command,
+  type EditorState,
+  type MapLayer,
+} from "~/editor"
 import { msg } from "~/i18n/msg"
 
 const NOTES_COMMANDS: Command<EditorState & NotesState>[] = [
@@ -19,38 +29,39 @@ const NOTES_COMMANDS: Command<EditorState & NotesState>[] = [
       ),
   },
   {
-    id: "toggleNotesList",
-    label: msg("Show or hide the notes list"),
+    id: "toggleNotes",
+    label: msg("Show or hide the notes"),
     group: GROUP.view,
-    icon: List,
-    isAvailable: () => true,
-    run: (state) => state.toggleNotesList(),
+    icon: Eye,
+    isAvailable: (state) => state.objects.some(isNote),
+    run: (state) => state.toggleLayer("notes"),
   },
 ]
 
-/** How many notes there are, while the list is open. */
-const NotesList = () => {
-  const { tn } = useI18n()
-  const isOpen = useNotesStore((state) => state.isNotesListOpen)
-  const noteCount = useNotesStore((state) => state.objects.filter(isNote).length)
-  if (!isOpen) return null
-
-  return (
-    <div className="pointer-events-auto absolute right-4 top-20 rounded-2xl bg-surface p-4 shadow-lg">
-      {tn(noteCount, "{n} note", "{n} notes")}
-    </div>
-  )
+/** The Map menu's switch for what's written on the notes. */
+const NOTES_LAYER: MapLayer = {
+  id: "notes",
+  label: msg("Notes"),
+  hint: msg("What's written on each note"),
+  icon: StickyNote,
+  when: "always",
+  isOnByDefault: true,
 }
 
 /**
- * The smallest useful module, as an example to start from: one item
- * (a note on the floor) with its own catalogue section, its own
- * state, two commands and a panel. Not part of the app — see notes.test.ts.
+ * A complete small module, as an example to start from: an item (a note on
+ * the floor) with its catalogue section, text written on it in the
+ * Inspector, shown above it in 3D, and the Map menu's switch to hide the
+ * notes and list to go to one — plus two commands. Its server half (the
+ * item and its field, for saved layouts) is items.ts; see notes.test.ts.
  */
 export const notesModule = defineModule<NotesState>({
   id: "notes",
-  catalog: { items: NOTE_ITEMS, categories: NOTE_CATEGORIES },
+  catalog: { items: NOTES, categories: NOTE_CATEGORIES },
   createState: createNotesState,
   commands: NOTES_COMMANDS,
-  panels: [{ Component: NotesList, when: "always" }],
+  inspectorSections: [NoteSection],
+  sceneLayers: [{ Component: NoteLabels, when: "always" }],
+  mapLayers: [NOTES_LAYER],
+  mapMenuSection: NOTES_MENU_SECTION,
 })

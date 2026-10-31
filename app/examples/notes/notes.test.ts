@@ -33,13 +33,41 @@ describe("the notes module", () => {
     expect(new Set(store.getState().selection)).toEqual(new Set([first, second]))
   })
 
-  test("opens and closes its list", () => {
-    const { store } = createNotesEditor()
+  test("shows and hides the notes", () => {
+    const { store, place } = createNotesEditor()
+    place("note", { x: 0.25, z: 0.25 })
+    expect(store.getState().layers.notes).toBe(true)
 
-    runCommand(store, "toggleNotesList")
-    expect(store.getState().isNotesListOpen).toBe(true)
+    runCommand(store, "toggleNotes")
+    expect(store.getState().layers.notes).toBe(false)
 
-    runCommand(store, "toggleNotesList")
-    expect(store.getState().isNotesListOpen).toBe(false)
+    runCommand(store, "toggleNotes")
+    expect(store.getState().layers.notes).toBe(true)
+  })
+
+  test("keeps what's written on a note as one step back", () => {
+    const { store, place } = createNotesEditor()
+    const note = place("note", { x: 0.25, z: 0.25 })
+    const steps = store.getState().past.length
+
+    store.getState().setNoteText(note, "  Water the plants  ")
+
+    const written = store.getState().objects.find((piece) => piece.id === note)
+    expect(written?.noteText).toBe("Water the plants")
+    expect(store.getState().past).toHaveLength(steps + 1)
+
+    store.getState().undo()
+    expect(store.getState().objects.find((piece) => piece.id === note)?.noteText).toBeUndefined()
+  })
+
+  test("leaves no step when the text doesn't change", () => {
+    const { store, place } = createNotesEditor()
+    const note = place("note", { x: 0.25, z: 0.25 })
+    store.getState().setNoteText(note, "Same")
+    const steps = store.getState().past.length
+
+    store.getState().setNoteText(note, "Same ")
+
+    expect(store.getState().past).toHaveLength(steps)
   })
 })

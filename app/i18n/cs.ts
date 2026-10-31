@@ -1076,11 +1076,10 @@ export const cs: Messages = {
   Notes: "Poznámky",
   "Reminders left on the floor.": "Připomínky nechané na podlaze.",
   "Select all notes": "Vybrat všechny poznámky",
-  "Show or hide the notes list": "Zobrazit nebo skrýt seznam poznámek",
-  "{n} note": {
-    one: "{n} poznámka",
-    few: "{n} poznámky",
-    many: "{n} poznámky",
-    other: "{n} poznámek",
-  },
+  "Show or hide the notes": "Zobrazit nebo skrýt poznámky",
+  "Go to a note": "Přejít na poznámku",
+  Text: "Text",
+  "Write a note…": "Napište poznámku…",
+  "Empty note": "Prázdná poznámka",
+  "What's written on each note": "Co je na které poznámce napsáno",
 }

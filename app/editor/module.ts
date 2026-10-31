@@ -114,6 +114,8 @@ export interface MapMenuSection {
   /** Translatable heading (msg). */
   heading: string
   Component: ComponentType
+  /** When it's offered: unset, while viewing (the office's desk filter). */
+  when?: "viewing" | "editing" | "always"
   /** A hook: whether it has anything to offer. */
   useIsShown: () => boolean
   /** A hook: how many of its settings are changed (counted on the Map button). */

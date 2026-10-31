@@ -4,6 +4,9 @@
  * from here, so the furniture is always registered first.
  */
 import "./furniture"
+// The office editor runs the notes example too (see OfficeEditor.tsx): its
+// items must be known wherever a saved layout is checked.
+import "~/examples/notes/items"
 import { hasTag, type ObjectType } from "~/editor/core"
 
 /**

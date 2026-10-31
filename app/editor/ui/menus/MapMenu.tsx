@@ -11,6 +11,7 @@ import {
 import { Fragment } from "react"
 import { useEditorStore, type Layers } from "../../store"
 import { hasWebGL } from "../../shell/webgl"
+import type { MapMenuSection } from "../../module"
 import { useModules } from "../../modules"
 import type { SceneObject } from "../../types"
 import { REVEAL_LABEL } from "../bars/revealLabel"
@@ -92,7 +93,7 @@ export const MapMenu = ({
   const toggleFrameRate = useEditorStore((state) => state.toggleFrameRate)
   const objects = useEditorStore((state) => state.objects)
   const modules = useModules()
-  // The modules' sections at the foot (the office: which desks), viewing only.
+  // The modules' sections at the foot (the office: which desks), in their mode.
   // Each one's hooks, in a loop: safe, the list is fixed (see ModulesContext).
   const sections = modules.flatMap((module) =>
     module.mapMenuSection
@@ -105,7 +106,9 @@ export const MapMenu = ({
         ]
       : []
   )
-  const shownSections = isEditing ? [] : sections.filter((section) => section.isShown)
+  const isSectionInMode = ({ when = "viewing" }: MapMenuSection) =>
+    when === "always" || (when === "editing") === isEditing
+  const shownSections = sections.filter((section) => section.isShown && isSectionInMode(section))
 
   // The modules' layers for the mode, then the editor's own, then the frame rate.
   const moduleRows: LayerRow[] = modules

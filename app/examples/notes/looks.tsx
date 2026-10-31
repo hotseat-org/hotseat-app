@@ -1,6 +1,6 @@
 import { StickyNote } from "lucide-react"
-import type { CategoryDefinition, MeshProps } from "~/editor"
-import { defineItem, hasTag, type SceneObject } from "~/editor/core"
+import { NOTE_ITEMS } from "./items"
+import { composeItemsWithLooks, type CategoryDefinition, type MeshProps } from "~/editor"
 import { Surface } from "~/editor/kit"
 import { msg } from "~/i18n/msg"
 
@@ -18,29 +18,13 @@ const NotePin = ({ color = "#f2c94c" }: MeshProps) => (
   </group>
 )
 
-/** A note pinned to the floor: a reminder left on the layout. What it is, and how it looks. */
-export const NOTE_ITEMS = {
-  note: defineItem({
-    mount: "floor",
-    footprint: [1, 1],
-    defaultColor: "#f2c94c",
-    tags: ["note"],
-    Mesh: NotePin,
-    tile: { label: msg("Note"), icon: StickyNote, category: "notes" },
-  }),
-}
-
-// An item joins the layout's types: saved layouts and the server know it too.
-type NoteItems = typeof NOTE_ITEMS
-declare module "~/editor/catalog/registry" {
-  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-  interface CatalogItems extends NoteItems {}
-}
+/** The notes as the module brings them: each item with how it looks. */
+export const NOTES = composeItemsWithLooks(NOTE_ITEMS, {
+  note: { Mesh: NotePin, tile: { label: msg("Note"), icon: StickyNote, category: "notes" } },
+})
 
 const NotesIcon = ({ className }: { className?: string }) => <StickyNote className={className} />
 
 export const NOTE_CATEGORIES: CategoryDefinition[] = [
   { id: "notes", label: msg("Notes"), icon: NotesIcon, hint: msg("Reminders left on the floor.") },
 ]
-
-export const isNote = (piece: SceneObject) => hasTag(piece.type, "note")
