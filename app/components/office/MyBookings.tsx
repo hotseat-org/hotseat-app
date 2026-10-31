@@ -5,6 +5,8 @@ import { useEffect, useMemo, useState } from "react"
 import { useFetcher, useNavigate, useParams } from "react-router"
 import { PANEL } from "./shell-ui"
 import { useOfficeStore } from "~/office/store"
+import { floorText, useDeskFloor } from "~/office/booking/useBooking"
+import { useAllPieces } from "~/editor"
 import type { MyBooking } from "~/core/reservation/mine"
 import type { MyBookingsData } from "~/routes/api.my-bookings.$slug"
 import type { ReservationActionData } from "~/routes/api.reservations.$slug.$officeSlug"
@@ -12,8 +14,12 @@ import type { Day } from "~/utils/booking"
 import { useI18n } from "~/i18n/I18nProvider"
 import type { Translator } from "~/i18n/translate"
 
-const deskText = ({ t }: Translator, label?: string) =>
-  label ? t("Desk {label}", { label }) : t("A desk")
+/** "Desk B2" (or "A desk") — with its floor in an office with floors: "Desk B2 · Attic". */
+const deskText = ({ t }: Translator, label?: string, floor?: string) => {
+  const desk = label ? t("Desk {label}", { label }) : t("A desk")
+
+  return floor ? `${desk} · ${floor}` : desk
+}
 
 /**
  * "My bookings": your upcoming days in every office of the organization, and
@@ -152,7 +158,9 @@ export const MyBookings = ({
             </span>
             <span className="min-w-0">
               <span className="block text-sm font-bold text-foreground">
-                {t("Permanent: {desk}", { desk: deskText(i18n, p.deskLabel) })}
+                {t("Permanent: {desk}", {
+                  desk: deskText(i18n, p.deskLabel, p.deskFloor && floorText(i18n, p.deskFloor)),
+                })}
               </span>
               <span className="block truncate text-xs text-muted">
                 {p.officeName} · {t("every day")}
@@ -222,7 +230,7 @@ export const MyBookings = ({
                     <>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-bold text-foreground">
-                          {deskText(i18n, b.deskLabel)}
+                          {deskText(i18n, b.deskLabel, b.deskFloor && floorText(i18n, b.deskFloor))}
                         </p>
                         <p className="truncate text-xs text-muted">{b.officeName}</p>
                       </div>
@@ -254,7 +262,8 @@ export const MyBookings = ({
  * favourite desks — Show finds one on the map; the star takes it off the list.
  */
 const HereSection = ({ onShow }: { onShow?: () => void }) => {
-  const objects = useOfficeStore((s) => s.objects)
+  const objects = useAllPieces()
+  const getDeskFloor = useDeskFloor()
   const { favorites, usual } = useOfficeStore((s) => s.booking.preferences)
   const setPreference = useOfficeStore((s) => s.booking.setPreference)
   const applyFavorite = useOfficeStore((s) => s.applyFavorite)
@@ -285,7 +294,9 @@ const HereSection = ({ onShow }: { onShow?: () => void }) => {
             className="min-w-0 flex-1 text-left"
           >
             <span className="block text-sm font-bold text-foreground">
-              {t("Usual: {desk}", { desk: deskText(i18n, usualDesk.label) })}
+              {t("Usual: {desk}", {
+                desk: deskText(i18n, usualDesk.label, getDeskFloor(usualDesk)),
+              })}
             </span>
             <span className="block truncate text-xs text-muted">
               {t("Booked for you every {days}", {
@@ -309,7 +320,9 @@ const HereSection = ({ onShow }: { onShow?: () => void }) => {
         >
           <button
             type="button"
-            aria-label={t("Remove {desk} from favourites", { desk: deskText(i18n, desk.label) })}
+            aria-label={t("Remove {desk} from favourites", {
+              desk: deskText(i18n, desk.label, getDeskFloor(desk)),
+            })}
             onClick={() => {
               applyFavorite(desk.id, false)
               setPreference({ intent: "favorite", deskId: desk.id, isFavorite: "false" })
@@ -319,7 +332,7 @@ const HereSection = ({ onShow }: { onShow?: () => void }) => {
             <Star className="size-4" fill="currentColor" />
           </button>
           <span className="min-w-0 flex-1 truncate text-sm font-bold text-foreground">
-            {deskText(i18n, desk.label)}
+            {deskText(i18n, desk.label, getDeskFloor(desk))}
           </span>
           <button
             type="button"

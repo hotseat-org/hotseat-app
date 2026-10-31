@@ -22,6 +22,7 @@ import { findNearestFreeDesk } from "./nearestFreeDesk"
 import { PhoneLayout } from "./PhoneLayout"
 import { type SceneObject } from "~/editor/core"
 import { useI18n } from "~/i18n/I18nProvider"
+import { useAllPieces } from "~/editor"
 import {
   addDays,
   deskState,
@@ -44,7 +45,7 @@ const lowerFirst = (text: string) => text.charAt(0).toLowerCase() + text.slice(1
 export const CustomBooking = () => {
   const customBooking = useOfficeStore((state) => state.customBooking)
   const close = useOfficeStore((state) => state.closeCustomBooking)
-  const objects = useOfficeStore((state) => state.objects)
+  const objects = useAllPieces()
   const desk = customBooking ? objects.find((object) => object.id === customBooking.id) : undefined
   const isPhone = useIsMobile()
   if (!desk) return null
@@ -83,7 +84,7 @@ const CustomBookingBody = ({
   isPhone: boolean
   onClose: () => void
 }) => {
-  const objects = useOfficeStore((state) => state.objects)
+  const objects = useAllPieces()
   const booking = useOfficeStore((state) => state.booking)
   const applyReserve = useOfficeStore((state) => state.applyReserve)
   const people = usePeople()

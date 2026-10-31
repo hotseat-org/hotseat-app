@@ -15,3 +15,12 @@ export type OfficeEditorState = EditorState & OfficeState
 /** The store's `set` and `get` where the office builds its state. */
 export type OfficeSetState = SetState<OfficeEditorState>
 export type OfficeGetState = GetState<OfficeEditorState>
+
+/**
+ * A desk on another floor: its floor shown first — before finding it, the way
+ * to it, or its card.
+ */
+export const showFloorOf = (get: OfficeGetState, deskId: string) => {
+  const desk = get().otherFloorsPieces.find((piece) => piece.id === deskId)
+  if (desk?.floor) get().showFloor(desk.floor)
+}

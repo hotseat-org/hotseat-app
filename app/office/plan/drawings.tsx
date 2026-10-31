@@ -162,7 +162,7 @@ export const composeOccupants = (objects: SceneObject[], desks: DeskOnDay[]) => 
 
 /** The shown day's desks, turned with the plan. */
 export const usePlanDesks = () => {
-  const { desks } = useDesksOnDay()
+  const { floorDesks: desks } = useDesksOnDay()
   const turn = useOfficeStore((state) => state.planTurn)
 
   return useMemo(

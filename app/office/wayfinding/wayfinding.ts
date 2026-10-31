@@ -533,9 +533,11 @@ export const useRoute = () => {
   const desk = objects.find((piece) => piece.id === route.deskId)
   if (!desk) return null
 
-  // Your desk on the shown day — the way starts there, unless it's where you're going.
+  // Your desk on the shown day — the way starts there, unless it's where
+  // you're going, or on another floor.
   const myDesk = me ? byPerson.get(me)?.desk : undefined
-  const canStartAtMyDesk = !!myDesk && myDesk.id !== desk.id
+  const isMyDeskHere = !!myDesk && objects.some((piece) => piece.id === myDesk.id)
+  const canStartAtMyDesk = isMyDeskHere && myDesk.id !== desk.id
   const fromMyDesk = canStartAtMyDesk && route.from === "desk"
 
   return {

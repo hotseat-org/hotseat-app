@@ -6,6 +6,7 @@ import { isSeatable } from "../catalog"
 import { useOfficeStore } from "../store"
 import { addDays, weekStart, type Day } from "~/utils/booking"
 import { useI18n } from "~/i18n/I18nProvider"
+import { useAllPieces } from "~/editor"
 
 /**
  * The day being shown in the office: ‹ Wed 23 Sep › in the bottom bar, with a
@@ -115,7 +116,7 @@ export const MonthCalendar = ({
   const from = useOfficeStore((state) => state.booking.from)
   const lastDay = useOfficeStore((state) => state.booking.lastDay)
   const byDay = useOfficeStore((state) => state.booking.byDay)
-  const objects = useOfficeStore((state) => state.objects)
+  const objects = useAllPieces()
   const me = useOfficeStore((state) => state.booking.me)
   const { t, format } = useI18n()
   const [month, setMonth] = useState(() => monthOf(day))

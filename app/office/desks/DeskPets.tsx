@@ -16,7 +16,7 @@ const PET_SCALE = 0.4
  * like clicking the desk.
  */
 export const DeskPets = () => {
-  const { desks } = useDesksOnDay()
+  const { floorDesks: desks } = useDesksOnDay()
   const objects = useOfficeStore((state) => state.objects)
   const openSeatCard = useOfficeStore((state) => state.openSeatCard)
   const people = usePeople()

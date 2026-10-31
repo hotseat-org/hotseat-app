@@ -1,4 +1,4 @@
-import { type OfficeGetState, type OfficeSetState } from "./state"
+import { showFloorOf, type OfficeGetState, type OfficeSetState } from "./state"
 
 /** The office's panels: a desk's card, booking it on chosen days, Insights. */
 export interface OfficePanelsState {
@@ -17,12 +17,15 @@ export interface OfficePanelsState {
 
 export const createOfficePanelsState = (
   set: OfficeSetState,
-  _get: OfficeGetState
+  get: OfficeGetState
 ): OfficePanelsState => ({
   isInsightsOpen: false,
   setInsightsOpen: (isInsightsOpen) => set({ isInsightsOpen }),
   seatCard: null,
-  openSeatCard: (id) => set({ seatCard: { id } }),
+  openSeatCard: (id) => {
+    showFloorOf(get, id)
+    set({ seatCard: { id } })
+  },
   closeSeatCard: () => set({ seatCard: null }),
   customBooking: null,
   openCustomBooking: (id) => set({ customBooking: { id }, seatCard: null }),

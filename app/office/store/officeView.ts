@@ -1,4 +1,4 @@
-import { type OfficeGetState, type OfficeSetState } from "./state"
+import { showFloorOf, type OfficeGetState, type OfficeSetState } from "./state"
 
 /** What the office shows over the map: the desk filter, the heatmap, a spotlit desk, the way to one. */
 export interface OfficeViewState {
@@ -26,7 +26,7 @@ export interface OfficeViewState {
 
 export const createOfficeViewState = (
   set: OfficeSetState,
-  _get: OfficeGetState
+  get: OfficeGetState
 ): OfficeViewState => ({
   deskFilter: [],
   toggleDeskFilter: (feature) =>
@@ -38,14 +38,19 @@ export const createOfficeViewState = (
   heatmap: null,
   setHeatmap: (heatmap) => set({ heatmap, seatCard: null }),
   spotlight: null,
-  spotlightSeat: (id) => set({ spotlight: { id }, seatCard: null }),
+  spotlightSeat: (id) => {
+    showFloorOf(get, id)
+    set({ spotlight: { id }, seatCard: null })
+  },
   resetSpotlight: () => set({ spotlight: null }),
   route: null,
-  showRoute: (deskId) =>
+  showRoute: (deskId) => {
+    showFloorOf(get, deskId)
     set((state) => ({
       route: { deskId, from: "desk", nonce: (state.route?.nonce ?? 0) + 1 },
       seatCard: null,
-    })),
+    }))
+  },
   setRouteFrom: (from) =>
     set((state) =>
       state.route ? { route: { ...state.route, from, nonce: state.route.nonce + 1 } } : {}

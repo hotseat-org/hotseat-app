@@ -2,7 +2,9 @@ import { useCallback, useMemo } from "react"
 import { isSeatable } from "../catalog"
 import { ZONE_FILTER_PREFIX } from "../zones/zones"
 import { useOfficeStore } from "../store"
-import { type SceneObject } from "~/editor/core"
+import { useAllPieces } from "~/editor"
+import { getFloorLabel, type FloorLabel, type SceneObject } from "~/editor/core"
+import { useI18n } from "~/i18n/I18nProvider"
 import { addDays, deskState, weekStart, type Day, type DeskState } from "~/utils/booking"
 import type { Translator } from "~/i18n/translate"
 
@@ -15,31 +17,53 @@ export interface DeskOnDay {
 export const deskName = ({ t }: Translator, desk: Pick<SceneObject, "label">) =>
   desk.label ? t("Desk {label}", { label: desk.label }) : t("Desk")
 
+/** A floor's name to show: its own, or (unnamed) "Floor 2". */
+export const floorText = ({ t }: Translator, floor: FloorLabel) =>
+  floor.name || t("Floor {number}", { number: floor.number })
+
+/** Which floor a desk is on, to show ("Attic") — none in an office of one floor. */
+export const useDeskFloor = () => {
+  const floors = useOfficeStore((state) => state.floors)
+  const i18n = useI18n()
+
+  return useCallback(
+    (desk: Pick<SceneObject, "floor">) => {
+      const floor = getFloorLabel(floors, desk)
+
+      return floor && floorText(i18n, floor)
+    },
+    [floors, i18n]
+  )
+}
+
 /** "today", or "on Wed 23 Sep". */
 export const dayPhrase = ({ t, format }: Translator, day: string, today: string) =>
   day === today ? t("today") : format.onDay(day)
 
 /**
- * Every desk with who has it on the shown day (resident, booking or free),
- * plus the same keyed by person. Without booking (standalone editor) only
- * permanent residents count.
+ * Every desk in the office (each with its floor) with who has it on the shown
+ * day (resident, booking or free), the same keyed by person — and the shown
+ * floor's, for what's drawn on the map. Without booking (standalone editor)
+ * only permanent residents count.
  */
 export const useDesksOnDay = () => {
-  const objects = useOfficeStore((state) => state.objects)
+  const pieces = useAllPieces()
+  const currentFloor = useOfficeStore((state) => state.currentFloor)
   const day = useOfficeStore((state) => state.booking.day)
   const byDay = useOfficeStore((state) => state.booking.byDay)
   const released = useOfficeStore((state) => state.booking.released)
 
   return useMemo(() => {
-    const desks: DeskOnDay[] = objects
+    const desks: DeskOnDay[] = pieces
       .filter((piece) => isSeatable(piece.type))
       .map((desk) => ({ desk, state: deskState(desk, day, byDay, released) }))
     const byPerson = new Map<string, DeskOnDay>()
     for (const entry of desks)
       if (entry.state.kind !== "free") byPerson.set(entry.state.email, entry)
+    const floorDesks = desks.filter((entry) => entry.desk.floor === currentFloor)
 
-    return { desks, byPerson }
-  }, [objects, day, byDay, released])
+    return { desks, byPerson, floorDesks }
+  }, [pieces, currentFloor, day, byDay, released])
 }
 
 /**
@@ -65,18 +89,18 @@ export const useDeskFilter = () => {
 
 /** Your permanent desk, when you gave it up on the shown day (you're away). */
 export const useGivenUpDesk = (email?: string) => {
-  const objects = useOfficeStore((state) => state.objects)
+  const pieces = useAllPieces()
   const day = useOfficeStore((state) => state.booking.day)
   const released = useOfficeStore((state) => state.booking.released)
 
   return email
-    ? objects.find((piece) => piece.assignee === email && released[day]?.[piece.id] === email)
+    ? pieces.find((piece) => piece.assignee === email && released[day]?.[piece.id] === email)
     : undefined
 }
 
 /** Mon–Fri of the shown day's week, and whether someone has a desk on each day. */
 export const useWeekPresence = () => {
-  const objects = useOfficeStore((state) => state.objects)
+  const pieces = useAllPieces()
   const day = useOfficeStore((state) => state.booking.day)
   const byDay = useOfficeStore((state) => state.booking.byDay)
   const released = useOfficeStore((state) => state.booking.released)
@@ -87,7 +111,7 @@ export const useWeekPresence = () => {
 
     const monday = weekStart(day)
     const days: Day[] = [0, 1, 2, 3, 4].map((i) => addDays(monday, i))
-    const desks = objects.filter((piece) => isSeatable(piece.type))
+    const desks = pieces.filter((piece) => isSeatable(piece.type))
     const present = new Map(
       days.map((date) => [
         date,
@@ -102,7 +126,7 @@ export const useWeekPresence = () => {
     )
 
     return { days, isIn: (email: string, date: Day) => present.get(date)?.has(email) ?? false }
-  }, [objects, day, byDay, released])
+  }, [pieces, day, byDay, released])
 }
 
 /**
@@ -118,8 +142,8 @@ export const useWaitlist = () => {
   const today = useOfficeStore((state) => state.booking.today)
   const preferences = useOfficeStore((state) => state.booking.preferences)
   const setPreference = useOfficeStore((state) => state.booking.setPreference)
-  const objects = useOfficeStore((state) => state.objects)
-  const isResident = !!me && objects.some((piece) => piece.assignee === me)
+  const pieces = useAllPieces()
+  const isResident = !!me && pieces.some((piece) => piece.assignee === me)
   const isFull =
     enabled &&
     day >= today &&

@@ -64,7 +64,7 @@ export const OFFICE_SCENE_LAYERS: SceneLayer[] = [
 
 /** Viewing: who's in at each desk on the shown day (clutter, monitor, pet). */
 export const useOfficePieceStates = (isViewing: boolean) => {
-  const { desks } = useDesksOnDay()
+  const { floorDesks: desks } = useDesksOnDay()
 
   return useMemo(
     () =>

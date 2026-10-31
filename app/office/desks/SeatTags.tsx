@@ -19,7 +19,7 @@ export const SeatTags = () => {
   // Bridged into the canvas; the tags' text is made here, outside <Html>'s own root.
   const { t } = useI18n()
   const people = usePeople()
-  const { desks } = useDesksOnDay()
+  const { floorDesks: desks } = useDesksOnDay()
   const matchesFilter = useDeskFilter()
   const booking = useOfficeStore((state) => state.booking.enabled)
   const past = useOfficeStore((state) => state.booking.day < state.booking.today)

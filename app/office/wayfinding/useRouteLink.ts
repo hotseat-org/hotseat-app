@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react"
 import { useOfficeStore, useOfficeStoreApi } from "../store"
+import { getAllPieces } from "~/editor"
 
 /**
  * Wayfinding: a shared link (?to=<desk>) opens with the way to that desk
@@ -9,14 +10,17 @@ import { useOfficeStore, useOfficeStoreApi } from "../store"
 export const useRouteLink = (readOnly: boolean) => {
   const store = useOfficeStoreApi()
   const routeDesk = useOfficeStore((state) => state.route?.deskId)
-  const hasLayout = useOfficeStore((state) => state.objects.length > 0)
+  const hasLayout = useOfficeStore(
+    (state) => state.objects.length > 0 || state.otherFloorsPieces.length > 0
+  )
   const askedRoute = useRef(false)
   useEffect(() => {
     if (askedRoute.current || !hasLayout) return
 
     askedRoute.current = true
     const to = new URL(window.location.href).searchParams.get("to")
-    if (to && store.getState().objects.some((piece) => piece.id === to))
+    // On any floor: showing the way shows its floor.
+    if (to && getAllPieces(store.getState()).some((piece) => piece.id === to))
       store.getState().showRoute(to)
   }, [hasLayout, store])
   useEffect(() => {

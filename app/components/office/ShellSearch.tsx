@@ -5,6 +5,9 @@ import { MemberAvatar, PANEL, PANEL_HOVER, nameOf, type ShellMember } from "./sh
 import { useOfficeStore } from "~/office/store"
 import { isSeatable } from "~/office/catalog"
 import { useI18n } from "~/i18n/I18nProvider"
+import { useAllPieces } from "~/editor"
+import type { SceneObject } from "~/editor/core"
+import { useDeskFloor } from "~/office/booking/useBooking"
 
 interface Result {
   key: string
@@ -24,7 +27,8 @@ export const ShellSearch = ({ members }: { members: ShellMember[] }) => {
   const { t } = useI18n()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("")
-  const objects = useOfficeStore((s) => s.objects)
+  const objects = useAllPieces()
+  const getDeskFloor = useDeskFloor()
   const openSeatCard = useOfficeStore((s) => s.openSeatCard)
 
   // ⌘K / Ctrl+K toggles it.
@@ -45,15 +49,22 @@ export const ShellSearch = ({ members }: { members: ShellMember[] }) => {
   const results = useMemo<Result[]>(() => {
     const q = query.trim().toLowerCase()
     const desks = objects.filter((o) => isSeatable(o.type))
+    // "Desk B2", with its floor in an office with floors: "Desk B2 · Attic".
+    const withFloor = (text: string, desk: SceneObject) => {
+      const floor = getDeskFloor(desk)
+
+      return floor ? `${text} · ${floor}` : text
+    }
     const people: Result[] = members.map((m) => {
       const desk = desks.find((d) => d.assignee === m.userEmail)
       return {
         key: `p:${m.userEmail}`,
         title: nameOf(m),
         subtitle: desk
-          ? desk.label
-            ? t("Desk {label}", { label: desk.label })
-            : t("Desk assigned")
+          ? withFloor(
+              desk.label ? t("Desk {label}", { label: desk.label }) : t("Desk assigned"),
+              desk
+            )
           : t("No desk in this office"),
         deskId: desk?.id,
         member: m,
@@ -65,7 +76,7 @@ export const ShellSearch = ({ members }: { members: ShellMember[] }) => {
         const who = members.find((m) => m.userEmail === d.assignee)
         return {
           key: `d:${d.id}`,
-          title: t("Desk {label}", { label: d.label ?? "" }),
+          title: withFloor(t("Desk {label}", { label: d.label ?? "" }), d),
           subtitle: who ? nameOf(who) : t("Free"),
           deskId: d.id,
         }
@@ -77,7 +88,7 @@ export const ShellSearch = ({ members }: { members: ShellMember[] }) => {
         `${r.title} ${r.subtitle} ${r.member?.userEmail ?? ""}`.toLowerCase().includes(q)
       )
       .slice(0, 8)
-  }, [query, objects, members, t])
+  }, [query, objects, members, t, getDeskFloor])
 
   const pick = (r: Result) => {
     if (!r.deskId) return
