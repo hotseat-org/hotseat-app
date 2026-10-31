@@ -87,9 +87,12 @@ export const MobileShell = ({ offices, me, members, empty = false }: Props) => {
 }
 
 /** Where you are (office switcher), what changed (bell) and who you are (account), edge to edge. */
+// The top bar and the tab bar are fixed and opaque: Safari tints its status bar
+// and toolbar from a fixed element at the screen's edge — these, not the
+// office layer behind them.
 export const TopBar = ({ offices }: { offices: ShellOffice[] }) => (
   <header
-    className="pointer-events-auto absolute inset-x-0 top-0 grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-1 border-b border-chrome-border bg-chrome/95 px-3 shadow-[0_2px_10px_var(--chrome-shadow)]"
+    className="pointer-events-auto fixed inset-x-0 top-0 grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-1 border-b border-chrome-border bg-chrome px-3 shadow-[0_2px_10px_var(--chrome-shadow)]"
     style={{ height: TOP_BAR_HEIGHT }}
   >
     {/* The switcher takes what the account leaves, and truncates in it. */}
@@ -453,7 +456,7 @@ const TabBar = ({ tab, onChange }: { tab: Tab; onChange: (tab: Tab) => void }) =
     <nav
       ref={bar}
       aria-label={t("Main")}
-      className="pointer-events-auto absolute inset-x-0 bottom-0 grid grid-cols-3 border-t border-foreground/[0.08] bg-chrome px-2 pb-3 pt-1.5"
+      className="pointer-events-auto fixed inset-x-0 bottom-0 grid grid-cols-3 border-t border-foreground/[0.08] bg-chrome px-2 pb-3 pt-1.5"
       style={{ height: TAB_BAR_HEIGHT }}
     >
       {TABS.map(([id, label, Icon]) => (
