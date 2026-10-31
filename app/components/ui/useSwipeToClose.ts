@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react"
+import { useState, type CSSProperties } from "react"
 import { useTouchSwipe } from "./useTouchSwipe"
 
 /** How far a sheet is pulled down before letting go closes it (px). */
@@ -14,12 +14,19 @@ const FLICK_SPEED = 0.5
  * belongs to its opening animation); `offset`, how far it's pulled (px).
  */
 export const useSwipeToClose = (onClose: () => void) => {
-  const { handlers, offset } = useTouchSwipe({
+  // Let go to close, the sheet stays where the finger left it and slides out
+  // from there: springing back up while sliding out, it jumped.
+  const [closedAt, setClosedAt] = useState(0)
+  const { handlers, offset: swipeOffset } = useTouchSwipe({
     axis: "y",
     onRelease: (distance, speed) => {
-      if (distance > CLOSE_DISTANCE || speed > FLICK_SPEED) onClose()
+      if (distance <= CLOSE_DISTANCE && speed <= FLICK_SPEED) return
+
+      setClosedAt(Math.max(0, distance))
+      onClose()
     },
   })
+  const offset = swipeOffset || closedAt
   const style: CSSProperties = {
     transform: offset > 0 ? `translateY(${offset}px)` : undefined,
     transition: offset > 0 ? "none" : "transform 200ms ease-out",
