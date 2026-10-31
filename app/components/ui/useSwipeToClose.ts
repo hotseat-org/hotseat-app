@@ -7,18 +7,22 @@ const CLOSE_DISTANCE = 100
 const FLICK_SPEED = 0.5
 
 /**
- * Swipe a bottom sheet down to close it, from its top (the grab handle and
- * title — its lists keep scrolling): it follows the finger, and closes past
+ * Swipe a bottom sheet down to close it: it follows the finger, and closes past
  * a distance or on a flick down; otherwise it springs back. `handlers` go on
  * the top; `style` on a wrapper round the sheet (the sheet's own transform
  * belongs to its opening animation); `offset`, how far it's pulled (px).
  */
-export const useSwipeToClose = (onClose: () => void) => {
+export const useSwipeToClose = (
+  onClose: () => void,
+  /** Whether a touch at x, y may pull the sheet (e.g. only on content scrolled to the top). */
+  canStart?: (x: number, y: number) => boolean
+) => {
   // Let go to close, the sheet stays where the finger left it and slides out
   // from there: springing back up while sliding out, it jumped.
   const [closedAt, setClosedAt] = useState(0)
   const { handlers, offset: swipeOffset } = useTouchSwipe({
     axis: "y",
+    canStart,
     onRelease: (distance, speed) => {
       if (distance <= CLOSE_DISTANCE && speed <= FLICK_SPEED) return
 

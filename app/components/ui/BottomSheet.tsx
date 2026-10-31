@@ -18,6 +18,34 @@ export const SHEET_EXIT_MS = 140
 /** The status-bar strip's depth (px): Safari ignores 10px or less. */
 const STRIP_HEIGHT = 11
 
+/**
+ * No pull-to-refresh while a sheet is open: pulling a sheet down (not quite
+ * on it, or past it) refreshed the page behind instead.
+ */
+const useNoPullToRefresh = () => {
+  useEffect(() => {
+    const html = document.documentElement
+    const previous = html.style.overscrollBehaviorY
+    html.style.overscrollBehaviorY = "none"
+
+    return () => {
+      html.style.overscrollBehaviorY = previous
+    }
+  }, [])
+}
+
+/** Whether anything under x, y inside `sheet` is scrolled down from its top. */
+const isScrolledDownAt = (x: number, y: number, sheet: HTMLElement | null) => {
+  for (
+    let element = document.elementFromPoint(x, y);
+    element && element !== sheet;
+    element = element.parentElement
+  )
+    if (element.scrollTop > 0) return true
+
+  return false
+}
+
 /** An element's height (px), kept up to date. */
 const useHeight = (element: RefObject<HTMLElement | null>) => {
   const [height, setHeight] = useState(0)
@@ -68,7 +96,11 @@ export const BottomSheet = ({
     setIsClosing(true)
     window.setTimeout(onClose, SHEET_EXIT_MS)
   }
-  const swipe = useSwipeToClose(close)
+  // Pulled down anywhere, like an iPhone's sheets — on content scrolled to
+  // the top; scrolled down, a pull scrolls it back up.
+  const sheet = useRef<HTMLElement>(null)
+  const swipe = useSwipeToClose(close, (x, y) => !isScrolledDownAt(x, y, sheet.current))
+  useNoPullToRefresh()
   const panel = useRef<HTMLDivElement>(null)
   const panelHeight = useHeight(panel)
   // The screen's dimming goes with the sheet: lighter as it's pulled down, and
@@ -135,8 +167,11 @@ export const BottomSheet = ({
           role="dialog"
           aria-modal="true"
           aria-label={label ?? title}
+          ref={sheet}
+          {...swipe.handlers}
           className={clsx(
-            "relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-t-3xl border-t border-border bg-overlay",
+            // No bounce in its lists: pulled down at the top, the sheet moves.
+            "relative flex [&_*]:overscroll-y-none min-h-0 flex-1 flex-col overflow-hidden rounded-t-3xl border-t border-border bg-overlay",
             // Above a tab bar, a shadow upwards only: the wrapper's clipping
             // didn't hold in Safari, which cast it over the bar.
             bottomInset > 0 ? "shadow-[0_-12px_24px_-12px_var(--chrome-shadow)]" : "shadow-overlay",
@@ -144,9 +179,8 @@ export const BottomSheet = ({
             isClosing ? "sheet-down" : "sheet-up"
           )}
         >
-          {/* The top: swipe it down to close. */}
           {title ? (
-            <div {...swipe.handlers} className="flex shrink-0 touch-none flex-col gap-3">
+            <div className="flex shrink-0 touch-none flex-col gap-3">
               <span aria-hidden className="mx-auto h-1.5 w-10 rounded-full bg-border" />
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-extrabold text-foreground">{title}</h2>
@@ -154,11 +188,7 @@ export const BottomSheet = ({
               </div>
             </div>
           ) : (
-            <div
-              {...swipe.handlers}
-              // A grab zone round the handle, clear of the banner's own close button.
-              className="absolute left-1/2 top-0 z-10 flex h-8 w-28 -translate-x-1/2 touch-none justify-center pt-2.5"
-            >
+            <div className="pointer-events-none absolute left-1/2 top-0 z-10 flex h-8 w-28 -translate-x-1/2 justify-center pt-2.5">
               <span aria-hidden className="h-1.5 w-10 rounded-full bg-white/70 shadow-sm" />
             </div>
           )}
