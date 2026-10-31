@@ -81,7 +81,10 @@ export const BottomSheet = ({
           aria-modal="true"
           aria-label={label ?? title}
           className={clsx(
-            "relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-t-3xl border-t border-border bg-overlay shadow-overlay",
+            "relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-t-3xl border-t border-border bg-overlay",
+            // Above a tab bar, a shadow upwards only: the wrapper's clipping
+            // didn't hold in Safari, which cast it over the bar.
+            bottomInset > 0 ? "shadow-[0_-12px_24px_-12px_var(--chrome-shadow)]" : "shadow-overlay",
             !isFlush && "gap-3 px-5 pb-7 pt-2.5",
             isClosing ? "sheet-down" : "sheet-up"
           )}
