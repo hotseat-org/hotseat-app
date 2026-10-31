@@ -3,7 +3,7 @@ import { isNote } from "./items"
 import { NOTE_CATEGORIES, NOTES } from "./looks"
 import { NoteLabels } from "./NoteLabels"
 import { NoteSection } from "./NoteSection"
-import { NOTES_MENU_SECTION } from "./NotesMenu"
+import { NoteList } from "./NoteList"
 import { createNotesState, type NotesState } from "./store"
 import {
   GROUP,
@@ -38,7 +38,7 @@ const NOTES_COMMANDS: Command<EditorState & NotesState>[] = [
   },
 ]
 
-/** The Map menu's switch for what's written on the notes. */
+/** The Map menu's switch for what's written on the notes, with the notes under it. */
 const NOTES_LAYER: MapLayer = {
   id: "notes",
   label: msg("Notes"),
@@ -46,13 +46,14 @@ const NOTES_LAYER: MapLayer = {
   icon: StickyNote,
   when: "always",
   isOnByDefault: true,
+  Details: NoteList,
 }
 
 /**
  * A complete small module, as an example to start from: an item (a note on
  * the floor) with its catalogue section, text written on it in the
  * Inspector, shown above it in 3D, and the Map menu's switch to hide the
- * notes and list to go to one — plus two commands. Its server half (the
+ * notes, with the list under it to go to one — plus two commands. Its server half (the
  * item and its field, for saved layouts) is items.ts; see notes.test.ts.
  */
 export const notesModule = defineModule<NotesState>({
@@ -63,5 +64,4 @@ export const notesModule = defineModule<NotesState>({
   inspectorSections: [NoteSection],
   sceneLayers: [{ Component: NoteLabels, when: "always" }],
   mapLayers: [NOTES_LAYER],
-  mapMenuSection: NOTES_MENU_SECTION,
 })

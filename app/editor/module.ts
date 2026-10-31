@@ -108,6 +108,8 @@ export interface MapLayer {
   isOnByDefault: boolean
   /** A hint instead, for this layout (the Zones layer, with none yet). */
   hintFor?: (objects: SceneObject[]) => string | null
+  /** What it shows, listed under its switch while it's on (the notes: each, to go to). */
+  Details?: ComponentType
 }
 
 export interface MapMenuSection {

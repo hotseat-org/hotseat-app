@@ -8,7 +8,7 @@ import {
   Ruler,
   type LucideIcon,
 } from "lucide-react"
-import { Fragment } from "react"
+import { Fragment, type ComponentType } from "react"
 import { useEditorStore, type Layers } from "../../store"
 import { hasWebGL } from "../../shell/webgl"
 import type { MapMenuSection } from "../../module"
@@ -27,6 +27,8 @@ interface LayerRow {
   shortcut?: string
   /** A hint instead, for this layout (a module's layer: see MapLayer.hintFor). */
   hintFor?: (objects: SceneObject[]) => string | null
+  /** Listed under the switch while it's on (a module's layer: see MapLayer.Details). */
+  Details?: ComponentType
 }
 
 const FRAME_RATE: LayerRow = {
@@ -202,6 +204,12 @@ export const MapMenu = ({
                     </span>
                     <Switch isOn={isLayerOn} />
                   </button>
+                  {isLayerOn && row.Details && (
+                    // Lined up with the label, under its icon's column.
+                    <div className="pb-1 pl-[3.375rem] pr-2.5">
+                      <row.Details />
+                    </div>
+                  )}
                 </li>
               )
             })}

@@ -1077,7 +1077,6 @@ export const cs: Messages = {
   "Reminders left on the floor.": "Připomínky nechané na podlaze.",
   "Select all notes": "Vybrat všechny poznámky",
   "Show or hide the notes": "Zobrazit nebo skrýt poznámky",
-  "Go to a note": "Přejít na poznámku",
   Text: "Text",
   "Write a note…": "Napište poznámku…",
   "Empty note": "Prázdná poznámka",
