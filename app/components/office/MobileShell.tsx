@@ -11,7 +11,8 @@ import { MyBookings } from "./MyBookings"
 import { NotificationsBell } from "./Notifications"
 import { WeekDots } from "./WeekDots"
 import { MOBILE_CHROME } from "./mobile"
-import { MapMenu, useEditorStore } from "~/editor"
+import { MapMenu } from "~/editor"
+import { useOfficeStore } from "~/office/store"
 import { MonthCalendar } from "~/office/booking/DateStepper"
 import {
   dayPhrase,
@@ -103,10 +104,10 @@ export const TopBar = ({ offices }: { offices: ShellOffice[] }) => (
 const DayDock = ({ me }: { me: ShellMember }) => {
   const i18n = useI18n()
   const { t } = i18n
-  const day = useEditorStore((s) => s.booking.day)
-  const today = useEditorStore((s) => s.booking.today)
-  const setDay = useEditorStore((s) => s.setBookingDay)
-  const spotlightSeat = useEditorStore((s) => s.spotlightSeat)
+  const day = useOfficeStore((s) => s.booking.day)
+  const today = useOfficeStore((s) => s.booking.today)
+  const setDay = useOfficeStore((s) => s.setBookingDay)
+  const spotlightSeat = useOfficeStore((s) => s.spotlightSeat)
   const { byPerson } = useDesksOnDay()
   const mine = byPerson.get(me.userEmail)
   const givenUp = useGivenUpDesk(me.userEmail)
@@ -198,7 +199,7 @@ const DayDock = ({ me }: { me: ShellMember }) => {
 
 /** The month calendar (as on the desktop) as a bottom sheet; picking a day closes it. */
 const CalendarSheet = ({ onClose }: { onClose: () => void }) => {
-  const setDay = useEditorStore((s) => s.setBookingDay)
+  const setDay = useOfficeStore((s) => s.setBookingDay)
   const { t } = useI18n()
   const [isClosing, setIsClosing] = useState(false)
   const close = () => {
@@ -249,11 +250,11 @@ const CalendarSheet = ({ onClose }: { onClose: () => void }) => {
 
 /** The bookable days (this week through the booking window), the shown one picked. */
 const DayStrip = () => {
-  const day = useEditorStore((s) => s.booking.day)
-  const today = useEditorStore((s) => s.booking.today)
-  const from = useEditorStore((s) => s.booking.from)
-  const lastDay = useEditorStore((s) => s.booking.lastDay)
-  const setDay = useEditorStore((s) => s.setBookingDay)
+  const day = useOfficeStore((s) => s.booking.day)
+  const today = useOfficeStore((s) => s.booking.today)
+  const from = useOfficeStore((s) => s.booking.from)
+  const lastDay = useOfficeStore((s) => s.booking.lastDay)
+  const setDay = useOfficeStore((s) => s.setBookingDay)
   const days = useMemo(() => (from && lastDay ? daysBetween(from, lastDay) : []), [from, lastDay])
   const { t, format } = useI18n()
 
@@ -312,9 +313,9 @@ const People = ({
   members: ShellMember[]
   onFind: () => void
 }) => {
-  const day = useEditorStore((s) => s.booking.day)
-  const today = useEditorStore((s) => s.booking.today)
-  const spotlightSeat = useEditorStore((s) => s.spotlightSeat)
+  const day = useOfficeStore((s) => s.booking.day)
+  const today = useOfficeStore((s) => s.booking.today)
+  const spotlightSeat = useOfficeStore((s) => s.spotlightSeat)
   const i18n = useI18n()
   const { t } = i18n
   const { open: openSettings } = useSettings()

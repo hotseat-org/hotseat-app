@@ -6,6 +6,7 @@
  */
 
 // A module: the slots it fills (see module.ts).
+export { defineModule } from "./module"
 export type {
   AutosaveControls,
   EditorModule,
@@ -34,6 +35,7 @@ export type { TourStep } from "./ui/guide/GuidedTour"
 // The store: the layout, the editor's state and each module's slice.
 export {
   createEditorStore,
+  getModuleStoreHooks,
   useEditorStore,
   useEditorStoreApi,
   type EditorState,

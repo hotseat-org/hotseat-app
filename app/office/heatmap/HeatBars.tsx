@@ -3,9 +3,9 @@ import { useEffect, useLayoutEffect, useMemo, useRef } from "react"
 import * as THREE from "three"
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js"
 import { isSeatable } from "../catalog"
+import { useOfficeStore } from "../store"
 import { HEAT_BAR, heatColor } from "./heatmap"
 import { useSurfaces, markShadowsDirty } from "~/editor/kit"
-import { useEditorStore } from "~/editor"
 
 /** How long a bar takes to grow (s), and the stagger between desks. */
 const GROW = 0.7
@@ -57,8 +57,8 @@ const columnMaterial = (isDark: boolean) => {
  * Every column in one draw, every plate in another. View mode only.
  */
 export const HeatBars = () => {
-  const heatmap = useEditorStore((state) => state.heatmap)
-  const objects = useEditorStore((state) => state.objects)
+  const heatmap = useOfficeStore((state) => state.heatmap)
+  const objects = useOfficeStore((state) => state.objects)
   const isDark = useSurfaces().nightDepth === 0
   const renderer = useThree((state) => state.gl)
   const invalidate = useThree((state) => state.invalidate)

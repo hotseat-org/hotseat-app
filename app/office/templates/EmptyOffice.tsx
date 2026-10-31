@@ -11,10 +11,9 @@ import {
   type LucideIcon,
 } from "lucide-react"
 import { useMemo, useState } from "react"
-import { numberUnlabelledDesks } from "../store"
+import { numberUnlabelledDesks, useOfficeStore } from "../store"
 import { isSeatable } from "../catalog"
 import { TEMPLATES, type OfficeTemplate } from "./templates"
-import { useEditorStore } from "~/editor"
 import { useI18n } from "~/i18n/I18nProvider"
 import type { Translator } from "~/i18n/translate"
 import { Button } from "~/components/Button"
@@ -63,7 +62,7 @@ const sizeOf = ({ t, tn }: Translator, template: OfficeTemplate) => {
  * (no editor) the layouts are the only way, so they show straight away.
  */
 export const EmptyOffice = ({ readOnly, isEditable, onEnterEdit, onDismiss }: Props) => {
-  const load = useEditorStore((state) => state.load)
+  const load = useOfficeStore((state) => state.load)
   const i18n = useI18n()
   const { t } = i18n
   const sizes = useMemo(() => PICKS.map((pick) => sizeOf(i18n, pick)), [i18n])

@@ -1,11 +1,12 @@
 import { Hash, SquareDashedMousePointer } from "lucide-react"
 import { isSeatable } from "../catalog"
 import { getZones } from "../zones/zones"
+import type { OfficeEditorState } from "../store"
 import { GROUP, selectAll, type Command } from "~/editor"
 import { msg } from "~/i18n/msg"
 
 /** The office's commands: selecting and numbering desks. */
-export const OFFICE_COMMANDS: Command[] = [
+export const OFFICE_COMMANDS: Command<OfficeEditorState>[] = [
   {
     id: "selectDesks",
     isOnFloorMenu: true,

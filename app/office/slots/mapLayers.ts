@@ -4,15 +4,6 @@ import { type MapLayer, type MapMenuSection } from "~/editor"
 import { DeskFilterOptions, useDeskFilterOptions } from "~/components/office/DeskFilter"
 import { msg } from "~/i18n/msg"
 
-declare module "~/editor/store/preferences" {
-  interface Layers {
-    /** Team zones: their floor and names. */
-    zones: boolean
-    /** Viewing: who sits where, and which desks are free. */
-    deskTags: boolean
-  }
-}
-
 /** The office's layers of the map. */
 export const OFFICE_MAP_LAYERS: MapLayer[] = [
   {

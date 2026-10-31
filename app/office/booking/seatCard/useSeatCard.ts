@@ -2,8 +2,8 @@ import { useEffect, useState } from "react"
 import { personByEmail, usePeople } from "../../desks/people"
 import { deskName } from "../useBooking"
 import { DESK_FEATURES } from "../../desks/deskFeatures"
+import { useOfficeStore } from "../../store"
 import type { BodyProps } from "./SeatCardBody"
-import { useEditorStore } from "~/editor"
 import { bookingPresets, deskState, type BookingPreset, type Day } from "~/utils/booking"
 import { useI18n } from "~/i18n/I18nProvider"
 
@@ -25,15 +25,15 @@ export interface Option {
  * scene) and the 2D floor plan's card. Null when no card is open.
  */
 export const useSeatCard = () => {
-  const card = useEditorStore((editorState) => editorState.seatCard)
-  const objects = useEditorStore((editorState) => editorState.objects)
-  const booking = useEditorStore((editorState) => editorState.booking)
-  const closeSeatCard = useEditorStore((editorState) => editorState.closeSeatCard)
-  const applyReserve = useEditorStore((editorState) => editorState.applyReserve)
-  const applyCancel = useEditorStore((editorState) => editorState.applyCancel)
-  const openCustomBooking = useEditorStore((editorState) => editorState.openCustomBooking)
-  const showRoute = useEditorStore((editorState) => editorState.showRoute)
-  const applyFavorite = useEditorStore((editorState) => editorState.applyFavorite)
+  const card = useOfficeStore((editorState) => editorState.seatCard)
+  const objects = useOfficeStore((editorState) => editorState.objects)
+  const booking = useOfficeStore((editorState) => editorState.booking)
+  const closeSeatCard = useOfficeStore((editorState) => editorState.closeSeatCard)
+  const applyReserve = useOfficeStore((editorState) => editorState.applyReserve)
+  const applyCancel = useOfficeStore((editorState) => editorState.applyCancel)
+  const openCustomBooking = useOfficeStore((editorState) => editorState.openCustomBooking)
+  const showRoute = useOfficeStore((editorState) => editorState.showRoute)
+  const applyFavorite = useOfficeStore((editorState) => editorState.applyFavorite)
   const people = usePeople()
   const i18n = useI18n()
   const { t, tn, format } = i18n

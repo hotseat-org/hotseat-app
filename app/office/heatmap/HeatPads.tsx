@@ -2,10 +2,10 @@ import { useEffect, useLayoutEffect, useMemo, useRef } from "react"
 import { useThree } from "@react-three/fiber"
 import * as THREE from "three"
 import { isSeatable } from "../catalog"
+import { useOfficeStore } from "../store"
 import { heatColor } from "./heatmap"
 import { footprintCells, GRID } from "~/editor/core"
 import { useSurfaces } from "~/editor/kit"
-import { useEditorStore } from "~/editor"
 
 /** On the floor, under the furniture and above the floor paint. */
 const HEIGHT = 0.018
@@ -57,8 +57,8 @@ const padMaterial = () =>
  * was in use in the chosen period. View mode only.
  */
 export const HeatPads = () => {
-  const heatmap = useEditorStore((state) => state.heatmap)
-  const objects = useEditorStore((state) => state.objects)
+  const heatmap = useOfficeStore((state) => state.heatmap)
+  const objects = useOfficeStore((state) => state.objects)
   const isDark = useSurfaces().nightDepth === 0
   const invalidate = useThree((state) => state.invalidate)
   const material = useMemo(padMaterial, [])

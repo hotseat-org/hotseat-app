@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect } from "react"
 import type { People } from "../desks/people"
 import type { DeskPreferences, PreferenceChange } from "../store"
-import { useEditorStore, useEditorStoreApi } from "~/editor"
+import { useOfficeStore, useOfficeStoreApi } from "../store"
 import { groupBookings, type BookingRow, type Day, type DeskDays } from "~/utils/booking"
 
 /** Desk booking data + actions for a real office, from the route. */
@@ -34,7 +34,7 @@ export interface EditorBooking {
  * same day.
  */
 export const useBookingSync = (booking: EditorBooking | undefined, people: People | undefined) => {
-  const store = useEditorStoreApi()
+  const store = useOfficeStoreApi()
   const reservations = booking?.reservations
   const releases = booking?.releases
   // Layout effects: set before the first paint, so the bar and desk tags don't
@@ -86,7 +86,7 @@ export const useBookingSync = (booking: EditorBooking | undefined, people: Peopl
     store,
   ])
   // Plain replaceState: no loader round-trip.
-  const shownDay = useEditorStore((state) => (state.booking.enabled ? state.booking.day : null))
+  const shownDay = useOfficeStore((state) => (state.booking.enabled ? state.booking.day : null))
   useEffect(() => {
     if (!shownDay || !today) return
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type RefObject } from "react"
 import { routeBounds } from "../wayfinding/wayfinding"
-import { useEditorStore } from "~/editor"
+import { useOfficeStore } from "../store"
 import { GLIDE_MS, type Frame, MAX_ZOOM, fitView, type View } from "~/editor/kit"
 
 /** Bringing a desk into view: at least this zoom (px per plan unit)… */
@@ -26,8 +26,8 @@ export const useSpotlight = ({
   findSpot: (id: string) => { x: number; z: number } | undefined
   glideTo: (from: View, to: View) => void
 }) => {
-  const spotlight = useEditorStore((state) => state.spotlight)
-  const resetSpotlight = useEditorStore((state) => state.resetSpotlight)
+  const spotlight = useOfficeStore((state) => state.spotlight)
+  const resetSpotlight = useOfficeStore((state) => state.resetSpotlight)
   const [highlightId, setHighlightId] = useState<string | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
   useEffect(() => () => clearTimeout(timer.current), [])

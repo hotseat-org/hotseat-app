@@ -5,8 +5,8 @@ import { isSeatable } from "../catalog"
 import { useDeskFilter, useDesksOnDay, type DeskOnDay } from "../booking/useBooking"
 import { composeZoneAreas, type ZoneArea } from "../zones/zones"
 import { drawZones } from "../zones/zoneDrawing"
+import { useOfficeStore } from "../store"
 import { GRID, type SceneObject } from "~/editor/core"
-import { useEditorStore } from "~/editor"
 import { turnObject } from "~/editor/kit"
 import { footprintCells } from "~/editor/core"
 import { type PlanDrawingContext, type PlanDrawings, type PlanPieceStyle } from "~/editor"
@@ -163,7 +163,7 @@ export const composeOccupants = (objects: SceneObject[], desks: DeskOnDay[]) => 
 /** The shown day's desks, turned with the plan. */
 export const usePlanDesks = () => {
   const { desks } = useDesksOnDay()
-  const turn = useEditorStore((state) => state.planTurn)
+  const turn = useOfficeStore((state) => state.planTurn)
 
   return useMemo(
     () => desks.map((entry) => ({ ...entry, desk: turnObject(entry.desk, turn) })),
@@ -173,14 +173,14 @@ export const usePlanDesks = () => {
 
 /** Free desks can be booked: booking on, not a past day, no heatmap over them. */
 export const usePlanBookable = () =>
-  useEditorStore(
+  useOfficeStore(
     (state) => state.booking.enabled && !(state.booking.day < state.booking.today) && !state.heatmap
   )
 
 /** Each turned layout's zones, worked out once (the drawing and the names share them). */
 const zoneAreasOf = new WeakMap<SceneObject[], ZoneArea[]>()
 export const usePlanZoneAreas = (objects: SceneObject[]) => {
-  const isShown = useEditorStore((state) => state.layers.zones)
+  const isShown = useOfficeStore((state) => state.layers.zones)
   if (!isShown) return []
 
   let areas = zoneAreasOf.get(objects)
@@ -210,7 +210,7 @@ export const useOfficePlanDrawings = ({
   const desks = usePlanDesks()
   const bookable = usePlanBookable()
   const matches = useDeskFilter()
-  const heatmap = useEditorStore((state) => state.heatmap)
+  const heatmap = useOfficeStore((state) => state.heatmap)
   const areas = usePlanZoneAreas(objects)
   const freeTitle = t("Free — tap to book")
 

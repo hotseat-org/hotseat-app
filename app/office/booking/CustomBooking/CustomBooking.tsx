@@ -5,6 +5,7 @@ import { useMemo, useState } from "react"
 import { personByEmail, usePeople } from "../../desks/people"
 import { isSeatable } from "../../catalog"
 import { deskName } from "../useBooking"
+import { useOfficeStore } from "../../store"
 import {
   DayCell,
   FOOTER_BUTTON,
@@ -20,7 +21,6 @@ import { Legend } from "./Legend"
 import { findNearestFreeDesk } from "./nearestFreeDesk"
 import { PhoneLayout } from "./PhoneLayout"
 import { type SceneObject } from "~/editor/core"
-import { useEditorStore } from "~/editor"
 import { useI18n } from "~/i18n/I18nProvider"
 import {
   addDays,
@@ -42,9 +42,9 @@ const lowerFirst = (text: string) => text.charAt(0).toLowerCase() + text.slice(1
  * A day someone else has can be picked too — it books the nearest free desk.
  */
 export const CustomBooking = () => {
-  const customBooking = useEditorStore((state) => state.customBooking)
-  const close = useEditorStore((state) => state.closeCustomBooking)
-  const objects = useEditorStore((state) => state.objects)
+  const customBooking = useOfficeStore((state) => state.customBooking)
+  const close = useOfficeStore((state) => state.closeCustomBooking)
+  const objects = useOfficeStore((state) => state.objects)
   const desk = customBooking ? objects.find((object) => object.id === customBooking.id) : undefined
   const isPhone = useIsMobile()
   if (!desk) return null
@@ -83,9 +83,9 @@ const CustomBookingBody = ({
   isPhone: boolean
   onClose: () => void
 }) => {
-  const objects = useEditorStore((state) => state.objects)
-  const booking = useEditorStore((state) => state.booking)
-  const applyReserve = useEditorStore((state) => state.applyReserve)
+  const objects = useOfficeStore((state) => state.objects)
+  const booking = useOfficeStore((state) => state.booking)
+  const applyReserve = useOfficeStore((state) => state.applyReserve)
   const people = usePeople()
   const i18n = useI18n()
   const { t, tn, format } = i18n

@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react"
 import { isSeatable } from "../catalog"
 import { LayoutImpact } from "../booking/LayoutImpact"
+import { useOfficeStore } from "../store"
 import { type AutosaveControls, type SaveGuard } from "~/editor"
-import { useEditorStore } from "~/editor"
 import { getLostBookings, planRehoming, type ReleasedBy } from "~/core/office/layoutImpact"
 
 declare module "~/editor/module" {
@@ -29,7 +29,7 @@ export const useLayoutImpactGuard = ({
 }: AutosaveControls): SaveGuard => {
   // What an unsaved change would do to upcoming bookings: who'd lose their
   // desk, and where they could move.
-  const bookingState = useEditorStore((state) => state.booking)
+  const bookingState = useOfficeStore((state) => state.booking)
   const impact = useMemo(() => {
     const booking = bookingState
     if (!isEnabled || !booking.enabled || !booking.today) return null

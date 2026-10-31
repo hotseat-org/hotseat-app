@@ -1,4 +1,4 @@
-import { type GetState, type SetState } from "~/editor"
+import { type OfficeGetState, type OfficeSetState } from "./state"
 
 /** What the office shows over the map: the desk filter, the heatmap, a spotlit desk, the way to one. */
 export interface OfficeViewSlice {
@@ -24,7 +24,10 @@ export interface OfficeViewSlice {
   clearRoute: () => void
 }
 
-export const createOfficeViewSlice = (set: SetState, _get: GetState): OfficeViewSlice => ({
+export const createOfficeViewSlice = (
+  set: OfficeSetState,
+  _get: OfficeGetState
+): OfficeViewSlice => ({
   deskFilter: [],
   toggleDeskFilter: (feature) =>
     set((state) => ({

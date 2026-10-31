@@ -2,8 +2,8 @@ import clsx from "clsx"
 import { ArrowLeftRight, Check, Footprints, Link2, X } from "lucide-react"
 import { useEffect, useState } from "react"
 import { deskName } from "../booking/useBooking"
+import { useOfficeStore } from "../store"
 import { useRoute, walkTime } from "./wayfinding"
-import { useEditorStore } from "~/editor"
 import { useI18n } from "~/i18n/I18nProvider"
 
 /**
@@ -16,8 +16,8 @@ export const RoutePill = ({ className }: { className?: string }) => {
   const i18n = useI18n()
   const { t } = i18n
   const route = useRoute()
-  const clearRoute = useEditorStore((state) => state.clearRoute)
-  const setRouteFrom = useEditorStore((state) => state.setRouteFrom)
+  const clearRoute = useOfficeStore((state) => state.clearRoute)
+  const setRouteFrom = useOfficeStore((state) => state.setRouteFrom)
   const [isCopied, setIsCopied] = useState(false)
   useEffect(() => setIsCopied(false), [route?.deskId])
 

@@ -1,5 +1,5 @@
 import type { People } from "../desks/people"
-import { type GetState, type SetState } from "~/editor"
+import { type OfficeGetState, type OfficeSetState } from "./state"
 
 /** The organization's members (desk assignment, name tags, avatars) — from the app, see OfficeSync. */
 export interface PeopleSlice {
@@ -9,7 +9,7 @@ export interface PeopleSlice {
 
 export const NO_PEOPLE: People = { me: null, members: [] }
 
-export const createPeopleSlice = (set: SetState, _get: GetState): PeopleSlice => ({
+export const createPeopleSlice = (set: OfficeSetState, _get: OfficeGetState): PeopleSlice => ({
   people: NO_PEOPLE,
   setPeople: (people) => set({ people }),
 })

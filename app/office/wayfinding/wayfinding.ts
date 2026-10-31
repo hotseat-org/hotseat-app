@@ -1,5 +1,6 @@
 import { useDesksOnDay } from "../booking/useBooking"
 import { spotFor } from "../desks/seatSpot"
+import { useOfficeStore } from "../store"
 import {
   enclosedCells,
   footprintCells,
@@ -12,7 +13,6 @@ import {
   getEdge,
   getItem,
 } from "~/editor/core"
-import { useEditorStore } from "~/editor"
 import {
   GRID,
   isEdgeType,
@@ -524,9 +524,9 @@ export const walkTime = ({ t }: Translator, metres: number) =>
  * its start is switched (to re-frame the view).
  */
 export const useRoute = () => {
-  const route = useEditorStore((state) => state.route)
-  const objects = useEditorStore((state) => state.objects)
-  const me = useEditorStore((state) => state.booking.me)
+  const route = useOfficeStore((state) => state.route)
+  const objects = useOfficeStore((state) => state.objects)
+  const me = useOfficeStore((state) => state.booking.me)
   const { byPerson } = useDesksOnDay()
   if (!route) return null
 

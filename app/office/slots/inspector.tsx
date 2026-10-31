@@ -6,7 +6,7 @@ import { isRetiredDesk, isSeatable } from "../catalog"
 import { usePeople } from "../desks/people"
 import { getZones } from "../zones/zones"
 import { DESK_FEATURES } from "../desks/deskFeatures"
-import { useEditorStore } from "~/editor"
+import { useOfficeStore } from "../store"
 import { type InspectorSectionProps } from "~/editor"
 import type { Day } from "~/utils/booking"
 import { useI18n } from "~/i18n/I18nProvider"
@@ -31,18 +31,18 @@ export const OfficeInspectorSection = ({ selected, count }: InspectorSectionProp
  * office). A resident desk is theirs every day and can't be booked.
  */
 const SeatSection = ({ id }: { id: string }) => {
-  const seat = useEditorStore((state) => state.objects.find((object) => object.id === id))
-  const setSeatLabel = useEditorStore((state) => state.setSeatLabel)
-  const assignSeat = useEditorStore((state) => state.assignSeat)
-  const numberDesks = useEditorStore((state) => state.numberDesks)
-  const toggleDeskFeature = useEditorStore((state) => state.toggleDeskFeature)
+  const seat = useOfficeStore((state) => state.objects.find((object) => object.id === id))
+  const setSeatLabel = useOfficeStore((state) => state.setSeatLabel)
+  const assignSeat = useOfficeStore((state) => state.assignSeat)
+  const numberDesks = useOfficeStore((state) => state.numberDesks)
+  const toggleDeskFeature = useOfficeStore((state) => state.toggleDeskFeature)
   const people = usePeople()
   const { t, format } = useI18n()
   // Upcoming bookings on this desk: giving it a resident (or deleting it)
   // cancels them — said before it happens, not after.
-  const byDay = useEditorStore((state) => state.booking.byDay)
-  const today = useEditorStore((state) => state.booking.today)
-  const isBookingOn = useEditorStore((state) => state.booking.enabled)
+  const byDay = useOfficeStore((state) => state.booking.byDay)
+  const today = useOfficeStore((state) => state.booking.today)
+  const isBookingOn = useOfficeStore((state) => state.booking.enabled)
   const bookings = useMemo(
     () =>
       isBookingOn
@@ -202,7 +202,7 @@ const SeatSection = ({ id }: { id: string }) => {
  */
 const RetiredDeskNote = ({ id, type }: { id: string; type: string }) => {
   const { t } = useI18n()
-  const replaceWithWorkstation = useEditorStore((state) => state.replaceWithWorkstation)
+  const replaceWithWorkstation = useOfficeStore((state) => state.replaceWithWorkstation)
 
   return (
     <div className="mb-4 rounded-xl bg-warning/10 p-3 text-xs leading-snug text-foreground">
@@ -232,10 +232,10 @@ const RetiredDeskNote = ({ id, type }: { id: string; type: string }) => {
  */
 const ZoneSection = () => {
   const { t, tn } = useI18n()
-  const objects = useEditorStore((state) => state.objects)
-  const selection = useEditorStore((state) => state.selection)
-  const setZone = useEditorStore((state) => state.setZone)
-  const numberDesksByZone = useEditorStore((state) => state.numberDesksByZone)
+  const objects = useOfficeStore((state) => state.objects)
+  const selection = useOfficeStore((state) => state.selection)
+  const setZone = useOfficeStore((state) => state.setZone)
+  const numberDesksByZone = useOfficeStore((state) => state.numberDesksByZone)
   const zones = useMemo(() => getZones(objects), [objects])
   const desks = useMemo(() => {
     const ids = new Set(selection)

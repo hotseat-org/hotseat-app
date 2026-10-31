@@ -4,7 +4,7 @@ import { CalendarDays, MapPin, Pin, Repeat, Star } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useFetcher, useNavigate, useParams } from "react-router"
 import { PANEL } from "./shell-ui"
-import { useEditorStore } from "~/editor"
+import { useOfficeStore } from "~/office/store"
 import type { MyBooking } from "~/core/reservation/mine"
 import type { MyBookingsData } from "~/routes/api.my-bookings.$slug"
 import type { ReservationActionData } from "~/routes/api.reservations.$slug.$officeSlug"
@@ -43,12 +43,12 @@ export const MyBookings = ({
   const navigate = useNavigate()
   const list = useFetcher<MyBookingsData>()
   const cancel = useFetcher<ReservationActionData>()
-  const setDay = useEditorStore((s) => s.setBookingDay)
-  const applyCancel = useEditorStore((s) => s.applyCancel)
-  const me = useEditorStore((s) => s.booking.me)
+  const setDay = useOfficeStore((s) => s.setBookingDay)
+  const applyCancel = useOfficeStore((s) => s.applyCancel)
+  const me = useOfficeStore((s) => s.booking.me)
   // The map's bookings: when they change (you booked or cancelled on the map),
   // this list is stale — reload it.
-  const byDay = useEditorStore((s) => s.booking.byDay)
+  const byDay = useOfficeStore((s) => s.booking.byDay)
   const load = list.load
   const url = `/api/my-bookings/${slug}`
   useEffect(() => {
@@ -255,11 +255,11 @@ export const MyBookings = ({
  * favourite desks — Show finds one on the map; the star takes it off the list.
  */
 const HereSection = ({ onShow }: { onShow?: () => void }) => {
-  const objects = useEditorStore((s) => s.objects)
-  const { favorites, usual } = useEditorStore((s) => s.booking.preferences)
-  const setPreference = useEditorStore((s) => s.booking.setPreference)
-  const applyFavorite = useEditorStore((s) => s.applyFavorite)
-  const spotlightSeat = useEditorStore((s) => s.spotlightSeat)
+  const objects = useOfficeStore((s) => s.objects)
+  const { favorites, usual } = useOfficeStore((s) => s.booking.preferences)
+  const setPreference = useOfficeStore((s) => s.booking.setPreference)
+  const applyFavorite = useOfficeStore((s) => s.applyFavorite)
+  const spotlightSeat = useOfficeStore((s) => s.spotlightSeat)
   const i18n = useI18n()
   const { t, format } = i18n
   const deskOf = (id: string) => objects.find((o) => o.id === id)

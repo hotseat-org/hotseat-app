@@ -5,10 +5,10 @@ import { SeatCardBody, useSeatCard } from "../booking/seatCard"
 import { useDeskFilter } from "../booking/useBooking"
 import { useRoute } from "../wayfinding/wayfinding"
 import { RoutePath } from "../wayfinding/RoutePath"
+import { useOfficeStore } from "../store"
 import { useRouteFraming, useSpotlight } from "./useFraming"
 import { DeskTag, HeatTag, Occupant, RouteEnd, SpotlightRing, ZoneName } from "./overlays"
 import { composeOccupants, usePlanDesks, usePlanZoneAreas } from "./drawings"
-import { useEditorStore } from "~/editor"
 import { clamp } from "~/editor/core"
 import { turnPoint } from "~/editor/kit"
 import { type PlanLayerProps } from "~/editor"
@@ -51,11 +51,11 @@ export const OfficeRoutePath = ({ plan }: PlanLayerProps) => {
 export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
   const { t } = useI18n()
   const { view, screen, turn, objects, isDark, phoneChrome } = plan
-  const openSeatCard = useEditorStore((state) => state.openSeatCard)
-  const heatmap = useEditorStore((state) => state.heatmap)
-  const isTagsLayerOn = useEditorStore((state) => state.layers.deskTags)
+  const openSeatCard = useOfficeStore((state) => state.openSeatCard)
+  const heatmap = useOfficeStore((state) => state.heatmap)
+  const isTagsLayerOn = useOfficeStore((state) => state.layers.deskTags)
   // Tags mark free desks as bookable whatever the heatmap (it hides them anyway).
-  const bookable = useEditorStore(
+  const bookable = useOfficeStore(
     (state) => state.booking.enabled && !(state.booking.day < state.booking.today)
   )
   const matchesFilter = useDeskFilter()

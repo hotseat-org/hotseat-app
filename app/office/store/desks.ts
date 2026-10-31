@@ -1,9 +1,9 @@
 import { findDeskChair, toWorld } from "../desks/seatSpot"
 import { isSeatable } from "../catalog"
 import { numberDesksByZone } from "../zones/zones"
+import { type OfficeGetState, type OfficeSetState } from "./state"
 import { type SceneObject } from "~/editor/core"
 import { snapToFootprint } from "~/editor/core"
-import { type GetState, type SetState } from "~/editor"
 
 /** Desks: their labels, residents, zones and features. */
 export interface DesksSlice {
@@ -69,7 +69,7 @@ export const asNewDesks = (existing: SceneObject[], fresh: SceneObject[]): Scene
   )
 }
 
-export const createDesksSlice = (set: SetState, _get: GetState): DesksSlice => ({
+export const createDesksSlice = (set: OfficeSetState, _get: OfficeGetState): DesksSlice => ({
   setSeatLabel: (id, label) =>
     set((state) => ({
       objects: state.objects.map((piece) =>

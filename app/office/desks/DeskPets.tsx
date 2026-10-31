@@ -2,9 +2,9 @@ import { Suspense, useMemo, useState } from "react"
 import { useCursor } from "@react-three/drei"
 import type { ThreeEvent } from "@react-three/fiber"
 import { useDesksOnDay } from "../booking/useBooking"
+import { useOfficeStore } from "../store"
 import { personByEmail, usePeople } from "./people"
 import { spotFor, type Spot } from "./seatSpot"
-import { useEditorStore } from "~/editor"
 import { petFor } from "~/editor/core"
 import { WiggleModel } from "~/editor/kit"
 
@@ -17,8 +17,8 @@ const PET_SCALE = 0.4
  */
 export const DeskPets = () => {
   const { desks } = useDesksOnDay()
-  const objects = useEditorStore((state) => state.objects)
-  const openSeatCard = useEditorStore((state) => state.openSeatCard)
+  const objects = useOfficeStore((state) => state.objects)
+  const openSeatCard = useOfficeStore((state) => state.openSeatCard)
   const people = usePeople()
   const pets = useMemo(() => {
     const seats = objects.filter((object) => object.type === "seat")

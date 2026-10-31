@@ -28,15 +28,16 @@ import { msg } from "~/i18n/msg"
  * right-click menu: what it's called, where it's listed, its shortcut, and
  * whether it applies right now.
  */
-export interface Command {
+export interface Command<State extends EditorState = EditorState> {
   id: string
   /** English text, translated where it's shown. */
   label: string
   group: string
   icon: LucideIcon
   shortcut?: string
-  isAvailable: (state: EditorState) => boolean
-  run: (state: EditorState) => void
+  /** Methods, so a module's commands may see its own state (Command<ItsState>). */
+  isAvailable(state: State): boolean
+  run(state: State): void
   /** Also offered on the floor's right-click menu (office-wide, not about a piece). */
   isOnFloorMenu?: boolean
 }

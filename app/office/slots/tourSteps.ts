@@ -1,5 +1,5 @@
 import { isSeatable } from "../catalog"
-import { type TourStep, type EditorState } from "~/editor"
+import { type EditorState, type TourStep } from "~/editor"
 import { msg } from "~/i18n/msg"
 
 const deskCount = (state: EditorState) =>

@@ -7,7 +7,7 @@ import { useFetcher, useParams } from "react-router"
 import { useTheme } from "remix-themes"
 import { heatColor, heatGradient, PERIOD_LABEL } from "~/office/heatmap/heatmap"
 import { personByEmail, usePeople } from "~/office/desks/people"
-import { useEditorStore } from "~/editor"
+import { useOfficeStore } from "~/office/store"
 import type { InsightsPeriod, OfficeInsights } from "~/core/office/insights"
 import type { InsightsData } from "~/routes/api.insights.$slug.$officeSlug"
 import { addDays, weekStart, type Day } from "~/utils/booking"
@@ -272,9 +272,9 @@ export const InsightsDashboard = () => {
   const { slug, officeSlug } = useParams()
   const i18n = useI18n()
   const { t, tn, format } = i18n
-  const setOpen = useEditorStore((s) => s.setInsightsOpen)
-  const setHeatmap = useEditorStore((s) => s.setHeatmap)
-  const heatmap = useEditorStore((s) => s.heatmap)
+  const setOpen = useOfficeStore((s) => s.setInsightsOpen)
+  const setHeatmap = useOfficeStore((s) => s.setHeatmap)
+  const heatmap = useOfficeStore((s) => s.heatmap)
   const people = usePeople()
   const [theme] = useTheme()
   const isDark = theme === "dark"

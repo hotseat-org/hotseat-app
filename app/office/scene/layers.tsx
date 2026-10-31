@@ -9,26 +9,26 @@ import { RouteLine } from "../wayfinding/RouteLine"
 import { SeatPopup } from "../desks/SeatPopup"
 import { SeatTags } from "../desks/SeatTags"
 import { ZoneFloor } from "../zones/ZoneFloor"
-import { useEditorStore, useEditorStoreApi } from "~/editor"
+import { useOfficeStore, useOfficeStoreApi } from "../store"
 import { type SceneLayer, type SceneLayerProps, type ViewClicks } from "~/editor"
 
 /** Who sits where, while the Desk tags layer is on. */
 const SeatTagsLayer = () => {
-  const isShown = useEditorStore((state) => state.layers.deskTags)
+  const isShown = useOfficeStore((state) => state.layers.deskTags)
 
   return isShown ? <SeatTags /> : null
 }
 
 /** Team zones, their floor tinted and their names, while the Zones layer is on. */
 const ZoneFloorLayer = ({ isEditing, isDark }: SceneLayerProps) => {
-  const isShown = useEditorStore((state) => state.layers.zones)
+  const isShown = useOfficeStore((state) => state.layers.zones)
 
   return isShown ? <ZoneFloor isEditing={isEditing} isDark={isDark} /> : null
 }
 
 /** The desk card lives in the scene (it follows its desk): it closes when the mode changes. */
 const SeatCardReset = ({ isEditing }: SceneLayerProps) => {
-  const store = useEditorStoreApi()
+  const store = useOfficeStoreApi()
   useEffect(() => {
     store.getState().closeSeatCard()
   }, [isEditing, store])
@@ -39,7 +39,7 @@ const SeatCardReset = ({ isEditing }: SceneLayerProps) => {
 /** The way to a desk: framed once shown (or asked for again). */
 const RouteFraming = () => {
   const route = useRoute()
-  const requestFrame = useEditorStore((state) => state.requestFrame)
+  const requestFrame = useOfficeStore((state) => state.requestFrame)
   const routeNonce = route?.path ? route.nonce : null
   useEffect(() => {
     if (route?.path) requestFrame(routeBounds(route.path.points))
@@ -77,8 +77,8 @@ export const useOfficePieceStates = (isViewing: boolean) => {
 
 /** Viewing: a desk opens its card; the bare floor closes it. */
 export const useOfficeViewClicks = (): ViewClicks => {
-  const openSeatCard = useEditorStore((state) => state.openSeatCard)
-  const closeSeatCard = useEditorStore((state) => state.closeSeatCard)
+  const openSeatCard = useOfficeStore((state) => state.openSeatCard)
+  const closeSeatCard = useOfficeStore((state) => state.closeSeatCard)
 
   return {
     isClickable: (object) => isSeatable(object.type),

@@ -1,7 +1,7 @@
 import clsx from "clsx"
 import { ArrowUpFromLine, Check, type LucideIcon } from "lucide-react"
 import { useMemo, type ReactNode } from "react"
-import { useEditorStore } from "~/editor"
+import { useOfficeStore } from "~/office/store"
 import { DESK_FEATURES, type DeskFeature } from "~/office/desks/deskFeatures"
 import { isSeatable } from "~/office/catalog"
 import { ZONE_FILTER_PREFIX, getZones } from "~/office/zones/zones"
@@ -14,8 +14,8 @@ const FEATURE_ICONS: Record<DeskFeature, LucideIcon> = { standing: ArrowUpFromLi
  * features some desk has (no filter for nothing), and how many are on.
  */
 export const useDeskFilterOptions = () => {
-  const objects = useEditorStore((s) => s.objects)
-  const filter = useEditorStore((s) => s.deskFilter)
+  const objects = useOfficeStore((s) => s.objects)
+  const filter = useOfficeStore((s) => s.deskFilter)
   const features = useMemo(
     () =>
       DESK_FEATURES.map((feature) => ({
@@ -41,8 +41,8 @@ export const useDeskFilterOptions = () => {
  */
 export const DeskFilterOptions = () => {
   const { t, tn } = useI18n()
-  const filter = useEditorStore((s) => s.deskFilter)
-  const toggle = useEditorStore((s) => s.toggleDeskFilter)
+  const filter = useOfficeStore((s) => s.deskFilter)
+  const toggle = useOfficeStore((s) => s.toggleDeskFilter)
   const { zones, features } = useDeskFilterOptions()
 
   return (

@@ -1,4 +1,4 @@
-import { useEditorStore } from "~/editor"
+import { useOfficeStore } from "../store"
 
 /** An org member as the editor needs them (seat assignment, name tags). */
 export interface Person {
@@ -16,7 +16,7 @@ export interface People {
 }
 
 /** The organization's members, from the office's store (see OfficeSync). Empty standalone. */
-export const usePeople = () => useEditorStore((state) => state.people)
+export const usePeople = () => useOfficeStore((state) => state.people)
 
 export const personByEmail = (people: People, email?: string) =>
   email ? (people.members.find((member) => member.email === email) ?? null) : null

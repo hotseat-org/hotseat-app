@@ -5,7 +5,7 @@ import type { ItemDefinition, ObjectType } from "./catalog/registry"
 import type { ItemRenderer } from "./catalog/renderers"
 import type { Frame } from "./plan/useFraming"
 import type { View } from "./plan/planView"
-import type { GetState, SetState } from "./store/state"
+import type { EditorState, GetState, SetState } from "./store/state"
 import type { SceneObject } from "./types"
 import type { Command } from "./ui/menus/commands"
 import type { TourStep } from "./ui/guide/GuidedTour"
@@ -26,10 +26,11 @@ export interface EditorModule {
    */
   useData?(data: unknown): void
   /**
-   * Its store slice: the state and actions it adds. Declare their types on
-   * ModuleState (`declare module`), so the editor's state includes them.
+   * Its store slice: the state and actions it adds (typed through
+   * defineModule; read with getModuleStoreHooks). A method, so a module's
+   * slice may see its own state.
    */
-  createSlice?: (set: SetState, get: GetState) => object
+  createSlice?(set: SetState, get: GetState): object
   /**
    * New pieces — placed, pasted, duplicated, from a saved room — before they
    * join `existing`: what they keep of what they were copied from (a copied
@@ -77,6 +78,16 @@ export interface EditorModule {
 }
 
 /** A layer of the map: shown or hidden from the Map menu. */
+/**
+ * A module, typed with the state its slice adds: `set` and `get` see the
+ * editor's state with it, and `createSlice` returns it whole.
+ */
+export const defineModule = <State extends object>(
+  module: Omit<EditorModule, "createSlice"> & {
+    createSlice?: (set: SetState<EditorState & State>, get: GetState<EditorState & State>) => State
+  }
+): EditorModule => module
+
 /**
  * A module's kinds of pieces: what they are, how they look, and the catalogue
  * sections they're offered in (after the editor's own). Kinds are app-wide:

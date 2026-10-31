@@ -12,15 +12,15 @@ import { OFFICE_MAP_LAYERS, OFFICE_MAP_MENU_SECTION } from "./slots/mapLayers"
 import { OFFICE_PANELS } from "./slots/panels"
 import { OFFICE_TOUR_STEPS } from "./slots/tourSteps"
 import { useLayoutImpactGuard } from "./slots/saveGuard"
-import { createOfficeSlice } from "./store"
+import { createOfficeSlice, type OfficeState } from "./store"
 import { useOfficeData } from "./useOfficeData"
-import { type EditorModule } from "~/editor"
+import { defineModule } from "~/editor"
 
 /**
  * The office: bookable desks on top of the editor — their labels, residents,
  * zones and features, booking them by day, and what the map shows about them.
  */
-export const officeModule: EditorModule = {
+export const officeModule = defineModule<OfficeState>({
   id: "office",
   catalog: {
     items: FURNITURE_ITEMS,
@@ -49,4 +49,4 @@ export const officeModule: EditorModule = {
   tourSteps: OFFICE_TOUR_STEPS,
   describePieces: describeDesks,
   EmptyState: OfficeEmptyState,
-}
+})

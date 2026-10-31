@@ -1,4 +1,4 @@
-import { type GetState, type SetState } from "~/editor"
+import { type OfficeGetState, type OfficeSetState } from "./state"
 
 /** The office's panels: a desk's card, booking it on chosen days, Insights. */
 export interface OfficePanelsSlice {
@@ -15,7 +15,10 @@ export interface OfficePanelsSlice {
   closeCustomBooking: () => void
 }
 
-export const createOfficePanelsSlice = (set: SetState, _get: GetState): OfficePanelsSlice => ({
+export const createOfficePanelsSlice = (
+  set: OfficeSetState,
+  _get: OfficeGetState
+): OfficePanelsSlice => ({
   isInsightsOpen: false,
   setInsightsOpen: (isInsightsOpen) => set({ isInsightsOpen }),
   seatCard: null,

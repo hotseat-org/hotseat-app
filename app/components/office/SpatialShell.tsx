@@ -19,7 +19,8 @@ import { MobileShell } from "./MobileShell"
 import { NotificationsBell } from "./Notifications"
 import { WeekDots } from "./WeekDots"
 import { InsightsDashboard } from "./InsightsDashboard"
-import { REVEAL_LABEL, useEditorStore, TimeOfDay, hasWebGL } from "~/editor"
+import { REVEAL_LABEL, TimeOfDay, hasWebGL } from "~/editor"
+import { useOfficeStore } from "~/office/store"
 import {
   dayPhrase,
   useDesksOnDay,
@@ -94,12 +95,12 @@ export const SpatialShell = ({
   const { t, tn, format } = i18n
   const { open: openSettings } = useSettings()
   // Who sits where on the shown day: permanent residents + bookings.
-  const day = useEditorStore((s) => s.booking.day)
-  const showRoute = useEditorStore((s) => s.showRoute)
-  const isInsightsOpen = useEditorStore((s) => s.isInsightsOpen)
-  const setInsightsOpen = useEditorStore((s) => s.setInsightsOpen)
-  const hasHeatmap = useEditorStore((s) => s.heatmap !== null)
-  const today = useEditorStore((s) => s.booking.today)
+  const day = useOfficeStore((s) => s.booking.day)
+  const showRoute = useOfficeStore((s) => s.showRoute)
+  const isInsightsOpen = useOfficeStore((s) => s.isInsightsOpen)
+  const setInsightsOpen = useOfficeStore((s) => s.setInsightsOpen)
+  const hasHeatmap = useOfficeStore((s) => s.heatmap !== null)
+  const today = useOfficeStore((s) => s.booking.today)
   const { byPerson } = useDesksOnDay()
   const [bookingsOpen, setBookingsOpen] = useState(false)
   const mine = byPerson.get(me.userEmail)

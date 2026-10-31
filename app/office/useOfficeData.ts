@@ -2,7 +2,7 @@ import { useLayoutEffect } from "react"
 import { useBookingSync, type EditorBooking } from "./booking/useBookingSync"
 import type { People } from "./desks/people"
 import { NO_PEOPLE } from "./store/people"
-import { useEditorStoreApi } from "~/editor"
+import { useOfficeStoreApi } from "./store"
 
 /** What the app (the route) passes the office: omitted in the standalone editor. */
 export interface OfficeData {
@@ -14,7 +14,7 @@ export interface OfficeData {
 
 /** The office's data from the app, mirrored into the editor's store. */
 export const useOfficeData = ({ people, booking }: OfficeData = {}) => {
-  const store = useEditorStoreApi()
+  const store = useOfficeStoreApi()
   // Set before the first paint, so names and tags don't pop in a frame late.
   useLayoutEffect(() => {
     store.getState().setPeople(people ?? NO_PEOPLE)

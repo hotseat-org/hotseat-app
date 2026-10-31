@@ -1,5 +1,5 @@
 import clsx from "clsx"
-import { useEditorStore } from "~/editor"
+import { useOfficeStore } from "~/office/store"
 import type { useWeekPresence } from "~/office/booking/useBooking"
 import { useI18n } from "~/i18n/I18nProvider"
 
@@ -14,7 +14,7 @@ export const WeekDots = ({
   email: string
   presence: ReturnType<typeof useWeekPresence>
 }) => {
-  const day = useEditorStore((s) => s.booking.day)
+  const day = useOfficeStore((s) => s.booking.day)
   const { t, format } = useI18n()
   const inDays = presence.days.filter((d) => presence.isIn(email, d))
   return (

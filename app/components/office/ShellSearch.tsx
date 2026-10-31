@@ -2,7 +2,7 @@ import { Popover } from "@heroui/react"
 import { Armchair, Search } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { MemberAvatar, PANEL, PANEL_HOVER, nameOf, type ShellMember } from "./shell-ui"
-import { useEditorStore } from "~/editor"
+import { useOfficeStore } from "~/office/store"
 import { isSeatable } from "~/office/catalog"
 import { useI18n } from "~/i18n/I18nProvider"
 
@@ -24,8 +24,8 @@ export const ShellSearch = ({ members }: { members: ShellMember[] }) => {
   const { t } = useI18n()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("")
-  const objects = useEditorStore((s) => s.objects)
-  const openSeatCard = useEditorStore((s) => s.openSeatCard)
+  const objects = useOfficeStore((s) => s.objects)
+  const openSeatCard = useOfficeStore((s) => s.openSeatCard)
 
   // ⌘K / Ctrl+K toggles it.
   useEffect(() => {

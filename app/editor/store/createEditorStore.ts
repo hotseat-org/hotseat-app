@@ -45,7 +45,7 @@ const makeInitializer =
         ),
       } as Layers,
     }
-    // The modules' slices: typed through ModuleState, which each one extends.
+    // The modules' slices (each typed through defineModule).
     const moduleSlices = Object.assign(
       {},
       ...modules.map((module) => module.createSlice?.(set, get) ?? {})

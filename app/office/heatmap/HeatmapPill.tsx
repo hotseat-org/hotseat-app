@@ -1,8 +1,8 @@
 import clsx from "clsx"
 import { BarChart3, Flame, X } from "lucide-react"
 import { useEffect } from "react"
+import { useOfficeStore } from "../store"
 import { heatGradient, PERIOD_LABEL } from "./heatmap"
-import { useEditorStore } from "~/editor"
 import { useI18n } from "~/i18n/I18nProvider"
 
 /**
@@ -11,10 +11,10 @@ import { useI18n } from "~/i18n/I18nProvider"
  */
 export const HeatmapPill = ({ isDark, className }: { isDark: boolean; className?: string }) => {
   const { t } = useI18n()
-  const heatmap = useEditorStore((state) => state.heatmap)
-  const setHeatmap = useEditorStore((state) => state.setHeatmap)
-  const setInsightsOpen = useEditorStore((state) => state.setInsightsOpen)
-  const isInsightsOpen = useEditorStore((state) => state.isInsightsOpen)
+  const heatmap = useOfficeStore((state) => state.heatmap)
+  const setHeatmap = useOfficeStore((state) => state.setHeatmap)
+  const setInsightsOpen = useOfficeStore((state) => state.setInsightsOpen)
+  const isInsightsOpen = useOfficeStore((state) => state.isInsightsOpen)
 
   useEffect(() => {
     if (!heatmap || isInsightsOpen) return

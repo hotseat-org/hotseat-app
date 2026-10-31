@@ -1,5 +1,5 @@
 import { createContext, useContext, useMemo } from "react"
-import { useStore } from "zustand"
+import { useStore, type StoreApi } from "zustand"
 import { paintWallFaces } from "../layout"
 import type { EditorState, EditorStore } from "./state"
 
@@ -21,6 +21,17 @@ export function useEditorStoreApi(): EditorStore {
 
   return store
 }
+
+/**
+ * The store hooks typed with a module's own state on top of the editor's —
+ * call once in the module (e.g. `useOfficeStore`), use everywhere in it.
+ */
+export const getModuleStoreHooks = <State extends object>() => ({
+  useStore: useEditorStore as <Selected>(
+    selector: (state: EditorState & State) => Selected
+  ) => Selected,
+  useStoreApi: useEditorStoreApi as () => StoreApi<EditorState & State>,
+})
 
 /** The layout with the Paint tool's hovered walls in its colour, for drawing them. */
 export const useObjectsWithPaintPreview = () => {

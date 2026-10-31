@@ -3,10 +3,10 @@ import clsx from "clsx"
 import { Pin } from "lucide-react"
 import { heatBarTop } from "../heatmap/heatmap"
 import { useDeskFilter, useDesksOnDay } from "../booking/useBooking"
+import { useOfficeStore } from "../store"
 import { getDeskTagTone } from "./deskTagTone"
 import { personByEmail, usePeople } from "./people"
 import { SeatAvatar } from "./SeatAvatar"
-import { useEditorStore } from "~/editor"
 import { useI18n } from "~/i18n/I18nProvider"
 
 /**
@@ -21,12 +21,12 @@ export const SeatTags = () => {
   const people = usePeople()
   const { desks } = useDesksOnDay()
   const matchesFilter = useDeskFilter()
-  const booking = useEditorStore((state) => state.booking.enabled)
-  const past = useEditorStore((state) => state.booking.day < state.booking.today)
+  const booking = useOfficeStore((state) => state.booking.enabled)
+  const past = useOfficeStore((state) => state.booking.day < state.booking.today)
   // The open desk's card replaces its tag.
-  const openId = useEditorStore((state) => state.seatCard?.id)
+  const openId = useOfficeStore((state) => state.seatCard?.id)
   // Insights' heatmap: every desk's share of days in use, instead of who's in.
-  const heatmap = useEditorStore((state) => state.heatmap)
+  const heatmap = useOfficeStore((state) => state.heatmap)
   if (heatmap)
     return (
       <>

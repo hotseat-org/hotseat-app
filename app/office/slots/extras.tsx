@@ -1,14 +1,13 @@
 import { isSeatable } from "../catalog"
 import { DateStepper } from "../booking/DateStepper"
-import { asNewDesks } from "../store"
+import { asNewDesks, useOfficeStore } from "../store"
 import { randomModelId } from "~/editor/core"
-import { useEditorStore } from "~/editor"
 import { type SceneObject } from "~/editor/core"
 import type { Translator } from "~/i18n/translate"
 
 /** The bottom bar's day shown (booking a real office). */
 export const OfficeDay = () => {
-  const isBooking = useEditorStore((state) => state.booking.enabled)
+  const isBooking = useOfficeStore((state) => state.booking.enabled)
 
   return isBooking ? <DateStepper /> : null
 }

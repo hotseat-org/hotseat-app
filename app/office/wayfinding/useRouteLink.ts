@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react"
-import { useEditorStore, useEditorStoreApi } from "~/editor"
+import { useOfficeStore, useOfficeStoreApi } from "../store"
 
 /**
  * Wayfinding: a shared link (?to=<desk>) opens with the way to that desk
@@ -7,9 +7,9 @@ import { useEditorStore, useEditorStoreApi } from "~/editor"
  * the page's address. Editing puts it away.
  */
 export const useRouteLink = (readOnly: boolean) => {
-  const store = useEditorStoreApi()
-  const routeDesk = useEditorStore((state) => state.route?.deskId)
-  const hasLayout = useEditorStore((state) => state.objects.length > 0)
+  const store = useOfficeStoreApi()
+  const routeDesk = useOfficeStore((state) => state.route?.deskId)
+  const hasLayout = useOfficeStore((state) => state.objects.length > 0)
   const askedRoute = useRef(false)
   useEffect(() => {
     if (askedRoute.current || !hasLayout) return

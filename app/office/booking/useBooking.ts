@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from "react"
 import { isSeatable } from "../catalog"
 import { ZONE_FILTER_PREFIX } from "../zones/zones"
-import { useEditorStore } from "~/editor"
+import { useOfficeStore } from "../store"
 import { type SceneObject } from "~/editor/core"
 import { addDays, deskState, weekStart, type Day, type DeskState } from "~/utils/booking"
 import type { Translator } from "~/i18n/translate"
@@ -25,10 +25,10 @@ export const dayPhrase = ({ t, format }: Translator, day: string, today: string)
  * permanent residents count.
  */
 export const useDesksOnDay = () => {
-  const objects = useEditorStore((state) => state.objects)
-  const day = useEditorStore((state) => state.booking.day)
-  const byDay = useEditorStore((state) => state.booking.byDay)
-  const released = useEditorStore((state) => state.booking.released)
+  const objects = useOfficeStore((state) => state.objects)
+  const day = useOfficeStore((state) => state.booking.day)
+  const byDay = useOfficeStore((state) => state.booking.byDay)
+  const released = useOfficeStore((state) => state.booking.released)
 
   return useMemo(() => {
     const desks: DeskOnDay[] = objects
@@ -48,7 +48,7 @@ export const useDesksOnDay = () => {
  * filter: every desk matches.
  */
 export const useDeskFilter = () => {
-  const filter = useEditorStore((state) => state.deskFilter)
+  const filter = useOfficeStore((state) => state.deskFilter)
 
   return useCallback(
     (desk: Pick<SceneObject, "features" | "zone">) => {
@@ -65,9 +65,9 @@ export const useDeskFilter = () => {
 
 /** Your permanent desk, when you gave it up on the shown day (you're away). */
 export const useGivenUpDesk = (email?: string) => {
-  const objects = useEditorStore((state) => state.objects)
-  const day = useEditorStore((state) => state.booking.day)
-  const released = useEditorStore((state) => state.booking.released)
+  const objects = useOfficeStore((state) => state.objects)
+  const day = useOfficeStore((state) => state.booking.day)
+  const released = useOfficeStore((state) => state.booking.released)
 
   return email
     ? objects.find((piece) => piece.assignee === email && released[day]?.[piece.id] === email)
@@ -76,10 +76,10 @@ export const useGivenUpDesk = (email?: string) => {
 
 /** Mon–Fri of the shown day's week, and whether someone has a desk on each day. */
 export const useWeekPresence = () => {
-  const objects = useEditorStore((state) => state.objects)
-  const day = useEditorStore((state) => state.booking.day)
-  const byDay = useEditorStore((state) => state.booking.byDay)
-  const released = useEditorStore((state) => state.booking.released)
+  const objects = useOfficeStore((state) => state.objects)
+  const day = useOfficeStore((state) => state.booking.day)
+  const byDay = useOfficeStore((state) => state.booking.byDay)
+  const released = useOfficeStore((state) => state.booking.released)
 
   return useMemo(() => {
     // No day yet (booking not set up — standalone, or the first render).
@@ -112,13 +112,13 @@ export const useWeekPresence = () => {
  */
 export const useWaitlist = () => {
   const { desks, byPerson } = useDesksOnDay()
-  const enabled = useEditorStore((state) => state.booking.enabled)
-  const me = useEditorStore((state) => state.booking.me)
-  const day = useEditorStore((state) => state.booking.day)
-  const today = useEditorStore((state) => state.booking.today)
-  const preferences = useEditorStore((state) => state.booking.preferences)
-  const setPreference = useEditorStore((state) => state.booking.setPreference)
-  const objects = useEditorStore((state) => state.objects)
+  const enabled = useOfficeStore((state) => state.booking.enabled)
+  const me = useOfficeStore((state) => state.booking.me)
+  const day = useOfficeStore((state) => state.booking.day)
+  const today = useOfficeStore((state) => state.booking.today)
+  const preferences = useOfficeStore((state) => state.booking.preferences)
+  const setPreference = useOfficeStore((state) => state.booking.setPreference)
+  const objects = useOfficeStore((state) => state.objects)
   const isResident = !!me && objects.some((piece) => piece.assignee === me)
   const isFull =
     enabled &&

@@ -21,13 +21,15 @@ export const writeMeasurePref = (on: boolean) => writePref(MEASURE_KEY, on ? "on
 
 /**
  * What the map shows on top of the layout — each can be hidden (the Map
- * menu). Modules add theirs (`declare module`, see EditorModule.mapLayers).
+ * menu). Modules add theirs by id (see EditorModule.mapLayers).
  */
 export interface Layers {
   /** Editing: each room's floor area (and what the modules say about it). */
   roomSizes: boolean
   /** Editing: the build grid. */
   grid: boolean
+  /** A module's layers, by MapLayer id. */
+  [layer: string]: boolean
 }
 
 /** The editor's own layers, on by default. */

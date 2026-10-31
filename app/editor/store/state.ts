@@ -10,13 +10,6 @@ import type { ViewSlice } from "./view"
 import type { WallsSlice } from "./walls"
 import type { Layers } from "./preferences"
 
-/**
- * The state modules add (see EditorModule.createSlice): each extends this with
- * its slice's type (`declare module`) — the office's desks and booking, say.
- */
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface ModuleState {}
-
 /** The editor's whole state: every slice's fields and actions together. */
 export interface EditorState
   extends
@@ -27,12 +20,14 @@ export interface EditorState
     ToolsSlice,
     ViewSlice,
     PanelsSlice,
-    HistorySlice,
-    ModuleState {}
+    HistorySlice {}
 
-/** The store's `set` — in the slices, the one that records undo steps (see createHistory). */
-export type SetState = Parameters<StateCreator<EditorState>>[0]
-export type GetState = () => EditorState
+/**
+ * The store's `set` — in the slices, the one that records undo steps (see
+ * createHistory). A module's slice sees its own state on top (defineModule).
+ */
+export type SetState<State extends EditorState = EditorState> = Parameters<StateCreator<State>>[0]
+export type GetState<State extends EditorState = EditorState> = () => State
 
 export type EditorStore = StoreApi<EditorState>
 

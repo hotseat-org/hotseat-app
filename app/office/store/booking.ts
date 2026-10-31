@@ -1,4 +1,4 @@
-import { type GetState, type SetState } from "~/editor"
+import { type OfficeGetState, type OfficeSetState } from "./state"
 import type { BookingsByDay, Day, DeskDays } from "~/utils/booking"
 
 /** Your desk preferences in this office (see core/reservation/preferences). */
@@ -87,7 +87,7 @@ export interface BookingSlice {
   applyFavorite: (deskId: string, isFavorite: boolean) => void
 }
 
-export const createBookingSlice = (set: SetState, _get: GetState): BookingSlice => ({
+export const createBookingSlice = (set: OfficeSetState, _get: OfficeGetState): BookingSlice => ({
   booking: NO_BOOKING,
   setBooking: (patch) => set((state) => ({ booking: { ...state.booking, ...patch } })),
   setBookingDay: (day) => set((state) => ({ booking: { ...state.booking, day } })),

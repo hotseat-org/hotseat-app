@@ -2,8 +2,8 @@ import { Html } from "@react-three/drei"
 import { useThree } from "@react-three/fiber"
 import { useEffect, useLayoutEffect, useMemo } from "react"
 import { Color, DataTexture, NearestFilter, RedFormat, ShaderMaterial, Vector2 } from "three"
+import { useOfficeStore } from "../store"
 import { ZONE_CELL, ZONE_RADIUS, composeZoneAreas } from "./zones"
-import { useEditorStore } from "~/editor"
 
 /** Just above the interior floor's tint (0.006), below rugs and highlights. */
 const HEIGHT = 0.009
@@ -110,7 +110,7 @@ const FRAGMENT = /* glsl */ `
  * in its colour with a fine line and rounded corners, its name in the middle.
  */
 export const ZoneFloor = ({ isEditing, isDark }: { isEditing: boolean; isDark: boolean }) => {
-  const objects = useEditorStore((state) => state.objects)
+  const objects = useOfficeStore((state) => state.objects)
   const areas = useMemo(
     () =>
       composeZoneAreas(objects).map(({ zone, cells, label }) => {

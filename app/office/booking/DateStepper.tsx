@@ -3,7 +3,7 @@ import clsx from "clsx"
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react"
 import { useMemo, useState } from "react"
 import { isSeatable } from "../catalog"
-import { useEditorStore } from "~/editor"
+import { useOfficeStore } from "../store"
 import { addDays, weekStart, type Day } from "~/utils/booking"
 import { useI18n } from "~/i18n/I18nProvider"
 
@@ -15,11 +15,11 @@ import { useI18n } from "~/i18n/I18nProvider"
  */
 export const DateStepper = () => {
   const { t, format } = useI18n()
-  const day = useEditorStore((state) => state.booking.day)
-  const today = useEditorStore((state) => state.booking.today)
-  const from = useEditorStore((state) => state.booking.from)
-  const lastDay = useEditorStore((state) => state.booking.lastDay)
-  const setDay = useEditorStore((state) => state.setBookingDay)
+  const day = useOfficeStore((state) => state.booking.day)
+  const today = useOfficeStore((state) => state.booking.today)
+  const from = useOfficeStore((state) => state.booking.from)
+  const lastDay = useOfficeStore((state) => state.booking.lastDay)
+  const setDay = useOfficeStore((state) => state.setBookingDay)
   const [open, setOpen] = useState(false)
 
   const step = (offset: number) => {
@@ -110,13 +110,13 @@ export const MonthCalendar = ({
   onPick: (day: Day) => void
   className?: string
 }) => {
-  const day = useEditorStore((state) => state.booking.day)
-  const today = useEditorStore((state) => state.booking.today)
-  const from = useEditorStore((state) => state.booking.from)
-  const lastDay = useEditorStore((state) => state.booking.lastDay)
-  const byDay = useEditorStore((state) => state.booking.byDay)
-  const objects = useEditorStore((state) => state.objects)
-  const me = useEditorStore((state) => state.booking.me)
+  const day = useOfficeStore((state) => state.booking.day)
+  const today = useOfficeStore((state) => state.booking.today)
+  const from = useOfficeStore((state) => state.booking.from)
+  const lastDay = useOfficeStore((state) => state.booking.lastDay)
+  const byDay = useOfficeStore((state) => state.booking.byDay)
+  const objects = useOfficeStore((state) => state.objects)
+  const me = useOfficeStore((state) => state.booking.me)
   const { t, format } = useI18n()
   const [month, setMonth] = useState(() => monthOf(day))
 
