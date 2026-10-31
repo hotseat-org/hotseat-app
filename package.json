@@ -3,7 +3,6 @@
   "private": true,
   "description": "",
   "license": "",
-  "sideEffects": false,
   "type": "module",
   "scripts": {
     "build": "bun run prisma:generate && react-router build && node scripts/nest-client-build.js",
