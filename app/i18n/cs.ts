@@ -284,6 +284,25 @@ export const cs: Messages = {
   "Clear office": "Vymazat kancelář",
   "Clear floor": "Vymazat patro",
 
+  // —— Editor: floors ——
+  "Floor {number}": "{number}. patro",
+  "Choose a floor": "Vybrat patro",
+  "The office's floors": "Patra kanceláře",
+  "Edit floors": "Upravit patra",
+  "Add a floor on top": "Přidat patro navrch",
+  "Name of {floor}": "Název – {floor}",
+  "Move up": "Posunout výš",
+  "Move down": "Posunout níž",
+  "Delete {floor}": "Smazat {floor}",
+  "Delete {floor}?": "Smazat {floor}?",
+  "Delete floor": "Smazat patro",
+  "Its {n} item goes with it. This can't be undone.": {
+    one: "Odstraní se s ním {n} předmět. Nejde to vrátit zpět.",
+    few: "Odstraní se s ním všechny {n} předměty. Nejde to vrátit zpět.",
+    many: "Odstraní se s ním všech {n} předmětu. Nejde to vrátit zpět.",
+    other: "Odstraní se s ním všech {n} předmětů. Nejde to vrátit zpět.",
+  },
+
   // —— Editor: controls & days ——
   Orbit: "Otáčet",
   "Right-drag": "Tažení pravým",

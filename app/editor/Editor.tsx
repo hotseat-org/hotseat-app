@@ -24,6 +24,7 @@ import { composeCommands } from "./ui/menus/commands"
 import { ContextMenu } from "./ui/menus/ContextMenu"
 import { GuidedTour } from "./ui/guide/GuidedTour"
 import { MapControls } from "./ui/menus/MapControls"
+import { FloorPicker } from "./ui/menus/FloorPicker"
 import { KitLibraryContext, type KitLibrary } from "./kits/kits"
 import { FrameRateReadout } from "./shell/FrameRateReadout"
 import { SelectionBox } from "./shell/SelectionBox"
@@ -305,7 +306,13 @@ const EditorInner = ({
         {!isEmpty && (
           <div className="pointer-events-none absolute bottom-4 left-4 flex flex-col items-start gap-2">
             {!flat && isFrameRateShown && stats && <FrameRateReadout stats={stats} />}
-            {!(shellMode && isMobile) && <MapControls isEditing={!readOnly} />}
+            {!(shellMode && isMobile) && (
+              <>
+                {/* Editing, the floors are in the top bar. */}
+                {readOnly && <FloorPicker />}
+                <MapControls isEditing={!readOnly} />
+              </>
+            )}
           </div>
         )}
 

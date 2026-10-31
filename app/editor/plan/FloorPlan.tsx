@@ -4,6 +4,7 @@ import { useModules, usePlanDrawings, usePlanPieceStyles, useViewClicks } from "
 import { useEditorStore } from "../store"
 import { SURFACES } from "../palette"
 import { ContourLines } from "../landscape/ContourLines"
+import { FloorPicker } from "../ui/menus/FloorPicker"
 import { PhoneControls } from "./PhoneControls"
 import { buildScene } from "./drawing/buildScene"
 import { fitView, turnObject, type Insets, type View } from "./planView"
@@ -159,7 +160,13 @@ export const FloorPlan = ({
       {plan && overlays.map((Overlay, index) => <Overlay key={index} plan={plan} />)}
 
       {phoneChrome && (
-        <PhoneControls bottom={phoneChrome.bottom + 12} onTurn={turnBy} onFit={requestFit} />
+        <>
+          {/* Above turn and fit, on the right. */}
+          <div className="absolute right-4" style={{ bottom: phoneChrome.bottom + 12 + 56 }}>
+            <FloorPicker isPhone />
+          </div>
+          <PhoneControls bottom={phoneChrome.bottom + 12} onTurn={turnBy} onFit={requestFit} />
+        </>
       )}
     </div>
   )
