@@ -3,6 +3,7 @@ import { data, redirect } from "react-router"
 import { getCore } from "~/core/get-core"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { requireUser } from "~/services/session.server"
+import { loadOncePerRequest } from "~/utils/loader-helpers/oncePerRequest"
 import { redirectToRenamedPage } from "~/utils/loader-helpers/redirectToRenamed"
 
 interface Options {
@@ -22,9 +23,10 @@ export const requireProfile = async (
 
   // Not a member (or no such organization): a 404, not a raw server error.
   // (Same answer either way, so it doesn't reveal which orgs exist.)
-  const profile = await core.profile
-    .get({ userEmail: user.email, organizationSlug: slug })
-    .catch(() => null)
+  // Once per request: an office page's loaders all ask, side by side.
+  const profile = await loadOncePerRequest(request, `profile:${slug}`, () =>
+    core.profile.get({ userEmail: user.email, organizationSlug: slug }).catch(() => null)
+  )
   if (!profile) {
     // Renamed since this link was made: the same page under its new URL.
     const renamed = await core.organization.renamedTo(slug)

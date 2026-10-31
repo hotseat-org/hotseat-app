@@ -2,6 +2,7 @@ import { Outlet, useLoaderData, useSearchParams, type LoaderFunctionArgs } from 
 import NewOffice from "./app.o.$slug.offices.new"
 import { getCore } from "~/core/get-core"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
+import { loadOrganization } from "~/utils/loader-helpers/loadOrganization"
 import { requireProfile } from "~/utils/loader-helpers/requireProfile"
 import { loadOrgSettings } from "~/utils/loader-helpers/settings.server"
 import { BOOKING_ACTIONS, revalidateOn } from "~/utils/revalidation"
@@ -15,7 +16,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
 
   // Membership is checked above; the rest is independent — fetched together.
   const [organization, organizations, orgSettings, notifications] = await Promise.all([
-    core.organization.getForPublic({ slug: profile.organizationSlug }),
+    loadOrganization(args.request, profile.organizationSlug),
     // Lean (one query): the switcher needs names, roles and member counts.
     core.user.listOrganizations(profile.userEmail),
     // Organization settings (?settings=org/…) can open over any org page: load

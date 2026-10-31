@@ -15,6 +15,7 @@ import {
 import { z } from "zod"
 import { getCore } from "~/core/get-core"
 import { redirectToRenamedPage } from "~/utils/loader-helpers/redirectToRenamed"
+import { loadOrganization } from "~/utils/loader-helpers/loadOrganization"
 import { requireProfile } from "~/utils/loader-helpers/requireProfile"
 import { NOTIFICATION_ACTIONS, revalidateOn } from "~/utils/revalidation"
 import { layoutSchema } from "~/office/schema"
@@ -83,7 +84,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
     }),
     // Membership was checked by requireProfile: no re-checks (each one is a
     // database round trip).
-    core.organization.getForPublic({ slug: organizationSlug }),
+    loadOrganization(args.request, organizationSlug),
     core.organization.listMembers(organizationSlug),
     core.organization.listOffices(organizationSlug),
   ])
