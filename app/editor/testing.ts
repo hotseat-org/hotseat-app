@@ -3,6 +3,9 @@
  * items registered and its state in place, and a way to put pieces down.
  */
 import type { StoreApi } from "zustand"
+// The editor's own looks, as in the browser: a layout's walls and doors are
+// shown (not kept aside, see splitLayout).
+import "./catalog/rendering"
 import type { EditorModule } from "./module"
 import { createEditorStore } from "./store"
 import type { EditorState } from "./store/state"

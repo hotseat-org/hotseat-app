@@ -84,6 +84,9 @@ export const registerRenderers = (record: { [Type in ObjectType]?: ItemRenderer 
   for (const [type, renderer] of Object.entries(record)) if (renderer) renderers.set(type, renderer)
 }
 
+/** Whether an item has its looks here (a module that brings it runs in this editor). */
+export const hasRenderer = (type: string) => renderers.has(type)
+
 export const getRenderer = (type: ObjectType): ItemRenderer => {
   const renderer = renderers.get(type)
   if (!renderer) throw new Error(`No renderer for "${type}" in the catalogue`)

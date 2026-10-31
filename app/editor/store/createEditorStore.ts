@@ -6,12 +6,11 @@ import { persist } from "zustand/middleware"
 import { registerCategories } from "../catalog/categories"
 import { registerItems } from "../catalog/registry"
 import { registerRenderers } from "../catalog/renderers"
-import { normalizeEdges } from "../layout"
 import type { EditorModule } from "../module"
 import type { SceneObject } from "../types"
 import { createFurnitureState, settleTurn } from "./furniture"
 import { createHistory } from "./history"
-import { createObjectsState } from "./objects"
+import { composeSavedLayout, createObjectsState, splitLayout } from "./objects"
 import { createPanelsState } from "./panels"
 import { createSelectionState, syncSelection } from "./selection"
 import type { EditorState, EditorStore, StoreHooks } from "./state"
@@ -98,22 +97,24 @@ export const createEditorStore = ({
   modules = [],
 }: CreateEditorStoreOptions = {}): EditorStore => {
   registerModuleCatalogs(modules)
-  const initializer = makeInitializer(normalizeEdges(initialObjects), modules)
+  const initializer = makeInitializer(initialObjects, modules)
 
   return persistKey
     ? createStore<EditorState>()(
         persist(initializer, {
           name: persistKey,
           // Only the layout is durable — tool/selection are per-session.
-          partialize: (state) => ({ objects: state.objects }),
-          // Upgrade layouts saved with old 1-unit wall segments.
+          // The pieces kept aside are part of the layout: saved with it.
+          partialize: (state) => ({ objects: composeSavedLayout(state) }),
+          // Upgrade layouts saved with old 1-unit wall segments, and keep
+          // aside the pieces this editor can't show (see splitLayout).
           merge: (persisted, current) => {
             const persistedState = persisted as Partial<EditorState> | undefined
 
             return {
               ...current,
               ...persistedState,
-              objects: normalizeEdges(persistedState?.objects ?? current.objects),
+              ...splitLayout(persistedState?.objects ?? composeSavedLayout(current)),
             }
           },
         })

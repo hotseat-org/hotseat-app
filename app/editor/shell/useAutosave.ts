@@ -1,5 +1,6 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import { useEditorStore, useEditorStoreApi } from "../store"
+import { composeSavedLayout } from "../store/objects"
 import type { SceneObject } from "../types"
 import type { AutosaveControls, SaveGuard, SaveOptions } from "../module"
 import { useModules } from "../modules"
@@ -25,6 +26,9 @@ export const useAutosave = ({
 }) => {
   const store = useEditorStoreApi()
   const objects = useEditorStore((state) => state.objects)
+  const keptPieces = useEditorStore((state) => state.keptPieces)
+  // What's saved: what's shown, with the pieces kept aside (see ObjectsState).
+  const layout = useMemo(() => composeSavedLayout({ objects, keptPieces }), [objects, keptPieces])
   // What's already persisted, so autosave doesn't re-save the freshly-loaded scene.
   const lastSaved = useRef<string>(JSON.stringify(initialObjects ?? []))
   const onSaveRef = useRef(onSave)
@@ -35,8 +39,8 @@ export const useAutosave = ({
     objects,
     getSavedObjects: () => JSON.parse(lastSaved.current || "[]") as SceneObject[],
     saveNow: (options) => {
-      lastSaved.current = JSON.stringify(objects)
-      onSave?.(objects, options)
+      lastSaved.current = JSON.stringify(layout)
+      onSave?.(layout, options)
     },
     revert: () => store.getState().load(JSON.parse(lastSaved.current || "[]")),
   }
@@ -52,16 +56,16 @@ export const useAutosave = ({
   useEffect(() => {
     if (!onSave || isHolding) return // waiting on a guard (the admin's choice)
 
-    const serialized = JSON.stringify(objects)
+    const serialized = JSON.stringify(layout)
     if (serialized === lastSaved.current) return
 
     const timeoutId = setTimeout(() => {
       lastSaved.current = serialized
-      onSave(objects)
+      onSave(layout)
     }, SAVE_DELAY)
 
     return () => clearTimeout(timeoutId)
-  }, [objects, onSave, isHolding])
+  }, [layout, onSave, isHolding])
 
   // A failed save means what's on screen isn't persisted: forget the "saved"
   // snapshot so leaving warns (and unmount flushes) until a save succeeds.
@@ -72,7 +76,7 @@ export const useAutosave = ({
   // Leaving within the debounce window (e.g. switching office) would drop the
   // last edit — flush it on unmount, and warn before closing the tab.
   useEffect(() => {
-    const unsaved = () => JSON.stringify(store.getState().objects) !== lastSaved.current
+    const unsaved = () => JSON.stringify(composeSavedLayout(store.getState())) !== lastSaved.current
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
       if (onSaveRef.current && unsaved()) event.preventDefault()
     }
@@ -84,7 +88,7 @@ export const useAutosave = ({
       // away): that waits for its choice, and leaving drops it rather than
       // decide for them.
       if (onSaveRef.current && unsaved() && !isHoldingRef.current)
-        onSaveRef.current(store.getState().objects)
+        onSaveRef.current(composeSavedLayout(store.getState()))
     }
   }, [store])
 
