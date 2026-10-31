@@ -9,7 +9,6 @@ import {
   type RefObject,
 } from "react"
 import { createPortal } from "react-dom"
-import { useDimmedPageColor } from "./useDimmedPageColor"
 import { useSwipeToClose } from "./useSwipeToClose"
 import { useI18n } from "~/i18n/I18nProvider"
 
@@ -70,8 +69,6 @@ export const BottomSheet = ({
     window.setTimeout(onClose, SHEET_EXIT_MS)
   }
   const swipe = useSwipeToClose(close)
-  const scrim = useRef<HTMLButtonElement>(null)
-  const dimmedPageColor = useDimmedPageColor(scrim)
   const panel = useRef<HTMLDivElement>(null)
   const panelHeight = useHeight(panel)
   // The screen's dimming goes with the sheet: lighter as it's pulled down, and
@@ -106,25 +103,29 @@ export const BottomSheet = ({
       {/* Fixed itself and empty: inside the fixed wrapper, Safari (iOS 26)
           found the wrapper, colourless, and kept its old tint. */}
       <button
-        ref={scrim}
         type="button"
         aria-label={t("Close")}
         className="fixed inset-x-0 bg-scrim"
         // Below the status-bar strip, which dims that band itself (dimmed
         // twice, it would show darker there while fading).
-        style={{ top: dimmedPageColor ? STRIP_HEIGHT : 0, bottom: bottomInset, ...dimmingStyle }}
+        style={{ top: STRIP_HEIGHT, bottom: bottomInset, ...dimmingStyle }}
         onClick={close}
       />
-      {/* Safari's status bar: the page as it shows dimmed, opaque, in a strip
-          just deep enough for it (over 10px) and clear of a top bar's content
-          (see useDimmedPageColor). */}
-      {dimmedPageColor && (
-        <div
-          aria-hidden
-          className="pointer-events-none fixed inset-x-0 top-0"
-          style={{ height: STRIP_HEIGHT, backgroundColor: dimmedPageColor, ...dimmingStyle }}
-        />
-      )}
+      {/* Safari's status bar (iOS 26): it tints from a fixed element over
+          10px deep at the top edge, and re-reads its colour only as the page
+          restyles — so the page's edge as it shows dimmed, opaque, worked out
+          in CSS (it changes in the same restyle as a theme switch). Just
+          deep enough, and clear of a top bar's content. */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-x-0 top-0"
+        style={{
+          height: STRIP_HEIGHT,
+          backgroundColor:
+            "color-mix(in srgb, var(--scrim-tone) var(--scrim-strength), var(--page-edge))",
+          ...dimmingStyle,
+        }}
+      />
       <div
         ref={panel}
         className={clsx("relative flex flex-col", isTall ? "h-[85dvh]" : "max-h-[92dvh]")}

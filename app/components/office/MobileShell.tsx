@@ -449,8 +449,17 @@ const TABS: [Tab, string, LucideIcon][] = [
 const TabBar = ({ tab, onChange }: { tab: Tab; onChange: (tab: Tab) => void }) => {
   const { t } = useI18n()
   const bar = useRef<HTMLElement>(null)
-  // The bars run on into the phone's status bar and toolbar.
+  // The bars run on into the phone's status bar and toolbar: the page's edge
+  // colour is theirs (tailwind.css), and so is the theme-color tags'.
   useBarColor(bar)
+  useEffect(() => {
+    const html = document.documentElement
+    html.dataset.chromeEdges = ""
+
+    return () => {
+      delete html.dataset.chromeEdges
+    }
+  }, [])
 
   return (
     <nav

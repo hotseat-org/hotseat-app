@@ -157,7 +157,9 @@
 
   /* What dims the page under a sheet or drop-down menu: always a shade, never
      a wash — warm brown here, near-black in dark. */
-  --scrim: rgba(51, 40, 24, 0.3);
+  --scrim-tone: rgb(51 40 24);
+  --scrim-strength: 30%;
+  --scrim: color-mix(in srgb, var(--scrim-tone) var(--scrim-strength), transparent);
 
 }
 
@@ -225,7 +227,9 @@
 
   --scrollbar-thumb: color-mix(in oklch, var(--foreground) 22%, transparent);
 
-  --scrim: rgba(4, 6, 12, 0.6);
+  --scrim-tone: rgb(4 6 12);
+  --scrim-strength: 60%;
+  --scrim: color-mix(in srgb, var(--scrim-tone) var(--scrim-strength), transparent);
 
 }
 
@@ -717,8 +721,14 @@ input:-webkit-autofill:focus {
   /* The page's own colour, the scheme's background: what a phone shows round
      its cutout and in landscape's side bars (unset, they can show black). */
   html {
-    background-color: var(--background);
+    /* The colour at the screen's edges: the scheme's background, or the
+       phone shell's bars while they're showing (they set data-chrome-edges). */
+    --page-edge: var(--background);
+    background-color: var(--page-edge);
     color-scheme: light;
+  }
+  html[data-chrome-edges] {
+    --page-edge: var(--chrome);
   }
   html.dark,
   html[data-theme="dark"] {

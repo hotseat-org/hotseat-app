@@ -107,12 +107,13 @@ const App = () => {
       lang={locale}
       className={clsx("h-full", theme)}
       data-scheme={scheme === DEFAULT_SCHEME ? undefined : scheme}
-      // A page with a colour of its own (the login screen, the phone shell's
-      // bars): round it too.
-      style={{
-        backgroundColor: pageColor,
-        colorScheme: routeColor && (routeColor.isDark ? "dark" : "light"),
-      }}
+      // A page with a colour of its own (the login screen): round it too.
+      style={
+        routeColor && {
+          backgroundColor: routeColor.background,
+          colorScheme: routeColor.isDark ? "dark" : "light",
+        }
+      }
     >
       <head>
         <meta charSet="utf-8" />
