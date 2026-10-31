@@ -7,7 +7,8 @@ import { OFFICE_COMMANDS } from "./slots/commands"
 import { OfficeInspectorSection } from "./slots/inspector"
 import { OfficeEmptyState } from "./slots/emptyState"
 import { OfficeDay, describeDesks, prepareNewOfficePieces } from "./slots/extras"
-import { OFFICE_MAP_LAYERS, OFFICE_MAP_MENU_SECTION } from "./slots/mapLayers"
+import { OFFICE_MAP_LAYERS } from "./slots/mapLayers"
+import { OFFICE_SIDE_PANELS } from "./slots/sidePanels"
 import { OFFICE_PANELS } from "./slots/panels"
 import { OFFICE_TOUR_STEPS } from "./slots/tourSteps"
 import { useLayoutImpactGuard } from "./slots/saveGuard"
@@ -39,7 +40,7 @@ export const officeModule = defineModule<OfficeState>({
   commands: OFFICE_COMMANDS,
   inspectorSections: [OfficeInspectorSection],
   mapLayers: OFFICE_MAP_LAYERS,
-  mapMenuSection: OFFICE_MAP_MENU_SECTION,
+  sidePanels: OFFICE_SIDE_PANELS,
   bottomBarItems: [OfficeDay],
   tourSteps: OFFICE_TOUR_STEPS,
   describePieces: describeDesks,

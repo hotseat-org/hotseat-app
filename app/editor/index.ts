@@ -13,7 +13,6 @@ export type {
   EmptyStateProps,
   InspectorSectionProps,
   MapLayer,
-  MapMenuSection,
   Panel,
   PanelProps,
   PieceState,
@@ -27,6 +26,8 @@ export type {
   SaveOptions,
   SceneLayer,
   SceneLayerProps,
+  SidePanel,
+  SidePanelProps,
   ViewClicks,
 } from "./module"
 export { GROUP, selectAll, type Command } from "./ui/menus/commands"
@@ -74,6 +75,14 @@ export {
 // Around the editor: its error boundary and whether 3D can run at all.
 export { EditorBoundary } from "./shell/EditorBoundary"
 export { hasWebGL } from "./shell/webgl"
+
+// Side panels in an app shell's own rail or dock (viewing).
+export {
+  SidePanelBadge,
+  SidePanelFlyout,
+  useSidePanels,
+  type SidePanelEntry,
+} from "./ui/sidePanels"
 
 // Editor UI an app shell may reuse (the office view's dock and map menu).
 export { TimeOfDay } from "./ui/bars/TimeOfDay"

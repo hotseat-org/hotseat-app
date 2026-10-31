@@ -5,7 +5,6 @@ import {
   Ban,
   Eraser,
   LayoutGrid,
-  LayoutTemplate,
   MousePointer2,
   PaintBucket,
   Rows3,
@@ -17,7 +16,7 @@ import { isRecolorable } from "../../types"
 import { FLOOR_SWATCHES, SWATCHES } from "../../palette"
 import type { PlacementPattern } from "../../layout"
 import { getItem } from "../../catalog"
-import { KitsPanel } from "../../kits/KitsPanel"
+import { SidePanelButton, SidePanelFlyout, useSidePanels } from "../sidePanels"
 import {
   getCatalogCategories,
   getToolMeta,
@@ -48,7 +47,6 @@ type PreviewModule = typeof import("./PreviewView")
  * opens its category. Select/Erase (which place nothing) collapse the panel.
  */
 /** The rail's own "category": the saved rooms (kits). */
-const KITS_ID = "kits"
 
 /** The item panel's least height (px), so a few rows of tiles always show. */
 const PANEL_MIN_HEIGHT = 560
@@ -76,10 +74,17 @@ export const Catalog = () => {
 
   const [openId, setOpenId] = useState<string | null>(null)
   const category = getCatalogCategories().find((entry) => entry.id === openId)
-  // Arming an asset any other way (number keys) opens its category.
+  // The side panels (Saved rooms, the modules' — the notes): they open in
+  // the same spot as a category, so one or the other is open.
+  const sidePanels = useSidePanels(true)
+  // Arming an asset any other way (number keys, a side panel's button)
+  // opens its category.
   useEffect(() => {
     const toolCategory = isCatalogItem(tool) ? categoryOf(tool) : undefined
-    if (toolCategory) setOpenId(toolCategory.id)
+    if (!toolCategory) return
+
+    setOpenId(toolCategory.id)
+    sidePanels.close()
   }, [tool])
 
   // The armed asset, if it's in the open category (drives the colour picker).
@@ -100,7 +105,14 @@ export const Catalog = () => {
     // Don't leave an asset from another (or the closing) category armed.
     if (isCatalogItem(tool) || armedKit) setTool("select")
 
+    sidePanels.close()
     setOpenId((currentId) => (currentId === id ? null : id))
+  }
+  const toggleSidePanel = (id: string) => {
+    if (isCatalogItem(tool)) setTool("select")
+
+    setOpenId(null)
+    sidePanels.toggle(id)
   }
   // The panel is as tall as the tray — but at least PANEL_MIN_HEIGHT (the
   // two-column tray is short), within the screen; tiles scroll inside it.
@@ -121,6 +133,7 @@ export const Catalog = () => {
 
   const pickMode = (mode: "select" | "delete" | "paint") => {
     setOpenId(null)
+    sidePanels.close()
     setTool(mode)
   }
 
@@ -178,23 +191,19 @@ export const Catalog = () => {
         </div>
 
         <div className="h-px shrink-0 bg-separator" />
-        <ToggleButton
-          variant="ghost"
-          isSelected={openId === KITS_ID}
-          onPress={() => toggleCategory(KITS_ID)}
-          className={clsx(
-            "flex h-auto w-full items-center justify-start gap-2 rounded-xl px-2 py-2 text-[11px] font-semibold transition-colors",
-            openId === KITS_ID
-              ? "bg-accent/15 text-foreground ring-2 ring-inset ring-accent"
-              : "text-muted hover:bg-foreground/10 hover:text-foreground"
-          )}
-        >
-          <LayoutTemplate className="size-5 shrink-0" />
-          {t("Saved rooms")}
-        </ToggleButton>
+        {sidePanels.entries.map((entry) => (
+          <SidePanelButton
+            key={entry.panel.id}
+            entry={entry}
+            isOpen={sidePanels.openPanel?.id === entry.panel.id}
+            onPress={() => toggleSidePanel(entry.panel.id)}
+          />
+        ))}
       </div>
 
-      {openId === KITS_ID && <KitsPanel style={panelStyle} />}
+      {sidePanels.openPanel && (
+        <SidePanelFlyout panel={sidePanels.openPanel} isEditing style={panelStyle} />
+      )}
 
       {/* Paint: colour choice + how-to, in the same slot/size as a category. */}
       {tool === "paint" && !category && <PaintPanel style={panelStyle} />}

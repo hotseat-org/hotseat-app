@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { createPortal } from "react-dom"
 import { CloseButton } from "@heroui/react"
 import clsx from "clsx"
@@ -11,7 +11,7 @@ import { MyBookings } from "./MyBookings"
 import { NotificationsBell } from "./Notifications"
 import { WeekDots } from "./WeekDots"
 import { MOBILE_CHROME } from "./mobile"
-import { MapMenu } from "~/editor"
+import { MapMenu, SidePanelBadge, useSidePanels } from "~/editor"
 import { useOfficeStore } from "~/office/store"
 import { MonthCalendar } from "~/office/booking/DateStepper"
 import {
@@ -188,6 +188,7 @@ const DayDock = ({ me }: { me: ShellMember }) => {
         >
           <CalendarDays className="size-5" />
         </button>
+        <SidePanelButtons />
         {/* A phone always shows the plan: no 3D-only rows. */}
         <MapMenu variant="compact" is3d={false} />
         <DayStrip />
@@ -197,9 +198,19 @@ const DayDock = ({ me }: { me: ShellMember }) => {
   )
 }
 
-/** The month calendar (as on the desktop) as a bottom sheet; picking a day closes it. */
-const CalendarSheet = ({ onClose }: { onClose: () => void }) => {
-  const setDay = useOfficeStore((s) => s.setBookingDay)
+/**
+ * A sheet up from the bottom of the screen: its title, a close button, and
+ * what it holds — given `close`, which slides it away before it goes.
+ */
+const BottomSheet = ({
+  title,
+  onClose,
+  children,
+}: {
+  title: string
+  onClose: () => void
+  children: (close: () => void) => ReactNode
+}) => {
   const { t } = useI18n()
   const [isClosing, setIsClosing] = useState(false)
   const close = () => {
@@ -207,8 +218,9 @@ const CalendarSheet = ({ onClose }: { onClose: () => void }) => {
     window.setTimeout(onClose, SHEET_EXIT_MS)
   }
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close()
+    const onKey = (event: KeyboardEvent) => event.key === "Escape" && close()
     window.addEventListener("keydown", onKey)
+
     return () => window.removeEventListener("keydown", onKey)
   }, [])
 
@@ -218,33 +230,84 @@ const CalendarSheet = ({ onClose }: { onClose: () => void }) => {
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
       <button
         type="button"
-        aria-label={t("Close the calendar")}
+        aria-label={t("Close")}
         className="absolute inset-0 bg-scrim"
         onClick={close}
       />
       <section
         role="dialog"
-        aria-label={t("Pick a day")}
+        aria-label={title}
         className={clsx(
-          "relative flex flex-col gap-3 rounded-t-3xl border-t border-border bg-overlay px-5 pb-7 pt-2.5 shadow-overlay",
+          "relative flex max-h-[85dvh] flex-col gap-3 rounded-t-3xl border-t border-border bg-overlay px-5 pb-7 pt-2.5 shadow-overlay",
           isClosing ? "sheet-down" : "sheet-up"
         )}
       >
-        <span aria-hidden className="mx-auto h-1.5 w-10 rounded-full bg-border" />
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-extrabold text-foreground">{t("Pick a day")}</h2>
+        <span aria-hidden className="mx-auto h-1.5 w-10 shrink-0 rounded-full bg-border" />
+        <div className="flex shrink-0 items-center justify-between">
+          <h2 className="text-lg font-extrabold text-foreground">{title}</h2>
           <CloseButton aria-label={t("Close")} onPress={close} className="size-10" />
         </div>
-        <MonthCalendar
-          className="w-full"
-          onPick={(d) => {
-            setDay(d)
-            close()
-          }}
-        />
+        <div className="flex min-h-0 flex-col overflow-y-auto">{children(close)}</div>
       </section>
     </div>,
     document.body
+  )
+}
+
+/** The month calendar (as on the desktop) as a bottom sheet; picking a day closes it. */
+const CalendarSheet = ({ onClose }: { onClose: () => void }) => {
+  const setDay = useOfficeStore((s) => s.setBookingDay)
+  const { t } = useI18n()
+
+  return (
+    <BottomSheet title={t("Pick a day")} onClose={onClose}>
+      {(close) => (
+        <MonthCalendar
+          className="w-full"
+          onPick={(picked) => {
+            setDay(picked)
+            close()
+          }}
+        />
+      )}
+    </BottomSheet>
+  )
+}
+
+/** The modules' side panels on a phone (the desk filter, the notes): a button each in the dock. */
+const SidePanelButtons = () => {
+  const { t } = useI18n()
+  const { entries, openPanel, toggle, close } = useSidePanels(false)
+
+  return (
+    <>
+      {entries.map(({ panel, badgeCount }) => {
+        const Icon = panel.icon
+
+        return (
+          <button
+            key={panel.id}
+            type="button"
+            aria-label={t(panel.label)}
+            aria-expanded={openPanel?.id === panel.id}
+            onClick={() => toggle(panel.id)}
+            className="relative grid h-12 w-11 shrink-0 place-items-center rounded-xl bg-foreground/[0.07] text-foreground"
+          >
+            <Icon className="size-5" />
+            {badgeCount > 0 && (
+              <span className="absolute right-1 top-1">
+                <SidePanelBadge count={badgeCount} />
+              </span>
+            )}
+          </button>
+        )
+      })}
+      {openPanel && (
+        <BottomSheet title={t(openPanel.label)} onClose={close}>
+          {(closeSheet) => <openPanel.Component isEditing={false} close={closeSheet} />}
+        </BottomSheet>
+      )}
+    </>
   )
 }
 

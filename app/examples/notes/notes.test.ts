@@ -14,12 +14,12 @@ const runCommand = (store: ReturnType<typeof createNotesEditor>["store"], id: st
 }
 
 describe("the notes module", () => {
-  test("brings its item, with its looks, and its catalogue section", () => {
+  test("brings its item, with its looks, offered in no catalogue section", () => {
     createNotesEditor()
 
     expect(getItem("note").tags).toContain("note")
-    expect(getTiles().some((tile) => tile.type === "note")).toBe(true)
-    expect(getCategories().find((category) => category.id === "notes")?.types).toEqual(["note"])
+    expect(getTiles().find((tile) => tile.type === "note")?.category).toBeUndefined()
+    expect(getCategories().some((category) => category.types.includes("note"))).toBe(false)
   })
 
   test("selects every note at once", () => {

@@ -459,7 +459,6 @@ export const cs: Messages = {
   "Tap a free + on the plan to book one": "Klepnutím na volné + v plánku si stůl zarezervujete",
   Show: "Ukázat",
   "Pick a day from the calendar": "Vybrat den v kalendáři",
-  "Close the calendar": "Zavřít kalendář",
   Days: "Dny",
   "Who's in": "Kdo tu je",
   "{in} of {total} in the office": "v kanceláři {in} z {total}",
@@ -536,7 +535,6 @@ export const cs: Messages = {
   "Log out": "Odhlásit se",
   "In this week: {days}": "Tento týden tu: {days}",
   "Not in this week": "Tento týden tu není",
-  "Show only": "Zobrazit jen",
   "{n} desk here": {
     one: "{n} stůl tady",
     few: "{n} stoly tady",
@@ -1074,9 +1072,14 @@ export const cs: Messages = {
   // —— Example module (app/examples/notes) ——
   Note: "Poznámka",
   Notes: "Poznámky",
-  "Reminders left on the floor.": "Připomínky nechané na podlaze.",
   "Select all notes": "Vybrat všechny poznámky",
   "Show or hide the notes": "Zobrazit nebo skrýt poznámky",
+  "New note": "Nová poznámka",
+  Shown: "Zobrazené",
+  Hidden: "Skryté",
+  "No notes yet. Place one, then write on it in the Inspector.":
+    "Zatím žádné poznámky. Umístěte jednu a pak do ní pište v Inspektoru.",
+  "Filter desks": "Filtrovat stoly",
   Text: "Text",
   "Write a note…": "Napište poznámku…",
   "Empty note": "Prázdná poznámka",

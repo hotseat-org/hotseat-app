@@ -19,7 +19,14 @@ import { MobileShell } from "./MobileShell"
 import { NotificationsBell } from "./Notifications"
 import { WeekDots } from "./WeekDots"
 import { InsightsDashboard } from "./InsightsDashboard"
-import { REVEAL_LABEL, TimeOfDay, hasWebGL } from "~/editor"
+import {
+  REVEAL_LABEL,
+  SidePanelBadge,
+  SidePanelFlyout,
+  TimeOfDay,
+  hasWebGL,
+  useSidePanels,
+} from "~/editor"
 import { useOfficeStore } from "~/office/store"
 import {
   dayPhrase,
@@ -57,10 +64,12 @@ interface RailItem {
   active?: boolean
   /** Not built yet: shown dimmed, not clickable (instead of a silent no-op). */
   disabled?: boolean
+  /** A count on it: a side panel's (the desk filters on). */
+  badge?: number
 }
 
-const RailLink = ({ icon: Icon, label, onClick, active, disabled }: RailItem) => {
-  const cls = `flex h-11 items-center rounded-xl px-3 text-sm font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-focus ${
+const RailLink = ({ icon: Icon, label, onClick, active, disabled, badge = 0 }: RailItem) => {
+  const cls = `relative flex h-11 items-center rounded-xl px-3 text-sm font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-focus ${
     active
       ? "bg-accent text-accent-foreground"
       : disabled
@@ -78,6 +87,11 @@ const RailLink = ({ icon: Icon, label, onClick, active, disabled }: RailItem) =>
     >
       <Icon className="size-5 shrink-0" />
       <span className={REVEAL_LABEL}>{label}</span>
+      {badge > 0 && (
+        <span className="absolute left-7 top-1">
+          <SidePanelBadge count={badge} />
+        </span>
+      )}
     </button>
   )
 }
@@ -103,6 +117,9 @@ export const SpatialShell = ({
   const today = useOfficeStore((s) => s.booking.today)
   const { byPerson } = useDesksOnDay()
   const [bookingsOpen, setBookingsOpen] = useState(false)
+  // The modules' side panels (the desk filter, the notes) in the rail; they
+  // open where Bookings does, so one or the other is open.
+  const sidePanels = useSidePanels(false)
   const mine = byPerson.get(me.userEmail)
   const givenUp = useGivenUpDesk(me.userEmail)
   const waitlist = useWaitlist()
@@ -146,8 +163,11 @@ export const SpatialShell = ({
         <RailLink
           icon={Building2}
           label={t("Office")}
-          active={!bookingsOpen && !isInsightsOpen && !hasHeatmap}
-          onClick={() => setBookingsOpen(false)}
+          active={!bookingsOpen && !isInsightsOpen && !hasHeatmap && !sidePanels.openPanel}
+          onClick={() => {
+            sidePanels.close()
+            setBookingsOpen(false)
+          }}
         />
         {/* Members is an admin page; the roster on the right is everyone's. */}
         {me.role === Role.ADMIN && (
@@ -161,7 +181,10 @@ export const SpatialShell = ({
           icon={Calendar}
           label={t("Bookings")}
           active={bookingsOpen}
-          onClick={() => setBookingsOpen((o) => !o)}
+          onClick={() => {
+            sidePanels.close()
+            setBookingsOpen((o) => !o)
+          }}
         />
         {me.role === Role.ADMIN && (
           <RailLink
@@ -171,6 +194,21 @@ export const SpatialShell = ({
             onClick={() => setInsightsOpen(true)}
           />
         )}
+        {sidePanels.entries.length > 0 && <div className="mx-2 h-px shrink-0 bg-separator" />}
+        {sidePanels.entries.map(({ panel, badgeCount }) => (
+          <RailLink
+            key={panel.id}
+            icon={panel.icon}
+            label={t(panel.label)}
+            badge={badgeCount}
+            active={sidePanels.openPanel?.id === panel.id}
+            onClick={() => {
+              setBookingsOpen(false)
+              sidePanels.toggle(panel.id)
+            }}
+          />
+        ))}
+        {sidePanels.openPanel && <SidePanelFlyout panel={sidePanels.openPanel} isEditing={false} />}
       </nav>
       {isInsightsOpen && <InsightsDashboard />}
 

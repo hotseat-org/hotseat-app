@@ -59,10 +59,10 @@ export interface EditorModule {
   commands?: Command[]
   /** Its sections in the Inspector (editing), for the selection. */
   inspectorSections?: ComponentType<InspectorSectionProps>[]
-  /** Its layers in the Map menu (shown or hidden, remembered in the browser). */
+  /** Its layers in the Map menu: switches only (shown or hidden, remembered in the browser). */
   mapLayers?: MapLayer[]
-  /** Its section at the foot of the Map menu while viewing (the office: which desks). */
-  mapMenuSection?: MapMenuSection
+  /** Its panels beside the rail, each opened from its own button (the notes, the desk filter). */
+  sidePanels?: SidePanel[]
   /** What it adds to the bottom bar, before the time of day (the office: the day). */
   bottomBarItems?: ComponentType[]
   /** Its steps in the editor's guided tour, each after the step it follows. */
@@ -108,20 +108,31 @@ export interface MapLayer {
   isOnByDefault: boolean
   /** A hint instead, for this layout (the Zones layer, with none yet). */
   hintFor?: (objects: SceneObject[]) => string | null
-  /** What it shows, listed under its switch while it's on (the notes: each, to go to). */
-  Details?: ComponentType
 }
 
-export interface MapMenuSection {
-  /** Translatable heading (msg). */
-  heading: string
-  Component: ComponentType
-  /** When it's offered: unset, while viewing (the office's desk filter). */
-  when?: "viewing" | "editing" | "always"
-  /** A hook: whether it has anything to offer. */
-  useIsShown: () => boolean
-  /** A hook: how many of its settings are changed (counted on the Map button). */
-  useChangeCount: () => number
+/**
+ * A panel of its own beside the rail — a feature's list or tool (the notes,
+ * the desk filter) — opened from its button; one is open at a time. Editing:
+ * in the catalogue's rail; viewing: in the app shell's rail (or the phone's
+ * dock, as a sheet).
+ */
+export interface SidePanel {
+  id: string
+  /** Its button's name and its title, translatable (msg). */
+  label: string
+  icon: LucideIcon
+  when: "viewing" | "editing" | "always"
+  Component: ComponentType<SidePanelProps>
+  /** A hook: whether it has anything to offer now (unset: always). */
+  useIsShown?: (isEditing: boolean) => boolean
+  /** A hook: a count on its button, e.g. filters on (unset or 0: none). */
+  useBadgeCount?: () => number
+}
+
+export interface SidePanelProps {
+  isEditing: boolean
+  /** Close it (after picking something that needs the view). */
+  close: () => void
 }
 
 export interface EmptyStateProps {

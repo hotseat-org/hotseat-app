@@ -8,10 +8,8 @@ import {
   Ruler,
   type LucideIcon,
 } from "lucide-react"
-import { Fragment, type ComponentType } from "react"
 import { useEditorStore, type Layers } from "../../store"
 import { hasWebGL } from "../../shell/webgl"
-import type { MapMenuSection } from "../../module"
 import { useModules } from "../../modules"
 import type { SceneObject } from "../../types"
 import { REVEAL_LABEL } from "../bars/revealLabel"
@@ -27,8 +25,6 @@ interface LayerRow {
   shortcut?: string
   /** A hint instead, for this layout (a module's layer: see MapLayer.hintFor). */
   hintFor?: (objects: SceneObject[]) => string | null
-  /** Listed under the switch while it's on (a module's layer: see MapLayer.Details). */
-  Details?: ComponentType
 }
 
 const FRAME_RATE: LayerRow = {
@@ -74,9 +70,8 @@ interface Props {
 
 /**
  * The Map menu: what the map shows on top of the office (zones, desk tags,
- * room sizes…, remembered in this browser) and, while viewing, which desks
- * — only a zone's, only standing desks… The button counts what's changed:
- * layers hidden plus filters on.
+ * room sizes…, remembered in this browser) — switches only; a feature's own
+ * lists and tools are side panels. The button counts the layers hidden.
  */
 export const MapMenu = ({
   isEditing = false,
@@ -95,23 +90,6 @@ export const MapMenu = ({
   const toggleFrameRate = useEditorStore((state) => state.toggleFrameRate)
   const objects = useEditorStore((state) => state.objects)
   const modules = useModules()
-  // The modules' sections at the foot (the office: which desks), in their mode.
-  // Each one's hooks, in a loop: safe, the list is fixed (see ModulesContext).
-  const sections = modules.flatMap((module) =>
-    module.mapMenuSection
-      ? [
-          {
-            ...module.mapMenuSection,
-            isShown: module.mapMenuSection.useIsShown(),
-            changeCount: module.mapMenuSection.useChangeCount(),
-          },
-        ]
-      : []
-  )
-  const isSectionInMode = ({ when = "viewing" }: MapMenuSection) =>
-    when === "always" || (when === "editing") === isEditing
-  const shownSections = sections.filter((section) => section.isShown && isSectionInMode(section))
-
   // The modules' layers for the mode, then the editor's own, then the frame rate.
   const moduleRows: LayerRow[] = modules
     .flatMap((module) => module.mapLayers ?? [])
@@ -131,9 +109,7 @@ export const MapMenu = ({
     return toggleLayer(row.id)
   }
   // The frame rate is off by default: on isn't a change worth a badge.
-  const hiddenCount = rows.filter((row) => row.id !== "frameRate" && !isOn(row)).length
-  const changedCount =
-    hiddenCount + shownSections.reduce((sum, section) => sum + section.changeCount, 0)
+  const changedCount = rows.filter((row) => row.id !== "frameRate" && !isOn(row)).length
   const label = changedCount ? tn(changedCount, "Map ({n} change)", "Map ({n} changes)") : t("Map")
 
   return (
@@ -204,23 +180,10 @@ export const MapMenu = ({
                     </span>
                     <Switch isOn={isLayerOn} />
                   </button>
-                  {isLayerOn && row.Details && (
-                    // Lined up with the label, under its icon's column.
-                    <div className="pb-1 pl-[3.375rem] pr-2.5">
-                      <row.Details />
-                    </div>
-                  )}
                 </li>
               )
             })}
           </ul>
-          {shownSections.map(({ heading, Component }, index) => (
-            <Fragment key={index}>
-              <div className="mx-2.5 my-1.5 h-px bg-separator" />
-              <Heading>{t(heading)}</Heading>
-              <Component />
-            </Fragment>
-          ))}
         </Popover.Dialog>
       </Popover.Content>
     </Popover>

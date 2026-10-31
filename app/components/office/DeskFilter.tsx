@@ -37,7 +37,7 @@ export const useDeskFilterOptions = () => {
 
 /**
  * The desk filter's choices — zones, then desk features. On, the desks
- * outside them fade and lose their "Free" marks. Part of the Map menu.
+ * outside them fade and lose their "Free" marks. The office's Filter desks side panel.
  */
 export const DeskFilterOptions = () => {
   const { t, tn } = useI18n()

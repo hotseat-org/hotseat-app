@@ -15,6 +15,7 @@ import { Catalog } from "./ui/catalog/Catalog"
 import { Inspector } from "./ui/Inspector"
 import { TopBar } from "./ui/bars/TopBar"
 import { TimeOfDay } from "./ui/bars/TimeOfDay"
+import { SidePanelRail } from "./ui/sidePanels"
 import { FloorPlan } from "./plan/FloorPlan"
 import { ControlsGuide, type GuideView } from "./ui/guide/ControlsGuide"
 import { SceneLoading } from "./ui/SceneLoading"
@@ -183,6 +184,8 @@ const EditorInner = ({
     [modules, switchMode]
   )
   useEditorShortcuts(readOnly)
+  // Editing and viewing have their own side panels: switching starts with none open.
+  useEffect(() => store.getState().closeSidePanel(), [readOnly, store])
   const { guardPanels } = useAutosave({ initialObjects, onSave, saveFailed })
   // The modules' panels for the mode.
   // An empty layout's screen: the first module's that has one.
@@ -315,6 +318,10 @@ const EditorInner = ({
             <Catalog />
           </>
         )}
+
+        {/* Viewing without an app shell: the side panels' own rail (the app
+            shell puts them in its rail). */}
+        {readOnly && !shellMode && !isEmpty && <SidePanelRail />}
 
         {/* Bottom-right: the selection inspector (edit) above the controls
             guide. The app shell places the guide itself, in its side panel. */}

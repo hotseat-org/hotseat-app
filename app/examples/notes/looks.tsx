@@ -1,6 +1,6 @@
 import { StickyNote } from "lucide-react"
 import { NOTE_ITEMS } from "./items"
-import { composeItemsWithLooks, type CategoryDefinition, type MeshProps } from "~/editor"
+import { composeItemsWithLooks, type MeshProps } from "~/editor"
 import { Surface } from "~/editor/kit"
 import { msg } from "~/i18n/msg"
 
@@ -18,13 +18,11 @@ const NotePin = ({ color = "#f2c94c" }: MeshProps) => (
   </group>
 )
 
-/** The notes as the module brings them: each item with how it looks. */
+/**
+ * The notes as the module brings them: each item with how it looks. Its tile
+ * names it (the Inspector, commands) but offers it in no catalogue section:
+ * the notes' side panel starts a new one.
+ */
 export const NOTES = composeItemsWithLooks(NOTE_ITEMS, {
-  note: { Mesh: NotePin, tile: { label: msg("Note"), icon: StickyNote, category: "notes" } },
+  note: { Mesh: NotePin, tile: { label: msg("Note"), icon: StickyNote } },
 })
-
-const NotesIcon = ({ className }: { className?: string }) => <StickyNote className={className} />
-
-export const NOTE_CATEGORIES: CategoryDefinition[] = [
-  { id: "notes", label: msg("Notes"), icon: NotesIcon, hint: msg("Reminders left on the floor.") },
-]

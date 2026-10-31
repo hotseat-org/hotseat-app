@@ -1,6 +1,6 @@
 import clsx from "clsx"
 import { MousePointerClick, Trash2 } from "lucide-react"
-import { useState, type CSSProperties } from "react"
+import { useState } from "react"
 import { useEditorStore } from "../store"
 import { describePieces, useModules } from "../modules"
 import { useKitLibrary } from "./kits"
@@ -12,7 +12,7 @@ import { useI18n } from "~/i18n/I18nProvider"
  * doors, furniture — as often as you like (Esc to stop). Saved from the
  * right-click menu inside a room.
  */
-export const KitsPanel = ({ style }: { style?: CSSProperties }) => {
+export const KitsPanel = () => {
   const i18n = useI18n()
   const { t, format } = i18n
   const modules = useModules()
@@ -23,13 +23,7 @@ export const KitsPanel = ({ style }: { style?: CSSProperties }) => {
   const [confirmingId, setConfirmingId] = useState<string | null>(null)
 
   return (
-    <div
-      style={style}
-      className="pointer-events-auto absolute left-full top-0 ml-2 flex w-60 flex-col rounded-2xl border border-border bg-overlay/90 p-3 shadow-overlay backdrop-blur-md"
-    >
-      <h2 className="mb-0.5 shrink-0 px-1 text-sm font-semibold text-foreground">
-        {t("Saved rooms")}
-      </h2>
+    <>
       <p className="mb-2 shrink-0 px-1 text-[11px] leading-snug text-muted">
         {kits.length
           ? t("Pick one, then click the floor to place it — walls, doors and all.")
@@ -94,6 +88,6 @@ export const KitsPanel = ({ style }: { style?: CSSProperties }) => {
           )
         })}
       </div>
-    </div>
+    </>
   )
 }

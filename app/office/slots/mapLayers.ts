@@ -1,7 +1,6 @@
 import { Shapes, Tag } from "lucide-react"
 import { getZones } from "../zones/zones"
-import { type MapLayer, type MapMenuSection } from "~/editor"
-import { DeskFilterOptions, useDeskFilterOptions } from "~/components/office/DeskFilter"
+import { type MapLayer } from "~/editor"
 import { msg } from "~/i18n/msg"
 
 /** The office's layers of the map. */
@@ -25,11 +24,3 @@ export const OFFICE_MAP_LAYERS: MapLayer[] = [
     isOnByDefault: true,
   },
 ]
-
-/** The Map menu's foot, viewing: show only a zone's desks, standing desks… */
-export const OFFICE_MAP_MENU_SECTION: MapMenuSection = {
-  heading: msg("Show only"),
-  Component: DeskFilterOptions,
-  useIsShown: () => useDeskFilterOptions().hasOptions,
-  useChangeCount: () => useDeskFilterOptions().activeCount,
-}
