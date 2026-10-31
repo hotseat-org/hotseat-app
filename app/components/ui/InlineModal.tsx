@@ -62,7 +62,14 @@ export function InlineModal({
               onClose()
             }
           }}
-          className={clsx("modal-in relative outline-none", className)}
+          className={clsx(
+            "modal-in relative outline-none",
+            // Filling a phone's screen, fixed itself: Safari (iOS 26) tints its
+            // status bar and toolbar from the fixed element at each edge — the
+            // dialog's colour, not the backdrop dimming the page behind it.
+            isFullScreenOnPhone && "max-md:fixed max-md:inset-0",
+            className
+          )}
         >
           {children}
         </div>

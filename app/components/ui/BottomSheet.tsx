@@ -1,7 +1,8 @@
 import { CloseButton } from "@heroui/react"
 import clsx from "clsx"
-import { useEffect, useState, type ReactNode } from "react"
+import { useEffect, useRef, useState, type ReactNode } from "react"
 import { createPortal } from "react-dom"
+import { useDimmedPageColor } from "./useDimmedPageColor"
 import { useSwipeToClose } from "./useSwipeToClose"
 import { useI18n } from "~/i18n/I18nProvider"
 
@@ -43,6 +44,8 @@ export const BottomSheet = ({
     window.setTimeout(onClose, SHEET_EXIT_MS)
   }
   const swipe = useSwipeToClose(close)
+  const scrim = useRef<HTMLButtonElement>(null)
+  const dimmedPageColor = useDimmedPageColor(scrim)
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => event.key === "Escape" && close()
     window.addEventListener("keydown", onKey)
@@ -62,16 +65,26 @@ export const BottomSheet = ({
       )}
       style={{ bottom: bottomInset }}
     >
-      {/* Fixed itself, see-through and empty: Safari (iOS 26) then tints its
-          status bar with it dimming the page, live — inside the fixed
-          wrapper it found the wrapper, colourless, and kept its old tint. */}
+      {/* Fixed itself and empty: inside the fixed wrapper, Safari (iOS 26)
+          found the wrapper, colourless, and kept its old tint. */}
       <button
+        ref={scrim}
         type="button"
         aria-label={t("Close")}
         className="fixed inset-x-0 top-0 bg-scrim"
         style={{ bottom: bottomInset }}
         onClick={close}
       />
+      {/* Safari's status bar: the page as it shows dimmed, opaque, in a strip
+          just deep enough for it (over 10px) and clear of a top bar's content
+          (see useDimmedPageColor). */}
+      {dimmedPageColor && (
+        <div
+          aria-hidden
+          className="pointer-events-none fixed inset-x-0 top-0 h-[11px]"
+          style={{ backgroundColor: dimmedPageColor }}
+        />
+      )}
       <div
         className={clsx("relative flex flex-col", isTall ? "h-[85dvh]" : "max-h-[92dvh]")}
         style={swipe.style}
