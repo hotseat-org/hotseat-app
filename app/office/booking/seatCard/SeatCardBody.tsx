@@ -17,6 +17,8 @@ import { type Person } from "../../desks/people"
 import { UsualStep } from "./UsualStep"
 import type { Option } from "./useSeatCard"
 import { MemberAvatar } from "~/components/office/shell-ui"
+import { SheetCloseButton } from "~/components/office/SheetCloseButton"
+import { useSwipeToClose } from "~/components/office/useSwipeToClose"
 import { type Day } from "~/utils/booking"
 import type { Translator } from "~/i18n/translate"
 
@@ -201,6 +203,8 @@ export const SeatCardBody = ({
   const isSheet = layout === "sheet"
   const { t } = i18n
   const [step, setStep] = useState<"main" | "days" | "usual">("main")
+  // The phone's sheet closes by a swipe down from its top too.
+  const swipe = useSwipeToClose(onClose)
 
   // Above the desk by default; a desk near the top of the screen gets the card
   // below it instead, so it's never cut off. Decided once, before paint.
@@ -344,17 +348,23 @@ export const SeatCardBody = ({
     // over the desks BEHIND this one (isometric), and must not block them.
     <div
       ref={cardRef}
+      // The sheet is a sheet: a tap on it isn't a tap on the dimmed plan.
       className={clsx(
-        "pointer-events-none",
-        isSheet ? "w-full" : clsx("-translate-x-1/2", below ? "pt-3" : "-translate-y-full pb-3")
+        isSheet
+          ? "pointer-events-auto w-full"
+          : clsx("pointer-events-none -translate-x-1/2", below ? "pt-3" : "-translate-y-full pb-3")
       )}
+      style={isSheet ? swipe.style : undefined}
     >
       <div
         // The card lives inside the canvas container: without this, clicks on
         // its controls bubble to the scene, which reads them as a click on
-        // empty floor and closes the card.
-        onPointerDown={stop}
-        onPointerUp={stop}
+        // empty floor and closes the card. The phone's sheet is portalled
+        // over the shell, outside the canvas: only its clicks would still
+        // reach the plan (through React); stopping its pointer events too
+        // would keep React Aria from finishing a press (the Close button).
+        onPointerDown={isSheet ? undefined : stop}
+        onPointerUp={isSheet ? undefined : stop}
         onClick={stop}
         className={clsx(
           "relative flex flex-col text-foreground [&_button]:pointer-events-auto",
@@ -370,59 +380,67 @@ export const SeatCardBody = ({
               )
         )}
       >
-        {isSheet && <span aria-hidden className="mx-auto mb-1 h-1.5 w-10 rounded-full bg-border" />}
-
-        {/* Who has it, when, what it offers — and your star. */}
-        <div className="mb-1.5 flex items-center gap-2.5 px-1 pt-0.5">
-          {person && (
-            <MemberAvatar
-              m={{
-                userEmail: person.email,
-                displayName: person.name,
-                avatarUrl: person.avatarUrl,
-                role: "",
-              }}
-              className={clsx("shrink-0 rounded-full", isSheet ? "size-10" : "size-9")}
-            />
+        {/* The sheet's top — its handle, and who has the desk — swipes it down to close. */}
+        <div
+          {...(isSheet ? swipe.bind() : {})}
+          className={clsx(isSheet && "flex touch-none flex-col gap-2")}
+        >
+          {isSheet && (
+            <span aria-hidden className="mx-auto mb-1 h-1.5 w-10 rounded-full bg-border" />
           )}
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1">
-              <p className={clsx("truncate font-black", isSheet ? "text-lg" : "text-base")}>
-                {title}
-              </p>
-              {canFavorite && (
-                <button
-                  type="button"
-                  aria-label={isFavorite ? t("Remove from favourites") : t("Add to favourites")}
-                  aria-pressed={isFavorite}
-                  onClick={onToggleFavorite}
+
+          {/* Who has it, when, what it offers — and your star. */}
+          <div className="mb-1.5 flex items-center gap-2.5 px-1 pt-0.5">
+            {person && (
+              <MemberAvatar
+                m={{
+                  userEmail: person.email,
+                  displayName: person.name,
+                  avatarUrl: person.avatarUrl,
+                  role: "",
+                }}
+                className={clsx("shrink-0 rounded-full", isSheet ? "size-10" : "size-9")}
+              />
+            )}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1">
+                <p className={clsx("truncate font-black", isSheet ? "text-lg" : "text-base")}>
+                  {title}
+                </p>
+                {canFavorite && (
+                  <button
+                    type="button"
+                    aria-label={isFavorite ? t("Remove from favourites") : t("Add to favourites")}
+                    aria-pressed={isFavorite}
+                    onClick={onToggleFavorite}
+                    className={clsx(
+                      "grid size-7 shrink-0 place-items-center rounded-full transition-colors hover:bg-warning/15",
+                      isFavorite ? "text-warning" : "text-muted"
+                    )}
+                  >
+                    <Star className="size-4" fill={isFavorite ? "currentColor" : "none"} />
+                  </button>
+                )}
+              </div>
+              <p className="truncate text-xs text-muted">
+                <span
                   className={clsx(
-                    "grid size-7 shrink-0 place-items-center rounded-full transition-colors hover:bg-warning/15",
-                    isFavorite ? "text-warning" : "text-muted"
+                    "font-bold",
+                    mine && "text-accent",
+                    !mine && state === "free" && !past && "text-success"
                   )}
                 >
-                  <Star className="size-4" fill={isFavorite ? "currentColor" : "none"} />
-                </button>
-              )}
+                  {status}
+                </span>
+                {features.length > 0 && ` · ${features.join(", ")}`}
+              </p>
             </div>
-            <p className="truncate text-xs text-muted">
-              <span
-                className={clsx(
-                  "font-bold",
-                  mine && "text-accent",
-                  !mine && state === "free" && !past && "text-success"
-                )}
-              >
-                {status}
-              </span>
-              {features.length > 0 && ` · ${features.join(", ")}`}
-            </p>
+            {isSheet ? (
+              <SheetCloseButton label={t("Close")} onClose={onClose} className="size-10 shrink-0" />
+            ) : (
+              <CloseButton aria-label={t("Close")} onPress={onClose} className="shrink-0" />
+            )}
           </div>
-          <CloseButton
-            aria-label={t("Close")}
-            onPress={onClose}
-            className={clsx("shrink-0", isSheet && "size-10")}
-          />
         </div>
 
         {(note || past) && step === "main" && (

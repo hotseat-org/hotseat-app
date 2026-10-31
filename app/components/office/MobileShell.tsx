@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { createPortal } from "react-dom"
-import { CloseButton } from "@heroui/react"
 import clsx from "clsx"
 import { Building2, CalendarDays, MapPin, Pin, Users } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
@@ -11,6 +10,8 @@ import { MyBookings } from "./MyBookings"
 import { NotificationsBell } from "./Notifications"
 import { WeekDots } from "./WeekDots"
 import { MOBILE_CHROME } from "./mobile"
+import { SheetCloseButton } from "./SheetCloseButton"
+import { useSwipeToClose } from "./useSwipeToClose"
 import { MapMenu, SidePanelBadge, useSidePanels } from "~/editor"
 import { useOfficeStore } from "~/office/store"
 import { MonthCalendar } from "~/office/booking/DateStepper"
@@ -219,6 +220,7 @@ const BottomSheet = ({
     setIsClosing(true)
     window.setTimeout(onClose, SHEET_EXIT_MS)
   }
+  const swipe = useSwipeToClose(close)
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => event.key === "Escape" && close()
     window.addEventListener("keydown", onKey)
@@ -236,21 +238,26 @@ const BottomSheet = ({
         className="absolute inset-0 bg-scrim"
         onClick={close}
       />
-      <section
-        role="dialog"
-        aria-label={title}
-        className={clsx(
-          "relative flex max-h-[85dvh] flex-col gap-3 rounded-t-3xl border-t border-border bg-overlay px-5 pb-7 pt-2.5 shadow-overlay",
-          isClosing ? "sheet-down" : "sheet-up"
-        )}
-      >
-        <span aria-hidden className="mx-auto h-1.5 w-10 shrink-0 rounded-full bg-border" />
-        <div className="flex shrink-0 items-center justify-between">
-          <h2 className="text-lg font-extrabold text-foreground">{title}</h2>
-          <CloseButton aria-label={t("Close")} onPress={close} className="size-10" />
-        </div>
-        <div className="flex min-h-0 flex-col overflow-y-auto">{children(close)}</div>
-      </section>
+      <div className="relative flex max-h-[85dvh] flex-col" style={swipe.style}>
+        <section
+          role="dialog"
+          aria-label={title}
+          className={clsx(
+            "flex min-h-0 flex-col gap-3 rounded-t-3xl border-t border-border bg-overlay px-5 pb-7 pt-2.5 shadow-overlay",
+            isClosing ? "sheet-down" : "sheet-up"
+          )}
+        >
+          {/* The top: swipe it down to close. */}
+          <div {...swipe.bind()} className="flex shrink-0 touch-none flex-col gap-3">
+            <span aria-hidden className="mx-auto h-1.5 w-10 rounded-full bg-border" />
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-extrabold text-foreground">{title}</h2>
+              <SheetCloseButton label={t("Close")} onClose={close} className="size-10" />
+            </div>
+          </div>
+          <div className="flex min-h-0 flex-col overflow-y-auto">{children(close)}</div>
+        </section>
+      </div>
     </div>,
     document.body
   )
