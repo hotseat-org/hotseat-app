@@ -24,7 +24,7 @@ import { getCore } from "~/core/get-core"
 import stylesheet from "~/styles/tailwind.css?url"
 import nunitoLatin from "~/styles/fonts/nunito-latin-wght-normal.woff2?url"
 import nunitoLatinExt from "~/styles/fonts/nunito-latin-ext-wght-normal.woff2?url"
-import { usePageColor } from "~/utils/pageColor"
+import { usePageColor, type PageColor } from "~/utils/pageColor"
 import { BOOKING_ACTIONS, NOTIFICATION_ACTIONS, revalidateOn } from "~/utils/revalidation"
 import { LocaleProvider } from "~/i18n/useLocale"
 import { getLocale } from "~/i18n/locale.server"
@@ -116,11 +116,7 @@ const App = () => {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
-        {pageColor ? (
-          <meta name="theme-color" content={pageColor.background} />
-        ) : (
-          <ThemeColor scheme={scheme} theme={theme} />
-        )}
+        <ThemeColor scheme={scheme} theme={theme} pageColor={pageColor} />
         {locale === "cs" && (
           <link
             rel="preload"
@@ -134,7 +130,7 @@ const App = () => {
         <PreventFlashOnWrongTheme ssrTheme={Boolean(data.theme)} />
         <Links />
       </head>
-      <body className="h-full">
+      <body className="h-full bg-inherit">
         <NavigationProgress />
         <Outlet />
         <ScrollRestoration />
@@ -145,27 +141,32 @@ const App = () => {
 }
 
 /**
- * The browser's colour round the page (a phone's status bar, its cutout):
- * the scheme's background in the chosen theme — or, following the system,
- * one for each.
+ * The browser's colour round the page (a phone's status bar, its cutout): a
+ * page's own colour, or the scheme's background in the chosen theme — or,
+ * following the system, one for each. Always the same two tags, only their
+ * colours change: Safari follows a tag's colour changing, not a tag swapped
+ * for another (switching theme left the old colour).
  */
-const ThemeColor = ({ scheme, theme }: { scheme: SchemeId; theme: string | null }) =>
-  theme === "light" || theme === "dark" ? (
-    <meta name="theme-color" content={getSchemeBackground(scheme, theme)} />
-  ) : (
+const ThemeColor = ({
+  scheme,
+  theme,
+  pageColor,
+}: {
+  scheme: SchemeId
+  theme: string | null
+  pageColor?: PageColor
+}) => {
+  const isForced = theme === "light" || theme === "dark"
+  const getColor = (system: "light" | "dark") =>
+    pageColor?.background ?? getSchemeBackground(scheme, isForced ? theme : system)
+
+  return (
     <>
-      <meta
-        name="theme-color"
-        media="(prefers-color-scheme: light)"
-        content={getSchemeBackground(scheme, "light")}
-      />
-      <meta
-        name="theme-color"
-        media="(prefers-color-scheme: dark)"
-        content={getSchemeBackground(scheme, "dark")}
-      />
+      <meta name="theme-color" media="(prefers-color-scheme: light)" content={getColor("light")} />
+      <meta name="theme-color" media="(prefers-color-scheme: dark)" content={getColor("dark")} />
     </>
   )
+}
 
 /**
  * App-wide error page (404s from loaders, unexpected errors) in the app's own
@@ -222,7 +223,7 @@ export function ErrorBoundary() {
         <Meta />
         <Links />
       </head>
-      <body className="h-full">
+      <body className="h-full bg-inherit">
         <CenteredScreen>
           <div className="relative w-full max-w-md rounded-2xl border border-border bg-overlay p-8 text-center text-foreground shadow-overlay">
             <p className="text-5xl font-extrabold tabular-nums text-accent">
