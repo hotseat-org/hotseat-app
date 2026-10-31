@@ -1,6 +1,7 @@
 import clsx from "clsx"
 import { useRef, type ReactNode } from "react"
 import { FocusScope, useDialog, usePreventScroll } from "react-aria"
+import { EdgeStrips } from "./EdgeStrips"
 
 /**
  * A modal that renders where it's written — no portal — so it comes out of
@@ -72,6 +73,7 @@ export function InlineModal({
           )}
         >
           {children}
+          {isFullScreenOnPhone && <EdgeStrips />}
         </div>
       </FocusScope>
     </div>
