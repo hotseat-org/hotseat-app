@@ -25,7 +25,8 @@ describe("a layout with pieces this editor can't show", () => {
   test("saves them back with the layout", () => {
     const { store } = createTestEditor({ objects: [wall, stranger] })
 
-    expect(composeSavedLayout(store.getState()).at(-1)?.id).toBe("stranger")
+    const saved = composeSavedLayout(store.getState())
+    expect(saved[saved.length - 1].id).toBe("stranger")
   })
 
   test("keeps them aside when a layout is loaded too", () => {
