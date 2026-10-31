@@ -3,7 +3,7 @@ import { ArrowLeftRight, Check, Footprints, Link2, X } from "lucide-react"
 import { useEffect, useState } from "react"
 import { deskName } from "../booking/useBooking"
 import { useRoute, walkTime } from "./wayfinding"
-import { useEditorStore } from "~/editor/store"
+import { useEditorStore } from "~/editor"
 import { useI18n } from "~/i18n/I18nProvider"
 
 /**

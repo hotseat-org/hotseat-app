@@ -1,8 +1,7 @@
-import { ACCENT, PALETTE } from "~/editor/palette"
-import { DESKMATE_SEAT_Z, WORKSTATION_SEAT_Z } from "~/editor/objects/dimensions"
-import { WINDOW_GLASS as GLASS, type DrawSymbol, type Sketch } from "~/editor/plan/sketch"
-import { shade } from "~/editor/plan/shapes"
-import type { ObjectType } from "~/editor/catalog/registry"
+import { ACCENT, PALETTE, DESKMATE_SEAT_Z, WORKSTATION_SEAT_Z } from "~/editor/core"
+import { WINDOW_GLASS as GLASS, type DrawSymbol, type Sketch } from "~/editor/kit"
+import { shade } from "~/editor/kit"
+import { type ObjectType } from "~/editor/core"
 
 /**
  * Furniture for the simple (top-down) view, drawn like a furnished floor

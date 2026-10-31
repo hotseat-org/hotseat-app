@@ -2,9 +2,8 @@ import { Suspense } from "react"
 import { Desk } from "../tables/Desk"
 import { Seat } from "../seating/Seat"
 import { NameTag } from "../NameTag"
-import { modelById } from "~/editor/objects/models"
-import { DESKMATE_SEAT_Z, SEAT } from "~/editor/objects/dimensions"
-import { WiggleModel } from "~/editor/objects/WiggleModel"
+import { modelById, DESKMATE_SEAT_Z, SEAT } from "~/editor/core"
+import { WiggleModel } from "~/editor/kit"
 
 interface Props {
   color?: string

@@ -1,7 +1,7 @@
 import { lazy, Suspense } from "react"
 import { ClientOnly } from "remix-utils/client-only"
 import type { MetaFunction } from "react-router"
-import { EditorBoundary } from "~/editor/shell/EditorBoundary"
+import { EditorBoundary } from "~/editor"
 import { metaTranslator } from "~/i18n/translate"
 import { useI18n } from "~/i18n/I18nProvider"
 

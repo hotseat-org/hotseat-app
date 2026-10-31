@@ -1,7 +1,5 @@
-import { PALETTE } from "~/editor/palette"
-import { RoundedBox } from "~/editor/objects/RoundedBox"
-import { Surface } from "~/editor/objects/Surface"
-import { SEAT } from "~/editor/objects/dimensions"
+import { PALETTE, SEAT } from "~/editor/core"
+import { RoundedBox, Surface } from "~/editor/kit"
 
 interface Props {
   color?: string

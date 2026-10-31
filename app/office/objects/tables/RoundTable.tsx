@@ -1,8 +1,7 @@
 import { Croissant, Cutlery, Flowers, Glass, Laptop, Mug, Notebook, Plate, Pot } from "../props"
 import { look } from "../looks"
-import { PALETTE } from "~/editor/palette"
-import { FLUSH_INSET } from "~/editor/objects/dimensions"
-import { Surface } from "~/editor/objects/Surface"
+import { PALETTE, FLUSH_INSET } from "~/editor/core"
+import { Surface } from "~/editor/kit"
 
 interface Props {
   color?: string

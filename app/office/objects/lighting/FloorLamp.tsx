@@ -1,8 +1,6 @@
 import { useContext } from "react"
-import { PALETTE } from "~/editor/palette"
-import { DaylightContext } from "~/editor/lighting/daylight"
-import { useLampsOn } from "~/editor/scene/ShaderWarmup"
-import { Surface } from "~/editor/objects/Surface"
+import { PALETTE } from "~/editor/core"
+import { DaylightContext, useLampsOn, Surface } from "~/editor/kit"
 
 interface Props {
   color?: string

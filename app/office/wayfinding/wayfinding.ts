@@ -9,8 +9,10 @@ import {
   isDiagonalEdge,
   runsAlongX,
   unitEdges,
-} from "~/editor/layout"
-import { useEditorStore } from "~/editor/store"
+  getEdge,
+  getItem,
+} from "~/editor/core"
+import { useEditorStore } from "~/editor"
 import {
   GRID,
   isEdgeType,
@@ -18,8 +20,7 @@ import {
   isOverhead,
   isWallMounted,
   type SceneObject,
-} from "~/editor/types"
-import { getEdge, getItem } from "~/editor/catalog"
+} from "~/editor/core"
 import type { Translator } from "~/i18n/translate"
 
 /**

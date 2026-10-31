@@ -4,9 +4,8 @@ import * as THREE from "three"
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js"
 import { isSeatable } from "../catalog"
 import { HEAT_BAR, heatColor } from "./heatmap"
-import { useSurfaces } from "~/editor/scene/sceneTheme"
-import { useEditorStore } from "~/editor/store"
-import { markShadowsDirty } from "~/editor/lighting/shadows"
+import { useSurfaces, markShadowsDirty } from "~/editor/kit"
+import { useEditorStore } from "~/editor"
 
 /** How long a bar takes to grow (s), and the stagger between desks. */
 const GROW = 0.7

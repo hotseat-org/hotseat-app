@@ -1,4 +1,4 @@
-import { Surface } from "~/editor/objects/Surface"
+import { Surface } from "~/editor/kit"
 
 interface Props {
   color?: string

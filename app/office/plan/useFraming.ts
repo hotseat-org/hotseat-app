@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState, type RefObject } from "react"
 import { routeBounds } from "../wayfinding/wayfinding"
-import { useEditorStore } from "~/editor/store"
-import { GLIDE_MS, type Frame } from "~/editor/plan/useFraming"
-import { MAX_ZOOM, fitView, type View } from "~/editor/plan/planView"
+import { useEditorStore } from "~/editor"
+import { GLIDE_MS, type Frame, MAX_ZOOM, fitView, type View } from "~/editor/kit"
 
 /** Bringing a desk into view: at least this zoom (px per plan unit)… */
 const SPOTLIGHT_ZOOM = 44

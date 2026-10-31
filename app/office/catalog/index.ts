@@ -4,7 +4,7 @@
  * from here, so the furniture is always registered first.
  */
 import "./furniture"
-import { hasTag, type ObjectType } from "~/editor/catalog"
+import { hasTag, type ObjectType } from "~/editor/core"
 
 /**
  * Desks no longer placed: one without a chair, and one with a pet always in its

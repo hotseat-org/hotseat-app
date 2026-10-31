@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react"
 import { isSeatable } from "../catalog"
 import { LayoutImpact } from "../booking/LayoutImpact"
-import type { AutosaveControls, SaveGuard } from "~/editor/module"
-import { useEditorStore } from "~/editor/store"
+import { type AutosaveControls, type SaveGuard } from "~/editor"
+import { useEditorStore } from "~/editor"
 import { getLostBookings, planRehoming, type ReleasedBy } from "~/core/office/layoutImpact"
 
 declare module "~/editor/module" {

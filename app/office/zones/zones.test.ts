@@ -1,8 +1,8 @@
 /// <reference types="bun" />
 import { describe, expect, test } from "bun:test"
 import { composeZoneAreas, getZones, numberDesksByZone } from "./zones"
-import { roomEdges } from "~/editor/layout"
-import type { ObjectType, SceneObject } from "~/editor/types"
+import { roomEdges } from "~/editor/core"
+import { type ObjectType, type SceneObject } from "~/editor/core"
 
 let nextId = 0
 const place = (type: ObjectType, spec: Pick<SceneObject, "x" | "z"> & Partial<SceneObject>) => ({

@@ -1,6 +1,5 @@
 import { isSeatable } from "../catalog"
-import type { TourStep } from "~/editor/ui/guide/GuidedTour"
-import type { EditorState } from "~/editor/store"
+import { type TourStep, type EditorState } from "~/editor"
 import { msg } from "~/i18n/msg"
 
 const deskCount = (state: EditorState) =>

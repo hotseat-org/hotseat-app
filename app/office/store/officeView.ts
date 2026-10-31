@@ -1,4 +1,4 @@
-import type { GetState, SetState } from "~/editor/store/state"
+import { type GetState, type SetState } from "~/editor"
 
 /** What the office shows over the map: the desk filter, the heatmap, a spotlit desk, the way to one. */
 export interface OfficeViewSlice {

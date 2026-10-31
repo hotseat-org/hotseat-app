@@ -1,5 +1,5 @@
 import { msg } from "~/i18n/msg"
-import { clamp } from "~/editor/math"
+import { clamp } from "~/editor/core"
 
 /**
  * The heatmap's single-hue scale (warm orange): how often a desk was in use,

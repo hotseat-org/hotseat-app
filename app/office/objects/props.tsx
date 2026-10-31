@@ -1,9 +1,7 @@
 import type { ReactNode } from "react"
 import { Steam } from "./Steam"
-import { ACCENT, PALETTE } from "~/editor/palette"
-import { RoundedBox } from "~/editor/objects/RoundedBox"
-import { FLUSH_INSET } from "~/editor/objects/dimensions"
-import { Surface } from "~/editor/objects/Surface"
+import { ACCENT, PALETTE, FLUSH_INSET } from "~/editor/core"
+import { RoundedBox, Surface } from "~/editor/kit"
 
 /**
  * Small tabletop props that make furniture look lived-in: mugs, plates of

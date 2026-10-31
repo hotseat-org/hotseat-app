@@ -3,7 +3,7 @@ import { createDesksSlice, type DesksSlice } from "./desks"
 import { createOfficePanelsSlice, type OfficePanelsSlice } from "./officePanels"
 import { createOfficeViewSlice, type OfficeViewSlice } from "./officeView"
 import { createPeopleSlice, type PeopleSlice } from "./people"
-import type { GetState, SetState } from "~/editor/store/state"
+import { type GetState, type SetState } from "~/editor"
 
 /** The office's part of the editor's state: desks, booking, and what it shows and opens. */
 export interface OfficeState

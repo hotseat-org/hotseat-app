@@ -3,7 +3,7 @@ import { personByEmail, usePeople } from "../../desks/people"
 import { deskName } from "../useBooking"
 import { DESK_FEATURES } from "../../desks/deskFeatures"
 import type { BodyProps } from "./SeatCardBody"
-import { useEditorStore } from "~/editor/store"
+import { useEditorStore } from "~/editor"
 import { bookingPresets, deskState, type BookingPreset, type Day } from "~/utils/booking"
 import { useI18n } from "~/i18n/I18nProvider"
 

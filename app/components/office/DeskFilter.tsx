@@ -1,7 +1,7 @@
 import clsx from "clsx"
 import { ArrowUpFromLine, Check, type LucideIcon } from "lucide-react"
 import { useMemo, type ReactNode } from "react"
-import { useEditorStore } from "~/editor/store"
+import { useEditorStore } from "~/editor"
 import { DESK_FEATURES, type DeskFeature } from "~/office/desks/deskFeatures"
 import { isSeatable } from "~/office/catalog"
 import { ZONE_FILTER_PREFIX, getZones } from "~/office/zones/zones"

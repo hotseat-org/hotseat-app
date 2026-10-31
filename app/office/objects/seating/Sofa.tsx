@@ -1,9 +1,7 @@
 import { Cushion, Throw } from "../props"
 import { look } from "../looks"
-import { PALETTE } from "~/editor/palette"
-import { RoundedBox } from "~/editor/objects/RoundedBox"
-import { FLUSH_INSET } from "~/editor/objects/dimensions"
-import { Surface } from "~/editor/objects/Surface"
+import { PALETTE, FLUSH_INSET } from "~/editor/core"
+import { RoundedBox, Surface } from "~/editor/kit"
 
 interface Props {
   color?: string

@@ -1,5 +1,5 @@
 import clsx from "clsx"
-import { useEditorStore } from "~/editor/store"
+import { useEditorStore } from "~/editor"
 import type { useWeekPresence } from "~/office/booking/useBooking"
 import { useI18n } from "~/i18n/I18nProvider"
 

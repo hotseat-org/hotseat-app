@@ -1,5 +1,4 @@
-import { PALETTE } from "~/editor/palette"
-import { defineItem, registerItems } from "~/editor/catalog/registry"
+import { PALETTE, defineItem, registerItems } from "~/editor/core"
 
 /** Furniture: what stands on the floor, hangs on walls or from the ceiling. */
 export const FURNITURE_ITEMS = {

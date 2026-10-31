@@ -1,8 +1,7 @@
 import { look } from "../looks"
 import { WALL_FACE } from "../wallItem"
-import { ACCENT } from "~/editor/palette"
-import { RoundedBox } from "~/editor/objects/RoundedBox"
-import { Surface } from "~/editor/objects/Surface"
+import { ACCENT } from "~/editor/core"
+import { RoundedBox, Surface } from "~/editor/kit"
 
 interface Props {
   color?: string

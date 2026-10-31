@@ -1,5 +1,4 @@
-import { GRID } from "~/editor/types"
-import { WALL } from "~/editor/objects/dimensions"
+import { GRID, WALL } from "~/editor/core"
 
 /**
  * Wall items sit in a 1-square-deep footprint whose back edge is the wall's

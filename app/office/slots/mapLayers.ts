@@ -1,6 +1,6 @@
 import { Shapes, Tag } from "lucide-react"
 import { getZones } from "../zones/zones"
-import type { MapLayer, MapMenuSection } from "~/editor/module"
+import { type MapLayer, type MapMenuSection } from "~/editor"
 import { DeskFilterOptions, useDeskFilterOptions } from "~/components/office/DeskFilter"
 import { msg } from "~/i18n/msg"
 

@@ -1,8 +1,7 @@
 import { useEffect, useRef } from "react"
 import { useFrame, useThree } from "@react-three/fiber"
 import type { Mesh, MeshStandardMaterial } from "three"
-import { prefersReducedMotion, subscribeAmbient } from "~/editor/scene/ambient"
-import { NO_BAKE } from "~/editor/objects/Baked"
+import { prefersReducedMotion, subscribeAmbient, NO_BAKE } from "~/editor/kit"
 
 const PUFFS = 4
 const PERIOD = 2.6 // seconds for a puff to rise and fade

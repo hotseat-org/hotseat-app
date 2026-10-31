@@ -1,6 +1,6 @@
 import { Seat } from "../seating/Seat"
 import { Desk } from "./Desk"
-import { WORKSTATION_SEAT_Z } from "~/editor/objects/dimensions"
+import { WORKSTATION_SEAT_Z } from "~/editor/core"
 
 interface Props {
   color?: string

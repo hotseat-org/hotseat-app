@@ -1,4 +1,4 @@
-import { useEditorStore } from "~/editor/store"
+import { useEditorStore } from "~/editor"
 
 /** An org member as the editor needs them (seat assignment, name tags). */
 export interface Person {

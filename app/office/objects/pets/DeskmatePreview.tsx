@@ -1,7 +1,7 @@
 import { Desk } from "../tables/Desk"
 import { Seat } from "../seating/Seat"
-import { Model } from "~/editor/objects/Model"
-import { SEAT } from "~/editor/objects/dimensions"
+import { Model } from "~/editor/kit"
+import { SEAT } from "~/editor/core"
 
 /**
  * Static stand-in for a deskmate: the real component floats a drei <Html> name

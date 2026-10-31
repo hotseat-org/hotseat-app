@@ -1,8 +1,8 @@
 import { Books, Flowers, Mug, Succulent } from "../props"
 import { look } from "../looks"
 import { WALL_FACE } from "../wallItem"
-import { Surface } from "~/editor/objects/Surface"
-import { PALETTE } from "~/editor/palette"
+import { Surface } from "~/editor/kit"
+import { PALETTE } from "~/editor/core"
 
 interface Props {
   color?: string

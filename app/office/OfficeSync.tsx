@@ -2,7 +2,7 @@ import { useLayoutEffect } from "react"
 import { useBookingSync, type EditorBooking } from "./booking/useBookingSync"
 import type { People } from "./desks/people"
 import { NO_PEOPLE } from "./store/people"
-import { useEditorStoreApi } from "~/editor/store"
+import { useEditorStoreApi } from "~/editor"
 
 /**
  * The office's data from the app (the route): its members and the booking

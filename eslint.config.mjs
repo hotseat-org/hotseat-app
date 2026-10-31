@@ -132,8 +132,8 @@ export default [
     files: ["app/editor/plan/sketch.tsx"],
     rules: { "max-params": "off" },
   },
-  // The editor's core knows nothing about offices: the office plugs in as a
-  // module (app/office/, see office/module.ts), never the other way.
+  // The editor knows nothing about offices: the office plugs in as a module
+  // (app/office/, see office/module.ts), never the other way.
   {
     files: ["app/editor/**/*.{ts,tsx}"],
     // Tests may use the office's furniture as test pieces.
@@ -146,7 +146,45 @@ export default [
             {
               group: ["**/office", "**/office/**", "~/core/office/**", "~/utils/booking"],
               message:
-                "The editor's core can't depend on the office: add a module slot instead (see app/editor/module.ts).",
+                "The editor can't depend on the office: add a module slot instead (see app/editor/module.ts).",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  // Outside the editor, it's used through its entry points only (see
+  // app/editor/core.ts), so its insides can move without breaking modules.
+  {
+    files: ["app/**/*.{ts,tsx}"],
+    ignores: ["app/editor/**"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              regex: "^~/editor/(?!(core|kit|Editor)$)",
+              message:
+                "Import the editor through its entry points: ~/editor/core, ~/editor, ~/editor/kit or ~/editor/Editor (see app/editor/core.ts).",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  // The server uses only the editor's headless core (no React, no three.js).
+  {
+    files: ["app/core/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              regex: "^~/editor(?!/core$)(/|$)",
+              message:
+                "The server uses only the editor's headless core: import from ~/editor/core.",
             },
           ],
         },

@@ -1,4 +1,4 @@
-import type { GetState, SetState } from "~/editor/store/state"
+import { type GetState, type SetState } from "~/editor"
 
 /** The office's panels: a desk's card, booking it on chosen days, Insights. */
 export interface OfficePanelsSlice {

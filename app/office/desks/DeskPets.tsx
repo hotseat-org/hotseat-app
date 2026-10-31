@@ -4,9 +4,9 @@ import type { ThreeEvent } from "@react-three/fiber"
 import { useDesksOnDay } from "../booking/useBooking"
 import { personByEmail, usePeople } from "./people"
 import { spotFor, type Spot } from "./seatSpot"
-import { useEditorStore } from "~/editor/store"
-import { petFor } from "~/editor/objects/models"
-import { WiggleModel } from "~/editor/objects/WiggleModel"
+import { useEditorStore } from "~/editor"
+import { petFor } from "~/editor/core"
+import { WiggleModel } from "~/editor/kit"
 
 const PET_SCALE = 0.4
 

@@ -1,9 +1,7 @@
 import { Books, Flowers, Mug, Notebook, Papers, PenCup, StickyNote, Succulent } from "../props"
 import { look } from "../looks"
-import { ACCENT, PALETTE } from "~/editor/palette"
-import { RoundedBox } from "~/editor/objects/RoundedBox"
-import { Surface } from "~/editor/objects/Surface"
-import { DESK } from "~/editor/objects/dimensions"
+import { ACCENT, PALETTE, DESK } from "~/editor/core"
+import { RoundedBox, Surface } from "~/editor/kit"
 
 interface Props {
   color?: string

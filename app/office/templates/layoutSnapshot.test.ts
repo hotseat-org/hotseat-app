@@ -4,15 +4,15 @@ import { isSeatable } from "../catalog"
 import { getRoute } from "../wayfinding/wayfinding"
 import { composeZoneAreas } from "../zones/zones"
 import { TEMPLATES } from "./templates"
-import { isEdgeType, isMarker, isWallMounted, type SceneObject } from "~/editor/types"
-import { getStructureBounds } from "~/editor/landscape/structureField"
+import { isEdgeType, isMarker, isWallMounted, type SceneObject } from "~/editor/core"
 import {
+  getStructureBounds,
   composeWallColors,
   enclosedRegions,
   furnitureCollides,
   mountWalls,
   wallJointNodes,
-} from "~/editor/layout"
+} from "~/editor/core"
 
 /**
  * A safety net for refactoring the layout logic: what it makes of every

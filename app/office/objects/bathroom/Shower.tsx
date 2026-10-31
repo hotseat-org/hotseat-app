@@ -1,8 +1,5 @@
-import { PALETTE } from "~/editor/palette"
-import { RoundedBox } from "~/editor/objects/RoundedBox"
-import { Glass } from "~/editor/objects/GlassWall"
-import { FLUSH_INSET } from "~/editor/objects/dimensions"
-import { Surface } from "~/editor/objects/Surface"
+import { PALETTE, FLUSH_INSET } from "~/editor/core"
+import { RoundedBox, Glass, Surface } from "~/editor/kit"
 
 interface Props {
   /** Tile colour. */

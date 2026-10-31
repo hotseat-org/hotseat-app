@@ -3,10 +3,9 @@ import { useThree } from "@react-three/fiber"
 import * as THREE from "three"
 import { isSeatable } from "../catalog"
 import { heatColor } from "./heatmap"
-import { footprintCells } from "~/editor/layout"
-import { useSurfaces } from "~/editor/scene/sceneTheme"
-import { useEditorStore } from "~/editor/store"
-import { GRID } from "~/editor/types"
+import { footprintCells, GRID } from "~/editor/core"
+import { useSurfaces } from "~/editor/kit"
+import { useEditorStore } from "~/editor"
 
 /** On the floor, under the furniture and above the floor paint. */
 const HEIGHT = 0.018

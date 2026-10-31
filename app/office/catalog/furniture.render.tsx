@@ -95,10 +95,10 @@ import {
   SeatingIcon,
   StorageIcon,
   TablesIcon,
-} from "~/editor/ui/catalog/categoryIcons"
-import { registerCategories } from "~/editor/catalog/categories"
-import { registerRenderers } from "~/editor/catalog/renderers"
-import { DESK } from "~/editor/objects/dimensions"
+  registerCategories,
+  registerRenderers,
+} from "~/editor"
+import { DESK } from "~/editor/core"
 import { msg } from "~/i18n/msg"
 
 // In catalogue order: each category offers its kinds in the order registered.

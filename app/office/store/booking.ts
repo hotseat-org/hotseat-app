@@ -1,4 +1,4 @@
-import type { GetState, SetState } from "~/editor/store/state"
+import { type GetState, type SetState } from "~/editor"
 import type { BookingsByDay, Day, DeskDays } from "~/utils/booking"
 
 /** Your desk preferences in this office (see core/reservation/preferences). */

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react"
-import { useEditorStore, useEditorStoreApi } from "~/editor/store"
+import { useEditorStore, useEditorStoreApi } from "~/editor"
 
 /**
  * Wayfinding: a shared link (?to=<desk>) opens with the way to that desk

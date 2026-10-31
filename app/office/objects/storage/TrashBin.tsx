@@ -1,5 +1,5 @@
-import { PALETTE } from "~/editor/palette"
-import { Surface } from "~/editor/objects/Surface"
+import { PALETTE } from "~/editor/core"
+import { Surface } from "~/editor/kit"
 
 interface Props {
   color?: string

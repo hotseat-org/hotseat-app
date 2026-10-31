@@ -3,7 +3,7 @@ import clsx from "clsx"
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react"
 import { useMemo, useState } from "react"
 import { isSeatable } from "../catalog"
-import { useEditorStore } from "~/editor/store"
+import { useEditorStore } from "~/editor"
 import { addDays, weekStart, type Day } from "~/utils/booking"
 import { useI18n } from "~/i18n/I18nProvider"
 

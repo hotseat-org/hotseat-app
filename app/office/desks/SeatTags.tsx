@@ -6,7 +6,7 @@ import { useDeskFilter, useDesksOnDay } from "../booking/useBooking"
 import { getDeskTagTone } from "./deskTagTone"
 import { personByEmail, usePeople } from "./people"
 import { SeatAvatar } from "./SeatAvatar"
-import { useEditorStore } from "~/editor/store"
+import { useEditorStore } from "~/editor"
 import { useI18n } from "~/i18n/I18nProvider"
 
 /**

@@ -3,7 +3,7 @@ import clsx from "clsx"
 import { Armchair, ArrowLeftRight, Check, X } from "lucide-react"
 import { deskName } from "../useBooking"
 import { PICK_ALL, PICK_ALL_OFF, PICK_ALL_ON, getDayLook, type Cell, type Week } from "./days"
-import { type SceneObject } from "~/editor/types"
+import { type SceneObject } from "~/editor/core"
 import { type Day } from "~/utils/booking"
 import type { Translator } from "~/i18n/translate"
 

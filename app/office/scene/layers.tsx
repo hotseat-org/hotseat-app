@@ -9,8 +9,8 @@ import { RouteLine } from "../wayfinding/RouteLine"
 import { SeatPopup } from "../desks/SeatPopup"
 import { SeatTags } from "../desks/SeatTags"
 import { ZoneFloor } from "../zones/ZoneFloor"
-import { useEditorStore, useEditorStoreApi } from "~/editor/store"
-import type { SceneLayer, SceneLayerProps, ViewClicks } from "~/editor/module"
+import { useEditorStore, useEditorStoreApi } from "~/editor"
+import { type SceneLayer, type SceneLayerProps, type ViewClicks } from "~/editor"
 
 /** Who sits where, while the Desk tags layer is on. */
 const SeatTagsLayer = () => {

@@ -19,10 +19,7 @@ import { MobileShell } from "./MobileShell"
 import { NotificationsBell } from "./Notifications"
 import { WeekDots } from "./WeekDots"
 import { InsightsDashboard } from "./InsightsDashboard"
-import { REVEAL_LABEL } from "~/editor/ui/bars/revealLabel"
-import { useEditorStore } from "~/editor/store"
-import { TimeOfDay } from "~/editor/ui/bars/TimeOfDay"
-import { hasWebGL } from "~/editor/shell/webgl"
+import { REVEAL_LABEL, useEditorStore, TimeOfDay, hasWebGL } from "~/editor"
 import {
   dayPhrase,
   useDesksOnDay,

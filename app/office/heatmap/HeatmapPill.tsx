@@ -2,7 +2,7 @@ import clsx from "clsx"
 import { BarChart3, Flame, X } from "lucide-react"
 import { useEffect } from "react"
 import { heatGradient, PERIOD_LABEL } from "./heatmap"
-import { useEditorStore } from "~/editor/store"
+import { useEditorStore } from "~/editor"
 import { useI18n } from "~/i18n/I18nProvider"
 
 /**

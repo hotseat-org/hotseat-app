@@ -19,8 +19,8 @@ import {
 import { Legend } from "./Legend"
 import { findNearestFreeDesk } from "./nearestFreeDesk"
 import { PhoneLayout } from "./PhoneLayout"
-import { type SceneObject } from "~/editor/types"
-import { useEditorStore } from "~/editor/store"
+import { type SceneObject } from "~/editor/core"
+import { useEditorStore } from "~/editor"
 import { useI18n } from "~/i18n/I18nProvider"
 import {
   addDays,

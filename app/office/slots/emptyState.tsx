@@ -1,6 +1,6 @@
 import { EmptyOffice } from "../templates/EmptyOffice"
 import { OfficeNotSetUp } from "../OfficeNotSetUp"
-import type { EmptyStateProps } from "~/editor/module"
+import { type EmptyStateProps } from "~/editor"
 
 /**
  * An empty office: for an admin, a blank floor or a ready-made layout; for

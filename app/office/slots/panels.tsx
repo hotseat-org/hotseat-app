@@ -2,7 +2,7 @@ import { useRouteLink } from "../wayfinding/useRouteLink"
 import { CustomBooking } from "../booking/CustomBooking"
 import { HeatmapPill } from "../heatmap/HeatmapPill"
 import { RoutePill } from "../wayfinding/RoutePill"
-import type { Panel, PanelProps } from "~/editor/module"
+import { type Panel, type PanelProps } from "~/editor"
 import { MOBILE_CHROME } from "~/components/office/mobile"
 
 /**

@@ -1,6 +1,6 @@
 import { look } from "../looks"
 import { WALL_FACE } from "../wallItem"
-import { Surface } from "~/editor/objects/Surface"
+import { Surface } from "~/editor/kit"
 
 interface Props {
   /** Frame colour. */

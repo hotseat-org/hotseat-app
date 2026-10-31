@@ -1,9 +1,9 @@
 import { isSeatable } from "../catalog"
 import { DateStepper } from "../booking/DateStepper"
 import { asNewDesks } from "../store"
-import { randomModelId } from "~/editor/objects/models"
-import { useEditorStore } from "~/editor/store"
-import { type SceneObject } from "~/editor/types"
+import { randomModelId } from "~/editor/core"
+import { useEditorStore } from "~/editor"
+import { type SceneObject } from "~/editor/core"
 import type { Translator } from "~/i18n/translate"
 
 /** The bottom bar's day shown (booking a real office). */

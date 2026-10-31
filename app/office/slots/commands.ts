@@ -1,7 +1,7 @@
 import { Hash, SquareDashedMousePointer } from "lucide-react"
 import { isSeatable } from "../catalog"
 import { getZones } from "../zones/zones"
-import { GROUP, selectAll, type Command } from "~/editor/ui/menus/commands"
+import { GROUP, selectAll, type Command } from "~/editor"
 import { msg } from "~/i18n/msg"
 
 /** The office's commands: selecting and numbering desks. */

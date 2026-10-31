@@ -11,9 +11,8 @@ import { MyBookings } from "./MyBookings"
 import { NotificationsBell } from "./Notifications"
 import { WeekDots } from "./WeekDots"
 import { MOBILE_CHROME } from "./mobile"
-import { MapMenu } from "~/editor/ui/menus/MapMenu"
+import { MapMenu, useEditorStore } from "~/editor"
 import { MonthCalendar } from "~/office/booking/DateStepper"
-import { useEditorStore } from "~/editor/store"
 import {
   dayPhrase,
   deskName,

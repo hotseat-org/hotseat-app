@@ -1,4 +1,4 @@
-import { type SceneObject } from "~/editor/types"
+import { type SceneObject } from "~/editor/core"
 import { deskState, type BookingsByDay, type Day } from "~/utils/booking"
 
 const distance = (first: SceneObject, second: SceneObject) =>

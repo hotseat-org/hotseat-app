@@ -12,7 +12,7 @@ import { OFFICE_PANELS } from "./slots/panels"
 import { OFFICE_TOUR_STEPS } from "./slots/tourSteps"
 import { useLayoutImpactGuard } from "./slots/saveGuard"
 import { createOfficeSlice } from "./store"
-import type { EditorModule } from "~/editor/module"
+import { type EditorModule } from "~/editor"
 
 /**
  * The office: bookable desks on top of the editor — their labels, residents,

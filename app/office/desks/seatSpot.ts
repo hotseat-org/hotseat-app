@@ -1,5 +1,5 @@
-import { DESKMATE_SEAT_Z, SEAT, WORKSTATION_SEAT_Z } from "~/editor/objects/dimensions"
-import type { SceneObject } from "~/editor/types"
+import { DESKMATE_SEAT_Z, SEAT, WORKSTATION_SEAT_Z } from "~/editor/core"
+import { type SceneObject } from "~/editor/core"
 
 /** How far in front of a plain desk its chair usually stands (local z). */
 const DESK_CHAIR_Z = 0.9
