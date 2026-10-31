@@ -41,7 +41,7 @@ const formatHour = (t: number) => {
 }
 
 /**
- * Time-of-day slider in the ThemeSwitcher's style: the track is a 24 h sky and
+ * Time-of-day slider, a little sky: the track is a 24 h sky and
  * the knob is a pill showing the time, with a sun that turns into a moon as
  * night falls (the scene's own `daylight()` nightness also tints its glow). A
  * real, invisible range input sits on top, so dragging, clicking the track,

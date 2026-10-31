@@ -529,7 +529,8 @@ export const cs: Messages = {
   "Changes to your bookings or desk show up here.":
     "Tady uvidíte změny svých rezervací nebo stolu.",
   "Account menu": "Nabídka účtu",
-  "Dark mode": "Tmavý režim",
+  Theme: "Motiv",
+  "Your settings": "Vaše nastavení",
   "User settings": "Nastavení uživatele",
   Organization: "Organizace",
   "Log out": "Odhlásit se",

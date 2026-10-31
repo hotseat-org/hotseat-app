@@ -1,62 +1,12 @@
 import clsx from "clsx"
 import { Check } from "lucide-react"
-import { Theme, useTheme } from "remix-themes"
 import { CardTitle, SettingsCard } from "../ui"
+import { SegmentedControl, ThemeModeControl } from "~/components/ui/ThemeModeControl"
 import { useScheme } from "~/utils/hooks/useScheme"
 import { SCHEMES, type SchemeHalf } from "~/utils/schemes"
 import { useI18n } from "~/i18n/I18nProvider"
-import { msg } from "~/i18n/msg"
 import { LOCALES, LOCALE_NAMES } from "~/i18n/locales"
 import { useLocale } from "~/i18n/useLocale"
-
-type Mode = "light" | "dark" | "device"
-
-const MODES: { id: Mode; label: string }[] = [
-  { id: "light", label: msg("Light") },
-  { id: "dark", label: msg("Dark") },
-  { id: "device", label: msg("Same as device") },
-]
-
-/** A row of choices as one pill (a radio group). */
-const Segment = <T extends string>({
-  label,
-  options,
-  value,
-  onChange,
-}: {
-  label: string
-  options: { id: T; label: string; lang?: string }[]
-  value: T
-  onChange: (id: T) => void
-}) => (
-  <div
-    role="radiogroup"
-    aria-label={label}
-    className="flex gap-1 rounded-full border border-border bg-segment p-1"
-  >
-    {options.map((o) => {
-      const isOn = o.id === value
-      return (
-        <button
-          key={o.id}
-          type="button"
-          role="radio"
-          lang={o.lang}
-          aria-checked={isOn}
-          onClick={() => onChange(o.id)}
-          className={clsx(
-            "min-h-9 rounded-full px-4 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus",
-            isOn
-              ? "bg-accent font-extrabold text-accent-foreground"
-              : "font-bold text-muted hover:text-foreground"
-          )}
-        >
-          {o.label}
-        </button>
-      )
-    })}
-  </div>
-)
 
 /**
  * How Hotseat looks on this device: its language, light, dark or following the
@@ -64,15 +14,9 @@ const Segment = <T extends string>({
  * device — teammates keep their own.
  */
 export function UserAppearance() {
-  const [theme, setTheme, themeMetadata] = useTheme()
   const [scheme, setScheme] = useScheme()
   const [locale, pickLocale] = useLocale()
   const { t } = useI18n()
-  const mode: Mode =
-    themeMetadata.definedBy === "SYSTEM" ? "device" : theme === Theme.DARK ? "dark" : "light"
-
-  const pickMode = (next: Mode) =>
-    setTheme(next === "device" ? null : next === "dark" ? Theme.DARK : Theme.LIGHT)
 
   return (
     <div className="flex flex-col gap-4">
@@ -83,7 +27,7 @@ export function UserAppearance() {
             {t("The language Hotseat speaks on this device.")}
           </p>
         </div>
-        <Segment
+        <SegmentedControl
           label={t("Language")}
           // Each language in itself, so anyone can find theirs.
           options={LOCALES.map((l) => ({ id: l, label: LOCALE_NAMES[l], lang: l }))}
@@ -97,12 +41,7 @@ export function UserAppearance() {
           <CardTitle>{t("Mode")}</CardTitle>
           <p className="mt-1 text-sm text-muted">{t("Light, dark, or follow your device.")}</p>
         </div>
-        <Segment
-          label={t("Mode")}
-          options={MODES.map((m) => ({ id: m.id, label: t(m.label) }))}
-          value={mode}
-          onChange={pickMode}
-        />
+        <ThemeModeControl />
       </SettingsCard>
 
       <SettingsCard className="flex flex-col gap-4">

@@ -1,84 +1,176 @@
 import { useState } from "react"
 import { Popover } from "@heroui/react"
-import { Cog, LogOut, Users } from "lucide-react"
+import clsx from "clsx"
+import { Building2, ChevronRight, LogOut, Settings, type LucideIcon } from "lucide-react"
 import { useNavigate } from "react-router"
 import { MemberAvatar, PANEL, PANEL_HOVER, nameOf, type ShellMember } from "./shell-ui"
 import { useProfile } from "~/utils/remix"
+import { useIsMobile } from "~/utils/hooks/useIsMobile"
 import { useSettings } from "~/components/settings/useSettings"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
-import { ThemeSwitcher } from "~/components/ui/ThemeSwitcher"
+import { BottomSheet } from "~/components/ui/BottomSheet"
+import { ThemeModeControl } from "~/components/ui/ThemeModeControl"
 import { useI18n } from "~/i18n/I18nProvider"
 
-const item =
-  "flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-foreground/5"
-
 /**
- * Avatar menu: user settings, org settings, log out. `isFlat`: no panel of its
- * own, for a bar that already is one (the phone's top bar).
+ * The avatar's menu: who you are, the theme, your settings and (admins) the
+ * organization's, and logging out. A popover by the avatar; on a phone, a
+ * sheet like the app's other phone dialogs. `isFlat`: no panel round the
+ * avatar, for a bar that already is one (the phone's top bar).
  */
 export const AccountMenu = ({ isFlat = false }: { isFlat?: boolean }) => {
   const profile = useProfile()
   const { t } = useI18n()
+  const isMobile = useIsMobile()
+  const [isOpen, setIsOpen] = useState(false)
   const me: ShellMember = {
     userEmail: profile.userEmail,
     displayName: profile.displayName,
     avatarUrl: profile.avatarUrl,
     role: String(profile.role),
   }
-  const { open: openSettings } = useSettings()
-  const navigate = useNavigate()
-  const [open, setOpen] = useState(false)
+  const trigger = (
+    <div
+      role="button"
+      tabIndex={0}
+      aria-label={t("Account menu")}
+      className={`${isFlat ? "pointer-events-auto rounded-xl" : `${PANEL} ${PANEL_HOVER} p-1.5`} flex cursor-pointer items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-focus`}
+    >
+      <MemberAvatar m={me} className="size-9 rounded-xl" />
+    </div>
+  )
 
-  const act = (fn: () => void) => {
-    setOpen(false)
-    fn()
-  }
+  if (isMobile)
+    return (
+      <>
+        <div
+          onClick={() => setIsOpen(true)}
+          onKeyDown={(event) => (event.key === "Enter" || event.key === " ") && setIsOpen(true)}
+        >
+          {trigger}
+        </div>
+        {isOpen && (
+          <BottomSheet label={t("Account menu")} onClose={() => setIsOpen(false)}>
+            {(close) => (
+              <AccountContent me={me} isAdmin={profile.role === Role.ADMIN} onDone={close} />
+            )}
+          </BottomSheet>
+        )}
+      </>
+    )
 
   return (
-    <Popover isOpen={open} onOpenChange={setOpen}>
-      <Popover.Trigger>
-        <div
-          role="button"
-          tabIndex={0}
-          aria-label={t("Account menu")}
-          className={`${isFlat ? "pointer-events-auto rounded-xl" : `${PANEL} ${PANEL_HOVER} p-1.5`} flex cursor-pointer items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-focus`}
-        >
-          <MemberAvatar m={me} className="size-9 rounded-xl" />
-        </div>
-      </Popover.Trigger>
-      <Popover.Content placement="bottom end" className="rounded-lg">
-        <Popover.Dialog className="w-56 p-1">
-          <div className="flex items-center gap-2 px-2 pb-2 pt-1">
-            <MemberAvatar m={me} className="size-8 rounded-lg" />
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium leading-5">{nameOf(me)}</p>
-              <p className="truncate text-xs leading-none text-muted">{me.userEmail}</p>
-            </div>
-          </div>
-          <div className="flex items-center justify-between gap-2 border-t border-separator px-2 py-2">
-            <span className="text-sm">{t("Dark mode")}</span>
-            <ThemeSwitcher />
-          </div>
-          <div className="flex flex-col border-t border-separator pt-1">
-            <button type="button" onClick={() => act(() => openSettings("user"))} className={item}>
-              {t("User settings")} <Cog className="size-3.5 text-muted" />
-            </button>
-            {/* Organization settings are an admin's. */}
-            {profile.role === Role.ADMIN && (
-              <button type="button" onClick={() => act(() => openSettings("org"))} className={item}>
-                {t("Organization")} <Users className="size-3.5 text-muted" />
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => act(() => navigate("/logout"))}
-              className={`${item} text-danger`}
-            >
-              {t("Log out")} <LogOut className="size-3.5" />
-            </button>
-          </div>
+    <Popover isOpen={isOpen} onOpenChange={setIsOpen}>
+      <Popover.Trigger>{trigger}</Popover.Trigger>
+      <Popover.Content placement="bottom end" className="rounded-2xl">
+        <Popover.Dialog className="w-72 p-2 outline-none">
+          <AccountContent
+            me={me}
+            isAdmin={profile.role === Role.ADMIN}
+            onDone={() => setIsOpen(false)}
+          />
         </Popover.Dialog>
       </Popover.Content>
     </Popover>
   )
 }
+
+/** What the menu holds, in the popover or the sheet. `onDone` closes it before acting. */
+const AccountContent = ({
+  me,
+  isAdmin,
+  onDone,
+}: {
+  me: ShellMember
+  isAdmin: boolean
+  onDone: () => void
+}) => {
+  const { t } = useI18n()
+  const { open: openSettings } = useSettings()
+  const navigate = useNavigate()
+  const act = (action: () => void) => () => {
+    onDone()
+    action()
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-3 px-2 pb-1 pt-2">
+        <MemberAvatar m={me} className="size-11 shrink-0 rounded-xl" />
+        <div className="min-w-0">
+          <p className="truncate text-[15px] font-extrabold text-foreground">{nameOf(me)}</p>
+          <p className="truncate text-xs text-muted">{me.userEmail}</p>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between gap-3 rounded-xl bg-surface px-3 py-2.5">
+        <span className="text-sm font-bold text-foreground">{t("Theme")}</span>
+        <ThemeModeControl isCompact />
+      </div>
+
+      <ul className="overflow-hidden rounded-xl bg-surface">
+        <AccountRow
+          icon={Settings}
+          label={t("Your settings")}
+          onPress={act(() => openSettings("user"))}
+        />
+        {/* Organization settings are an admin's. */}
+        {isAdmin && (
+          <AccountRow
+            icon={Building2}
+            label={t("Organization settings")}
+            onPress={act(() => openSettings("org"))}
+          />
+        )}
+      </ul>
+
+      <ul className="overflow-hidden rounded-xl bg-surface">
+        <AccountRow
+          icon={LogOut}
+          label={t("Log out")}
+          isDanger
+          onPress={act(() => navigate("/logout"))}
+        />
+      </ul>
+    </div>
+  )
+}
+
+/** A row of the menu: its icon, what it does, and (opening a page) a chevron. */
+const AccountRow = ({
+  icon: Icon,
+  label,
+  isDanger = false,
+  onPress,
+}: {
+  icon: LucideIcon
+  label: string
+  isDanger?: boolean
+  onPress: () => void
+}) => (
+  <li className="border-b border-separator last:border-b-0">
+    <button
+      type="button"
+      onClick={onPress}
+      className="flex min-h-12 w-full items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-foreground/5 active:bg-foreground/5"
+    >
+      <span
+        className={clsx(
+          "grid size-8 shrink-0 place-items-center rounded-lg",
+          isDanger ? "bg-danger/10 text-danger" : "bg-accent/12 text-accent"
+        )}
+      >
+        <Icon className="size-4" />
+      </span>
+      <span
+        className={clsx(
+          "min-w-0 flex-1 truncate text-sm font-bold",
+          isDanger ? "text-danger" : "text-foreground"
+        )}
+      >
+        {label}
+      </span>
+      {!isDanger && <ChevronRight className="size-4 shrink-0 text-muted" />}
+    </button>
+  </li>
+)
