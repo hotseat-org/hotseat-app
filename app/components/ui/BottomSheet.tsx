@@ -1,6 +1,13 @@
 import { CloseButton } from "@heroui/react"
 import clsx from "clsx"
-import { useEffect, useRef, useState, type ReactNode } from "react"
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+  type RefObject,
+} from "react"
 import { createPortal } from "react-dom"
 import { useDimmedPageColor } from "./useDimmedPageColor"
 import { useSwipeToClose } from "./useSwipeToClose"
@@ -8,6 +15,25 @@ import { useI18n } from "~/i18n/I18nProvider"
 
 /** A sheet's slide-out (the `sheet-down` animation in tailwind.css), ms. */
 export const SHEET_EXIT_MS = 140
+
+/** The status-bar strip's depth (px): Safari ignores 10px or less. */
+const STRIP_HEIGHT = 11
+
+/** An element's height (px), kept up to date. */
+const useHeight = (element: RefObject<HTMLElement | null>) => {
+  const [height, setHeight] = useState(0)
+
+  useEffect(() => {
+    if (!element.current) return
+
+    const observer = new ResizeObserver(([entry]) => setHeight(entry.contentRect.height))
+    observer.observe(element.current)
+
+    return () => observer.disconnect()
+  }, [element])
+
+  return height
+}
 
 /**
  * A sheet up from the bottom of the screen — a phone's dialog: its title
@@ -46,6 +72,18 @@ export const BottomSheet = ({
   const swipe = useSwipeToClose(close)
   const scrim = useRef<HTMLButtonElement>(null)
   const dimmedPageColor = useDimmedPageColor(scrim)
+  const panel = useRef<HTMLDivElement>(null)
+  const panelHeight = useHeight(panel)
+  // The screen's dimming goes with the sheet: lighter as it's pulled down, and
+  // gone as it slides away — not all at once when it's gone.
+  const dimming = isClosing ? 0 : 1 - Math.min(1, swipe.offset / Math.max(1, panelHeight))
+  const dimmingStyle: CSSProperties = {
+    opacity: dimming,
+    transition:
+      swipe.offset > 0 && !isClosing
+        ? "none"
+        : `opacity ${isClosing ? `${SHEET_EXIT_MS}ms ease-in` : "200ms ease-out"}`,
+  }
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => event.key === "Escape" && close()
     window.addEventListener("keydown", onKey)
@@ -71,8 +109,10 @@ export const BottomSheet = ({
         ref={scrim}
         type="button"
         aria-label={t("Close")}
-        className="fixed inset-x-0 top-0 bg-scrim"
-        style={{ bottom: bottomInset }}
+        className="fixed inset-x-0 bg-scrim"
+        // Below the status-bar strip, which dims that band itself (dimmed
+        // twice, it would show darker there while fading).
+        style={{ top: dimmedPageColor ? STRIP_HEIGHT : 0, bottom: bottomInset, ...dimmingStyle }}
         onClick={close}
       />
       {/* Safari's status bar: the page as it shows dimmed, opaque, in a strip
@@ -81,11 +121,12 @@ export const BottomSheet = ({
       {dimmedPageColor && (
         <div
           aria-hidden
-          className="pointer-events-none fixed inset-x-0 top-0 h-[11px]"
-          style={{ backgroundColor: dimmedPageColor }}
+          className="pointer-events-none fixed inset-x-0 top-0"
+          style={{ height: STRIP_HEIGHT, backgroundColor: dimmedPageColor, ...dimmingStyle }}
         />
       )}
       <div
+        ref={panel}
         className={clsx("relative flex flex-col", isTall ? "h-[85dvh]" : "max-h-[92dvh]")}
         style={swipe.style}
       >

@@ -11,7 +11,7 @@ const FLICK_SPEED = 0.5
  * title — its lists keep scrolling): it follows the finger, and closes past
  * a distance or on a flick down; otherwise it springs back. `handlers` go on
  * the top; `style` on a wrapper round the sheet (the sheet's own transform
- * belongs to its opening animation).
+ * belongs to its opening animation); `offset`, how far it's pulled (px).
  */
 export const useSwipeToClose = (onClose: () => void) => {
   const { handlers, offset } = useTouchSwipe({
@@ -25,5 +25,5 @@ export const useSwipeToClose = (onClose: () => void) => {
     transition: offset > 0 ? "none" : "transform 200ms ease-out",
   }
 
-  return { handlers, style }
+  return { handlers, style, offset }
 }
