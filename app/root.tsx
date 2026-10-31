@@ -13,6 +13,7 @@ import {
 import type { LinksFunction, LoaderFunctionArgs } from "react-router"
 import { PreventFlashOnWrongTheme, ThemeProvider, useTheme } from "remix-themes"
 import clsx from "clsx"
+import { useState } from "react"
 import { themeSessionResolver } from "./services/theme.server"
 import { schemeCookie } from "./cookies"
 import { SchemeProvider, useScheme } from "./utils/hooks/useScheme"
@@ -24,7 +25,7 @@ import { getCore } from "~/core/get-core"
 import stylesheet from "~/styles/tailwind.css?url"
 import nunitoLatin from "~/styles/fonts/nunito-latin-wght-normal.woff2?url"
 import nunitoLatinExt from "~/styles/fonts/nunito-latin-ext-wght-normal.woff2?url"
-import { usePageColor, type PageColor } from "~/utils/pageColor"
+import { BarColorContext, usePageColor } from "~/utils/pageColor"
 import { BOOKING_ACTIONS, NOTIFICATION_ACTIONS, revalidateOn } from "~/utils/revalidation"
 import { LocaleProvider } from "~/i18n/useLocale"
 import { getLocale } from "~/i18n/locale.server"
@@ -92,7 +93,10 @@ const App = () => {
   const [scheme] = useScheme()
   const { locale } = useI18n()
   const data = useLoaderData<typeof loader>()
-  const pageColor = usePageColor()
+  const routeColor = usePageColor()
+  // A page's bars (the phone shell's), carried on into the status bar and toolbar.
+  const [barColor, setBarColor] = useState<string>()
+  const pageColor = routeColor?.background ?? barColor
 
   return (
     // "h-full" first: with no theme cookie, remix-themes' anti-flash script
@@ -103,15 +107,12 @@ const App = () => {
       lang={locale}
       className={clsx("h-full", theme)}
       data-scheme={scheme === DEFAULT_SCHEME ? undefined : scheme}
-      // A page with a colour of its own (the login screen): round it too.
-      style={
-        pageColor
-          ? {
-              backgroundColor: pageColor.background,
-              colorScheme: pageColor.isDark ? "dark" : "light",
-            }
-          : undefined
-      }
+      // A page with a colour of its own (the login screen, the phone shell's
+      // bars): round it too.
+      style={{
+        backgroundColor: pageColor,
+        colorScheme: routeColor && (routeColor.isDark ? "dark" : "light"),
+      }}
     >
       <head>
         <meta charSet="utf-8" />
@@ -132,7 +133,9 @@ const App = () => {
       </head>
       <body className="h-full bg-inherit">
         <NavigationProgress />
-        <Outlet />
+        <BarColorContext.Provider value={setBarColor}>
+          <Outlet />
+        </BarColorContext.Provider>
         <ScrollRestoration />
         <Scripts />
       </body>
@@ -154,11 +157,11 @@ const ThemeColor = ({
 }: {
   scheme: SchemeId
   theme: string | null
-  pageColor?: PageColor
+  pageColor?: string
 }) => {
   const isForced = theme === "light" || theme === "dark"
   const getColor = (system: "light" | "dark") =>
-    pageColor?.background ?? getSchemeBackground(scheme, isForced ? theme : system)
+    pageColor ?? getSchemeBackground(scheme, isForced ? theme : system)
 
   return (
     <>

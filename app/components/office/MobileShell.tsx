@@ -26,6 +26,7 @@ import { Role } from "~/repositories/main-repository/prisma/generated/prisma-cli
 import { daysBetween, isWeekend, type Day } from "~/utils/booking"
 import { useI18n } from "~/i18n/I18nProvider"
 import { msg } from "~/i18n/msg"
+import { useBarColor } from "~/utils/pageColor"
 
 type Tab = "office" | "bookings" | "people"
 
@@ -444,8 +445,13 @@ const TABS: [Tab, string, LucideIcon][] = [
 
 const TabBar = ({ tab, onChange }: { tab: Tab; onChange: (tab: Tab) => void }) => {
   const { t } = useI18n()
+  const bar = useRef<HTMLElement>(null)
+  // The bars run on into the phone's status bar and toolbar.
+  useBarColor(bar)
+
   return (
     <nav
+      ref={bar}
       aria-label={t("Main")}
       className="pointer-events-auto absolute inset-x-0 bottom-0 grid grid-cols-3 border-t border-foreground/[0.08] bg-chrome px-2 pb-3 pt-1.5"
       style={{ height: TAB_BAR_HEIGHT }}
