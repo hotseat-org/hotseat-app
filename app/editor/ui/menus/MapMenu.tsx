@@ -54,7 +54,7 @@ const EDIT_ROWS: LayerRow[] = [
 
 const getToneClass = (hasChanges: boolean, isCompact: boolean) => {
   if (hasChanges) return "bg-accent/15 text-accent"
-  if (isCompact) return "bg-foreground/[0.07] text-foreground"
+  if (isCompact) return "text-foreground hover:bg-foreground/10"
 
   return "text-muted hover:bg-foreground/10 hover:text-foreground"
 }
@@ -63,7 +63,7 @@ interface Props {
   isEditing?: boolean
   /** The 3D view (the frame rate is only measured there). */
   is3d?: boolean
-  /** How it sits: in the map controls (desktop) or the phone's dock. */
+  /** How it sits: in the map controls (desktop) or the phone's map buttons. */
   variant?: "stack" | "compact"
   onOpenChange?: (isOpen: boolean) => void
 }
@@ -122,12 +122,12 @@ export const MapMenu = ({
         className={clsx(
           "relative shrink-0",
           variant === "compact"
-            ? "h-12 w-11 rounded-xl"
+            ? "size-10 rounded-lg"
             : "h-9 w-auto min-w-0 justify-start rounded-xl px-[9px] text-sm font-semibold",
           getToneClass(changedCount > 0, variant === "compact")
         )}
       >
-        <LayersIcon className={variant === "compact" ? "size-5" : "size-[18px]"} />
+        <LayersIcon className={variant === "compact" ? "size-4" : "size-[18px]"} />
         {variant === "stack" && <span className={REVEAL_LABEL}>{t("Map")}</span>}
         {changedCount > 0 && (
           <span className="absolute left-5 top-0 grid size-4 place-items-center rounded-full bg-accent text-[10px] font-extrabold text-accent-foreground ring-2 ring-overlay">

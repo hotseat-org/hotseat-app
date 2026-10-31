@@ -64,7 +64,12 @@ export const MobileShell = ({ offices, me, members, empty = false }: Props) => {
   return (
     <>
       <TopBar offices={offices} />
-      {tab === "office" && <DayDock me={me} />}
+      {tab === "office" && (
+        <>
+          <MapButtons />
+          <DayDock me={me} />
+        </>
+      )}
       {tab === "bookings" && (
         <MyBookings
           isScreen
@@ -188,9 +193,6 @@ const DayDock = ({ me }: { me: ShellMember }) => {
         >
           <CalendarDays className="size-5" />
         </button>
-        <SidePanelButtons />
-        {/* A phone always shows the plan: no 3D-only rows. */}
-        <MapMenu variant="compact" is3d={false} />
         <DayStrip />
       </div>
       {isCalendarOpen && <CalendarSheet onClose={() => setIsCalendarOpen(false)} />}
@@ -274,13 +276,21 @@ const CalendarSheet = ({ onClose }: { onClose: () => void }) => {
   )
 }
 
-/** The modules' side panels on a phone (the desk filter, the notes): a button each in the dock. */
-const SidePanelButtons = () => {
+/**
+ * The map's own buttons, bottom-left above the dock — the side panels (the
+ * desk filter, the notes) and the Map menu — mirroring turn and fit on the
+ * right (see PhoneControls), so the dock is only about the day.
+ */
+const MapButtons = () => {
   const { t } = useI18n()
   const { entries, openPanel, toggle, close } = useSidePanels(false)
 
   return (
-    <>
+    <div
+      className="pointer-events-auto absolute left-4 flex gap-1 rounded-xl border border-chrome-border bg-chrome/95 p-1 shadow-overlay backdrop-blur-md"
+      // Level with turn and fit (PhoneControls), just above the dock.
+      style={{ bottom: MOBILE_CHROME.bottom + 12 }}
+    >
       {entries.map(({ panel, badgeCount }) => {
         const Icon = panel.icon
 
@@ -291,23 +301,28 @@ const SidePanelButtons = () => {
             aria-label={t(panel.label)}
             aria-expanded={openPanel?.id === panel.id}
             onClick={() => toggle(panel.id)}
-            className="relative grid h-12 w-11 shrink-0 place-items-center rounded-xl bg-foreground/[0.07] text-foreground"
+            className={clsx(
+              "relative grid size-10 shrink-0 place-items-center rounded-lg transition-colors",
+              badgeCount > 0 ? "bg-accent/15 text-accent" : "text-foreground hover:bg-foreground/10"
+            )}
           >
-            <Icon className="size-5" />
+            <Icon className="size-4" />
             {badgeCount > 0 && (
-              <span className="absolute right-1 top-1">
+              <span className="absolute left-5 top-0">
                 <SidePanelBadge count={badgeCount} />
               </span>
             )}
           </button>
         )
       })}
+      {/* A phone always shows the plan: no 3D-only rows. */}
+      <MapMenu variant="compact" is3d={false} />
       {openPanel && (
         <BottomSheet title={t(openPanel.label)} onClose={close}>
           {(closeSheet) => <openPanel.Component isEditing={false} close={closeSheet} />}
         </BottomSheet>
       )}
-    </>
+    </div>
   )
 }
 
