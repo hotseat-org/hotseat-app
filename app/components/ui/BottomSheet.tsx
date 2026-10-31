@@ -1,7 +1,7 @@
+import { CloseButton } from "@heroui/react"
 import clsx from "clsx"
 import { useEffect, useState, type ReactNode } from "react"
 import { createPortal } from "react-dom"
-import { SheetCloseButton } from "./SheetCloseButton"
 import { useSwipeToClose } from "./useSwipeToClose"
 import { useI18n } from "~/i18n/I18nProvider"
 
@@ -84,16 +84,16 @@ export const BottomSheet = ({
         >
           {/* The top: swipe it down to close. */}
           {title ? (
-            <div {...swipe.bind()} className="flex shrink-0 touch-none flex-col gap-3">
+            <div {...swipe.handlers} className="flex shrink-0 touch-none flex-col gap-3">
               <span aria-hidden className="mx-auto h-1.5 w-10 rounded-full bg-border" />
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-extrabold text-foreground">{title}</h2>
-                <SheetCloseButton label={t("Close")} onClose={close} className="size-10" />
+                <CloseButton aria-label={t("Close")} onPress={close} className="size-10" />
               </div>
             </div>
           ) : (
             <div
-              {...swipe.bind()}
+              {...swipe.handlers}
               // A grab zone round the handle, clear of the banner's own close button.
               className="absolute left-1/2 top-0 z-10 flex h-8 w-28 -translate-x-1/2 touch-none justify-center pt-2.5"
             >

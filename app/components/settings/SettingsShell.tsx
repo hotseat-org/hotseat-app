@@ -1,9 +1,9 @@
 import clsx from "clsx"
 import type { LucideIcon } from "lucide-react"
-import { useDrag } from "@use-gesture/react"
 import { ChevronLeft, ChevronRight, X } from "lucide-react"
 import { useRef, useState, type ReactNode } from "react"
 import { UnsavedChangesProvider, type UnsavedChanges } from "./unsavedChanges"
+import { useTouchSwipe } from "~/components/ui/useTouchSwipe"
 import { Button } from "~/components/Button"
 import { InlineModal } from "~/components/ui/InlineModal"
 import { useI18n } from "~/i18n/I18nProvider"
@@ -90,29 +90,13 @@ export function SettingsShell({
   }
 
   // Phones, on a page: a swipe from the left edge goes back to the list.
-  const [backOffset, setBackOffset] = useState(0)
-  const bindSwipeBack = useDrag(
-    ({
-      first,
-      initial: [startX],
-      movement: [moveX],
-      velocity: [speedX],
-      direction: [directionX],
-      last,
-      cancel,
-      tap,
-    }) => {
-      if (first && startX > BACK_EDGE) return cancel()
-      if (tap) return
-
-      if (!last) return setBackOffset(Math.max(0, moveX))
-
-      setBackOffset(0)
-      const isFlick = speedX > BACK_FLICK_SPEED && directionX > 0
-      if (moveX > BACK_DISTANCE || isFlick) select(null)
+  const swipeBack = useTouchSwipe({
+    axis: "x",
+    canStart: (x) => x <= BACK_EDGE,
+    onRelease: (distance, speed) => {
+      if (distance > BACK_DISTANCE || speed > BACK_FLICK_SPEED) select(null)
     },
-    { axis: "x", filterTaps: true, pointer: { capture: false } }
-  )
+  })
 
   const item = (l: SettingsLink) => {
     const Icon = l.icon
@@ -232,14 +216,14 @@ export function SettingsShell({
             phone's list, the first section waits (it shows on larger screens).
             On a phone's page, it follows a swipe back from the left edge. */}
         <div
-          {...(isListShown ? {} : bindSwipeBack())}
+          {...(isListShown ? {} : swipeBack.handlers)}
           className={clsx(
             "min-h-0 flex-1 touch-pan-y flex-col md:flex",
             isListShown ? "hidden" : "flex"
           )}
           style={{
-            transform: backOffset > 0 ? `translateX(${backOffset}px)` : undefined,
-            transition: backOffset > 0 ? "none" : "transform 200ms ease-out",
+            transform: swipeBack.offset > 0 ? `translateX(${swipeBack.offset}px)` : undefined,
+            transition: swipeBack.offset > 0 ? "none" : "transform 200ms ease-out",
           }}
         >
           <div

@@ -17,7 +17,6 @@ import { type Person } from "../../desks/people"
 import { UsualStep } from "./UsualStep"
 import type { Option } from "./useSeatCard"
 import { MemberAvatar } from "~/components/office/shell-ui"
-import { SheetCloseButton } from "~/components/ui/SheetCloseButton"
 import { useSwipeToClose } from "~/components/ui/useSwipeToClose"
 import { type Day } from "~/utils/booking"
 import type { Translator } from "~/i18n/translate"
@@ -382,7 +381,7 @@ export const SeatCardBody = ({
       >
         {/* The sheet's top — its handle, and who has the desk — swipes it down to close. */}
         <div
-          {...(isSheet ? swipe.bind() : {})}
+          {...(isSheet ? swipe.handlers : {})}
           className={clsx(isSheet && "flex touch-none flex-col gap-2")}
         >
           {isSheet && (
@@ -435,11 +434,11 @@ export const SeatCardBody = ({
                 {features.length > 0 && ` · ${features.join(", ")}`}
               </p>
             </div>
-            {isSheet ? (
-              <SheetCloseButton label={t("Close")} onClose={onClose} className="size-10 shrink-0" />
-            ) : (
-              <CloseButton aria-label={t("Close")} onPress={onClose} className="shrink-0" />
-            )}
+            <CloseButton
+              aria-label={t("Close")}
+              onPress={onClose}
+              className={clsx("shrink-0", isSheet && "size-10")}
+            />
           </div>
         </div>
 
