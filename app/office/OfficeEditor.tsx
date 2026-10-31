@@ -2,10 +2,9 @@ import { officeModule } from "./module"
 import type { OfficeData } from "./useOfficeData"
 import { Editor, type EditorProps } from "~/editor/Editor"
 import { MOBILE_CHROME } from "~/components/office/mobile"
-import { notesModule } from "~/examples/notes/module"
 
 /** The editor runs with the office's module. */
-const MODULES = [officeModule, notesModule]
+const MODULES = [officeModule]
 
 type OfficeEditorProps = Omit<
   EditorProps,
