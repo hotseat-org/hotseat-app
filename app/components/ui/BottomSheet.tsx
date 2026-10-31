@@ -54,7 +54,12 @@ export const BottomSheet = ({
   // containing block, squeezing it into the shell.
   return createPortal(
     <div
-      className="fixed inset-x-0 top-0 z-50 flex flex-col justify-end"
+      // Above a tab bar, the sheet comes out from behind it and casts no
+      // shadow over it: whatever passes below the bar is cut off.
+      className={clsx(
+        "fixed inset-x-0 top-0 z-50 flex flex-col justify-end",
+        bottomInset > 0 && "overflow-hidden"
+      )}
       style={{ bottom: bottomInset }}
     >
       <button
