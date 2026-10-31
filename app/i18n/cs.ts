@@ -1070,4 +1070,17 @@ export const cs: Messages = {
   Fit: "Celá",
   Simple: "Jednoduché",
   "3D": "3D",
+
+  // —— Example module (app/examples/notes) ——
+  Note: "Poznámka",
+  Notes: "Poznámky",
+  "Reminders left on the floor.": "Připomínky nechané na podlaze.",
+  "Select all notes": "Vybrat všechny poznámky",
+  "Show or hide the notes list": "Zobrazit nebo skrýt seznam poznámek",
+  "{n} note": {
+    one: "{n} poznámka",
+    few: "{n} poznámky",
+    many: "{n} poznámky",
+    other: "{n} poznámek",
+  },
 }

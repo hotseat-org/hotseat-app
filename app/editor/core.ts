@@ -6,7 +6,8 @@
  * Modules and integrators import from the editor's three entry points only:
  * `~/editor/core` (this), `~/editor` (the editor's API for modules and its
  * reusable UI) and `~/editor/kit` (building blocks for a module's own 3D
- * models and plan drawings). `Editor` itself comes from `~/editor/Editor`.
+ * models and plan drawings). `Editor` itself comes from `~/editor/Editor`,
+ * and `createTestEditor` (testing a module) from `~/editor/testing`.
  */
 
 // The catalogue: kinds of pieces, their traits, and the editor's presets.

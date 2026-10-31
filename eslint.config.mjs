@@ -164,9 +164,9 @@ export default [
         {
           patterns: [
             {
-              regex: "^~/editor/(?!(core|kit|Editor)$)",
+              regex: "^~/editor/(?!(core|kit|Editor|testing)$)",
               message:
-                "Import the editor through its entry points: ~/editor/core, ~/editor, ~/editor/kit or ~/editor/Editor (see app/editor/core.ts).",
+                "Import the editor through its entry points: ~/editor/core, ~/editor, ~/editor/kit, ~/editor/Editor or ~/editor/testing (see app/editor/core.ts).",
             },
           ],
         },

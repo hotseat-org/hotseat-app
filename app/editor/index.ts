@@ -44,8 +44,19 @@ export {
 export type { GetState, SetState } from "./store/state"
 
 // How the catalogue's kinds look and where they're listed.
-export { registerRenderers, type ItemRenderer, type MeshProps } from "./catalog/renderers"
-export { registerCategories, type CategoryDefinition } from "./catalog/categories"
+export {
+  getTiles,
+  registerRenderers,
+  type ItemRenderer,
+  type ItemTile,
+  type MeshProps,
+} from "./catalog/renderers"
+export {
+  getCategories,
+  registerCategories,
+  type Category,
+  type CategoryDefinition,
+} from "./catalog/categories"
 export {
   BathroomIcon,
   DecorIcon,
