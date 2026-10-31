@@ -2,6 +2,7 @@ import type { EntryContext } from "react-router"
 import { ServerRouter } from "react-router"
 import { isbot } from "isbot"
 import { renderToReadableStream } from "react-dom/server"
+import "~/i18n/messages.server"
 
 export const streamTimeout = 5_000
 

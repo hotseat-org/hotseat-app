@@ -19,8 +19,11 @@ import { SchemeProvider, useScheme } from "./utils/hooks/useScheme"
 import { DEFAULT_SCHEME, getSchemeBackground, isSchemeId, type SchemeId } from "./utils/schemes"
 import { isAuthenticated } from "./services/session.server"
 import { CenteredScreen } from "~/components/ui/CenteredScreen"
+import { NavigationProgress } from "~/components/ui/NavigationProgress"
 import { getCore } from "~/core/get-core"
 import stylesheet from "~/styles/tailwind.css?url"
+import nunitoLatin from "~/styles/fonts/nunito-latin-wght-normal.woff2?url"
+import nunitoLatinExt from "~/styles/fonts/nunito-latin-ext-wght-normal.woff2?url"
 import { revalidateOn } from "~/utils/revalidation"
 import { LocaleProvider } from "~/i18n/useLocale"
 import { getLocale } from "~/i18n/locale.server"
@@ -29,6 +32,10 @@ import { createTranslator } from "~/i18n/translate"
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesheet },
+  // The text's font, fetched with the stylesheet rather than after it (no
+  // swap from a fallback font on first paint): the Latin set. Czech's
+  // letters (č, ř…) are in latin-ext, preloaded for Czech in the head below.
+  { rel: "preload", href: nunitoLatin, as: "font", type: "font/woff2", crossOrigin: "anonymous" },
   // Explicit, so they're found under the app's base path (the browser's default
   // /favicon.ico is the domain root, outside the app). The SVG for browsers
   // that take it (sharp at any size), the .ico (16/32/48) for the rest.
@@ -99,11 +106,21 @@ const App = () => {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
         <ThemeColor scheme={scheme} theme={theme} />
+        {locale === "cs" && (
+          <link
+            rel="preload"
+            href={nunitoLatinExt}
+            as="font"
+            type="font/woff2"
+            crossOrigin="anonymous"
+          />
+        )}
         <Meta />
         <PreventFlashOnWrongTheme ssrTheme={Boolean(data.theme)} />
         <Links />
       </head>
       <body className="h-full">
+        <NavigationProgress />
         <Outlet />
         <ScrollRestoration />
         <Scripts />

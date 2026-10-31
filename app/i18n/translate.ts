@@ -1,4 +1,3 @@
-import { cs } from "./cs"
 import { DEFAULT_LOCALE, type Locale } from "./locales"
 import { toUtcDate, type Day } from "~/utils/booking"
 
@@ -7,7 +6,24 @@ export type PluralForms = Partial<Record<Intl.LDMLPluralRule, string>> & { other
 /** A language's messages, keyed by the English text. */
 export type Messages = Record<string, string | PluralForms>
 
-const MESSAGES: Record<Locale, Messages> = { en: {}, cs }
+/**
+ * The languages' messages loaded so far: English is its own keys; others are
+ * registered — on the server all at once (messages.server.ts), in the browser
+ * when the language is needed (loadMessages), so each reader downloads only
+ * their own.
+ */
+const MESSAGES: Partial<Record<Locale, Messages>> = { en: {} }
+
+export const registerMessages = (locale: Locale, messages: Messages) => {
+  MESSAGES[locale] = messages
+}
+
+/** Load a language's messages in the browser, before showing it (English needs none). */
+export const loadMessages = async (locale: Locale) => {
+  if (MESSAGES[locale]) return
+
+  if (locale === "cs") registerMessages("cs", (await import("./cs")).cs)
+}
 
 /** A day as a value: written out as a date in the reader's language ("Wed 23 Sep"). */
 export type DayParam = { day: Day }
@@ -136,7 +152,7 @@ const isDeskParam = (value: unknown): value is DeskParam =>
  * `{name}` in a message is replaced by `params.name`.
  */
 export const createTranslator = (locale: Locale = DEFAULT_LOCALE) => {
-  const messages = MESSAGES[locale]
+  const messages = MESSAGES[locale] ?? {}
   const format = createFormat(locale)
   const plural = new Intl.PluralRules(locale)
   const fill = (text: string, params?: Params): string =>

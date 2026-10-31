@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useMemo, useState, type ReactNo
 import { useRevalidator } from "react-router"
 import { I18nProvider } from "./I18nProvider"
 import type { Locale } from "./locales"
+import { loadMessages } from "./translate"
 
 type LocaleContextValue = [Locale, (locale: Locale) => void]
 
@@ -24,7 +25,8 @@ export const LocaleProvider = ({
   const { revalidate } = useRevalidator()
   const pickLocale = useCallback(
     (next: Locale) => {
-      setLocale(next)
+      // Its messages first (the browser loads a language when it's needed).
+      void loadMessages(next).then(() => setLocale(next))
       void fetch(`${import.meta.env.BASE_URL}api/set-locale`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
