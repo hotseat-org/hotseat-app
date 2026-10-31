@@ -4,6 +4,7 @@ import { AlertTriangle, Check, Link2, X } from "lucide-react"
 import type { ReactNode } from "react"
 import { useLocation } from "react-router"
 import type { useRename } from "./useRename"
+import { useReportUnsavedChanges } from "./unsavedChanges"
 import { Button } from "~/components/Button"
 import { useI18n } from "~/i18n/I18nProvider"
 
@@ -36,7 +37,8 @@ export const CardTitle = ({ children }: { children: ReactNode }) => (
 /**
  * "You have unsaved changes · Discard · Save changes" — sticks to the bottom of
  * the settings panel, shown only while a form is dirty. Submits the form with
- * id `form` (the button sits outside it).
+ * id `form` (the button sits outside it). Leaving the panel while it's dirty
+ * asks first (see SettingsShell).
  */
 export const SaveBar = ({
   form,
@@ -52,6 +54,9 @@ export const SaveBar = ({
   onDiscard: () => void
 }) => {
   const { t } = useI18n()
+  // Leaving the panel with these changes asks first (see SettingsShell).
+  useReportUnsavedChanges({ isDirty: dirty, discard: onDiscard })
+
   return dirty ? (
     <div className="sticky bottom-0 z-10 -mx-4 -mb-6 mt-auto flex items-center gap-3 border-t border-separator bg-surface-secondary px-4 py-3 md:-mx-9 md:-mb-8 md:px-9 md:py-4">
       <span className="size-2 shrink-0 rounded-full bg-warning" aria-hidden />

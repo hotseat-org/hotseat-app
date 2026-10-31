@@ -1,7 +1,10 @@
 import clsx from "clsx"
 import type { LucideIcon } from "lucide-react"
+import { useDrag } from "@use-gesture/react"
 import { ChevronLeft, ChevronRight, X } from "lucide-react"
-import type { ReactNode } from "react"
+import { useRef, useState, type ReactNode } from "react"
+import { UnsavedChangesProvider, type UnsavedChanges } from "./unsavedChanges"
+import { Button } from "~/components/Button"
 import { InlineModal } from "~/components/ui/InlineModal"
 import { useI18n } from "~/i18n/I18nProvider"
 
@@ -16,6 +19,12 @@ export type SettingsLink = {
   /** Destructive section: pinned to the bottom of the nav, in red. */
   danger?: boolean
 }
+
+/** A swipe back starts this close to the left edge (px)… */
+const BACK_EDGE = 28
+/** …and goes back past this far (px), or on a flick (px per ms). */
+const BACK_DISTANCE = 90
+const BACK_FLICK_SPEED = 0.5
 
 type SettingsShellProps = {
   /** Accessible name of the dialog, e.g. "Organization settings". */
@@ -38,7 +47,9 @@ type SettingsShellProps = {
  * zone pinned at the bottom), the active panel on the right under its title.
  * On a phone, the whole screen, one level at a time: the list of sections
  * (who they're for on top, the danger zone last), then a section's page with
- * a way back to the list.
+ * a way back to the list — which slides in, and swipes back from the left
+ * edge, as on an iPhone. Leaving a panel with unsaved changes (closing, going
+ * back, another section) asks first.
  * It owns no routing — selection and close are delegated through `onSelect` /
  * `onClose` so it can be driven by search params. Panels render their content
  * as `SettingsCard`s and, for forms, a `SaveBar` that appears when dirty.
@@ -60,6 +71,49 @@ export function SettingsShell({
   // Phones: no section picked yet shows the list of them, in its place.
   const isListShown = !activeSection
 
+  // The open panel's unsaved changes (its SaveBar reports them): leaving asks first.
+  const unsavedChanges = useRef<UnsavedChanges | null>(null)
+  const [pendingLeave, setPendingLeave] = useState<(() => void) | null>(null)
+  const leave = (action: () => void) =>
+    unsavedChanges.current?.isDirty ? setPendingLeave(() => action) : action()
+  const close = () => leave(onClose)
+  const select = (section: string | null) => {
+    if (section !== (activeSection ?? null)) leave(() => onSelect(section))
+  }
+
+  // Phones: a page slides in from the right, the list back from the left.
+  const shownSection = useRef(activeSection)
+  const motion = useRef<"push" | "pop" | null>(null)
+  if (shownSection.current !== activeSection) {
+    motion.current = activeSection ? "push" : "pop"
+    shownSection.current = activeSection
+  }
+
+  // Phones, on a page: a swipe from the left edge goes back to the list.
+  const [backOffset, setBackOffset] = useState(0)
+  const bindSwipeBack = useDrag(
+    ({
+      first,
+      initial: [startX],
+      movement: [moveX],
+      velocity: [speedX],
+      direction: [directionX],
+      last,
+      cancel,
+      tap,
+    }) => {
+      if (first && startX > BACK_EDGE) return cancel()
+      if (tap) return
+
+      if (!last) return setBackOffset(Math.max(0, moveX))
+
+      setBackOffset(0)
+      const isFlick = speedX > BACK_FLICK_SPEED && directionX > 0
+      if (moveX > BACK_DISTANCE || isFlick) select(null)
+    },
+    { axis: "x", filterTaps: true, pointer: { capture: false } }
+  )
+
   const item = (l: SettingsLink) => {
     const Icon = l.icon
     const isActive = l.id === active.id
@@ -67,7 +121,7 @@ export function SettingsShell({
       <button
         key={l.id}
         type="button"
-        onClick={() => onSelect(l.id)}
+        onClick={() => select(l.id)}
         aria-current={isActive ? "page" : undefined}
         className={clsx(
           "flex items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left text-sm transition-colors",
@@ -93,7 +147,7 @@ export function SettingsShell({
     // On a phone: the whole screen, the list of sections or one section's page.
     <InlineModal
       label={title}
-      onClose={onClose}
+      onClose={close}
       isFullScreenOnPhone
       className="flex h-dvh w-screen flex-row gap-0 overflow-hidden bg-overlay p-0 md:h-[82vh] md:max-h-[760px] md:w-[min(1080px,94vw)] md:rounded-[28px] md:border md:border-border md:shadow-overlay"
     >
@@ -121,18 +175,18 @@ export function SettingsShell({
       <main className="flex min-w-0 flex-1 flex-col bg-overlay">
         <header className="flex items-start justify-between gap-4 px-4 pb-3 pt-4 md:px-9 md:pb-5 md:pt-8">
           <div className="flex min-w-0 items-center gap-1">
-            {/* Phones, on a section's page: back to the list of them. */}
-            {!isListShown && (
-              <button
-                type="button"
-                onClick={() => onSelect(null)}
-                aria-label={t("All settings")}
-                className="-ml-2 grid size-10 shrink-0 place-items-center rounded-full text-foreground transition-colors hover:bg-surface-secondary md:hidden"
-              >
-                <ChevronLeft className="size-6" />
-              </button>
-            )}
             <div className="min-w-0">
+              {/* Phones, on a section's page: back to the list, named for it. */}
+              {!isListShown && (
+                <button
+                  type="button"
+                  onClick={() => select(null)}
+                  className="-ml-1.5 mb-1 flex items-center gap-0.5 text-[15px] font-semibold text-accent md:hidden"
+                >
+                  <ChevronLeft className="size-5" />
+                  {t("Settings")}
+                </button>
+              )}
               {/* Phones, on the list: the settings' own title. */}
               <h1
                 className={clsx(
@@ -142,8 +196,9 @@ export function SettingsShell({
               >
                 {t(active.label)}
               </h1>
+              {/* Phones, on the list: the settings' own title, large. */}
               {isListShown && (
-                <h1 className="text-xl font-black tracking-tight text-foreground md:hidden">
+                <h1 className="text-[28px] font-black leading-tight tracking-tight text-foreground md:hidden">
                   {title}
                 </h1>
               )}
@@ -154,7 +209,7 @@ export function SettingsShell({
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={close}
             aria-label={t("Close settings")}
             title={t("Close (Esc)")}
             className="grid size-10 shrink-0 place-items-center rounded-full border border-border text-muted transition-colors hover:bg-surface-secondary hover:text-foreground"
@@ -163,18 +218,50 @@ export function SettingsShell({
           </button>
         </header>
         {isListShown && (
-          <SectionList identity={identity} main={main} danger={danger} onSelect={onSelect} />
+          <SectionList
+            key="list"
+            identity={identity}
+            groupLabel={groupLabel}
+            main={main}
+            danger={danger}
+            onSelect={select}
+            className={clsx(motion.current === "pop" && "settings-pop")}
+          />
         )}
         {/* Scrolls; a panel's SaveBar sticks to the bottom of this area. On a
-            phone's list, the first section waits (it shows on larger screens). */}
+            phone's list, the first section waits (it shows on larger screens).
+            On a phone's page, it follows a swipe back from the left edge. */}
         <div
+          {...(isListShown ? {} : bindSwipeBack())}
           className={clsx(
-            "min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-6 md:flex md:px-9 md:pb-8",
+            "min-h-0 flex-1 touch-pan-y flex-col md:flex",
             isListShown ? "hidden" : "flex"
           )}
+          style={{
+            transform: backOffset > 0 ? `translateX(${backOffset}px)` : undefined,
+            transition: backOffset > 0 ? "none" : "transform 200ms ease-out",
+          }}
         >
-          {children}
+          <div
+            key={activeSection ?? "first"}
+            className={clsx(
+              "flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-6 md:px-9 md:pb-8",
+              motion.current === "push" && "settings-push"
+            )}
+          >
+            <UnsavedChangesProvider value={unsavedChanges}>{children}</UnsavedChangesProvider>
+          </div>
         </div>
+        {pendingLeave && (
+          <DiscardChanges
+            onKeep={() => setPendingLeave(null)}
+            onDiscard={() => {
+              unsavedChanges.current?.discard()
+              setPendingLeave(null)
+              pendingLeave()
+            }}
+          />
+        )}
       </main>
     </InlineModal>
   )
@@ -186,14 +273,18 @@ export function SettingsShell({
  */
 const SectionList = ({
   identity,
+  groupLabel,
   main,
   danger,
   onSelect,
+  className,
 }: {
   identity: SettingsShellProps["identity"]
+  groupLabel: string
   main: SettingsLink[]
   danger: SettingsLink[]
   onSelect: (section: string) => void
+  className?: string
 }) => {
   const { t } = useI18n()
   const row = (link: SettingsLink) => (
@@ -233,7 +324,12 @@ const SectionList = ({
   )
 
   return (
-    <nav className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-6 md:hidden">
+    <nav
+      className={clsx(
+        "flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-6 md:hidden",
+        className
+      )}
+    >
       <div className="flex items-center gap-3 px-1">
         {identity.visual}
         <div className="min-w-0">
@@ -241,14 +337,45 @@ const SectionList = ({
           <p className="truncate text-xs text-muted">{identity.sub}</p>
         </div>
       </div>
-      <ul className="divide-y divide-separator overflow-hidden rounded-2xl bg-surface shadow-surface">
-        {main.map(row)}
-      </ul>
+      <div>
+        <p className="px-4 pb-1.5 text-[11px] font-extrabold uppercase tracking-wider text-muted">
+          {groupLabel}
+        </p>
+        <ul className="divide-y divide-separator overflow-hidden rounded-2xl bg-surface shadow-surface">
+          {main.map(row)}
+        </ul>
+      </div>
       {danger.length > 0 && (
         <ul className="divide-y divide-separator overflow-hidden rounded-2xl bg-surface shadow-surface">
           {danger.map(row)}
         </ul>
       )}
     </nav>
+  )
+}
+
+/** Leaving a panel with unsaved changes: keep editing, or throw them away and go. */
+const DiscardChanges = ({ onKeep, onDiscard }: { onKeep: () => void; onDiscard: () => void }) => {
+  const { t } = useI18n()
+
+  return (
+    <div className="absolute inset-0 z-30 grid place-items-center bg-scrim p-6">
+      <div
+        role="alertdialog"
+        aria-label={t("Discard changes?")}
+        className="w-full max-w-xs rounded-2xl border border-border bg-overlay p-5 text-center shadow-overlay"
+      >
+        <p className="text-base font-extrabold text-foreground">{t("Discard changes?")}</p>
+        <p className="mt-1 text-sm text-muted">{t("What you changed on this page isn't saved.")}</p>
+        <div className="mt-4 flex flex-col gap-2">
+          <Button variant="danger" onPress={onDiscard}>
+            {t("Discard")}
+          </Button>
+          <Button variant="ghost" onPress={onKeep}>
+            {t("Keep editing")}
+          </Button>
+        </div>
+      </div>
+    </div>
   )
 }

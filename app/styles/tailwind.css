@@ -533,6 +533,35 @@ input:-webkit-autofill:focus {
 
 /* The desk card as a phone's bottom sheet: slides up, slides away (same 140ms
    exit as the in-scene card — seatCard.tsx's EXIT_MS). */
+/* A phone's settings: a section's page slides in from the right, the list
+   back in from the left (a navigation stack's push and pop). */
+@keyframes settings-push {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+@keyframes settings-pop {
+  from {
+    transform: translateX(-30%);
+    opacity: 0.6;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@media (max-width: 767px) {
+  .settings-push {
+    animation: settings-push 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .settings-pop {
+    animation: settings-pop 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
 @keyframes sheet-up {
   from {
     transform: translateY(100%);
@@ -586,6 +615,8 @@ input:-webkit-autofill:focus {
   }
   .seat-pop,
   .seat-pop-out,
+  .settings-push,
+  .settings-pop,
   .sheet-up,
   .sheet-down {
     animation-name: none;
