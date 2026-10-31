@@ -20,6 +20,12 @@ export interface EditorModule {
   /** The kinds of pieces it brings: registered when an editor starts with it. */
   catalog?: ModuleCatalog
   /**
+   * Takes in what the app passes it (`moduleData[id]` on the Editor) — run as
+   * a hook inside the editor, to mirror the app's data into the store. (A
+   * method, so a module's hook may take its own data type.)
+   */
+  useData?(data: unknown): void
+  /**
    * Its store slice: the state and actions it adds. Declare their types on
    * ModuleState (`declare module`), so the editor's state includes them.
    */

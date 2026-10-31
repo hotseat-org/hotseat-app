@@ -73,7 +73,9 @@ export interface EditorProps {
     /** The camera controls guide, for the shell to place among its panels. */
     guide: ReactNode
   }) => ReactNode
-  /** Rendered inside the editor's providers, before it (a module's data sync). */
+  /** Each module's data from the app, by module id (see EditorModule.useData). */
+  moduleData?: Record<string, unknown>
+  /** Rendered inside the editor's providers, before it. */
   children?: ReactNode
   /** On a phone with the app's shell: what the shell covers at the top and bottom (px). */
   phoneChrome?: { top: number; bottom: number }
@@ -104,12 +106,20 @@ export const Editor = (props: EditorProps) => {
     <EditorStoreContextProvider value={storeRef.current}>
       <ModulesContext.Provider value={modules}>
         <KitLibraryContext.Provider value={props.kitLibrary ?? null}>
+          <ModuleData data={props.moduleData} />
           {props.children}
           <EditorInner {...props} />
         </KitLibraryContext.Provider>
       </ModulesContext.Provider>
     </EditorStoreContextProvider>
   )
+}
+
+/** Hands each module its data from the app (their hooks, in module order). */
+const ModuleData = ({ data }: { data?: Record<string, unknown> }) => {
+  useModules().forEach((module) => module.useData?.(data?.[module.id]))
+
+  return null
 }
 
 const getGuideView = ({

@@ -4,17 +4,20 @@ import type { People } from "./desks/people"
 import { NO_PEOPLE } from "./store/people"
 import { useEditorStoreApi } from "~/editor"
 
-/**
- * The office's data from the app (the route): its members and the booking
- * data and actions, mirrored into the editor's store. Renders nothing.
- */
-export const OfficeSync = ({ booking, people }: { booking?: EditorBooking; people?: People }) => {
+/** What the app (the route) passes the office: omitted in the standalone editor. */
+export interface OfficeData {
+  /** Org members (desk assignment and name tags). */
+  people?: People
+  /** Desk booking data and actions for a real office. */
+  booking?: EditorBooking
+}
+
+/** The office's data from the app, mirrored into the editor's store. */
+export const useOfficeData = ({ people, booking }: OfficeData = {}) => {
   const store = useEditorStoreApi()
   // Set before the first paint, so names and tags don't pop in a frame late.
   useLayoutEffect(() => {
     store.getState().setPeople(people ?? NO_PEOPLE)
   }, [people, store])
   useBookingSync(booking, people)
-
-  return null
 }

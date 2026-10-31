@@ -13,6 +13,7 @@ import { OFFICE_PANELS } from "./slots/panels"
 import { OFFICE_TOUR_STEPS } from "./slots/tourSteps"
 import { useLayoutImpactGuard } from "./slots/saveGuard"
 import { createOfficeSlice } from "./store"
+import { useOfficeData } from "./useOfficeData"
 import { type EditorModule } from "~/editor"
 
 /**
@@ -26,6 +27,7 @@ export const officeModule: EditorModule = {
     renderers: FURNITURE_RENDERERS,
     categories: FURNITURE_CATEGORIES,
   },
+  useData: useOfficeData,
   createSlice: createOfficeSlice,
   prepareNewPieces: prepareNewOfficePieces,
   sceneLayers: OFFICE_SCENE_LAYERS,
