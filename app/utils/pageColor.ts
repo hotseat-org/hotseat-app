@@ -31,16 +31,22 @@ export const usePageColor = (): PageColor | undefined => {
 /** Where a page's bars report their colour to the root (undefined: none showing). */
 export const BarColorContext = createContext<(color: string | undefined) => void>(() => {})
 
-/** A CSS colour as #rrggbb (computed colours can be color-mix() results, oklab…). */
-const getHexColor = (color: string) => {
+/**
+ * Colours laid one over another, as the #rrggbb they show: computed colours
+ * can be color-mix() results, oklab…, and a see-through one (a scrim) shows
+ * what's under it.
+ */
+export const composeHexColor = (layers: string[]) => {
   const canvas = document.createElement("canvas")
   canvas.width = 1
   canvas.height = 1
   const context = canvas.getContext("2d")
-  if (!context) return color
+  if (!context) return layers[0]
 
-  context.fillStyle = color
-  context.fillRect(0, 0, 1, 1)
+  for (const layer of layers) {
+    context.fillStyle = layer
+    context.fillRect(0, 0, 1, 1)
+  }
   const [red, green, blue] = context.getImageData(0, 0, 1, 1).data
 
   return `#${[red, green, blue].map((value) => value.toString(16).padStart(2, "0")).join("")}`
@@ -60,7 +66,7 @@ export const useBarColor = (ref: RefObject<HTMLElement | null>) => {
     const element = ref.current
     if (!element) return
 
-    setBarColor(getHexColor(getComputedStyle(element).backgroundColor))
+    setBarColor(composeHexColor([getComputedStyle(element).backgroundColor]))
 
     return () => setBarColor(undefined)
   }, [ref, setBarColor, theme, scheme])

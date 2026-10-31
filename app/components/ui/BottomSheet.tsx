@@ -1,7 +1,8 @@
 import { CloseButton } from "@heroui/react"
 import clsx from "clsx"
-import { useEffect, useState, type ReactNode } from "react"
+import { useEffect, useRef, useState, type ReactNode } from "react"
 import { createPortal } from "react-dom"
+import { useEdgeColors } from "./useEdgeColors"
 import { useSwipeToClose } from "./useSwipeToClose"
 import { useI18n } from "~/i18n/I18nProvider"
 
@@ -43,6 +44,9 @@ export const BottomSheet = ({
     window.setTimeout(onClose, SHEET_EXIT_MS)
   }
   const swipe = useSwipeToClose(close)
+  const scrim = useRef<HTMLButtonElement>(null)
+  const sheet = useRef<HTMLElement>(null)
+  const edgeColors = useEdgeColors({ scrim, sheet })
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => event.key === "Escape" && close()
     window.addEventListener("keydown", onKey)
@@ -63,16 +67,36 @@ export const BottomSheet = ({
       style={{ bottom: bottomInset }}
     >
       <button
+        ref={scrim}
         type="button"
         aria-label={t("Close")}
         className="absolute inset-0 bg-scrim"
         onClick={close}
       />
+      {/* For Safari's status bar and toolbar (see useEdgeColors): a pixel of
+          what shows at each edge — above a tab bar, the bar is the bottom's. */}
+      {edgeColors && (
+        <>
+          <div
+            aria-hidden
+            className="pointer-events-none fixed inset-x-0 top-0 z-10 h-px"
+            style={{ backgroundColor: edgeColors.top }}
+          />
+          {bottomInset === 0 && (
+            <div
+              aria-hidden
+              className="pointer-events-none fixed inset-x-0 bottom-0 z-10 h-px"
+              style={{ backgroundColor: edgeColors.bottom }}
+            />
+          )}
+        </>
+      )}
       <div
         className={clsx("relative flex flex-col", isTall ? "h-[85dvh]" : "max-h-[92dvh]")}
         style={swipe.style}
       >
         <section
+          ref={sheet}
           role="dialog"
           aria-modal="true"
           aria-label={label ?? title}
