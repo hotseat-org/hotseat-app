@@ -4,7 +4,7 @@ import type { GetState, SetState } from "./state"
 /** Max undo steps kept. */
 export const HISTORY_LIMIT = 100
 
-export interface HistorySlice {
+export interface HistoryState {
   /** Earlier scenes, oldest first. */
   past: SceneObject[][]
   /** Undone scenes, most recently undone last. */
@@ -36,7 +36,7 @@ const stripIds = (objects: SceneObject[]) =>
     )
 
 /**
- * Undo / redo, and the `set` every other slice is given. Every change to
+ * Undo / redo, and the `set` every other part of the state is given. Every change to
  * `objects` made through that `set` becomes an undo step — so all actions are
  * undoable with no per-action code — except while undo/redo applies a snapshot
  * or a batch is open. (Persist rehydration uses the store API directly, so
@@ -46,7 +46,7 @@ export const createHistory = (
   rawSet: SetState,
   get: GetState,
   afterSet: () => void
-): { set: SetState; slice: HistorySlice } => {
+): { set: SetState; state: HistoryState } => {
   // Per-store bookkeeping (not state: not rendered, not persisted).
   const history: HistoryInternals = { applying: false, batch: null }
   const set: SetState = (partial, replace?: boolean) => {
@@ -58,7 +58,7 @@ export const createHistory = (
 
     rawSet({ past: [...get().past, before].slice(-HISTORY_LIMIT), future: [] })
   }
-  const slice: HistorySlice = {
+  const state: HistoryState = {
     past: [],
     future: [],
     // These only move snapshots between the stacks; `set` records the rest.
@@ -108,5 +108,5 @@ export const createHistory = (
     },
   }
 
-  return { set, slice }
+  return { set, state }
 }

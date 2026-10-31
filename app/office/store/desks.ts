@@ -6,7 +6,7 @@ import { type SceneObject } from "~/editor/core"
 import { snapToFootprint } from "~/editor/core"
 
 /** Desks: their labels, residents, zones and features. */
-export interface DesksSlice {
+export interface DesksState {
   /** Give a desk a seat label ("" clears it). */
   setSeatLabel: (id: string, label: string) => void
   /** Seat someone at a desk (null frees it). One desk per person. */
@@ -69,7 +69,7 @@ export const asNewDesks = (existing: SceneObject[], fresh: SceneObject[]): Scene
   )
 }
 
-export const createDesksSlice = (set: OfficeSetState, _get: OfficeGetState): DesksSlice => ({
+export const createDesksState = (set: OfficeSetState, _get: OfficeGetState): DesksState => ({
   setSeatLabel: (id, label) =>
     set((state) => ({
       objects: state.objects.map((piece) =>

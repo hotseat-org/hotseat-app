@@ -12,7 +12,7 @@ import { OFFICE_MAP_LAYERS, OFFICE_MAP_MENU_SECTION } from "./slots/mapLayers"
 import { OFFICE_PANELS } from "./slots/panels"
 import { OFFICE_TOUR_STEPS } from "./slots/tourSteps"
 import { useLayoutImpactGuard } from "./slots/saveGuard"
-import { createOfficeSlice, type OfficeState } from "./store"
+import { createOfficeState, type OfficeState } from "./store"
 import { useOfficeData } from "./useOfficeData"
 import { defineModule } from "~/editor"
 
@@ -28,7 +28,7 @@ export const officeModule = defineModule<OfficeState>({
     categories: FURNITURE_CATEGORIES,
   },
   useData: useOfficeData,
-  createSlice: createOfficeSlice,
+  createState: createOfficeState,
   prepareNewPieces: prepareNewOfficePieces,
   sceneLayers: OFFICE_SCENE_LAYERS,
   usePieceStates: useOfficePieceStates,

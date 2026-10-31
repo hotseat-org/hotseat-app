@@ -26,7 +26,7 @@ import { dropOrphanMounts } from "./objects"
 import type { GetState, SetState } from "./state"
 
 /** Building and painting walls, doors and windows; painting floors. */
-export interface WallsSlice {
+export interface WallsState {
   /** Builds wall segments (solid by default, or glass) on free edges. */
   addWalls: (cells: WallCell[], type?: WallType) => void
   /** Remove any wall/door segments sitting on the given edges. */
@@ -54,7 +54,7 @@ export interface WallsSlice {
   paintFloor: (x: number, z: number, color: string | null) => void
 }
 
-export const createWallsSlice = (set: SetState, get: GetState): WallsSlice => ({
+export const createWallsState = (set: SetState, get: GetState): WallsState => ({
   addWalls: (cells, type = "wall") =>
     set((state) => {
       // Key by cell AND orientation so a corner node can hold both a

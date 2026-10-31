@@ -4,7 +4,7 @@ import type { ObjectType, Tool } from "../types"
 import type { GetState, SetState } from "./state"
 
 /** The active tool and its settings: placing, painting, carrying. */
-export interface ToolsSlice {
+export interface ToolsState {
   tool: Tool
   setTool: (tool: Tool) => void
   /** Rotation applied to the next placed object (ephemeral, not persisted). */
@@ -25,7 +25,7 @@ export interface ToolsSlice {
    * walls themselves (see useObjectsWithPaintPreview), never saved.
    */
   paintPreview: { targets: WallPaint[]; color: string | null } | null
-  setPaintPreview: (preview: ToolsSlice["paintPreview"]) => void
+  setPaintPreview: (preview: ToolsState["paintPreview"]) => void
   /** A saved room being placed (the Select tool, with its ghost on the cursor). */
   armedKit: Kit | null
   armKit: (kit: Kit | null) => void
@@ -34,7 +34,7 @@ export interface ToolsSlice {
   setCarrying: (id: string | null) => void
 }
 
-export const createToolsSlice = (set: SetState, get: GetState): ToolsSlice => ({
+export const createToolsState = (set: SetState, get: GetState): ToolsState => ({
   tool: "select",
   setTool: (tool) =>
     set({ tool, selectedId: tool === "select" ? get().selectedId : null, armedKit: null }),

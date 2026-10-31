@@ -1,13 +1,13 @@
 import { type OfficeGetState, type OfficeSetState } from "./state"
 
 /** What the office shows over the map: the desk filter, the heatmap, a spotlit desk, the way to one. */
-export interface OfficeViewSlice {
+export interface OfficeViewState {
   /** View: show only desks with all these features (others dimmed). */
   deskFilter: string[]
   toggleDeskFilter: (feature: string) => void
   /** Insights (admins): each desk's share of working days in use, for a period, over the office. */
   heatmap: { period: "4w" | "12w" | "next"; ratios: Record<string, number> } | null
-  setHeatmap: (heatmap: OfficeViewSlice["heatmap"]) => void
+  setHeatmap: (heatmap: OfficeViewState["heatmap"]) => void
   /** Plan: a desk to bring into view and highlight ("Show my desk", "Find"); the plan clears it once shown. */
   spotlight: { id: string } | null
   spotlightSeat: (id: string) => void
@@ -24,10 +24,10 @@ export interface OfficeViewSlice {
   clearRoute: () => void
 }
 
-export const createOfficeViewSlice = (
+export const createOfficeViewState = (
   set: OfficeSetState,
   _get: OfficeGetState
-): OfficeViewSlice => ({
+): OfficeViewState => ({
   deskFilter: [],
   toggleDeskFilter: (feature) =>
     set((state) => ({

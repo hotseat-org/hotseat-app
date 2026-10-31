@@ -1,16 +1,16 @@
-import { createBookingSlice } from "./booking"
-import { createDesksSlice } from "./desks"
-import { createOfficePanelsSlice } from "./officePanels"
-import { createOfficeViewSlice } from "./officeView"
-import { createPeopleSlice } from "./people"
+import { createBookingState } from "./booking"
+import { createDesksState } from "./desks"
+import { createOfficePanelsState } from "./officePanels"
+import { createOfficeViewState } from "./officeView"
+import { createPeopleState } from "./people"
 import type { OfficeGetState, OfficeSetState, OfficeState } from "./state"
 
-export const createOfficeSlice = (set: OfficeSetState, get: OfficeGetState): OfficeState => ({
-  ...createDesksSlice(set, get),
-  ...createBookingSlice(set, get),
-  ...createOfficeViewSlice(set, get),
-  ...createOfficePanelsSlice(set, get),
-  ...createPeopleSlice(set, get),
+export const createOfficeState = (set: OfficeSetState, get: OfficeGetState): OfficeState => ({
+  ...createDesksState(set, get),
+  ...createBookingState(set, get),
+  ...createOfficeViewState(set, get),
+  ...createOfficePanelsState(set, get),
+  ...createPeopleState(set, get),
 })
 
 export {

@@ -7,7 +7,7 @@ export interface NotesState {
   toggleNotesList: () => void
 }
 
-export const createNotesSlice = (set: SetState<EditorState & NotesState>): NotesState => ({
+export const createNotesState = (set: SetState<EditorState & NotesState>): NotesState => ({
   isNotesListOpen: false,
   toggleNotesList: () => set((state) => ({ isNotesListOpen: !state.isNotesListOpen })),
 })

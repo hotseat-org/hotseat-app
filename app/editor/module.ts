@@ -26,11 +26,11 @@ export interface EditorModule {
    */
   useData?(data: unknown): void
   /**
-   * Its store slice: the state and actions it adds (typed through
+   * Its part of the store: the state and actions it adds (typed through
    * defineModule; read with getModuleStoreHooks). A method, so a module's
-   * slice may see its own state.
+   * part may see its own state.
    */
-  createSlice?(set: SetState, get: GetState): object
+  createState?(set: SetState, get: GetState): object
   /**
    * New pieces — placed, pasted, duplicated, from a saved room — before they
    * join `existing`: what they keep of what they were copied from (a copied
@@ -79,12 +79,12 @@ export interface EditorModule {
 
 /** A layer of the map: shown or hidden from the Map menu. */
 /**
- * A module, typed with the state its slice adds: `set` and `get` see the
- * editor's state with it, and `createSlice` returns it whole.
+ * A module, typed with the state it adds: `set` and `get` see the
+ * editor's state with it, and `createState` returns it whole.
  */
 export const defineModule = <State extends object>(
-  module: Omit<EditorModule, "createSlice"> & {
-    createSlice?: (set: SetState<EditorState & State>, get: GetState<EditorState & State>) => State
+  module: Omit<EditorModule, "createState"> & {
+    createState?: (set: SetState<EditorState & State>, get: GetState<EditorState & State>) => State
   }
 ): EditorModule => module
 

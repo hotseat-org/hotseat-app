@@ -1,8 +1,8 @@
 import { type OfficeGetState, type OfficeSetState } from "./state"
 
 /** The office's panels: a desk's card, booking it on chosen days, Insights. */
-export interface OfficePanelsSlice {
-  /** Insights (admins): the dashboard's open state (its heatmap: see ViewSlice). */
+export interface OfficePanelsState {
+  /** Insights (admins): the dashboard's open state (its heatmap: see ViewState). */
   isInsightsOpen: boolean
   setInsightsOpen: (isOpen: boolean) => void
   /** View mode: the desk whose card is open (rendered in-scene, see SeatPopup). */
@@ -15,10 +15,10 @@ export interface OfficePanelsSlice {
   closeCustomBooking: () => void
 }
 
-export const createOfficePanelsSlice = (
+export const createOfficePanelsState = (
   set: OfficeSetState,
   _get: OfficeGetState
-): OfficePanelsSlice => ({
+): OfficePanelsState => ({
   isInsightsOpen: false,
   setInsightsOpen: (isInsightsOpen) => set({ isInsightsOpen }),
   seatCard: null,

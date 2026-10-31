@@ -73,7 +73,7 @@ const NO_BOOKING: Booking = {
   setPreference: () => {},
 }
 
-export interface BookingSlice {
+export interface BookingState {
   /** Desk booking for a real office (disabled in the standalone editor). */
   booking: Booking
   /** Replace the booking data/callbacks (from the route). Keeps the chosen day. */
@@ -87,7 +87,7 @@ export interface BookingSlice {
   applyFavorite: (deskId: string, isFavorite: boolean) => void
 }
 
-export const createBookingSlice = (set: OfficeSetState, _get: OfficeGetState): BookingSlice => ({
+export const createBookingState = (set: OfficeSetState, _get: OfficeGetState): BookingState => ({
   booking: NO_BOOKING,
   setBooking: (patch) => set((state) => ({ booking: { ...state.booking, ...patch } })),
   setBookingDay: (day) => set((state) => ({ booking: { ...state.booking, day } })),

@@ -21,7 +21,7 @@ export interface FloorArea {
   maxZ: number
 }
 
-export interface ViewSlice {
+export interface ViewState {
   /** Time of day in hours [0,24) driving the scene lighting. */
   timeOfDay: number
   /** Manually set the time of day — this stops following the real clock. */
@@ -65,7 +65,7 @@ export const nowHours = () => {
   return now.getHours() + now.getMinutes() / 60
 }
 
-export const createViewSlice = (set: SetState, get: GetState, hooks: StoreHooks): ViewSlice => ({
+export const createViewState = (set: SetState, get: GetState, hooks: StoreHooks): ViewState => ({
   // Server-safe default; the real time is applied on mount (client clock + TZ).
   timeOfDay: 13,
   setTimeOfDay: (hour) => set({ timeOfDay: ((hour % 24) + 24) % 24, syncTime: false }),

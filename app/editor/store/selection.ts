@@ -4,7 +4,7 @@ import { isEdgeType, isMarker, isRecolorable, type SceneObject } from "../types"
 import type { GetState, SetState, StoreHooks } from "./state"
 
 /** What's selected, and what's done to the whole selection. */
-export interface SelectionSlice {
+export interface SelectionState {
   /** Primary selection (the Inspector's target). */
   selectedId: string | null
   /**
@@ -16,7 +16,7 @@ export interface SelectionSlice {
   clipboard: SceneObject[]
   /** An in-progress box selection, in client (screen) pixels. */
   box: { startX: number; startY: number; endX: number; endY: number; additive: boolean } | null
-  setBox: (box: SelectionSlice["box"]) => void
+  setBox: (box: SelectionState["box"]) => void
   select: (id: string | null) => void
   /** Shift-click: add/remove furniture to/from the selection. */
   toggleSelect: (id: string) => void
@@ -54,11 +54,11 @@ export const syncSelection = (rawSet: SetState, get: GetState) => {
     rawSet({ selectedId: primary, selection: nextSelection })
 }
 
-export const createSelectionSlice = (
+export const createSelectionState = (
   set: SetState,
   get: GetState,
   hooks: StoreHooks
-): SelectionSlice => {
+): SelectionState => {
   // Furniture in the current selection (group ops skip walls/openings).
   const selectedFurniture = () => {
     const { selection, objects } = get()

@@ -21,7 +21,7 @@ export interface NewObject {
 }
 
 /** Placing, moving and turning single pieces. */
-export interface FurnitureSlice {
+export interface FurnitureState {
   addObject: (piece: NewObject) => string
   /** Several pieces in one step (one undo): any that would collide are skipped. */
   addObjects: (pieces: NewObject[]) => number
@@ -76,11 +76,11 @@ export const settleTurn = (rawSet: SetState, get: GetState) => {
   })
 }
 
-export const createFurnitureSlice = (
+export const createFurnitureState = (
   set: SetState,
   get: GetState,
   hooks: StoreHooks
-): FurnitureSlice => ({
+): FurnitureState => ({
   addObject: ({ type, x, z, rotation = 0, color, model }) => {
     // Don't place furniture inside existing furniture.
     if (furnitureCollides(get().objects, { type, x, z, rotation })) return ""
@@ -142,7 +142,7 @@ export const createFurnitureSlice = (
       rotation,
     })
     const turn = state.pendingTurn?.id === id ? state.pendingTurn : null
-    const composePendingTurn = (): FurnitureSlice["pendingTurn"] => {
+    const composePendingTurn = (): FurnitureState["pendingTurn"] => {
       const isInPlace = state.carryingId !== id
       if (!isInPlace) return state.pendingTurn
       if (!isOverlapping) return null

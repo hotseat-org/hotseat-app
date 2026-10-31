@@ -2,13 +2,13 @@ import type { Cell } from "../types"
 import type { GetState, SetState } from "./state"
 
 /** What's open over the office: menus, dialogs, cards and the tour. */
-export interface PanelsSlice {
+export interface PanelsState {
   /**
    * The right-click menu: where it opens (screen px), on which piece (null:
    * the floor), and the floor point under the pointer.
    */
   contextMenu: { x: number; y: number; targetId: string | null; point: Cell } | null
-  openContextMenu: (menu: NonNullable<PanelsSlice["contextMenu"]>) => void
+  openContextMenu: (menu: NonNullable<PanelsState["contextMenu"]>) => void
   closeContextMenu: () => void
   /** The command search (⌘K). */
   isCommandSearchOpen: boolean
@@ -18,7 +18,7 @@ export interface PanelsSlice {
   setTourOpen: (isOpen: boolean) => void
 }
 
-export const createPanelsSlice = (set: SetState, _get: GetState): PanelsSlice => ({
+export const createPanelsState = (set: SetState, _get: GetState): PanelsState => ({
   contextMenu: null,
   openContextMenu: (contextMenu) => set({ contextMenu }),
   closeContextMenu: () => set({ contextMenu: null }),

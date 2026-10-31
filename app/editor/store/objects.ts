@@ -3,7 +3,7 @@ import { isEdgeType, isWallMounted, type SceneObject } from "../types"
 import type { GetState, SetState, StoreHooks } from "./state"
 
 /** The layout as a whole. */
-export interface ObjectsSlice {
+export interface ObjectsState {
   objects: SceneObject[]
   /** Replace the whole scene (e.g. hydrating from a saved office layout). */
   load: (objects: SceneObject[]) => void
@@ -18,11 +18,11 @@ export const dropOrphanMounts = (objects: SceneObject[]) =>
     ? objects.filter((piece) => !isWallMounted(piece.type) || mountWalls(objects, piece))
     : objects
 
-export const createObjectsSlice = (
+export const createObjectsState = (
   set: SetState,
   _get: GetState,
   { initialObjects, hooks }: { initialObjects: SceneObject[]; hooks: StoreHooks }
-): ObjectsSlice => ({
+): ObjectsState => ({
   objects: initialObjects,
   load: (objects) => set({ objects: normalizeEdges(objects), selectedId: null }),
   clear: () => set({ objects: [], selectedId: null }),

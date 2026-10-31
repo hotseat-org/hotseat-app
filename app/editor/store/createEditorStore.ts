@@ -9,15 +9,15 @@ import { registerRenderers } from "../catalog/renderers"
 import { normalizeEdges } from "../layout"
 import type { EditorModule } from "../module"
 import type { SceneObject } from "../types"
-import { createFurnitureSlice, settleTurn } from "./furniture"
+import { createFurnitureState, settleTurn } from "./furniture"
 import { createHistory } from "./history"
-import { createObjectsSlice } from "./objects"
-import { createPanelsSlice } from "./panels"
-import { createSelectionSlice, syncSelection } from "./selection"
+import { createObjectsState } from "./objects"
+import { createPanelsState } from "./panels"
+import { createSelectionState, syncSelection } from "./selection"
 import type { EditorState, EditorStore, StoreHooks } from "./state"
-import { createToolsSlice } from "./tools"
-import { createViewSlice } from "./view"
-import { createWallsSlice } from "./walls"
+import { createToolsState } from "./tools"
+import { createViewState } from "./view"
+import { createWallsState } from "./walls"
 import { CORE_LAYERS, type Layers } from "./preferences"
 
 const makeInitializer =
@@ -25,7 +25,7 @@ const makeInitializer =
   (rawSet, get) => {
     // After every change: keep the selection to what exists, and settle a
     // piece turned into others once it's let go.
-    const { set, slice: history } = createHistory(rawSet, get, () => {
+    const { set, state: history } = createHistory(rawSet, get, () => {
       syncSelection(rawSet, get)
       settleTurn(rawSet, get)
     })
@@ -45,21 +45,21 @@ const makeInitializer =
         ),
       } as Layers,
     }
-    // The modules' slices (each typed through defineModule).
-    const moduleSlices = Object.assign(
+    // The modules' own state (each typed through defineModule).
+    const moduleStates = Object.assign(
       {},
-      ...modules.map((module) => module.createSlice?.(set, get) ?? {})
+      ...modules.map((module) => module.createState?.(set, get) ?? {})
     ) as EditorState
 
     return {
-      ...moduleSlices,
-      ...createObjectsSlice(set, get, { initialObjects, hooks }),
-      ...createFurnitureSlice(set, get, hooks),
-      ...createWallsSlice(set, get),
-      ...createSelectionSlice(set, get, hooks),
-      ...createToolsSlice(set, get),
-      ...createViewSlice(set, get, hooks),
-      ...createPanelsSlice(set, get),
+      ...moduleStates,
+      ...createObjectsState(set, get, { initialObjects, hooks }),
+      ...createFurnitureState(set, get, hooks),
+      ...createWallsState(set, get),
+      ...createSelectionState(set, get, hooks),
+      ...createToolsState(set, get),
+      ...createViewState(set, get, hooks),
+      ...createPanelsState(set, get),
       ...history,
     }
   }
@@ -80,7 +80,7 @@ interface CreateEditorStoreOptions {
   persistKey?: string
   /** Scene the store is born with (an office's saved layout), avoiding any load race. */
   initialObjects?: SceneObject[]
-  /** The modules this editor runs with (their slices and hooks). */
+  /** The modules this editor runs with (their state and hooks). */
   modules?: EditorModule[]
 }
 
