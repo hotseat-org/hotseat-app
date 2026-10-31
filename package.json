@@ -19,7 +19,7 @@
     "db:start": "docker compose up -d postgres",
     "db:stop": "docker compose stop postgres",
     "typecheck": "bun run typegen:worker && react-router typegen && tsc --project ./tsconfig.json",
-    "test": "bun test app/editor app/office app/examples",
+    "test": "bun test app/editor app/office app/examples app/utils",
     "deploy": "bun run build && wrangler deploy",
     "typegen:worker": "wrangler types --include-runtime=false",
     "i18n:check": "node scripts/i18n-check.mjs"

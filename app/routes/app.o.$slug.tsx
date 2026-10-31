@@ -4,7 +4,7 @@ import { getCore } from "~/core/get-core"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { requireProfile } from "~/utils/loader-helpers/requireProfile"
 import { loadOrgSettings } from "~/utils/loader-helpers/settings.server"
-import { revalidateOn } from "~/utils/revalidation"
+import { BOOKING_ACTIONS, revalidateOn } from "~/utils/revalidation"
 
 // Org-scoped data for the whole subtree (read via useOrganizationContext /
 // useProfile). The old colored org rail lived here — navigation now floats in
@@ -30,7 +30,11 @@ export const loader = async (args: LoaderFunctionArgs) => {
   return { organization, profile, organizations, orgSettings, notifications }
 }
 
-export const shouldRevalidate = revalidateOn({ params: ["slug"], settings: "org" })
+export const shouldRevalidate = revalidateOn({
+  params: ["slug"],
+  settings: "org",
+  unaffectedBy: [BOOKING_ACTIONS],
+})
 
 export default function OrgLayout() {
   // `?modal=new-office` opens the create-office modal over ANY org page (the

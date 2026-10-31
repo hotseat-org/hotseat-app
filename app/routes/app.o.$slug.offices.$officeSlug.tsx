@@ -16,7 +16,7 @@ import { z } from "zod"
 import { getCore } from "~/core/get-core"
 import { redirectToRenamedPage } from "~/utils/loader-helpers/redirectToRenamed"
 import { requireProfile } from "~/utils/loader-helpers/requireProfile"
-import { revalidateOn } from "~/utils/revalidation"
+import { NOTIFICATION_ACTIONS, revalidateOn } from "~/utils/revalidation"
 import { layoutSchema } from "~/office/schema"
 import { EditorBoundary } from "~/editor"
 import { type SceneObject, type Kit, type KitLibrary } from "~/editor/core"
@@ -144,7 +144,10 @@ export const loader = async (args: LoaderFunctionArgs) => {
 }
 
 // Opening settings, a sub-dialog or a create modal doesn't change the office.
-export const shouldRevalidate = revalidateOn({ params: ["slug", "officeSlug"] })
+export const shouldRevalidate = revalidateOn({
+  params: ["slug", "officeSlug"],
+  unaffectedBy: [NOTIFICATION_ACTIONS],
+})
 
 export type LayoutActionData =
   | { ok: true; cancelled: number; moved: number }

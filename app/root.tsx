@@ -24,7 +24,7 @@ import { getCore } from "~/core/get-core"
 import stylesheet from "~/styles/tailwind.css?url"
 import nunitoLatin from "~/styles/fonts/nunito-latin-wght-normal.woff2?url"
 import nunitoLatinExt from "~/styles/fonts/nunito-latin-ext-wght-normal.woff2?url"
-import { revalidateOn } from "~/utils/revalidation"
+import { BOOKING_ACTIONS, NOTIFICATION_ACTIONS, revalidateOn } from "~/utils/revalidation"
 import { LocaleProvider } from "~/i18n/useLocale"
 import { getLocale } from "~/i18n/locale.server"
 import { useI18n } from "~/i18n/I18nProvider"
@@ -235,4 +235,6 @@ export function ErrorBoundary() {
 }
 
 // Opening a settings/create modal over this page doesn't change its data.
-export const shouldRevalidate = revalidateOn()
+export const shouldRevalidate = revalidateOn({
+  unaffectedBy: [BOOKING_ACTIONS, NOTIFICATION_ACTIONS],
+})

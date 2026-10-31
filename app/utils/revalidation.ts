@@ -7,6 +7,11 @@ import type { ShouldRevalidateFunctionArgs } from "react-router"
  */
 const OVERLAY_PARAMS = ["settings", "dialog", "modal"]
 
+/** Actions that change an office's bookings (and its desk preferences): no one else's data. */
+export const BOOKING_ACTIONS = "/api/reservations/"
+/** Marking notifications read: only the bell's data (the organization layout's). */
+export const NOTIFICATION_ACTIONS = "/api/notifications"
+
 const without = (url: URL, keys: string[]) => {
   const params = new URLSearchParams(url.search)
   for (const k of keys) params.delete(k)
@@ -29,12 +34,19 @@ const panel = (url: URL, scope: string) => {
  * matched loader on every navigation).
  *
  * Mutations (form/fetcher submissions) and explicit `revalidate()` calls still
- * revalidate as usual.
+ * revalidate as usual — except after the actions in `unaffectedBy` (paths of
+ * actions that can't change this route's data: a booking doesn't change the
+ * user or the organization), which leave it as it is.
  */
 export const revalidateOn =
-  ({ params = [], settings }: { params?: string[]; settings?: "user" | "org" } = {}) =>
+  ({
+    params = [],
+    settings,
+    unaffectedBy = [],
+  }: { params?: string[]; settings?: "user" | "org"; unaffectedBy?: string[] } = {}) =>
   (args: ShouldRevalidateFunctionArgs) => {
-    const { currentUrl, nextUrl, currentParams, nextParams, formMethod } = args
+    const { currentUrl, nextUrl, currentParams, nextParams, formMethod, formAction } = args
+    if (formMethod && unaffectedBy.some((action) => formAction?.includes(action))) return false
     if (formMethod || currentUrl.href === nextUrl.href) return args.defaultShouldRevalidate
     if (params.some((k) => currentParams[k] !== nextParams[k])) return args.defaultShouldRevalidate
     if (without(currentUrl, OVERLAY_PARAMS) !== without(nextUrl, OVERLAY_PARAMS))

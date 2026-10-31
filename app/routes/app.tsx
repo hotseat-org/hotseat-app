@@ -6,7 +6,7 @@ import NewOrganization from "./api.new-organization"
 import { useSettings } from "~/components/settings/useSettings"
 import { requireUser } from "~/services/session.server"
 import { loadUserSettings } from "~/utils/loader-helpers/settings.server"
-import { revalidateOn } from "~/utils/revalidation"
+import { BOOKING_ACTIONS, NOTIFICATION_ACTIONS, revalidateOn } from "~/utils/revalidation"
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const user = await requireUser(request)
@@ -15,7 +15,10 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   return { userSettings: await loadUserSettings(request, user) }
 }
 
-export const shouldRevalidate = revalidateOn({ settings: "user" })
+export const shouldRevalidate = revalidateOn({
+  settings: "user",
+  unaffectedBy: [BOOKING_ACTIONS, NOTIFICATION_ACTIONS],
+})
 
 // The settings dialog's code (~170 KB) loads only when settings are opened.
 const SettingsOverlay = lazy(() =>
