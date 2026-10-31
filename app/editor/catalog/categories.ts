@@ -2,7 +2,7 @@ import type { ReactNode } from "react"
 import type { CatalogItem } from "../types"
 import { getTiles } from "./renderers"
 
-/** A Sims-style build category grouping related kinds. */
+/** A Sims-style build category grouping related items. */
 export interface CategoryDefinition {
   id: string
   /** Its name, translatable (msg). */
@@ -18,7 +18,7 @@ export interface CategoryDefinition {
 }
 
 export interface Category extends CategoryDefinition {
-  /** What it offers: its leading tools, then the kinds registered into it, in order. */
+  /** What it offers: its leading tools, then the items registered into it, in order. */
   types: CatalogItem[]
 }
 

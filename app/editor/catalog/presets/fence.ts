@@ -24,7 +24,7 @@ export const FENCE_ITEMS = {
 type FenceItems = typeof FENCE_ITEMS
 declare module "../registry" {
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-  interface ItemKinds extends FenceItems {}
+  interface CatalogItems extends FenceItems {}
 }
 
 registerItems(FENCE_ITEMS)

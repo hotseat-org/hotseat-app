@@ -8,7 +8,7 @@ const half = (type: ObjectType): [number, number] => [
   (getItem(type).footprint[1] * GRID) / 2,
 ]
 
-/** A kind without a symbol of its own: a plain box its size. */
+/** An item without a symbol of its own: a plain box its size. */
 const drawBox: DrawSymbol = ({ sketch, color, halfX, halfZ }) => {
   sketch.rect(-halfX + 0.04, -halfZ + 0.04, halfX - 0.04, halfZ - 0.04, color, 0.04)
   sketch.shadowRect(-halfX + 0.04, -halfZ + 0.04, halfX - 0.04, halfZ - 0.04, 0.04)

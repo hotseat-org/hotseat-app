@@ -64,13 +64,16 @@ const makeInitializer =
     }
   }
 
-/** The modules' kinds of pieces join the catalogue (registering again replaces). */
+/**
+ * The modules' items join the catalogue (registering again replaces): what
+ * each is goes to the items, how it looks to the renderers.
+ */
 const registerModuleCatalogs = (modules: EditorModule[]) => {
   for (const { catalog } of modules) {
     if (!catalog) continue
 
     registerItems(catalog.items ?? {})
-    registerRenderers(catalog.renderers ?? {})
+    registerRenderers(catalog.items ?? {})
     registerCategories(catalog.categories ?? [])
   }
 }

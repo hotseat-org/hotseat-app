@@ -44,7 +44,7 @@ export interface SceneObject extends ObjectFields {
   variant?: number
 }
 
-/** A tool that places a piece (a registered kind, not a data marker). */
+/** A tool that places a piece (a registered item, not a data marker). */
 export const isObjectType = (tool: Tool): tool is ObjectType => {
   const item = findItem(tool)
 

@@ -1,5 +1,4 @@
-import { FURNITURE_ITEMS } from "./catalog/furniture"
-import { FURNITURE_CATEGORIES, FURNITURE_RENDERERS } from "./catalog/furniture.render"
+import { FURNITURE, FURNITURE_CATEGORIES } from "./catalog/furniture.render"
 import "./slots/objectFields"
 import { useOfficePieceStyles, useOfficePlanDrawings } from "./plan/drawings"
 import { OfficePlanOverlays, OfficeRoutePath } from "./plan/layers"
@@ -22,11 +21,7 @@ import { defineModule } from "~/editor"
  */
 export const officeModule = defineModule<OfficeState>({
   id: "office",
-  catalog: {
-    items: FURNITURE_ITEMS,
-    renderers: FURNITURE_RENDERERS,
-    categories: FURNITURE_CATEGORIES,
-  },
+  catalog: { items: FURNITURE, categories: FURNITURE_CATEGORIES },
   useData: useOfficeData,
   createState: createOfficeState,
   prepareNewPieces: prepareNewOfficePieces,

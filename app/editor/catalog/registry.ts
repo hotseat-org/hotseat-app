@@ -1,10 +1,10 @@
 /**
- * The catalogue: every kind of piece the editor knows, and what its logic
+ * The catalogue: every item the editor knows, and what its logic
  * needs to know about each (rendering is registered apart, see renderers.ts).
- * The editor knows no kinds of its own: presets register them (presets/) —
+ * The editor knows no items of its own: presets register them (presets/) —
  * the structure (walls, doors, windows), furniture, and whatever an
- * integrator adds — and extend `ItemKinds`, so `ObjectType` stays a checked
- * union of exactly the registered kinds.
+ * integrator adds — and extend `CatalogItems`, so `ObjectType` stays a checked
+ * union of exactly the registered items.
  */
 
 /**
@@ -30,7 +30,7 @@ export interface EdgeTraits {
   hosts?: readonly string[]
 }
 
-/** A kind of piece: everything the editor's logic needs to know about it (rendering is registered apart). */
+/** An item: everything the editor's logic needs to know about it (rendering is registered apart). */
 export interface ItemDefinition {
   mount: Mount
   /** Footprint in grid squares [x, z], before turning. */
@@ -43,7 +43,7 @@ export interface ItemDefinition {
   hasLooks: boolean
   /** Floor décor that other furniture may stand on (a rug). */
   isUnderlay: boolean
-  /** Copied (duplicated, pasted) like any piece; not a kind no longer placed. */
+  /** Copied (duplicated, pasted) like any piece; not an item no longer placed. */
   isCopyable: boolean
   edge?: EdgeTraits
   /** What integrators mark it as — the office module's "desk", for one. */
@@ -66,17 +66,17 @@ export const defineItem = <const T extends Definition>(definition: T) =>
   ({ ...DEFAULTS, ...definition }) as Omit<typeof DEFAULTS, keyof T> & T
 
 /**
- * Every registered kind, by type. Presets extend it with their definitions'
- * types (`declare module`), so a new kind is checked wherever types are.
+ * Every registered item, by type. Presets extend it with their definitions'
+ * types (`declare module`), so a new item is checked wherever types are.
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface ItemKinds {}
+export interface CatalogItems {}
 
-export type ObjectType = keyof ItemKinds & string
+export type ObjectType = keyof CatalogItems & string
 
-/** The kinds whose edge traits match `T` (e.g. `{ role: "run" }`), as a type. */
+/** The items whose edge traits match `T` (e.g. `{ role: "run" }`), as a type. */
 type EdgeTypeWith<T> = {
-  [K in ObjectType]: ItemKinds[K] extends { edge: T } ? K : never
+  [K in ObjectType]: CatalogItems[K] extends { edge: T } ? K : never
 }[ObjectType]
 /** Wall runs (solid or glass) — what an opening is cut into. */
 export type WallType = EdgeTypeWith<{ role: "run" }>
@@ -85,12 +85,12 @@ export type OpeningType = EdgeTypeWith<{ role: "opening" }>
 
 const definitions = new Map<string, ItemDefinition>()
 
-/** Add kinds to the catalogue (a preset, or an integrator's own). Later ones replace earlier. */
+/** Add items to the catalogue (a preset, or an integrator's own). Later ones replace earlier. */
 export const registerItems = (items: Record<string, ItemDefinition>) => {
   for (const [type, definition] of Object.entries(items)) definitions.set(type, definition)
 }
 
-/** Every registered kind, in the order registered (the catalogue's order). */
+/** Every registered item, in the order registered (the catalogue's order). */
 export const getItemTypes = () => [...definitions.keys()] as ObjectType[]
 
 export const getItem = (type: ObjectType): ItemDefinition => {

@@ -85,6 +85,7 @@ import { Whiteboard } from "../objects/tech/Whiteboard"
 import { Workstation } from "../objects/tables/Workstation"
 import { DeskmatePreview } from "../objects/pets/DeskmatePreview"
 import { FURNITURE_SYMBOLS } from "./furnitureSymbols"
+import { FURNITURE_ITEMS } from "./furniture"
 import {
   BathroomIcon,
   DecorIcon,
@@ -95,13 +96,13 @@ import {
   SeatingIcon,
   StorageIcon,
   TablesIcon,
+  composeItemsWithLooks,
   type CategoryDefinition,
-  type ItemRenderer,
 } from "~/editor"
-import { DESK, type ObjectType } from "~/editor/core"
+import { DESK } from "~/editor/core"
 import { msg } from "~/i18n/msg"
 
-// In catalogue order: each category offers its kinds in the order registered.
+// In catalogue order: each category offers its items in the order registered.
 /** A desk's screen, in its Desk's space (see objects/tables/Desk.tsx), a hair in front — for a Desk this far back. */
 const screenAt = (deskOffset: number) => [
   {
@@ -112,8 +113,12 @@ const screenAt = (deskOffset: number) => [
 /** A lamp's bulb: inside a pendant's bulb, inside a floor lamp's shade. */
 const bulbAt = (height: number) => [{ kind: "bulb" as const, position: [0, height, 0] as const }]
 
-/** How the furniture looks: its 3D model, plan symbol and catalogue tile. */
-export const FURNITURE_RENDERERS: { [Type in ObjectType]?: ItemRenderer } = {
+/**
+ * The office's furniture as the module brings it: each item (furniture.ts,
+ * kept apart for the server) with how it looks — its 3D model, plan symbol
+ * and catalogue tile.
+ */
+export const FURNITURE = composeItemsWithLooks(FURNITURE_ITEMS, {
   // The one bookable desk: a desk with its chair (what people book is a seat).
   workstation: {
     Mesh: Workstation,
@@ -334,7 +339,7 @@ export const FURNITURE_RENDERERS: { [Type in ObjectType]?: ItemRenderer } = {
     drawSymbol: FURNITURE_SYMBOLS.deskmate,
     tile: { label: msg("Desk with pet"), icon: PawPrintIcon },
   },
-}
+})
 
 /** The catalogue's sections for furniture, after the editor's own. */
 export const FURNITURE_CATEGORIES: CategoryDefinition[] = [

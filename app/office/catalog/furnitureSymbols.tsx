@@ -5,7 +5,7 @@ import { type ObjectType } from "~/editor/core"
 
 /**
  * Furniture for the simple (top-down) view, drawn like a furnished floor
- * plan: each kind's symbol in its own frame (see plan/sketch.tsx). Null: not
+ * plan: each item's symbol in its own frame (see plan/sketch.tsx). Null: not
  * drawn on the plan (ceiling lights — they'd cover the room).
  */
 

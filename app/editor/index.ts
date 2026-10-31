@@ -43,12 +43,14 @@ export {
 } from "./store"
 export type { GetState, SetState } from "./store/state"
 
-// How the catalogue's kinds look and where they're listed.
+// How the catalogue's items look and where they're listed.
 export {
+  composeItemsWithLooks,
   getTiles,
   registerRenderers,
   type ItemRenderer,
   type ItemTile,
+  type ItemWithLooks,
   type MeshProps,
 } from "./catalog/renderers"
 export {

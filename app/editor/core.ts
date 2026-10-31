@@ -10,7 +10,7 @@
  * and `createTestEditor` (testing a module) from `~/editor/testing`.
  */
 
-// The catalogue: kinds of pieces, their traits, and the editor's presets.
+// The catalogue: items, their traits, and the editor's presets.
 export * from "./catalog"
 
 // Placed pieces and the traits asked about them.

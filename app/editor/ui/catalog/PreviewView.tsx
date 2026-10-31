@@ -23,7 +23,7 @@ import {
   useThumbnail,
 } from "./thumbnails"
 
-/** A kind's own thumbnail model if it has one (see ItemRenderer.Thumbnail), else its mesh. */
+/** An item's own thumbnail model if it has one (see ItemRenderer.Thumbnail), else its mesh. */
 const Thumbnail = ({ type, color }: { type: ObjectType; color?: string }) => {
   const { Thumbnail: Own } = getRenderer(type)
 

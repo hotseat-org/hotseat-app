@@ -14,7 +14,7 @@ const runCommand = (store: ReturnType<typeof createNotesEditor>["store"], id: st
 }
 
 describe("the notes module", () => {
-  test("brings its kind of piece, its look and its catalogue section", () => {
+  test("brings its item, with its looks, and its catalogue section", () => {
     createNotesEditor()
 
     expect(getItem("note").tags).toContain("note")

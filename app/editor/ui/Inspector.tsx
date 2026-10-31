@@ -24,7 +24,7 @@ export const Inspector = () => {
   const select = useEditorStore((state) => state.select)
   const shuffleLook = useEditorStore((state) => state.shuffleLook)
   const selection = useEditorStore((state) => state.selection)
-  // Some kinds aren't copied (retired desks: a copy would place one anew).
+  // Some items aren't copied (retired desks: a copy would place one anew).
   const hasUncopyable = useEditorStore((state) =>
     state.selection.some((id) => {
       const object = state.objects.find((candidate) => candidate.id === id)

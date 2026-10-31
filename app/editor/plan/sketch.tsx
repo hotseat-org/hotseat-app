@@ -157,11 +157,11 @@ export class Sketch {
   }
 }
 
-/** What a kind's symbol is drawn with. */
+/** What an item's symbol is drawn with. */
 export interface SymbolContext {
   sketch: Sketch
   object: SceneObject
-  /** Its colour: its own, else its kind's. */
+  /** Its colour: its own, else its item's. */
   color: string
   /** Half its footprint (m), before turning. */
   halfX: number
@@ -171,5 +171,5 @@ export interface SymbolContext {
   state: PieceState
 }
 
-/** Draws one kind's top-down symbol, in its own frame (front = +Z). */
+/** Draws one item's top-down symbol, in its own frame (front = +Z). */
 export type DrawSymbol = (context: SymbolContext) => PieceDrawing

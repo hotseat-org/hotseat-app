@@ -12,11 +12,11 @@ export interface ToolMeta {
 }
 
 /**
- * Every tool: Select and Room, each kind with a tile in the catalogue (see
+ * Every tool: Select and Room, each item with a tile in the catalogue (see
  * ItemRenderer.tile, registered by the presets), and Erase.
  */
 let tools: ToolMeta[] | null = null
-/** Built on first use, once every preset has registered its kinds. */
+/** Built on first use, once every preset has registered its items. */
 export const getTools = (): ToolMeta[] =>
   (tools ??= [
     { tool: "select", label: msg("Select"), icon: MousePointer2, key: "1" },

@@ -78,7 +78,7 @@ export const FURNITURE_ITEMS = {
 type FurnitureItems = typeof FURNITURE_ITEMS
 declare module "~/editor/catalog/registry" {
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-  interface ItemKinds extends FurnitureItems {}
+  interface CatalogItems extends FurnitureItems {}
 }
 
 // Registered here as well as through the office module: the server asks the

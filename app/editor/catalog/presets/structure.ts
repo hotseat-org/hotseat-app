@@ -78,7 +78,7 @@ export const STRUCTURE_ITEMS = {
 type StructureItems = typeof STRUCTURE_ITEMS
 declare module "../registry" {
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-  interface ItemKinds extends StructureItems {}
+  interface CatalogItems extends StructureItems {}
 }
 
 registerItems(STRUCTURE_ITEMS)

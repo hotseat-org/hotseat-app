@@ -1,6 +1,8 @@
 /// <reference types="bun" />
 import { describe, expect, test } from "bun:test"
-import { canHost, getEdge, getItem, getItemTypes, hasTag, type ObjectType } from "."
+import type { ReactElement } from "react"
+import { composeItemsWithLooks } from "./renderers"
+import { canHost, defineItem, getEdge, getItem, getItemTypes, hasTag, type ObjectType } from "."
 
 describe("the catalogue", () => {
   test("walls, glass, doors and windows all close rooms", () => {
@@ -43,5 +45,20 @@ describe("trait questions about tools that place no piece", () => {
       expect(types.hasLooks(tool)).toBe(false)
       expect(getEdge(tool)).toBeUndefined()
     }
+  })
+})
+
+describe("items with their looks", () => {
+  test("keep the looks' order: it's the catalogue's", () => {
+    const Mesh = () => null as unknown as ReactElement
+    const items = {
+      first: defineItem({ footprint: [1, 1], defaultColor: "#000" }),
+      second: defineItem({ footprint: [1, 1], defaultColor: "#000" }),
+    }
+
+    const composed = composeItemsWithLooks(items, { second: { Mesh }, first: { Mesh } })
+
+    expect(Object.keys(composed)).toEqual(["second", "first"])
+    expect(composed.first.footprint).toEqual([1, 1])
   })
 })

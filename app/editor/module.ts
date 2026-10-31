@@ -1,8 +1,7 @@
 import type { ComponentType, ReactNode, RefObject } from "react"
 import type { LucideIcon } from "lucide-react"
 import type { CategoryDefinition } from "./catalog/categories"
-import type { ItemDefinition, ObjectType } from "./catalog/registry"
-import type { ItemRenderer } from "./catalog/renderers"
+import type { ItemWithLooks } from "./catalog/renderers"
 import type { Frame } from "./plan/useFraming"
 import type { View } from "./plan/planView"
 import type { EditorState, GetState, SetState } from "./store/state"
@@ -13,11 +12,11 @@ import type { Translator } from "~/i18n/translate"
 
 /**
  * An editor module: what it adds to an editor instance (see office/module.ts)
- * — the kinds of pieces it brings, and its behaviour.
+ * — the items it brings, and its behaviour.
  */
 export interface EditorModule {
   id: string
-  /** The kinds of pieces it brings: registered when an editor starts with it. */
+  /** The items it adds to the catalogue: registered when an editor starts with it. */
   catalog?: ModuleCatalog
   /**
    * Takes in what the app passes it (`moduleData[id]` on the Editor) — run as
@@ -89,14 +88,13 @@ export const defineModule = <State extends object>(
 ): EditorModule => module
 
 /**
- * A module's kinds of pieces: what they are, how they look, and the catalogue
- * sections they're offered in (after the editor's own). Kinds are app-wide:
- * where the server needs their traits (no editor there), register the items
- * there too, headless (`registerItems` from ~/editor/core).
+ * What a module adds to the catalogue: its items, each with its looks, and
+ * the categories they're offered in (after the editor's own). Items are
+ * app-wide: where the server needs their traits (no editor there), register
+ * them there too, headless (`registerItems` from ~/editor/core).
  */
 export interface ModuleCatalog {
-  items?: Record<string, ItemDefinition>
-  renderers?: { [Type in ObjectType]?: ItemRenderer }
+  items?: Record<string, ItemWithLooks>
   categories?: CategoryDefinition[]
 }
 

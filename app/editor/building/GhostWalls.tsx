@@ -9,7 +9,7 @@ import { buildRuns, type Run } from "../walls/Walls"
 import { GhostObject } from "./GhostObject"
 
 interface Props {
-  /** The wall segments to preview (walls and glass merged into runs; other kinds piece by piece). */
+  /** The wall segments to preview (walls and glass merged into runs; other items piece by piece). */
   edges: (WallCell & {
     type: WallType
     /** Its own colour, for a translucent ghost (a saved room's painted walls). */

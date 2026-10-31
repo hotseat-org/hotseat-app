@@ -1,6 +1,5 @@
 import { List, StickyNote } from "lucide-react"
-import { NOTE_ITEMS, isNote } from "./catalog"
-import { NOTE_CATEGORIES, NOTE_RENDERERS } from "./looks"
+import { NOTE_CATEGORIES, NOTE_ITEMS, isNote } from "./items"
 import { createNotesState, useNotesStore, type NotesState } from "./store"
 import { GROUP, defineModule, selectAll, type Command, type EditorState } from "~/editor"
 import { useI18n } from "~/i18n/I18nProvider"
@@ -44,13 +43,13 @@ const NotesList = () => {
 }
 
 /**
- * The smallest useful module, as an example to start from: one kind of
- * piece (a note on the floor) with its own catalogue section, its own
+ * The smallest useful module, as an example to start from: one item
+ * (a note on the floor) with its own catalogue section, its own
  * state, two commands and a panel. Not part of the app — see notes.test.ts.
  */
 export const notesModule = defineModule<NotesState>({
   id: "notes",
-  catalog: { items: NOTE_ITEMS, renderers: NOTE_RENDERERS, categories: NOTE_CATEGORIES },
+  catalog: { items: NOTE_ITEMS, categories: NOTE_CATEGORIES },
   createState: createNotesState,
   commands: NOTES_COMMANDS,
   panels: [{ Component: NotesList, when: "always" }],

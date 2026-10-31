@@ -1,6 +1,6 @@
 /**
  * Testing a module without a browser: an editor's store with the module's
- * kinds registered and its state in place, and a way to put pieces down.
+ * items registered and its state in place, and a way to put pieces down.
  */
 import type { StoreApi } from "zustand"
 import type { EditorModule } from "./module"
