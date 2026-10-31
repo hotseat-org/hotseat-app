@@ -16,7 +16,7 @@ import clsx from "clsx"
 import { themeSessionResolver } from "./services/theme.server"
 import { schemeCookie } from "./cookies"
 import { SchemeProvider, useScheme } from "./utils/hooks/useScheme"
-import { DEFAULT_SCHEME, isSchemeId } from "./utils/schemes"
+import { DEFAULT_SCHEME, getSchemeBackground, isSchemeId, type SchemeId } from "./utils/schemes"
 import { isAuthenticated } from "./services/session.server"
 import { CenteredScreen } from "~/components/ui/CenteredScreen"
 import { getCore } from "~/core/get-core"
@@ -98,6 +98,7 @@ const App = () => {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <ThemeColor scheme={scheme} theme={theme} />
         <Meta />
         <PreventFlashOnWrongTheme ssrTheme={Boolean(data.theme)} />
         <Links />
@@ -110,6 +111,29 @@ const App = () => {
     </html>
   )
 }
+
+/**
+ * The browser's colour round the page (a phone's status bar, its cutout):
+ * the scheme's background in the chosen theme — or, following the system,
+ * one for each.
+ */
+const ThemeColor = ({ scheme, theme }: { scheme: SchemeId; theme: string | null }) =>
+  theme === "light" || theme === "dark" ? (
+    <meta name="theme-color" content={getSchemeBackground(scheme, theme)} />
+  ) : (
+    <>
+      <meta
+        name="theme-color"
+        media="(prefers-color-scheme: light)"
+        content={getSchemeBackground(scheme, "light")}
+      />
+      <meta
+        name="theme-color"
+        media="(prefers-color-scheme: dark)"
+        content={getSchemeBackground(scheme, "dark")}
+      />
+    </>
+  )
 
 /**
  * App-wide error page (404s from loaders, unexpected errors) in the app's own
@@ -153,6 +177,7 @@ export function ErrorBoundary() {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <ThemeColor scheme={data?.scheme ?? DEFAULT_SCHEME} theme={data?.theme ?? null} />
         {!data?.theme && (
           <script
             dangerouslySetInnerHTML={{

@@ -603,6 +603,17 @@ input:-webkit-autofill:focus {
    tabs, native selects/checkboxes etc. need it here. In the base layer, so an
    explicit cursor-* utility still wins; disabled things keep the arrow. */
 @layer base {
+  /* The page's own colour, the scheme's background: what a phone shows round
+     its cutout and in landscape's side bars (unset, they can show black). */
+  html {
+    background-color: var(--background);
+    color-scheme: light;
+  }
+  html.dark,
+  html[data-theme="dark"] {
+    color-scheme: dark;
+  }
+
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
   a[href],

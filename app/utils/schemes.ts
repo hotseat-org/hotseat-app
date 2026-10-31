@@ -65,3 +65,7 @@ export const SCHEMES: Scheme[] = [
     dark: { background: "#161117", surface: "#28202a", border: "#3e3241", accent: "#c497d6" },
   },
 ]
+
+/** A scheme's background for a theme: the page's colour (theme-color, see root.tsx). */
+export const getSchemeBackground = (id: SchemeId, theme: "light" | "dark") =>
+  (SCHEMES.find((scheme) => scheme.id === id) ?? SCHEMES[0])[theme].background
