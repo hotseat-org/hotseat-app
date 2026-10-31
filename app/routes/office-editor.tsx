@@ -6,7 +6,11 @@ import { metaTranslator } from "~/i18n/translate"
 import { useI18n } from "~/i18n/I18nProvider"
 
 // three / R3F are browser-only — keep them out of the server bundle.
-const OfficeEditor = lazy(() => import("~/office/OfficeEditor.client"))
+const loadOfficeEditor = () => import("~/office/OfficeEditor.client")
+// In the browser, the editor (the biggest download) starts loading with this
+// page's own code — not after hydration, when <ClientOnly> first renders it.
+if (typeof window !== "undefined") void loadOfficeEditor()
+const OfficeEditor = lazy(loadOfficeEditor)
 
 export const meta: MetaFunction = ({ matches }) => [
   { title: `${metaTranslator(matches).t("Office Editor")} · Hotseat` },

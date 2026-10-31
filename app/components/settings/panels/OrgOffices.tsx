@@ -52,6 +52,7 @@ export function OrgOffices() {
               />
               <Link
                 to={`/app/o/${slug}/offices/${office.slug}`}
+                prefetch="intent"
                 onClick={close}
                 className="min-w-0 flex-1 hover:underline"
               >

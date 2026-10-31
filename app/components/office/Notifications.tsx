@@ -68,7 +68,7 @@ export const NotificationsBell = ({ triggerClassName }: { triggerClassName: stri
                 return (
                   <li key={n.id}>
                     {n.link ? (
-                      <Link to={n.link} className={className}>
+                      <Link to={n.link} prefetch="intent" className={className}>
                         {body}
                       </Link>
                     ) : (

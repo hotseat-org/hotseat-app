@@ -2,7 +2,7 @@ import { Popover, Tooltip } from "@heroui/react"
 import { Building2, ChevronDown, Plus, Settings, Star } from "lucide-react"
 import { useEffect, useState, type ReactNode } from "react"
 import { createPortal } from "react-dom"
-import { Link, useFetcher, useNavigate, useParams } from "react-router"
+import { Link, PrefetchPageLinks, useFetcher, useNavigate, useParams } from "react-router"
 import { MOBILE_CHROME } from "./mobile"
 import { PANEL, ThumbAvatar, type ShellOffice } from "./shell-ui"
 import { useSettings } from "~/components/settings/useSettings"
@@ -203,6 +203,7 @@ const OrgMenu = ({
             lead={<OrgLogo src={o.thumbnailUrl} name={o.name} className="size-9 rounded-xl" />}
             label={o.name}
             sub={orgDetail(d.i18n, o)}
+            prefetchPath={`/app/o/${o.slug}`}
             onClick={() => onGo(`/app/o/${o.slug}`)}
           />
         ))}
@@ -276,6 +277,7 @@ const OfficeMenu = ({
                     />
                   )
                 }
+                prefetchPath={`/app/o/${d.slug}/offices/${o.slug}`}
                 onClick={() => onGo(`/app/o/${d.slug}/offices/${o.slug}`)}
               />
             ))}
@@ -496,13 +498,18 @@ const SectionLabel = ({ children }: { children: ReactNode }) => (
   </p>
 )
 
-/** A menu row: leading visual, label (+ optional sublabel), trailing slot. */
+/**
+ * A menu row: leading visual, label (+ optional sublabel), trailing slot.
+ * Going to `prefetchPath`, the page's code and data start loading as soon
+ * as it's hovered, focused or touched — often ready by the click.
+ */
 const Row = ({
   lead,
   label,
   sub,
   trail,
   active,
+  prefetchPath,
   onClick,
 }: {
   lead: ReactNode
@@ -510,23 +517,33 @@ const Row = ({
   sub?: string
   trail?: ReactNode
   active?: boolean
+  prefetchPath?: string
   onClick: () => void
-}) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className={`flex w-full items-center gap-3 rounded-xl px-2 py-1.5 text-left transition-colors ${
-      active ? "bg-accent/12 text-accent" : "text-foreground hover:bg-foreground/5"
-    }`}
-  >
-    {lead}
-    <span className="min-w-0 flex-1">
-      <span className="block truncate text-sm font-semibold">{label}</span>
-      {sub && <span className="block truncate text-xs text-muted">{sub}</span>}
-    </span>
-    {trail}
-  </button>
-)
+}) => {
+  const [isIntended, setIsIntended] = useState(false)
+  const intend = () => setIsIntended(true)
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      onPointerEnter={intend}
+      onFocus={intend}
+      onTouchStart={intend}
+      className={`flex w-full items-center gap-3 rounded-xl px-2 py-1.5 text-left transition-colors ${
+        active ? "bg-accent/12 text-accent" : "text-foreground hover:bg-foreground/5"
+      }`}
+    >
+      {lead}
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-semibold">{label}</span>
+        {sub && <span className="block truncate text-xs text-muted">{sub}</span>}
+      </span>
+      {trail}
+      {prefetchPath && isIntended && <PrefetchPageLinks page={prefetchPath} />}
+    </button>
+  )
+}
 
 const OfficeThumb = ({ o }: { o: ShellOffice }) => (
   <ThumbAvatar

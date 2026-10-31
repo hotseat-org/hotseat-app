@@ -87,6 +87,7 @@ export const JoinProblem = ({ title, children }: { title: string; children: Reac
         <p className="mt-2 text-muted">{children}</p>
         <Link
           to="/app"
+          prefetch="intent"
           className="mt-6 inline-flex rounded-xl bg-accent/15 px-4 py-2.5 text-sm font-bold text-accent hover:bg-accent/25"
         >
           {t("Back to Hotseat")}

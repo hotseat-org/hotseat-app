@@ -34,8 +34,14 @@ import type { EditorModule, SaveOptions } from "./module"
 import { ModulesContext, useModules } from "./modules"
 import { ContourBackdrop } from "~/components/ui/ContourBackdrop"
 
-// three.js + the whole scene load only when the 3D view is shown.
-const SceneCanvas = lazy(() => import("./scene/SceneCanvas"))
+// three.js and the whole scene: their own chunk, loaded apart from the editor.
+const loadSceneCanvas = () => import("./scene/SceneCanvas")
+// Where the 3D view is likely (not a phone, which shows the plan), its code
+// starts loading with the editor's, instead of when it first renders.
+if (typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches)
+  void loadSceneCanvas()
+
+const SceneCanvas = lazy(loadSceneCanvas)
 
 export interface EditorProps {
   /** The modules this editor runs with (fixed for its life). */
