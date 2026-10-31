@@ -616,6 +616,7 @@ export const cs: Messages = {
     "Kanceláře organizace. Smazáním kanceláře zmizí její rozvržení i rezervace.",
   Account: "Účet",
   office: "kancelář",
+  "All settings": "Všechna nastavení",
   "Close settings": "Zavřít nastavení",
   "Close (Esc)": "Zavřít (Esc)",
 

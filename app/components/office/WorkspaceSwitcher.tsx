@@ -189,7 +189,7 @@ const OrgMenu = ({
         d.isAdmin
           ? () => {
               onClose()
-              d.openSettings("org", "general")
+              d.openSettings("org")
             }
           : undefined
       }
@@ -252,7 +252,7 @@ const OfficeMenu = ({
             d.isAdmin
               ? () => {
                   onClose()
-                  d.openSettings("office", "general")
+                  d.openSettings("office")
                 }
               : undefined
           }

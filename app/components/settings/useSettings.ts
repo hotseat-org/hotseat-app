@@ -31,7 +31,9 @@ export function useSettings() {
     string | undefined,
   ]
   const scope: SettingsScope | undefined = officeMatch ? "office" : paramScope
-  const section = officeMatch ? (officeMatch.params.section ?? "general") : paramSection
+  // Unset: no section picked yet (a phone shows the list of them; a larger
+  // screen, the first).
+  const section = officeMatch ? officeMatch.params.section : paramSection
   const dialog = searchParams.get("dialog") ?? undefined
 
   const officeUrl = `/app/o/${slug}/offices/${officeSlug}`
@@ -46,15 +48,17 @@ export function useSettings() {
     [searchParams]
   )
 
+  /** Open a scope's settings — at a section, or (none given) at the list of them. */
   const open = useCallback(
-    (nextScope: SettingsScope, nextSection: string) => {
+    (nextScope: SettingsScope, nextSection?: string) => {
+      const sectionPath = nextSection ? `/${nextSection}` : ""
       if (nextScope === "office") {
-        navigate(`${officeUrl}/settings/${nextSection}${searchWithout("settings", "dialog")}`)
+        navigate(`${officeUrl}/settings${sectionPath}${searchWithout("settings", "dialog")}`)
         return
       }
       setSearchParams((prev) => {
         const next = new URLSearchParams(prev)
-        next.set("settings", `${nextScope}/${nextSection}`)
+        next.set("settings", `${nextScope}${sectionPath}`)
         next.delete("dialog")
         return next
       })
@@ -62,10 +66,12 @@ export function useSettings() {
     [navigate, officeUrl, searchWithout, setSearchParams]
   )
 
+  /** Pick a section; null goes back to the list of them (a phone's). */
   const selectSection = useCallback(
-    (nextSection: string) => {
+    (nextSection: string | null) => {
+      const sectionPath = nextSection ? `/${nextSection}` : ""
       if (officeMatch) {
-        navigate(`${officeUrl}/settings/${nextSection}${searchWithout("dialog")}`, {
+        navigate(`${officeUrl}/settings${sectionPath}${searchWithout("dialog")}`, {
           replace: true,
         })
         return
@@ -74,7 +80,7 @@ export function useSettings() {
         (prev) => {
           const next = new URLSearchParams(prev)
           const [currentScope] = next.get("settings")?.split("/") ?? []
-          next.set("settings", `${currentScope}/${nextSection}`)
+          next.set("settings", `${currentScope}${sectionPath}`)
           next.delete("dialog")
           return next
         },

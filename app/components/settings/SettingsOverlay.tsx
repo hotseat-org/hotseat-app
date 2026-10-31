@@ -99,7 +99,7 @@ const officePanels: Record<string, ReactNode> = {
   danger: <OfficeDanger />,
 }
 
-function UserSettings({ section }: { section: string }) {
+function UserSettings({ section }: { section?: string }) {
   const { selectSection, close } = useSettings()
   const user = useUser()
   const { t } = useI18n()
@@ -125,12 +125,12 @@ function UserSettings({ section }: { section: string }) {
       onSelect={selectSection}
       onClose={close}
     >
-      {userPanels[section] ?? userPanels.profile}
+      {(section && userPanels[section]) || userPanels.profile}
     </SettingsShell>
   )
 }
 
-function OrgSettings({ section }: { section: string }) {
+function OrgSettings({ section }: { section?: string }) {
   const { slug } = useParams()
   const { selectSection, close } = useSettings()
   const { organization, organizations, profile } = useOrganizationContext()
@@ -193,7 +193,7 @@ function OrgSettings({ section }: { section: string }) {
       onSelect={selectSection}
       onClose={close}
     >
-      {orgPanels[section] ?? orgPanels.general}
+      {(section && orgPanels[section]) || orgPanels.general}
     </SettingsShell>
   )
 }
@@ -203,7 +203,7 @@ function OrgSettings({ section }: { section: string }) {
  * (/app/o/:slug/offices/:officeSlug/settings/:section) as a child of the office,
  * so it opens over the office scene.
  */
-export function OfficeSettings({ section }: { section: string }) {
+export function OfficeSettings({ section }: { section?: string }) {
   const { officeSlug } = useParams()
   const { selectSection, close } = useSettings()
   const { organization } = useOrganizationContext()
@@ -231,7 +231,7 @@ export function OfficeSettings({ section }: { section: string }) {
       onSelect={selectSection}
       onClose={close}
     >
-      {officePanels[section] ?? officePanels.general}
+      {(section && officePanels[section]) || officePanels.general}
     </SettingsShell>
   )
 }
@@ -244,8 +244,8 @@ export function OfficeSettings({ section }: { section: string }) {
 export function SettingsOverlay() {
   const { scope, section } = useSettings()
 
-  if (scope === "user") return <UserSettings section={section ?? "profile"} />
-  if (scope === "org") return <OrgSettings section={section ?? "general"} />
+  if (scope === "user") return <UserSettings section={section} />
+  if (scope === "org") return <OrgSettings section={section} />
 
   return null
 }

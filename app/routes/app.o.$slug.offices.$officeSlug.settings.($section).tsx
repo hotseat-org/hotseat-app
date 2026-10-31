@@ -25,5 +25,5 @@ export const loader = async (args: LoaderFunctionArgs) => {
 export const shouldRevalidate = revalidateOn({ params: ["slug", "officeSlug", "section"] })
 
 export default function OfficeSettingsRoute({ params }: Route.ComponentProps) {
-  return <OfficeSettings section={params.section ?? "general"} />
+  return <OfficeSettings section={params.section} />
 }

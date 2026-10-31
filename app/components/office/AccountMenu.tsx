@@ -60,20 +60,12 @@ export const AccountMenu = ({ isFlat = false }: { isFlat?: boolean }) => {
             <ThemeSwitcher />
           </div>
           <div className="flex flex-col border-t border-separator pt-1">
-            <button
-              type="button"
-              onClick={() => act(() => openSettings("user", "profile"))}
-              className={item}
-            >
+            <button type="button" onClick={() => act(() => openSettings("user"))} className={item}>
               {t("User settings")} <Cog className="size-3.5 text-muted" />
             </button>
             {/* Organization settings are an admin's. */}
             {profile.role === Role.ADMIN && (
-              <button
-                type="button"
-                onClick={() => act(() => openSettings("org", "general"))}
-                className={item}
-              >
+              <button type="button" onClick={() => act(() => openSettings("org"))} className={item}>
                 {t("Organization")} <Users className="size-3.5 text-muted" />
               </button>
             )}
