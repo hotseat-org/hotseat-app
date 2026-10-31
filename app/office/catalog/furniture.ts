@@ -81,4 +81,6 @@ declare module "~/editor/catalog/registry" {
   interface ItemKinds extends FurnitureItems {}
 }
 
+// Registered here as well as through the office module: the server asks the
+// furniture's traits (isSeatable) without an editor.
 registerItems(FURNITURE_ITEMS)

@@ -1,4 +1,5 @@
-import "./catalog/rendering"
+import { FURNITURE_ITEMS } from "./catalog/furniture"
+import { FURNITURE_CATEGORIES, FURNITURE_RENDERERS } from "./catalog/furniture.render"
 import "./slots/objectFields"
 import { useOfficePieceStyles, useOfficePlanDrawings } from "./plan/drawings"
 import { OfficePlanOverlays, OfficeRoutePath } from "./plan/layers"
@@ -20,6 +21,11 @@ import { type EditorModule } from "~/editor"
  */
 export const officeModule: EditorModule = {
   id: "office",
+  catalog: {
+    items: FURNITURE_ITEMS,
+    renderers: FURNITURE_RENDERERS,
+    categories: FURNITURE_CATEGORIES,
+  },
   createSlice: createOfficeSlice,
   prepareNewPieces: prepareNewOfficePieces,
   sceneLayers: OFFICE_SCENE_LAYERS,

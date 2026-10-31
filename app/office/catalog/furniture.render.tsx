@@ -95,10 +95,10 @@ import {
   SeatingIcon,
   StorageIcon,
   TablesIcon,
-  registerCategories,
-  registerRenderers,
+  type CategoryDefinition,
+  type ItemRenderer,
 } from "~/editor"
-import { DESK } from "~/editor/core"
+import { DESK, type ObjectType } from "~/editor/core"
 import { msg } from "~/i18n/msg"
 
 // In catalogue order: each category offers its kinds in the order registered.
@@ -112,7 +112,8 @@ const screenAt = (deskOffset: number) => [
 /** A lamp's bulb: inside a pendant's bulb, inside a floor lamp's shade. */
 const bulbAt = (height: number) => [{ kind: "bulb" as const, position: [0, height, 0] as const }]
 
-registerRenderers({
+/** How the furniture looks: its 3D model, plan symbol and catalogue tile. */
+export const FURNITURE_RENDERERS: { [Type in ObjectType]?: ItemRenderer } = {
   // The one bookable desk: a desk with its chair (what people book is a seat).
   workstation: {
     Mesh: Workstation,
@@ -333,9 +334,10 @@ registerRenderers({
     drawSymbol: FURNITURE_SYMBOLS.deskmate,
     tile: { label: msg("Desk with pet"), icon: PawPrintIcon },
   },
-})
+}
 
-registerCategories([
+/** The catalogue's sections for furniture, after the editor's own. */
+export const FURNITURE_CATEGORIES: CategoryDefinition[] = [
   {
     id: "desks",
     label: msg("Desks"),
@@ -387,4 +389,4 @@ registerCategories([
     label: msg("Decor"),
     icon: DecorIcon,
   },
-])
+]

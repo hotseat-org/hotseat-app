@@ -3,6 +3,9 @@
 // duplicated React and crashed useStore (blank canvas on some refreshes).
 import { createStore, type StateCreator } from "zustand"
 import { persist } from "zustand/middleware"
+import { registerCategories } from "../catalog/categories"
+import { registerItems } from "../catalog/registry"
+import { registerRenderers } from "../catalog/renderers"
 import { normalizeEdges } from "../layout"
 import type { EditorModule } from "../module"
 import type { SceneObject } from "../types"
@@ -61,6 +64,17 @@ const makeInitializer =
     }
   }
 
+/** The modules' kinds of pieces join the catalogue (registering again replaces). */
+const registerModuleCatalogs = (modules: EditorModule[]) => {
+  for (const { catalog } of modules) {
+    if (!catalog) continue
+
+    registerItems(catalog.items ?? {})
+    registerRenderers(catalog.renderers ?? {})
+    registerCategories(catalog.categories ?? [])
+  }
+}
+
 interface CreateEditorStoreOptions {
   /** localStorage key (standalone editor). Omit for DB-backed offices. */
   persistKey?: string
@@ -80,6 +94,7 @@ export const createEditorStore = ({
   initialObjects = [],
   modules = [],
 }: CreateEditorStoreOptions = {}): EditorStore => {
+  registerModuleCatalogs(modules)
   const initializer = makeInitializer(normalizeEdges(initialObjects), modules)
 
   return persistKey

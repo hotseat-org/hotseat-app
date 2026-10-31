@@ -24,9 +24,16 @@ export interface Category extends CategoryDefinition {
 
 const categories: CategoryDefinition[] = []
 
-/** Add categories to the catalogue, after those already there. */
+/**
+ * Add categories to the catalogue, after those already there. One already
+ * registered (by id) is replaced where it stands.
+ */
 export const registerCategories = (definitions: CategoryDefinition[]) => {
-  categories.push(...definitions)
+  for (const definition of definitions) {
+    const index = categories.findIndex((category) => category.id === definition.id)
+    if (index === -1) categories.push(definition)
+    else categories[index] = definition
+  }
 }
 
 /** The catalogue's categories with what each offers. */
