@@ -26,16 +26,13 @@ const deskText = ({ t }: Translator, label?: string) =>
 export const MyBookings = ({
   onClose,
   onShow,
-  isScreen = false,
-  style,
+  isSheet = false,
 }: {
   onClose: () => void
   /** After Show moved the map to a booking (the phone switches to its Office tab). */
   onShow?: () => void
-  /** Phones: a whole screen between the shell's header and tab bar, no close button. */
-  isScreen?: boolean
-  /** Placement for `isScreen`. */
-  style?: React.CSSProperties
+  /** Phones: inside a bottom sheet, which brings the title and closing. */
+  isSheet?: boolean
 }) => {
   const { slug, officeSlug } = useParams()
   const i18n = useI18n()
@@ -69,11 +66,11 @@ export const MyBookings = ({
   }, [cancel.data, cancel.state, load, url])
 
   useEffect(() => {
-    if (isScreen) return
+    if (isSheet) return
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose()
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
-  }, [onClose, isScreen])
+  }, [onClose, isSheet])
 
   const data = list.data && !("error" in list.data) ? list.data : undefined
   const error = list.data && "error" in list.data ? list.data.error : undefined
@@ -119,15 +116,17 @@ export const MyBookings = ({
     <section
       aria-label={t("My bookings")}
       className={clsx(
-        PANEL,
-        "absolute flex flex-col p-4",
-        isScreen ? "inset-x-3" : "bottom-24 left-[5.75rem] top-24 w-[340px]"
+        "flex flex-col",
+        isSheet
+          ? "min-h-0 flex-1"
+          : clsx(PANEL, "absolute bottom-24 left-[5.75rem] top-24 w-[340px] p-4")
       )}
-      style={isScreen ? style : undefined}
     >
       <header className="mb-3 flex items-start justify-between">
         <div>
-          <h2 className="text-lg font-extrabold text-foreground">{t("My bookings")}</h2>
+          {!isSheet && (
+            <h2 className="text-lg font-extrabold text-foreground">{t("My bookings")}</h2>
+          )}
           <p className="text-xs text-muted">
             {data
               ? count
@@ -136,7 +135,7 @@ export const MyBookings = ({
               : t("Loading…")}
           </p>
         </div>
-        {!isScreen && <CloseButton aria-label={t("Close my bookings")} onPress={onClose} />}
+        {!isSheet && <CloseButton aria-label={t("Close my bookings")} onPress={onClose} />}
       </header>
 
       <div className="-mx-1 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-1">
@@ -179,7 +178,7 @@ export const MyBookings = ({
             <div>
               <p className="text-sm font-bold text-foreground">{t("No upcoming bookings")}</p>
               <p className="mt-0.5 text-xs text-muted">
-                {isScreen
+                {isSheet
                   ? t("Pick a day at the bottom of the Office tab, then tap a free desk.")
                   : t("Pick a day at the bottom, then click a free desk on the map.")}
               </p>

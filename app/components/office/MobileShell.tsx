@@ -1,18 +1,16 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
-import { createPortal } from "react-dom"
+import { useEffect, useMemo, useRef, useState } from "react"
 import clsx from "clsx"
-import { Building2, CalendarDays, MapPin, Pin, Users } from "lucide-react"
+import { Building2, CalendarDays, Layers, MapPin, Pin, Users } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
-import { MemberAvatar, PANEL, nameOf, type ShellMember, type ShellOffice } from "./shell-ui"
+import { MemberAvatar, nameOf, type ShellMember, type ShellOffice } from "./shell-ui"
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher"
 import { AccountMenu } from "./AccountMenu"
 import { MyBookings } from "./MyBookings"
 import { NotificationsBell } from "./Notifications"
 import { WeekDots } from "./WeekDots"
 import { MOBILE_CHROME } from "./mobile"
-import { SheetCloseButton } from "./SheetCloseButton"
-import { useSwipeToClose } from "./useSwipeToClose"
-import { MapMenu, SidePanelBadge, useSidePanels } from "~/editor"
+import { BottomSheet } from "~/components/ui/BottomSheet"
+import { MapLayerSwitches, SidePanelBadge, useMapLayerRows, useSidePanels } from "~/editor"
 import { useOfficeStore } from "~/office/store"
 import { MonthCalendar } from "~/office/booking/DateStepper"
 import {
@@ -37,10 +35,6 @@ const TOP_BAR_HEIGHT = MOBILE_CHROME.top
 const TAB_BAR_HEIGHT = 68
 /** The day dock above the tab bar (Office tab), px. */
 const DAY_DOCK_HEIGHT = MOBILE_CHROME.bottom - TAB_BAR_HEIGHT
-/** Bookings / People screens: between the top bar and the tab bar, with a gap, px. */
-const SCREEN_INSETS = { top: TOP_BAR_HEIGHT + 8, bottom: TAB_BAR_HEIGHT + 8 }
-/** A sheet's slide-out (the `sheet-down` animation in tailwind.css), ms. */
-const SHEET_EXIT_MS = 140
 
 interface Props {
   offices: ShellOffice[]
@@ -54,33 +48,39 @@ interface Props {
  * The office on a phone: the plan full-screen between a slim top bar (office
  * switcher, account) and, at the bottom where a thumb reaches, the day dock —
  * your desk for the shown day, Today, the calendar and the strip of days —
- * over a tab bar: Office, Bookings, People. View and book only: no editing on
- * a phone. Sizes match MOBILE_CHROME, which the plan fits the office between.
+ * over a tab bar: Office, and Bookings and People, which open as sheets over
+ * the office, above the tab bar (it stays, to switch). View and book only: no editing on a phone. Sizes match MOBILE_CHROME,
+ * which the plan fits the office between.
  */
 export const MobileShell = ({ offices, me, members, empty = false }: Props) => {
-  const [tab, setTab] = useState<Tab>("office")
+  const { t } = useI18n()
+  // The sheet over the office (Bookings, People); none, the office itself.
+  const [sheet, setSheet] = useState<Exclude<Tab, "office"> | null>(null)
+  const closeSheet = () => setSheet(null)
 
   if (empty) return <TopBar offices={offices} />
 
   return (
     <>
       <TopBar offices={offices} />
-      {tab === "office" && (
-        <>
-          <MapButtons />
-          <DayDock me={me} />
-        </>
+      <MapButtons />
+      <DayDock me={me} />
+      {sheet === "bookings" && (
+        <BottomSheet
+          title={t("My bookings")}
+          isTall
+          bottomInset={TAB_BAR_HEIGHT}
+          onClose={closeSheet}
+        >
+          {(close) => <MyBookings isSheet onClose={close} onShow={close} />}
+        </BottomSheet>
       )}
-      {tab === "bookings" && (
-        <MyBookings
-          isScreen
-          style={SCREEN_INSETS}
-          onClose={() => setTab("office")}
-          onShow={() => setTab("office")}
-        />
+      {sheet === "people" && (
+        <BottomSheet title={t("Who's in")} isTall bottomInset={TAB_BAR_HEIGHT} onClose={closeSheet}>
+          {(close) => <People me={me} members={members} onFind={close} />}
+        </BottomSheet>
       )}
-      {tab === "people" && <People me={me} members={members} onFind={() => setTab("office")} />}
-      <TabBar tab={tab} onChange={setTab} />
+      <TabBar tab={sheet ?? "office"} onChange={(tab) => setSheet(tab === "office" ? null : tab)} />
     </>
   )
 }
@@ -201,68 +201,6 @@ const DayDock = ({ me }: { me: ShellMember }) => {
   )
 }
 
-/**
- * A sheet up from the bottom of the screen: its title, a close button, and
- * what it holds — given `close`, which slides it away before it goes.
- */
-const BottomSheet = ({
-  title,
-  onClose,
-  children,
-}: {
-  title: string
-  onClose: () => void
-  children: (close: () => void) => ReactNode
-}) => {
-  const { t } = useI18n()
-  const [isClosing, setIsClosing] = useState(false)
-  const close = () => {
-    setIsClosing(true)
-    window.setTimeout(onClose, SHEET_EXIT_MS)
-  }
-  const swipe = useSwipeToClose(close)
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => event.key === "Escape" && close()
-    window.addEventListener("keydown", onKey)
-
-    return () => window.removeEventListener("keydown", onKey)
-  }, [])
-
-  // Portalled: the dock's backdrop blur would otherwise be the fixed sheet's
-  // containing block, squeezing it into the dock.
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex flex-col justify-end">
-      <button
-        type="button"
-        aria-label={t("Close")}
-        className="absolute inset-0 bg-scrim"
-        onClick={close}
-      />
-      <div className="relative flex max-h-[85dvh] flex-col" style={swipe.style}>
-        <section
-          role="dialog"
-          aria-label={title}
-          className={clsx(
-            "flex min-h-0 flex-col gap-3 rounded-t-3xl border-t border-border bg-overlay px-5 pb-7 pt-2.5 shadow-overlay",
-            isClosing ? "sheet-down" : "sheet-up"
-          )}
-        >
-          {/* The top: swipe it down to close. */}
-          <div {...swipe.bind()} className="flex shrink-0 touch-none flex-col gap-3">
-            <span aria-hidden className="mx-auto h-1.5 w-10 rounded-full bg-border" />
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-extrabold text-foreground">{title}</h2>
-              <SheetCloseButton label={t("Close")} onClose={close} className="size-10" />
-            </div>
-          </div>
-          <div className="flex min-h-0 flex-col overflow-y-auto">{children(close)}</div>
-        </section>
-      </div>
-    </div>,
-    document.body
-  )
-}
-
 /** The month calendar (as on the desktop) as a bottom sheet; picking a day closes it. */
 const CalendarSheet = ({ onClose }: { onClose: () => void }) => {
   const setDay = useOfficeStore((s) => s.setBookingDay)
@@ -291,6 +229,9 @@ const CalendarSheet = ({ onClose }: { onClose: () => void }) => {
 const MapButtons = () => {
   const { t } = useI18n()
   const { entries, openPanel, toggle, close } = useSidePanels(false)
+  // A phone always shows the plan: no 3D-only rows.
+  const { changedCount } = useMapLayerRows({ is3d: false })
+  const [isMapOpen, setIsMapOpen] = useState(false)
 
   return (
     <div
@@ -322,8 +263,28 @@ const MapButtons = () => {
           </button>
         )
       })}
-      {/* A phone always shows the plan: no 3D-only rows. */}
-      <MapMenu variant="compact" is3d={false} />
+      <button
+        type="button"
+        aria-label={t("Show on the map")}
+        aria-expanded={isMapOpen}
+        onClick={() => setIsMapOpen(true)}
+        className={clsx(
+          "relative grid size-10 shrink-0 place-items-center rounded-lg transition-colors",
+          changedCount > 0 ? "bg-accent/15 text-accent" : "text-foreground hover:bg-foreground/10"
+        )}
+      >
+        <Layers className="size-4" />
+        {changedCount > 0 && (
+          <span className="absolute left-5 top-0">
+            <SidePanelBadge count={changedCount} />
+          </span>
+        )}
+      </button>
+      {isMapOpen && (
+        <BottomSheet title={t("Show on the map")} onClose={() => setIsMapOpen(false)}>
+          {() => <MapLayerSwitches is3d={false} />}
+        </BottomSheet>
+      )}
       {openPanel && (
         <BottomSheet title={t(openPanel.label)} onClose={close}>
           {(closeSheet) => <openPanel.Component isEditing={false} close={closeSheet} />}
@@ -416,13 +377,8 @@ const People = ({
   const inCount = roster.filter((r) => r.at).length
 
   return (
-    <section
-      aria-label={t("Who's in")}
-      className={`${PANEL} absolute inset-x-3 flex flex-col p-4`}
-      style={SCREEN_INSETS}
-    >
+    <div className="flex min-h-0 flex-1 flex-col">
       <header className="mb-3">
-        <h2 className="text-lg font-extrabold text-foreground">{t("Who's in")}</h2>
         <p className="text-xs text-muted">
           {day === today ? t("Today") : i18n.format.long(day)} ·{" "}
           {t("{in} of {total} in the office", { in: inCount, total: members.length })}
@@ -476,7 +432,7 @@ const People = ({
           ))}
         </ul>
       )}
-    </section>
+    </div>
   )
 }
 

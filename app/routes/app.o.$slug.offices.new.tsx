@@ -1,4 +1,4 @@
-import { Modal, Spinner } from "@heroui/react"
+import { Spinner } from "@heroui/react"
 import {
   useFetcher,
   useNavigate,
@@ -12,6 +12,7 @@ import { ImagePlus } from "lucide-react"
 import { z } from "zod"
 import { Button } from "~/components/Button"
 import {
+  CreateDialog,
   BannerClose,
   ContourBanner,
   IMAGE_TYPES,
@@ -90,67 +91,58 @@ export const NewOffice = () => {
   const isCreating = create.state !== "idle"
 
   return (
-    <Modal
-      isOpen
-      onOpenChange={(isOpen) => {
-        if (!isOpen) close()
-      }}
-    >
-      <Modal.Backdrop>
-        <Modal.Container>
-          <Modal.Dialog className="overflow-hidden p-0">
-            <create.Form method="POST" action={action}>
-              <input type="hidden" name="thumbnail" value={cover.id ?? ""} />
-              <ContourBanner image={cover.preview} className="h-[190px]">
-                <BannerClose onPress={close} />
-                {/* The whole banner picks the photo; the pill says so. */}
-                <label className="absolute inset-0 flex cursor-pointer items-center justify-center">
-                  <input
-                    type="file"
-                    accept={IMAGE_TYPES}
-                    className="sr-only"
-                    onChange={(e) => cover.pick(e.target.files?.[0])}
-                  />
-                  <span className="inline-flex h-[38px] items-center gap-2 rounded-full border border-border bg-overlay/90 px-4 text-[13px] font-extrabold text-foreground shadow-sm">
-                    {cover.isUploading ? <Spinner size="sm" /> : <ImagePlus size={16} />}
-                    {cover.preview ? t("Change cover photo") : t("Add a cover photo")}
-                  </span>
-                </label>
-              </ContourBanner>
-              <div className="flex flex-col gap-5 px-[30px] pt-[26px] pb-7">
-                <TitleNameField
-                  label={t("New office")}
-                  placeholder={t("Name your office")}
-                  name={name}
-                  onChange={setName}
-                  path="…/offices/"
-                  slug={officeSlugForName(name)}
-                  availability={availability}
-                />
-                <p className="text-[13px] leading-normal text-muted">
-                  {t("Next you'll lay out its floor, from a template or a blank plan.")}
-                </p>
-                <div className="flex justify-end gap-2.5">
-                  <Button variant="ghost" type="button" onPress={close}>
-                    {t("Cancel")}
-                  </Button>
-                  <Button
-                    type="submit"
-                    name="intent"
-                    value={Intent.CREATE_OFFICE}
-                    isDisabled={availability !== "available" || cover.isUploading}
-                    isPending={isCreating}
-                    variant="primary"
-                  >
-                    {t("Create office")}
-                  </Button>
-                </div>
-              </div>
-            </create.Form>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
-    </Modal>
+    <CreateDialog label={t("New office")} onClose={close}>
+      {(closeDialog) => (
+        <create.Form method="POST" action={action}>
+          <input type="hidden" name="thumbnail" value={cover.id ?? ""} />
+          <ContourBanner image={cover.preview} className="h-[190px]">
+            <BannerClose onPress={closeDialog} />
+            {/* The whole banner picks the photo; the pill says so. */}
+            <label className="absolute inset-0 flex cursor-pointer items-center justify-center">
+              <input
+                type="file"
+                accept={IMAGE_TYPES}
+                className="sr-only"
+                onChange={(e) => cover.pick(e.target.files?.[0])}
+              />
+              <span className="inline-flex h-[38px] items-center gap-2 rounded-full border border-border bg-overlay/90 px-4 text-[13px] font-extrabold text-foreground shadow-sm">
+                {cover.isUploading ? <Spinner size="sm" /> : <ImagePlus size={16} />}
+                {cover.preview ? t("Change cover photo") : t("Add a cover photo")}
+              </span>
+            </label>
+          </ContourBanner>
+          <div className="flex flex-col gap-5 px-[30px] pt-[26px] pb-7">
+            <TitleNameField
+              label={t("New office")}
+              placeholder={t("Name your office")}
+              name={name}
+              onChange={setName}
+              path="…/offices/"
+              slug={officeSlugForName(name)}
+              availability={availability}
+            />
+            <p className="text-[13px] leading-normal text-muted">
+              {t("Next you'll lay out its floor, from a template or a blank plan.")}
+            </p>
+            <div className="flex justify-end gap-2.5">
+              <Button variant="ghost" type="button" onPress={closeDialog}>
+                {t("Cancel")}
+              </Button>
+              <Button
+                type="submit"
+                name="intent"
+                value={Intent.CREATE_OFFICE}
+                isDisabled={availability !== "available" || cover.isUploading}
+                isPending={isCreating}
+                variant="primary"
+              >
+                {t("Create office")}
+              </Button>
+            </div>
+          </div>
+        </create.Form>
+      )}
+    </CreateDialog>
   )
 }
 

@@ -1,10 +1,12 @@
-import { Spinner } from "@heroui/react"
+import { Modal, Spinner } from "@heroui/react"
 import { useDebounce } from "@uidotdev/usehooks"
 import clsx from "clsx"
 import { Check, X } from "lucide-react"
 import { useEffect, useState, type ReactNode } from "react"
 import { useFetcher } from "react-router"
 import { uploadImage } from "~/components/Inputs/ImageUpload"
+import { BottomSheet } from "~/components/ui/BottomSheet"
+import { useIsMobile } from "~/utils/hooks/useIsMobile"
 import { useI18n } from "~/i18n/I18nProvider"
 
 /**
@@ -122,6 +124,39 @@ export const ContourBanner = ({
     {children}
   </div>
 )
+
+/**
+ * A create dialog (a new organization, a new office): centred on larger
+ * screens, a sheet up from the bottom on a phone. Its content gets `close`,
+ * which slides a sheet away before it goes.
+ */
+export const CreateDialog = ({
+  label,
+  onClose,
+  children,
+}: {
+  label: string
+  onClose: () => void
+  children: (close: () => void) => ReactNode
+}) => {
+  const isMobile = useIsMobile()
+  if (isMobile)
+    return (
+      <BottomSheet label={label} isFlush onClose={onClose}>
+        {children}
+      </BottomSheet>
+    )
+
+  return (
+    <Modal isOpen onOpenChange={(isOpen) => !isOpen && onClose()}>
+      <Modal.Backdrop>
+        <Modal.Container>
+          <Modal.Dialog className="overflow-hidden p-0">{children(onClose)}</Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
+    </Modal>
+  )
+}
 
 /** Round "×" over the banner. */
 export const BannerClose = ({ onPress }: { onPress: () => void }) => {
