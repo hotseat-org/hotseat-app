@@ -7,6 +7,8 @@ import { BATCH_PART, materialKey, useBatchChanged, type AnyMaterial } from "./ba
 
 /** Mark a subtree (e.g. an animated model) to be left out of baking. */
 export const NO_BAKE = { noBake: true }
+/** Marks our merged output (to tell it from the originals it stands for). */
+export const BAKED_OUTPUT = { isBakedOutput: true }
 
 interface Part {
   key: string
@@ -189,7 +191,7 @@ export const Baked = ({
   return (
     <group ref={root}>
       {children}
-      <group ref={output}>
+      <group ref={output} userData={BAKED_OUTPUT}>
         {parts.map((part) => (
           <mesh
             key={part.key + part.geometry.uuid}

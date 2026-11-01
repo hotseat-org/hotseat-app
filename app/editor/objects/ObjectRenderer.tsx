@@ -1,6 +1,6 @@
 import { memo, useContext, useEffect, useLayoutEffect, useRef, useState } from "react"
 import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber"
-import { Box3, MathUtils, Vector3, type Group } from "three"
+import { MathUtils, type BufferGeometry, type Group } from "three"
 import {
   GRID,
   isEdgeType,
@@ -23,6 +23,7 @@ import { PieceContext } from "./pieceContext"
 import { WALL } from "./dimensions"
 import { FootprintPlinth } from "./FootprintPlinth"
 import { Baked } from "./Baked"
+import { composeHitShape } from "./hitShape"
 
 const ERASE = "#ef4444"
 
@@ -58,9 +59,8 @@ interface Props {
 
 const isFurniture = (object: SceneObject) => !isEdgeType(object.type)
 /** Seconds for a rotation to swing round (with a little overshoot). */
-/** A piece's hit box's height until its model is measured, and the most it may be (m). */
+/** A piece's hit box's height until its model is measured (m). */
 const DEFAULT_HIT_HEIGHT = 0.8
-const MAX_HIT_HEIGHT = 2.2
 
 /** Doors, windows and wall items are sliced with their wall by the cursor cutaway. */
 const getCutaway = (type: SceneObject["type"]) => {
@@ -105,8 +105,8 @@ export const ObjectRenderer = memo(function ObjectRenderer({
   wallBack,
 }: Props) {
   const [hovered, setHovered] = useState(false)
-  // How tall the piece stands (its hit box's height), measured from its model.
-  const [hitHeight, setHitHeight] = useState(DEFAULT_HIT_HEIGHT)
+  // What it's picked by, measured from its model (see composeHitShape).
+  const [hitShape, setHitShape] = useState<BufferGeometry | null>(null)
   // View mode: desks are clickable (seat card).
   const clickable = !interactive && !!onViewClick
   // Edit mode: with the Select tool, everything that renders here (furniture,
@@ -167,14 +167,18 @@ export const ObjectRenderer = memo(function ObjectRenderer({
 
   // "Grabbed" animation: lift + tilt (as if hoisted by a corner) + gentle sway.
   const lifted = useRef<Group>(null)
-  // Its hit box stands as tall as its model (measured where it stands, so a
-  // floor gliding to another doesn't skew it).
+  // Measured in its own frame, so a floor gliding to another doesn't skew it.
   useLayoutEffect(() => {
     const model = lifted.current
-    if (!model || carried) return
+    const frame = turned.current
+    if (!model || !frame || carried) return
 
-    const top = new Box3().setFromObject(model).max.y - model.getWorldPosition(new Vector3()).y
-    if (Number.isFinite(top) && top > 0.05) setHitHeight(Math.min(top, MAX_HIT_HEIGHT))
+    const shape = composeHitShape(model, frame)
+    if (!shape) return
+
+    setHitShape(shape)
+
+    return () => shape.dispose()
   }, [object.type, object.model, object.variant, carried])
   const amount = useRef(0)
   useFrame((state, delta) => {
@@ -321,24 +325,14 @@ export const ObjectRenderer = memo(function ObjectRenderer({
         </CutawayContext.Provider>
         {showErase && <GhostObject type={object.type} tint={ERASE} scale={1.06} />}
       </group>
-      {/* The whole piece is clickable, not just its mesh: an invisible box
-          over its footprint, as tall as it is — so the pointer can't slip
-          between a desk's legs to the desk behind. Rugs: a plane a hair over
-          the floor, so what stands on them wins. Overhead and wall items have
-          furniture under their footprint, so they're picked by their mesh only. */}
+      {/* The whole piece is clickable, not just its mesh: invisible columns
+          under its parts, so the pointer can't slip between a desk's legs to
+          the desk behind (a box over the footprint until it's measured). Rugs:
+          a plane a hair over the floor, so what stands on them wins. Overhead
+          and wall items have furniture under their footprint, so they're
+          picked by their mesh only. */}
       {isFurniture(object) && !isOverhead(object.type) && !isWallMounted(object.type) && (
-        <mesh
-          visible={false}
-          position={[0, isUnderlay ? 0.006 : hitHeight / 2, 0]}
-          rotation={isUnderlay ? [-Math.PI / 2, 0, 0] : undefined}
-        >
-          {isUnderlay ? (
-            <planeGeometry args={outline} />
-          ) : (
-            <boxGeometry args={[outline[0], hitHeight, outline[1]]} />
-          )}
-          <meshBasicMaterial />
-        </mesh>
+        <HitShape shape={isUnderlay ? null : hitShape} outline={outline} isUnderlay={isUnderlay} />
       )}
       <FootprintPlinth
         width={outline[0]}
@@ -349,3 +343,36 @@ export const ObjectRenderer = memo(function ObjectRenderer({
     </group>
   )
 })
+
+/** What a piece is picked by: its measured shape, or a stand-in over its footprint. */
+const HitShape = ({
+  shape,
+  outline,
+  isUnderlay,
+}: {
+  shape: BufferGeometry | null
+  outline: [number, number]
+  isUnderlay?: boolean
+}) => {
+  if (shape)
+    return (
+      <mesh visible={false} geometry={shape}>
+        <meshBasicMaterial />
+      </mesh>
+    )
+
+  if (isUnderlay)
+    return (
+      <mesh visible={false} position-y={0.006} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={outline} />
+        <meshBasicMaterial />
+      </mesh>
+    )
+
+  return (
+    <mesh visible={false} position-y={DEFAULT_HIT_HEIGHT / 2}>
+      <boxGeometry args={[outline[0], DEFAULT_HIT_HEIGHT, outline[1]]} />
+      <meshBasicMaterial />
+    </mesh>
+  )
+}
