@@ -49,10 +49,11 @@ interface Cell {
   parts: Part[]
 }
 
-/** A mesh to merge, placed in the batch's own space. */
+/** A mesh to merge, placed in the batch's own space, and all its merge depends on. */
 interface Source {
   mesh: Mesh
   toBatch: Matrix4
+  signature: string
 }
 
 /** The cutaway a material is sliced by, if any (marked by Surface). */
@@ -81,16 +82,58 @@ const getKindKey = (mesh: Mesh) => {
   return `${surfaceKey(material)}|${material.opacity}|${mesh.castShadow}|${mesh.receiveShadow}|${cutawayOf(material) ?? ""}`
 }
 
-/** All a cell's merge depends on: its meshes, their looks and where they stand. */
-const getSignature = (sources: Source[]) =>
-  sources
-    .map(({ mesh, toBatch }) => {
-      const material = mesh.material as AnyMaterial
-      const placement = toBatch.elements.map((value) => value.toFixed(4)).join(",")
+/** All a mesh's part in the merge depends on: its shape, its look and where it stands. */
+const describe = (mesh: Mesh, toBatch: Matrix4) => {
+  const material = mesh.material as AnyMaterial
+  const placement = toBatch.elements.map((value) => value.toFixed(4)).join(",")
 
-      return `${mesh.uuid}:${mesh.geometry.uuid}:${material.uuid}:${materialKey(material)}:${getKindKey(mesh)}:${placement}`
-    })
-    .join(";")
+  return `${mesh.uuid}:${mesh.geometry.uuid}:${material.uuid}:${materialKey(material)}:${getKindKey(mesh)}:${placement}`
+}
+
+/** All a cell's merge depends on. */
+const getSignature = (sources: Source[]) => sources.map((source) => source.signature).join(";")
+
+/**
+ * Each mesh's geometry as the merge takes it — placed, coloured, cut — kept
+ * while the mesh is the same: a cell rebuilt for one piece that changed only
+ * joins the others' again (most of a rebuild was preparing them).
+ */
+const preparedGeometries = new WeakMap<Mesh, { signature: string; geometry: BufferGeometry }>()
+
+const getPrepared = ({ mesh, toBatch, signature }: Source) => {
+  const known = preparedGeometries.get(mesh)
+  if (known?.signature === signature) return known.geometry
+
+  const copy = mesh.geometry.clone()
+  // Not its bounds: placed, they'd be measured again (the merge measures its own).
+  copy.boundingBox = null
+  copy.boundingSphere = null
+  const colored = withColor(
+    copy.applyMatrix4(toBatch),
+    (mesh.material as Material & { color: Color }).color
+  )
+  const cutaway = cutawayOf(mesh.material as Material)
+  // Cut by the wall cutaway: each vertex keeps its piece's anchor (its
+  // origin) and the way it runs (its local X), as its own mesh gave them.
+  const elements = toBatch.elements
+  const geometry = cutaway
+    ? setCutAttributes(
+        colored,
+        new Vector3().setFromMatrixPosition(toBatch),
+        cutDirectionOf(elements[0], elements[2])
+      )
+    : colored
+  preparedGeometries.set(mesh, { signature, geometry })
+
+  return geometry
+}
+
+/** Into a map of lists: onto the list at `key` (begun if there's none). */
+const addTo = <Item,>(lists: Map<string, Item[]>, key: string, item: Item) => {
+  const list = lists.get(key)
+  if (list) list.push(item)
+  else lists.set(key, [item])
+}
 
 /** The cell a mesh falls in, by where its piece stands — the one cell, without a size. */
 const getCellKey = (toBatch: Matrix4, cellSize: number | undefined) => {
@@ -113,33 +156,13 @@ const mergeCell = (
   const kinds = new Map<string, Source[]>()
   for (const source of sources) {
     const kindKey = getKindKey(source.mesh)
-    kinds.set(kindKey, [...(kinds.get(kindKey) ?? []), source])
+    addTo(kinds, kindKey, source)
   }
 
   const parts: Part[] = []
   for (const [kindKey, kindSources] of kinds) {
     const firstMesh = kindSources[0].mesh
-    const cutaway = cutawayOf(firstMesh.material as Material)
-    const geometries = kindSources.map(({ mesh, toBatch }) => {
-      const copy = mesh.geometry.clone()
-      // Not its bounds: placed, they'd be measured again (the merge measures its own).
-      copy.boundingBox = null
-      copy.boundingSphere = null
-      const geometry = withColor(
-        copy.applyMatrix4(toBatch),
-        (mesh.material as Material & { color: Color }).color
-      )
-      if (!cutaway) return geometry
-
-      // Cut by the wall cutaway: each vertex keeps its piece's anchor (its
-      // origin) and the way it runs (its local X), as its own mesh gave them.
-      const elements = toBatch.elements
-      const axis = cutDirectionOf(elements[0], elements[2])
-
-      return setCutAttributes(geometry, new Vector3().setFromMatrixPosition(toBatch), axis)
-    })
-    const merged = mergeGeometries(geometries, false)
-    geometries.forEach((geometry) => geometry.dispose())
+    const merged = mergeGeometries(kindSources.map(getPrepared), false)
     if (!merged) continue // couldn't merge: those keep drawing themselves
 
     kindSources.forEach(({ mesh }) => (mesh.visible = false))
@@ -243,9 +266,11 @@ export const StaticBatch = ({
     group.traverse((object) => {
       if (!(object as Mesh).isMesh || !object.userData[BATCH_PART]) return
 
-      const toBatch = new Matrix4().multiplyMatrices(inverse, object.matrixWorld)
+      const mesh = object as Mesh
+      const toBatch = new Matrix4().multiplyMatrices(inverse, mesh.matrixWorld)
       const cellKey = getCellKey(toBatch, cellSize)
-      found.set(cellKey, [...(found.get(cellKey) ?? []), { mesh: object as Mesh, toBatch }])
+      const source = { mesh, toBatch, signature: describe(mesh, toBatch) }
+      addTo(found, cellKey, source)
     })
 
     // The cells that changed (or are gone) show their meshes again…

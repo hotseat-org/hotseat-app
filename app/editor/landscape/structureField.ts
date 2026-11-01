@@ -239,7 +239,17 @@ const smooth = (loop: [number, number][], passes = 2) => {
   return points
 }
 
-const build = (objects: SceneObject[]): StructureField | null => {
+/** What a field is worked out from: the grid, and its cells that are built on (0). */
+interface FieldSeed {
+  bounds: NonNullable<ReturnType<typeof getStructureBounds>>
+  cells: Float32Array
+  width: number
+  height: number
+  minX: number
+  minZ: number
+}
+
+const getFieldSeed = (objects: SceneObject[]): FieldSeed | null => {
   const bounds = getStructureBounds(objects)
   if (!bounds) return null
 
@@ -269,6 +279,25 @@ const build = (objects: SceneObject[]): StructureField | null => {
       const j = Math.round((cell.z + SEG / 2 - minZ) / GRID)
       if (i >= 0 && j >= 0 && i < width && j < height) cells[j * width + i] = 0
     }
+
+  return { bounds, cells, width, height, minX, minZ }
+}
+
+const isSameSeed = (first: FieldSeed, second: FieldSeed) => {
+  if (first.width !== second.width || first.height !== second.height) return false
+  if (first.minX !== second.minX || first.minZ !== second.minZ) return false
+
+  const { bounds } = first
+  const other = second.bounds
+  if (bounds.minX !== other.minX || bounds.maxX !== other.maxX) return false
+  if (bounds.minZ !== other.minZ || bounds.maxZ !== other.maxZ) return false
+
+  return first.cells.every((value, index) => value === second.cells[index])
+}
+
+const build = (seed: FieldSeed): StructureField => {
+  const { bounds, width, height, minX, minZ } = seed
+  const cells = Float32Array.from(seed.cells)
   chamfer(cells, width, height)
   for (let index = 0; index < cells.length; index++) cells[index] *= GRID // cells → metres
 
@@ -313,8 +342,26 @@ const build = (objects: SceneObject[]): StructureField | null => {
 
 /** One field per layout (the objects array is replaced on every change). */
 const cache = new WeakMap<SceneObject[], StructureField | null>()
-export const getStructureField = (objects: SceneObject[]) => {
-  if (!cache.has(objects)) cache.set(objects, build(objects))
+/**
+ * The last few fields, by what they were worked out from: a piece moved or
+ * turned within a room covers cells that are built on already (the room's
+ * floor) — the very same field, and the same land, not worked out again.
+ */
+const knownFields: { seed: FieldSeed; field: StructureField }[] = []
+const MAX_KNOWN_FIELDS = 4
 
-  return cache.get(objects) ?? null
+export const getStructureField = (objects: SceneObject[]) => {
+  if (cache.has(objects)) return cache.get(objects) ?? null
+
+  const seed = getFieldSeed(objects)
+  const known = seed && knownFields.find((entry) => isSameSeed(entry.seed, seed))
+  const field = seed ? (known?.field ?? build(seed)) : null
+  if (seed && field && !known) {
+    knownFields.unshift({ seed, field })
+    knownFields.length = Math.min(knownFields.length, MAX_KNOWN_FIELDS)
+  }
+
+  cache.set(objects, field)
+
+  return field
 }

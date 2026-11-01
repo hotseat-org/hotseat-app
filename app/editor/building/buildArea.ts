@@ -2,9 +2,9 @@ import { useEffect, useMemo } from "react"
 import { DataTexture, LinearFilter, RedFormat, UnsignedByteType, Vector2, Vector3 } from "three"
 import { distance, float, length, max, select, smoothstep, texture, uniform } from "three/tsl"
 import type { Node } from "three/webgpu"
-import { getStructureField } from "../landscape/structureField"
+import { getStructureField, type StructureField } from "../landscape/structureField"
 import { useEditorStore } from "../store"
-import { GRID, type SceneObject, type Tool } from "../types"
+import { GRID, type Tool } from "../types"
 
 /**
  * Where the editing grid shows: hugging what's built — it spreads this far (m)
@@ -92,8 +92,7 @@ interface DistanceMap {
  * The structure field's distances (see structureField.ts) as a byte texture —
  * a fraction of the reach — that the shaders blend smoothly.
  */
-const buildDistanceMap = (objects: SceneObject[]): DistanceMap | null => {
-  const field = getStructureField(objects)
+const buildDistanceMap = (field: StructureField | null): DistanceMap | null => {
   if (!field) return null
 
   const { cells, width: width, height: height, minX, minZ } = field.grid
@@ -131,15 +130,17 @@ export const useBuildArea = () => {
   const currentFloor = useEditorStore((state) => state.currentFloor)
   const otherFloorsPieces = useEditorStore((state) => state.otherFloorsPieces)
   const placing = useEditorStore((state) => isPlacing(state.tool, state.carryingId))
-  const map = useMemo(() => {
+  const field = useMemo(() => {
     const level = floors.findIndex((floor) => floor.id === currentFloor)
     const below = new Set(floors.slice(0, Math.max(0, level)).map((floor) => floor.id))
 
-    return buildDistanceMap([
+    return getStructureField([
       ...objects,
       ...otherFloorsPieces.filter((piece) => piece.floor && below.has(piece.floor)),
     ])
   }, [objects, floors, currentFloor, otherFloorsPieces])
+  // The same field (a piece moved within a room): the same map.
+  const map = useMemo(() => buildDistanceMap(field), [field])
   useEffect(() => () => map?.texture.dispose(), [map])
 
   return (area: BuildArea) => area.set({ map, isPlacing: placing })

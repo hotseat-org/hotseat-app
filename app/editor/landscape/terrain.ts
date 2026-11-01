@@ -358,7 +358,27 @@ export const createLandscape = (objects: SceneObject[]): Landscape => {
  * only once it's set down (see heldPlacement).
  */
 export const useLandscape = (objects: SceneObject[]) =>
-  useMemo(() => createLandscape(objects), [objects])
+  useMemo(() => getLandscape(objects), [objects])
+
+/**
+ * One land per field (and count of pieces, which picks its hills): a piece
+ * moved within a room leaves the field as it was (see getStructureField), and
+ * the land isn't traced again.
+ */
+const landscapes = new WeakMap<object, Map<number, Landscape>>()
+const NO_FIELD = {}
+const getLandscape = (objects: SceneObject[]) => {
+  const key = getStructureField(objects) ?? NO_FIELD
+  const byCount = landscapes.get(key) ?? new Map<number, Landscape>()
+  landscapes.set(key, byCount)
+  const known = byCount.get(objects.length)
+  if (known) return known
+
+  const landscape = createLandscape(objects)
+  byCount.set(objects.length, landscape)
+
+  return landscape
+}
 
 /** The tiles (tx, tz) covering a world rectangle. */
 export const tilesCovering = (from: Cell, to: Cell) => {
