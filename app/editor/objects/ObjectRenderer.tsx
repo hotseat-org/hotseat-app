@@ -1,6 +1,6 @@
 import { memo, useContext, useEffect, useLayoutEffect, useRef, useState } from "react"
 import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber"
-import { MathUtils, type Group } from "three"
+import { Box3, MathUtils, Vector3, type Group } from "three"
 import {
   GRID,
   isEdgeType,
@@ -17,7 +17,7 @@ import { markShadowsDirty } from "../lighting/shadows"
 import { CutawayContext } from "../walls/cutaway"
 import { CursorHintContext } from "../shell/cursors"
 import { getItem } from "../catalog"
-import { useEditorStoreApi } from "../store"
+import { useEditorStore, useEditorStoreApi } from "../store"
 import { ObjectMesh } from "./ObjectMesh"
 import { PieceContext } from "./pieceContext"
 import { WALL } from "./dimensions"
@@ -58,6 +58,10 @@ interface Props {
 
 const isFurniture = (object: SceneObject) => !isEdgeType(object.type)
 /** Seconds for a rotation to swing round (with a little overshoot). */
+/** A piece's hit box's height until its model is measured, and the most it may be (m). */
+const DEFAULT_HIT_HEIGHT = 0.8
+const MAX_HIT_HEIGHT = 2.2
+
 /** Doors, windows and wall items are sliced with their wall by the cursor cutaway. */
 const getCutaway = (type: SceneObject["type"]) => {
   if (isOpening(type)) return "wall"
@@ -101,6 +105,8 @@ export const ObjectRenderer = memo(function ObjectRenderer({
   wallBack,
 }: Props) {
   const [hovered, setHovered] = useState(false)
+  // How tall the piece stands (its hit box's height), measured from its model.
+  const [hitHeight, setHitHeight] = useState(DEFAULT_HIT_HEIGHT)
   // View mode: desks are clickable (seat card).
   const clickable = !interactive && !!onViewClick
   // Edit mode: with the Select tool, everything that renders here (furniture,
@@ -110,8 +116,12 @@ export const ObjectRenderer = memo(function ObjectRenderer({
   // open (pick it up) in edit mode, pointing (open its card) in view mode.
   const hoverable = clickable || selectable
   const setCursorHint = useContext(CursorHintContext)
-  // Viewing, the store knows it's pointed at too (its tag grows with it).
+  // Viewing, the store knows it's pointed at too (its tag grows with it) —
+  // and it may be pointed at elsewhere (its tag, its deskmate).
   const storeApi = useEditorStoreApi()
+  const isPointedElsewhere = useEditorStore(
+    (state) => clickable && state.hoveredPieceId === object.id && !hovered
+  )
   useEffect(() => {
     if (!hoverable || !hovered) return
 
@@ -157,6 +167,15 @@ export const ObjectRenderer = memo(function ObjectRenderer({
 
   // "Grabbed" animation: lift + tilt (as if hoisted by a corner) + gentle sway.
   const lifted = useRef<Group>(null)
+  // Its hit box stands as tall as its model (measured where it stands, so a
+  // floor gliding to another doesn't skew it).
+  useLayoutEffect(() => {
+    const model = lifted.current
+    if (!model || carried) return
+
+    const top = new Box3().setFromObject(model).max.y - model.getWorldPosition(new Vector3()).y
+    if (Number.isFinite(top) && top > 0.05) setHitHeight(Math.min(top, MAX_HIT_HEIGHT))
+  }, [object.type, object.model, object.variant, carried])
   const amount = useRef(0)
   useFrame((state, delta) => {
     const swing = turn.current
@@ -244,6 +263,7 @@ export const ObjectRenderer = memo(function ObjectRenderer({
   const outline: [number, number] = isEdgeType(object.type)
     ? [edgeLength(object), WALL.depth + 0.2]
     : [getItem(object.type).footprint[0] * GRID, getItem(object.type).footprint[1] * GRID]
+  const isUnderlay = getItem(object.type).isUnderlay
   // Red preview when this piece of furniture is about to be erased.
   const showErase = interactive && tool === "delete" && hovered && isFurniture(object)
 
@@ -259,12 +279,13 @@ export const ObjectRenderer = memo(function ObjectRenderer({
               // erase, a desk in view mode); with a build tool armed the floor
               // keeps tracking, so the placement preview stays up (red) here.
               if (hoverable || tool === "delete") event.stopPropagation()
-
-              setHovered(true)
             }
           : undefined
       }
-      onPointerOut={interactive || clickable ? () => setHovered(false) : undefined}
+      // Into and out of the piece as a whole: over and out also fire passing
+      // from one of its parts to another, and its plinth flickered.
+      onPointerEnter={interactive || clickable ? () => setHovered(true) : undefined}
+      onPointerLeave={interactive || clickable ? () => setHovered(false) : undefined}
       // View mode: desks are clickable (seat card). A drag (camera pan) isn't
       // a click — R3F's `delta` is the pointer travel in px.
       onClick={
@@ -300,25 +321,29 @@ export const ObjectRenderer = memo(function ObjectRenderer({
         </CutawayContext.Provider>
         {showErase && <GhostObject type={object.type} tint={ERASE} scale={1.06} />}
       </group>
-      {/* The whole footprint is clickable, not just the mesh: an invisible
-          floor plane over its grid squares. Rugs sit a hair lower so what
-          stands on them wins; overhead and wall items have furniture under
-          their footprint, so they're picked by their mesh only. */}
+      {/* The whole piece is clickable, not just its mesh: an invisible box
+          over its footprint, as tall as it is — so the pointer can't slip
+          between a desk's legs to the desk behind. Rugs: a plane a hair over
+          the floor, so what stands on them wins. Overhead and wall items have
+          furniture under their footprint, so they're picked by their mesh only. */}
       {isFurniture(object) && !isOverhead(object.type) && !isWallMounted(object.type) && (
         <mesh
           visible={false}
-          rotation={[-Math.PI / 2, 0, 0]}
-          // Above a rug's own surface (y ≈ 0.014), so a piece on a rug wins there.
-          position={[0, getItem(object.type).isUnderlay ? 0.006 : 0.02, 0]}
+          position={[0, isUnderlay ? 0.006 : hitHeight / 2, 0]}
+          rotation={isUnderlay ? [-Math.PI / 2, 0, 0] : undefined}
         >
-          <planeGeometry args={outline} />
+          {isUnderlay ? (
+            <planeGeometry args={outline} />
+          ) : (
+            <boxGeometry args={[outline[0], hitHeight, outline[1]]} />
+          )}
           <meshBasicMaterial />
         </mesh>
       )}
       <FootprintPlinth
         width={outline[0]}
         depth={outline[1]}
-        hovered={hoverable && hovered}
+        hovered={hoverable && (hovered || isPointedElsewhere)}
         selected={selected && !carried}
       />
     </group>

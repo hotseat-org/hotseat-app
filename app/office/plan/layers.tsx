@@ -7,6 +7,7 @@ import { deskName, useDeskFilter } from "../booking/useBooking"
 import { useRoute } from "../wayfinding/wayfinding"
 import { RoutePath } from "../wayfinding/RoutePath"
 import { useOfficeStore } from "../store"
+import { useHoveredPieceActions } from "../desks/useHoveredPiece"
 import { useRouteFraming, useSpotlight } from "./useFraming"
 import { DeskTag, HeatTag, Occupant, RouteEnd, SpotlightRing, ZoneName } from "./overlays"
 import { composeOccupants, usePlanDesks, usePlanZoneAreas } from "./drawings"
@@ -59,6 +60,7 @@ export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
   const { view, screen, turn, objects, isDark, phoneChrome } = plan
   const openSeatCard = useOfficeStore((state) => state.openSeatCard)
   const hoveredId = useOfficeStore((state) => state.hoveredPieceId)
+  const { setHoveredPiece, clearHoveredPiece } = useHoveredPieceActions()
   const heatmap = useOfficeStore((state) => state.heatmap)
   const isTagsLayerOn = useOfficeStore((state) => state.layers.deskTags)
   // Tags mark free desks as bookable whatever the heatmap (it hides them anyway).
@@ -182,6 +184,8 @@ export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
                 event.stopPropagation()
                 if (!plan.isMoved()) openSeatCard(desk.id)
               }}
+              onPointerEnter={() => setHoveredPiece(desk.id)}
+              onPointerLeave={() => clearHoveredPiece(desk.id)}
             >
               {/* Pointed at — it, or its desk — it grows a little. */}
               <span

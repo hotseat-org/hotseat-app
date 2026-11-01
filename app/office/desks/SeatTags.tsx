@@ -4,6 +4,7 @@ import { Pin } from "lucide-react"
 import { heatBarTop } from "../heatmap/heatmap"
 import { deskName, useDeskFilter, useDesksOnDay } from "../booking/useBooking"
 import { useOfficeStore } from "../store"
+import { useHoveredPieceActions } from "./useHoveredPiece"
 import { getDeskTagTone } from "./deskTagTone"
 import { personByEmail, usePeople } from "./people"
 import { SeatAvatar } from "./SeatAvatar"
@@ -27,6 +28,7 @@ export const SeatTags = () => {
   const openId = useOfficeStore((state) => state.seatCard?.id)
   const openSeatCard = useOfficeStore((state) => state.openSeatCard)
   const hoveredId = useOfficeStore((state) => state.hoveredPieceId)
+  const { setHoveredPiece, clearHoveredPiece } = useHoveredPieceActions()
   const i18n = useI18n()
   // Insights' heatmap: every desk's share of days in use, instead of who's in.
   const heatmap = useOfficeStore((state) => state.heatmap)
@@ -81,6 +83,9 @@ export const SeatTags = () => {
               type="button"
               aria-label={t("Open {desk}", { desk: deskName(i18n, desk) })}
               onClick={() => openSeatCard(desk.id)}
+              // Pointed at, its desk shows it's pointed at too (its plinth).
+              onPointerEnter={() => setHoveredPiece(desk.id)}
+              onPointerLeave={() => clearHoveredPiece(desk.id)}
               // The button itself isn't scaled (the UI kit sets buttons' scale): what's in it is.
               className="group pointer-events-auto cursor-pointer select-none"
             >
