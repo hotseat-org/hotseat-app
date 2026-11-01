@@ -322,8 +322,15 @@ const EditorInner = ({
           <TimeOfDay isViewing={readOnly}>{editable && modeButton}</TimeOfDay>
         )}
 
-        {/* Editing: the floors, top right under the toolbar — anchored, clear of
-            the inspector growing up from the bottom (the catalogue has the left). */}
+        {/* Viewing: the floors on the right edge, halfway down — like a lift's
+            buttons, clear of the rail and the bars. Editing: top right under the
+            toolbar — anchored, clear of the inspector growing up from the bottom
+            (the catalogue has the left). */}
+        {readOnly && !isEmpty && !(shellMode && isMobile) && (
+          <div className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2">
+            <FloorPicker />
+          </div>
+        )}
         {!readOnly && !isEmpty && (
           <div className="pointer-events-none absolute right-4 top-20">
             <FloorPicker isEditing />

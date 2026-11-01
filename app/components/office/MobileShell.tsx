@@ -2,12 +2,12 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import clsx from "clsx"
 import { Building2, CalendarDays, Layers, MapPin, Pin, Users } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
-import { MemberAvatar, nameOf, type ShellMember, type ShellOffice } from "./shell-ui"
+import { MemberAvatar, type ShellMember, type ShellOffice } from "./shell-ui"
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher"
 import { AccountMenu } from "./AccountMenu"
 import { MyBookings } from "./MyBookings"
 import { NotificationsBell } from "./Notifications"
-import { WeekDots } from "./WeekDots"
+import { WhosInList } from "./WhosIn"
 import { MOBILE_CHROME } from "./mobile"
 import { BottomSheet } from "~/components/ui/BottomSheet"
 import { MapLayerSwitches, SidePanelBadge, useMapLayerRows, useSidePanels } from "~/editor"
@@ -19,10 +19,7 @@ import {
   useDesksOnDay,
   useGivenUpDesk,
   useWaitlist,
-  useWeekPresence,
 } from "~/office/booking/useBooking"
-import { useSettings } from "~/components/settings/useSettings"
-import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { daysBetween, isWeekend, type Day } from "~/utils/booking"
 import { useI18n } from "~/i18n/I18nProvider"
 import { msg } from "~/i18n/msg"
@@ -78,7 +75,7 @@ export const MobileShell = ({ offices, me, members, empty = false }: Props) => {
       )}
       {sheet === "people" && (
         <BottomSheet title={t("Who's in")} isTall bottomInset={TAB_BAR_HEIGHT} onClose={closeSheet}>
-          {(close) => <People me={me} members={members} onFind={close} />}
+          {(close) => <WhosInList me={me} members={members} onFind={close} />}
         </BottomSheet>
       )}
       <TabBar tab={sheet ?? "office"} onChange={(tab) => setSheet(tab === "office" ? null : tab)} />
@@ -350,93 +347,6 @@ const DayStrip = () => {
         )
       })}
     </nav>
-  )
-}
-
-/** Who's in on the shown day (people with a desk first); Find opens their desk. */
-const People = ({
-  me,
-  members,
-  onFind,
-}: {
-  me: ShellMember
-  members: ShellMember[]
-  onFind: () => void
-}) => {
-  const day = useOfficeStore((s) => s.booking.day)
-  const today = useOfficeStore((s) => s.booking.today)
-  const spotlightSeat = useOfficeStore((s) => s.spotlightSeat)
-  const i18n = useI18n()
-  const { t } = i18n
-  const { open: openSettings } = useSettings()
-  const { byPerson } = useDesksOnDay()
-  const week = useWeekPresence()
-  const roster = useMemo(
-    () =>
-      members
-        .map((m, i) => ({ m, i, at: byPerson.get(m.userEmail) }))
-        .sort((a, b) => Number(!a.at) - Number(!b.at) || a.i - b.i),
-    [members, byPerson]
-  )
-  const inCount = roster.filter((r) => r.at).length
-
-  return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <header className="mb-3">
-        <p className="text-xs text-muted">
-          {day === today ? t("Today") : i18n.format.long(day)} ·{" "}
-          {t("{in} of {total} in the office", { in: inCount, total: members.length })}
-        </p>
-      </header>
-      {members.length <= 1 ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
-          <p className="text-sm font-bold text-foreground">{t("It's just you so far")}</p>
-          {/* Inviting is an admin's. */}
-          {me.role === Role.ADMIN && (
-            <button
-              type="button"
-              onClick={() => openSettings("org", "invitations")}
-              className="min-h-11 rounded-xl bg-accent/15 px-4 text-sm font-bold text-accent"
-            >
-              {t("Invite teammates")}
-            </button>
-          )}
-        </div>
-      ) : (
-        <ul className="-mx-1 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-1">
-          {roster.map(({ m, at }) => (
-            <li key={m.userEmail} className="flex items-center gap-3 rounded-xl px-1 py-1.5">
-              <MemberAvatar m={m} className="size-10 shrink-0 rounded-xl" />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-bold text-foreground">
-                  {m.userEmail === me.userEmail ? t("You") : nameOf(m)}
-                </p>
-                <p className="flex items-center gap-2 text-xs text-muted">
-                  {/* Fixed width: every row's dots start at the same spot. */}
-                  <span className="w-16 shrink-0 truncate">
-                    {at ? deskName(i18n, at.desk) : t("Not in")}
-                  </span>
-                  <WeekDots email={m.userEmail} presence={week} />
-                </p>
-              </div>
-              {at && (
-                <button
-                  type="button"
-                  aria-label={t("Show {name}'s desk on the plan", { name: nameOf(m) })}
-                  onClick={() => {
-                    spotlightSeat(at.desk.id)
-                    onFind()
-                  }}
-                  className="flex min-h-11 items-center gap-1.5 rounded-xl bg-default px-3 text-sm font-bold text-foreground"
-                >
-                  <MapPin className="size-4" /> {t("Find")}
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
   )
 }
 
