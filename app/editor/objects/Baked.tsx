@@ -177,6 +177,14 @@ export const Baked = ({
 
     return () => parts.forEach((part) => part.geometry.dispose())
   }, [parts, renderer, invalidate, handleBatchChanged, shouldBatch])
+  // Gone too: the batch drops it. (Another floor shown takes every piece away
+  // at once — without this, the merged furniture stayed, drawn over it.)
+  useLayoutEffect(
+    () => () => {
+      if (shouldBatch) handleBatchChanged?.()
+    },
+    [handleBatchChanged, shouldBatch]
+  )
 
   return (
     <group ref={root}>
