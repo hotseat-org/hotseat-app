@@ -114,8 +114,9 @@ export const PostFx = ({ highQuality = false }: Props) => {
     <SilentBoundary>
       {/* 2× MSAA: enough for the soft, rounded furniture; the composer's
           buffers are full-screen, and 4× costs real bandwidth on integrated
-          and mid-range GPUs. Thin lines (the terrain) smooth themselves. */}
-      <EffectComposer multisampling={2} enableNormalPass={false}>
+          and mid-range GPUs. Thin lines (the terrain) smooth themselves.
+          A stencil, for the pieces' outlines (see PieceOutline). */}
+      <EffectComposer multisampling={2} enableNormalPass={false} stencilBuffer>
         {highQuality ? (
           <N8AO
             ref={occlusion}

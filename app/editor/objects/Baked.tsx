@@ -34,6 +34,7 @@ const thaw = (mesh: Mesh) => {
 /** An original merged into the baked meshes: hidden, not hit, frozen — or back to normal. */
 const setOriginal = (mesh: Mesh, isMerged: boolean) => {
   mesh.visible = !isMerged
+  mesh.userData.isBakedOriginal = isMerged
   mesh.raycast = isMerged ? noRaycast : meshRaycast
   if (isMerged) freeze(mesh)
   else thaw(mesh)

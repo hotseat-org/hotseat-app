@@ -21,7 +21,7 @@ import { useEditorStore, useEditorStoreApi } from "../store"
 import { ObjectMesh } from "./ObjectMesh"
 import { PieceContext } from "./pieceContext"
 import { WALL } from "./dimensions"
-import { FootprintPlinth } from "./FootprintPlinth"
+import { PieceOutline } from "./PieceOutline"
 import { Baked } from "./Baked"
 import { composeHitShape } from "./hitShape"
 
@@ -274,6 +274,12 @@ export const ObjectRenderer = memo(function ObjectRenderer({
   }
 
   const isUnderlay = getItem(object.type).isUnderlay
+  // Pointed at (here, or at its tag or deskmate), or selected: outlined.
+  const isOutlined = hoverable && (hovered || isPointedElsewhere)
+  const isSelectedShown = selected && !carried
+  const [hasOutline, setHasOutline] = useState(false)
+  if ((isOutlined || isSelectedShown) && !hasOutline) setHasOutline(true)
+
   // Red preview when this piece of furniture is about to be erased.
   const showErase = interactive && tool === "delete" && hovered && isFurniture(object)
 
@@ -338,6 +344,14 @@ export const ObjectRenderer = memo(function ObjectRenderer({
           </Baked>
         </CutawayContext.Provider>
         {showErase && <GhostObject type={object.type} tint={ERASE} scale={1.06} />}
+        {/* Round its own shape, lifted and tilted with it — traced once it's first needed. */}
+        {hasOutline && (
+          <PieceOutline
+            shapeKey={[object.type, object.model, object.variant].join("/")}
+            hovered={isOutlined}
+            selected={isSelectedShown}
+          />
+        )}
       </group>
       {/* The whole piece is clickable, not just its mesh: invisible columns
           under its parts, so the pointer can't slip between a desk's legs to
@@ -348,12 +362,6 @@ export const ObjectRenderer = memo(function ObjectRenderer({
       {isFurniture(object) && !isOverhead(object.type) && !isWallMounted(object.type) && (
         <HitShape shape={isUnderlay ? null : hitShape} outline={outline} isUnderlay={isUnderlay} />
       )}
-      <FootprintPlinth
-        width={outline[0]}
-        depth={outline[1]}
-        hovered={hoverable && (hovered || isPointedElsewhere)}
-        selected={selected && !carried}
-      />
     </group>
   )
 })

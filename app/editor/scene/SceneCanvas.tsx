@@ -39,7 +39,8 @@ const SceneCanvas = ({ store, readOnly, dark, fitInsets, showStats, onStats, onR
       // Capped at 1.5× — on retina, 2× is ~1.8× the pixels (and post-fx cost)
       // for a barely visible sharpness gain on this soft, rounded style.
       dpr={[1, 1.5]}
-      gl={{ antialias: true, powerPreference: "high-performance" }}
+      // A stencil: a piece's outline goes round it, not over it (PieceOutline).
+      gl={{ antialias: true, powerPreference: "high-performance", stencil: true }}
       frameloop={showStats ? "always" : "demand"}
       onPointerMissed={() => viewClicks.onFloor()}
       // Checking each new shader for errors makes the browser finish compiling
