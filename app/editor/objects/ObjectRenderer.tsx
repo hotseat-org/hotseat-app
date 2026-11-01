@@ -133,6 +133,10 @@ export const ObjectRenderer = memo(function ObjectRenderer({
   // cutaway (see cutaway.ts).
   const cutaway = getCutaway(object.type)
 
+  // Turning, lifted or settling back down: drawn by itself, out of the
+  // office-wide batch (that holds only pieces standing still, see StaticBatch).
+  const [isMoving, setIsMoving] = useState(false)
+
   // Rotation swings round quickly instead of jumping: the group's angle is
   // driven here (not as a prop), easing along the shortest way to the target.
   const invalidate = useThree((state) => state.invalidate)
@@ -157,6 +161,7 @@ export const ObjectRenderer = memo(function ObjectRenderer({
     }
 
     turn.current = { from: currentAngle, to: currentAngle + difference, t: 0 }
+    setIsMoving(true)
     invalidate()
   }, [object.rotation, invalidate])
 
@@ -230,6 +235,11 @@ export const ObjectRenderer = memo(function ObjectRenderer({
     // shadow redraw while carrying would double the draw calls.
     if (Math.abs(target - strength) > 0.01) markShadowsDirty(state.invalidate)
     else state.invalidate()
+  })
+
+  useFrame(() => {
+    const isStill = !turn.current && amount.current === 0
+    if (isStill === isMoving) setIsMoving(!isStill)
   })
 
   const handlePointerDown = (event: ThreeEvent<PointerEvent>) => {
@@ -310,7 +320,7 @@ export const ObjectRenderer = memo(function ObjectRenderer({
         <CutawayContext.Provider value={cutaway}>
           {/* Batched: the object's parts merge into one mesh per material — and,
               viewing, with the whole office's. */}
-          <Baked isBatchable>
+          <Baked isBatchable={!carried && !isMoving}>
             <PieceContext.Provider value={object}>
               <ObjectMesh
                 type={object.type}

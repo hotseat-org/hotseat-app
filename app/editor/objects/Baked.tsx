@@ -75,7 +75,7 @@ export const Baked = ({
   isBatchable = false,
 }: {
   children: ReactNode
-  /** May join the office-wide batch (see StaticBatch): it never changes on its own. */
+  /** May join the office-wide batch (see StaticBatch): it stands still and never changes on its own. */
   isBatchable?: boolean
 }) => {
   const root = useRef<Group>(null)
@@ -156,6 +156,10 @@ export const Baked = ({
         continue
       }
 
+      // Measured now: hidden in the office-wide batch, it would be measured
+      // at the first pointer move instead — every piece's at once, a stutter.
+      merged.computeBoundingSphere()
+
       next.push({
         key,
         geometry: merged,
@@ -180,14 +184,14 @@ export const Baked = ({
 
     return () => parts.forEach((part) => part.geometry.dispose())
   }, [parts, renderer, invalidate, handleBatchChanged, shouldBatch])
-  // Gone too: the batch drops it. (Another floor shown takes every piece away
-  // at once — without this, the merged furniture stayed, drawn over it.)
-  useLayoutEffect(
-    () => () => {
-      if (shouldBatch) handleBatchChanged?.()
-    },
-    [handleBatchChanged, shouldBatch]
-  )
+  // Joining or leaving the batch (a piece picked up, or set down), or gone:
+  // the batch takes it in or drops it. (Another floor shown takes every piece
+  // away at once — without this, the merged furniture stayed, drawn over it.)
+  useLayoutEffect(() => {
+    handleBatchChanged?.()
+
+    return () => handleBatchChanged?.()
+  }, [handleBatchChanged, shouldBatch])
 
   return (
     <group ref={root}>
