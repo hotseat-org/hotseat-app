@@ -4,6 +4,7 @@ import clsx from "clsx"
 import { Building2, ChevronRight, LogOut, Settings, type LucideIcon } from "lucide-react"
 import { useNavigate } from "react-router"
 import { MemberAvatar, PANEL, PANEL_HOVER, nameOf, type ShellMember } from "./shell-ui"
+import type { DayStatus } from "./dayStatus"
 import { useProfile } from "~/utils/remix"
 import { useIsMobile } from "~/utils/hooks/useIsMobile"
 import { useSettings } from "~/components/settings/useSettings"
@@ -16,9 +17,11 @@ import { useI18n } from "~/i18n/I18nProvider"
  * The avatar's menu: who you are, the theme, your settings and (admins) the
  * organization's, and logging out. A popover by the avatar; on a phone, a
  * sheet like the app's other phone dialogs. `isFlat`: no panel round the
- * avatar, for a bar that already is one (the phone's top bar).
+ * avatar, for a bar that already is one (the phone's top bar). `day` (an
+ * office, desktop): your day beside the avatar, and on top of the menu with
+ * what to do about it.
  */
-export const AccountMenu = ({ isFlat = false }: { isFlat?: boolean }) => {
+export const AccountMenu = ({ isFlat = false, day }: { isFlat?: boolean; day?: DayStatus }) => {
   const profile = useProfile()
   const { t } = useI18n()
   const isMobile = useIsMobile()
@@ -33,9 +36,15 @@ export const AccountMenu = ({ isFlat = false }: { isFlat?: boolean }) => {
     <div
       role="button"
       tabIndex={0}
-      aria-label={t("Account menu")}
+      aria-label={day ? `${t("Account menu")}: ${day.text}` : t("Account menu")}
       className={`${isFlat ? "pointer-events-auto rounded-xl" : `${PANEL} ${PANEL_HOVER} p-1.5`} flex cursor-pointer items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-focus`}
     >
+      {day && !isMobile && (
+        <span className="flex min-w-0 max-w-56 items-center gap-1.5 pl-2 text-sm font-bold text-foreground">
+          <day.icon className="size-4 shrink-0 text-muted" />
+          <span className="truncate">{day.text}</span>
+        </span>
+      )}
       <MemberAvatar m={me} className="size-9 rounded-xl" />
     </div>
   )
@@ -66,6 +75,7 @@ export const AccountMenu = ({ isFlat = false }: { isFlat?: boolean }) => {
         <Popover.Dialog className="w-72 p-2 outline-none">
           <AccountContent
             me={me}
+            day={day}
             isAdmin={profile.role === Role.ADMIN}
             onDone={() => setIsOpen(false)}
           />
@@ -78,10 +88,12 @@ export const AccountMenu = ({ isFlat = false }: { isFlat?: boolean }) => {
 /** What the menu holds, in the popover or the sheet. `onDone` closes it before acting. */
 const AccountContent = ({
   me,
+  day,
   isAdmin,
   onDone,
 }: {
   me: ShellMember
+  day?: DayStatus
   isAdmin: boolean
   onDone: () => void
 }) => {
@@ -102,6 +114,17 @@ const AccountContent = ({
           <p className="truncate text-xs text-muted">{me.userEmail}</p>
         </div>
       </div>
+
+      {day && (
+        // Any of its actions closes the menu: the map (or a panel) has it.
+        <div className="flex flex-col gap-1 rounded-xl bg-accent/10 px-3 py-2.5" onClick={onDone}>
+          <p className="flex items-center gap-1.5 text-sm font-extrabold text-foreground">
+            <day.icon className="size-4 shrink-0 text-accent" />
+            {day.text}
+          </p>
+          <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">{day.actions}</p>
+        </div>
+      )}
 
       <div className="flex items-center justify-between gap-3 rounded-xl bg-surface px-3 py-2.5">
         <span className="text-sm font-bold text-foreground">{t("Theme")}</span>

@@ -1,6 +1,6 @@
-import { Hourglass, MapPin, Pin } from "lucide-react"
+import { Hourglass, MapPin, Pin, type LucideIcon } from "lucide-react"
 import type { ReactNode } from "react"
-import { MemberAvatar, type ShellMember } from "./shell-ui"
+import type { ShellMember } from "./shell-ui"
 import { useOfficeStore } from "~/office/store"
 import { dayPhrase, useDesksOnDay, useGivenUpDesk, useWaitlist } from "~/office/booking/useBooking"
 import { useI18n } from "~/i18n/I18nProvider"
@@ -16,18 +16,19 @@ const Action = ({ onPress, children }: { onPress: () => void; children: ReactNod
   </button>
 )
 
+/** Your day, to show: its icon, a line, and what to do about it. */
+export interface DayStatus {
+  icon: LucideIcon
+  text: string
+  actions: ReactNode
+}
+
 /**
- * Your day in the bottom bar (desktop): where you sit on the shown day — your
- * permanent desk, a booking, away, waiting, or no desk yet — and what to do
- * about it: the way there, the waitlist, all your bookings.
+ * Your day (desktop, by your avatar — see AccountMenu): where you sit on the
+ * shown day — your permanent desk, a booking, away, waiting, or no desk yet —
+ * and what to do about it: the way there, the waitlist, all your bookings.
  */
-export const YourDay = ({
-  me,
-  onOpenBookings,
-}: {
-  me: ShellMember
-  onOpenBookings: () => void
-}) => {
+export const useDayStatus = (me: ShellMember, onOpenBookings: () => void): DayStatus => {
   const i18n = useI18n()
   const { t, tn } = i18n
   const day = useOfficeStore((state) => state.booking.day)
@@ -40,10 +41,10 @@ export const YourDay = ({
   const when = dayPhrase(i18n, day, today)
 
   const allBookings = <Action onPress={onOpenBookings}>{t("All my bookings")}</Action>
-  const { icon, status, actions } = mine
+  return mine
     ? {
         icon: mine.state.kind === "resident" ? Pin : MapPin,
-        status:
+        text:
           mine.state.kind === "resident"
             ? mine.desk.label
               ? t("Permanent desk {label}", { label: mine.desk.label })
@@ -59,11 +60,11 @@ export const YourDay = ({
         ),
       }
     : givenUp
-      ? { icon: Pin, status: t("Away {when}", { when }), actions: allBookings }
+      ? { icon: Pin, text: t("Away {when}", { when }), actions: allBookings }
       : waitlist.isWaiting
         ? {
             icon: Hourglass,
-            status:
+            text:
               t("On the waitlist {when}", { when }) +
               (waitlist.count > 1
                 ? ` ${tn(waitlist.count, "({n} waiting)", "({n} waiting)")}`
@@ -78,7 +79,7 @@ export const YourDay = ({
         : waitlist.canWait
           ? {
               icon: Hourglass,
-              status: t("Office full {when}", { when }),
+              text: t("Office full {when}", { when }),
               actions: (
                 <>
                   <Action onPress={waitlist.join}>{t("Join the waitlist")}</Action>
@@ -88,7 +89,7 @@ export const YourDay = ({
             }
           : {
               icon: MapPin,
-              status: t("No desk {when}.", { when }),
+              text: t("No desk {when}.", { when }),
               actions: (
                 <>
                   {day >= today && <span className="text-muted">{t("Click a free one.")}</span>}
@@ -96,18 +97,4 @@ export const YourDay = ({
                 </>
               ),
             }
-  const Icon = icon
-
-  return (
-    <div className="flex min-w-0 max-w-72 items-center gap-2.5 pl-1 pr-2">
-      <MemberAvatar m={me} className="size-9 shrink-0 rounded-xl" />
-      <div className="min-w-0">
-        <p className="flex items-center gap-1 truncate text-sm font-extrabold text-foreground">
-          <Icon className="size-3.5 shrink-0 text-muted" />
-          <span className="truncate">{status}</span>
-        </p>
-        <p className="flex items-center gap-2.5 whitespace-nowrap text-xs">{actions}</p>
-      </div>
-    </div>
-  )
 }

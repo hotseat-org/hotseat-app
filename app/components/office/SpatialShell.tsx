@@ -5,7 +5,7 @@ import type { LucideIcon } from "lucide-react"
 import { PANEL, PANEL_HOVER, type ShellMember, type ShellOffice } from "./shell-ui"
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher"
 import { WhosInPanel } from "./WhosIn"
-import { YourDay } from "./YourDay"
+import { useDayStatus } from "./dayStatus"
 import { ShellSearch } from "./ShellSearch"
 import { AccountMenu } from "./AccountMenu"
 import { MyBookings } from "./MyBookings"
@@ -107,6 +107,11 @@ export const SpatialShell = ({
     setBookingsOpen(false)
     setPeopleOpen(false)
   }
+  // Your day, by your avatar (top right).
+  const day = useDayStatus(me, () => {
+    closePanels()
+    setBookingsOpen(true)
+  })
 
   // How many are in on the shown day: on Who's in's button, at a glance.
   const inCount = members.filter((member) => byPerson.has(member.userEmail)).length
@@ -201,7 +206,7 @@ export const SpatialShell = ({
         <NotificationsBell
           triggerClassName={`${PANEL} ${PANEL_HOVER} pointer-events-auto grid size-11 cursor-pointer place-items-center text-foreground outline-none focus-visible:ring-2 focus-visible:ring-focus`}
         />
-        <AccountMenu />
+        <AccountMenu day={day} />
       </div>
 
       {bookingsOpen && <MyBookings onClose={() => setBookingsOpen(false)} />}
@@ -213,13 +218,6 @@ export const SpatialShell = ({
 
       {/* Bottom dock: real-time sync + time-of-day + edit */}
       <TimeOfDay isViewing>
-        <YourDay
-          me={me}
-          onOpenBookings={() => {
-            closePanels()
-            setBookingsOpen(true)
-          }}
-        />
         {/* Editing is 3D-only (no WebGL → view-only). */}
         {canEdit && hasWebGL() && (
           <Button variant="primary" size="sm" className="min-w-32" onPress={enterEdit}>
