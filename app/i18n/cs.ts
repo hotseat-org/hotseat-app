@@ -286,6 +286,7 @@ export const cs: Messages = {
 
   // —— Editor: floors ——
   "Floor {number}": "{number}. patro",
+  "Ground floor": "Přízemí",
   "Choose a floor": "Vybrat patro",
   "The office's floors": "Patra kanceláře",
   "Edit floors": "Upravit patra",

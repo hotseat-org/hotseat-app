@@ -3,7 +3,13 @@ import { isSeatable } from "../catalog"
 import { ZONE_FILTER_PREFIX } from "../zones/zones"
 import { useOfficeStore } from "../store"
 import { useAllPieces, type FloorNote } from "~/editor"
-import { getFloorId, getFloorLabel, type FloorLabel, type SceneObject } from "~/editor/core"
+import {
+  getFloorId,
+  getFloorLabel,
+  getFloorTitle,
+  type FloorLabel,
+  type SceneObject,
+} from "~/editor/core"
 import { useI18n } from "~/i18n/I18nProvider"
 import { addDays, deskState, weekStart, type Day, type DeskState } from "~/utils/booking"
 import type { Translator } from "~/i18n/translate"
@@ -19,7 +25,7 @@ export const deskName = ({ t }: Translator, desk: Pick<SceneObject, "label">) =>
 
 /** A floor's name to show: its own, or (unnamed) "Floor 2". */
 export const floorText = ({ t }: Translator, floor: FloorLabel) =>
-  floor.name || t("Floor {number}", { number: floor.number })
+  floor.name || getFloorTitle({ t }, floor.number)
 
 /** Which floor a desk is on, to show ("Attic") — none in an office of one floor. */
 export const useDeskFloor = () => {

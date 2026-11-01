@@ -2,7 +2,14 @@ import { AlertDialog, Button, Dropdown, Popover } from "@heroui/react"
 import clsx from "clsx"
 import { BrickWall, ChevronDown, ChevronUp, Ellipsis, Pencil, Plus, Trash2 } from "lucide-react"
 import { useState, type ReactNode } from "react"
-import { MAX_FLOORS, MAX_FLOOR_NAME, getFloorId, getFloorNumber, type Floor } from "../../floors"
+import {
+  MAX_FLOORS,
+  MAX_FLOOR_NAME,
+  getFloorId,
+  getFloorNumber,
+  getFloorTitle,
+  type Floor,
+} from "../../floors"
 import { useEditorStore } from "../../store"
 import type { FloorNote } from "../../module"
 import { useI18n } from "~/i18n/I18nProvider"
@@ -46,8 +53,7 @@ export const useFloorName = () => {
   const { t } = useI18n()
   const floors = useEditorStore((state) => state.floors)
 
-  return (floor: Floor) =>
-    floor.name || t("Floor {number}", { number: getFloorNumber(floors, floor.id) })
+  return (floor: Floor) => floor.name || getFloorTitle({ t }, getFloorNumber(floors, floor.id))
 }
 
 /**
@@ -301,7 +307,7 @@ const FloorRow = ({
         ).length
   )
   const [isConfirming, setIsConfirming] = useState(false)
-  const placeholder = t("Floor {number}", { number: getFloorNumber(floors, floor.id) })
+  const placeholder = getFloorTitle({ t }, getFloorNumber(floors, floor.id))
   const name = floor.name || placeholder
   const isFull = floors.length >= MAX_FLOORS
   const disabledActions: FloorAction[] = [

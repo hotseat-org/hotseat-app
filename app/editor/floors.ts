@@ -1,4 +1,5 @@
 import type { SceneObject } from "./types"
+import type { Translator } from "~/i18n/translate"
 
 /** One floor of a layout. */
 export interface Floor {
@@ -43,9 +44,13 @@ export const readSavedLayout = (saved: unknown): Layout => {
 export const getFloorId = (piece: Pick<SceneObject, "floor">, floors: Floor[]) =>
   piece.floor && floors.some((floor) => floor.id === piece.floor) ? piece.floor : floors[0].id
 
-/** A floor's number, from 1 at the bottom (what an unnamed floor is called). */
+/** A floor's number, the European way: 0 for the ground floor at the bottom, then 1, 2… */
 export const getFloorNumber = (floors: Floor[], id: string) =>
-  floors.findIndex((floor) => floor.id === id) + 1
+  floors.findIndex((floor) => floor.id === id)
+
+/** What an unnamed floor is called, by its number: "Ground floor", "Floor 1"… */
+export const getFloorTitle = ({ t }: Pick<Translator, "t">, number: number) =>
+  number === 0 ? t("Ground floor") : t("Floor {number}", { number })
 
 /** Which floor something's on, to show: its name, or (unnamed) its number. */
 export interface FloorLabel {

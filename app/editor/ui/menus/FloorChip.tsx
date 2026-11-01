@@ -1,7 +1,7 @@
 import clsx from "clsx"
 import { ChevronDown } from "lucide-react"
 import { useState } from "react"
-import { getFloorNumber } from "../../floors"
+import { getFloorNumber, getFloorTitle } from "../../floors"
 import { useFloorNotes } from "../../modules"
 import { useEditorStore } from "../../store"
 import { Slab, composeFloorLabel, useFloorName } from "./FloorPicker"
@@ -27,7 +27,7 @@ export const FloorChip = ({ top }: { top: number }) => {
   const shown = floors.find((floor) => floor.id === currentFloor)
   if (floors.length < 2 || !shown) return null
 
-  const shownNumber = t("Floor {number}", { number: getFloorNumber(floors, shown.id) })
+  const shownNumber = getFloorTitle({ t }, getFloorNumber(floors, shown.id))
 
   return (
     <>
@@ -55,7 +55,7 @@ export const FloorChip = ({ top }: { top: number }) => {
               {[...floors].reverse().map((floor) => {
                 const isShown = floor.id === currentFloor
                 const note = floorNotes?.get(floor.id)
-                const number = t("Floor {number}", { number: getFloorNumber(floors, floor.id) })
+                const number = getFloorTitle({ t }, getFloorNumber(floors, floor.id))
 
                 return (
                   <li key={floor.id}>

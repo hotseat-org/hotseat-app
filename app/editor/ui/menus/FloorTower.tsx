@@ -1,6 +1,6 @@
 import clsx from "clsx"
-import { useEffect, useRef, useState, type CSSProperties } from "react"
-import { getFloorNumber } from "../../floors"
+import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from "react"
+import { getFloorNumber, getFloorTitle } from "../../floors"
 import { useFloorNotes } from "../../modules"
 import { useEditorStore } from "../../store"
 import { composeFloorLabel, useFloorName } from "./FloorPicker"
@@ -15,6 +15,8 @@ const SPREAD_STEP = 46
 const MAX_SPREAD_HEIGHT = 380
 /** How long the pointer may leave before it gathers up again (ms): crossing a gap doesn't. */
 const GATHER_DELAY = 160
+/** How far past the tower's ends the pointer still holds it open (px). */
+const HOLD_MARGIN = 12
 
 /** The springy ease of the spread (it overshoots a little), and its stagger per floor (ms). */
 const SPRING = "cubic-bezier(0.2, 0.9, 0.25, 1.15)"
@@ -37,6 +39,7 @@ export const FloorTower = () => {
   const floorNotes = useFloorNotes()
   const [isSpread, setIsSpread] = useState(false)
   const gatherTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const anchor = useRef<HTMLDivElement>(null)
   useEffect(() => () => clearTimeout(gatherTimer.current), [])
   if (floors.length < 2) return null
 
@@ -58,15 +61,25 @@ export const FloorTower = () => {
   const height = (topFirst.length - 1) * step + SLAB_HEIGHT
   const top = -height / 2
 
+  // Over the tower as it's laid out, not as it moves: a slab springing past
+  // the pointer (or one still settling, gathering up) doesn't spread it again.
+  const handlePointer = (event: PointerEvent<HTMLDivElement>) => {
+    const middle = anchor.current?.getBoundingClientRect().top ?? event.clientY
+    const isOver = Math.abs(event.clientY - middle) <= height / 2 + HOLD_MARGIN
+    if (isOver) spread()
+    else gather()
+  }
+
   return (
     // Its middle at this height: the tower grows up and down from it.
-    <div className="relative h-0" style={{ width: SLAB_WIDTH }}>
+    <div ref={anchor} className="relative h-0" style={{ width: SLAB_WIDTH }}>
       <div
         role="radiogroup"
         aria-label={t("Choose a floor")}
         className="pointer-events-auto absolute right-0 transition-[top,height] duration-500"
         style={{ top, height, width: SLAB_WIDTH, transitionTimingFunction: SPRING }}
-        onPointerEnter={spread}
+        onPointerEnter={handlePointer}
+        onPointerMove={handlePointer}
         onPointerLeave={gather}
         onFocus={spread}
         onBlur={(event) => {
@@ -94,8 +107,7 @@ export const FloorTower = () => {
         {topFirst.map((floor, index) => {
           const isShown = index === shownIndex
           const note = floorNotes?.get(floor.id)
-          const name =
-            floor.name || t("Floor {number}", { number: getFloorNumber(floors, floor.id) })
+          const name = floor.name || getFloorTitle({ t }, getFloorNumber(floors, floor.id))
           const style: CSSProperties = {
             top: index * step,
             zIndex: topFirst.length - index,
@@ -165,7 +177,11 @@ export const FloorTower = () => {
   )
 }
 
-/** A floor's slab: its top and, under it, its edge — the shown one in the accent, glowing. */
+/**
+ * A floor's slab: its top and, under it, its edge — solid colours mixed from
+ * the theme (its border is see-through: stacked, the slabs showed through
+ * each other). The shown one in the accent, glowing.
+ */
 const TowerSlab = ({ isShown }: { isShown: boolean }) => (
   <svg
     aria-hidden
@@ -178,7 +194,11 @@ const TowerSlab = ({ isShown }: { isShown: boolean }) => (
   >
     <path
       d="M4 31 L62 58 L120 31 L120 39 L62 66 L4 39 Z"
-      className={isShown ? "fill-accent/70" : "fill-border"}
+      className={
+        isShown
+          ? "fill-[color-mix(in_oklab,var(--accent)_68%,black)]"
+          : "fill-[color-mix(in_oklab,var(--default)_70%,black)]"
+      }
     />
     <path
       d="M62 4 L120 31 L62 58 L4 31 Z"
@@ -187,8 +207,8 @@ const TowerSlab = ({ isShown }: { isShown: boolean }) => (
       className={clsx(
         "transition-[fill,stroke] duration-200",
         isShown
-          ? "fill-accent stroke-accent"
-          : "fill-surface stroke-border group-hover:stroke-accent group-focus-visible:stroke-accent"
+          ? "fill-accent stroke-[color-mix(in_oklab,var(--accent)_70%,white)]"
+          : "fill-[color-mix(in_oklab,var(--default)_92%,var(--foreground))] stroke-[color-mix(in_oklab,var(--default)_72%,var(--foreground))] group-hover:fill-[color-mix(in_oklab,var(--default)_84%,var(--foreground))] group-hover:stroke-accent group-focus-visible:stroke-accent"
       )}
     />
   </svg>
