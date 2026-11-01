@@ -198,11 +198,11 @@
   --success-foreground: #16200f;
   --warning: #e8c07a;
   --warning-foreground: #3a2e10;
-  --danger: #e8776e;
+  --danger: #f09088; /* 4.7:1 as text on a secondary button (#e8776e was 3.8) */
   --danger-foreground: #151820;
 
   /* Light-on-dark hairlines: they read on any surface, page or panel. */
-  --border: rgba(255, 255, 255, 0.1);
+  --border: rgba(255, 255, 255, 0.14);
   --separator: rgba(255, 255, 255, 0.07);
   --focus: var(--accent);
   --link: var(--accent);
@@ -210,14 +210,15 @@
   --field-background: var(--surface); /* raised, as in light */
   --field-foreground: var(--foreground);
   --field-placeholder: var(--muted);
-  --field-border: rgba(255, 255, 255, 0.12);
+  /* A field sits on a panel of its own colour: its border is its edge. */
+  --field-border: rgba(255, 255, 255, 0.22);
   --field-border-width: 1px;
 
   --segment: #181c24; /* an inset track */
   --segment-foreground: var(--foreground);
 
   --chrome: #2a303c;
-  --chrome-border: rgba(255, 255, 255, 0.1);
+  --chrome-border: rgba(255, 255, 255, 0.14);
   --chrome-shadow: rgba(0, 0, 0, 0.55);
 
   /* The lift: a 1px top highlight plus a deep, soft drop. */
@@ -277,13 +278,13 @@
   --default: color-mix(in oklab, var(--surface) 84%, var(--foreground));
   --accent: #8cc29a;
   --accent-foreground: #121612;
-  --border: rgba(255, 255, 255, 0.1);
+  --border: rgba(255, 255, 255, 0.14);
   --separator: rgba(255, 255, 255, 0.07);
   --field-background: var(--surface);
-  --field-border: rgba(255, 255, 255, 0.12);
+  --field-border: rgba(255, 255, 255, 0.22);
   --segment: color-mix(in oklab, var(--background) 80%, var(--surface));
   --chrome: var(--surface);
-  --chrome-border: rgba(255, 255, 255, 0.1);
+  --chrome-border: rgba(255, 255, 255, 0.14);
 }
 
 /* terracotta */
@@ -320,13 +321,13 @@
   --default: color-mix(in oklab, var(--surface) 84%, var(--foreground));
   --accent: #e88d6c;
   --accent-foreground: #1a1311;
-  --border: rgba(255, 255, 255, 0.1);
+  --border: rgba(255, 255, 255, 0.14);
   --separator: rgba(255, 255, 255, 0.07);
   --field-background: var(--surface);
-  --field-border: rgba(255, 255, 255, 0.12);
+  --field-border: rgba(255, 255, 255, 0.22);
   --segment: color-mix(in oklab, var(--background) 80%, var(--surface));
   --chrome: var(--surface);
-  --chrome-border: rgba(255, 255, 255, 0.1);
+  --chrome-border: rgba(255, 255, 255, 0.14);
 }
 
 /* ocean */
@@ -363,13 +364,13 @@
   --default: color-mix(in oklab, var(--surface) 84%, var(--foreground));
   --accent: #6fb2e6;
   --accent-foreground: #0e151d;
-  --border: rgba(255, 255, 255, 0.1);
+  --border: rgba(255, 255, 255, 0.14);
   --separator: rgba(255, 255, 255, 0.07);
   --field-background: var(--surface);
-  --field-border: rgba(255, 255, 255, 0.12);
+  --field-border: rgba(255, 255, 255, 0.22);
   --segment: color-mix(in oklab, var(--background) 80%, var(--surface));
   --chrome: var(--surface);
-  --chrome-border: rgba(255, 255, 255, 0.1);
+  --chrome-border: rgba(255, 255, 255, 0.14);
 }
 
 /* plum */
@@ -406,13 +407,13 @@
   --default: color-mix(in oklab, var(--surface) 84%, var(--foreground));
   --accent: #c497d6;
   --accent-foreground: #161117;
-  --border: rgba(255, 255, 255, 0.1);
+  --border: rgba(255, 255, 255, 0.14);
   --separator: rgba(255, 255, 255, 0.07);
   --field-background: var(--surface);
-  --field-border: rgba(255, 255, 255, 0.12);
+  --field-border: rgba(255, 255, 255, 0.22);
   --segment: color-mix(in oklab, var(--background) 80%, var(--surface));
   --chrome: var(--surface);
-  --chrome-border: rgba(255, 255, 255, 0.1);
+  --chrome-border: rgba(255, 255, 255, 0.14);
 }
 
 /* Expose the phone chrome to Tailwind utilities (bg-chrome / border-chrome-border). */
