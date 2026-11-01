@@ -130,8 +130,8 @@ export const ObjectRenderer = memo(function ObjectRenderer({
 
     return () => {
       setCursorHint(object.id, null)
-      if (clickable && storeApi.getState().hoveredPieceId === object.id)
-        storeApi.getState().setHoveredPiece(null)
+      // Only its own: its tag may have taken over (the pointer went up onto it).
+      if (clickable) storeApi.getState().clearHoveredPiece(object.id)
     }
   }, [hoverable, hovered, selectable, clickable, object.id, setCursorHint, storeApi])
   // Doors, windows and wall items are sliced with their wall by the cursor

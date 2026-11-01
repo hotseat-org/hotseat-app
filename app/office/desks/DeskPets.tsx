@@ -20,7 +20,7 @@ export const DeskPets = () => {
   const { floorDesks: desks } = useDesksOnDay()
   const objects = useOfficeStore((state) => state.objects)
   const openSeatCard = useOfficeStore((state) => state.openSeatCard)
-  const { setHoveredPiece, clearHoveredPiece } = useHoveredPieceActions()
+  const { setHoveredPiece, clearHoveredPiece } = useHoveredPieceActions("deskmate")
   const people = usePeople()
   const pets = useMemo(() => {
     const seats = objects.filter((object) => object.type === "seat")

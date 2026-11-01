@@ -1,17 +1,16 @@
-import { useOfficeStoreApi } from "../store"
+import { useOfficeStore } from "../store"
 
 /**
  * Marking a desk as pointed at from elsewhere — its tag, its deskmate — so
  * the desk shows it (its plinth), and letting go of it (only if it's still
- * the one: the pointer may already be on another).
+ * pointed at from there: the desk itself may have taken over, or another).
  */
-export const useHoveredPieceActions = () => {
-  const store = useOfficeStoreApi()
+export const useHoveredPieceActions = (source: "tag" | "deskmate") => {
+  const setHoveredPiece = useOfficeStore((state) => state.setHoveredPiece)
+  const clearHoveredPiece = useOfficeStore((state) => state.clearHoveredPiece)
 
   return {
-    setHoveredPiece: (id: string) => store.getState().setHoveredPiece(id),
-    clearHoveredPiece: (id: string) => {
-      if (store.getState().hoveredPieceId === id) store.getState().setHoveredPiece(null)
-    },
+    setHoveredPiece: (id: string) => setHoveredPiece(id, source),
+    clearHoveredPiece: (id: string) => clearHoveredPiece(id, source),
   }
 }

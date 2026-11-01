@@ -29,7 +29,7 @@ export const SeatTags = () => {
   const openId = useOfficeStore((state) => state.seatCard?.id)
   const openSeatCard = useOfficeStore((state) => state.openSeatCard)
   const hoveredId = useOfficeStore((state) => state.hoveredPieceId)
-  const { setHoveredPiece, clearHoveredPiece } = useHoveredPieceActions()
+  const { setHoveredPiece, clearHoveredPiece } = useHoveredPieceActions("tag")
   // The tags lie over the canvas: the scene lets go of what it had pointed at.
   const leaveScene = useThree((state) => state.events.handlers?.onPointerLeave)
   const i18n = useI18n()

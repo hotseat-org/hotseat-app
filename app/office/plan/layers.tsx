@@ -60,7 +60,7 @@ export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
   const { view, screen, turn, objects, isDark, phoneChrome } = plan
   const openSeatCard = useOfficeStore((state) => state.openSeatCard)
   const hoveredId = useOfficeStore((state) => state.hoveredPieceId)
-  const { setHoveredPiece, clearHoveredPiece } = useHoveredPieceActions()
+  const { setHoveredPiece, clearHoveredPiece } = useHoveredPieceActions("tag")
   const heatmap = useOfficeStore((state) => state.heatmap)
   const isTagsLayerOn = useOfficeStore((state) => state.layers.deskTags)
   // Tags mark free desks as bookable whatever the heatmap (it hides them anyway).

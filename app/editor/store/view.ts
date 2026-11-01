@@ -21,6 +21,9 @@ export interface FloorArea {
   maxZ: number
 }
 
+/** What points at a piece: the scene itself, or its tag or deskmate over it. */
+export type HoverSource = "scene" | "tag" | "deskmate"
+
 export interface ViewState {
   /** Time of day in hours [0,24) driving the scene lighting. */
   timeOfDay: number
@@ -38,9 +41,15 @@ export interface ViewState {
    */
   view: OfficeView
   setView: (view: OfficeView) => void
-  /** Viewing: the clickable piece under the pointer (a desk — its tag grows with it), or none. */
+  /**
+   * Viewing: the clickable piece pointed at (a desk — its tag grows with it),
+   * or none, and by what: the scene, or its tag or deskmate over it.
+   */
   hoveredPieceId: string | null
-  setHoveredPiece: (id: string | null) => void
+  hoveredPieceSource: HoverSource
+  setHoveredPiece: (id: string | null, source?: HoverSource) => void
+  /** Lets go of it, only if it's still pointed at the same way (another may have taken over). */
+  clearHoveredPiece: (id: string, source?: HoverSource) => void
   /** Viewing: the lift whose floor buttons are open (pressed on the map), or none. */
   liftPanelId: string | null
   setLiftPanel: (id: string | null) => void
@@ -81,7 +90,14 @@ export const createViewState = (set: SetState, get: GetState, hooks: StoreHooks)
     if (get().syncTime) set({ timeOfDay: nowHours() })
   },
   hoveredPieceId: null,
-  setHoveredPiece: (hoveredPieceId) => set({ hoveredPieceId }),
+  hoveredPieceSource: "scene",
+  setHoveredPiece: (hoveredPieceId, hoveredPieceSource = "scene") =>
+    set({ hoveredPieceId, hoveredPieceSource }),
+  clearHoveredPiece: (id, source = "scene") => {
+    const { hoveredPieceId, hoveredPieceSource } = get()
+    if (hoveredPieceId === id && hoveredPieceSource === source)
+      set({ hoveredPieceId: null, hoveredPieceSource: "scene" })
+  },
   liftPanelId: null,
   setLiftPanel: (liftPanelId) => set({ liftPanelId }),
   view: readViewPref(),
