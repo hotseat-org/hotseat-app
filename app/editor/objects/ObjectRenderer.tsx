@@ -21,7 +21,7 @@ import { useEditorStoreApi } from "../store"
 import { ObjectMesh } from "./ObjectMesh"
 import { PieceContext } from "./pieceContext"
 import { WALL } from "./dimensions"
-import { FootprintOutline } from "./FootprintOutline"
+import { FootprintPlinth } from "./FootprintPlinth"
 import { Baked } from "./Baked"
 
 const ERASE = "#ef4444"
@@ -315,7 +315,7 @@ export const ObjectRenderer = memo(function ObjectRenderer({
           <meshBasicMaterial />
         </mesh>
       )}
-      <FootprintOutline
+      <FootprintPlinth
         width={outline[0]}
         depth={outline[1]}
         hovered={hoverable && hovered}

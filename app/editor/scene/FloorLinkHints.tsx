@@ -5,7 +5,7 @@ import { getFloorLink, getItem } from "../catalog"
 import { isFloorLink } from "../floorLinks"
 import { getFloorNumber, getFloorTitle } from "../floors"
 import { STOREY } from "../objects/dimensions"
-import { FootprintOutline } from "../objects/FootprintOutline"
+import { FootprintPlinth } from "../objects/FootprintPlinth"
 import { CursorHintContext } from "../shell/cursors"
 import { useEditorStore } from "../store"
 import { GRID, type SceneObject } from "../types"
@@ -108,7 +108,7 @@ export const FloorLinkHints = () => {
 
         return (
           <group key={stairs.id} position={[stairs.x, 0, stairs.z]} rotation-y={stairs.rotation}>
-            <FootprintOutline
+            <FootprintPlinth
               width={cellsX * GRID}
               depth={cellsZ * GRID}
               hovered={hovered?.isOpening === true && hovered.piece.id === stairs.id}
