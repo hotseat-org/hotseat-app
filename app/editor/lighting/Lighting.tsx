@@ -1,5 +1,5 @@
 import { useThree } from "@react-three/fiber"
-import { useLayoutEffect, useRef } from "react"
+import { useLayoutEffect, useRef, useState } from "react"
 import * as THREE from "three"
 import { ACCENT } from "../palette"
 import { useSurfaces } from "../scene/sceneTheme"
@@ -86,13 +86,22 @@ export const Lighting = ({ profile, centre = [0, 0], reach = 0, depth = 0 }: Pro
     markShadowsDirty(invalidate)
   }, [half, mapSize, renderer, invalidate])
 
+  // One sky colour and one fog, changed in place. A new fog (as `<fog args>`
+  // makes on every change) has the renderer rebuild every material's shader.
+  const [sky] = useState(() => new THREE.Color())
+  const [fog] = useState(() => new THREE.Fog(0x000000))
+  useLayoutEffect(() => {
+    sky.set(background ?? profile.sky)
+    fog.color.set(background ?? profile.fog)
+    fog.near = profile.fogNear + FOG_SHIFT
+    fog.far = profile.fogFar + FOG_SHIFT
+    invalidate()
+  }, [sky, fog, background, profile.sky, profile.fog, profile.fogNear, profile.fogFar, invalidate])
+
   return (
     <>
-      <color attach="background" args={[background ?? profile.sky]} />
-      <fog
-        attach="fog"
-        args={[background ?? profile.fog, profile.fogNear + FOG_SHIFT, profile.fogFar + FOG_SHIFT]}
-      />
+      <primitive object={sky} attach="background" />
+      <primitive object={fog} attach="fog" />
 
       <ambientLight intensity={profile.ambientIntensity} color={profile.ambientColor} />
       <hemisphereLight
