@@ -97,9 +97,12 @@ export const SURFACES: Record<"light" | "dark", SurfacePalette> = {
   light: {
     background: null,
     planBackdrop: "#e5dfd2",
-    contour: { minor: "#b9a684", major: "#957d52", plateau: "#ede8de", plateau3d: "#efe4d0" },
-    floor: PALETTE.floor,
-    floorInside: PALETTE.floorInside,
+    contour: { minor: "#a8946f", major: "#857048", plateau: "#ede8de", plateau3d: "#cbc0ad" },
+    // A cool stone, a step down from the cream UI: its labels and panels
+    // stand out on it, the building from the ground round it, and the wood
+    // desks by hue (a cream floor washed the scene out).
+    floor: "#c4b9a6",
+    floorInside: "#b39f7c",
     ceiling: "#f4efe6",
     wall: "#c9ced8",
     grid: "#9c855e",
