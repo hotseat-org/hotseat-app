@@ -113,9 +113,11 @@ export const buildRuns = (walls: SceneObject[], defaultColor: string): Run[] => 
  * (deselecting, like any empty spot). Walls are edited with the Wall / Door /
  * Erase tools, which BuildController handles.
  */
-export const Walls = () => {
+export const Walls = ({ pieces }: { pieces?: SceneObject[] }) => {
   // Hovering with the Paint tool shows its colour on the walls themselves.
-  const objects = useObjectsWithPaintPreview()
+  const shown = useObjectsWithPaintPreview()
+  // Another floor's (one below), or the shown floor's.
+  const objects = pieces ?? shown
 
   const walls = useMemo(() => objects.filter((object) => object.type === "wall"), [objects])
   const wallColor = useSurfaces().wall

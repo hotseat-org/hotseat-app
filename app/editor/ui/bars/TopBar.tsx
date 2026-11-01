@@ -11,7 +11,6 @@ import {
   Undo2,
 } from "lucide-react"
 import { useEditorStore } from "../../store"
-import { FloorPicker } from "../menus/FloorPicker"
 import { isMarker } from "../../types"
 import { useI18n } from "~/i18n/I18nProvider"
 import { msg } from "~/i18n/msg"
@@ -121,8 +120,6 @@ export const TopBar = ({ dbMode, saving, saveFailed, onRetrySave }: Props) => {
             />
           </div>
         </div>
-        {/* Which floor is being edited, and the floors' menu. */}
-        <FloorPicker isEditing />
       </div>
 
       <div className="pointer-events-auto absolute right-4 top-4 flex items-center gap-2">

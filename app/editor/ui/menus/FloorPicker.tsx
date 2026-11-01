@@ -16,11 +16,11 @@ export const useFloorName = () => {
 }
 
 /**
- * The layout's floors: one is shown, another a press away. Viewing, a column
- * with the top floor on top — only with floors to choose from. Editing, a row
- * in the top bar (the catalogue has the left), from the bottom floor, always
- * there, with the floors' own menu (add, name, order, delete). `isPhone`: in
- * the phone shell's colours.
+ * The layout's floors as a stack of slabs, the top floor on top: the shown
+ * one in the accent, another a press away. Viewing, only with floors to
+ * choose from. Editing, always — with a ghost slab on top to add a floor
+ * there, and the floors' menu (names, order, delete) below. `isPhone`: in the
+ * phone shell's colours.
  */
 export const FloorPicker = ({
   isEditing = false,
@@ -33,63 +33,102 @@ export const FloorPicker = ({
   const floors = useEditorStore((state) => state.floors)
   const currentFloor = useEditorStore((state) => state.currentFloor)
   const showFloor = useEditorStore((state) => state.showFloor)
-  const requestFit = useEditorStore((state) => state.requestFit)
+  const addFloor = useEditorStore((state) => state.addFloor)
   const getFloorName = useFloorName()
   if (!isEditing && floors.length < 2) return null
 
-  const pick = (id: string) => {
-    showFloor(id)
-    // Floors differ: each fits the view its own way.
-    requestFit()
-  }
-
   return (
     <div
-      role="radiogroup"
-      aria-label={t("Choose a floor")}
       className={clsx(
-        "pointer-events-auto flex gap-0.5 p-1 shadow-overlay",
-        isEditing ? "flex-row items-center" : "flex-col",
+        "pointer-events-auto flex flex-col items-stretch p-1.5 shadow-overlay",
         isPhone
           ? "rounded-xl border border-chrome-border bg-chrome/95"
           : "rounded-2xl border border-border bg-overlay"
       )}
       onPointerDown={(event) => event.stopPropagation()}
     >
-      {(isEditing ? floors : [...floors].reverse()).map((floor) => {
-        const isShown = floor.id === currentFloor
+      {isEditing && floors.length < MAX_FLOORS && (
+        <button
+          type="button"
+          aria-label={t("Add a floor on top")}
+          title={t("Add a floor on top")}
+          onClick={addFloor}
+          className="group flex items-center gap-2 rounded-lg pr-2 text-muted outline-none hover:text-accent focus-visible:ring-2 focus-visible:ring-focus"
+        >
+          <Slab look="ghost" />
+          <Plus className="size-3.5" />
+        </button>
+      )}
+      <div role="radiogroup" aria-label={t("Choose a floor")} className="flex flex-col">
+        {[...floors].reverse().map((floor) => {
+          const isShown = floor.id === currentFloor
 
-        return (
-          <button
-            key={floor.id}
-            type="button"
-            role="radio"
-            aria-checked={isShown}
-            aria-label={getFloorName(floor)}
-            title={getFloorName(floor)}
-            onClick={() => pick(floor.id)}
-            className={clsx(
-              "h-9 min-w-9 max-w-28 truncate rounded-xl px-2.5 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus",
-              isShown
-                ? "bg-accent font-extrabold text-accent-foreground"
-                : "font-bold text-foreground hover:bg-foreground/10"
-            )}
-          >
-            {floor.name || getFloorNumber(floors, floor.id)}
-          </button>
-        )
-      })}
+          return (
+            <button
+              key={floor.id}
+              type="button"
+              role="radio"
+              aria-checked={isShown}
+              aria-label={getFloorName(floor)}
+              title={getFloorName(floor)}
+              // The camera follows (see FloorShift): no refit.
+              onClick={() => showFloor(floor.id)}
+              className="group flex items-center gap-2 rounded-lg pr-2 outline-none focus-visible:ring-2 focus-visible:ring-focus"
+            >
+              <Slab look={isShown ? "shown" : "other"} />
+              <span
+                className={clsx(
+                  "max-w-24 truncate text-xs",
+                  isShown
+                    ? "font-extrabold text-accent"
+                    : "font-bold text-muted group-hover:text-foreground"
+                )}
+              >
+                {floor.name || getFloorNumber(floors, floor.id)}
+              </span>
+            </button>
+          )
+        })}
+      </div>
       {isEditing && <FloorsMenu />}
     </div>
   )
 }
+
+/**
+ * A floor drawn as a flat slab seen from above at an angle — stacked, they
+ * read as the building. `ghost`: dashed, a floor that could be added.
+ */
+const Slab = ({ look }: { look: "shown" | "other" | "ghost" }) => (
+  <svg aria-hidden viewBox="0 0 44 20" className="h-5 w-11 shrink-0 overflow-visible">
+    {/* The edge: the slab's thickness, under its top. */}
+    <path
+      d="M2 9 L22 16 L42 9 L42 12 L22 19 L2 12 Z"
+      className={clsx(
+        look === "shown" && "fill-accent/70",
+        look === "other" && "fill-border group-hover:fill-accent/40",
+        look === "ghost" && "fill-none"
+      )}
+    />
+    <path
+      d="M22 2 L42 9 L22 16 L2 9 Z"
+      strokeWidth={1.25}
+      strokeLinejoin="round"
+      strokeDasharray={look === "ghost" ? "3 2.5" : undefined}
+      className={clsx(
+        look === "shown" && "fill-accent stroke-accent",
+        look === "other" && "fill-surface stroke-border group-hover:stroke-accent",
+        look === "ghost" && "fill-none stroke-current"
+      )}
+    />
+  </svg>
+)
 
 /** Editing: the floors' menu — a new one on top, and each named, moved or deleted. */
 const FloorsMenu = () => {
   const { t } = useI18n()
   const floors = useEditorStore((state) => state.floors)
   const addFloor = useEditorStore((state) => state.addFloor)
-  const requestFit = useEditorStore((state) => state.requestFit)
   const canAdd = floors.length < MAX_FLOORS
 
   return (
@@ -99,11 +138,11 @@ const FloorsMenu = () => {
         variant="ghost"
         size="sm"
         aria-label={t("Edit floors")}
-        className="size-9 min-w-9 rounded-xl"
+        className="mt-1 h-8 w-full min-w-8 rounded-lg"
       >
         <Pencil className="size-4" />
       </Button>
-      <Popover.Content placement="bottom start" className="rounded-2xl">
+      <Popover.Content placement="left" className="rounded-2xl">
         <Popover.Dialog aria-label={t("The office's floors")} className="w-80 p-2 outline-none">
           <p className="px-1 pb-2 pt-1 text-xs font-extrabold text-muted">
             {t("The office's floors")}
@@ -124,10 +163,7 @@ const FloorsMenu = () => {
             size="sm"
             isDisabled={!canAdd}
             className="mt-2 w-full justify-start rounded-xl"
-            onPress={() => {
-              addFloor()
-              requestFit()
-            }}
+            onPress={addFloor}
           >
             <Plus className="size-4" />
             {t("Add a floor on top")}

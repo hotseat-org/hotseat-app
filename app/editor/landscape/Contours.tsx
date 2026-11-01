@@ -4,6 +4,7 @@ import * as THREE from "three"
 import { DaylightContext } from "../lighting/daylight"
 import { useSurfaces } from "../scene/sceneTheme"
 import { useEditorStore } from "../store"
+import type { SceneObject } from "../types"
 import { BUILD_AREA_GLSL, createBuildAreaUniforms, useBuildArea } from "../building/buildArea"
 import { getViewCentre } from "../camera/viewCentre"
 import { TILE, tilesCovering, useLandscape, type ContourTile } from "./terrain"
@@ -275,8 +276,16 @@ const viewCentre = new THREE.Vector3()
  * as the 2D plan. While editing, the plateau is hidden and the lines give way
  * to the grid's area round the structure, fading back in beyond it.
  */
-export const Contours = ({ isEditing = false }: { isEditing?: boolean }) => {
-  const objects = useEditorStore((state) => state.objects)
+export const Contours = ({
+  isEditing = false,
+  pieces,
+}: {
+  isEditing?: boolean
+  /** What the land is shaped round: the ground floor's pieces (unset: the shown floor's). */
+  pieces?: SceneObject[]
+}) => {
+  const shown = useEditorStore((state) => state.objects)
+  const objects = pieces ?? shown
   const surfaces = useSurfaces()
   const nightness = useContext(DaylightContext)
   const land = useLandscape(objects)

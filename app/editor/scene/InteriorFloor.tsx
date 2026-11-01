@@ -9,7 +9,7 @@ import {
 } from "three"
 import { useEditorStore, useEditorStoreApi } from "../store"
 import { FLOOR_PART, SEG, enclosedRegions, type FloorCell } from "../layout"
-import { isEdgeType } from "../types"
+import { isEdgeType, type SceneObject } from "../types"
 import { useSurfaces } from "./sceneTheme"
 
 const dummy = new Object3D()
@@ -77,10 +77,18 @@ const planksKey = () => "interior-planks"
  * instanced mesh of flat tiles per colour, just above the base floor (below the
  * edit grid).
  */
-export const InteriorFloor = () => {
+export const InteriorFloor = ({
+  pieces,
+  opacity = 1,
+}: {
+  /** Another floor's pieces (one below); unset, the shown floor's. */
+  pieces?: SceneObject[]
+  /** Below 1, see-through (the slab over the floor below). */
+  opacity?: number
+}) => {
   // Rooms depend only on walls/doors/windows and floor paints — a key of those,
   // so moving furniture doesn't re-run the flood fill.
-  const key = useEditorStore((state) =>
+  const shownKey = useEditorStore((state) =>
     state.objects
       .filter((object) => isEdgeType(object.type) || object.type === "floorPaint")
       .map(
@@ -91,9 +99,11 @@ export const InteriorFloor = () => {
   )
   const store = useEditorStoreApi()
   const surfaces = useSurfaces()
+  // Another floor's pieces change only with the layout: they're the key.
+  const key = pieces ?? shownKey
   const groups = useMemo(() => {
     void key // recompute exactly when the rooms can have changed
-    const objects = store.getState().objects
+    const objects = pieces ?? store.getState().objects
     const paints = objects.filter((object) => object.type === "floorPaint" && object.color)
     const byColor = new Map<string, FloorCell[]>()
     for (const region of enclosedRegions(objects)) {
@@ -114,19 +124,27 @@ export const InteriorFloor = () => {
     }
 
     return [...byColor]
-  }, [key, store, surfaces.floorInside])
+  }, [key, pieces, store, surfaces.floorInside])
 
   return (
     <>
       {groups.map(([color, cells]) => (
-        <FloorTiles key={color} color={color} cells={cells} />
+        <FloorTiles key={color} color={color} cells={cells} opacity={opacity} />
       ))}
     </>
   )
 }
 
 /** One colour's worth of interior floor: whole squares as tiles, cut ones as triangles. */
-const FloorTiles = ({ color, cells: all }: { color: string; cells: FloorCell[] }) => {
+const FloorTiles = ({
+  color,
+  cells: all,
+  opacity,
+}: {
+  color: string
+  cells: FloorCell[]
+  opacity: number
+}) => {
   const invalidate = useThree((state) => state.invalidate)
   const ref = useRef<InstancedMesh>(null)
   const cells = useMemo(() => all.filter((cell) => cell.parts === undefined), [all])
@@ -158,18 +176,21 @@ const FloorTiles = ({ color, cells: all }: { color: string; cells: FloorCell[] }
           receiveShadow
         >
           <planeGeometry args={[SEG, SEG]} />
-          <FloorSurface color={color} />
+          <FloorSurface color={color} opacity={opacity} />
         </instancedMesh>
       )}
-      {cutCells.length > 0 && <CutFloor color={color} cells={cutCells} />}
+      {cutCells.length > 0 && <CutFloor color={color} cells={cutCells} opacity={opacity} />}
     </>
   )
 }
 
-const FloorSurface = ({ color }: { color: string }) => (
+const FloorSurface = ({ color, opacity }: { color: string; opacity: number }) => (
   <meshStandardMaterial
     color={color}
     roughness={0.92}
+    transparent={opacity < 1}
+    opacity={opacity}
+    depthWrite={opacity === 1}
     onBeforeCompile={patchPlanks}
     customProgramCacheKey={planksKey}
   />
@@ -179,7 +200,15 @@ const FloorSurface = ({ color }: { color: string }) => (
  * The squares a diagonal wall cuts: only their triangles inside the room (a
  * square's quarters between its diagonals, see FLOOR_PART), as one mesh.
  */
-const CutFloor = ({ color, cells }: { color: string; cells: FloorCell[] }) => {
+const CutFloor = ({
+  color,
+  cells,
+  opacity,
+}: {
+  color: string
+  cells: FloorCell[]
+  opacity: number
+}) => {
   const geometry = useMemo(() => {
     const positions: number[] = []
     const y = 0.006
@@ -207,7 +236,7 @@ const CutFloor = ({ color, cells }: { color: string; cells: FloorCell[] }) => {
 
   return (
     <mesh geometry={geometry} receiveShadow>
-      <FloorSurface color={color} />
+      <FloorSurface color={color} opacity={opacity} />
     </mesh>
   )
 }

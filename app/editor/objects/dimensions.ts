@@ -10,6 +10,12 @@ export const WALL = {
   sink: 0.08,
 }
 
+/**
+ * One storey: a floor's walls and the slab on them — how far each floor sits
+ * above the one below.
+ */
+export const STOREY = WALL.height + 0.12
+
 export const DESK = {
   width: 1.6,
   depth: 0.9,

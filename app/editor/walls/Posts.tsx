@@ -8,7 +8,7 @@ import { WALL } from "../objects/dimensions"
 import { useSurfaces } from "../scene/sceneTheme"
 import { getItem } from "../catalog"
 import { getRenderer } from "../catalog/rendering"
-import { isWall } from "../types"
+import { isWall, type SceneObject } from "../types"
 import { CutawayContext, setCutAttributes } from "./cutaway"
 
 const SIZE = 0.15 // slightly proud of the wall thickness so it fills the corner notch
@@ -19,8 +19,10 @@ const GLASS_SIZE = 0.07
  * Small pillars at every node touched by a wall/door. On straight runs they sit
  * hidden inside the wall; at corners and run-ends they finish the joint cleanly.
  */
-export const Posts = () => {
-  const objects = useObjectsWithPaintPreview()
+export const Posts = ({ pieces }: { pieces?: SceneObject[] }) => {
+  const shown = useObjectsWithPaintPreview()
+  // Another floor's (one below), or the shown floor's.
+  const objects = pieces ?? shown
   // Where walls (and what's cut into them) meet: other runs, like fences,
   // join without wall posts.
   const nodes = useMemo(

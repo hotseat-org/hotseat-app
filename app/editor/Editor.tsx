@@ -322,6 +322,13 @@ const EditorInner = ({
           <TimeOfDay isViewing={readOnly}>{editable && modeButton}</TimeOfDay>
         )}
 
+        {/* Editing: the floors, middle right (the catalogue has the left). */}
+        {!readOnly && !isEmpty && (
+          <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2">
+            <FloorPicker isEditing />
+          </div>
+        )}
+
         {!readOnly && !isEmpty && (
           <>
             <TopBar

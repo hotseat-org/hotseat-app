@@ -12,7 +12,7 @@ import {
 } from "../building/buildArea"
 
 /** The ground: past any view and the whole (practically endless) build area. */
-const GROUND_SIZE = BUILD_HALF * 4
+export const GROUND_SIZE = BUILD_HALF * 4
 
 interface Props {
   // Raw ground coordinates — Scene snaps them per-object (footprint aware).
@@ -24,13 +24,27 @@ interface Props {
   onClick?: (delta: number) => void
   /** Grid is a build aid — shown only while editing. */
   showGrid?: boolean
+  /**
+   * The shown floor is the ground floor (default). Higher up, this is only the
+   * level everything's placed on — invisible, the ground is drawn below (see
+   * FloorStack) — with the build grid on it.
+   */
+  isGroundFloor?: boolean
 }
 
 /**
  * The endless ground — also what pointer events hit for placing and drawing —
  * and, while editing, the build grid hugging the structure (see buildArea.ts).
  */
-export const Ground = ({ onDown, onMove, onUp, onLeave, onClick, showGrid = true }: Props) => {
+export const Ground = ({
+  onDown,
+  onMove,
+  onUp,
+  onLeave,
+  onClick,
+  showGrid = true,
+  isGroundFloor = true,
+}: Props) => {
   const surfaces = useSurfaces()
   const invalidate = useThree((state) => state.invalidate)
 
@@ -62,7 +76,11 @@ export const Ground = ({ onDown, onMove, onUp, onLeave, onClick, showGrid = true
         onClick={onClick ? (event: ThreeEvent<MouseEvent>) => onClick(event.delta) : undefined}
       >
         <planeGeometry args={[GROUND_SIZE, GROUND_SIZE]} />
-        <meshStandardMaterial color={surfaces.floor} roughness={0.95} fog={false} />
+        {isGroundFloor ? (
+          <meshStandardMaterial color={surfaces.floor} roughness={0.95} fog={false} />
+        ) : (
+          <meshBasicMaterial visible={false} />
+        )}
       </mesh>
 
       {showGrid && <BuildGrid color={surfaces.grid} />}
