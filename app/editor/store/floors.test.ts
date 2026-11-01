@@ -119,4 +119,19 @@ describe("floors", () => {
 
     expect(store.getState().floors.map((floor) => floor.name)).toEqual(["Attic", first.name])
   })
+
+  test("a floor dragged to another place moves there, the others making room", () => {
+    const { store } = createTestEditor({ objects: [wall] })
+    store.getState().addFloor()
+    store.getState().addFloor()
+    const [ground, first, second] = store.getState().floors
+
+    store.getState().moveFloorTo(second.id, 0)
+
+    expect(store.getState().floors.map((floor) => floor.id)).toEqual([
+      second.id,
+      ground.id,
+      first.id,
+    ])
+  })
 })

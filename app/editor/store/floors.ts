@@ -25,6 +25,8 @@ export interface FloorsState {
   renameFloor: (id: string, name: string) => void
   /** A floor one up (1) or down (-1) in the order. */
   moveFloor: (id: string, step: 1 | -1) => void
+  /** A floor to this place in the order (from 0 at the bottom), the others making room. */
+  moveFloorTo: (id: string, index: number) => void
   /** A floor and everything on it gone (never the last one). */
   deleteFloor: (id: string) => void
 }
@@ -71,14 +73,18 @@ export const createFloorsActions = (
           floor.id === id ? { ...floor, name: name.trim().slice(0, MAX_FLOOR_NAME) } : floor
         ),
       })),
-    moveFloor: (id, step) =>
-      set((state) => {
-        const index = state.floors.findIndex((floor) => floor.id === id)
-        const target = index + step
-        if (index < 0 || target < 0 || target >= state.floors.length) return state
+    moveFloor: (id, step) => {
+      const { floors, moveFloorTo } = get()
 
-        const floors = [...state.floors]
-        ;[floors[index], floors[target]] = [floors[target], floors[index]]
+      moveFloorTo(id, floors.findIndex((floor) => floor.id === id) + step)
+    },
+    moveFloorTo: (id, index) =>
+      set((state) => {
+        const from = state.floors.findIndex((floor) => floor.id === id)
+        if (from < 0 || from === index || index < 0 || index >= state.floors.length) return state
+
+        const floors = state.floors.filter((floor) => floor.id !== id)
+        floors.splice(index, 0, state.floors[from])
 
         return { floors }
       }),

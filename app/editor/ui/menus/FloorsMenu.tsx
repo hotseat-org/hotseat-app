@@ -1,7 +1,16 @@
 import { AlertDialog, Button, Dropdown, Popover } from "@heroui/react"
 import clsx from "clsx"
-import { BrickWall, ChevronDown, ChevronUp, Ellipsis, Pencil, Plus, Trash2 } from "lucide-react"
-import { useState } from "react"
+import {
+  BrickWall,
+  ChevronDown,
+  ChevronUp,
+  Ellipsis,
+  GripVertical,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react"
+import { useRef, useState, type PointerEvent as ReactPointerEvent } from "react"
 import {
   MAX_FLOORS,
   MAX_FLOOR_NAME,
@@ -55,15 +64,73 @@ export const Slab = ({ look }: { look: "shown" | "other" | "ghost" }) => (
   </svg>
 )
 
+/** The gap between the menu's rows (px; its list's `gap-1`). */
+const ROW_GAP = 4
+
+/** A floor being dragged to another place: where its row's middle started, and how far it's gone. */
+interface FloorDrag {
+  id: string
+  startY: number
+  offset: number
+  /** Every row's middle (px, on screen), top floor first, as the drag began. */
+  rowMiddles: number[]
+  /** How far a row makes way: the dragged one's height and the gap. */
+  rowStep: number
+}
+
+/** Where a dragged row would land among the others (top floor first). */
+const getDropIndex = (drag: FloorDrag, from: number) =>
+  drag.rowMiddles.filter(
+    (middle, index) => index !== from && middle < drag.rowMiddles[from] + drag.offset
+  ).length
+
 /**
- * Editing: the floors' menu, opened from its button under the tower — a new
- * floor on top, and each named, moved or deleted.
+ * Editing: the floors' menu, opened from its button above the tower — a new
+ * floor on top, and each named, dragged to another place, or deleted.
  */
 export const FloorsMenu = () => {
   const { t } = useI18n()
   const floors = useEditorStore((state) => state.floors)
   const addFloor = useEditorStore((state) => state.addFloor)
+  const moveFloorTo = useEditorStore((state) => state.moveFloorTo)
   const canAdd = floors.length < MAX_FLOORS
+  const list = useRef<HTMLUListElement>(null)
+  const [drag, setDrag] = useState<FloorDrag | null>(null)
+  const topFirst = [...floors].reverse()
+  const dragFrom = drag ? topFirst.findIndex((floor) => floor.id === drag.id) : -1
+  const dropIndex = drag ? getDropIndex(drag, dragFrom) : -1
+
+  const handleDragStart = (id: string, event: ReactPointerEvent<HTMLElement>) => {
+    const rows = [...(list.current?.children ?? [])].map((row) => row.getBoundingClientRect())
+    const from = topFirst.findIndex((floor) => floor.id === id)
+    event.currentTarget.setPointerCapture(event.pointerId)
+    setDrag({
+      id,
+      startY: event.clientY,
+      offset: 0,
+      rowMiddles: rows.map((row) => row.top + row.height / 2),
+      rowStep: (rows[from]?.height ?? 0) + ROW_GAP,
+    })
+  }
+  const handleDragMove = (event: ReactPointerEvent<HTMLElement>) =>
+    setDrag((current) => current && { ...current, offset: event.clientY - current.startY })
+  const handleDragEnd = () => {
+    if (!drag) return
+
+    // Top floor first on screen; the order is from the bottom.
+    moveFloorTo(drag.id, floors.length - 1 - dropIndex)
+    setDrag(null)
+  }
+
+  /** How far a row moves while one is dragged: the dragged one with the pointer, the others aside. */
+  const getRowShift = (index: number) => {
+    if (!drag) return 0
+    if (index === dragFrom) return drag.offset
+    if (dragFrom < index && index <= dropIndex) return -drag.rowStep
+    if (dropIndex <= index && index < dragFrom) return drag.rowStep
+
+    return 0
+  }
 
   return (
     <Popover>
@@ -77,18 +144,26 @@ export const FloorsMenu = () => {
         <Pencil className="size-4" />
       </Button>
       <Popover.Content placement="left" className="rounded-2xl">
-        <Popover.Dialog aria-label={t("The office's floors")} className="w-80 p-2 outline-none">
+        <Popover.Dialog
+          aria-label={t("The office's floors")}
+          className="w-[22rem] p-2 outline-none"
+        >
           <p className="px-1 pb-2 pt-1 text-xs font-extrabold text-muted">
             {t("The office's floors")}
           </p>
-          <ul className="flex flex-col gap-1">
-            {[...floors].reverse().map((floor, index) => (
+          <ul ref={list} className="flex flex-col gap-1">
+            {topFirst.map((floor, index) => (
               <FloorRow
                 key={floor.id}
                 floor={floor}
                 isTop={index === 0}
                 isBottom={index === floors.length - 1}
                 isOnly={floors.length === 1}
+                isDragged={floor.id === drag?.id}
+                shift={getRowShift(index)}
+                onDragStart={(event) => handleDragStart(floor.id, event)}
+                onDragMove={handleDragMove}
+                onDragEnd={handleDragEnd}
               />
             ))}
           </ul>
@@ -109,23 +184,35 @@ export const FloorsMenu = () => {
 }
 
 /** What a floor's "…" menu offers. */
-type FloorAction = "add-walled" | "add-empty" | "move-up" | "move-down" | "delete"
+type FloorAction = "add-walled" | "add-empty" | "move-up" | "move-down"
 
 /**
- * A floor in the menu: its number and name to edit, how much is on it, and
- * its "…" menu — a floor above (with its outer walls, or empty), up and
- * down, delete.
+ * A floor in the menu: its grip to drag it to another place, its number and
+ * name to edit, how much is on it, delete, and its "…" menu — a floor above
+ * (with its outer walls, or empty), up and down (the keyboard's way to move it).
  */
 const FloorRow = ({
   floor,
   isTop,
   isBottom,
   isOnly,
+  isDragged,
+  shift,
+  onDragStart,
+  onDragMove,
+  onDragEnd,
 }: {
   floor: Floor
   isTop: boolean
   isBottom: boolean
   isOnly: boolean
+  /** It's the one being dragged (it follows the pointer, over the others). */
+  isDragged: boolean
+  /** How far it's moved while a row is dragged (px). */
+  shift: number
+  onDragStart: (event: ReactPointerEvent<HTMLElement>) => void
+  onDragMove: (event: ReactPointerEvent<HTMLElement>) => void
+  onDragEnd: () => void
 }) => {
   const { t, tn } = useI18n()
   const floors = useEditorStore((state) => state.floors)
@@ -150,7 +237,6 @@ const FloorRow = ({
     ...(isFull ? (["add-walled", "add-empty"] as const) : []),
     ...(isTop ? (["move-up"] as const) : []),
     ...(isBottom ? (["move-down"] as const) : []),
-    ...(isOnly ? (["delete"] as const) : []),
   ]
 
   const handleAction = (action: FloorAction) => {
@@ -163,18 +249,35 @@ const FloorRow = ({
         return moveFloor(floor.id, 1)
       case "move-down":
         return moveFloor(floor.id, -1)
-      case "delete":
-        return pieceCount > 0 ? setIsConfirming(true) : deleteFloor(floor.id)
     }
   }
 
   return (
     <li
       className={clsx(
-        "flex items-center gap-2 rounded-xl border p-1.5",
-        isShown ? "border-accent/30 bg-accent/10" : "border-transparent"
+        "relative flex items-center gap-1.5 rounded-xl border p-1.5",
+        isShown ? "border-accent/30 bg-accent/10" : "border-transparent",
+        isDragged
+          ? "z-10 border-border bg-overlay shadow-overlay"
+          : "transition-transform duration-150"
       )}
+      style={{ transform: shift ? `translateY(${shift}px)` : undefined }}
     >
+      {/* Dragged up or down to another place (the "…" menu's Move up / down, by keyboard). */}
+      <span
+        aria-hidden
+        title={t("Drag to reorder")}
+        onPointerDown={onDragStart}
+        onPointerMove={(event) => isDragged && onDragMove(event)}
+        onPointerUp={onDragEnd}
+        onPointerCancel={onDragEnd}
+        className={clsx(
+          "grid w-5 shrink-0 touch-none place-items-center self-stretch rounded-md text-muted hover:bg-foreground/5 hover:text-foreground",
+          isDragged ? "cursor-grabbing" : "cursor-grab"
+        )}
+      >
+        <GripVertical className="size-4" />
+      </span>
       <label className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span
           className={clsx(
@@ -199,6 +302,17 @@ const FloorRow = ({
       <span className="w-16 shrink-0 self-end pb-2 text-right text-xs font-bold text-muted">
         {tn(pieceCount, "{n} item", "{n} items")}
       </span>
+      <Button
+        isIconOnly
+        variant="ghost"
+        size="sm"
+        aria-label={t("Delete {floor}", { floor: name })}
+        isDisabled={isOnly}
+        className="size-8 min-w-8 self-end text-danger"
+        onPress={() => (pieceCount > 0 ? setIsConfirming(true) : deleteFloor(floor.id))}
+      >
+        <Trash2 className="size-4" />
+      </Button>
       <Dropdown>
         <Dropdown.Trigger
           aria-label={t("More for {floor}", { floor: name })}
@@ -230,10 +344,6 @@ const FloorRow = ({
             <Dropdown.Item id="move-down" textValue={t("Move down")}>
               <ChevronDown className="size-4 text-muted" />
               {t("Move down")}
-            </Dropdown.Item>
-            <Dropdown.Item id="delete" textValue={t("Delete floor")} variant="danger">
-              <Trash2 className="size-4" />
-              {t("Delete floor")}
             </Dropdown.Item>
           </Dropdown.Menu>
         </Dropdown.Popover>

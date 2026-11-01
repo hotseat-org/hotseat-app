@@ -305,7 +305,9 @@ export const cs: Messages = {
     many: "{n} volného",
     other: "{n} volných",
   },
+  "Delete {floor}": "Smazat {floor}",
   "Delete {floor}?": "Smazat {floor}?",
+  "Drag to reorder": "Přetažením změníte pořadí",
   "Delete floor": "Smazat patro",
   "Its {n} item goes with it. This can't be undone.": {
     one: "Odstraní se s ním {n} předmět. Nejde to vrátit zpět.",
