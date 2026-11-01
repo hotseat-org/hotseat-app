@@ -17,6 +17,7 @@ import { markShadowsDirty } from "../lighting/shadows"
 import { CutawayContext } from "../walls/cutaway"
 import { CursorHintContext } from "../shell/cursors"
 import { getItem } from "../catalog"
+import { useEditorStoreApi } from "../store"
 import { ObjectMesh } from "./ObjectMesh"
 import { PieceContext } from "./pieceContext"
 import { WALL } from "./dimensions"
@@ -109,13 +110,20 @@ export const ObjectRenderer = memo(function ObjectRenderer({
   // open (pick it up) in edit mode, pointing (open its card) in view mode.
   const hoverable = clickable || selectable
   const setCursorHint = useContext(CursorHintContext)
+  // Viewing, the store knows it's pointed at too (its tag grows with it).
+  const storeApi = useEditorStoreApi()
   useEffect(() => {
     if (!hoverable || !hovered) return
 
     setCursorHint(object.id, selectable ? "grab" : "point")
+    if (clickable) storeApi.getState().setHoveredPiece(object.id)
 
-    return () => setCursorHint(object.id, null)
-  }, [hoverable, hovered, selectable, object.id, setCursorHint])
+    return () => {
+      setCursorHint(object.id, null)
+      if (clickable && storeApi.getState().hoveredPieceId === object.id)
+        storeApi.getState().setHoveredPiece(null)
+    }
+  }, [hoverable, hovered, selectable, clickable, object.id, setCursorHint, storeApi])
   // Doors, windows and wall items are sliced with their wall by the cursor
   // cutaway (see cutaway.ts).
   const cutaway = getCutaway(object.type)

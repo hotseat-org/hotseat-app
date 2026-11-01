@@ -17,6 +17,8 @@ export interface FurnitureInput {
   /** Whether a piece answers a click (a module's: a desk opens its card). */
   isClickable: (object: SceneObject) => boolean
   onPiece: (id: string) => void
+  /** The clickable piece the pointer is over, or none (left). */
+  onHover?: (id: string | null) => void
 }
 
 /**
@@ -25,7 +27,7 @@ export interface FurnitureInput {
  * back as a layer of their own.
  */
 export const drawFurniture = (
-  { objects, floorInside, styleOf, isClickable, onPiece }: FurnitureInput,
+  { objects, floorInside, styleOf, isClickable, onPiece, onHover }: FurnitureInput,
   push: Push
 ) => {
   /** A muted piece, blended this far toward the floor. */
@@ -67,6 +69,8 @@ export const drawFurniture = (
         transform={`translate(${object.x} ${object.z}) rotate(${turn})`}
         className={isPieceClickable ? "cursor-pointer" : undefined}
         onClick={isPieceClickable ? open : undefined}
+        onPointerEnter={isPieceClickable && onHover ? () => onHover(object.id) : undefined}
+        onPointerLeave={isPieceClickable && onHover ? () => onHover(null) : undefined}
         opacity={style?.isDimmed ? 0.3 : undefined}
       >
         {piece.node}

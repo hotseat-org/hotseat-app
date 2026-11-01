@@ -1,3 +1,4 @@
+import clsx from "clsx"
 import { useCallback, useMemo } from "react"
 import { createPortal } from "react-dom"
 import { personByEmail, usePeople } from "../desks/people"
@@ -57,6 +58,7 @@ export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
   const { t } = i18n
   const { view, screen, turn, objects, isDark, phoneChrome } = plan
   const openSeatCard = useOfficeStore((state) => state.openSeatCard)
+  const hoveredId = useOfficeStore((state) => state.hoveredPieceId)
   const heatmap = useOfficeStore((state) => state.heatmap)
   const isTagsLayerOn = useOfficeStore((state) => state.layers.deskTags)
   // Tags mark free desks as bookable whatever the heatmap (it hides them anyway).
@@ -174,20 +176,28 @@ export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
               key={desk.id}
               type="button"
               aria-label={t("Open {desk}", { desk: deskName(i18n, desk) })}
-              className="absolute -translate-x-1/2 -translate-y-full cursor-pointer transition-transform hover:-translate-y-[calc(100%+2px)]"
+              className="group absolute -translate-x-1/2 -translate-y-full cursor-pointer"
               style={at}
               onClick={(event) => {
                 event.stopPropagation()
                 if (!plan.isMoved()) openSeatCard(desk.id)
               }}
             >
-              <DeskTag
-                person={person}
-                label={desk.label}
-                mine={mine}
-                free={free}
-                resident={state.kind === "resident"}
-              />
+              {/* Pointed at — it, or its desk — it grows a little. */}
+              <span
+                className={clsx(
+                  "block origin-bottom transition-transform duration-150 group-hover:[transform:scale(1.1)]",
+                  desk.id === hoveredId && "[transform:scale(1.1)]"
+                )}
+              >
+                <DeskTag
+                  person={person}
+                  label={desk.label}
+                  mine={mine}
+                  free={free}
+                  resident={state.kind === "resident"}
+                />
+              </span>
             </button>
           )
         })}

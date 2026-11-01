@@ -38,6 +38,9 @@ export interface ViewState {
    */
   view: OfficeView
   setView: (view: OfficeView) => void
+  /** Viewing: the clickable piece under the pointer (a desk — its tag grows with it), or none. */
+  hoveredPieceId: string | null
+  setHoveredPiece: (id: string | null) => void
   /** Viewing: the lift whose floor buttons are open (pressed on the map), or none. */
   liftPanelId: string | null
   setLiftPanel: (id: string | null) => void
@@ -77,6 +80,8 @@ export const createViewState = (set: SetState, get: GetState, hooks: StoreHooks)
   tickClock: () => {
     if (get().syncTime) set({ timeOfDay: nowHours() })
   },
+  hoveredPieceId: null,
+  setHoveredPiece: (hoveredPieceId) => set({ hoveredPieceId }),
   liftPanelId: null,
   setLiftPanel: (liftPanelId) => set({ liftPanelId }),
   view: readViewPref(),

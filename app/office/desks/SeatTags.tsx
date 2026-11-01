@@ -26,6 +26,7 @@ export const SeatTags = () => {
   // The open desk's card replaces its tag; pressed, a tag opens its desk's card.
   const openId = useOfficeStore((state) => state.seatCard?.id)
   const openSeatCard = useOfficeStore((state) => state.openSeatCard)
+  const hoveredId = useOfficeStore((state) => state.hoveredPieceId)
   const i18n = useI18n()
   // Insights' heatmap: every desk's share of days in use, instead of who's in.
   const heatmap = useOfficeStore((state) => state.heatmap)
@@ -80,25 +81,34 @@ export const SeatTags = () => {
               type="button"
               aria-label={t("Open {desk}", { desk: deskName(i18n, desk) })}
               onClick={() => openSeatCard(desk.id)}
-              className="pointer-events-auto flex cursor-pointer select-none flex-col items-center gap-1 transition-transform hover:-translate-y-0.5"
+              // The button itself isn't scaled (the UI kit sets buttons' scale): what's in it is.
+              className="group pointer-events-auto cursor-pointer select-none"
             >
-              {person && state.kind !== "free" && (
-                <SeatAvatar person={person} email={state.email} isMine={mine} size={40} />
-              )}
-              <div
+              <span
                 className={clsx(
-                  "flex items-center gap-1.5 whitespace-nowrap rounded-full border px-1.5 py-0.5 text-[11px] font-bold shadow-overlay",
-                  getDeskTagTone(mine, free)
+                  "flex origin-bottom flex-col items-center gap-1 transition-transform duration-150 group-hover:[transform:scale(1.1)]",
+                  // Its desk pointed at: it grows too.
+                  desk.id === hoveredId && "[transform:scale(1.1)]"
                 )}
               >
-                {desk.label && <span className="opacity-80">{desk.label}</span>}
-                {/* First name only: neighbouring desks' tags would collide. */}
-                {person && <span>{mine ? t("You") : person.name.split(" ")[0]}</span>}
-                {state.kind === "resident" && (
-                  <Pin className="size-3 opacity-70" aria-label={t("Permanent desk")} />
+                {person && state.kind !== "free" && (
+                  <SeatAvatar person={person} email={state.email} isMine={mine} size={40} />
                 )}
-                {free && <span>{t("Free")}</span>}
-              </div>
+                <div
+                  className={clsx(
+                    "flex items-center gap-1.5 whitespace-nowrap rounded-full border px-1.5 py-0.5 text-[11px] font-bold shadow-overlay",
+                    getDeskTagTone(mine, free)
+                  )}
+                >
+                  {desk.label && <span className="opacity-80">{desk.label}</span>}
+                  {/* First name only: neighbouring desks' tags would collide. */}
+                  {person && <span>{mine ? t("You") : person.name.split(" ")[0]}</span>}
+                  {state.kind === "resident" && (
+                    <Pin className="size-3 opacity-70" aria-label={t("Permanent desk")} />
+                  )}
+                  {free && <span>{t("Free")}</span>}
+                </div>
+              </span>
             </button>
           </Html>
         )

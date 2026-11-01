@@ -116,6 +116,7 @@ export const FloorPlan = ({
     [viewClicks]
   )
   const liftPanel = useLiftPanel()
+  const setHoveredPiece = useEditorStore((state) => state.setHoveredPiece)
   const styleOf = usePlanPieceStyles(objects)
   const drawings = usePlanDrawings({ objects, isDark: dark, idPrefix, onPiece })
 
@@ -129,9 +130,19 @@ export const FloorPlan = ({
         styleOf,
         isClickable,
         onPiece,
+        onHover: setHoveredPiece,
         drawings,
       }),
-    [objects, surfaces.wall, surfaces.floorInside, styleOf, viewClicks, onPiece, drawings]
+    [
+      objects,
+      surfaces.wall,
+      surfaces.floorInside,
+      styleOf,
+      isClickable,
+      onPiece,
+      setHoveredPiece,
+      drawings,
+    ]
   )
 
   useLayoutEffect(() => {
