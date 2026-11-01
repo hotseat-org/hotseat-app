@@ -8,6 +8,7 @@ import {
   type Camera,
   type OrthographicCamera,
   type Scene,
+  Vector2,
 } from "three"
 import {
   dot,
@@ -39,7 +40,7 @@ import {
 } from "three/webgpu"
 import { ao } from "three/examples/jsm/tsl/display/GTAONode.js"
 import { denoise } from "three/examples/jsm/tsl/display/DenoiseNode.js"
-import { OUTLINE_LAYER } from "../objects/outlineLayer"
+import { OUTLINE_LAYER, shownOutlines } from "../objects/outlineLayer"
 import { DEPTH_BIAS } from "../objects/PieceOutline"
 
 /** Ambient occlusion: its reach (m) and strength (×), at half the screen's resolution. */
@@ -64,6 +65,9 @@ const onLayer = (layer: number) => {
  */
 class OutlinePassNode extends PassNode {
   private readonly shownScene: Scene
+  /** Its target was last drawn empty, at this size (drawing buffer px): no need to again. */
+  private readonly clearedSize = new Vector2()
+  private isCleared = false
 
   constructor(scene: Scene, camera: Camera) {
     super(PassNode.COLOR, scene, camera, { stencilBuffer: true })
@@ -82,6 +86,15 @@ class OutlinePassNode extends PassNode {
 
   updateBefore(frame: NodeFrame) {
     const renderer = frame.renderer as unknown as WebGPURenderer
+
+    // No outlines showing: drawn empty once (cleared), then left as it is.
+    const size = renderer.getDrawingBufferSize(drawingBufferSize)
+    const isEmpty = shownOutlines.size === 0
+    if (isEmpty && this.isCleared && size.equals(this.clearedSize)) return
+
+    this.isCleared = isEmpty
+    this.clearedSize.copy(size)
+
     const background = this.shownScene.background
     const clearAlpha = renderer.getClearAlpha()
     this.shownScene.background = null
@@ -93,6 +106,8 @@ class OutlinePassNode extends PassNode {
     return result
   }
 }
+
+const drawingBufferSize = new Vector2()
 
 /** A depth texture's distances in view space (m), for this camera's projection. */
 const getViewZ = (depth: Node<"float">, camera: Camera) => {

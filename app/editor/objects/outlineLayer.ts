@@ -1,3 +1,5 @@
+import type { Object3D } from "three"
+
 /**
  * Pieces' outlines (see PieceOutline) are on a layer of their own. Editing,
  * the camera draws them with the scene. Viewing, post-processing (PostFx)
@@ -7,3 +9,9 @@
  * the scene stands in front of them.
  */
 export const OUTLINE_LAYER = 1
+
+/**
+ * The outlines showing now (pointed at, selected or easing out). With none,
+ * PostFx doesn't draw the outlines' pass: empty, it still cost a few ms a frame.
+ */
+export const shownOutlines = new Set<Object3D>()

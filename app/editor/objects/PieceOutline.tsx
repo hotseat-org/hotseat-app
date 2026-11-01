@@ -27,7 +27,7 @@ import {
 import { MeshBasicNodeMaterial } from "three/webgpu"
 import { ACCENT } from "../palette"
 import { getMatrixWithin } from "./localMatrix"
-import { OUTLINE_LAYER } from "./outlineLayer"
+import { OUTLINE_LAYER, shownOutlines } from "./outlineLayer"
 
 /** Its width (CSS px) and colour: cream pointed at, the accent selected. */
 const LOOK = {
@@ -120,6 +120,14 @@ export const PieceOutline = ({
     outlineLook.resolution.value.set(size.width, size.height)
   }, [outlineLook, size.width, size.height])
 
+  useEffect(() => {
+    const outline = self.current
+
+    return () => {
+      if (outline) shownOutlines.delete(outline)
+    }
+  }, [])
+
   const amount = useRef(0)
   useFrame((state, delta) => {
     const outline = self.current
@@ -128,6 +136,8 @@ export const PieceOutline = ({
     const target = hovered || selected ? 1 : 0
     amount.current += (target - amount.current) * Math.min(1, delta * 14)
     outline.visible = amount.current > 0.01
+    if (outline.visible) shownOutlines.add(outline)
+    else shownOutlines.delete(outline)
     if (!outline.visible) return
 
     const look = selected ? LOOK.selected : LOOK.hovered
