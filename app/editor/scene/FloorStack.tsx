@@ -172,8 +172,6 @@ export const ShownFloorLinks = ({ isViewing }: { isViewing: boolean }) => {
                 event.stopPropagation()
                 handleLinkClick(stairs)
               }}
-              onPointerOver={() => (document.body.style.cursor = "pointer")}
-              onPointerOut={() => (document.body.style.cursor = "")}
             >
               <planeGeometry args={[STAIRS.width, STAIRS.length]} />
             </mesh>

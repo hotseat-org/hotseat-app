@@ -57,6 +57,7 @@ import { useFloorLinkClick } from "../useFloorLinkClick"
 import { isFloorLink } from "../floorLinks"
 import { FloorPiecesContext } from "../objects/pieceContext"
 import { LiftPanel } from "./LiftPanel"
+import { FloorLinkHints } from "./FloorLinkHints"
 import { FloorShift, FloorsBelow, ShownFloorLinks } from "./FloorStack"
 import { useOfficeArea } from "./useOfficeArea"
 import { useContextMenuPress } from "./useContextMenuPress"
@@ -392,6 +393,8 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
                 {/* What other floors bring here: stairs' guard rails, lift shafts. */}
                 <ShownFloorLinks isViewing={readOnly} />
                 {readOnly && <LiftPanel />}
+                {/* Pointed at, stairs and lifts say where they take you. */}
+                {readOnly && <FloorLinkHints />}
                 {/* The modules' layers (the office: zones, desk tags, the heatmap, the way to a desk). */}
                 {sceneLayers.map(({ Component }, index) => (
                   <Component key={index} isEditing={!readOnly} isDark={dark} />

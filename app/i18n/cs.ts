@@ -152,6 +152,8 @@ export const cs: Messages = {
   Stairs: "Schody",
   Lift: "Výtah",
   "Lift: choose a floor": "Výtah: vyberte patro",
+  "Up to {floor}": "Nahoru: {floor}",
+  "Down to {floor}": "Dolů: {floor}",
   Chair: "Židle",
   Sofa: "Pohovka",
   Plant: "Rostlina",
