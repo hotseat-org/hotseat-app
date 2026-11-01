@@ -229,6 +229,7 @@ export const cs: Messages = {
   " and ": " a ",
   Seat: "Místo",
   "Label every unlabelled desk D-1, D-2…": "Očíslovat všechny stoly bez označení D-1, D-2…",
+  Label: "Popisek",
   "Number all desks": "Očíslovat všechny stoly",
   "Label, e.g. D-12": "Označení, např. D-12",
   Features: "Vybavení",

@@ -7,8 +7,16 @@ import { hasLooks, isEdgeType, isRecolorable, isWallMounted } from "../types"
 import { getItem } from "../catalog"
 import { useModules } from "../modules"
 import { getToolMeta } from "./catalog/categories"
+import { InspectorGroup } from "./InspectorGroup"
 import { useI18n } from "~/i18n/I18nProvider"
 
+/**
+ * Editing: the selection's settings, docked on the right — its name and
+ * close on top, its actions (turn, look, copy, delete) at the bottom, and in
+ * between its settings in groups that fold away (its colour, the modules':
+ * a desk's label, features, resident, zone…), scrolling when they don't fit:
+ * however much a piece has, it keeps to the space it's given.
+ */
 export const Inspector = () => {
   const { t, tn } = useI18n()
   const selectedId = useEditorStore((state) => state.selectedId)
@@ -62,9 +70,9 @@ export const Inspector = () => {
   const otherActionCount = [canRotate, shufflable, canCopy].filter(Boolean).length
 
   return (
-    <div className="pointer-events-auto w-64 rounded-2xl border border-border bg-overlay p-4 text-foreground shadow-overlay">
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold">
+    <div className="pointer-events-auto flex max-h-full min-h-0 w-72 flex-col rounded-2xl border border-border bg-overlay text-foreground shadow-overlay">
+      <div className="flex shrink-0 items-center justify-between border-b border-separator py-2 pl-4 pr-2">
+        <h3 className="truncate text-sm font-extrabold">
           {count > 1
             ? tn(count, "{n} item", "{n} items")
             : t(getToolMeta(selected.type)?.label ?? selected.type)}
@@ -72,34 +80,35 @@ export const Inspector = () => {
         <CloseButton aria-label={t("Deselect")} onPress={() => select(null)} />
       </div>
 
-      {canColor && (
-        <>
-          <p className="mb-1 text-xs font-medium text-muted">{t("Colour")}</p>
-          <ColorSwatchPicker
-            aria-label={t("Colour")}
-            value={current}
-            onChange={(color) => colorSelection(color.toString("hex").toLowerCase())}
-            className="mb-4 grid grid-cols-5 justify-items-center gap-1.5"
-          >
-            {SWATCHES.map((color) => (
-              // Size the item (its 2px ring included); the swatch fills it.
-              <ColorSwatchPicker.Item key={color} color={color} className="size-9 rounded-xl">
-                <ColorSwatchPicker.Swatch />
-                <ColorSwatchPicker.Indicator />
-              </ColorSwatchPicker.Item>
-            ))}
-          </ColorSwatchPicker>
-        </>
-      )}
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4">
+        {canColor && (
+          <InspectorGroup title={t("Colour")}>
+            <ColorSwatchPicker
+              aria-label={t("Colour")}
+              value={current}
+              onChange={(color) => colorSelection(color.toString("hex").toLowerCase())}
+              className="grid grid-cols-5 justify-items-center gap-1.5"
+            >
+              {SWATCHES.map((color) => (
+                // Size the item (its 2px ring included); the swatch fills it.
+                <ColorSwatchPicker.Item key={color} color={color} className="size-9 rounded-xl">
+                  <ColorSwatchPicker.Swatch />
+                  <ColorSwatchPicker.Indicator />
+                </ColorSwatchPicker.Item>
+              ))}
+            </ColorSwatchPicker>
+          </InspectorGroup>
+        )}
 
-      {/* The modules' sections (the office: a desk's label, resident, zone…). */}
-      {sections.map((Section, index) => (
-        <Section key={index} selected={selected} count={count} />
-      ))}
+        {/* The modules' groups (the office: a desk's label, features, resident, zone…). */}
+        {sections.map((Section, index) => (
+          <Section key={index} selected={selected} count={count} />
+        ))}
+      </div>
 
       {/* Two columns (four labelled buttons don't fit one row); Delete spans
           the row when it would be left on its own. */}
-      <div className="grid grid-cols-2 gap-1.5">
+      <div className="grid shrink-0 grid-cols-2 gap-1.5 border-t border-separator p-3">
         {/* Wall items face out from their wall — nothing to rotate. */}
         {canRotate && (
           <Button size="sm" fullWidth variant="tertiary" onPress={rotateSelection}>

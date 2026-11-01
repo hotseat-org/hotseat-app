@@ -1,4 +1,5 @@
 import { Button } from "@heroui/react"
+import clsx from "clsx"
 import { Suspense, lazy, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { useTheme } from "remix-themes"
 import { Check, Pencil } from "lucide-react"
@@ -219,6 +220,7 @@ const EditorInner = ({
   // so the reading reflects a true, comparable FPS instead of only the frames
   // that on-demand rendering happens to produce.
   const isFrameRateShown = useEditorStore((state) => state.isFrameRateShown)
+  const hasSelection = useEditorStore((state) => state.selectedId !== null)
   const [stats, setStats] = useState<FrameStats | null>(null)
   const dbMode = !!onSave
   const modeButton = readOnly ? (
@@ -332,7 +334,13 @@ const EditorInner = ({
           </div>
         )}
         {!readOnly && !isEmpty && (
-          <div className="pointer-events-none absolute right-4 top-20">
+          <div
+            className={clsx(
+              "pointer-events-none absolute top-20 transition-[right] duration-300",
+              // A piece selected: beside the inspector, not under it.
+              hasSelection ? "right-[calc(18rem+2rem)]" : "right-4"
+            )}
+          >
             <FloorTower isEditing />
           </div>
         )}
@@ -353,12 +361,13 @@ const EditorInner = ({
             shell puts them in its rail). */}
         {readOnly && !shellMode && !isEmpty && <SidePanelRail />}
 
-        {/* Bottom-right: the selection inspector (edit) above the controls
-            guide. The app shell places the guide itself, in its side panel. */}
+        {/* Right: the selection inspector (edit), docked from under the
+            toolbar to above the controls guide — it scrolls inside, never
+            past them. The app shell places the guide itself. */}
         {!isEmpty && !shellMode && (
-          <div className="pointer-events-none absolute bottom-4 right-4 flex flex-col items-end gap-2">
+          <div className="pointer-events-none absolute bottom-4 right-4 top-20 flex flex-col items-end justify-end gap-2">
             {!readOnly && <Inspector />}
-            {guide}
+            <div className="shrink-0">{guide}</div>
           </div>
         )}
 

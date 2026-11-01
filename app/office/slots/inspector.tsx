@@ -7,28 +7,29 @@ import { usePeople } from "../desks/people"
 import { getZones } from "../zones/zones"
 import { DESK_FEATURES } from "../desks/deskFeatures"
 import { useOfficeStore } from "../store"
-import { type InspectorSectionProps } from "~/editor"
+import { InspectorGroup, type InspectorSectionProps } from "~/editor"
 import type { Day } from "~/utils/booking"
 import { useI18n } from "~/i18n/I18nProvider"
 
 /**
  * The office's part of the Inspector: an older layout's desk offers to become
- * the bookable one; desks get their zone, and a single desk its label,
- * features and resident.
+ * the bookable one; a single desk gets its label, features and resident, and
+ * desks their zone — each a group of its own.
  */
 export const OfficeInspectorSection = ({ selected, count }: InspectorSectionProps) => (
   <>
     {count === 1 && isRetiredDesk(selected.type) && (
       <RetiredDeskNote id={selected.id} type={selected.type} />
     )}
-    <ZoneSection />
     {count === 1 && isSeatable(selected.type) && <SeatSection key={selected.id} id={selected.id} />}
+    <ZoneSection />
   </>
 )
 
 /**
- * Desk seat: its label, and its permanent resident (members only in a real
- * office). A resident desk is theirs every day and can't be booked.
+ * A desk's groups: its label, what it offers, and its permanent resident
+ * (members only in a real office) — a resident desk is theirs every day and
+ * can't be booked.
  */
 const SeatSection = ({ id }: { id: string }) => {
   const seat = useOfficeStore((state) => state.objects.find((object) => object.id === id))
@@ -83,58 +84,61 @@ const SeatSection = ({ id }: { id: string }) => {
   if (!seat) return null
 
   return (
-    <div className="mb-4 flex flex-col gap-2">
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-medium text-muted">{t("Seat")}</p>
-        <button
-          type="button"
-          onClick={numberDesks}
-          className="text-[11px] font-semibold text-accent hover:underline"
-          title={t("Label every unlabelled desk D-1, D-2…")}
-        >
-          {t("Number all desks")}
-        </button>
-      </div>
-      <input
-        // Keyed by desk so switching selection resets the draft.
-        key={seat.id}
-        defaultValue={seat.label ?? ""}
-        placeholder={t("Label, e.g. D-12")}
-        maxLength={24}
-        onBlur={(event) => setSeatLabel(seat.id, event.currentTarget.value)}
-        onKeyDown={(event) => event.key === "Enter" && event.currentTarget.blur()}
-        className="h-8 rounded-lg border border-border bg-surface px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-focus"
-      />
+    <>
+      <InspectorGroup
+        title={t("Seat")}
+        action={
+          <button
+            type="button"
+            onClick={numberDesks}
+            className="shrink-0 text-[11px] font-semibold text-accent hover:underline"
+            title={t("Label every unlabelled desk D-1, D-2…")}
+          >
+            {t("Number all desks")}
+          </button>
+        }
+      >
+        <input
+          // Keyed by desk so switching selection resets the draft.
+          key={seat.id}
+          defaultValue={seat.label ?? ""}
+          placeholder={t("Label, e.g. D-12")}
+          maxLength={24}
+          onBlur={(event) => setSeatLabel(seat.id, event.currentTarget.value)}
+          onKeyDown={(event) => event.key === "Enter" && event.currentTarget.blur()}
+          aria-label={t("Label")}
+          className="h-8 rounded-lg border border-border bg-surface px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-focus"
+        />
+      </InspectorGroup>
       {/* What it offers — people can filter the map by these. */}
-      <p className="mt-1 text-xs font-medium text-muted">{t("Features")}</p>
-      <div className="flex flex-wrap gap-1.5">
-        {DESK_FEATURES.map((feature) => {
-          const isActive = !!seat.features?.includes(feature.id)
+      <InspectorGroup title={t("Features")}>
+        <div className="flex flex-wrap gap-1.5">
+          {DESK_FEATURES.map((feature) => {
+            const isActive = !!seat.features?.includes(feature.id)
 
-          return (
-            <button
-              key={feature.id}
-              type="button"
-              aria-pressed={isActive}
-              onClick={() => toggleDeskFeature(seat.id, feature.id)}
-              className={clsx(
-                "h-7 rounded-full border px-2.5 text-xs font-bold transition-colors",
-                isActive
-                  ? "border-accent bg-accent/15 text-accent"
-                  : "border-border text-muted hover:border-muted hover:text-foreground"
-              )}
-            >
-              {t(feature.label)}
-            </button>
-          )
-        })}
-      </div>
+            return (
+              <button
+                key={feature.id}
+                type="button"
+                aria-pressed={isActive}
+                onClick={() => toggleDeskFeature(seat.id, feature.id)}
+                className={clsx(
+                  "h-7 rounded-full border px-2.5 text-xs font-bold transition-colors",
+                  isActive
+                    ? "border-accent bg-accent/15 text-accent"
+                    : "border-border text-muted hover:border-muted hover:text-foreground"
+                )}
+              >
+                {t(feature.label)}
+              </button>
+            )
+          })}
+        </div>
+      </InspectorGroup>
       {people.members.length > 0 && (
-        <>
-          <label htmlFor={`resident-${seat.id}`} className="mt-1 text-xs font-medium text-muted">
-            {t("Permanent resident")}
-          </label>
+        <InspectorGroup title={t("Permanent resident")}>
           <select
+            aria-label={t("Permanent resident")}
             id={`resident-${seat.id}`}
             value={seat.assignee ?? ""}
             onChange={(event) => {
@@ -190,9 +194,9 @@ const SeatSection = ({ id }: { id: string }) => {
               </p>
             )
           )}
-        </>
+        </InspectorGroup>
       )}
-    </div>
+    </>
   )
 }
 
@@ -205,7 +209,7 @@ const RetiredDeskNote = ({ id, type }: { id: string; type: string }) => {
   const replaceWithWorkstation = useOfficeStore((state) => state.replaceWithWorkstation)
 
   return (
-    <div className="mb-4 rounded-xl bg-warning/10 p-3 text-xs leading-snug text-foreground">
+    <div className="my-2.5 rounded-xl bg-warning/10 p-3 text-xs leading-snug text-foreground">
       <p>
         {type === "deskmate"
           ? t("Its pet sits there whoever books it — pets now show only who's booked a desk.")
@@ -250,22 +254,23 @@ const ZoneSection = () => {
   const current = zoneNames.size === 1 ? [...zoneNames][0] : null
 
   return (
-    <div className="mb-4 flex flex-col gap-1.5">
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-medium text-muted">
-          {desks.length > 1 ? tn(desks.length, "Zone of {n} desk", "Zone of {n} desks") : t("Zone")}
-        </p>
-        {zones.length > 0 && (
+    <InspectorGroup
+      title={
+        desks.length > 1 ? tn(desks.length, "Zone of {n} desk", "Zone of {n} desks") : t("Zone")
+      }
+      action={
+        zones.length > 0 && (
           <button
             type="button"
             onClick={numberDesksByZone}
-            className="text-[11px] font-semibold text-accent hover:underline"
+            className="shrink-0 text-[11px] font-semibold text-accent hover:underline"
             title={t("Number every desk after its zone: ENG-1, ENG-2… (the rest D-1…)")}
           >
             {t("Number by zone")}
           </button>
-        )}
-      </div>
+        )
+      }
+    >
       <div className="flex flex-wrap gap-1.5">
         {zones.map((zone) => {
           const isOn = current === zone.name
@@ -303,6 +308,6 @@ const ZoneSection = () => {
         maxLength={32}
         className="h-8 rounded-lg border border-border bg-surface px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-focus"
       />
-    </div>
+    </InspectorGroup>
   )
 }

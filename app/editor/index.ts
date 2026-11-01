@@ -89,5 +89,6 @@ export {
 
 // Editor UI an app shell may reuse (the office view's dock and map menu).
 export { TimeOfDay } from "./ui/bars/TimeOfDay"
+export { InspectorGroup } from "./ui/InspectorGroup"
 export { REVEAL_LABEL } from "./ui/bars/revealLabel"
 export { MapLayerSwitches, MapMenu, useMapLayerRows } from "./ui/menus/MapMenu"
