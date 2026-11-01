@@ -8,9 +8,11 @@ import {
   type Object3D,
 } from "three"
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js"
+import { STOREY } from "./dimensions"
+import { getMatrixWithin } from "./localMatrix"
 
-/** The most a part's column may stand (m), and the least worth one. */
-const MAX_HEIGHT = 2.2
+/** The most a part's column may stand (m: a lift's shaft is a storey tall), and the least worth one. */
+const MAX_HEIGHT = STOREY
 const MIN_SIZE = 0.02
 /** How high the floor of its footprint stands (m): about its plinth's height. */
 const BASE_HEIGHT = 0.05
@@ -36,8 +38,6 @@ export const composeHitShape = (
   frame: Object3D,
   footprint: [number, number]
 ): BufferGeometry | null => {
-  frame.updateWorldMatrix(true, false)
-  const toFrame = new Matrix4().copy(frame.matrixWorld).invert()
   const columns: Box3[] = []
 
   // The originals, not the baked meshes they're merged into (one of those
@@ -46,8 +46,7 @@ export const composeHitShape = (
     if (object.userData.isBakedOutput) return
 
     if (object instanceof Mesh) {
-      object.updateWorldMatrix(true, false)
-      const column = getColumn(object, toFrame)
+      const column = getColumn(object, getMatrixWithin(object, frame))
       if (column) columns.push(column)
     }
 
@@ -88,12 +87,11 @@ export const composeHitShape = (
 
 /** The column under a part: its bounds in the frame, down to the floor. */
 const getColumn = (part: Mesh, toFrame: Matrix4) => {
+  // `toFrame`: the part's transform in the frame.
   const { geometry } = part
   if (!geometry.boundingBox) geometry.computeBoundingBox()
 
-  const bounds = geometry.boundingBox
-    ?.clone()
-    .applyMatrix4(new Matrix4().multiplyMatrices(toFrame, part.matrixWorld))
+  const bounds = geometry.boundingBox?.clone().applyMatrix4(toFrame)
   if (!bounds || bounds.isEmpty() || bounds.max.y < MIN_SIZE) return null
 
   bounds.expandByScalar(PROUD)

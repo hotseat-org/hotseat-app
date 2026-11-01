@@ -1,5 +1,5 @@
 import { useFrame, useThree } from "@react-three/fiber"
-import { useEffect, useLayoutEffect, useMemo, useRef, type ReactNode } from "react"
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import type { Group } from "three"
 import { GROUND_SIZE } from "../landscape/Ground"
 import { Contours } from "../landscape/Contours"
@@ -15,6 +15,8 @@ import { STAIRS, StairsLanding } from "../objects/Stairs"
 import { FloorPiecesContext } from "../objects/pieceContext"
 import { useFloorLinkClick } from "../useFloorLinkClick"
 import { ObjectRenderer } from "../objects/ObjectRenderer"
+import { PieceOutline } from "../objects/PieceOutline"
+import { usePieceHover } from "../objects/usePieceHover"
 import { isEdgeType, isMarker, type SceneObject } from "../types"
 import { Posts } from "../walls/Posts"
 import { Walls } from "../walls/Walls"
@@ -158,25 +160,13 @@ export const ShownFloorLinks = ({ isViewing }: { isViewing: boolean }) => {
   return (
     <>
       {arrivingStairs.map((stairs) => (
-        <group key={stairs.id} position={[stairs.x, 0, stairs.z]} rotation-y={stairs.rotation}>
-          <StairsLanding walledSides={getStairsWalledSides(stairs, objects)} />
-          {isViewing && (
-            // The opening, pressed: down the stairs.
-            <mesh
-              visible={false}
-              rotation={[-Math.PI / 2, 0, 0]}
-              position-y={0.02}
-              onClick={(event) => {
-                if (event.delta > 4) return
-
-                event.stopPropagation()
-                handleLinkClick(stairs)
-              }}
-            >
-              <planeGeometry args={[STAIRS.width, STAIRS.length]} />
-            </mesh>
-          )}
-        </group>
+        <StairsOpening
+          key={stairs.id}
+          stairs={stairs}
+          walledSides={getStairsWalledSides(stairs, objects)}
+          isViewing={isViewing}
+          onPress={() => handleLinkClick(stairs)}
+        />
       ))}
       {passingLifts.map((lift) => (
         <ObjectRenderer
@@ -192,6 +182,59 @@ export const ShownFloorLinks = ({ isViewing }: { isViewing: boolean }) => {
         />
       ))}
     </>
+  )
+}
+
+/**
+ * The opening of stairs coming up from below: its guard rail — and, viewing,
+ * pointed at and pressed like a piece (its outline, the hand): down the stairs.
+ */
+const StairsOpening = ({
+  stairs,
+  walledSides,
+  isViewing,
+  onPress,
+}: {
+  stairs: SceneObject
+  walledSides: ReturnType<typeof getStairsWalledSides>
+  isViewing: boolean
+  onPress: () => void
+}) => {
+  const { isPointedAt, handleEnter, handleLeave } = usePieceHover({
+    id: stairs.id,
+    cursor: isViewing ? "point" : null,
+    isShared: isViewing,
+    isEditing: false,
+  })
+  const [hasOutline, setHasOutline] = useState(false)
+  if (isPointedAt && !hasOutline) setHasOutline(true)
+
+  return (
+    <group
+      position={[stairs.x, 0, stairs.z]}
+      rotation-y={stairs.rotation}
+      onPointerEnter={isViewing ? handleEnter : undefined}
+      onPointerLeave={isViewing ? handleLeave : undefined}
+      onClick={
+        isViewing
+          ? (event) => {
+              if (event.delta > 4) return // a camera drag, not a click
+
+              event.stopPropagation()
+              onPress()
+            }
+          : undefined
+      }
+    >
+      <StairsLanding walledSides={walledSides} />
+      {isViewing && (
+        // Its floor catches the pointer too, not just its rail.
+        <mesh visible={false} rotation={[-Math.PI / 2, 0, 0]} position-y={0.02}>
+          <planeGeometry args={[STAIRS.width, STAIRS.length]} />
+        </mesh>
+      )}
+      {hasOutline && <PieceOutline shapeKey={stairs.type} hovered={isPointedAt} />}
+    </group>
   )
 }
 

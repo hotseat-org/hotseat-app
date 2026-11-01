@@ -1,4 +1,4 @@
-import { memo, useContext, useEffect, useLayoutEffect, useRef, useState } from "react"
+import { memo, useLayoutEffect, useRef, useState } from "react"
 import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber"
 import { MathUtils, type BufferGeometry, type Group } from "three"
 import {
@@ -15,13 +15,12 @@ import { GhostObject } from "../building/GhostObject"
 import { edgeLength, edgeStretch } from "../layout"
 import { markShadowsDirty } from "../lighting/shadows"
 import { CutawayContext } from "../walls/cutaway"
-import { CursorHintContext } from "../shell/cursors"
 import { getItem } from "../catalog"
-import { useEditorStore, useEditorStoreApi } from "../store"
 import { ObjectMesh } from "./ObjectMesh"
 import { PieceContext } from "./pieceContext"
 import { WALL } from "./dimensions"
 import { PieceOutline } from "./PieceOutline"
+import { usePieceHover } from "./usePieceHover"
 import { Baked } from "./Baked"
 import { composeHitShape } from "./hitShape"
 
@@ -61,11 +60,6 @@ const isFurniture = (object: SceneObject) => !isEdgeType(object.type)
 /** Seconds for a rotation to swing round (with a little overshoot). */
 /** A piece's hit box's height until its model is measured (m). */
 const DEFAULT_HIT_HEIGHT = 0.8
-
-/** Right and middle mouse buttons (orbit and pan), as `buttons` bits. */
-const CAMERA_BUTTONS = 2 | 4
-const isCameraDrag = (buttons: number, isEditing: boolean) =>
-  isEditing ? (buttons & CAMERA_BUTTONS) !== 0 : buttons !== 0
 
 /** Doors, windows and wall items are sliced with their wall by the cursor cutaway. */
 const getCutaway = (type: SceneObject["type"]) => {
@@ -109,7 +103,6 @@ export const ObjectRenderer = memo(function ObjectRenderer({
   wallFront,
   wallBack,
 }: Props) {
-  const [hovered, setHovered] = useState(false)
   // What it's picked by, measured from its model (see composeHitShape).
   const [hitShape, setHitShape] = useState<BufferGeometry | null>(null)
   // View mode: desks are clickable (seat card).
@@ -117,28 +110,25 @@ export const ObjectRenderer = memo(function ObjectRenderer({
   // Edit mode: with the Select tool, everything that renders here (furniture,
   // doors, windows) can be clicked/picked up.
   const selectable = interactive && tool === "select" && !carried
-  // Same hover language in both modes: a hand cursor + footprint outline —
-  // open (pick it up) in edit mode, pointing (open its card) in view mode.
+  // Same hover language in both modes: a hand cursor + its outline — open
+  // (pick it up) in edit mode, pointing (open its card) in view mode.
   const hoverable = clickable || selectable
-  const setCursorHint = useContext(CursorHintContext)
-  // Viewing, the store knows it's pointed at too (its tag grows with it) —
-  // and it may be pointed at elsewhere (its tag, its deskmate).
-  const storeApi = useEditorStoreApi()
-  const isPointedElsewhere = useEditorStore(
-    (state) => clickable && state.hoveredPieceId === object.id && !hovered
-  )
-  useEffect(() => {
-    if (!hoverable || !hovered) return
+  const getCursor = () => {
+    if (!hoverable) return null
 
-    setCursorHint(object.id, selectable ? "grab" : "point")
-    if (clickable) storeApi.getState().setHoveredPiece(object.id)
-
-    return () => {
-      setCursorHint(object.id, null)
-      // Only its own: its tag may have taken over (the pointer went up onto it).
-      if (clickable) storeApi.getState().clearHoveredPiece(object.id)
-    }
-  }, [hoverable, hovered, selectable, clickable, object.id, setCursorHint, storeApi])
+    return selectable ? "grab" : "point"
+  }
+  const {
+    isHovered: hovered,
+    isPointedAt,
+    handleEnter,
+    handleLeave,
+  } = usePieceHover({
+    id: object.id,
+    cursor: getCursor(),
+    isShared: clickable,
+    isEditing: interactive,
+  })
   // Doors, windows and wall items are sliced with their wall by the cursor
   // cutaway (see cutaway.ts).
   const cutaway = getCutaway(object.type)
@@ -275,7 +265,7 @@ export const ObjectRenderer = memo(function ObjectRenderer({
 
   const isUnderlay = getItem(object.type).isUnderlay
   // Pointed at (here, or at its tag or deskmate), or selected: outlined.
-  const isOutlined = hoverable && (hovered || isPointedElsewhere)
+  const isOutlined = isPointedAt
   const isSelectedShown = selected && !carried
   const [hasOutline, setHasOutline] = useState(false)
   if ((isOutlined || isSelectedShown) && !hasOutline) setHasOutline(true)
@@ -298,18 +288,9 @@ export const ObjectRenderer = memo(function ObjectRenderer({
             }
           : undefined
       }
-      // Into and out of the piece as a whole: over and out also fire passing
-      // from one of its parts to another, and its plinth flickered.
-      // Not while the camera is dragged over it (any button viewing; the
-      // orbit and pan buttons editing, where a left-drag is the tool's).
-      onPointerEnter={
-        interactive || clickable
-          ? (event) => {
-              if (!isCameraDrag(event.buttons, interactive)) setHovered(true)
-            }
-          : undefined
-      }
-      onPointerLeave={interactive || clickable ? () => setHovered(false) : undefined}
+      // Into and out of the piece as a whole (see usePieceHover).
+      onPointerEnter={interactive || clickable ? handleEnter : undefined}
+      onPointerLeave={interactive || clickable ? handleLeave : undefined}
       // View mode: desks are clickable (seat card). A drag (camera pan) isn't
       // a click — R3F's `delta` is the pointer travel in px.
       onClick={

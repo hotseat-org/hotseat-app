@@ -4,7 +4,6 @@ import {
   AlwaysStencilFunc,
   BufferGeometry,
   Color,
-  Matrix4,
   Mesh,
   NotEqualStencilFunc,
   ReplaceStencilOp,
@@ -15,6 +14,7 @@ import {
 } from "three"
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js"
 import { ACCENT } from "../palette"
+import { getMatrixWithin } from "./localMatrix"
 
 /** Its width (CSS px) and colour: cream pointed at, the accent selected. */
 const LOOK = {
@@ -168,8 +168,6 @@ const ignoreRaycast = () => {}
  * they're merged into (see BAKED_OUTPUT) — nor the outline itself.
  */
 const composeOutlineShape = (model: Object3D, outline: Object3D): BufferGeometry | null => {
-  model.updateWorldMatrix(true, false)
-  const toModel = new Matrix4().copy(model.matrixWorld).invert()
   const parts: BufferGeometry[] = []
 
   const collect = (object: Object3D) => {
@@ -177,12 +175,11 @@ const composeOutlineShape = (model: Object3D, outline: Object3D): BufferGeometry
     if (!object.visible && !object.userData.isBakedOriginal) return
 
     if (object instanceof Mesh) {
-      object.updateWorldMatrix(true, false)
       const source = object.geometry as BufferGeometry
       const part = new BufferGeometry()
       const flat = source.index ? source.toNonIndexed() : source
       part.setAttribute("position", flat.getAttribute("position").clone())
-      part.applyMatrix4(new Matrix4().multiplyMatrices(toModel, object.matrixWorld))
+      part.applyMatrix4(getMatrixWithin(object, model))
       parts.push(part)
       if (flat !== source) flat.dispose()
     }
