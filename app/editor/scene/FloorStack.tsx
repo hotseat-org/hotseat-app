@@ -6,12 +6,14 @@ import { Contours } from "../landscape/Contours"
 import { markShadowsDirty } from "../lighting/shadows"
 import { STOREY } from "../objects/dimensions"
 import { FloorPlaceContext, groundUniform, shownFloorUniform } from "../objects/floorHeight"
-import { useEditorStore } from "../store"
+import { useAllPieces, useEditorStore } from "../store"
 import { getRenderer } from "../catalog/rendering"
 import { getFloorLink } from "../catalog"
-import { isFloorLink } from "../floorLinks"
+import { getStairsWalledSides, isFloorLink } from "../floorLinks"
 import { useShownFloorLinks } from "../useShownFloorLinks"
-import { StairsLanding } from "../objects/Stairs"
+import { STAIRS, StairsLanding } from "../objects/Stairs"
+import { FloorPiecesContext } from "../objects/pieceContext"
+import { useFloorLinkClick } from "../useFloorLinkClick"
 import { ObjectRenderer } from "../objects/ObjectRenderer"
 import { isEdgeType, isMarker, type SceneObject } from "../types"
 import { Posts } from "../walls/Posts"
@@ -119,7 +121,9 @@ export const FloorsBelow = ({ isEditing }: { isEditing: boolean }) => {
         <group key={id} position-y={floorLevel * STOREY}>
           {/* Shaded on its own floor, not the shown one's. */}
           <FloorPlaceContext.Provider value={place}>
-            <LowerFloor pieces={pieces} />
+            <FloorPiecesContext.Provider value={pieces}>
+              <LowerFloor pieces={pieces} />
+            </FloorPiecesContext.Provider>
           </FloorPlaceContext.Provider>
           {/* Its ceiling, on its walls: from above, its roof — the floor
               above's walls stand on it, and what's built up there. */}
@@ -136,17 +140,44 @@ const ignore = () => {}
 
 /**
  * On the shown floor, what comes from others: a guard rail round each
- * opening of stairs coming up from below, and the shafts of lifts placed on
- * other floors — not editable here (they're edited on their own floor).
+ * opening of stairs coming up from below (none along a wall here), and the
+ * shafts of lifts placed on other floors — not editable here (they're edited
+ * on their own floor). Viewing, pressing an opening goes down its stairs, and
+ * a lift opens its floor buttons (see useFloorLinkClick).
  */
-export const ShownFloorLinks = () => {
+export const ShownFloorLinks = ({ isViewing }: { isViewing: boolean }) => {
   const { arrivingStairs, passingLifts } = useShownFloorLinks()
+  const objects = useEditorStore((state) => state.objects)
+  const allPieces = useAllPieces()
+  const handleLinkClick = useFloorLinkClick()
+  const handleLiftClick = (id: string) => {
+    const lift = allPieces.find((piece) => piece.id === id)
+    if (lift) handleLinkClick(lift)
+  }
 
   return (
     <>
       {arrivingStairs.map((stairs) => (
         <group key={stairs.id} position={[stairs.x, 0, stairs.z]} rotation-y={stairs.rotation}>
-          <StairsLanding />
+          <StairsLanding walledSides={getStairsWalledSides(stairs, objects)} />
+          {isViewing && (
+            // The opening, pressed: down the stairs.
+            <mesh
+              visible={false}
+              rotation={[-Math.PI / 2, 0, 0]}
+              position-y={0.02}
+              onClick={(event) => {
+                if (event.delta > 4) return
+
+                event.stopPropagation()
+                handleLinkClick(stairs)
+              }}
+              onPointerOver={() => (document.body.style.cursor = "pointer")}
+              onPointerOut={() => (document.body.style.cursor = "")}
+            >
+              <planeGeometry args={[STAIRS.width, STAIRS.length]} />
+            </mesh>
+          )}
         </group>
       ))}
       {passingLifts.map((lift) => (
@@ -159,6 +190,7 @@ export const ShownFloorLinks = () => {
           onSelect={ignore}
           onDelete={ignore}
           onStartDrag={ignore}
+          onViewClick={isViewing ? handleLiftClick : undefined}
         />
       ))}
     </>

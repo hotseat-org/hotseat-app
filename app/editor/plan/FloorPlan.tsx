@@ -3,10 +3,14 @@ import type { PlanState } from "../module"
 import { useModules, usePlanDrawings, usePlanPieceStyles, useViewClicks } from "../modules"
 import { useEditorStore } from "../store"
 import { useShownFloorLinks } from "../useShownFloorLinks"
+import { useFloorLinkClick } from "../useFloorLinkClick"
+import { isFloorLink } from "../floorLinks"
+import { LiftButtons } from "../ui/LiftButtons"
+import { useLiftPanel } from "../ui/useLiftButtons"
 import { SURFACES } from "../palette"
 import { ContourLines } from "../landscape/ContourLines"
 import { FLOOR_CHIP_HEIGHT, FloorChip } from "../ui/menus/FloorChip"
-import { isEdgeType } from "../types"
+import { isEdgeType, type SceneObject } from "../types"
 import { PhoneControls } from "./PhoneControls"
 import { buildScene } from "./drawing/buildScene"
 import { fitView, turnObject, type Bounds, type Insets, type View } from "./planView"
@@ -93,12 +97,25 @@ export const FloorPlan = ({
   const { moved } = usePlanGestures(box, setView, turnBy)
 
   // A piece clicked in the drawing, not the end of a pan.
+  // Stairs and lifts change floor (see useFloorLinkClick); the rest are the modules'.
+  const handleLinkClick = useFloorLinkClick()
   const onPiece = useCallback(
     (id: string) => {
-      if (!moved.current) viewClicks.onPiece(id)
+      if (moved.current) return
+
+      const link = [...links.arrivingStairs, ...links.passingLifts, ...layout].find(
+        (piece) => piece.id === id && isFloorLink(piece)
+      )
+      if (link) handleLinkClick(link)
+      else viewClicks.onPiece(id)
     },
-    [moved, viewClicks]
+    [moved, viewClicks, links, layout, handleLinkClick]
   )
+  const isClickable = useCallback(
+    (object: SceneObject) => isFloorLink(object) || viewClicks.isClickable(object),
+    [viewClicks]
+  )
+  const liftPanel = useLiftPanel()
   const styleOf = usePlanPieceStyles(objects)
   const drawings = usePlanDrawings({ objects, isDark: dark, idPrefix, onPiece })
 
@@ -110,7 +127,7 @@ export const FloorPlan = ({
         wall: surfaces.wall,
         floorInside: surfaces.floorInside,
         styleOf,
-        isClickable: viewClicks.isClickable,
+        isClickable,
         onPiece,
         drawings,
       }),
@@ -225,6 +242,21 @@ export const FloorPlan = ({
       </svg>
 
       {plan && overlays.map((Overlay, index) => <Overlay key={index} plan={plan} />)}
+
+      {/* A pressed lift's floor buttons, beside it. */}
+      {plan && liftPanel && (
+        <div
+          className="absolute -translate-y-1/2"
+          style={(() => {
+            const turned = turnObject(liftPanel.lift, turn)
+            const { left, top } = plan.screen(turned.x, turned.z)
+
+            return { left: left + 28, top }
+          })()}
+        >
+          <LiftButtons {...liftPanel} />
+        </div>
+      )}
 
       {phoneChrome && (
         <>

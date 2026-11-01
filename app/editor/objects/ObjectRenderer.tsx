@@ -18,6 +18,7 @@ import { CutawayContext } from "../walls/cutaway"
 import { CursorHintContext } from "../shell/cursors"
 import { getItem } from "../catalog"
 import { ObjectMesh } from "./ObjectMesh"
+import { PieceContext } from "./pieceContext"
 import { WALL } from "./dimensions"
 import { FootprintOutline } from "./FootprintOutline"
 import { Baked } from "./Baked"
@@ -276,15 +277,17 @@ export const ObjectRenderer = memo(function ObjectRenderer({
           {/* Batched: the object's parts merge into one mesh per material — and,
               viewing, with the whole office's. */}
           <Baked isBatchable>
-            <ObjectMesh
-              type={object.type}
-              color={object.color}
-              wallFront={wallFront}
-              wallBack={wallBack}
-              model={object.model}
-              variant={variantOf(object)}
-              occupied={occupied}
-            />
+            <PieceContext.Provider value={object}>
+              <ObjectMesh
+                type={object.type}
+                color={object.color}
+                wallFront={wallFront}
+                wallBack={wallBack}
+                model={object.model}
+                variant={variantOf(object)}
+                occupied={occupied}
+              />
+            </PieceContext.Provider>
           </Baked>
         </CutawayContext.Provider>
         {showErase && <GhostObject type={object.type} tint={ERASE} scale={1.06} />}

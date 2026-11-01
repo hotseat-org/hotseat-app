@@ -294,6 +294,9 @@ export const FloorTower = ({
   )
 }
 
+/** How long a label takes to fade away (ms). */
+const LABEL_FADE = 180
+
 /** A slab's label, floating beside it: shown, or slid in faded out. */
 const FloorLabel = ({
   isShown,
@@ -307,10 +310,16 @@ const FloorLabel = ({
 }) => (
   <span
     className={clsx(
-      "pointer-events-none absolute right-full mr-3 flex flex-col items-end whitespace-nowrap transition-[opacity,transform] duration-300 [text-shadow:0_1px_6px_var(--surface)]",
+      "pointer-events-none absolute right-full mr-3 flex flex-col items-end whitespace-nowrap [text-shadow:0_1px_6px_var(--surface)]",
       isShown ? "translate-x-0 opacity-100" : "translate-x-2.5 opacity-0"
     )}
-    style={{ transitionDelay: `${delay}ms` }}
+    style={{
+      // Showing, it slides in as it fades in; hiding, it only fades — it
+      // slides back once it's gone (sliding as it went read as a jolt).
+      transition: isShown
+        ? `opacity 300ms ${delay}ms, transform 300ms ${delay}ms`
+        : `opacity ${LABEL_FADE}ms, transform 0ms ${LABEL_FADE}ms`,
+    }}
   >
     {children}
   </span>

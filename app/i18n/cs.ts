@@ -151,6 +151,7 @@ export const cs: Messages = {
   Fence: "Plot",
   Stairs: "Schody",
   Lift: "Výtah",
+  "Lift: choose a floor": "Výtah: vyberte patro",
   Chair: "Židle",
   Sofa: "Pohovka",
   Plant: "Rostlina",

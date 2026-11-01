@@ -38,6 +38,9 @@ export interface ViewState {
    */
   view: OfficeView
   setView: (view: OfficeView) => void
+  /** Viewing: the lift whose floor buttons are open (pressed on the map), or none. */
+  liftPanelId: string | null
+  setLiftPanel: (id: string | null) => void
   layers: Layers
   toggleLayer: (layer: keyof Layers) => void
   /** The simple view turned by this many quarter turns. */
@@ -74,6 +77,8 @@ export const createViewState = (set: SetState, get: GetState, hooks: StoreHooks)
   tickClock: () => {
     if (get().syncTime) set({ timeOfDay: nowHours() })
   },
+  liftPanelId: null,
+  setLiftPanel: (liftPanelId) => set({ liftPanelId }),
   view: readViewPref(),
   setView: (view) => {
     writeViewPref(view)
