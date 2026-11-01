@@ -40,11 +40,14 @@ const SeatCardReset = ({ isEditing }: SceneLayerProps) => {
 const RouteFraming = () => {
   const route = useRoute()
   const requestFrame = useOfficeStore((state) => state.requestFrame)
-  const routeNonce = route?.path ? route.nonce : null
+  const currentFloor = useOfficeStore((state) => state.currentFloor)
+  const points = route?.path?.points
+  // Framed when asked for, and on each floor it's followed to (where it passes).
+  const frameKey = points?.length ? `${route?.nonce}:${currentFloor}` : null
   useEffect(() => {
-    if (route?.path) requestFrame(routeBounds(route.path.points))
-    // Only when a way is asked for — not as it's recomputed.
-  }, [routeNonce])
+    if (points?.length) requestFrame(routeBounds(points))
+    // Only when a way is asked for or followed — not as it's recomputed.
+  }, [frameKey])
 
   return null
 }

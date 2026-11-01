@@ -167,7 +167,8 @@ const accentColor = () =>
 /** The way to a desk, drawn on the floor as a glowing line (see wayfinding.ts). View mode only. */
 export const RouteLine = () => {
   const route = useRoute()
-  const points = route?.path?.points
+  // The shown floor's part of it (none when it doesn't pass here).
+  const points = route?.path?.points.length ? route.path.points : undefined
   const invalidate = useThree((state) => state.invalidate)
   const [isStill, setIsStill] = useState(false)
   useEffect(() => setIsStill(matchMedia("(prefers-reduced-motion: reduce)").matches), [])

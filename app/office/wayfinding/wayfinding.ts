@@ -1,6 +1,7 @@
 import { useDesksOnDay } from "../booking/useBooking"
 import { spotFor } from "../desks/seatSpot"
 import { useOfficeStore } from "../store"
+import { useAllPieces } from "~/editor"
 import {
   enclosedCells,
   footprintCells,
@@ -12,8 +13,10 @@ import {
   unitEdges,
   getEdge,
   getItem,
-} from "~/editor/core"
-import {
+  getFloorBlockers,
+  getFloorId,
+  getFloorLink,
+  type Floor as FloorPlan,
   GRID,
   isEdgeType,
   isMarker,
@@ -372,20 +375,14 @@ const findEntranceStarts = (floor: Floor) => {
   return starts
 }
 
-const findRoute = (objects: SceneObject[], deskId: string, fromDeskId?: string): Route | null => {
-  const desk = objects.find((piece) => piece.id === deskId)
-  if (!desk) return null
-
-  const floor = readFloor(objects)
-  if (!floor) return null
-
-  const seats = objects.filter((piece) => piece.type === "seat")
-  const spot = spotFor(desk, seats)
-
-  // Where it starts: [square, its first point, the walk to it from there].
-  const origin = fromDeskId ? objects.find((piece) => piece.id === fromDeskId) : undefined
-  const starts = origin ? findChairStarts(floor, spotFor(origin, seats)) : findEntranceStarts(floor)
+/**
+ * The walk on one floor from its starts (the nearest wins) to `target`: to
+ * the reachable square nearest it, then on to it — pulled tight and rounded.
+ */
+const walkTo = (floor: Floor, starts: Start[], target: { x: number; z: number }): Route | null => {
   if (!starts.length) return null
+
+  const spot = target
 
   // Dijkstra from every start at once — the nearest entrance wins (the floor is
   // small: a few thousand squares).
@@ -493,6 +490,215 @@ const findRoute = (objects: SceneObject[], deskId: string, fromDeskId?: string):
   return { points, length }
 }
 
+/** The way to a desk on its floor: from the nearest entrance, or from `fromDeskId`'s chair. */
+const findRoute = (objects: SceneObject[], deskId: string, fromDeskId?: string): Route | null => {
+  const desk = objects.find((piece) => piece.id === deskId)
+  if (!desk) return null
+
+  const floor = readFloor(objects)
+  if (!floor) return null
+
+  const seats = objects.filter((piece) => piece.type === "seat")
+  const origin = fromDeskId ? objects.find((piece) => piece.id === fromDeskId) : undefined
+  const starts = origin ? findChairStarts(floor, spotFor(origin, seats)) : findEntranceStarts(floor)
+
+  return walkTo(floor, starts, spotFor(desk, seats))
+}
+
+/** How a route goes on from one floor to another: up or down the stairs, or by lift. */
+export interface RouteLink {
+  kind: "stairs" | "lift"
+  /** The floor it goes on to. */
+  floorId: string
+}
+
+/** A route's part on one floor, and how it goes on from there (unset: it ends here, at the desk). */
+export interface RouteLeg extends Route {
+  floorId: string
+  next?: RouteLink
+}
+
+/** The way to a desk through the building: a leg on each floor it crosses, and the whole walk (m). */
+export interface BuildingRoute {
+  legs: RouteLeg[]
+  length: number
+}
+
+/**
+ * What a flight of stairs and a lift ride count as on the way (m), weighing
+ * the two: a floor or two up the stairs beats waiting for the lift, more
+ * doesn't.
+ */
+const FLIGHT_COST = 8
+const LIFT_COST = 14
+/** How far from stairs or lift doors a walk starts or ends (m): a step off them. */
+const STEP_OFF = 0.35
+
+/** A point in a piece's own frame, in the world (turned as its model is). */
+const toWorld = (piece: SceneObject, localX: number, localZ: number) => {
+  const cos = Math.cos(piece.rotation)
+  const sin = Math.sin(piece.rotation)
+
+  return { x: piece.x + localX * cos + localZ * sin, z: piece.z - localX * sin + localZ * cos }
+}
+
+/** Half a piece's length along its own Z (m). */
+const getHalfLength = (piece: SceneObject) => (getItem(piece.type).footprint[1] * GRID) / 2
+
+/** Where stairs are taken: their foot (the front) and their top (the back, on the floor above). */
+const getStairsFoot = (stairs: SceneObject) => toWorld(stairs, 0, getHalfLength(stairs) + STEP_OFF)
+const getStairsTop = (stairs: SceneObject) => toWorld(stairs, 0, -getHalfLength(stairs) - STEP_OFF)
+/** Where a lift is taken, on every floor: in front of its doors. */
+const getLiftDoor = (lift: SceneObject) => toWorld(lift, 0, getHalfLength(lift) + STEP_OFF)
+
+/**
+ * The way to a desk through the building: from the entrance (the ground
+ * floor's) or `fromDeskId`'s chair, on its floor, to the desk on its own —
+ * by lift, or up (or down) the stairs a flight at a time, the nearest flight
+ * on each floor; whichever is shorter, a flight or a ride weighed in (see
+ * FLIGHT_COST). Each floor is walked round what other floors keep clear on
+ * it (stairs coming up, lift shafts).
+ */
+/** What a way through the building is worked out from: every floor's pieces, the floors, and where to. */
+interface BuildingRouteQuery {
+  pieces: SceneObject[]
+  floors: FloorPlan[]
+  deskId: string
+  /** Start at this desk's chair (else the entrance). */
+  fromDeskId?: string
+}
+
+const findBuildingRoute = ({
+  pieces,
+  floors,
+  deskId,
+  fromDeskId,
+}: BuildingRouteQuery): BuildingRoute | null => {
+  const desk = pieces.find((piece) => piece.id === deskId)
+  if (!desk) return null
+
+  const levelOf = (piece: SceneObject) =>
+    floors.findIndex((floor) => floor.id === getFloorId(piece, floors))
+  const onLevel = (level: number) => {
+    const floorId = floors[level].id
+
+    return pieces.filter((piece) => getFloorId(piece, floors) === floorId)
+  }
+  const read = new Map<number, Floor | null>()
+  const readLevel = (level: number) => {
+    if (!read.has(level))
+      read.set(
+        level,
+        readFloor([...onLevel(level), ...getFloorBlockers(pieces, floors, floors[level].id)])
+      )
+
+    return read.get(level) ?? null
+  }
+  const spotOn = (piece: SceneObject) =>
+    spotFor(
+      piece,
+      onLevel(levelOf(piece)).filter((candidate) => candidate.type === "seat")
+    )
+  const toLeg = (level: number, walk: Route, next?: RouteLink): RouteLeg => ({
+    ...walk,
+    floorId: floors[level].id,
+    next,
+  })
+
+  const targetLevel = levelOf(desk)
+  const target = spotOn(desk)
+  const origin = fromDeskId ? pieces.find((piece) => piece.id === fromDeskId) : undefined
+  const startLevel = origin ? levelOf(origin) : 0
+  const startFloor = readLevel(startLevel)
+  if (!startFloor) return null
+
+  const starts = origin
+    ? findChairStarts(startFloor, spotOn(origin))
+    : findEntranceStarts(startFloor)
+  if (startLevel === targetLevel) {
+    const walk = walkTo(startFloor, starts, target)
+
+    return walk && { legs: [toLeg(startLevel, walk)], length: walk.length }
+  }
+
+  const candidates: { legs: RouteLeg[]; cost: number }[] = []
+
+  // By lift: to its doors, then from them on the desk's floor.
+  const targetFloor = readLevel(targetLevel)
+  for (const lift of pieces.filter((piece) => getFloorLink(piece.type) === "all")) {
+    const door = getLiftDoor(lift)
+    const first = walkTo(startFloor, starts, door)
+    const last =
+      first && targetFloor && walkTo(targetFloor, findChairStarts(targetFloor, door), target)
+    if (!first || !last) continue
+
+    candidates.push({
+      legs: [
+        toLeg(startLevel, first, { kind: "lift", floorId: floors[targetLevel].id }),
+        toLeg(targetLevel, last),
+      ],
+      cost: first.length + LIFT_COST + last.length,
+    })
+  }
+
+  // By stairs, a flight at a time: on each floor, the nearest flight the right way.
+  const direction = Math.sign(targetLevel - startLevel)
+  const stairsLegs: RouteLeg[] = []
+  let level = startLevel
+  let legStarts = starts
+  let cost = 0
+  while (level !== targetLevel) {
+    const floor = readLevel(level)
+    const nextLevel = level + direction
+    const nextFloor = readLevel(nextLevel)
+    // Up: the flights standing on this floor; down: those coming up to it.
+    const flightLevel = direction > 0 ? level : nextLevel
+    const flights = onLevel(flightLevel).filter((piece) => getFloorLink(piece.type) === "above")
+    const best = flights
+      .map((flight) => ({
+        walk:
+          floor &&
+          walkTo(floor, legStarts, direction > 0 ? getStairsFoot(flight) : getStairsTop(flight)),
+        arrival: direction > 0 ? getStairsTop(flight) : getStairsFoot(flight),
+      }))
+      .filter(
+        (option): option is { walk: Route; arrival: { x: number; z: number } } => !!option.walk
+      )
+      .sort((first, second) => first.walk.length - second.walk.length)[0]
+    if (!best || !nextFloor) break
+
+    stairsLegs.push(toLeg(level, best.walk, { kind: "stairs", floorId: floors[nextLevel].id }))
+    cost += best.walk.length + FLIGHT_COST
+    legStarts = findChairStarts(nextFloor, best.arrival)
+    level = nextLevel
+  }
+  const last = level === targetLevel && targetFloor && walkTo(targetFloor, legStarts, target)
+  if (last)
+    candidates.push({ legs: [...stairsLegs, toLeg(targetLevel, last)], cost: cost + last.length })
+
+  const chosen = candidates.sort((first, second) => first.cost - second.cost)[0]
+
+  return (
+    chosen && {
+      legs: chosen.legs,
+      length: chosen.legs.reduce((total, leg) => total + leg.length, 0),
+    }
+  )
+}
+
+/** One way through the building per layout (every floor's pieces), desk and start. */
+const buildingCache = new WeakMap<SceneObject[], Map<string, BuildingRoute | null>>()
+export const getBuildingRoute = (query: BuildingRouteQuery): BuildingRoute | null => {
+  const { pieces, floors, deskId, fromDeskId } = query
+  let routes = buildingCache.get(pieces)
+  if (!routes) buildingCache.set(pieces, (routes = new Map()))
+
+  const cacheKey = `${floors.map((floor) => floor.id).join(",")}|${deskId}<${fromDeskId ?? ""}`
+  if (!routes.has(cacheKey)) routes.set(cacheKey, findBuildingRoute(query))
+
+  return routes.get(cacheKey) ?? null
+}
+
 /**
  * One route per layout, desk and start (the objects array is replaced on every
  * change). From the nearest entrance, or from `fromDeskId`'s chair.
@@ -518,34 +724,48 @@ export const walkTime = ({ t }: Translator, metres: number) =>
 
 /**
  * The route being shown (store `route`), worked out for the current layout:
- * which desk, its path — from your desk on the shown day (when you have one
- * and asked for another), else the nearest entrance; null when there's no way
- * (no outside door) — and `nonce`, which changes each time it's asked for or
- * its start is switched (to re-frame the view).
+ * which desk, its way through the building — from your desk on the shown day
+ * (when you have one, on any floor, and asked for another), else the
+ * entrance; null when there's no way (no outside door, no stairs or lift to
+ * the desk's floor) — and `nonce`, which changes each time it's asked for or
+ * its start is switched (to re-frame the view). `path.points` is the shown
+ * floor's part of it (none when it doesn't pass here); `path.legs`, every
+ * floor's.
  */
 export const useRoute = () => {
   const route = useOfficeStore((state) => state.route)
-  const objects = useOfficeStore((state) => state.objects)
+  const pieces = useAllPieces()
+  const floors = useOfficeStore((state) => state.floors)
+  const currentFloor = useOfficeStore((state) => state.currentFloor)
   const me = useOfficeStore((state) => state.booking.me)
   const { byPerson } = useDesksOnDay()
   if (!route) return null
 
-  const desk = objects.find((piece) => piece.id === route.deskId)
+  const desk = pieces.find((piece) => piece.id === route.deskId)
   if (!desk) return null
 
-  // Your desk on the shown day — the way starts there, unless it's where
-  // you're going, or on another floor.
+  // Your desk on the shown day — the way starts there, unless it's where you're going.
   const myDesk = me ? byPerson.get(me)?.desk : undefined
-  const isMyDeskHere = !!myDesk && objects.some((piece) => piece.id === myDesk.id)
-  const canStartAtMyDesk = isMyDeskHere && myDesk.id !== desk.id
+  const canStartAtMyDesk = !!myDesk && myDesk.id !== desk.id
   const fromMyDesk = canStartAtMyDesk && route.from === "desk"
+  const building = getBuildingRoute({
+    pieces,
+    floors,
+    deskId: route.deskId,
+    fromDeskId: fromMyDesk ? myDesk?.id : undefined,
+  })
+  const shownLeg = building?.legs.find((leg) => leg.floorId === currentFloor)
 
   return {
     ...route,
     desk,
     myDesk: canStartAtMyDesk ? myDesk : undefined,
     fromMyDesk,
-    path: getRoute(objects, route.deskId, fromMyDesk ? myDesk?.id : undefined),
+    path: building && {
+      points: shownLeg?.points ?? [],
+      length: building.length,
+      legs: building.legs,
+    },
   }
 }
 

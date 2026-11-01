@@ -28,12 +28,16 @@ const RING_PAD = 14
 /** The way to a desk, turned with the plan. */
 const useTurnedRoute = (turn: number) => {
   const route = useRoute()
+  const currentFloor = useOfficeStore((state) => state.currentFloor)
+  // The shown floor's part of it (none when it doesn't pass here).
+  const shownPoints = route?.path?.points.length ? route.path.points : undefined
   const points = useMemo(
-    () => route?.path?.points.map(([x, z]) => turnPoint(x, z, turn)),
-    [route?.path, turn]
+    () => shownPoints?.map(([x, z]) => turnPoint(x, z, turn)),
+    [shownPoints, turn]
   )
 
-  return { points, nonce: route?.path ? route.nonce : null }
+  // Framed again when asked for, and on each floor it's followed to.
+  return { points, frameKey: shownPoints ? `${route?.nonce}:${currentFloor}` : null }
 }
 
 /** The way to a desk on the plan: its glowing line (an SVG layer, sized with the zoom). */
@@ -80,7 +84,7 @@ export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
   const route = useTurnedRoute(turn)
   useRouteFraming({
     routePoints: route.points,
-    routeNonce: route.nonce,
+    routeKey: route.frameKey,
     hasView: true,
     viewRef: plan.viewRef,
     frame: plan.frame,

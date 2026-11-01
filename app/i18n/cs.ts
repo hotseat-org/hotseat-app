@@ -388,7 +388,10 @@ export const cs: Messages = {
   "From your desk {label}": "Od vašeho stolu {label}",
   "From your desk": "Od vašeho stolu",
   "From the nearest entrance": "Od nejbližšího vchodu",
-  "No outside door to start from": "Chybí vchod zvenku, odkud začít",
+  "No way there: no outside door, or no stairs or lift to its floor":
+    "Cesta nevede: chybí venkovní dveře nebo schody či výtah do jeho patra",
+  "By lift": "Výtahem",
+  "By the stairs": "Po schodech",
   "Link copied": "Odkaz zkopírován",
   "Copy link to this way": "Kopírovat odkaz na tuto cestu",
   Copied: "Zkopírováno",

@@ -16,6 +16,7 @@ export * from "./catalog"
 // Placed pieces and the traits asked about them.
 export * from "./types"
 export * from "./floors"
+export * from "./floorLinks"
 
 // The geometry of a layout: walls and rooms, footprints and collisions.
 export * from "./layout"

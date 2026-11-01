@@ -44,8 +44,8 @@ export const createOfficeViewState = (
   },
   resetSpotlight: () => set({ spotlight: null }),
   route: null,
+  // The floors it crosses are shown in turn by the route's pill (see RoutePill).
   showRoute: (deskId) => {
-    showFloorOf(get, deskId)
     set((state) => ({
       route: { deskId, from: "desk", nonce: (state.route?.nonce ?? 0) + 1 },
       seatCard: null,

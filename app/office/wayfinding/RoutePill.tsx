@@ -1,16 +1,45 @@
 import clsx from "clsx"
-import { ArrowLeftRight, Check, Footprints, Link2, X } from "lucide-react"
+import { ArrowLeftRight, ArrowUpDown, Check, Footprints, Link2, X } from "lucide-react"
 import { useEffect, useState } from "react"
 import { deskName } from "../booking/useBooking"
 import { useOfficeStore } from "../store"
-import { useRoute, walkTime } from "./wayfinding"
+import { useRoute, walkTime, type RouteLeg } from "./wayfinding"
+import { getFloorId, getFloorNumber, getFloorTitle } from "~/editor/core"
 import { useI18n } from "~/i18n/I18nProvider"
+
+/** How long the map stays on each floor of a way through the building (ms). */
+const LEG_PAUSE = 2600
+
+/**
+ * A way through the building, followed: the map shows the floor it starts on,
+ * then each next floor in turn, ending on the desk's — and the floor of a step
+ * pressed in the pill. Again whenever the way is asked for.
+ */
+const useRouteTour = (route: ReturnType<typeof useRoute>) => {
+  const showFloor = useOfficeStore((state) => state.showFloor)
+  const floors = useOfficeStore((state) => state.floors)
+
+  useEffect(() => {
+    if (!route) return
+
+    const floorIds = route.path?.legs.map((leg) => leg.floorId) ?? [getFloorId(route.desk, floors)]
+    showFloor(floorIds[0])
+    const timers = floorIds
+      .slice(1)
+      .map((floorId, index) => setTimeout(() => showFloor(floorId), (index + 1) * LEG_PAUSE))
+
+    return () => timers.forEach(clearTimeout)
+    // When it's asked for (or its start switched) — not as it's recomputed.
+  }, [route?.nonce, route?.deskId])
+}
 
 /**
  * While a way to a desk is shown: where to, from where (your desk, or the
  * nearest entrance — tap to switch, when you have a desk that day), how far, a
  * link to share it (the page's own URL carries `?to=`; whoever opens it gets
- * the way from their own desk), and a close. Floats at the top, centred.
+ * the way from their own desk), and a close. Through the building: its floors
+ * in order, how it goes between them (stairs, lift), the shown one marked —
+ * each pressed shows its floor. Floats at the top, centred.
  */
 export const RoutePill = ({ className }: { className?: string }) => {
   const i18n = useI18n()
@@ -20,6 +49,7 @@ export const RoutePill = ({ className }: { className?: string }) => {
   const setRouteFrom = useOfficeStore((state) => state.setRouteFrom)
   const [isCopied, setIsCopied] = useState(false)
   useEffect(() => setIsCopied(false), [route?.deskId])
+  useRouteTour(route)
 
   useEffect(() => {
     if (!route) return
@@ -87,9 +117,10 @@ export const RoutePill = ({ className }: { className?: string }) => {
               <span className="hidden sm:inline"> · {walkTime(i18n, route.path.length)}</span>
             </span>
           ) : (
-            !route.myDesk && t("No outside door to start from")
+            !route.myDesk && t("No way there: no outside door, or no stairs or lift to its floor")
           )}
         </span>
+        {route.path && route.path.legs.length > 1 && <RouteSteps legs={route.path.legs} />}
       </span>
       <button
         type="button"
@@ -109,5 +140,61 @@ export const RoutePill = ({ className }: { className?: string }) => {
         <X className="size-4" />
       </button>
     </div>
+  )
+}
+
+/**
+ * A way's floors in order — the shown one marked, each a press away — and how
+ * it goes from one to the next: up or down the stairs, or by lift.
+ */
+const RouteSteps = ({ legs }: { legs: RouteLeg[] }) => {
+  const i18n = useI18n()
+  const { t } = i18n
+  const floors = useOfficeStore((state) => state.floors)
+  const currentFloor = useOfficeStore((state) => state.currentFloor)
+  const showFloor = useOfficeStore((state) => state.showFloor)
+  const getName = (floorId: string) => {
+    const floor = floors.find((candidate) => candidate.id === floorId)
+
+    return floor?.name || getFloorTitle(i18n, getFloorNumber(floors, floorId))
+  }
+
+  return (
+    <span className="mt-1 flex flex-wrap items-center gap-1 text-xs">
+      {legs.map((leg) => {
+        const isShown = leg.floorId === currentFloor
+        const Via = leg.next?.kind === "lift" ? ArrowUpDown : Footprints
+
+        return (
+          <span key={leg.floorId} className="flex items-center gap-1">
+            <button
+              type="button"
+              aria-current={isShown || undefined}
+              onClick={() => showFloor(leg.floorId)}
+              className={clsx(
+                "rounded-full px-2 py-0.5 font-bold transition-colors",
+                isShown
+                  ? "bg-accent text-accent-foreground"
+                  : "bg-foreground/5 text-muted hover:text-foreground"
+              )}
+            >
+              {getName(leg.floorId)}
+            </button>
+            {leg.next && (
+              <span
+                className="flex items-center gap-0.5 text-muted"
+                title={leg.next.kind === "lift" ? t("By lift") : t("By the stairs")}
+              >
+                <Via className="size-3.5" aria-hidden />
+                <span className="sr-only">
+                  {leg.next.kind === "lift" ? t("By lift") : t("By the stairs")}
+                </span>
+                ›
+              </span>
+            )}
+          </span>
+        )
+      })}
+    </span>
   )
 }

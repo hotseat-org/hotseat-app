@@ -57,15 +57,15 @@ export const useSpotlight = ({
 /** The way to a desk: framed whole once shown (or once the plan first has a view). */
 export const useRouteFraming = ({
   routePoints,
-  routeNonce,
+  routeKey,
   hasView,
   viewRef,
   frame,
   glideTo,
 }: {
   routePoints: [number, number][] | undefined
-  /** Changes each time a way is asked for. */
-  routeNonce: number | null
+  /** Changes each time a way is asked for, and as it's followed to another floor. */
+  routeKey: string | null
   hasView: boolean
   viewRef: RefObject<View | null>
   frame: RefObject<Frame>
@@ -86,5 +86,5 @@ export const useRouteFraming = ({
       )
     )
     // Only when a way is asked for (or the plan first has a view) — not on every pan.
-  }, [routeNonce, hasView])
+  }, [routeKey, hasView])
 }
