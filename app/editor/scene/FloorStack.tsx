@@ -8,6 +8,10 @@ import { STOREY } from "../objects/dimensions"
 import { FloorPlaceContext, groundUniform, shownFloorUniform } from "../objects/floorHeight"
 import { useEditorStore } from "../store"
 import { getRenderer } from "../catalog/rendering"
+import { getFloorLink } from "../catalog"
+import { isFloorLink } from "../floorLinks"
+import { useShownFloorLinks } from "../useShownFloorLinks"
+import { StairsLanding } from "../objects/Stairs"
 import { ObjectRenderer } from "../objects/ObjectRenderer"
 import { isEdgeType, isMarker, type SceneObject } from "../types"
 import { Posts } from "../walls/Posts"
@@ -38,6 +42,18 @@ const getPiecesSignature = (pieces: SceneObject[]) =>
  * often floors are switched: its walls, ceiling and the land aren't worked
  * out again (they were, every switch — the land is the slowest of all).
  */
+/** A floor's stairs (they go up through its ceiling), kept per list of its pieces. */
+const stairsByPieces = new WeakMap<SceneObject[], SceneObject[]>()
+const getStairs = (pieces: SceneObject[]) => {
+  let stairs = stairsByPieces.get(pieces)
+  if (!stairs) {
+    stairs = pieces.filter((piece) => getFloorLink(piece.type) === "above")
+    stairsByPieces.set(pieces, stairs)
+  }
+
+  return stairs
+}
+
 const useFloorLevels = () => {
   const floors = useEditorStore((state) => state.floors)
   const currentFloor = useEditorStore((state) => state.currentFloor)
@@ -108,7 +124,7 @@ export const FloorsBelow = ({ isEditing }: { isEditing: boolean }) => {
           {/* Its ceiling, on its walls: from above, its roof — the floor
               above's walls stand on it, and what's built up there. */}
           <group position-y={STOREY - CEILING_DROP}>
-            <InteriorFloor pieces={pieces} color={surfaces.ceiling} />
+            <InteriorFloor pieces={pieces} color={surfaces.ceiling} holes={getStairs(pieces)} />
           </group>
         </group>
       ))}
@@ -119,7 +135,39 @@ export const FloorsBelow = ({ isEditing }: { isEditing: boolean }) => {
 const ignore = () => {}
 
 /**
- * A floor below: its walls, with their doors and windows — not its furniture,
+ * On the shown floor, what comes from others: a guard rail round each
+ * opening of stairs coming up from below, and the shafts of lifts placed on
+ * other floors — not editable here (they're edited on their own floor).
+ */
+export const ShownFloorLinks = () => {
+  const { arrivingStairs, passingLifts } = useShownFloorLinks()
+
+  return (
+    <>
+      {arrivingStairs.map((stairs) => (
+        <group key={stairs.id} position={[stairs.x, 0, stairs.z]} rotation-y={stairs.rotation}>
+          <StairsLanding />
+        </group>
+      ))}
+      {passingLifts.map((lift) => (
+        <ObjectRenderer
+          key={lift.id}
+          object={lift}
+          selected={false}
+          tool="select"
+          interactive={false}
+          onSelect={ignore}
+          onDelete={ignore}
+          onStartDrag={ignore}
+        />
+      ))}
+    </>
+  )
+}
+
+/**
+ * A floor below: its walls, with their doors and windows, and its stairs and
+ * lifts (seen through the opening of stairs coming up) — not its furniture,
  * which would only crowd the view of the floor being shown (the ceiling
  * covers its rooms anyway). The openings are drawn one by one, not batched:
  * batched (StaticBatch), they showed up on the floor above.
@@ -127,7 +175,8 @@ const ignore = () => {}
 const LowerFloor = ({ pieces }: { pieces: SceneObject[] }) => {
   const openings = pieces.filter(
     (piece) =>
-      isEdgeType(piece.type) && !getRenderer(piece.type).isDrawnAsRun && !isMarker(piece.type)
+      (isEdgeType(piece.type) && !getRenderer(piece.type).isDrawnAsRun && !isMarker(piece.type)) ||
+      isFloorLink(piece)
   )
 
   return (

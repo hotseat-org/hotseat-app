@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react"
 import { composeRepeat, furnitureCollides } from "../layout"
-import { useEditorStore } from "../store"
+import { useCollidables, useEditorStore } from "../store"
 import { isWallMounted, type Cell, type ObjectType, type SceneObject, type Tool } from "../types"
 
 export type RepeatDrag = { start: Cell & { rotation?: number }; end: Cell }
@@ -11,7 +11,8 @@ export type RepeatDrag = { start: Cell & { rotation?: number }; end: Cell }
  * against the office and the copies before it). Wall items hang one at a time.
  */
 export const useRepeatPlacement = (tool: Tool, isFurniture: boolean) => {
-  const objects = useEditorStore((state) => state.objects)
+  // What a row mustn't run into: the floor's pieces and what other floors keep clear.
+  const objects = useCollidables()
   const placementPattern = useEditorStore((state) => state.placementPattern)
   const placementRotation = useEditorStore((state) => state.placementRotation)
   const [repeat, setRepeat] = useState<RepeatDrag | null>(null)

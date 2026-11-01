@@ -4,6 +4,7 @@ import { useThree } from "@react-three/fiber"
 import { MOUSE } from "three"
 import {
   useAllPieces,
+  useCollidables,
   useEditorStore,
   useEditorStoreApi,
   useObjectsWithPaintPreview,
@@ -50,7 +51,8 @@ import { useFurnitureDrag } from "../carrying/useFurnitureDrag"
 import { useOpeningCarry } from "../carrying/useOpeningCarry"
 import { useRepeatPlacement } from "../building/useRepeatPlacement"
 import { STOREY } from "../objects/dimensions"
-import { FloorShift, FloorsBelow } from "./FloorStack"
+import { useShownFloorLinks } from "../useShownFloorLinks"
+import { FloorShift, FloorsBelow, ShownFloorLinks } from "./FloorStack"
 import { useOfficeArea } from "./useOfficeArea"
 import { useContextMenuPress } from "./useContextMenuPress"
 import { BoxSelect } from "./BoxSelect"
@@ -104,6 +106,7 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
   const refusedTurn = useEditorStore((state) => state.refusedTurn)
   // Higher up, the ground is drawn below (see FloorsBelow).
   const isGroundFloor = useEditorStore((state) => state.floors[0]?.id === state.currentFloor)
+  const shownFloorLinks = useShownFloorLinks()
 
   const raycaster = useThree((state) => state.raycaster)
   const pointer = useThree((state) => state.pointer)
@@ -119,7 +122,11 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
     () => (armedKit && hover ? composeKitAt(armedKit, hover.x, hover.z) : null),
     [armedKit, hover]
   )
-  const doesKitFit = useMemo(() => !!kitPlan && canPlaceKit(objects, kitPlan), [kitPlan, objects])
+  const collidables = useCollidables()
+  const doesKitFit = useMemo(
+    () => !!kitPlan && canPlaceKit(collidables, kitPlan),
+    [kitPlan, collidables]
+  )
   // A tool that places a piece of furniture (not an edge, not a marker).
   const isFurniture = isObjectType(tool) && !isEdgeType(tool) && !isMarker(tool)
   const { repeat, setRepeat, isRepeating, repeatPlan, repeatBlocked } = useRepeatPlacement(
@@ -359,8 +366,11 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
               {/* The ground and its land, and the floors below with the ceiling built on. */}
               <FloorsBelow isEditing={!readOnly} />
 
-              {/* Tint the floor enclosed by walls (the office interior). */}
-              <InteriorFloor />
+              {/* Tint the floor enclosed by walls (the office interior) — open
+                  where stairs come up from below. */}
+              <InteriorFloor holes={shownFloorLinks.arrivingStairs} />
+              {/* What other floors bring here: stairs' guard rails, lift shafts. */}
+              <ShownFloorLinks />
               {/* The modules' layers (the office: zones, desk tags, the heatmap, the way to a desk). */}
               {sceneLayers.map(({ Component }, index) => (
                 <Component key={index} isEditing={!readOnly} isDark={dark} />

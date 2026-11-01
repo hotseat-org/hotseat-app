@@ -8,11 +8,20 @@ import {
   type WebGLProgramParametersWithUniforms,
 } from "three"
 import { useEditorStore, useEditorStoreApi } from "../store"
-import { FLOOR_PART, SEG, enclosedRegions, type FloorCell } from "../layout"
+import {
+  FLOOR_PART,
+  SEG,
+  enclosedRegions,
+  footprintOverlapsSquare,
+  type FloorCell,
+} from "../layout"
 import { isEdgeType, type SceneObject } from "../types"
 import { useSurfaces } from "./sceneTheme"
 
 const dummy = new Object3D()
+
+/** No openings (stable: the tiles are worked out again when they change). */
+const NO_HOLES: SceneObject[] = []
 
 /** Plank width and length (m), and the seams' darkening. */
 const PLANK_WIDTH = 0.18
@@ -80,11 +89,14 @@ const planksKey = () => "interior-planks"
 export const InteriorFloor = ({
   pieces,
   color,
+  holes = NO_HOLES,
 }: {
   /** Another floor's pieces (one below); unset, the shown floor's. */
   pieces?: SceneObject[]
   /** Every room in this one plain colour — a ceiling, not floorboards. */
   color?: string
+  /** Openings in it — stairs coming up through it: no floor where they stand. */
+  holes?: SceneObject[]
 }) => {
   // Rooms depend only on walls/doors/windows and floor paints — a key of those,
   // so moving furniture doesn't re-run the flood fill.
@@ -106,7 +118,12 @@ export const InteriorFloor = ({
     const objects = pieces ?? store.getState().objects
     const paints = objects.filter((object) => object.type === "floorPaint" && object.color)
     const byColor = new Map<string, FloorCell[]>()
-    for (const region of enclosedRegions(objects)) {
+    // Squares an opening covers have no floor.
+    const isOpen = (cell: FloorCell) =>
+      holes.some((hole) => footprintOverlapsSquare(hole, cell.x + SEG / 2, cell.z + SEG / 2))
+    for (const region of enclosedRegions(objects).map((cells) =>
+      holes.length ? cells.filter((cell) => !isOpen(cell)) : cells
+    )) {
       // Last paint inside the room wins.
       const paint = [...paints]
         .reverse()
@@ -124,7 +141,7 @@ export const InteriorFloor = ({
     }
 
     return [...byColor]
-  }, [key, pieces, store, surfaces.floorInside])
+  }, [key, pieces, holes, store, surfaces.floorInside])
 
   return (
     <>

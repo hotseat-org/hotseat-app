@@ -30,6 +30,9 @@ export interface EdgeTraits {
   hosts?: readonly string[]
 }
 
+/** How a piece joins floors (see ItemDefinition.linksFloors). */
+export type FloorLink = "above" | "all"
+
 /** An item: everything the editor's logic needs to know about it (rendering is registered apart). */
 export interface ItemDefinition {
   mount: Mount
@@ -46,6 +49,11 @@ export interface ItemDefinition {
   /** Copied (duplicated, pasted) like any piece; not an item no longer placed. */
   isCopyable: boolean
   edge?: EdgeTraits
+  /**
+   * It joins floors: stairs, from its floor to the one above ("above"); a
+   * lift, every floor at its spot ("all").
+   */
+  linksFloors?: FloorLink
   /** What integrators mark it as — the office module's "desk", for one. */
   tags: readonly string[]
 }
@@ -114,5 +122,8 @@ export const getEdge = (type: ObjectType): EdgeTraits | undefined => findItem(ty
 /** Whether an opening of `opening`'s kind can be cut into a run of `run`'s. */
 export const canHost = (run: ObjectType, opening: ObjectType) =>
   getEdge(run)?.hosts?.includes(opening) ?? false
+
+/** How a piece joins floors: stairs to the one above, a lift all; undefined, it doesn't. */
+export const getFloorLink = (type: ObjectType): FloorLink | undefined => findItem(type)?.linksFloors
 
 export const hasTag = (type: ObjectType, tag: string) => findItem(type)?.tags.includes(tag) ?? false

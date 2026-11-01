@@ -2,6 +2,7 @@ import { useCallback, useId, useLayoutEffect, useMemo, useRef, useState } from "
 import type { PlanState } from "../module"
 import { useModules, usePlanDrawings, usePlanPieceStyles, useViewClicks } from "../modules"
 import { useEditorStore } from "../store"
+import { useShownFloorLinks } from "../useShownFloorLinks"
 import { SURFACES } from "../palette"
 import { ContourLines } from "../landscape/ContourLines"
 import { FLOOR_CHIP_HEIGHT, FloorChip } from "../ui/menus/FloorChip"
@@ -61,7 +62,15 @@ export const FloorPlan = ({
   // View angle: the whole layout turned by quarter turns (see turnObject).
   const turn = useEditorStore((state) => state.planTurn)
   const turnBy = useEditorStore((state) => state.turnPlan)
-  const objects = useMemo(() => layout.map((object) => turnObject(object, turn)), [layout, turn])
+  // With what other floors bring here: lifts passing through, stairs coming up.
+  const links = useShownFloorLinks()
+  const objects = useMemo(
+    () =>
+      [...layout, ...links.passingLifts, ...links.arrivingStairs].map((object) =>
+        turnObject(object, turn)
+      ),
+    [layout, links, turn]
+  )
   // The ground floor's pieces (the land is shaped round them, from every
   // floor) and the walls of the floor right below (drawn faded under this one).
   const floors = useEditorStore((state) => state.floors)

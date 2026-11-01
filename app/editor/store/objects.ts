@@ -3,6 +3,7 @@ import { hasRenderer } from "../catalog/renderers"
 import { getFloorId, type Layout } from "../floors"
 import { edgeKey, mountWalls, normalizeEdges, unitEdges } from "../layout"
 import { isEdgeType, isWallMounted, type SceneObject } from "../types"
+import { getFloorBlockers } from "../floorLinks"
 import type { FloorsState } from "./floors"
 import type { GetState, SetState, StoreHooks } from "./state"
 
@@ -48,9 +49,25 @@ export const splitLayout = ({ floors, pieces }: Layout, floorId = floors[0].id) 
       shown.filter((piece) => piece.floor === currentFloor).map(withoutFloor)
     ),
     otherFloorsPieces: shown.filter((piece) => piece.floor !== currentFloor),
+    // Stairs up from below and lifts from other floors keep their spots clear here.
+    floorBlockers: getFloorBlockers(
+      shown.filter((piece) => piece.floor !== currentFloor),
+      floors,
+      currentFloor
+    ),
     keptPieces: pieces.filter((piece) => !canShow(piece)).map(onTheirFloor),
   }
 }
+
+/**
+ * What a piece mustn't overlap on the shown floor: its pieces, and what
+ * other floors keep clear there (stairs coming up, lift shafts).
+ */
+export const getCollidables = ({
+  objects,
+  floorBlockers,
+}: Pick<ObjectsState & FloorsState, "objects" | "floorBlockers">) =>
+  floorBlockers.length ? [...objects, ...floorBlockers] : objects
 
 /**
  * Every piece on every floor, each with its floor, in floor order — the shown

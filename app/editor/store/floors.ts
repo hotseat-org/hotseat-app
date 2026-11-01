@@ -13,6 +13,11 @@ export interface FloorsState {
   currentFloor: string
   /** The other floors' pieces, each with its floor, aside while one is shown. */
   otherFloorsPieces: SceneObject[]
+  /**
+   * What other floors keep clear on this one — stairs coming up, lift shafts:
+   * nothing is placed over them (see getCollidables).
+   */
+  floorBlockers: SceneObject[]
   /** Show another floor — a scene of its own, so nothing to undo there yet. */
   showFloor: (id: string) => void
   /** A new floor on top, shown. */
@@ -30,7 +35,7 @@ export interface FloorsState {
 export const createFloorsActions = (
   set: SetState,
   get: GetState
-): Omit<FloorsState, "floors" | "currentFloor" | "otherFloorsPieces"> => {
+): Omit<FloorsState, "floors" | "currentFloor" | "otherFloorsPieces" | "floorBlockers"> => {
   const showLayout = (floors: Floor[], pieces: SceneObject[], floorId: string) => {
     set({ ...splitLayout({ floors, pieces }, floorId), selectedId: null })
     get().resetHistory()

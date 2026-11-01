@@ -8,7 +8,7 @@ import {
 } from "../layout"
 import { isEdgeType, isRecolorable, variantOf, type ObjectType, type SceneObject } from "../types"
 import { HISTORY_LIMIT } from "./history"
-import { dropOrphanMounts } from "./objects"
+import { dropOrphanMounts, getCollidables } from "./objects"
 import type { GetState, SetState, StoreHooks } from "./state"
 
 export interface NewObject {
@@ -60,7 +60,8 @@ export const settleTurn = (rawSet: SetState, get: GetState) => {
   if (!turn || selectedId === turn.id) return
 
   const piece = objects.find((candidate) => candidate.id === turn.id)
-  if (!piece || !furnitureCollides(objects, piece)) return rawSet({ pendingTurn: null })
+  if (!piece || !furnitureCollides(getCollidables(get()), piece))
+    return rawSet({ pendingTurn: null })
 
   const { x, z, rotation } = turn
   const isOnlyTurns = past.length === turn.historyLength + turn.steps
@@ -83,7 +84,7 @@ export const createFurnitureState = (
 ): FurnitureState => ({
   addObject: ({ type, x, z, rotation = 0, color, model }) => {
     // Don't place furniture inside existing furniture.
-    if (furnitureCollides(get().objects, { type, x, z, rotation })) return ""
+    if (furnitureCollides(getCollidables(get()), { type, x, z, rotation })) return ""
 
     const id = nanoid(8)
     set((state) => ({
@@ -99,7 +100,8 @@ export const createFurnitureState = (
   addObjects: (pieces) => {
     const placed: SceneObject[] = []
     for (const { type, x, z, rotation = 0, color, model } of pieces) {
-      if (furnitureCollides([...get().objects, ...placed], { type, x, z, rotation })) continue
+      if (furnitureCollides([...getCollidables(get()), ...placed], { type, x, z, rotation }))
+        continue
 
       placed.push({ id: nanoid(8), type, x, z, rotation, color, model })
     }
@@ -135,7 +137,7 @@ export const createFurnitureState = (
       rotation,
       snapToFootprint({ type: piece.type, rotation }, piece)
     )
-    const isOverlapping = furnitureCollides(state.objects, {
+    const isOverlapping = furnitureCollides(getCollidables(state), {
       ...snapped,
       id: piece.id,
       type: piece.type,
@@ -209,7 +211,7 @@ export const createFurnitureState = (
           z: original.z + deltaZ,
         })
         if (
-          furnitureCollides(state.objects, {
+          furnitureCollides(getCollidables(state), {
             ...snapped,
             type: original.type,
             rotation: original.rotation,

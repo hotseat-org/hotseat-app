@@ -1,7 +1,7 @@
 import { createContext, useContext, useMemo } from "react"
 import { useStore, type StoreApi } from "zustand"
 import { paintWallFaces } from "../layout"
-import { getAllPieces } from "./objects"
+import { getAllPieces, getCollidables } from "./objects"
 import type { EditorState, EditorStore } from "./state"
 
 const EditorStoreContext = createContext<EditorStore | null>(null)
@@ -59,4 +59,12 @@ export const useObjectsWithPaintPreview = () => {
     () => (preview ? paintWallFaces(objects, preview.targets, preview.color) : objects),
     [objects, preview]
   )
+}
+
+/** What a piece mustn't overlap on the shown floor (see getCollidables), kept while it's the same. */
+export const useCollidables = () => {
+  const objects = useEditorStore((state) => state.objects)
+  const floorBlockers = useEditorStore((state) => state.floorBlockers)
+
+  return useMemo(() => getCollidables({ objects, floorBlockers }), [objects, floorBlockers])
 }

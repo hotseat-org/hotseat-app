@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import type { ThreeEvent } from "@react-three/fiber"
 import { Plane, Vector3 } from "three"
 import { furnitureCollides } from "../layout"
-import { useEditorStoreApi } from "../store"
+import { getCollidables, useEditorStoreApi } from "../store"
 
 /** The floor plane: where a grabbed piece is held from. */
 const GROUND = new Plane(new Vector3(0, 1, 0), 0)
@@ -45,7 +45,7 @@ export const useFurnitureDrag = (readOnly: boolean) => {
 
     const all = storeApi.getState().objects
     const object = all.find((candidate) => candidate.id === start.id)
-    if (object && furnitureCollides(all, object)) {
+    if (object && furnitureCollides(getCollidables(storeApi.getState()), object)) {
       setBlockedAt(performance.now())
 
       return putBack()

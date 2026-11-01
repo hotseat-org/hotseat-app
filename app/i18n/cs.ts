@@ -149,6 +149,8 @@ export const cs: Messages = {
   "Glass wall": "Skleněná stěna",
   "Glass door": "Skleněné dveře",
   Fence: "Plot",
+  Stairs: "Schody",
+  Lift: "Výtah",
   Chair: "Židle",
   Sofa: "Pohovka",
   Plant: "Rostlina",

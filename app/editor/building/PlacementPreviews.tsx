@@ -1,5 +1,5 @@
 import { furnitureCollides } from "../layout"
-import { useEditorStore } from "../store"
+import { useCollidables, useEditorStore } from "../store"
 import { isObjectType, isWallMounted, type Cell, type ObjectType, type SceneObject } from "../types"
 import { AlignmentGuides } from "../carrying/AlignmentGuides"
 import { MeasureHints } from "../carrying/MeasureHints"
@@ -36,6 +36,7 @@ export const PlacementPreviews = ({
   carried: SceneObject | undefined
 }) => {
   const objects = useEditorStore((state) => state.objects)
+  const collidables = useCollidables()
   const tool = useEditorStore((state) => state.tool)
   const placementRotation = useEditorStore((state) => state.placementRotation)
   const placementColor = useEditorStore((state) =>
@@ -52,7 +53,7 @@ export const PlacementPreviews = ({
   const shown = isFurniture && !dragId && !isRepeatDragging ? hover : null
   const rotation = shown?.rotation ?? placementRotation
   const isHoverBlocked =
-    !!shown && furnitureCollides(objects, { type, x: shown.x, z: shown.z, rotation })
+    !!shown && furnitureCollides(collidables, { type, x: shown.x, z: shown.z, rotation })
 
   return (
     <>
@@ -146,7 +147,7 @@ export const PlacementPreviews = ({
           x={carried.x}
           z={carried.z}
           rotation={carried.rotation}
-          valid={!furnitureCollides(objects, carried)}
+          valid={!furnitureCollides(collidables, carried)}
         />
       )}
     </>

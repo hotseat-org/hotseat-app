@@ -2,6 +2,7 @@ import { nanoid } from "nanoid"
 import { ROTATION_STEP, groupCollides, snapToFootprint, toRotationStep } from "../layout"
 import { isEdgeType, isMarker, isRecolorable, type SceneObject } from "../types"
 import type { GetState, SetState, StoreHooks } from "./state"
+import { getCollidables } from "./objects"
 
 /** What's selected, and what's done to the whole selection. */
 export interface SelectionState {
@@ -90,7 +91,7 @@ export const createSelectionState = (
           variant: undefined,
         }))
       )
-      if (!groupCollides([...get().objects, ...copies], copies)) return copies
+      if (!groupCollides([...getCollidables(get()), ...copies], copies)) return copies
     }
 
     return null
@@ -134,7 +135,7 @@ export const createSelectionState = (
 
         return { ...piece, ...snapToFootprint({ type: piece.type, rotation }, piece), rotation }
       })
-      if (groupCollides(get().objects, turned)) return
+      if (groupCollides(getCollidables(get()), turned)) return
 
       const byId = new Map(turned.map((piece) => [piece.id, piece]))
       set((state) => ({ objects: state.objects.map((piece) => byId.get(piece.id) ?? piece) }))
@@ -152,7 +153,7 @@ export const createSelectionState = (
       if (group.length === 0) return false
 
       const moved = group.map((piece) => ({ ...piece, x: piece.x + deltaX, z: piece.z + deltaZ }))
-      if (groupCollides(get().objects, moved)) return false
+      if (groupCollides(getCollidables(get()), moved)) return false
 
       const byId = new Map(moved.map((piece) => [piece.id, piece]))
       set((state) => ({ objects: state.objects.map((piece) => byId.get(piece.id) ?? piece) }))

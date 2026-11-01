@@ -5,6 +5,7 @@
  */
 import "./presets/structure.render"
 import "./presets/fence.render"
+import "./presets/circulation.render"
 
 export * from "./renderers"
 export * from "./categories"
