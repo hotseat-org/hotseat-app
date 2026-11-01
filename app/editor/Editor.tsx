@@ -25,7 +25,8 @@ import { composeCommands } from "./ui/menus/commands"
 import { ContextMenu } from "./ui/menus/ContextMenu"
 import { GuidedTour } from "./ui/guide/GuidedTour"
 import { MapControls } from "./ui/menus/MapControls"
-import { FloorTower } from "./ui/menus/FloorTower"
+import { FloorTower, getGatheredTowerHeight } from "./ui/menus/FloorTower"
+import { useRoomAbove } from "./shell/useRoomAbove"
 import { KitLibraryContext, type KitLibrary } from "./kits/kits"
 import { FrameRateReadout } from "./shell/FrameRateReadout"
 import { SelectionBox } from "./shell/SelectionBox"
@@ -220,7 +221,13 @@ const EditorInner = ({
   // so the reading reflects a true, comparable FPS instead of only the frames
   // that on-demand rendering happens to produce.
   const isFrameRateShown = useEditorStore((state) => state.isFrameRateShown)
-  const hasSelection = useEditorStore((state) => state.selectedId !== null)
+  const floorCount = useEditorStore((state) => state.floors.length)
+  // Editing: the room the inspector leaves above it (null: none shown) — the
+  // floors' tower stays in its corner when it fits there, else moves beside it.
+  const [inspectorBox, setInspectorBox] = useState<HTMLDivElement | null>(null)
+  const roomAboveInspector = useRoomAbove(inspectorBox)
+  const isTowerAside =
+    roomAboveInspector !== null && roomAboveInspector < getGatheredTowerHeight(floorCount, true)
   const [stats, setStats] = useState<FrameStats | null>(null)
   const dbMode = !!onSave
   const modeButton = readOnly ? (
@@ -337,11 +344,14 @@ const EditorInner = ({
           <div
             className={clsx(
               "pointer-events-none absolute top-20 transition-[right] duration-300",
-              // A piece selected: beside the inspector, not under it.
-              hasSelection ? "right-[calc(18rem+2rem)]" : "right-4"
+              // No room above the inspector: beside it, not under it.
+              isTowerAside ? "right-[calc(18rem+2rem)]" : "right-4"
             )}
           >
-            <FloorTower isEditing />
+            <FloorTower
+              isEditing
+              maxHeight={isTowerAside ? undefined : (roomAboveInspector ?? undefined)}
+            />
           </div>
         )}
 
@@ -366,7 +376,11 @@ const EditorInner = ({
             past them. The app shell places the guide itself. */}
         {!isEmpty && !shellMode && (
           <div className="pointer-events-none absolute bottom-4 right-4 top-20 flex flex-col items-end justify-end gap-2">
-            {!readOnly && <Inspector />}
+            {!readOnly && (
+              <div ref={setInspectorBox} className="flex min-h-0 flex-col items-end">
+                <Inspector />
+              </div>
+            )}
             <div className="shrink-0">{guide}</div>
           </div>
         )}

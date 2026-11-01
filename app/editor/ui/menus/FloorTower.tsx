@@ -33,6 +33,13 @@ const MENU_ROOM = 46
 const SPRING = "cubic-bezier(0.2, 0.9, 0.25, 1.15)"
 const STAGGER = 28
 
+/** How tall the tower stands gathered up (px): editing, its menu button above it included. */
+export const getGatheredTowerHeight = (floorCount: number, isEditing: boolean) => {
+  const rowCount = floorCount + (isEditing && floorCount < MAX_FLOORS ? 1 : 0)
+
+  return (isEditing ? MENU_ROOM : 0) + (rowCount - 1) * GATHERED_STEP + SLAB_HEIGHT
+}
+
 /** What shows beside a floor: a few words, coloured. */
 interface FloorWord {
   text: string
@@ -74,7 +81,14 @@ const useItemCounts = () => {
  * top adds a floor (spread out), and the floors' menu (names, order, delete)
  * is above. A phone has its own (see FloorChip).
  */
-export const FloorTower = ({ isEditing = false }: { isEditing?: boolean }) => {
+export const FloorTower = ({
+  isEditing = false,
+  maxHeight = Infinity,
+}: {
+  isEditing?: boolean
+  /** The room it has (px, its menu button included): spread out, it keeps to it. */
+  maxHeight?: number
+}) => {
   const { t, tn } = useI18n()
   const floors = useEditorStore((state) => state.floors)
   const currentFloor = useEditorStore((state) => state.currentFloor)
@@ -104,8 +118,12 @@ export const FloorTower = ({ isEditing = false }: { isEditing?: boolean }) => {
   const hasGhost = isEditing && floors.length < MAX_FLOORS
   const firstRow = hasGhost ? 1 : 0
   const rowCount = topFirst.length + firstRow
+  const spreadRoom = Math.min(
+    MAX_SPREAD_HEIGHT,
+    maxHeight - (isEditing ? MENU_ROOM : 0) - SLAB_HEIGHT
+  )
   const step = isSpread
-    ? Math.min(SPREAD_STEP, MAX_SPREAD_HEIGHT / Math.max(1, rowCount - 1))
+    ? Math.max(GATHERED_STEP, Math.min(SPREAD_STEP, spreadRoom / Math.max(1, rowCount - 1)))
     : GATHERED_STEP
   const height = (rowCount - 1) * step + SLAB_HEIGHT
   // Viewing, its middle at the anchor (it grows up and down); editing, its

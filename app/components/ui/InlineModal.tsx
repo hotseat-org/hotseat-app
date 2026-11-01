@@ -36,7 +36,9 @@ export function InlineModal({
   return (
     <div
       className={clsx(
-        "modal-in-backdrop fixed inset-0 z-50 grid place-items-center bg-black/50",
+        // Its own pointer events: inside a layer that lets clicks through to
+        // what's under it (the office's shell), it must still catch them.
+        "modal-in-backdrop pointer-events-auto fixed inset-0 z-50 grid place-items-center bg-black/50",
         isFullScreenOnPhone ? "p-0 md:p-4" : "p-4"
       )}
       // Only a press that starts and ends on the backdrop itself closes it (a
