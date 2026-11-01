@@ -38,6 +38,7 @@ import {
   type WebGPURenderer,
 } from "three/webgpu"
 import { ao } from "three/examples/jsm/tsl/display/GTAONode.js"
+import { denoise } from "three/examples/jsm/tsl/display/DenoiseNode.js"
 import { OUTLINE_LAYER } from "../objects/outlineLayer"
 import { DEPTH_BIAS } from "../objects/PieceOutline"
 
@@ -129,12 +130,16 @@ export const PostFx = ({ highQuality = false }: { highQuality?: boolean }) => {
       scenePass.getTexture("normal").type = UnsignedByteType
       const packedNormals = scenePass.getTextureNode("normal")
       const normals = sample((at: Node<"vec2">) => unpackRGBToNormal(packedNormals.sample(at)))
-      const occlusion = ao(scenePass.getTextureNode("depth"), normals, camera)
+      const sceneDepth = scenePass.getTextureNode("depth")
+      const occlusion = ao(sceneDepth, normals, camera)
       occlusion.radius.value = OCCLUSION.radius
       occlusion.scale.value = OCCLUSION.scale
       occlusion.resolutionScale = OCCLUSION.resolution
+      // GTAO is noisy by itself (its samples turn per pixel): denoised, as
+      // three's own example does, it's smooth.
+      const smoothed = denoise(occlusion.getTextureNode(), sceneDepth, normals, camera)
 
-      return sceneColor.rgb.mul(occlusion.getTextureNode().r)
+      return sceneColor.rgb.mul((smoothed as unknown as Node<"vec4">).r)
     }
     const lit = highQuality ? getOccluded() : sceneColor.rgb
 

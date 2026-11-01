@@ -44,6 +44,7 @@ export default defineConfig({
       "three/webgpu",
       "three/tsl",
       "three/examples/jsm/tsl/display/GTAONode.js",
+      "three/examples/jsm/tsl/display/DenoiseNode.js",
       "three/examples/jsm/geometries/RoundedBoxGeometry.js",
       "three/examples/jsm/utils/BufferGeometryUtils.js",
       "@react-three/fiber",

@@ -35,10 +35,10 @@ const SceneCanvas = ({ store, readOnly, dark, fitInsets, showStats, onStats, onR
 
   return (
     <Canvas
-      // PCF, which three.js uses anyway: asking for PCFSoft (`shadows`), it
-      // falls back to PCF — and R3F, seeing the type "change" back on every
-      // re-render, redrew the (cached) shadow maps each time.
-      shadows="percentage"
+      // Soft (PCFSoft): smooth. WebGPU's plain PCF spreads its samples with
+      // per-pixel noise — speckled edges. The sun filters wider still (see
+      // shadows.ts).
+      shadows="soft"
       // Capped at 1.5× — on retina, 2× is ~1.8× the pixels (and post-fx cost)
       // for a barely visible sharpness gain on this soft, rounded style.
       dpr={[1, 1.5]}
