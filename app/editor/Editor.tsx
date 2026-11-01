@@ -300,19 +300,19 @@ const EditorInner = ({
             </div>
           ))}
 
-        {/* Bottom-left, one column: the frame-rate readout (when on) above the
-            map's controls (fit, view, Map menu) — so the controls, widening on
-            hover, never cover it. The phone shell has its own controls. */}
-        {!isEmpty && (
-          <div className="pointer-events-none absolute bottom-4 left-4 flex flex-col items-start gap-2">
-            {!flat && isFrameRateShown && stats && <FrameRateReadout stats={stats} />}
-            {!(shellMode && isMobile) && (
-              <>
-                {/* Editing, the floors are in the top bar. */}
-                {readOnly && <FloorPicker />}
-                <MapControls isEditing={!readOnly} />
-              </>
-            )}
+        {/* Bottom-left: the map's controls (floors, fit, view, Map menu). The
+            phone shell has its own. */}
+        {!isEmpty && !(shellMode && isMobile) && (
+          <div className="pointer-events-none absolute bottom-4 left-4">
+            <MapControls isEditing={!readOnly} />
+          </div>
+        )}
+
+        {/* The frame-rate readout (when on), top centre: clear of the panels
+            down the sides. */}
+        {!isEmpty && !flat && isFrameRateShown && stats && (
+          <div className="pointer-events-none absolute left-1/2 top-4 -translate-x-1/2">
+            <FrameRateReadout stats={stats} />
           </div>
         )}
 

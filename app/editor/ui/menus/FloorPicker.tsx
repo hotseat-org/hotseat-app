@@ -6,6 +6,7 @@ import { MAX_FLOORS, MAX_FLOOR_NAME, getFloorId, getFloorNumber, type Floor } fr
 import { useFloorNotes } from "../../modules"
 import { useEditorStore } from "../../store"
 import type { FloorNote } from "../../module"
+import { REVEAL_LABEL } from "../bars/revealLabel"
 import { useI18n } from "~/i18n/I18nProvider"
 
 /** What a floor is called: its name, or (unnamed) "Floor 2". */
@@ -19,11 +20,12 @@ export const useFloorName = () => {
 
 /**
  * The layout's floors as a stack of slabs, the top floor on top: the shown
- * one in the accent, another a press away. Viewing, only with floors to
- * choose from. Editing, always — with a ghost slab on top to add a floor
- * there, and the floors' menu (names, order, delete) below. Viewing, each
- * with the modules' word on it (the office: "6 free"). A phone has its
- * own, see FloorChip.
+ * one in the accent, another a press away. Editing: a panel of its own, with
+ * a ghost slab on top to add a floor there and the floors' menu (names,
+ * order, delete) below. Viewing (only with floors to choose from): the top of
+ * the map's controls bar (see MapControls) — slabs and numbers, and, as the
+ * bar opens, each floor's name and the modules' word on it (the office: "6
+ * free"). A phone has its own, see FloorChip.
  */
 export const FloorPicker = ({ isEditing = false }: { isEditing?: boolean }) => {
   const { t } = useI18n()
@@ -37,7 +39,10 @@ export const FloorPicker = ({ isEditing = false }: { isEditing?: boolean }) => {
 
   return (
     <div
-      className="pointer-events-auto flex flex-col items-stretch rounded-2xl border border-border bg-overlay p-1.5 shadow-overlay"
+      className={clsx(
+        "pointer-events-auto flex flex-col items-stretch",
+        isEditing && "rounded-2xl border border-border bg-overlay p-1.5 shadow-overlay"
+      )}
       onPointerDown={(event) => event.stopPropagation()}
     >
       {isEditing && floors.length < MAX_FLOORS && (
@@ -89,39 +94,72 @@ export const FloorPicker = ({ isEditing = false }: { isEditing?: boolean }) => {
               title={composeFloorLabel(getFloorName(floor), note)}
               // The camera follows (see FloorShift): no refit.
               onClick={() => showFloor(floor.id)}
-              className="group flex items-center gap-2 rounded-lg pr-2 outline-none focus-visible:ring-2 focus-visible:ring-focus"
+              className={clsx(
+                "group flex items-center rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-focus",
+                isEditing ? "gap-2 pr-2" : "h-7 px-1.5 hover:bg-foreground/10"
+              )}
             >
               <span className="relative shrink-0">
-                <Slab look={isShown ? "shown" : "other"} />
+                <Slab look={isShown ? "shown" : "other"} isSmall={!isEditing} />
                 {note?.yours && (
                   <span className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-success ring-2 ring-overlay" />
                 )}
               </span>
-              <span
-                className={clsx(
-                  "max-w-24 truncate text-xs",
-                  isShown
-                    ? "font-extrabold text-accent"
-                    : "font-bold text-muted group-hover:text-foreground"
-                )}
-              >
-                {floor.name || getFloorNumber(floors, floor.id)}
-              </span>
-              {note && (
+              {isEditing ? (
                 <span
                   className={clsx(
-                    "ml-auto whitespace-nowrap pl-2 text-[11px] font-extrabold",
-                    note.tone === "positive" ? "text-success" : "text-warning"
+                    "max-w-24 truncate text-xs",
+                    isShown
+                      ? "font-extrabold text-accent"
+                      : "font-bold text-muted group-hover:text-foreground"
                   )}
                 >
-                  {note.text}
+                  {floor.name || getFloorNumber(floors, floor.id)}
                 </span>
+              ) : (
+                <>
+                  <span
+                    className={clsx(
+                      "ml-1.5 w-3 text-xs tabular-nums",
+                      isShown ? "font-extrabold text-accent" : "font-bold text-muted"
+                    )}
+                  >
+                    {getFloorNumber(floors, floor.id)}
+                  </span>
+                  {/* As the bar opens: its name, and the word on it. */}
+                  <span className={clsx(REVEAL_LABEL, "flex items-center gap-2 text-xs")}>
+                    {floor.name && (
+                      <span
+                        className={clsx(
+                          "max-w-24 truncate",
+                          isShown ? "font-extrabold text-accent" : "font-bold text-foreground"
+                        )}
+                      >
+                        {floor.name}
+                      </span>
+                    )}
+                    {note && (
+                      <span
+                        className={clsx(
+                          "ml-auto font-extrabold",
+                          note.tone === "positive" ? "text-success" : "text-warning"
+                        )}
+                      >
+                        {note.text}
+                      </span>
+                    )}
+                  </span>
+                </>
               )}
             </button>
           )
         })}
       </div>
-      {isEditing && <FloorsMenu />}
+      {isEditing ? (
+        <FloorsMenu />
+      ) : (
+        <span className="mx-1.5 my-0.5 h-px bg-separator" aria-hidden />
+      )}
     </div>
   )
 }
@@ -134,8 +172,19 @@ export const composeFloorLabel = (name: string, note: FloorNote | undefined) =>
  * A floor drawn as a flat slab seen from above at an angle — stacked, they
  * read as the building. `ghost`: dashed, a floor that could be added.
  */
-export const Slab = ({ look }: { look: "shown" | "other" | "ghost" }) => (
-  <svg aria-hidden viewBox="0 0 44 20" className="h-5 w-11 shrink-0 overflow-visible">
+export const Slab = ({
+  look,
+  isSmall = false,
+}: {
+  look: "shown" | "other" | "ghost"
+  /** Icon-sized, for a bar of icons. */
+  isSmall?: boolean
+}) => (
+  <svg
+    aria-hidden
+    viewBox="0 0 44 20"
+    className={clsx("shrink-0 overflow-visible", isSmall ? "h-3.5 w-[30px]" : "h-5 w-11")}
+  >
     {/* The edge: the slab's thickness, under its top. */}
     <path
       d="M2 9 L22 16 L42 9 L42 12 L22 19 L2 12 Z"

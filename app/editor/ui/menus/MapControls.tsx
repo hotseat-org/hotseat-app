@@ -4,12 +4,13 @@ import { useState, type ReactNode } from "react"
 import { useEditorStore } from "../../store"
 import { hasWebGL } from "../../shell/webgl"
 import { REVEAL_LABEL } from "../bars/revealLabel"
+import { FloorPicker } from "./FloorPicker"
 import { MapMenu } from "./MapMenu"
 import { useI18n } from "~/i18n/I18nProvider"
 
 /**
- * The map's own controls, stacked bottom-left as in map apps: fit the office
- * (F), 3D ⇄ the simple view (viewing), turn the simple view (Q / E), and the
+ * The map's own controls, stacked bottom-left as in map apps: the floors
+ * (viewing, with more than one), fit the office (F), 3D ⇄ the simple view (viewing), turn the simple view (Q / E), and the
  * Map menu — what's shown, which desks.
  */
 export const MapControls = ({ isEditing = false }: { isEditing?: boolean }) => {
@@ -30,6 +31,8 @@ export const MapControls = ({ isEditing = false }: { isEditing?: boolean }) => {
       data-open={isMenuOpen || undefined}
       className="group/bar pointer-events-auto flex flex-col items-stretch gap-0.5 rounded-2xl border border-border bg-overlay p-1 text-foreground shadow-overlay"
     >
+      {/* Editing, the floors have a panel of their own (top right). */}
+      {!isEditing && <FloorPicker />}
       <ControlButton label={t("Fit")} title={t("Fit to office (F)")} onPress={requestFit}>
         <Focus className="size-[18px]" />
       </ControlButton>

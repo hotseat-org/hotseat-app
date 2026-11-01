@@ -8,22 +8,21 @@ const getFrameRateColor = (fps: number) => {
   return "text-danger"
 }
 
-/** The perf HUD's reading: frames per second (coloured by how smooth), frame time and what's drawn. */
+/** The perf HUD's reading, on one line: frames per second (coloured by how smooth), frame time and what's drawn. */
 export const FrameRateReadout = ({ stats }: { stats: FrameStats }) => {
   const { t, tn } = useI18n()
 
   return (
-    <div className="rounded-xl border border-border bg-overlay px-3 py-2 font-mono text-sm text-foreground shadow-overlay">
-      <span className="tabular-nums">
+    <div className="flex items-baseline gap-3 whitespace-nowrap rounded-xl border border-border bg-overlay px-3 py-1.5 font-mono text-sm tabular-nums text-foreground shadow-overlay">
+      <span>
         <span className={getFrameRateColor(stats.fps)}>{stats.fps.toFixed(0)}</span> FPS
-        <span className="ml-2 text-muted">{stats.ms.toFixed(1)} ms</span>
-        {/* One per line: a narrow column stays clear of the centred bottom bar. */}
-        <span className="block text-xs leading-5 text-muted">
-          <span className="block">{t("CPU {ms} ms", { ms: stats.cpuMs.toFixed(1) })}</span>
-          <span className="block">{tn(stats.drawCalls, "{n} draw call", "{n} draw calls")}</span>
-          <span className="block">{tn(stats.objects, "{n} object", "{n} objects")}</span>
-        </span>
       </span>
+      <span className="text-xs text-muted">{stats.ms.toFixed(1)} ms</span>
+      <span className="text-xs text-muted">{t("CPU {ms} ms", { ms: stats.cpuMs.toFixed(1) })}</span>
+      <span className="text-xs text-muted">
+        {tn(stats.drawCalls, "{n} draw call", "{n} draw calls")}
+      </span>
+      <span className="text-xs text-muted">{tn(stats.objects, "{n} object", "{n} objects")}</span>
     </div>
   )
 }
