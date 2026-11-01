@@ -11,9 +11,7 @@ import {
   Vector2,
 } from "three"
 import {
-  dot,
   float,
-  mix,
   mrt,
   normalView,
   orthographicDepthToViewZ,
@@ -27,8 +25,6 @@ import {
   sample,
   saturation,
   unpackRGBToNormal,
-  uv,
-  vec3,
   vec4,
 } from "three/tsl"
 import {
@@ -45,8 +41,6 @@ import { DEPTH_BIAS } from "../objects/PieceOutline"
 
 /** Ambient occlusion: its reach (m) and strength (×), at half the screen's resolution. */
 const OCCLUSION = { radius: 0.6, scale: 1.1, resolution: 0.5 }
-/** The vignette: how far it reaches in from the edges, and how dark it gets there. */
-const VIGNETTE = { offset: 0.35, darkness: 0.4 }
 /** The grade over tone mapping (ACES greys light colours a little): a touch more colour and snap. */
 const GRADE = { saturation: 1.1, contrast: 0.06 }
 
@@ -122,8 +116,8 @@ const getViewZ = (depth: Node<"float">, camera: Camera) => {
 
 /**
  * Post-processing (display mode only), in TSL: ambient occlusion (GTAO), the
- * pieces' outlines (their own pass, see outlineLayer.ts), a vignette, ACES
- * tone mapping and a light grade. No tilt-shift: its blur towards the top and
+ * pieces' outlines (their own pass, see outlineLayer.ts), ACES tone mapping
+ * and a light grade. No vignette: the corners stay as bright as the rest. No tilt-shift: its blur towards the top and
  * bottom read as a low-quality render. No bloom: it only ever caught the
  * screens and bulbs — they have halos now (see Halos).
  * It draws the frame itself (R3F's own render stands aside: priority 1).
@@ -170,11 +164,8 @@ export const PostFx = ({ highQuality = false }: { highQuality?: boolean }) => {
     const shown = outlines.a.mul(isInSight.select(1, 0))
     const outlined = lit.mul(float(1).sub(shown)).add(outlines.rgb.mul(isInSight.select(1, 0)))
 
-    // Darker towards the corners, as the old vignette did (not the Eskil one).
-    const fromCentre = uv().sub(0.5).mul(VIGNETTE.offset)
-    const vignetted = mix(outlined, vec3(1 - VIGNETTE.darkness), dot(fromCentre, fromCentre))
     // Tone mapped and in the screen's colours, then graded.
-    const toned = renderOutput(vec4(vignetted, 1)).rgb
+    const toned = renderOutput(vec4(outlined, 1)).rgb
     const contrasted = toned
       .sub(0.5)
       .mul(float(1 + GRADE.contrast))
