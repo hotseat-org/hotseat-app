@@ -1,4 +1,5 @@
 import { Html } from "@react-three/drei"
+import { useThree } from "@react-three/fiber"
 import clsx from "clsx"
 import { Pin } from "lucide-react"
 import { heatBarTop } from "../heatmap/heatmap"
@@ -29,6 +30,8 @@ export const SeatTags = () => {
   const openSeatCard = useOfficeStore((state) => state.openSeatCard)
   const hoveredId = useOfficeStore((state) => state.hoveredPieceId)
   const { setHoveredPiece, clearHoveredPiece } = useHoveredPieceActions()
+  // The tags lie over the canvas: the scene lets go of what it had pointed at.
+  const leaveScene = useThree((state) => state.events.handlers?.onPointerLeave)
   const i18n = useI18n()
   // Insights' heatmap: every desk's share of days in use, instead of who's in.
   const heatmap = useOfficeStore((state) => state.heatmap)
@@ -82,9 +85,18 @@ export const SeatTags = () => {
             <button
               type="button"
               aria-label={t("Open {desk}", { desk: deskName(i18n, desk) })}
-              onClick={() => openSeatCard(desk.id)}
+              // Kept from the scene beneath (its pointer moves and clicks):
+              // it'd point at, and open, whatever piece is behind the tag.
+              onClick={(event) => {
+                event.stopPropagation()
+                openSeatCard(desk.id)
+              }}
+              onPointerMove={(event) => event.stopPropagation()}
               // Pointed at, its desk shows it's pointed at too (its plinth).
-              onPointerEnter={() => setHoveredPiece(desk.id)}
+              onPointerEnter={(event) => {
+                leaveScene?.(event.nativeEvent)
+                setHoveredPiece(desk.id)
+              }}
               onPointerLeave={() => clearHoveredPiece(desk.id)}
               // The button itself isn't scaled (the UI kit sets buttons' scale): what's in it is.
               className="group pointer-events-auto cursor-pointer select-none"
