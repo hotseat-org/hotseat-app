@@ -1,6 +1,7 @@
 import type { CoreContext } from "../types"
 import { parseLayout } from "~/office/schema"
 import { isSeatable } from "~/office/catalog"
+import { getFloorId, getFloorLabel, type FloorLabel } from "~/editor/core"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import {
   addDays,
@@ -57,9 +58,13 @@ export interface OfficeInsights {
     ratio: number
     lastUsed: Day | null
     resident?: string
+    /** Its floor, in an office of several (to tell desks apart). */
+    floor?: FloorLabel
   }[]
   /** Permanent desks: how often their resident gave them up. */
   permanent: { deskId: string; label?: string; resident: string; givenUp: number }[]
+  /** With floors (two or more): each one's desks, and the share of them in use on an average working day. */
+  byFloor: { floor: FloorLabel; deskCount: number; ratio: number }[]
 }
 
 const rangeFor = (period: InsightsPeriod, today: Day, lastDay: Day) => {
@@ -88,7 +93,8 @@ export const getOfficeInsights =
     })
     if (!office) throw new Error("Not Found")
 
-    const desks = parseLayout(office.layout).pieces.filter((o) => isSeatable(o.type))
+    const layout = parseLayout(office.layout)
+    const desks = layout.pieces.filter((o) => isSeatable(o.type))
     const deskIds = new Set(desks.map((d) => d.id))
     const today = todayIn(office.timezone)
     const { from, to } = rangeFor(period, today, addDays(today, office.bookingWindowDays))
@@ -198,6 +204,7 @@ export const getOfficeInsights =
             ratio: dates.length ? used.length / dates.length : 0,
             lastUsed: used.length ? used[used.length - 1] : null,
             resident: desk.assignee,
+            floor: getFloorLabel(layout.floors, desk),
           }
         })
         .sort((a, b) => b.ratio - a.ratio),
@@ -207,5 +214,25 @@ export const getOfficeInsights =
         resident: d.assignee as string,
         givenUp: dates.filter((date) => released.has(`${d.id}|${date}`)).length,
       })),
+      byFloor:
+        layout.floors.length < 2
+          ? []
+          : layout.floors.map((floor) => {
+              const onFloor = desks.filter((desk) => getFloorId(desk, layout.floors) === floor.id)
+              const inUseOn = (date: Day) =>
+                onFloor.filter(
+                  (desk) =>
+                    bookedOn.get(date)?.has(desk.id) ||
+                    (desk.assignee && !released.has(`${desk.id}|${date}`))
+                ).length
+
+              return {
+                floor: getFloorLabel(layout.floors, { floor: floor.id }) as FloorLabel,
+                deskCount: onFloor.length,
+                ratio: onFloor.length
+                  ? mean(dates.map((date) => inUseOn(date) / onFloor.length))
+                  : 0,
+              }
+            }),
     }
   }

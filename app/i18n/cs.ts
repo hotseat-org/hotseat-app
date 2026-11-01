@@ -618,6 +618,7 @@ export const cs: Messages = {
   Booked: "Rezervované",
   Permanent: "Stálé",
   "Every working day": "Každý pracovní den",
+  "By floor, an average working day": "Podle pater, průměrný pracovní den",
   "In use": "Obsazenost",
   "Last used": "Naposledy",
   never: "nikdy",

@@ -1,7 +1,11 @@
+import { useEffect, useRef } from "react"
 import { useRouteLink } from "../wayfinding/useRouteLink"
+import { useDesksOnDay } from "../booking/useBooking"
+import { useOfficeStore, useOfficeStoreApi } from "../store"
 import { CustomBooking } from "../booking/CustomBooking"
 import { HeatmapPill } from "../heatmap/HeatmapPill"
 import { RoutePill } from "../wayfinding/RoutePill"
+import { getFloorId } from "~/editor/core"
 import { type Panel, type PanelProps } from "~/editor"
 import { MOBILE_CHROME } from "~/components/office/mobile"
 
@@ -31,7 +35,34 @@ const OfficeRouteLink = ({ isViewing }: PanelProps) => {
   return null
 }
 
+/**
+ * Opening an office of several floors, it shows the one with your desk that
+ * day — once, when the bookings are in; not when a shared way to a desk
+ * (?to=) shows its own.
+ */
+const OfficeStartFloor = () => {
+  const store = useOfficeStoreApi()
+  const me = useOfficeStore((state) => state.booking.me)
+  const hasFloors = useOfficeStore((state) => state.floors.length > 1)
+  const { byPerson } = useDesksOnDay()
+  const myDesk = me ? byPerson.get(me)?.desk : undefined
+  const isDone = useRef(false)
+
+  useEffect(() => {
+    if (isDone.current || !hasFloors || !me) return
+
+    isDone.current = true
+    const { route, floors, showFloor } = store.getState()
+    if (route || !myDesk) return
+
+    showFloor(getFloorId(myDesk, floors))
+  }, [hasFloors, me, myDesk, store])
+
+  return null
+}
+
 export const OFFICE_PANELS: Panel[] = [
   { Component: OfficeRouteLink, when: "always" },
+  { Component: OfficeStartFloor, when: "viewing" },
   { Component: OfficeViewPanels, when: "viewing" },
 ]

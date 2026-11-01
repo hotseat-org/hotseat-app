@@ -9,6 +9,7 @@ import { heatColor, heatGradient, PERIOD_LABEL } from "~/office/heatmap/heatmap"
 import { personByEmail, usePeople } from "~/office/desks/people"
 import { useOfficeStore } from "~/office/store"
 import { useOfficePanel } from "~/office/useOfficePanel"
+import { floorText } from "~/office/booking/useBooking"
 import type { InsightsPeriod, OfficeInsights } from "~/core/office/insights"
 import type { InsightsData } from "~/routes/api.insights.$slug.$officeSlug"
 import { addDays, weekStart, type Day } from "~/utils/booking"
@@ -472,6 +473,36 @@ export const InsightsDashboard = () => {
               </Card>
             </div>
 
+            {/* With floors: how much each is in use. */}
+            {data.byFloor.length > 0 && (
+              <Card title={t("By floor, an average working day")}>
+                <ul className="flex flex-col gap-2">
+                  {[...data.byFloor].reverse().map(({ floor, deskCount, ratio }) => (
+                    <li
+                      key={floor.number}
+                      className="grid grid-cols-[minmax(0,10rem)_minmax(0,1fr)_auto] items-center gap-3 text-[13px]"
+                    >
+                      <span className="truncate font-bold">{floorText(i18n, floor)}</span>
+                      <span className="h-2.5 overflow-hidden rounded-full bg-surface-secondary">
+                        <span
+                          className="block h-full rounded-full"
+                          style={{
+                            width: `${Math.round(ratio * 100)}%`,
+                            background: colors.booked,
+                          }}
+                        />
+                      </span>
+                      <span className="whitespace-nowrap text-muted">
+                        <span className="font-bold text-foreground">{format.percent(ratio)}</span>
+                        {" · "}
+                        {tn(deskCount, "{n} desk", "{n} desks")}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            )}
+
             <div className="grid gap-4 lg:grid-cols-2">
               <Card title={t("Desks")}>
                 <div className="max-h-64 overflow-y-auto">
@@ -488,6 +519,12 @@ export const InsightsDashboard = () => {
                         <tr key={d.deskId} className="border-t border-separator">
                           <td className="py-1.5 font-bold">
                             {d.label ?? t("Desk")}
+                            {d.floor && (
+                              <span className="font-normal text-muted">
+                                {" "}
+                                · {floorText(i18n, d.floor)}
+                              </span>
+                            )}
                             {d.resident && (
                               <span className="font-normal text-muted">
                                 {" "}
