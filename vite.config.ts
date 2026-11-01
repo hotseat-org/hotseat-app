@@ -7,6 +7,11 @@ import devtoolsJson from "vite-plugin-devtools-json"
 
 export default defineConfig({
   base: "/hotseat/",
+  // Changes with every build: what the browser keeps between visits (the
+  // catalog's stills) is kept per build, so a new one never shows stale models.
+  define: {
+    __BUILD_ID__: JSON.stringify(Date.now().toString(36)),
+  },
   server: {
     port: 3000,
     allowedHosts: ["hotseat.vidlak.net"],

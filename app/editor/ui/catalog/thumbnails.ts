@@ -3,7 +3,9 @@ import type { CatalogItem } from "../../types"
 
 /**
  * Catalog thumbnails: still images of each item (in each colour it's shown in),
- * rendered one at a time by the shared ThumbnailStudio and kept for the session.
+ * rendered one at a time by the shared ThumbnailStudio — and kept between
+ * visits (the browser's Cache Storage, per build): opened again, the editor
+ * renders none, and nothing competes with the office loading.
  * Tiles show them instantly; only a hovered / armed tile runs a live canvas.
  */
 
@@ -40,6 +42,7 @@ const subscribe = (listener: () => void) => {
  * rest (pre-rendering the whole catalog) wait their turn.
  */
 export const requestThumbnail = (type: CatalogItem, color?: string, isUrgent = false) => {
+  restoring ??= restoreThumbnails()
   const key = getKey(type, color)
   if (images.has(key)) return
 
@@ -52,14 +55,61 @@ export const requestThumbnail = (type: CatalogItem, color?: string, isUrgent = f
   notify()
 }
 
-/** Stores a rendered still and moves the queue on. */
-export const addThumbnail = (key: string, url: string) => {
-  images.set(key, url)
+/** Stores a rendered still (and keeps it for later visits), and moves the queue on. */
+export const addThumbnail = (key: string, blob: Blob) => {
+  images.set(key, URL.createObjectURL(blob))
+  void keepThumbnail(key, blob)
   queue = queue.filter((request) => request.key !== key)
   notify()
 }
 
-const getNextRequest = () => queue[0]
+/** Nothing is rendered until the stills kept from earlier visits are back. */
+const getNextRequest = () => (isRestored ? queue[0] : undefined)
+
+/** Where this build's stills are kept, and the address each is kept under. */
+const STORE_PREFIX = "catalog-thumbnails-"
+const STORE_NAME = `${STORE_PREFIX}${__BUILD_ID__}`
+const toAddress = (key: string) => `${window.location.origin}/thumbnails/${encodeURIComponent(key)}`
+const fromAddress = (address: string) =>
+  decodeURIComponent(new URL(address).pathname.split("/").pop() ?? "")
+/** Kept between visits — not while developing (models change without a new build). */
+const canKeep = () => !import.meta.env.DEV && typeof caches !== "undefined"
+
+let isRestored = false
+let restoring: Promise<void> | null = null
+
+/** The stills kept from an earlier visit of this build (older builds' are dropped). */
+const restoreThumbnails = async () => {
+  try {
+    if (!canKeep()) return
+
+    for (const name of await caches.keys())
+      if (name.startsWith(STORE_PREFIX) && name !== STORE_NAME) await caches.delete(name)
+
+    const store = await caches.open(STORE_NAME)
+    for (const request of await store.keys()) {
+      const response = await store.match(request)
+      if (response) images.set(fromAddress(request.url), URL.createObjectURL(await response.blob()))
+    }
+  } catch {
+    // Nothing kept (storage blocked or full): they're rendered, as on a first visit.
+  } finally {
+    isRestored = true
+    queue = queue.filter((request) => !images.has(request.key))
+    notify()
+  }
+}
+
+const keepThumbnail = async (key: string, blob: Blob) => {
+  try {
+    if (!canKeep()) return
+
+    const store = await caches.open(STORE_NAME)
+    await store.put(toAddress(key), new Response(blob, { headers: { "Content-Type": blob.type } }))
+  } catch {
+    // Not kept: rendered again next visit.
+  }
+}
 
 /** The next still to render (for the studio). */
 export const useNextThumbnailRequest = () =>

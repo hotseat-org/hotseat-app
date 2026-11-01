@@ -180,12 +180,14 @@ const Contents = ({
 /** Previews draw on a transparent canvas (the tile shows through). */
 const createPreviewRenderer = createRenderer({ alpha: true })
 
-/** Runs `callback` in idle time — or within a frame or so if there's none. */
-const whenIdle = (callback: () => void) => {
+/** Runs `callback` in idle time — or after `timeout` (ms) if there's none. */
+const whenIdle = (callback: () => void, timeout = 50) => {
   if (typeof window.requestIdleCallback === "function")
-    window.requestIdleCallback(callback, { timeout: 50 })
-  else window.setTimeout(callback, 16)
+    window.requestIdleCallback(callback, { timeout })
+  else window.setTimeout(callback, Math.min(timeout, 16))
 }
+/** How long the background pre-render waits for idle time at most (ms): past the office loading. */
+const BACKGROUND_WAIT = 2000
 
 /**
  * Renders catalog stills, one at a time, in a single hidden canvas — one WebGL
@@ -195,22 +197,49 @@ const whenIdle = (callback: () => void) => {
  * never competes with the editor.
  */
 export const ThumbnailStudio = () => {
-  const request = useNextThumbnailRequest()
+  const next = useNextThumbnailRequest()
+  // The background pre-render only starts an item in idle time (building its
+  // model is work too); a tile waiting for its still starts at once.
+  const [idleKey, setIdleKey] = useState<string | null>(null)
+  useEffect(() => {
+    if (!next || next.isUrgent) return
+
+    let isCancelled = false
+    whenIdle(() => {
+      if (!isCancelled) setIdleKey(next.key)
+    }, BACKGROUND_WAIT)
+
+    return () => {
+      isCancelled = true
+    }
+  }, [next])
+  const request = next && (next.isUrgent || next.key === idleKey) ? next : undefined
   const key = request?.key
+  const shownKey = useRef(key)
+  shownKey.current = key
   const handleReady = useRef<ReadyHandler>(() => {})
   const isUrgent = request?.isUrgent ?? false
   handleReady.current = (renderer, scene, camera) => {
     if (!key) return
 
-    renderer.render(scene, camera)
-    renderer.domElement.toBlob((blob) => {
-      if (!blob) return
+    // Its shaders compiled first, off the page's thread where the browser
+    // can: drawn at once, the first stills compiled them in one long stall.
+    void renderer
+      .compileAsync(scene, camera)
+      .catch(() => {}) // compiled as it's drawn instead
+      .then(() => {
+        if (shownKey.current !== key) return // another item took its place meanwhile
 
-      const add = () => addThumbnail(key, URL.createObjectURL(blob))
-      // A tile is waiting: now. The background pre-render: in idle time.
-      if (isUrgent) add()
-      else whenIdle(add)
-    })
+        renderer.render(scene, camera)
+        renderer.domElement.toBlob((blob) => {
+          if (!blob) return
+
+          const add = () => addThumbnail(key, blob)
+          // A tile is waiting: now. The background pre-render: in idle time.
+          if (isUrgent) add()
+          else whenIdle(add)
+        })
+      })
   }
   // Stable, so OnReady's effect runs once per item, not per studio render.
   const onReady = useCallback<ReadyHandler>(
