@@ -96,16 +96,16 @@ export interface SurfacePalette {
 export const SURFACES: Record<"light" | "dark", SurfacePalette> = {
   light: {
     background: null,
-    planBackdrop: "#e5dfd2",
-    contour: { minor: "#a8946f", major: "#857048", plateau: "#ede8de", plateau3d: "#cbc0ad" },
-    // A cool stone, a step down from the cream UI: its labels and panels
-    // stand out on it, the building from the ground round it, and the wood
-    // desks by hue (a cream floor washed the scene out).
-    floor: "#c4b9a6",
-    floorInside: "#b39f7c",
+    planBackdrop: "#dedcd5",
+    // The dark theme's build, in daylight: cool surroundings (a pale ground,
+    // blue-grey contours) round a warm interior, its floor the darkest
+    // surface — the furniture, the walls and the labels stand out from it.
+    contour: { minor: "#8f9bb0", major: "#62759a", plateau: "#e8e7e2", plateau3d: "#e2e1dc" },
+    floor: "#d9d7d0",
+    floorInside: "#8a6c4c",
     ceiling: "#f4efe6",
     wall: "#c9ced8",
-    grid: "#9c855e",
+    grid: "#8a96ab",
     nightDepth: 1.5,
   },
   dark: {
