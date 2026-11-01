@@ -3,7 +3,6 @@ import clsx from "clsx"
 import { BrickWall, ChevronDown, ChevronUp, Ellipsis, Pencil, Plus, Trash2 } from "lucide-react"
 import { useState, type ReactNode } from "react"
 import { MAX_FLOORS, MAX_FLOOR_NAME, getFloorId, getFloorNumber, type Floor } from "../../floors"
-import { useFloorNotes } from "../../modules"
 import { useEditorStore } from "../../store"
 import type { FloorNote } from "../../module"
 import { useI18n } from "~/i18n/I18nProvider"
@@ -52,30 +51,27 @@ export const useFloorName = () => {
 }
 
 /**
- * The layout's floors as a stack of slabs, the top floor on top: the shown
- * one in the accent, another a press away; at most MAX_STACKED, scrolling
- * through more. Editing: with a ghost slab on top to add a floor there, and
- * the floors' menu (names, order, delete) below. Viewing (only with floors
- * to choose from): each with the modules' word on it (the office: "6 free").
- * A phone has its own, see FloorChip.
+ * Editing: the layout's floors as a stack of slabs, the top floor on top: the
+ * shown one in the accent, another a press away; at most MAX_STACKED,
+ * scrolling through more. A ghost slab on top adds a floor there, and the
+ * floors' menu (names, order, delete) is below. Viewing has the tower (see
+ * FloorTower); a phone, its chip (see FloorChip).
  */
-export const FloorPicker = ({ isEditing = false }: { isEditing?: boolean }) => {
+export const FloorPicker = () => {
   const { t } = useI18n()
   const floors = useEditorStore((state) => state.floors)
   const currentFloor = useEditorStore((state) => state.currentFloor)
   const showFloor = useEditorStore((state) => state.showFloor)
   const addFloor = useEditorStore((state) => state.addFloor)
   const getFloorName = useFloorName()
-  const floorNotes = useFloorNotes()
   const stack = useStackedFloors(floors, currentFloor)
-  if (!isEditing && floors.length < 2) return null
 
   return (
     <div
       className="pointer-events-auto flex flex-col items-stretch rounded-2xl border border-border bg-overlay p-1.5 shadow-overlay"
       onPointerDown={(event) => event.stopPropagation()}
     >
-      {isEditing && floors.length < MAX_FLOORS && (
+      {floors.length < MAX_FLOORS && (
         <button
           type="button"
           aria-label={t("Add a floor on top")}
@@ -120,7 +116,6 @@ export const FloorPicker = ({ isEditing = false }: { isEditing?: boolean }) => {
       >
         {stack.stacked.map((floor) => {
           const isShown = floor.id === currentFloor
-          const note = isEditing ? undefined : floorNotes?.get(floor.id)
 
           return (
             <button
@@ -129,18 +124,13 @@ export const FloorPicker = ({ isEditing = false }: { isEditing?: boolean }) => {
               role="radio"
               aria-checked={isShown}
               tabIndex={isShown ? 0 : -1}
-              aria-label={composeFloorLabel(getFloorName(floor), note)}
-              title={composeFloorLabel(getFloorName(floor), note)}
+              aria-label={getFloorName(floor)}
+              title={getFloorName(floor)}
               // The camera follows (see FloorShift): no refit.
               onClick={() => showFloor(floor.id)}
               className="group flex h-7 items-center gap-2 rounded-lg pr-2 outline-none hover:bg-foreground/5 focus-visible:ring-2 focus-visible:ring-focus"
             >
-              <span className="relative shrink-0">
-                <Slab look={isShown ? "shown" : "other"} />
-                {note?.yours && (
-                  <span className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-success ring-2 ring-overlay" />
-                )}
-              </span>
+              <Slab look={isShown ? "shown" : "other"} />
               <span
                 className={clsx(
                   "max-w-28 truncate text-xs",
@@ -151,16 +141,6 @@ export const FloorPicker = ({ isEditing = false }: { isEditing?: boolean }) => {
               >
                 {floor.name || getFloorNumber(floors, floor.id)}
               </span>
-              {note && (
-                <span
-                  className={clsx(
-                    "ml-auto whitespace-nowrap pl-2 text-[11px] font-extrabold",
-                    note.tone === "positive" ? "text-success" : "text-warning"
-                  )}
-                >
-                  {note.text}
-                </span>
-              )}
             </button>
           )
         })}
@@ -174,7 +154,7 @@ export const FloorPicker = ({ isEditing = false }: { isEditing?: boolean }) => {
           <ChevronDown className="size-3.5" />
         </ScrollArrow>
       )}
-      {isEditing && <FloorsMenu />}
+      <FloorsMenu />
     </div>
   )
 }

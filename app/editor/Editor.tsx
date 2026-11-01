@@ -25,6 +25,7 @@ import { ContextMenu } from "./ui/menus/ContextMenu"
 import { GuidedTour } from "./ui/guide/GuidedTour"
 import { MapControls } from "./ui/menus/MapControls"
 import { FloorPicker } from "./ui/menus/FloorPicker"
+import { FloorTower } from "./ui/menus/FloorTower"
 import { KitLibraryContext, type KitLibrary } from "./kits/kits"
 import { FrameRateReadout } from "./shell/FrameRateReadout"
 import { SelectionBox } from "./shell/SelectionBox"
@@ -322,18 +323,18 @@ const EditorInner = ({
           <TimeOfDay isViewing={readOnly}>{editable && modeButton}</TimeOfDay>
         )}
 
-        {/* Viewing: the floors on the right edge, halfway down — like a lift's
-            buttons, clear of the rail and the bars. Editing: top right under the
+        {/* Viewing: the floors' tower on the right edge, halfway down — clear
+            of the rail and the bars. Editing: top right under the
             toolbar — anchored, clear of the inspector growing up from the bottom
             (the catalogue has the left). */}
         {readOnly && !isEmpty && !(shellMode && isMobile) && (
-          <div className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2">
-            <FloorPicker />
+          <div className="pointer-events-none absolute right-5 top-1/2">
+            <FloorTower />
           </div>
         )}
         {!readOnly && !isEmpty && (
           <div className="pointer-events-none absolute right-4 top-20">
-            <FloorPicker isEditing />
+            <FloorPicker />
           </div>
         )}
 
