@@ -62,6 +62,11 @@ const isFurniture = (object: SceneObject) => !isEdgeType(object.type)
 /** A piece's hit box's height until its model is measured (m). */
 const DEFAULT_HIT_HEIGHT = 0.8
 
+/** Right and middle mouse buttons (orbit and pan), as `buttons` bits. */
+const CAMERA_BUTTONS = 2 | 4
+const isCameraDrag = (buttons: number, isEditing: boolean) =>
+  isEditing ? (buttons & CAMERA_BUTTONS) !== 0 : buttons !== 0
+
 /** Doors, windows and wall items are sliced with their wall by the cursor cutaway. */
 const getCutaway = (type: SceneObject["type"]) => {
   if (isOpening(type)) return "wall"
@@ -289,7 +294,15 @@ export const ObjectRenderer = memo(function ObjectRenderer({
       }
       // Into and out of the piece as a whole: over and out also fire passing
       // from one of its parts to another, and its plinth flickered.
-      onPointerEnter={interactive || clickable ? () => setHovered(true) : undefined}
+      // Not while the camera is dragged over it (any button viewing; the
+      // orbit and pan buttons editing, where a left-drag is the tool's).
+      onPointerEnter={
+        interactive || clickable
+          ? (event) => {
+              if (!isCameraDrag(event.buttons, interactive)) setHovered(true)
+            }
+          : undefined
+      }
       onPointerLeave={interactive || clickable ? () => setHovered(false) : undefined}
       // View mode: desks are clickable (seat card). A drag (camera pan) isn't
       // a click — R3F's `delta` is the pointer travel in px.

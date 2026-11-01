@@ -91,9 +91,15 @@ export const SeatTags = () => {
                 event.stopPropagation()
                 openSeatCard(desk.id)
               }}
-              onPointerMove={(event) => event.stopPropagation()}
+              // A drag passing over it (the camera's) isn't stopped, nor does
+              // it point at anything: the camera follows it on the document.
+              onPointerMove={(event) => {
+                if (event.buttons === 0) event.stopPropagation()
+              }}
               // Pointed at, its desk shows it's pointed at too (its plinth).
               onPointerEnter={(event) => {
+                if (event.buttons !== 0) return
+
                 leaveScene?.(event.nativeEvent)
                 setHoveredPiece(desk.id)
               }}
