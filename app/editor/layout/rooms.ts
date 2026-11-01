@@ -36,8 +36,32 @@ export const enclosedCells = (objects: SceneObject[]): FloorCell[] =>
  * The flood runs over triangles — each grid square split by its two diagonals
  * into south, east, north and west — so a diagonal wall (a square's diagonal)
  * can close a room as well as one on the square's sides.
+ *
+ * Only what encloses (walls, doors, windows) counts, so the answer is kept
+ * while just furniture changes: dragging a desk would flood the floor afresh
+ * on every step, in every component that reads the rooms.
  */
 export const enclosedRegions = (objects: SceneObject[]): FloorCell[][] => {
+  const enclosers = objects.filter((object) => getEdge(object.type)?.encloses)
+  const known = knownRegions.find((entry) => isSameList(entry.enclosers, enclosers))
+  if (known) return known.regions
+
+  const regions = findEnclosedRegions(enclosers)
+  knownRegions.unshift({ enclosers, regions })
+  knownRegions.length = Math.min(knownRegions.length, MAX_KNOWN_REGIONS)
+
+  return regions
+}
+
+/** The last few layouts' rooms (a few: the shown floor's, and the ones below it). */
+const knownRegions: { enclosers: SceneObject[]; regions: FloorCell[][] }[] = []
+const MAX_KNOWN_REGIONS = 4
+
+/** The same pieces, in the same order (pieces are replaced, never changed, when edited). */
+const isSameList = (first: SceneObject[], second: SceneObject[]) =>
+  first.length === second.length && first.every((piece, index) => piece === second[index])
+
+const findEnclosedRegions = (objects: SceneObject[]): FloorCell[][] => {
   const blockedAlongX = new Set<string>() // `i,j` blocks cells (i,j-1) ↔ (i,j)
   const blockedAlongZ = new Set<string>() // `i,j` blocks cells (i-1,j) ↔ (i,j)
   const diagonals = new Map<string, number>() // cell `i,j` → 1 rising, 2 falling (bits)
