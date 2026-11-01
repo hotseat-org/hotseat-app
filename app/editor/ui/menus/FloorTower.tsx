@@ -316,9 +316,10 @@ const FloorLabel = ({
     style={{
       // Showing, it slides in as it fades in; hiding, it only fades — it
       // slides back once it's gone (sliding as it went read as a jolt).
+      // `translate`, not `transform`: Tailwind's translate-x sets that one.
       transition: isShown
-        ? `opacity 300ms ${delay}ms, transform 300ms ${delay}ms`
-        : `opacity ${LABEL_FADE}ms, transform 0ms ${LABEL_FADE}ms`,
+        ? `opacity 300ms ${delay}ms, translate 300ms ${delay}ms`
+        : `opacity ${LABEL_FADE}ms, translate 0ms ${LABEL_FADE}ms`,
     }}
   >
     {children}
