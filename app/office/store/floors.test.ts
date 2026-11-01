@@ -26,13 +26,14 @@ describe("a desk on another floor", () => {
     expect(store.getState().objects.some((piece) => piece.id === desk.id)).toBe(true)
   })
 
-  test("the way to it: its floor is shown", () => {
+  // The floors it crosses are shown in turn by the route's pill, not here.
+  test("the way to it: set, from the floor shown", () => {
     const { store } = createTwoFloorOffice()
-    const [first] = store.getState().floors
+    const shown = store.getState().currentFloor
 
     store.getState().showRoute(desk.id)
 
-    expect(store.getState().currentFloor).toBe(first.id)
+    expect(store.getState().currentFloor).toBe(shown)
     expect(store.getState().route?.deskId).toBe(desk.id)
   })
 
