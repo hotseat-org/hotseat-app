@@ -1,10 +1,10 @@
 import { showFloorOf, type OfficeGetState, type OfficeSetState } from "./state"
 
-/** The office's panels: a desk's card, booking it on chosen days, Insights. */
+/**
+ * The office's panels over the map: a desk's card, booking it on chosen days.
+ * (The rail's modals, Insights among them, are in the URL: see useOfficePanel.)
+ */
 export interface OfficePanelsState {
-  /** Insights (admins): the dashboard's open state (its heatmap: see ViewState). */
-  isInsightsOpen: boolean
-  setInsightsOpen: (isOpen: boolean) => void
   /** View mode: the desk whose card is open (rendered in-scene, see SeatPopup). */
   seatCard: { id: string } | null
   openSeatCard: (id: string) => void
@@ -19,8 +19,6 @@ export const createOfficePanelsState = (
   set: OfficeSetState,
   get: OfficeGetState
 ): OfficePanelsState => ({
-  isInsightsOpen: false,
-  setInsightsOpen: (isInsightsOpen) => set({ isInsightsOpen }),
   seatCard: null,
   openSeatCard: (id) => {
     showFloorOf(get, id)

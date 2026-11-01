@@ -1,10 +1,11 @@
-import { useState, type ReactNode } from "react"
+import { type ReactNode } from "react"
 import { Button } from "@heroui/react"
 import { BarChart3, Building2, Calendar, Pencil, Users } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { PANEL, PANEL_HOVER, type ShellMember, type ShellOffice } from "./shell-ui"
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher"
-import { WhosInPanel } from "./WhosIn"
+import { WhosInModal } from "./WhosIn"
+import { RailModal } from "./RailModal"
 import { useDayStatus } from "./dayStatus"
 import { ShellSearch } from "./ShellSearch"
 import { AccountMenu } from "./AccountMenu"
@@ -21,6 +22,7 @@ import {
   useSidePanels,
 } from "~/editor"
 import { useOfficeStore } from "~/office/store"
+import { useOfficePanel, type OfficePanel } from "~/office/useOfficePanel"
 import { useDesksOnDay } from "~/office/booking/useBooking"
 import { useI18n } from "~/i18n/I18nProvider"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
@@ -92,25 +94,25 @@ export const SpatialShell = ({
   guide,
 }: Props) => {
   const { t } = useI18n()
-  const isInsightsOpen = useOfficeStore((s) => s.isInsightsOpen)
-  const setInsightsOpen = useOfficeStore((s) => s.setInsightsOpen)
   const hasHeatmap = useOfficeStore((s) => s.heatmap !== null)
   // Who sits where on the shown day: permanent residents + bookings.
   const { byPerson } = useDesksOnDay()
-  const [bookingsOpen, setBookingsOpen] = useState(false)
-  const [peopleOpen, setPeopleOpen] = useState(false)
-  // The modules' side panels (the desk filter, the notes) in the rail; they
-  // open where Who's in and Bookings do, so one of them is open at a time.
+  // The rail's modals — who's in, your bookings, Insights — one at a time, in
+  // the URL (see useOfficePanel).
+  const officePanel = useOfficePanel()
+  // The modules' side panels (the desk filter): the map's own tools, beside
+  // the rail, while the map stays in view.
   const sidePanels = useSidePanels(false)
-  const closePanels = () => {
+  /** Open one of the rail's modals (closing a side panel), or close it if it's open. */
+  const toggleModal = (panel: OfficePanel) => {
     sidePanels.close()
-    setBookingsOpen(false)
-    setPeopleOpen(false)
+    if (officePanel.panel === panel) officePanel.close()
+    else officePanel.open(panel)
   }
   // Your day, by your avatar (top right).
   const day = useDayStatus(me, () => {
-    closePanels()
-    setBookingsOpen(true)
+    sidePanels.close()
+    officePanel.open("bookings")
   })
 
   // How many are in on the shown day: on Who's in's button, at a glance.
@@ -144,39 +146,32 @@ export const SpatialShell = ({
         <RailLink
           icon={Building2}
           label={t("Office")}
-          active={
-            !bookingsOpen && !peopleOpen && !isInsightsOpen && !hasHeatmap && !sidePanels.openPanel
-          }
-          onClick={closePanels}
+          active={!officePanel.panel && !hasHeatmap && !sidePanels.openPanel}
+          onClick={() => {
+            sidePanels.close()
+            officePanel.close()
+          }}
         />
         {/* Who's in on the shown day (admins manage people from there). */}
         <RailLink
           icon={Users}
           label={t("Who's in")}
           badge={inCount}
-          active={peopleOpen}
-          onClick={() => {
-            const isOpening = !peopleOpen
-            closePanels()
-            setPeopleOpen(isOpening)
-          }}
+          active={officePanel.panel === "people"}
+          onClick={() => toggleModal("people")}
         />
         <RailLink
           icon={Calendar}
           label={t("Bookings")}
-          active={bookingsOpen}
-          onClick={() => {
-            const isOpening = !bookingsOpen
-            closePanels()
-            setBookingsOpen(isOpening)
-          }}
+          active={officePanel.panel === "bookings"}
+          onClick={() => toggleModal("bookings")}
         />
         {me.role === Role.ADMIN && (
           <RailLink
             icon={BarChart3}
             label={t("Insights")}
-            active={isInsightsOpen || hasHeatmap}
-            onClick={() => setInsightsOpen(true)}
+            active={officePanel.panel === "insights" || hasHeatmap}
+            onClick={() => toggleModal("insights")}
           />
         )}
         {sidePanels.entries.length > 0 && <div className="mx-2 h-px shrink-0 bg-separator" />}
@@ -188,15 +183,22 @@ export const SpatialShell = ({
             badge={badgeCount}
             active={sidePanels.openPanel?.id === panel.id}
             onClick={() => {
-              setBookingsOpen(false)
-              setPeopleOpen(false)
+              officePanel.close()
               sidePanels.toggle(panel.id)
             }}
           />
         ))}
         {sidePanels.openPanel && <SidePanelFlyout panel={sidePanels.openPanel} isEditing={false} />}
       </nav>
-      {isInsightsOpen && <InsightsDashboard />}
+      {officePanel.panel === "people" && (
+        <WhosInModal me={me} members={members} onClose={officePanel.close} />
+      )}
+      {officePanel.panel === "bookings" && (
+        <RailModal title={t("My bookings")} onClose={officePanel.close}>
+          <MyBookings onShow={officePanel.close} />
+        </RailModal>
+      )}
+      {officePanel.panel === "insights" && me.role === Role.ADMIN && <InsightsDashboard />}
 
       {/* Top-right: search + notifications + account */}
       <div className="pointer-events-none absolute right-5 top-5 flex items-center gap-2.5">
@@ -208,10 +210,6 @@ export const SpatialShell = ({
         />
         <AccountMenu day={day} />
       </div>
-
-      {bookingsOpen && <MyBookings onClose={() => setBookingsOpen(false)} />}
-
-      {peopleOpen && <WhosInPanel me={me} members={members} onClose={() => setPeopleOpen(false)} />}
 
       {/* The editor's camera controls guide, bottom right. */}
       {guide && <div className="pointer-events-none absolute bottom-4 right-5">{guide}</div>}

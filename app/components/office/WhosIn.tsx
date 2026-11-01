@@ -1,7 +1,7 @@
-import { CloseButton } from "@heroui/react"
 import { MapPin, Settings2 } from "lucide-react"
-import { useEffect, useMemo } from "react"
-import { MemberAvatar, PANEL, nameOf, type ShellMember } from "./shell-ui"
+import { useMemo } from "react"
+import { RailModal } from "./RailModal"
+import { MemberAvatar, nameOf, type ShellMember } from "./shell-ui"
 import { WeekDots } from "./WeekDots"
 import { useOfficeStore } from "~/office/store"
 import { deskName, useDesksOnDay, useWeekPresence } from "~/office/booking/useBooking"
@@ -97,10 +97,10 @@ export const WhosInList = ({
 }
 
 /**
- * Who's in, beside the rail (desktop) — opened from it, like My bookings: the
- * list, and for admins the way to the people settings. Escape closes it.
+ * Who's in, as a modal from the rail (desktop): the list, and for admins the
+ * way to the people settings.
  */
-export const WhosInPanel = ({
+export const WhosInModal = ({
   me,
   members,
   onClose,
@@ -112,35 +112,24 @@ export const WhosInPanel = ({
   const { t } = useI18n()
   const { open: openSettings } = useSettings()
 
-  useEffect(() => {
-    const handleKey = (event: KeyboardEvent) => event.key === "Escape" && onClose()
-    window.addEventListener("keydown", handleKey)
-
-    return () => window.removeEventListener("keydown", handleKey)
-  }, [onClose])
-
   return (
-    <section
-      aria-label={t("Who's in")}
-      className={`${PANEL} absolute bottom-24 left-[5.75rem] top-24 flex w-[340px] flex-col p-4`}
+    <RailModal
+      title={t("Who's in")}
+      onClose={onClose}
+      actions={
+        me.role === Role.ADMIN && (
+          <button
+            type="button"
+            onClick={() => openSettings("org", "members")}
+            className="flex h-8 items-center gap-1.5 rounded-lg px-2 text-xs font-bold text-muted outline-none hover:bg-foreground/10 hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
+          >
+            <Settings2 className="size-4" /> {t("Manage people")}
+          </button>
+        )
+      }
     >
-      <header className="mb-1 flex items-start justify-between gap-2">
-        <h2 className="text-lg font-extrabold text-foreground">{t("Who's in")}</h2>
-        <div className="flex items-center gap-1">
-          {me.role === Role.ADMIN && (
-            <button
-              type="button"
-              onClick={() => openSettings("org", "members")}
-              className="flex h-8 items-center gap-1.5 rounded-lg px-2 text-xs font-bold text-muted outline-none hover:bg-foreground/10 hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
-            >
-              <Settings2 className="size-4" /> {t("Manage people")}
-            </button>
-          )}
-          <CloseButton aria-label={t("Close who's in")} onPress={onClose} />
-        </div>
-      </header>
-      {/* Find leaves it open: the map's beside it. */}
-      <WhosInList me={me} members={members} onFind={() => {}} />
-    </section>
+      {/* Find closes it: the desk is on the map behind. */}
+      <WhosInList me={me} members={members} onFind={onClose} />
+    </RailModal>
   )
 }

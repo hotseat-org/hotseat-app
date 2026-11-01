@@ -8,6 +8,7 @@ import { useTheme } from "remix-themes"
 import { heatColor, heatGradient, PERIOD_LABEL } from "~/office/heatmap/heatmap"
 import { personByEmail, usePeople } from "~/office/desks/people"
 import { useOfficeStore } from "~/office/store"
+import { useOfficePanel } from "~/office/useOfficePanel"
 import type { InsightsPeriod, OfficeInsights } from "~/core/office/insights"
 import type { InsightsData } from "~/routes/api.insights.$slug.$officeSlug"
 import { addDays, weekStart, type Day } from "~/utils/booking"
@@ -272,7 +273,7 @@ export const InsightsDashboard = () => {
   const { slug, officeSlug } = useParams()
   const i18n = useI18n()
   const { t, tn, format } = i18n
-  const setOpen = useOfficeStore((s) => s.setInsightsOpen)
+  const { close } = useOfficePanel()
   const setHeatmap = useOfficeStore((s) => s.setHeatmap)
   const heatmap = useOfficeStore((s) => s.heatmap)
   const people = usePeople()
@@ -285,12 +286,11 @@ export const InsightsDashboard = () => {
   useEffect(() => {
     load(`/api/insights/${slug}/${officeSlug}?period=${period}`)
   }, [load, slug, officeSlug, period])
-  const close = () => setOpen(false)
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false)
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close()
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
-  }, [setOpen])
+  }, [close])
 
   const data = insights.data && !("error" in insights.data) ? insights.data : null
   const isCurrent = data?.period === period

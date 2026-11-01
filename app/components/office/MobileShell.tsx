@@ -70,7 +70,7 @@ export const MobileShell = ({ offices, me, members, empty = false }: Props) => {
           bottomInset={TAB_BAR_HEIGHT}
           onClose={closeSheet}
         >
-          {(close) => <MyBookings isSheet onClose={close} onShow={close} />}
+          {(close) => <MyBookings isPhone onShow={close} />}
         </BottomSheet>
       )}
       {sheet === "people" && (

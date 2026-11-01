@@ -2,6 +2,7 @@ import clsx from "clsx"
 import { BarChart3, Flame, X } from "lucide-react"
 import { useEffect } from "react"
 import { useOfficeStore } from "../store"
+import { useOfficePanel } from "../useOfficePanel"
 import { heatGradient, PERIOD_LABEL } from "./heatmap"
 import { useI18n } from "~/i18n/I18nProvider"
 
@@ -13,8 +14,8 @@ export const HeatmapPill = ({ isDark, className }: { isDark: boolean; className?
   const { t } = useI18n()
   const heatmap = useOfficeStore((state) => state.heatmap)
   const setHeatmap = useOfficeStore((state) => state.setHeatmap)
-  const setInsightsOpen = useOfficeStore((state) => state.setInsightsOpen)
-  const isInsightsOpen = useOfficeStore((state) => state.isInsightsOpen)
+  const officePanel = useOfficePanel()
+  const isInsightsOpen = officePanel.panel === "insights"
 
   useEffect(() => {
     if (!heatmap || isInsightsOpen) return
@@ -54,7 +55,7 @@ export const HeatmapPill = ({ isDark, className }: { isDark: boolean; className?
       </span>
       <button
         type="button"
-        onClick={() => setInsightsOpen(true)}
+        onClick={() => officePanel.open("insights")}
         className="flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-xs font-bold text-accent transition-colors hover:bg-accent/10"
       >
         <BarChart3 className="size-4" />

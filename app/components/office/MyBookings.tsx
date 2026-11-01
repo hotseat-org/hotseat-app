@@ -1,9 +1,8 @@
-import { Button, CloseButton, toast } from "@heroui/react"
+import { Button, toast } from "@heroui/react"
 import clsx from "clsx"
 import { CalendarDays, MapPin, Pin, Repeat, Star } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useFetcher, useNavigate, useParams } from "react-router"
-import { PANEL } from "./shell-ui"
 import { useOfficeStore } from "~/office/store"
 import { floorText, useDeskFloor } from "~/office/booking/useBooking"
 import { useAllPieces } from "~/editor"
@@ -25,20 +24,17 @@ const deskText = ({ t }: Translator, label?: string, floor?: string) => {
  * "My bookings": your upcoming days in every office of the organization, and
  * any desk that's permanently yours. Show jumps the map to that day (and
  * office); Cancel asks once, inline, then frees the day.
- *
- * Anchored top and bottom next to the rail, so its size never depends on how
- * many bookings there are — the list scrolls inside.
+ * Content only: the desktop's modal or the phone's sheet brings its title
+ * and closing, at a fixed height — the list scrolls inside.
  */
 export const MyBookings = ({
-  onClose,
   onShow,
-  isSheet = false,
+  isPhone = false,
 }: {
-  onClose: () => void
-  /** After Show moved the map to a booking (the phone switches to its Office tab). */
+  /** After Show moved the map to a booking (its modal or sheet closes, so the map shows). */
   onShow?: () => void
-  /** Phones: inside a bottom sheet, which brings the title and closing. */
-  isSheet?: boolean
+  /** In the phone's sheet: its words are for touch. */
+  isPhone?: boolean
 }) => {
   const { slug, officeSlug } = useParams()
   const i18n = useI18n()
@@ -70,13 +66,6 @@ export const MyBookings = ({
     }
     load(url)
   }, [cancel.data, cancel.state, load, url])
-
-  useEffect(() => {
-    if (isSheet) return
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose()
-    window.addEventListener("keydown", onKey)
-    return () => window.removeEventListener("keydown", onKey)
-  }, [onClose, isSheet])
 
   const data = list.data && !("error" in list.data) ? list.data : undefined
   const error = list.data && "error" in list.data ? list.data.error : undefined
@@ -119,20 +108,9 @@ export const MyBookings = ({
   const count = days.reduce((n, [, bs]) => n + bs.length, 0)
 
   return (
-    <section
-      aria-label={t("My bookings")}
-      className={clsx(
-        "flex flex-col",
-        isSheet
-          ? "min-h-0 flex-1"
-          : clsx(PANEL, "absolute bottom-24 left-[5.75rem] top-24 w-[340px] p-4")
-      )}
-    >
+    <section aria-label={t("My bookings")} className="flex min-h-0 flex-1 flex-col">
       <header className="mb-3 flex items-start justify-between">
         <div>
-          {!isSheet && (
-            <h2 className="text-lg font-extrabold text-foreground">{t("My bookings")}</h2>
-          )}
           <p className="text-xs text-muted">
             {data
               ? count
@@ -141,7 +119,6 @@ export const MyBookings = ({
               : t("Loading…")}
           </p>
         </div>
-        {!isSheet && <CloseButton aria-label={t("Close my bookings")} onPress={onClose} />}
       </header>
 
       <div className="-mx-1 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-1">
@@ -186,7 +163,7 @@ export const MyBookings = ({
             <div>
               <p className="text-sm font-bold text-foreground">{t("No upcoming bookings")}</p>
               <p className="mt-0.5 text-xs text-muted">
-                {isSheet
+                {isPhone
                   ? t("Pick a day at the bottom of the Office tab, then tap a free desk.")
                   : t("Pick a day at the bottom, then click a free desk on the map.")}
               </p>
