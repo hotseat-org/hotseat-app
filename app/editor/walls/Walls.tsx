@@ -3,7 +3,7 @@ import { BoxGeometry, Matrix4, Vector3, type BufferGeometry } from "three"
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js"
 import { useObjectsWithPaintPreview } from "../store"
 import { useSurfaces } from "../scene/sceneTheme"
-import { Surface } from "../objects/Surface"
+import { Surface, WALL_RECESS } from "../objects/Surface"
 import {
   EDGE_ROTATION,
   SEG,
@@ -171,7 +171,7 @@ const WallRuns = ({ runs }: { runs: Run[] }) => {
         (mesh) =>
           mesh.geometry && (
             <mesh key={mesh.color} geometry={mesh.geometry} castShadow receiveShadow>
-              <Surface color={mesh.color} roughness={0.85} isRecessed />
+              <Surface color={mesh.color} roughness={0.85} recess={WALL_RECESS} />
             </mesh>
           )
       )}

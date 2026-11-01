@@ -3,7 +3,7 @@ import { BoxGeometry, Vector3 } from "three"
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js"
 import { useObjectsWithPaintPreview } from "../store"
 import { composeWallColors, getCellKey, wallJointNodes } from "../layout"
-import { Surface } from "../objects/Surface"
+import { POST_RECESS, Surface } from "../objects/Surface"
 import { WALL } from "../objects/dimensions"
 import { useSurfaces } from "../scene/sceneTheme"
 import { getItem } from "../catalog"
@@ -98,7 +98,7 @@ export const Posts = ({ pieces }: { pieces?: SceneObject[] }) => {
     <CutawayContext.Provider value="mergedWall">
       {meshes.solid.map((mesh) => (
         <mesh key={mesh.color} geometry={mesh.geometry ?? undefined} castShadow receiveShadow>
-          <Surface color={mesh.color} roughness={0.85} isRecessed />
+          <Surface color={mesh.color} roughness={0.85} recess={POST_RECESS} />
         </mesh>
       ))}
       {meshes.glass && (

@@ -50,7 +50,6 @@ import { useFurnitureDrag } from "../carrying/useFurnitureDrag"
 import { useOpeningCarry } from "../carrying/useOpeningCarry"
 import { useRepeatPlacement } from "../building/useRepeatPlacement"
 import { STOREY } from "../objects/dimensions"
-import { FloorPlaceContext } from "../objects/floorHeight"
 import { FloorShift, FloorsBelow } from "./FloorStack"
 import { useOfficeArea } from "./useOfficeArea"
 import { useContextMenuPress } from "./useContextMenuPress"
@@ -105,8 +104,6 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
   const refusedTurn = useEditorStore((state) => state.refusedTurn)
   // Higher up, the ground is drawn below (see FloorsBelow).
   const isGroundFloor = useEditorStore((state) => state.floors[0]?.id === state.currentFloor)
-  // Upper floors show nothing below their level (see FloorPlace).
-  const shownFloorPlace = useMemo(() => ({ base: 0, isUpper: !isGroundFloor }), [isGroundFloor])
 
   const raycaster = useThree((state) => state.raycaster)
   const pointer = useThree((state) => state.pointer)
@@ -337,110 +334,106 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
 
             {/* The floor shown, and what's below it — gliding together to another floor. */}
             <FloorShift>
-              <FloorPlaceContext.Provider value={shownFloorPlace}>
-                <Ground
-                  isGroundFloor={isGroundFloor}
-                  onDown={handleDown}
-                  onMove={handleMove}
-                  onUp={handleUp}
-                  onLeave={() => {
-                    setHover(null)
-                    wallResize.current?.hover(Infinity, Infinity)
-                  }}
-                  // View mode: a click on bare floor (not a drag that pans the
-                  // camera) is the modules' — it closes the desk card. Piece
-                  // clicks stop propagation first.
-                  onClick={
-                    readOnly
-                      ? (delta) => {
-                          if (delta <= 4) viewClicks.onFloor()
-                        }
-                      : undefined
-                  }
-                  showGrid={!readOnly && layers.grid}
-                />
+              <Ground
+                isGroundFloor={isGroundFloor}
+                onDown={handleDown}
+                onMove={handleMove}
+                onUp={handleUp}
+                onLeave={() => {
+                  setHover(null)
+                  wallResize.current?.hover(Infinity, Infinity)
+                }}
+                // View mode: a click on bare floor (not a drag that pans the
+                // camera) is the modules' — it closes the desk card. Piece
+                // clicks stop propagation first.
+                onClick={
+                  readOnly
+                    ? (delta) => {
+                        if (delta <= 4) viewClicks.onFloor()
+                      }
+                    : undefined
+                }
+                showGrid={!readOnly && layers.grid}
+              />
 
-                {/* The ground and its land, and the floors below with the ceiling built on. */}
-                <FloorsBelow isEditing={!readOnly} />
+              {/* The ground and its land, and the floors below with the ceiling built on. */}
+              <FloorsBelow isEditing={!readOnly} />
 
-                {/* Tint the floor enclosed by walls (the office interior). */}
-                <InteriorFloor />
-                {/* The modules' layers (the office: zones, desk tags, the heatmap, the way to a desk). */}
-                {sceneLayers.map(({ Component }, index) => (
-                  <Component key={index} isEditing={!readOnly} isDark={dark} />
-                ))}
-                {/* Editing: each room's area and desks. */}
-                {!readOnly && layers.roomSizes && <RoomLabels />}
-                {/* A saved room about to be placed. */}
-                {!readOnly && kitPlan && <KitGhost plan={kitPlan} doesFit={doesKitFit} />}
-                {/* Soft shadows grounding each piece on the floor. */}
-                <ContactBlobs />
-                {/* Sunlight through the windows, and glows on screens and lamps. */}
-                <WindowLight profile={profile} />
-                <Halos pieceStates={pieceStates} />
+              {/* Tint the floor enclosed by walls (the office interior). */}
+              <InteriorFloor />
+              {/* The modules' layers (the office: zones, desk tags, the heatmap, the way to a desk). */}
+              {sceneLayers.map(({ Component }, index) => (
+                <Component key={index} isEditing={!readOnly} isDark={dark} />
+              ))}
+              {/* Editing: each room's area and desks. */}
+              {!readOnly && layers.roomSizes && <RoomLabels />}
+              {/* A saved room about to be placed. */}
+              {!readOnly && kitPlan && <KitGhost plan={kitPlan} doesFit={doesKitFit} />}
+              {/* Soft shadows grounding each piece on the floor. */}
+              <ContactBlobs />
+              {/* Sunlight through the windows, and glows on screens and lamps. */}
+              <WindowLight profile={profile} />
+              <Halos pieceStates={pieceStates} />
 
-                {/* Walls render as merged runs (seamless); everything else individually. */}
-                <Walls />
-                <StaticBatch enabled={readOnly}>
-                  {objects
-                    .filter(
-                      (object) => !getRenderer(object.type).isDrawnAsRun && !isMarker(object.type)
-                    )
-                    .map((object) => (
-                      <ObjectRenderer
-                        key={object.id}
-                        object={object}
-                        selected={!readOnly && selection.includes(object.id)}
-                        carried={!readOnly && object.id === dragId}
-                        blockedAt={getBlockedAt(object.id)}
-                        tool={tool}
-                        interactive={!readOnly}
-                        onSelect={select}
-                        onDelete={removeObject}
-                        onStartDrag={onStartDrag}
-                        onPickOpening={onPickOpening}
-                        onToggleSelect={toggleSelect}
-                        onMenuPress={readOnly ? undefined : onMenuPress}
-                        onViewClick={
-                          readOnly && viewClicks.isClickable(object)
-                            ? viewClicks.onPiece
-                            : undefined
-                        }
-                        occupied={pieceStates?.get(object.id)?.isOccupied}
-                        wallFront={wallColors.openings.get(object.id)?.[0]}
-                        wallBack={wallColors.openings.get(object.id)?.[1]}
-                      />
-                    ))}
-                </StaticBatch>
-
-                {/* Corner posts finishing wall joints */}
-                <Posts />
-
-                {!readOnly && (
-                  <>
-                    {/* Wall draw + erase previews and interaction */}
-                    <BuildController />
-                    <BoxSelect />
-                    {tool === "paint" && <PaintController />}
-                    <NudgeKeys />
-
-                    {/* A door/window being moved along the walls */}
-                    {carriedOpening && (
-                      <OpeningCarry carried={carriedOpening} onDone={finishOpening} />
-                    )}
-
-                    <PlacementPreviews
-                      isFurniture={isFurniture}
-                      hover={hover}
-                      isRepeatDragging={!!repeat}
-                      repeatPlan={repeatPlan}
-                      repeatBlocked={repeatBlocked}
-                      dragId={dragId}
-                      carried={carried}
+              {/* Walls render as merged runs (seamless); everything else individually. */}
+              <Walls />
+              <StaticBatch enabled={readOnly}>
+                {objects
+                  .filter(
+                    (object) => !getRenderer(object.type).isDrawnAsRun && !isMarker(object.type)
+                  )
+                  .map((object) => (
+                    <ObjectRenderer
+                      key={object.id}
+                      object={object}
+                      selected={!readOnly && selection.includes(object.id)}
+                      carried={!readOnly && object.id === dragId}
+                      blockedAt={getBlockedAt(object.id)}
+                      tool={tool}
+                      interactive={!readOnly}
+                      onSelect={select}
+                      onDelete={removeObject}
+                      onStartDrag={onStartDrag}
+                      onPickOpening={onPickOpening}
+                      onToggleSelect={toggleSelect}
+                      onMenuPress={readOnly ? undefined : onMenuPress}
+                      onViewClick={
+                        readOnly && viewClicks.isClickable(object) ? viewClicks.onPiece : undefined
+                      }
+                      occupied={pieceStates?.get(object.id)?.isOccupied}
+                      wallFront={wallColors.openings.get(object.id)?.[0]}
+                      wallBack={wallColors.openings.get(object.id)?.[1]}
                     />
-                  </>
-                )}
-              </FloorPlaceContext.Provider>
+                  ))}
+              </StaticBatch>
+
+              {/* Corner posts finishing wall joints */}
+              <Posts />
+
+              {!readOnly && (
+                <>
+                  {/* Wall draw + erase previews and interaction */}
+                  <BuildController />
+                  <BoxSelect />
+                  {tool === "paint" && <PaintController />}
+                  <NudgeKeys />
+
+                  {/* A door/window being moved along the walls */}
+                  {carriedOpening && (
+                    <OpeningCarry carried={carriedOpening} onDone={finishOpening} />
+                  )}
+
+                  <PlacementPreviews
+                    isFurniture={isFurniture}
+                    hover={hover}
+                    isRepeatDragging={!!repeat}
+                    repeatPlan={repeatPlan}
+                    repeatBlocked={repeatBlocked}
+                    dragId={dragId}
+                    carried={carried}
+                  />
+                </>
+              )}
             </FloorShift>
 
             {/* Post-processing only in display mode. In edit mode we keep the plain

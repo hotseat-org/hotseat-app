@@ -1,6 +1,6 @@
 import { useSurfaces } from "../scene/sceneTheme"
 import { GRID } from "../types"
-import { Surface } from "./Surface"
+import { Surface, WALL_RECESS } from "./Surface"
 import { WALL } from "./dimensions"
 
 interface Props {
@@ -19,7 +19,7 @@ export const Wall = ({ color }: Props) => {
   return (
     <mesh position={[0, (WALL.height - WALL.sink) / 2, 0]} castShadow receiveShadow>
       <boxGeometry args={[GRID, WALL.height + WALL.sink, WALL.depth]} />
-      <Surface color={color ?? surfaces.wall} roughness={0.85} isRecessed />
+      <Surface color={color ?? surfaces.wall} roughness={0.85} recess={WALL_RECESS} />
     </mesh>
   )
 }

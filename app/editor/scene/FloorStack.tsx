@@ -18,8 +18,7 @@ import { useSurfaces } from "./sceneTheme"
 /**
  * How far a ceiling sits under its walls' tops: clear of the shown floor's
  * own rooms (0.006 up) and of the tops (either would flicker). The walls
- * above start right on those tops: nothing of them shows below their floor
- * (see FloorPlace), so no seam and no overlap.
+ * above reach down past those tops, in front of them (see Surface): no seam.
  */
 const CEILING_DROP = 0.004
 /** How long the world takes to glide to another floor (ms). */
@@ -61,7 +60,7 @@ const useFloorLevels = () => {
       id: floor.id,
       level: floorLevel,
       // Where it stands, from the shown floor (stable: its pieces' shaders key on it).
-      place: { base: (floorLevel - level) * STOREY, isUpper: floorLevel > 0 },
+      place: { base: (floorLevel - level) * STOREY },
       pieces: getStable(
         floor.id,
         otherFloorsPieces.filter((piece) => piece.floor === floor.id)

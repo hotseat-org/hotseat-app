@@ -12,8 +12,7 @@ import { groundUniform, shownFloorUniform, type FloorPlace } from "./floorHeight
  *   walls and tall pieces read as solid.
  * Furniture by its height above its own floor; walls and what's in them by
  * their height above the ground, so a building's walls shade as one, storey
- * on storey. On a floor standing on another, nothing shows below its level
- * (see FloorPlace).
+ * on storey.
  */
 const CONTACT_REACH = 0.3 // m above the floor the darkening fades out
 const CONTACT_DARKEST = 0.72
@@ -54,7 +53,6 @@ const patchShading = (
         vec3 n = normalize(vShadeNormal);
         float upright = 1.0 - abs(n.y);
         float aboveFloor = vShadeWorld.y - shownFloor - (${glsl(place.base)});
-        ${place.isUpper ? "if (aboveFloor < 0.0) discard;" : ""}
         float height = ${isInWall ? "vShadeWorld.y - groundLevel" : "aboveFloor"};
         float contact = mix(${glsl(CONTACT_DARKEST)}, 1.0, smoothstep(0.0, ${glsl(CONTACT_REACH)}, height));
         float gradient = mix(${glsl(GRADIENT_LOW)}, ${glsl(GRADIENT_HIGH)}, smoothstep(0.0, ${glsl(GRADIENT_REACH)}, height));
@@ -73,16 +71,15 @@ const cache = new Map<
   }
 >()
 
-const GROUND_FLOOR: FloorPlace = { base: 0, isUpper: false }
+const SHOWN_FLOOR: FloorPlace = { base: 0 }
 
 /**
  * Material props for a Surface's shader: the shading above, plus the wall
  * cutaway when it's sliced by one (and so is in a wall) — on its floor
  * (`place`). One program per variant, shared.
  */
-export const getSurfaceShader = (cutaway: CutawayKind | null, place = GROUND_FLOOR) => {
-  const placeKey =
-    place.base || place.isUpper ? `@${glsl(place.base)}${place.isUpper ? "-up" : ""}` : ""
+export const getSurfaceShader = (cutaway: CutawayKind | null, place = SHOWN_FLOOR) => {
+  const placeKey = place.base ? `@${glsl(place.base)}` : ""
   const id = `${cutaway ?? "plain"}${placeKey}`
   let props = cache.get(id)
   if (!props) {

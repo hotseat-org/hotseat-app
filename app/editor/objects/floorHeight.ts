@@ -16,13 +16,8 @@ export const groundUniform = { value: 0 }
 export interface FloorPlace {
   /** The floor's height from the shown floor's (m): 0 on it, lower for a floor below. */
   base: number
-  /**
-   * It stands on another floor: nothing of it shows below its level (the
-   * walls' sink would overlap the walls under them, and flicker).
-   */
-  isUpper: boolean
 }
 
-export const FloorPlaceContext = createContext<FloorPlace>({ base: 0, isUpper: false })
+export const FloorPlaceContext = createContext<FloorPlace>({ base: 0 })
 
 export const useFloorPlace = () => useContext(FloorPlaceContext)

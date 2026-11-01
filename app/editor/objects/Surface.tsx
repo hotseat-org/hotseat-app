@@ -1,6 +1,7 @@
 import { createContext, useContext } from "react"
 import { DoubleSide } from "three"
 import { useCutaway } from "../walls/cutaway"
+import { STOREY } from "./dimensions"
 import { useFloorPlace } from "./floorHeight"
 import { getSurfaceShader } from "./surfaceShader"
 
@@ -25,15 +26,39 @@ interface SurfaceProps {
   /** Base opacity (<1 = see-through, e.g. window glass). */
   opacity?: number
   /**
-   * Draw as if a hair behind anything exactly level with it (a depth bias).
-   * For walls: furniture stands flush against them, and a face landing exactly
-   * on the wall's face (a shower's tiles) would otherwise flicker (z-fighting).
+   * Draw as if a hair behind anything exactly level with it — this many
+   * depth steps (a depth bias). Walls 1: furniture stands flush against them,
+   * and a face landing exactly on the wall's face (a shower's tiles) would
+   * otherwise flicker (z-fighting). Posts 2: their faces lie on the walls'
+   * own, which win.
    */
-  isRecessed?: boolean
+  recess?: number
 }
 
-/** polygonOffset pushes the depth back by about one depth step: ties only. */
-const RECESSED = { polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 }
+/** Walls' depth step back (see SurfaceProps.recess). */
+export const WALL_RECESS = 1
+/** Posts': behind the walls their faces lie on. */
+export const POST_RECESS = 2
+
+/**
+ * How far back a floor below is drawn, per storey under the shown one (depth
+ * steps): past anything recessed on the floor above.
+ */
+const STOREY_RECESS = 3
+
+/**
+ * The depth push back (polygonOffset; ties only): the surface's own, and more
+ * for each storey down — where a floor's walls reach into the tops of the
+ * walls under them (their sink), the upper ones win, with no flicker and no
+ * line where the storeys meet.
+ */
+const getDepthOffset = (ownRecess: number, base: number) => {
+  const recess = ownRecess + Math.round(-base / STOREY) * STOREY_RECESS
+
+  return recess > 0
+    ? { polygonOffset: true, polygonOffsetFactor: recess, polygonOffsetUnits: recess }
+    : {}
+}
 
 /**
  * Drop-in replacement for <meshStandardMaterial> that becomes a translucent or
@@ -49,7 +74,7 @@ export const Surface = ({
   emissive,
   emissiveIntensity = 1,
   opacity: baseOpacity = 1,
-  isRecessed = false,
+  recess = 0,
 }: SurfaceProps) => {
   const ghost = useContext(GhostContext)
   const cutaway = useCutaway()
@@ -81,7 +106,7 @@ export const Surface = ({
       transparent={translucent}
       opacity={translucent ? opacity : 1}
       depthWrite={!translucent}
-      {...(isRecessed && RECESSED)}
+      {...getDepthOffset(recess, floorPlace.base)}
       // Contact shading (by its height on its floor), and the wall cutaway when it's
       // sliced by one (inner faces then show where it's cut open) — see
       // surfaceShader.ts. The
