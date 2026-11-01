@@ -1,16 +1,34 @@
-import type { WebGLRenderer } from "three"
+import type { DirectionalLight, LightShadow, PointLight, SpotLight } from "three"
 
 /**
- * Shadows are cached: the renderer's shadow maps are NOT redrawn every frame
- * (`shadowMap.autoUpdate = false`, set in Scene) — only when something that
- * casts or receives them changes. Camera moves (orbit/pan/zoom) don't need new
- * shadow maps, which halves the draw calls of those frames (and at night the
- * lamps' point-light shadows cost 6 extra scene passes each).
+ * Shadows are cached: a light's shadow map is NOT redrawn every frame
+ * (`shadow.autoUpdate = false`) — only when something that casts or receives
+ * them changes. Camera moves (orbit/pan/zoom) don't need new shadow maps,
+ * which halves the draw calls of those frames (and at night the lamps'
+ * point-light shadows cost 6 extra scene passes each).
  *
- * Anything that moves a shadow caster outside of a store update (animations,
- * async model loads, the wall cutaway) must call this.
+ * Every shadow-casting light joins with `cacheShadow` (its ref). Anything that
+ * moves a shadow caster outside of a store update (animations, async model
+ * loads, the wall cutaway) must call `markShadowsDirty`.
  */
-export const markShadowsDirty = (renderer: WebGLRenderer, invalidate?: () => void) => {
-  renderer.shadowMap.needsUpdate = true
+const cachedShadows = new Set<LightShadow>()
+
+/** A shadow-casting light's ref: its shadow map is cached, drawn afresh when marked dirty. */
+export const cacheShadow = (light: DirectionalLight | PointLight | SpotLight | null) => {
+  const shadow = light?.shadow
+  if (!shadow) return
+
+  shadow.autoUpdate = false
+  shadow.needsUpdate = true
+  cachedShadows.add(shadow)
+
+  return () => {
+    cachedShadows.delete(shadow)
+  }
+}
+
+/** Every cached shadow map is drawn afresh with the next frame (asked for, if `invalidate`). */
+export const markShadowsDirty = (invalidate?: () => void) => {
+  for (const shadow of cachedShadows) shadow.needsUpdate = true
   invalidate?.()
 }

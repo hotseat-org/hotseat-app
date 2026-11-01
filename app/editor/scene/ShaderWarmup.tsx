@@ -31,9 +31,8 @@ export const useLampsOn = () => {
   const nightness = useContext(DaylightContext)
   const forced = useContext(WarmupContext)
   const isOn = forced ?? nightness > LAMPS_ON
-  const renderer = useThree((state) => state.gl)
   const invalidate = useThree((state) => state.invalidate)
-  useLayoutEffect(() => markShadowsDirty(renderer, invalidate), [isOn, renderer, invalidate])
+  useLayoutEffect(() => markShadowsDirty(invalidate), [isOn, invalidate])
 
   return isOn
 }
@@ -79,7 +78,7 @@ export const ShaderWarmup = ({ children }: { children: ReactNode }) => {
         setFrameloop(frameloop)
         setForced(null)
         // The lamps flip back: their shadows must be drawn afresh.
-        markShadowsDirty(renderer, invalidate)
+        markShadowsDirty(invalidate)
       })
 
     return () => {

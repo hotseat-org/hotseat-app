@@ -4,8 +4,9 @@ import * as THREE from "three"
 import { ACCENT } from "../palette"
 import { useSurfaces } from "../scene/sceneTheme"
 import { FOG_SHIFT } from "../camera/viewCentre"
+import { getMaxTextureSize } from "../scene/createRenderer"
 import type { DayProfile } from "./daylight"
-import { markShadowsDirty } from "./shadows"
+import { cacheShadow, markShadowsDirty } from "./shadows"
 
 interface Props {
   profile: DayProfile
@@ -51,6 +52,8 @@ export const Lighting = ({ profile, centre = [0, 0], reach = 0, depth = 0 }: Pro
   // The sun (and its shadow area) sits over the office, wherever on the endless
   // ground it's built: light and target move together.
   const sun = useRef<THREE.DirectionalLight>(null)
+  // Its shadow map is cached (see shadows.ts).
+  useLayoutEffect(() => cacheShadow(sun.current), [])
   const [centreX, centreZ] = centre
   useLayoutEffect(() => {
     const light = sun.current
@@ -61,7 +64,7 @@ export const Lighting = ({ profile, centre = [0, 0], reach = 0, depth = 0 }: Pro
   }, [centreX, centreZ])
   const renderer = useThree((state) => state.gl)
   const invalidate = useThree((state) => state.invalidate)
-  const maxMapSize = renderer.capabilities.maxTextureSize >= 16384 ? 4096 : 2048
+  const maxMapSize = getMaxTextureSize(renderer) >= 16384 ? 4096 : 2048
   const { half, mapSize } = getShadowArea(reach, depth, maxMapSize)
   useLayoutEffect(() => {
     const light = sun.current
@@ -80,7 +83,7 @@ export const Lighting = ({ profile, centre = [0, 0], reach = 0, depth = 0 }: Pro
       light.shadow.map = null
     }
 
-    markShadowsDirty(renderer, invalidate)
+    markShadowsDirty(invalidate)
   }, [half, mapSize, renderer, invalidate])
 
   return (

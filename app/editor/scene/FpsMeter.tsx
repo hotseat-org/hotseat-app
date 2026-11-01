@@ -62,7 +62,8 @@ export const FpsMeter = ({ onSample }: Props) => {
     // The previous frame, now complete.
     if (timing.start && timing.renderEnd > timing.start) {
       sums.cpu += timing.renderEnd - timing.start
-      sums.drawCalls += renderer.info.render.calls
+      // WebGPU counts draws as `drawCalls` (its `calls` are render passes).
+      sums.drawCalls += (renderer.info.render as { drawCalls?: number }).drawCalls ?? 0
       sums.triangles += renderer.info.render.triangles
       sums.frames += 1
       sums.elapsed += now - last.current

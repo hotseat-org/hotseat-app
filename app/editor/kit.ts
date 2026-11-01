@@ -16,7 +16,7 @@ export { NO_BAKE } from "./objects/Baked"
 // The scene they stand in: time of day, lamps, shadows, motion, theme.
 export { DaylightContext } from "./lighting/daylight"
 export { useLampsOn } from "./scene/ShaderWarmup"
-export { markShadowsDirty } from "./lighting/shadows"
+export { cacheShadow, markShadowsDirty } from "./lighting/shadows"
 export { prefersReducedMotion, subscribeAmbient } from "./scene/ambient"
 export { useSurfaces } from "./scene/sceneTheme"
 

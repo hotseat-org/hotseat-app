@@ -60,7 +60,6 @@ export const HeatBars = () => {
   const heatmap = useOfficeStore((state) => state.heatmap)
   const objects = useOfficeStore((state) => state.objects)
   const isDark = useSurfaces().nightDepth === 0
-  const renderer = useThree((state) => state.gl)
   const invalidate = useThree((state) => state.invalidate)
 
   const bars = useMemo(() => {
@@ -158,7 +157,7 @@ export const HeatBars = () => {
     if (elapsed < duration) invalidate()
     else {
       isGrowing.current = false
-      markShadowsDirty(renderer, invalidate)
+      markShadowsDirty(invalidate)
     }
   })
 

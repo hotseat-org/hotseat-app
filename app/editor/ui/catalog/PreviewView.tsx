@@ -15,6 +15,7 @@ import { ObjectMesh } from "../../objects/ObjectMesh"
 import { getRenderer } from "../../catalog/rendering"
 import type { CatalogItem, ObjectType } from "../../types"
 import { Wall } from "../../objects/Wall"
+import { createRenderer } from "../../scene/createRenderer"
 import {
   addThumbnail,
   PREVIEW_SIZE,
@@ -176,6 +177,9 @@ const Contents = ({
   </>
 )
 
+/** Previews draw on a transparent canvas (the tile shows through). */
+const createPreviewRenderer = createRenderer({ alpha: true })
+
 /** Runs `callback` in idle time — or within a frame or so if there's none. */
 const whenIdle = (callback: () => void) => {
   if (typeof window.requestIdleCallback === "function")
@@ -222,8 +226,9 @@ export const ThumbnailStudio = () => {
     >
       <Canvas
         dpr={[1, 2]}
-        // The drawing buffer is read back (toBlob) after the frame is drawn.
-        gl={{ alpha: true, antialias: true, preserveDrawingBuffer: true }}
+        // Read back (toBlob) in the same task as the frame is drawn, while the
+        // canvas still holds it.
+        gl={createPreviewRenderer}
         camera={CAMERA}
         frameloop="never"
         style={{ width: "100%", height: "100%" }}
@@ -288,7 +293,7 @@ export const PreviewTile = ({ type, color, active = false }: TileProps) => {
       {isSpinning && (
         <Canvas
           dpr={[1, 2]}
-          gl={{ alpha: true, antialias: true }}
+          gl={createPreviewRenderer}
           // Camera exists from the first render, so FitCamera frames the right one.
           camera={CAMERA}
           frameloop="demand"

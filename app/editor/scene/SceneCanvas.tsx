@@ -4,6 +4,7 @@ import { EditorStoreContextProvider, type EditorStore } from "../store"
 import { ModulesContext, useModules, useViewClicks } from "../modules"
 import type { FitInsets } from "../camera/CameraFit"
 import { Scene } from "./Scene"
+import { createRenderer } from "./createRenderer"
 import { FpsMeter, type FrameStats } from "./FpsMeter"
 import { I18nBridge, useI18n } from "~/i18n/I18nProvider"
 
@@ -19,6 +20,8 @@ interface Props {
   /** Called once the scene has drawn for real: after loading, and after each switch of mode. */
   onReady?: (readOnly: boolean) => void
 }
+
+const createSceneRenderer = createRenderer({ stencil: true })
 
 /**
  * The 3D office. Its own module so the Editor can load it lazily: three.js,
@@ -39,16 +42,11 @@ const SceneCanvas = ({ store, readOnly, dark, fitInsets, showStats, onStats, onR
       // Capped at 1.5× — on retina, 2× is ~1.8× the pixels (and post-fx cost)
       // for a barely visible sharpness gain on this soft, rounded style.
       dpr={[1, 1.5]}
-      // A stencil: a piece's outline goes round it, not over it (PieceOutline).
-      gl={{ antialias: true, powerPreference: "high-performance", stencil: true }}
+      // WebGPU (WebGL 2 where there's none). A stencil: a piece's outline goes
+      // round it, not over it (PieceOutline).
+      gl={createSceneRenderer}
       frameloop={showStats ? "always" : "demand"}
       onPointerMissed={() => viewClicks.onFloor()}
-      // Checking each new shader for errors makes the browser finish compiling
-      // it on the spot (a long stall when a big office first renders, or on
-      // switching to editing). Development keeps the checks and their messages.
-      onCreated={({ gl: renderer }) => {
-        renderer.debug.checkShaderErrors = import.meta.env.DEV
-      }}
     >
       <Suspense fallback={null}>
         {/* Bridge the store into the R3F tree — context doesn't cross the Canvas. */}

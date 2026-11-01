@@ -141,7 +141,7 @@ export const StaticBatch = ({ enabled, children }: { enabled: boolean; children:
   // geometry. Not its materials: three.js would free their shader programs,
   // and the next batch (another floor shown and back) compile them all again.
   useLayoutEffect(() => {
-    markShadowsDirty(renderer, invalidate)
+    markShadowsDirty(invalidate)
 
     return () => parts.forEach((part) => part.geometry.dispose())
   }, [parts, renderer, invalidate])

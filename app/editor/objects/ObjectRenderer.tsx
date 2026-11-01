@@ -194,7 +194,7 @@ export const ObjectRenderer = memo(function ObjectRenderer({
         turnedGroup.rotation.y = object.rotation
       }
 
-      markShadowsDirty(state.gl, state.invalidate) // shadows turn with it
+      markShadowsDirty(state.invalidate) // shadows turn with it
     }
   })
   useFrame((state, delta) => {
@@ -209,7 +209,7 @@ export const ObjectRenderer = memo(function ObjectRenderer({
       if (prev !== 0) {
         group.position.set(0, 0, 0)
         group.rotation.set(0, 0, 0)
-        markShadowsDirty(state.gl, state.invalidate) // settled back down
+        markShadowsDirty(state.invalidate) // settled back down
       }
 
       amount.current = 0
@@ -228,7 +228,7 @@ export const ObjectRenderer = memo(function ObjectRenderer({
     // Keep the render loop alive while animating (frameloop is "demand"). The
     // cached shadows follow the lift itself, not the idle sway — a per-frame
     // shadow redraw while carrying would double the draw calls.
-    if (Math.abs(target - strength) > 0.01) markShadowsDirty(state.gl, state.invalidate)
+    if (Math.abs(target - strength) > 0.01) markShadowsDirty(state.invalidate)
     else state.invalidate()
   })
 

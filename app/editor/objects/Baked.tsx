@@ -171,7 +171,7 @@ export const Baked = ({
   useLayoutEffect(() => {
     if (shapeChanged.current) {
       shapeChanged.current = false
-      markShadowsDirty(renderer, invalidate)
+      markShadowsDirty(invalidate)
     } else invalidate()
     // Only a piece in the office-wide batch changes it: doors and windows
     // re-bake all the time in the wall cutaway, and each call re-merges the

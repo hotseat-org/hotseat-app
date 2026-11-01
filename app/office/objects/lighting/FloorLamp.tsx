@@ -1,6 +1,6 @@
 import { useContext } from "react"
 import { PALETTE } from "~/editor/core"
-import { DaylightContext, useLampsOn, Surface } from "~/editor/kit"
+import { DaylightContext, cacheShadow, useLampsOn, Surface } from "~/editor/kit"
 
 interface Props {
   color?: string
@@ -21,6 +21,7 @@ export const FloorLamp = ({ color = "#f0e2c0" }: Props) => {
         or over them. */}
       {isLampOn && (
         <pointLight
+          ref={cacheShadow}
           position={[0, 1.2, 0]}
           color="#ffd9a0"
           intensity={nightness * 9}

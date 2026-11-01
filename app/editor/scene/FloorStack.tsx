@@ -351,7 +351,7 @@ export const FloorShift = ({ children }: { children: ReactNode }) => {
     shownFloorUniform.value = world.position.y
     groundUniform.value = world.position.y - level * STOREY
     // The shadows move with it (they're cached, see shadows.ts); next frame too.
-    markShadowsDirty(renderer, invalidate)
+    markShadowsDirty(invalidate)
   })
 
   return <group ref={group}>{children}</group>
