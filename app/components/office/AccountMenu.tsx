@@ -37,7 +37,7 @@ export const AccountMenu = ({ isFlat = false, day }: { isFlat?: boolean; day?: D
       role="button"
       tabIndex={0}
       aria-label={day ? `${t("Account menu")}: ${day.text}` : t("Account menu")}
-      className={`${isFlat ? "pointer-events-auto rounded-xl" : `${PANEL} ${PANEL_HOVER} p-1.5`} flex cursor-pointer items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-focus`}
+      className={`${isFlat ? "pointer-events-auto rounded-xl" : `${PANEL} ${PANEL_HOVER} h-11 p-[5px]`} flex cursor-pointer items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-focus`}
     >
       {day && !isMobile && (
         <span className="flex min-w-0 max-w-56 items-center gap-1.5 pl-2 text-sm font-bold text-foreground">
@@ -45,7 +45,8 @@ export const AccountMenu = ({ isFlat = false, day }: { isFlat?: boolean; day?: D
           <span className="truncate">{day.text}</span>
         </span>
       )}
-      <MemberAvatar m={me} className="size-9 rounded-xl" />
+      {/* The top bar's height (h-11, as search and the bell); its corners follow the panel's. */}
+      <MemberAvatar m={me} className={isFlat ? "size-9 rounded-xl" : "size-8 rounded-[10px]"} />
     </div>
   )
 

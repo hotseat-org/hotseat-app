@@ -103,7 +103,7 @@ export const ShellSearch = ({ members }: { members: ShellMember[] }) => {
           role="button"
           tabIndex={0}
           aria-label={t("Find a person or seat (⌘K)")}
-          className={`${PANEL} ${PANEL_HOVER} flex cursor-pointer items-center gap-2 px-3.5 py-2.5 text-sm text-muted outline-none focus-visible:ring-2 focus-visible:ring-focus`}
+          className={`${PANEL} ${PANEL_HOVER} flex h-11 cursor-pointer items-center gap-2 px-3.5 text-sm text-muted outline-none focus-visible:ring-2 focus-visible:ring-focus`}
         >
           <Search className="size-4" />
           <span className="hidden sm:inline">{t("Find a person or seat…")}</span>
