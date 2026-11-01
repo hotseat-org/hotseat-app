@@ -120,7 +120,7 @@ export const HeatTag = ({
 }) => (
   <div className="group absolute -translate-x-1/2 -translate-y-1/2 hover:z-10" style={style}>
     {/* Just the share (desks sit close together); the desk on hover. */}
-    <span className="flex cursor-default items-center gap-1 whitespace-nowrap rounded-full border border-border bg-overlay/95 px-1.5 text-[10px] font-extrabold leading-4 text-foreground shadow-overlay">
+    <span className="flex cursor-default items-center gap-1 whitespace-nowrap rounded-full border border-foreground/20 bg-overlay px-1.5 text-[10px] font-extrabold leading-4 text-foreground shadow-overlay">
       {label && <span className="hidden opacity-70 group-hover:inline">{label}</span>}
       {/* The bar chart, flat: as full as the desk's share of days. */}
       <span aria-hidden className="h-1.5 w-5 overflow-hidden rounded-full bg-foreground/10">

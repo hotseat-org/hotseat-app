@@ -69,7 +69,7 @@ export const FloorLinkHints = () => {
           zIndexRange={[15, 5]}
           style={{ pointerEvents: "none" }}
         >
-          <span className="flex items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-overlay px-2.5 py-1 text-xs font-extrabold text-foreground shadow-overlay">
+          <span className="flex items-center gap-1.5 whitespace-nowrap rounded-full border border-foreground/20 bg-overlay px-2.5 py-1 text-xs font-extrabold text-foreground shadow-overlay">
             <hint.icon className="size-3.5 text-accent" />
             {hint.text}
           </span>

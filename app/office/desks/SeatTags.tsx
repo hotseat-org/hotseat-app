@@ -48,7 +48,7 @@ export const SeatTags = () => {
               zIndexRange={[20, 0]}
             >
               {/* Just the share (many desks, close together); the desk on hover. */}
-              <div className="group flex cursor-default select-none items-center gap-1 whitespace-nowrap rounded-full border border-border bg-overlay/95 px-1.5 text-[10px] font-extrabold leading-4 text-foreground shadow-overlay hover:relative hover:z-10 hover:text-[11px]">
+              <div className="group flex cursor-default select-none items-center gap-1 whitespace-nowrap rounded-full border border-foreground/20 bg-overlay/95 px-1.5 text-[10px] font-extrabold leading-4 text-foreground shadow-overlay hover:relative hover:z-10 hover:text-[11px]">
                 {desk.label && (
                   <span className="hidden opacity-70 group-hover:inline">{desk.label}</span>
                 )}

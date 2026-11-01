@@ -3,5 +3,6 @@ export const getDeskTagTone = (isMine: boolean, isFree: boolean) => {
   if (isMine) return "border-accent bg-accent text-accent-foreground"
   if (isFree) return "border-success bg-success text-success-foreground"
 
-  return "border-border bg-overlay/95 text-foreground"
+  // A border that shows on a light floor too (the theme's barely did).
+  return "border-foreground/20 bg-overlay text-foreground"
 }

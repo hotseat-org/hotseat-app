@@ -40,10 +40,10 @@ export const getGatheredTowerHeight = (floorCount: number, isEditing: boolean) =
   return (isEditing ? MENU_ROOM : 0) + (rowCount - 1) * GATHERED_STEP + SLAB_HEIGHT
 }
 
-/** What shows beside a floor: a few words, coloured. */
+/** What shows beside a floor: a few words, and how it's going there (a coloured dot). */
 interface FloorWord {
   text: string
-  className: string
+  tone?: "positive" | "warning"
   /** What of yours is there ("your desk"). */
   yours?: string
 }
@@ -144,7 +144,6 @@ export const FloorTower = ({
     if (isEditing)
       return {
         text: tn(itemCounts.get(id) ?? 0, "{n} item", "{n} items"),
-        className: "text-muted",
       }
 
     const note = floorNotes?.get(id)
@@ -152,7 +151,7 @@ export const FloorTower = ({
     return (
       note && {
         text: note.text,
-        className: note.tone === "positive" ? "text-success" : "text-warning",
+        tone: note.tone === "positive" ? "positive" : "warning",
         yours: note.yours,
       }
     )
@@ -258,7 +257,12 @@ export const FloorTower = ({
                 <span
                   className={clsx(
                     "rounded-md px-1 text-sm font-extrabold",
-                    isShown ? "text-accent" : "text-foreground"
+                    // Over the scene, on any floor: the accent leant towards the
+                    // text colour reads in both themes (on a light floor, pure
+                    // accent was too faint).
+                    isShown
+                      ? "text-[color-mix(in_oklab,var(--accent)_70%,var(--foreground))]"
+                      : "text-foreground"
                   )}
                 >
                   {name}
@@ -266,11 +270,21 @@ export const FloorTower = ({
                 {word && (
                   <span className="flex items-center gap-1.5 text-xs font-extrabold">
                     {word.yours && (
-                      <span className="rounded-full bg-success/15 px-1.5 text-[11px] text-success">
+                      <span className="rounded-full bg-success px-1.5 text-[11px] text-success-foreground">
                         {word.yours}
                       </span>
                     )}
-                    <span className={word.className}>{word.text}</span>
+                    {/* The tone as a dot: green or amber text over a light floor was unreadable. */}
+                    {word.tone && (
+                      <span
+                        aria-hidden
+                        className={clsx(
+                          "size-1.5 rounded-full",
+                          word.tone === "positive" ? "bg-success" : "bg-warning"
+                        )}
+                      />
+                    )}
+                    <span className="text-foreground/75">{word.text}</span>
                   </span>
                 )}
               </FloorLabel>
@@ -280,7 +294,7 @@ export const FloorTower = ({
                 <span
                   className={clsx(
                     "absolute left-1/2 top-[17px] -translate-x-1/2 text-xs font-black",
-                    isShown ? "text-accent-foreground" : "text-muted"
+                    isShown ? "text-accent-foreground" : "text-foreground"
                   )}
                 >
                   {getFloorNumber(floors, floor.id)}
