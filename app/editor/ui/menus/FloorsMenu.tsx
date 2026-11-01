@@ -1,7 +1,7 @@
 import { AlertDialog, Button, Dropdown, Popover } from "@heroui/react"
 import clsx from "clsx"
 import { BrickWall, ChevronDown, ChevronUp, Ellipsis, Pencil, Plus, Trash2 } from "lucide-react"
-import { useState, type ReactNode } from "react"
+import { useState } from "react"
 import {
   MAX_FLOORS,
   MAX_FLOOR_NAME,
@@ -14,40 +14,6 @@ import { useEditorStore } from "../../store"
 import type { FloorNote } from "../../module"
 import { useI18n } from "~/i18n/I18nProvider"
 
-/** Most floors the stack shows at once: more scroll by, so it never outgrows its corner. */
-const MAX_STACKED = 4
-
-/**
- * Which floors the stack shows (top floor first): all of them, or MAX_STACKED
- * in a row — scrolled by its arrows, and moved along to keep the shown floor
- * in view whenever that changes.
- */
-const useStackedFloors = (floors: Floor[], currentFloor: string) => {
-  const topFirst = [...floors].reverse()
-  const shownIndex = topFirst.findIndex((floor) => floor.id === currentFloor)
-  const lastStart = Math.max(0, topFirst.length - MAX_STACKED)
-  const getStartShowing = (start: number) =>
-    Math.min(lastStart, Math.max(0, shownIndex - MAX_STACKED + 1, Math.min(start, shownIndex)))
-  const [start, setStart] = useState(() => getStartShowing(0))
-  // Another floor shown (a press, the arrow keys, a desk on another floor): into view.
-  const [followedFloor, setFollowedFloor] = useState(currentFloor)
-  if (followedFloor !== currentFloor) {
-    setFollowedFloor(currentFloor)
-    setStart(getStartShowing(start))
-  }
-
-  const shownStart = Math.min(start, lastStart)
-
-  return {
-    stacked: topFirst.slice(shownStart, shownStart + MAX_STACKED),
-    isScrolling: topFirst.length > MAX_STACKED,
-    canScrollUp: shownStart > 0,
-    canScrollDown: shownStart < lastStart,
-    scrollUp: () => setStart(Math.max(0, shownStart - 1)),
-    scrollDown: () => setStart(Math.min(lastStart, shownStart + 1)),
-  }
-}
-
 /** What a floor is called: its name, or (unnamed) "Floor 2". */
 export const useFloorName = () => {
   const { t } = useI18n()
@@ -55,139 +21,6 @@ export const useFloorName = () => {
 
   return (floor: Floor) => floor.name || getFloorTitle({ t }, getFloorNumber(floors, floor.id))
 }
-
-/**
- * Editing: the layout's floors as a stack of slabs, the top floor on top: the
- * shown one in the accent, another a press away; at most MAX_STACKED,
- * scrolling through more. A ghost slab on top adds a floor there, and the
- * floors' menu (names, order, delete) is below. Viewing has the tower (see
- * FloorTower); a phone, its chip (see FloorChip).
- */
-export const FloorPicker = () => {
-  const { t } = useI18n()
-  const floors = useEditorStore((state) => state.floors)
-  const currentFloor = useEditorStore((state) => state.currentFloor)
-  const showFloor = useEditorStore((state) => state.showFloor)
-  const addFloor = useEditorStore((state) => state.addFloor)
-  const getFloorName = useFloorName()
-  const stack = useStackedFloors(floors, currentFloor)
-
-  return (
-    <div
-      className="pointer-events-auto flex flex-col items-stretch rounded-2xl border border-border bg-overlay p-1.5 shadow-overlay"
-      onPointerDown={(event) => event.stopPropagation()}
-    >
-      {floors.length < MAX_FLOORS && (
-        <button
-          type="button"
-          aria-label={t("Add a floor on top")}
-          title={t("Add a floor on top")}
-          onClick={addFloor}
-          className="group flex items-center gap-2 rounded-lg pr-2 text-muted outline-none hover:text-accent focus-visible:ring-2 focus-visible:ring-focus"
-        >
-          <Slab look="ghost" />
-          <Plus className="size-3.5" />
-        </button>
-      )}
-      {stack.isScrolling && (
-        <ScrollArrow
-          label={t("Show the floors above")}
-          isDisabled={!stack.canScrollUp}
-          onPress={stack.scrollUp}
-        >
-          <ChevronUp className="size-3.5" />
-        </ScrollArrow>
-      )}
-      <div
-        role="radiogroup"
-        aria-label={t("Choose a floor")}
-        className="flex flex-col"
-        // Up and down move a floor (the stack's top is the top floor).
-        onKeyDown={(event) => {
-          const step = { ArrowUp: 1, ArrowDown: -1 }[event.key]
-          if (!step) return
-
-          event.preventDefault()
-          const index = floors.findIndex((floor) => floor.id === currentFloor)
-          const next = floors[index + step]
-          if (!next) return
-
-          showFloor(next.id)
-          // The focus goes with it (the shown floor is the one in the tab order).
-          const group = event.currentTarget
-          requestAnimationFrame(() =>
-            group.querySelector<HTMLElement>("[aria-checked=true]")?.focus()
-          )
-        }}
-      >
-        {stack.stacked.map((floor) => {
-          const isShown = floor.id === currentFloor
-
-          return (
-            <button
-              key={floor.id}
-              type="button"
-              role="radio"
-              aria-checked={isShown}
-              tabIndex={isShown ? 0 : -1}
-              aria-label={getFloorName(floor)}
-              title={getFloorName(floor)}
-              // The camera follows (see FloorShift): no refit.
-              onClick={() => showFloor(floor.id)}
-              className="group flex h-7 items-center gap-2 rounded-lg pr-2 outline-none hover:bg-foreground/5 focus-visible:ring-2 focus-visible:ring-focus"
-            >
-              <Slab look={isShown ? "shown" : "other"} />
-              <span
-                className={clsx(
-                  "max-w-28 truncate text-xs",
-                  isShown
-                    ? "font-extrabold text-accent"
-                    : "font-bold text-muted group-hover:text-foreground"
-                )}
-              >
-                {floor.name || getFloorNumber(floors, floor.id)}
-              </span>
-            </button>
-          )
-        })}
-      </div>
-      {stack.isScrolling && (
-        <ScrollArrow
-          label={t("Show the floors below")}
-          isDisabled={!stack.canScrollDown}
-          onPress={stack.scrollDown}
-        >
-          <ChevronDown className="size-3.5" />
-        </ScrollArrow>
-      )}
-      <FloorsMenu />
-    </div>
-  )
-}
-
-/** Scrolls the stack a floor up or down (more floors than it shows). */
-const ScrollArrow = ({
-  label,
-  isDisabled,
-  onPress,
-  children,
-}: {
-  label: string
-  isDisabled: boolean
-  onPress: () => void
-  children: ReactNode
-}) => (
-  <button
-    type="button"
-    aria-label={label}
-    title={label}
-    disabled={isDisabled}
-    onClick={onPress}
-    className="flex h-5 items-center justify-center rounded-md text-muted outline-none hover:bg-foreground/10 hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-30 disabled:hover:bg-transparent"
-  >
-    {children}
-  </button>
-)
 
 /** A floor's name, for assistive tech and its tooltip: with its note, and what of yours is there. */
 export const composeFloorLabel = (name: string, note: FloorNote | undefined) =>
@@ -222,8 +55,11 @@ export const Slab = ({ look }: { look: "shown" | "other" | "ghost" }) => (
   </svg>
 )
 
-/** Editing: the floors' menu — a new one on top, and each named, moved or deleted. */
-const FloorsMenu = () => {
+/**
+ * Editing: the floors' menu, opened from its button under the tower — a new
+ * floor on top, and each named, moved or deleted.
+ */
+export const FloorsMenu = () => {
   const { t } = useI18n()
   const floors = useEditorStore((state) => state.floors)
   const addFloor = useEditorStore((state) => state.addFloor)
@@ -236,7 +72,7 @@ const FloorsMenu = () => {
         variant="ghost"
         size="sm"
         aria-label={t("Edit floors")}
-        className="mt-1 h-8 w-full min-w-8 rounded-lg"
+        className="size-9 min-w-9 rounded-full border border-border bg-overlay shadow-overlay"
       >
         <Pencil className="size-4" />
       </Button>

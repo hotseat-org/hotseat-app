@@ -24,7 +24,6 @@ import { composeCommands } from "./ui/menus/commands"
 import { ContextMenu } from "./ui/menus/ContextMenu"
 import { GuidedTour } from "./ui/guide/GuidedTour"
 import { MapControls } from "./ui/menus/MapControls"
-import { FloorPicker } from "./ui/menus/FloorPicker"
 import { FloorTower } from "./ui/menus/FloorTower"
 import { KitLibraryContext, type KitLibrary } from "./kits/kits"
 import { FrameRateReadout } from "./shell/FrameRateReadout"
@@ -334,7 +333,7 @@ const EditorInner = ({
         )}
         {!readOnly && !isEmpty && (
           <div className="pointer-events-none absolute right-4 top-20">
-            <FloorPicker />
+            <FloorTower isEditing />
           </div>
         )}
 

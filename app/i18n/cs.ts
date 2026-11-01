@@ -291,8 +291,6 @@ export const cs: Messages = {
   "The office's floors": "Patra kanceláře",
   "Edit floors": "Upravit patra",
   "Add a floor on top": "Přidat patro navrch",
-  "Show the floors above": "Ukázat patra výš",
-  "Show the floors below": "Ukázat patra níž",
   "Name of {floor}": "Název – {floor}",
   "Move up": "Posunout výš",
   "Move down": "Posunout níž",

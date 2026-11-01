@@ -4,7 +4,7 @@ import { useState } from "react"
 import { getFloorNumber, getFloorTitle } from "../../floors"
 import { useFloorNotes } from "../../modules"
 import { useEditorStore } from "../../store"
-import { Slab, composeFloorLabel, useFloorName } from "./FloorPicker"
+import { Slab, composeFloorLabel, useFloorName } from "./FloorsMenu"
 import { BottomSheet } from "~/components/ui/BottomSheet"
 import { useI18n } from "~/i18n/I18nProvider"
 
