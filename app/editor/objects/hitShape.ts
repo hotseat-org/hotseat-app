@@ -12,6 +12,14 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
 /** The most a part's column may stand (m), and the least worth one. */
 const MAX_HEIGHT = 2.2
 const MIN_SIZE = 0.02
+/** How high the floor of its footprint stands (m): about its plinth's height. */
+const BASE_HEIGHT = 0.05
+/**
+ * How far it stands proud of the model (m): always the nearest hit, so the
+ * pointer stays on one thing of the piece's (R3F leaves a group, for a frame,
+ * when what's nearest within it changes — a blink of its plinth).
+ */
+const PROUD = 0.01
 
 /**
  * What a piece is picked by: a column under each of its parts, from the floor
@@ -19,9 +27,15 @@ const MIN_SIZE = 0.02
  * between a desk's legs to the desk behind), yet it's no taller than the part
  * it stands for — a box as tall as the monitor over the whole desk stuck out,
  * at an angle, over the desks behind it.
+ * And a low base over its whole footprint: crossing the gap between its parts
+ * (a desk and its chair) doesn't leave it, so its plinth doesn't blink.
  * `model` is measured in `frame`'s space (the piece's turned group).
  */
-export const composeHitShape = (model: Object3D, frame: Object3D): BufferGeometry | null => {
+export const composeHitShape = (
+  model: Object3D,
+  frame: Object3D,
+  footprint: [number, number]
+): BufferGeometry | null => {
   frame.updateWorldMatrix(true, false)
   const toFrame = new Matrix4().copy(frame.matrixWorld).invert()
   const columns: Box3[] = []
@@ -50,7 +64,12 @@ export const composeHitShape = (model: Object3D, frame: Object3D): BufferGeometr
   )
   if (outer.length === 0) return null
 
-  const boxes = outer.map((column) => {
+  const base = new BoxGeometry(
+    footprint[0] + PROUD * 2,
+    BASE_HEIGHT,
+    footprint[1] + PROUD * 2
+  ).translate(0, BASE_HEIGHT / 2, 0)
+  const columnBoxes = outer.map((column) => {
     const size = column.getSize(new Vector3())
     const centre = column.getCenter(new Vector3())
 
@@ -60,6 +79,7 @@ export const composeHitShape = (model: Object3D, frame: Object3D): BufferGeometr
       Math.max(size.z, MIN_SIZE)
     ).translate(centre.x, centre.y, centre.z)
   })
+  const boxes = [base, ...columnBoxes]
   const shape = mergeGeometries(boxes, false)
   boxes.forEach((box) => box.dispose())
 
@@ -76,8 +96,9 @@ const getColumn = (part: Mesh, toFrame: Matrix4) => {
     .applyMatrix4(new Matrix4().multiplyMatrices(toFrame, part.matrixWorld))
   if (!bounds || bounds.isEmpty() || bounds.max.y < MIN_SIZE) return null
 
+  bounds.expandByScalar(PROUD)
   bounds.min.y = 0
-  bounds.max.y = Math.min(bounds.max.y, MAX_HEIGHT)
+  bounds.max.y = Math.min(bounds.max.y, MAX_HEIGHT + PROUD)
 
   return bounds
 }

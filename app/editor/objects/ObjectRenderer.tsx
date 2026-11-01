@@ -167,19 +167,24 @@ export const ObjectRenderer = memo(function ObjectRenderer({
 
   // "Grabbed" animation: lift + tilt (as if hoisted by a corner) + gentle sway.
   const lifted = useRef<Group>(null)
+  // Outline size: a footprint for furniture; the wall segment for doors/windows.
+  const outline: [number, number] = isEdgeType(object.type)
+    ? [edgeLength(object), WALL.depth + 0.2]
+    : [getItem(object.type).footprint[0] * GRID, getItem(object.type).footprint[1] * GRID]
+  const [outlineWidth, outlineDepth] = outline
   // Measured in its own frame, so a floor gliding to another doesn't skew it.
   useLayoutEffect(() => {
     const model = lifted.current
     const frame = turned.current
     if (!model || !frame || carried) return
 
-    const shape = composeHitShape(model, frame)
+    const shape = composeHitShape(model, frame, [outlineWidth, outlineDepth])
     if (!shape) return
 
     setHitShape(shape)
 
     return () => shape.dispose()
-  }, [object.type, object.model, object.variant, carried])
+  }, [object.type, object.model, object.variant, carried, outlineWidth, outlineDepth])
   const amount = useRef(0)
   useFrame((state, delta) => {
     const swing = turn.current
@@ -263,10 +268,6 @@ export const ObjectRenderer = memo(function ObjectRenderer({
     // Other build tools fall through so placement can read the ground beneath.
   }
 
-  // Outline size: a footprint for furniture; the wall segment for doors/windows.
-  const outline: [number, number] = isEdgeType(object.type)
-    ? [edgeLength(object), WALL.depth + 0.2]
-    : [getItem(object.type).footprint[0] * GRID, getItem(object.type).footprint[1] * GRID]
   const isUnderlay = getItem(object.type).isUnderlay
   // Red preview when this piece of furniture is about to be erased.
   const showErase = interactive && tool === "delete" && hovered && isFurniture(object)

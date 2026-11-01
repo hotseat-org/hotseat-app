@@ -15,6 +15,8 @@ import { ACCENT } from "../palette"
 const MARGIN = 0.08
 const THICKNESS = 0.045
 const RIM = 0.025
+/** Never hit: it's how a piece shows it's pointed at, not part of it. */
+const ignoreRaycast = () => {}
 /** How far its contact shadow spreads past it (m). */
 const SHADOW_SPREAD = 0.05
 
@@ -113,7 +115,7 @@ export const FootprintPlinth = ({
   return (
     <group ref={group} visible={false}>
       {/* A soft contact shadow round its foot: it stands on the floor, not in it. */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position-y={0.004}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position-y={0.004} raycast={ignoreRaycast}>
         <shapeGeometry args={[shadow, 8]} />
         <meshBasicMaterial
           ref={shadowMaterial}
@@ -124,7 +126,12 @@ export const FootprintPlinth = ({
         />
       </mesh>
       {/* The slab, extruded up from the floor and lit like the furniture. */}
-      <mesh geometry={slab} rotation={[-Math.PI / 2, 0, 0]} position-y={0.005}>
+      <mesh
+        geometry={slab}
+        rotation={[-Math.PI / 2, 0, 0]}
+        position-y={0.005}
+        raycast={ignoreRaycast}
+      >
         <meshStandardMaterial
           ref={slabMaterial}
           roughness={0.55}
@@ -134,7 +141,12 @@ export const FootprintPlinth = ({
         />
       </mesh>
       {/* The rim round its top (selected). */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position-y={THICKNESS + 0.008} renderOrder={2}>
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        position-y={THICKNESS + 0.008}
+        renderOrder={2}
+        raycast={ignoreRaycast}
+      >
         <shapeGeometry args={[rim, 8]} />
         <meshBasicMaterial
           ref={rimMaterial}
