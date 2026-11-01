@@ -1,6 +1,6 @@
 import type { WebGLProgramParametersWithUniforms } from "three"
 import { CUTAWAY_PATCHES, type CutawayKind } from "../walls/cutaway"
-import { shownFloorUniform } from "./floorHeight"
+import { groundUniform, shownFloorUniform, type FloorPlace } from "./floorHeight"
 
 /**
  * Shading every solid surface gets in its shader, computed per pixel from its
@@ -10,8 +10,10 @@ import { shownFloorUniform } from "./floorHeight"
  *   does, for free and always on);
  * - a soft vertical gradient on upright faces, darker low, lighter high, so
  *   walls and tall pieces read as solid.
- * Both by height above the surface's own floor (`floorBase` from the shown
- * floor's, which glides — see floorHeight.ts).
+ * Furniture by its height above its own floor; walls and what's in them by
+ * their height above the ground, so a building's walls shade as one, storey
+ * on storey. On a floor standing on another, nothing shows below its level
+ * (see FloorPlace).
  */
 const CONTACT_REACH = 0.3 // m above the floor the darkening fades out
 const CONTACT_DARKEST = 0.72
@@ -22,8 +24,13 @@ const GRADIENT_REACH = 1.6
 
 const glsl = (value: number) => value.toFixed(4)
 
-const patchShading = (shader: WebGLProgramParametersWithUniforms, floorBase: number) => {
+const patchShading = (
+  shader: WebGLProgramParametersWithUniforms,
+  place: FloorPlace,
+  isInWall: boolean
+) => {
   shader.uniforms.shownFloor = shownFloorUniform
+  shader.uniforms.groundLevel = groundUniform
   shader.vertexShader = shader.vertexShader
     .replace(
       "#include <common>",
@@ -38,7 +45,7 @@ const patchShading = (shader: WebGLProgramParametersWithUniforms, floorBase: num
   shader.fragmentShader = shader.fragmentShader
     .replace(
       "#include <common>",
-      "#include <common>\nuniform float shownFloor;\nvarying vec3 vShadeWorld;\nvarying vec3 vShadeNormal;"
+      "#include <common>\nuniform float shownFloor;\nuniform float groundLevel;\nvarying vec3 vShadeWorld;\nvarying vec3 vShadeNormal;"
     )
     .replace(
       "#include <color_fragment>",
@@ -46,7 +53,9 @@ const patchShading = (shader: WebGLProgramParametersWithUniforms, floorBase: num
       {
         vec3 n = normalize(vShadeNormal);
         float upright = 1.0 - abs(n.y);
-        float height = vShadeWorld.y - shownFloor - (${glsl(floorBase)});
+        float aboveFloor = vShadeWorld.y - shownFloor - (${glsl(place.base)});
+        ${place.isUpper ? "if (aboveFloor < 0.0) discard;" : ""}
+        float height = ${isInWall ? "vShadeWorld.y - groundLevel" : "aboveFloor"};
         float contact = mix(${glsl(CONTACT_DARKEST)}, 1.0, smoothstep(0.0, ${glsl(CONTACT_REACH)}, height));
         float gradient = mix(${glsl(GRADIENT_LOW)}, ${glsl(GRADIENT_HIGH)}, smoothstep(0.0, ${glsl(GRADIENT_REACH)}, height));
         float shade = mix(1.0, contact * gradient, upright);
@@ -64,20 +73,24 @@ const cache = new Map<
   }
 >()
 
+const GROUND_FLOOR: FloorPlace = { base: 0, isUpper: false }
+
 /**
  * Material props for a Surface's shader: the shading above, plus the wall
- * cutaway when it's sliced by one — on the shown floor (`floorBase` 0) or one
- * below. One program per variant, shared.
+ * cutaway when it's sliced by one (and so is in a wall) — on its floor
+ * (`place`). One program per variant, shared.
  */
-export const getSurfaceShader = (cutaway: CutawayKind | null, floorBase = 0) => {
-  const id = `${cutaway ?? "plain"}@${glsl(floorBase)}`
+export const getSurfaceShader = (cutaway: CutawayKind | null, place = GROUND_FLOOR) => {
+  const placeKey =
+    place.base || place.isUpper ? `@${glsl(place.base)}${place.isUpper ? "-up" : ""}` : ""
+  const id = `${cutaway ?? "plain"}${placeKey}`
   let props = cache.get(id)
   if (!props) {
     const cutawayPatch = cutaway ? CUTAWAY_PATCHES[cutaway] : null
-    const key = `surface${cutawayPatch ? `-${cutawayPatch.key}` : ""}${floorBase ? `@${glsl(floorBase)}` : ""}`
+    const key = `surface${cutawayPatch ? `-${cutawayPatch.key}` : ""}${placeKey}`
     props = {
       onBeforeCompile: (shader) => {
-        patchShading(shader, floorBase)
+        patchShading(shader, place, cutaway !== null)
         cutawayPatch?.patch(shader)
       },
       customProgramCacheKey: () => key,

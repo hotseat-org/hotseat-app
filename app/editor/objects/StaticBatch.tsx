@@ -13,6 +13,7 @@ import {
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js"
 import { markShadowsDirty } from "../lighting/shadows"
 import { MERGED_KIND, cutDirectionOf, setCutAttributes } from "../walls/cutaway"
+import { useFloorPlace } from "./floorHeight"
 import { getSurfaceShader } from "./surfaceShader"
 import { BATCH_PART, BatchContext, surfaceKey } from "./batching"
 
@@ -66,6 +67,7 @@ export const StaticBatch = ({ enabled, children }: { enabled: boolean; children:
   const hidden = useRef<Mesh[]>([])
   const renderer = useThree((state) => state.gl)
   const invalidate = useThree((state) => state.invalidate)
+  const floorPlace = useFloorPlace()
 
   useLayoutEffect(() => {
     const group = root.current
@@ -122,7 +124,7 @@ export const StaticBatch = ({ enabled, children }: { enabled: boolean; children:
       material.vertexColors = true
       // A clone loses its shader patch: the shading, and the cutaway's merged variant.
       if (material.type === "MeshStandardMaterial")
-        Object.assign(material, getSurfaceShader(cutaway ? MERGED_KIND[cutaway] : null))
+        Object.assign(material, getSurfaceShader(cutaway ? MERGED_KIND[cutaway] : null, floorPlace))
 
       next.push({
         key,
@@ -133,7 +135,7 @@ export const StaticBatch = ({ enabled, children }: { enabled: boolean; children:
       })
     }
     setParts(next)
-  }, [enabled, version])
+  }, [enabled, version, floorPlace])
 
   // New batch → the cached shadow maps must include it; free the old one's
   // geometry. Not its materials: three.js would free their shader programs,
