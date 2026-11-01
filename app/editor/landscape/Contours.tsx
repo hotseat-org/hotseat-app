@@ -65,7 +65,8 @@ const createLook = () => {
   const resolution = uniform(new THREE.Vector2(1, 1))
   const starAmount = uniform(0)
   /** Where it's seen: 1, or giving way to the build area while editing. */
-  const getShown = () => select(isEditing.greaterThan(0.5), float(1).sub(area.getArea(positionWorld.xz)), float(1))
+  const getShown = () =>
+    select(isEditing.greaterThan(0.5), float(1).sub(area.getArea(positionWorld.xz)), float(1))
 
   return {
     area,

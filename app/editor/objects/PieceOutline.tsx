@@ -5,8 +5,8 @@ import {
   BufferGeometry,
   Color,
   Mesh,
-  NotEqualStencilFunc,
-  ReplaceStencilOp,
+  EqualStencilFunc,
+  IncrementStencilOp,
   Vector2,
   type Group,
   type Object3D,
@@ -27,6 +27,7 @@ import {
 import { MeshBasicNodeMaterial } from "three/webgpu"
 import { ACCENT } from "../palette"
 import { getMatrixWithin } from "./localMatrix"
+import { OUTLINE_LAYER } from "./outlineLayer"
 
 /** Its width (CSS px) and colour: cream pointed at, the accent selected. */
 const LOOK = {
@@ -39,9 +40,15 @@ const DIRECTIONS = 12
  * How far its copies are drawn towards the camera (m): the floor just past a
  * piece's foot is nearer than the foot itself, and would hide the outline there.
  */
-const DEPTH_BIAS = 0.15
-/** Our stencil mark: where the piece itself is (its outline goes round, not over it). */
-const STENCIL_MARK = 1
+export const DEPTH_BIAS = 0.15
+/**
+ * The stencil's reference stays 0, the value every pass starts with: three's
+ * WebGPU backend remembers the reference it last set across frames, though
+ * each new pass resets it to 0 — so a reference of 1 only held on the first
+ * frame. So the piece's mark counts up from 0 (whatever the reference), and
+ * its outline draws where the stencil is still 0.
+ */
+const STENCIL_REFERENCE = 0
 
 /**
  * The outline's material (TSL): the piece's shape, drawn once per direction
@@ -64,8 +71,8 @@ const createOutlineMaterial = () => {
     transparent: true,
     depthWrite: false,
     stencilWrite: true,
-    stencilRef: STENCIL_MARK,
-    stencilFunc: NotEqualStencilFunc,
+    stencilRef: STENCIL_REFERENCE,
+    stencilFunc: EqualStencilFunc,
   })
   material.vertexNode = vec4(clip.xy.add(shift), clip.zw)
   material.colorNode = tint
@@ -136,16 +143,16 @@ export const PieceOutline = ({
       {shape && (
         <>
           {/* Where the piece is, in the stencil only — however much is hidden. */}
-          <mesh geometry={shape} renderOrder={100} raycast={ignoreRaycast}>
+          <mesh geometry={shape} renderOrder={100} raycast={ignoreRaycast} onUpdate={setOwnLayer}>
             <meshBasicMaterial
               colorWrite={false}
               depthWrite={false}
               depthTest={false}
               transparent
               stencilWrite
-              stencilRef={STENCIL_MARK}
+              stencilRef={STENCIL_REFERENCE}
               stencilFunc={AlwaysStencilFunc}
-              stencilZPass={ReplaceStencilOp}
+              stencilZPass={IncrementStencilOp}
             />
           </mesh>
           <instancedMesh
@@ -153,12 +160,16 @@ export const PieceOutline = ({
             renderOrder={101}
             frustumCulled={false}
             raycast={ignoreRaycast}
+            onUpdate={setOwnLayer}
           />
         </>
       )}
     </group>
   )
 }
+
+/** On the outlines' layer (see outlineLayer.ts). */
+const setOwnLayer = (part: Object3D) => part.layers.set(OUTLINE_LAYER)
 
 /** Never hit: it's how a piece shows it's pointed at, not part of it. */
 const ignoreRaycast = () => {}

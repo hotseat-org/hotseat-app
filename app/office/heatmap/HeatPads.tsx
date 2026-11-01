@@ -1,6 +1,8 @@
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react"
 import { useThree } from "@react-three/fiber"
 import * as THREE from "three"
+import { abs, attribute, float, length, max, min, smoothstep, uv, vec2 } from "three/tsl"
+import { MeshBasicNodeMaterial } from "three/webgpu"
 import { isSeatable } from "../catalog"
 import { useOfficeStore } from "../store"
 import { heatColor } from "./heatmap"
@@ -16,41 +18,29 @@ const MARGIN = 0.3
  * A soft-edged rounded rectangle, one per instance: its size (m), colour and
  * glow come from instance attributes — every pad in one draw.
  */
-const padMaterial = () =>
-  new THREE.ShaderMaterial({
-    vertexShader: /* glsl */ `
-      attribute vec2 padSize;
-      attribute vec3 padColor;
-      attribute float padGlow;
-      varying vec2 vUv;
-      varying vec2 vSize;
-      varying vec3 vColor;
-      void main() {
-        vUv = uv;
-        vSize = padSize;
-        vColor = padColor * padGlow;
-        gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0);
-      }
-    `,
-    fragmentShader: /* glsl */ `
-      varying vec2 vUv;
-      varying vec2 vSize;
-      varying vec3 vColor;
-      void main() {
-        // Distance (m) outside a rounded rectangle inset by the soft edge.
-        vec2 p = (vUv - 0.5) * vSize;
-        vec2 inner = vSize * 0.5 - 0.22; // (not "half": reserved in GLSL)
-        vec2 q = abs(p) - inner + 0.12;
-        float d = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - 0.12;
-        float a = 1.0 - smoothstep(-0.02, 0.2, d);
-        if (a < 0.01) discard;
-        gl_FragColor = vec4(vColor, a * 0.9);
-      }
-    `,
+const padMaterial = () => {
+  const size = attribute<"vec2">("padSize", "vec2")
+  // Distance (m) outside a rounded rectangle inset by the soft edge.
+  const spot = uv().sub(0.5).mul(size)
+  const corner = abs(spot).sub(size.mul(0.5).sub(0.22)).add(0.12)
+  const outside = length(max(corner, vec2(0)))
+    .add(min(max(corner.x, corner.y), 0))
+    .sub(0.12)
+  const alpha = float(1).sub(smoothstep(-0.02, 0.2, outside))
+
+  const material = new MeshBasicNodeMaterial({
     transparent: true,
     depthWrite: false,
     toneMapped: false,
   })
+  material.colorNode = attribute<"vec3">("padColor", "vec3").mul(
+    attribute<"float">("padGlow", "float")
+  )
+  material.opacityNode = alpha.mul(0.9)
+  material.maskNode = alpha.greaterThanEqual(0.01)
+
+  return material
+}
 
 /**
  * The heatmap's floor (Insights): each desk on a pad coloured by how often it

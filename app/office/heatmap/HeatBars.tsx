@@ -2,6 +2,8 @@ import { useFrame, useThree } from "@react-three/fiber"
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react"
 import * as THREE from "three"
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js"
+import { diffuseColor } from "three/tsl"
+import { MeshStandardNodeMaterial } from "three/webgpu"
 import { isSeatable } from "../catalog"
 import { useOfficeStore } from "../store"
 import { HEAT_BAR, heatColor } from "./heatmap"
@@ -35,18 +37,9 @@ const columnGeometry = () =>
  * enough for the bloom).
  */
 const columnMaterial = (isDark: boolean) => {
-  const material = new THREE.MeshStandardMaterial({
-    emissive: "#ffffff",
-    emissiveIntensity: isDark ? 0.55 : 0.45,
-    roughness: 0.55,
-    toneMapped: !isDark,
-  })
-  material.onBeforeCompile = (shader) => {
-    shader.fragmentShader = shader.fragmentShader.replace(
-      "#include <emissivemap_fragment>",
-      "#include <emissivemap_fragment>\ntotalEmissiveRadiance *= vColor.rgb;"
-    )
-  }
+  const material = new MeshStandardNodeMaterial({ roughness: 0.55, toneMapped: !isDark })
+  // Its diffuse colour is its instance's: the glow takes it too.
+  material.emissiveNode = diffuseColor.rgb.mul(isDark ? 0.55 : 0.45)
 
   return material
 }

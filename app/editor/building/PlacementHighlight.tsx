@@ -1,6 +1,5 @@
-import { useMemo } from "react"
-import { Edges } from "@react-three/drei"
-import { DoubleSide, Shape } from "three"
+import { useEffect, useMemo } from "react"
+import { DoubleSide, EdgesGeometry, PlaneGeometry, Shape } from "three"
 import { GRID, type ObjectType } from "../types"
 import { getItem } from "../catalog"
 
@@ -41,6 +40,12 @@ export const PlacementHighlight = ({ type, x, z, rotation, valid = true }: Props
   const width = footprintWidth * GRID
   const halfDepth = (footprintDepth * GRID) / 2
   const shape = useMemo(chevron, [])
+  // Its outline: the footprint's edges, a pixel wide.
+  const edges = useMemo(
+    () => new EdgesGeometry(new PlaneGeometry(width, halfDepth * 2)),
+    [width, halfDepth]
+  )
+  useEffect(() => () => edges.dispose(), [edges])
 
   return (
     <>
@@ -48,7 +53,9 @@ export const PlacementHighlight = ({ type, x, z, rotation, valid = true }: Props
         <mesh rotation={[-Math.PI / 2, 0, 0]}>
           <planeGeometry args={[width, halfDepth * 2]} />
           <meshBasicMaterial color={color} transparent opacity={0.22} toneMapped={false} />
-          <Edges color={color} />
+          <lineSegments geometry={edges}>
+            <lineBasicMaterial color={color} toneMapped={false} />
+          </lineSegments>
         </mesh>
       </group>
       <group position={[x, 0.024, z]} rotation={[0, rotation, 0]}>

@@ -1,5 +1,5 @@
 import { OrbitControls, OrthographicCamera } from "@react-three/drei"
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { useThree } from "@react-three/fiber"
 import { MOUSE } from "three"
 import {
@@ -30,6 +30,7 @@ import { useModules, usePieceStates, useViewClicks } from "../modules"
 import { Lighting } from "../lighting/Lighting"
 import { StudioEnvironment } from "../lighting/StudioEnvironment"
 import { PostFx } from "../lighting/PostFx"
+import { OUTLINE_LAYER } from "../objects/outlineLayer"
 import { Ground } from "../landscape/Ground"
 import { CAMERA_OFFSET } from "../camera/viewCentre"
 import { WindowLight } from "../lighting/WindowLight"
@@ -129,6 +130,10 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
   const camera = useThree((state) => state.camera)
   const storeApi = useEditorStoreApi()
   useCachedShadows(readOnly, dark)
+  // The camera sees the pieces' outlines too (viewing, PostFx draws them apart).
+  useLayoutEffect(() => {
+    camera.layers.enable(OUTLINE_LAYER)
+  }, [camera])
 
   // Where the armed piece would go (wall items also carry the way they face).
   const [hover, setHover] = useState<(Cell & { rotation?: number }) | null>(null)

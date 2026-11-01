@@ -10,7 +10,8 @@ type DefaultProps = Parameters<Extract<GLProps, (props: never) => Promise<unknow
  * Its materials are node materials, their shaders written in TSL (see
  * objects/surfaceShader.ts), the same for both.
  * For R3F's `gl` prop: R3F hands over the canvas, and waits for the renderer
- * to be ready.
+ * to be ready. `?webgl` in the page's address forces the WebGL 2 backend (to
+ * test the fallback on a browser that has WebGPU).
  */
 export const createRenderer =
   ({ alpha = false, stencil = false }: { alpha?: boolean; stencil?: boolean } = {}) =>
@@ -21,6 +22,7 @@ export const createRenderer =
       alpha,
       stencil,
       powerPreference: "high-performance",
+      forceWebGL: new URLSearchParams(window.location.search).has("webgl"),
     })
     await renderer.init()
 

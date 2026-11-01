@@ -1,5 +1,5 @@
-import { useMemo } from "react"
-import { Line } from "@react-three/drei"
+import { useEffect, useMemo } from "react"
+import { BufferGeometry, Float32BufferAttribute } from "three"
 import { footprintCells, isDiagonal } from "../layout"
 import { GRID, isEdgeType, isMarker, isOverhead, type ObjectType, type SceneObject } from "../types"
 
@@ -108,11 +108,18 @@ export const AlignmentGuides = ({ objects, type, x, z, rotation, ignoreId }: Pro
     return result
   }, [objects, type, x, z, rotation, ignoreId])
 
+  // Every guide in one draw: a pair of points each.
+  const geometry = useMemo(() => {
+    const positions = guides.flatMap((points) => points.flat())
+
+    return new BufferGeometry().setAttribute("position", new Float32BufferAttribute(positions, 3))
+  }, [guides])
+  useEffect(() => () => geometry.dispose(), [geometry])
+  if (guides.length === 0) return null
+
   return (
-    <>
-      {guides.map((points, i) => (
-        <Line key={i} points={points} color={COLOR} lineWidth={1.5} transparent opacity={0.9} />
-      ))}
-    </>
+    <lineSegments geometry={geometry}>
+      <lineBasicMaterial color={COLOR} transparent opacity={0.9} />
+    </lineSegments>
   )
 }

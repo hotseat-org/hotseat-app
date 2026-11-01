@@ -38,11 +38,16 @@ export default defineConfig({
       "zustand/middleware",
       "nanoid",
       "lucide-react",
+      // three's entry points and the examples used, in one pass: they share
+      // one copy of three's core (two copies break the WebGPU renderer).
       "three",
+      "three/webgpu",
+      "three/tsl",
+      "three/examples/jsm/tsl/display/GTAONode.js",
+      "three/examples/jsm/geometries/RoundedBoxGeometry.js",
+      "three/examples/jsm/utils/BufferGeometryUtils.js",
       "@react-three/fiber",
       "@react-three/drei",
-      "@react-three/postprocessing",
-      "postprocessing",
       "remix-themes",
       "remix-utils/client-only",
       "clsx",

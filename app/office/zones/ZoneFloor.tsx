@@ -1,7 +1,24 @@
 import { Html } from "@react-three/drei"
 import { useThree } from "@react-three/fiber"
 import { useEffect, useLayoutEffect, useMemo } from "react"
-import { Color, DataTexture, NearestFilter, RedFormat, ShaderMaterial, Vector2 } from "three"
+import { Color, DataTexture, NearestFilter, RedFormat, Vector2 } from "three"
+import {
+  Fn,
+  If,
+  float,
+  floor,
+  fwidth,
+  length,
+  min,
+  positionWorld,
+  select,
+  smoothstep,
+  step,
+  texture,
+  uniform,
+  vec2,
+} from "three/tsl"
+import { MeshBasicNodeMaterial, type Node } from "three/webgpu"
 import { useOfficeStore } from "../store"
 import { ZONE_CELL, ZONE_RADIUS, composeZoneAreas } from "./zones"
 
@@ -34,76 +51,108 @@ const LINE_WIDTH = 0.07
  * inner one (filled in with a curve) — so any shape of squares gets soft
  * corners, at every size, with a thin line round the edge.
  */
-const VERTEX = /* glsl */ `
-  varying vec2 vWorld;
-  void main() {
-    vec4 world = modelMatrix * vec4(position, 1.0);
-    vWorld = world.xz;
-    gl_Position = projectionMatrix * viewMatrix * world;
+/** Outside the zone: the edge distance that hides a pixel. */
+const OUTSIDE = -1e3
+
+const createZoneMaterial = ({
+  mask,
+  size,
+  origin,
+  color,
+}: {
+  mask: DataTexture
+  size: Vector2
+  origin: Vector2
+  color: string
+}) => {
+  const maskSize = vec2(size.x, size.y)
+  const fill = uniform(0)
+  const shade = uniform(0)
+  const line = uniform(0)
+  const isFilled = (cell: Node<"vec2">) => {
+    const isOff = cell.x
+      .lessThan(0)
+      .or(cell.y.lessThan(0))
+      .or(cell.x.greaterThanEqual(size.x))
+      .or(cell.y.greaterThanEqual(size.y))
+
+    return select(isOff, float(0), step(0.5, texture(mask, cell.add(0.5).div(maskSize)).r))
   }
-`
-const FRAGMENT = /* glsl */ `
-  uniform sampler2D uMask;
-  uniform vec2 uSize;
-  uniform vec2 uOrigin;
-  uniform float uCell;
-  uniform vec3 uColor;
-  uniform float uFill;
-  uniform float uShade;
-  uniform float uLine;
-  varying vec2 vWorld;
 
-  float filled(vec2 c) {
-    if (c.x < 0.0 || c.y < 0.0 || c.x >= uSize.x || c.y >= uSize.y) return 0.0;
-    return step(0.5, texture2D(uMask, (c + 0.5) / uSize).r);
-  }
+  // Signed distance to the edge, in squares: positive inside the zone.
+  const getEdgeDistance = Fn(() => {
+    const radius = ZONE_RADIUS
+    const spot = positionWorld.xz.sub(vec2(origin.x, origin.y)).div(ZONE_CELL)
+    const cell = floor(spot)
+    const within = spot.sub(cell)
+    // This quarter's corner: which way it faces, and how far the point is
+    // from the two sides meeting there.
+    const facing = vec2(
+      select(within.x.lessThan(0.5), float(-1), float(1)),
+      select(within.y.lessThan(0.5), float(-1), float(1))
+    )
+    const toSide = vec2(
+      select(facing.x.greaterThan(0), float(1).sub(within.x), within.x),
+      select(facing.y.greaterThan(0), float(1).sub(within.y), within.y)
+    )
+    const isSelf = isFilled(cell).greaterThan(0.5)
+    const isSide = isFilled(cell.add(vec2(facing.x, 0))).greaterThan(0.5)
+    const isAhead = isFilled(cell.add(vec2(0, facing.y))).greaterThan(0.5)
+    const isAcross = isFilled(cell.add(facing)).greaterThan(0.5)
+    const isNearCorner = toSide.x.lessThan(radius).and(toSide.y.lessThan(radius))
+    const distance = float(OUTSIDE).toVar()
 
-  void main() {
-    const float R = ${ZONE_RADIUS.toFixed(2)}; // corner radius, in squares
-    vec2 p = (vWorld - uOrigin) / uCell;
-    vec2 cell = floor(p);
-    vec2 f = p - cell;
-    // This quarter's corner: which way it faces, and how far the point is from
-    // the two sides meeting there.
-    vec2 dir = vec2(f.x < 0.5 ? -1.0 : 1.0, f.y < 0.5 ? -1.0 : 1.0);
-    vec2 t = vec2(dir.x > 0.0 ? 1.0 - f.x : f.x, dir.y > 0.0 ? 1.0 - f.y : f.y);
-    float self = filled(cell);
-    float side = filled(cell + vec2(dir.x, 0.0));
-    float ahead = filled(cell + vec2(0.0, dir.y));
-    float across = filled(cell + dir);
-
-    // Signed distance to the edge, in squares: positive inside the zone.
-    float d;
-    if (self > 0.5) {
-      if (side < 0.5 && ahead < 0.5) {
-        // An outer corner: rounded off.
-        d = t.x < R && t.y < R ? R - length(vec2(R) - t) : min(t.x, t.y);
-      } else if (side < 0.5) {
+    If(isSelf.and(isSide.not()).and(isAhead.not()), () => {
+      // An outer corner: rounded off.
+      distance.assign(
+        select(
+          isNearCorner,
+          float(radius).sub(length(vec2(radius).sub(toSide))),
+          min(toSide.x, toSide.y)
+        )
+      )
+    })
+      .ElseIf(isSelf.and(isSide.not()), () => {
         // An edge — but where it runs into an inner corner (the square across
         // is the zone's too), the curve in the empty square takes over from it.
-        d = across > 0.5 && t.y < R ? length(vec2(t.x + R, t.y - R)) - R : t.x;
-      } else if (ahead < 0.5) {
-        d = across > 0.5 && t.x < R ? length(vec2(t.x - R, t.y + R)) - R : t.y;
-      } else {
+        const curve = length(vec2(toSide.x.add(radius), toSide.y.sub(radius))).sub(radius)
+        distance.assign(select(isAcross.and(toSide.y.lessThan(radius)), curve, toSide.x))
+      })
+      .ElseIf(isSelf.and(isAhead.not()), () => {
+        const curve = length(vec2(toSide.x.sub(radius), toSide.y.add(radius))).sub(radius)
+        distance.assign(select(isAcross.and(toSide.x.lessThan(radius)), curve, toSide.y))
+      })
+      .ElseIf(isSelf, () => {
         // Inside — near an inner corner's curve when the square across is empty.
-        d = across < 0.5 ? length(t + vec2(R)) - R : 1e3;
-      }
-    } else if (side > 0.5 && ahead > 0.5 && t.x < R && t.y < R) {
-      d = length(vec2(R) - t) - R; // an inner corner's curve
-    } else {
-      discard;
-    }
+        distance.assign(select(isAcross, float(1e3), length(toSide.add(radius)).sub(radius)))
+      })
+      .ElseIf(isSide.and(isAhead).and(isNearCorner), () => {
+        // An inner corner's curve.
+        distance.assign(length(vec2(radius).sub(toSide)).sub(radius))
+      })
 
-    d -= ${INSET};
-    float w = fwidth(d);
-    float inside = smoothstep(-w, w, d);
-    float line = inside * (1.0 - smoothstep(${LINE_WIDTH} - w, ${LINE_WIDTH} + w, d));
-    float alpha = inside * uFill + line * (uLine - uFill);
-    if (alpha < 0.002) discard;
-    gl_FragColor = vec4(uColor * (1.0 - uShade), alpha);
-    #include <colorspace_fragment>
-  }
-`
+    return distance
+  })
+
+  const edge = getEdgeDistance().sub(INSET)
+  const smoothing = fwidth(edge)
+  const inside = smoothstep(smoothing.negate(), smoothing, edge)
+  const onLine = inside.mul(
+    float(1).sub(smoothstep(smoothing.negate().add(LINE_WIDTH), smoothing.add(LINE_WIDTH), edge))
+  )
+  const alpha = inside.mul(fill).add(onLine.mul(line.sub(fill)))
+
+  const material = new MeshBasicNodeMaterial({
+    transparent: true,
+    depthWrite: false,
+    toneMapped: false,
+  })
+  material.colorNode = uniform(new Color(color)).mul(float(1).sub(shade))
+  material.opacityNode = alpha
+  material.maskNode = alpha.greaterThanEqual(0.002)
+
+  return { material, fill, shade, line }
+}
 
 /**
  * Each zone's part of the floor — under and round its desks — faintly tinted
@@ -126,27 +175,17 @@ export const ZoneFloor = ({ isEditing, isDark }: { isEditing: boolean; isDark: b
         texture.minFilter = NearestFilter
         texture.unpackAlignment = 1
         texture.needsUpdate = true
-        const material = new ShaderMaterial({
-          vertexShader: VERTEX,
-          fragmentShader: FRAGMENT,
-          uniforms: {
-            uMask: { value: texture },
-            uSize: { value: new Vector2(columns, rows) },
-            uOrigin: { value: new Vector2(minI * ZONE_CELL, minJ * ZONE_CELL) },
-            uCell: { value: ZONE_CELL },
-            uColor: { value: new Color(zone.color) },
-            uFill: { value: 0 },
-            uShade: { value: 0 },
-            uLine: { value: 0 },
-          },
-          transparent: true,
-          depthWrite: false,
+        const look = createZoneMaterial({
+          mask: texture,
+          size: new Vector2(columns, rows),
+          origin: new Vector2(minI * ZONE_CELL, minJ * ZONE_CELL),
+          color: zone.color,
         })
 
         return {
           zone,
           texture,
-          material,
+          look,
           centre: [(minI + columns / 2) * ZONE_CELL, (minJ + rows / 2) * ZONE_CELL] as const,
           size: [columns * ZONE_CELL, rows * ZONE_CELL] as const,
           label: [label.x, label.z] as const,
@@ -158,10 +197,10 @@ export const ZoneFloor = ({ isEditing, isDark }: { isEditing: boolean; isDark: b
   const strength = STRENGTH[isEditing ? "edit" : "view"][isDark ? "dark" : "light"]
   const invalidate = useThree((state) => state.invalidate)
   useLayoutEffect(() => {
-    for (const { material } of areas) {
-      material.uniforms.uFill.value = strength.fill
-      material.uniforms.uShade.value = strength.shade
-      material.uniforms.uLine.value = strength.line
+    for (const { look } of areas) {
+      look.fill.value = strength.fill
+      look.shade.value = strength.shade
+      look.line.value = strength.line
     }
     invalidate()
   }, [areas, strength, invalidate])
@@ -169,19 +208,19 @@ export const ZoneFloor = ({ isEditing, isDark }: { isEditing: boolean; isDark: b
     () => () =>
       areas.forEach((area) => {
         area.texture.dispose()
-        area.material.dispose()
+        area.look.material.dispose()
       }),
     [areas]
   )
 
   return (
     <>
-      {areas.map(({ zone, material, centre, size, label }) => (
+      {areas.map(({ zone, look, centre, size, label }) => (
         <group key={zone.name}>
           <mesh
             position={[centre[0], HEIGHT, centre[1]]}
             rotation={[-Math.PI / 2, 0, 0]}
-            material={material}
+            material={look.material}
             renderOrder={1}
           >
             <planeGeometry args={[size[0], size[1]]} />

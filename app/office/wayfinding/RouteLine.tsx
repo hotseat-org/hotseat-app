@@ -1,6 +1,22 @@
 import { useFrame, useThree } from "@react-three/fiber"
 import { useEffect, useMemo, useRef, useState } from "react"
 import * as THREE from "three"
+import {
+  abs,
+  attribute,
+  exp,
+  float,
+  fract,
+  length,
+  max,
+  mix,
+  pow,
+  smoothstep,
+  uniform,
+  uv,
+  vec3,
+} from "three/tsl"
+import { MeshBasicNodeMaterial, type Node } from "three/webgpu"
 import { useRoute } from "./wayfinding"
 
 /** Just above the floor and its paint, under the furniture. */
@@ -67,96 +83,67 @@ const ribbon = (points: [number, number][], width: number) => {
   return { geometry, length: run }
 }
 
-const lineMaterial = () =>
-  new THREE.ShaderMaterial({
-    uniforms: {
-      color: { value: new THREE.Color() },
-      time: { value: 0 },
-      routeLength: { value: 1 },
-      period: { value: PERIOD },
-      hdr: { value: HDR },
-    },
-    vertexShader: /* glsl */ `
-      attribute float distance;
-      attribute float across;
-      varying float vDistance;
-      varying float vAcross;
-      void main() {
-        vDistance = distance;
-        vAcross = across;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `,
-    fragmentShader: /* glsl */ `
-      uniform vec3 color;
-      uniform float time;
-      uniform float routeLength; // (not "length": that's GLSL's built-in)
-      uniform float period;
-      uniform float hdr;
-      varying float vDistance;
-      varying float vAcross;
-      void main() {
-        float a = abs(vAcross);
-        // A soft halo across the ribbon, and a slim bright core.
-        float halo = exp(-a * a * 7.0) * 0.42;
-        float core = 1.0 - smoothstep(0.1, 0.2, a);
-        // Pulses of light running toward the desk (a short gaussian each).
-        float p = fract((vDistance - time) / period) - 0.5;
-        float pulse = exp(-pow(p * period / 0.22, 2.0)) * (1.0 - smoothstep(0.15, 0.35, a));
-        // Fade in from the door and out at the chair.
-        float ends = smoothstep(0.0, 0.35, vDistance) * smoothstep(0.0, 0.35, routeLength - vDistance);
-        vec3 bright = mix(color, vec3(1.0), 0.45) * hdr;
-        vec3 rgb = mix(color, bright, max(core * 0.85, pulse));
-        rgb = mix(rgb, vec3(hdr * 1.3), pulse * 0.6);
-        float alpha = max(halo, max(core * 0.95, pulse)) * mix(0.35, 1.0, ends);
-        if (alpha < 0.01) discard;
-        gl_FragColor = vec4(rgb, alpha);
-      }
-    `,
+/** The route's look, shared by the line and its markers: its colour, and the pulses' clock. */
+const createLook = () => ({
+  color: uniform(new THREE.Color()),
+  time: uniform(0),
+  routeLength: uniform(1),
+})
+type Look = ReturnType<typeof createLook>
+
+/** The accent, brightened past white (HDR) where the light is strongest. */
+const getBright = (color: Node<"color">) => mix(color, vec3(1), 0.45).mul(HDR)
+
+/** A glowing, see-through material: no tone mapping, so the core really glows. */
+const createGlowMaterial = (
+  { color, alpha }: { color: Node<"vec3">; alpha: Node<"float"> },
+  side: THREE.Side = THREE.FrontSide
+) => {
+  const material = new MeshBasicNodeMaterial({
     transparent: true,
     depthWrite: false,
     toneMapped: false,
-    side: THREE.DoubleSide,
+    side,
   })
+  material.colorNode = color
+  material.opacityNode = alpha
+  material.maskNode = alpha.greaterThanEqual(0.01)
+
+  return material
+}
+
+const createLineMaterial = ({ color, time, routeLength }: Look) => {
+  const along = attribute<"float">("distance", "float")
+  const across = abs(attribute<"float">("across", "float"))
+  // A soft halo across the ribbon, and a slim bright core.
+  const halo = exp(across.mul(across).mul(-7)).mul(0.42)
+  const core = float(1).sub(smoothstep(0.1, 0.2, across))
+  // Pulses of light running toward the desk (a short gaussian each).
+  const phase = fract(along.sub(time).div(PERIOD)).sub(0.5)
+  const pulse = exp(pow(phase.mul(PERIOD / 0.22), 2).negate()).mul(
+    float(1).sub(smoothstep(0.15, 0.35, across))
+  )
+  // Fade in from the door and out at the chair.
+  const ends = smoothstep(0, 0.35, along).mul(smoothstep(0, 0.35, routeLength.sub(along)))
+  const lit = mix(color, getBright(color), max(core.mul(0.85), pulse))
+  const rgb = mix(lit, vec3(HDR * 1.3), pulse.mul(0.6))
+  const alpha = max(halo, max(core.mul(0.95), pulse)).mul(mix(0.35, 1, ends))
+
+  return createGlowMaterial({ color: rgb, alpha }, THREE.DoubleSide)
+}
 
 /** A glowing marker on the floor: a dot (the entrance) or a ring (the desk). */
-const markerMaterial = (isRing: boolean) =>
-  new THREE.ShaderMaterial({
-    uniforms: {
-      color: { value: new THREE.Color() },
-      hdr: { value: HDR },
-      isRing: { value: isRing },
-    },
-    vertexShader: /* glsl */ `
-      varying vec2 vUv;
-      void main() {
-        vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `,
-    fragmentShader: /* glsl */ `
-      uniform vec3 color;
-      uniform float hdr;
-      uniform bool isRing;
-      varying vec2 vUv;
-      void main() {
-        float r = length(vUv - 0.5) * 2.0; // 0 centre … 1 edge
-        float shape = isRing
-          ? 1.0 - smoothstep(0.035, 0.07, abs(r - 0.55))
-          : 1.0 - smoothstep(0.24, 0.3, r);
-        float halo = isRing
-          ? exp(-pow((r - 0.55) / 0.2, 2.0)) * 0.45
-          : exp(-r * r * 5.0) * 0.5;
-        vec3 bright = mix(color, vec3(1.0), 0.45) * hdr;
-        float alpha = max(shape, halo);
-        if (alpha < 0.01) discard;
-        gl_FragColor = vec4(mix(color, bright, shape), alpha);
-      }
-    `,
-    transparent: true,
-    depthWrite: false,
-    toneMapped: false,
-  })
+const createMarkerMaterial = ({ color }: Look, isRing: boolean) => {
+  const fromCentre = length(uv().sub(0.5)).mul(2) // 0 centre … 1 edge
+  const shape = isRing
+    ? float(1).sub(smoothstep(0.035, 0.07, abs(fromCentre.sub(0.55))))
+    : float(1).sub(smoothstep(0.24, 0.3, fromCentre))
+  const halo = isRing
+    ? exp(pow(fromCentre.sub(0.55).div(0.2), 2).negate()).mul(0.45)
+    : exp(fromCentre.mul(fromCentre).mul(-5)).mul(0.5)
+
+  return createGlowMaterial({ color: mix(color, getBright(color), shape), alpha: max(shape, halo) })
+}
 
 /** The app's accent (it follows the colour scheme), read from the page. */
 const accentColor = () =>
@@ -175,9 +162,10 @@ export const RouteLine = () => {
 
   const strip = useMemo(() => points && ribbon(points, WIDTH), [points])
   useEffect(() => () => strip?.geometry.dispose(), [strip])
-  const line = useMemo(lineMaterial, [])
-  const dot = useMemo(() => markerMaterial(false), [])
-  const ring = useMemo(() => markerMaterial(true), [])
+  const look = useMemo(createLook, [])
+  const line = useMemo(() => createLineMaterial(look), [look])
+  const dot = useMemo(() => createMarkerMaterial(look, false), [look])
+  const ring = useMemo(() => createMarkerMaterial(look, true), [look])
   useEffect(
     () => () => {
       line.dispose()
@@ -187,8 +175,8 @@ export const RouteLine = () => {
     [line, dot, ring]
   )
   const accent = accentColor()
-  for (const material of [line, dot, ring]) material.uniforms.color.value.set(accent)
-  if (strip) line.uniforms.routeLength.value = strip.length
+  look.color.value.set(accent)
+  if (strip) look.routeLength.value = strip.length
 
   // Pulses run (and the desk's ring breathes) for a while after a way is shown.
   const ringMesh = useRef<THREE.Mesh>(null)
@@ -202,10 +190,8 @@ export const RouteLine = () => {
 
     flowing.current += delta
     const isDone = flowing.current >= FLOW_SECONDS
-    line.uniforms.time.value += delta * SPEED
-    ringMesh.current?.scale.setScalar(
-      isDone ? 1 : 1 + 0.12 * Math.sin(line.uniforms.time.value * 3.5)
-    )
+    look.time.value += delta * SPEED
+    ringMesh.current?.scale.setScalar(isDone ? 1 : 1 + 0.12 * Math.sin(look.time.value * 3.5))
     invalidate()
   })
 
