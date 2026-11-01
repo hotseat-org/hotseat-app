@@ -1,18 +1,30 @@
 import { createContext, useContext } from "react"
+import { BufferAttribute, Vector4, type BufferGeometry, type Vector3 } from "three"
 import {
-  BufferAttribute,
-  Vector4,
-  type BufferGeometry,
-  type Vector3,
-  type WebGLProgramParametersWithUniforms,
-} from "three"
+  abs,
+  attribute,
+  dot,
+  float,
+  frontFacing,
+  max,
+  mix,
+  modelWorldMatrix,
+  normalize,
+  positionWorld,
+  select,
+  smoothstep,
+  uniformArray,
+  vec2,
+  vec4,
+} from "three/tsl"
+import type { Node } from "three/webgpu"
 import { WALL } from "../objects/dimensions"
 import { shownFloorUniform } from "../objects/floorHeight"
 
 /**
  * The wall cutaway, done on the GPU: walls, posts, doors, windows and wall
- * items share a small shader patch that reads a few cuts from one shared
- * uniform and drops what's above each cut's height. Moving the cutaway only
+ * items share a few shader nodes (TSL) that read a few cuts from one shared
+ * uniform and drop what's above each cut's height. Moving the cutaway only
  * updates those numbers (see WallXray) — no re-render, no geometry rebuild, no
  * material swap — so it keeps up with the fastest cursor.
  */
@@ -29,6 +41,8 @@ export const MAX_CUTS = 4
 export const cutawayUniform = {
   value: Array.from({ length: MAX_CUTS }, () => new Vector4()),
 }
+/** The same cuts, as the shader reads them (the very same vectors, sent every frame). */
+const cuts = uniformArray<"vec4">(cutawayUniform.value, "vec4")
 
 /** Fully cut within FULL of the centre (m), easing back up to full height by REACH. */
 const FULL = 1.25
@@ -40,7 +54,7 @@ const CROSS_REACH = 3
 const CUT_HEIGHT = 0.3
 /** Clip height when not cut — safely above everything wall-mounted. */
 const CUT_TOP = WALL.height + 0.5
-/** The cut-open top's light: a share of the ambient (no sun, so no shadows). */
+/** The cut-open top's light: the ambient, this much stronger (no sun, so no shadows). */
 const CAP_LIGHT = 1.6
 
 /**
@@ -56,22 +70,30 @@ export const CUT_BAND = { wall: 0.05, item: WALL.depth / 2 + 0.4 }
 export const CUT_DIRECTION = { x: 0, z: 1, rising: 2, falling: 3 } as const
 type CutDirection = (typeof CUT_DIRECTION)[keyof typeof CUT_DIRECTION]
 
+/** Each direction's unit vectors on the floor (along, across) (by CUT_DIRECTION). */
+const DIAGONAL = Math.SQRT1_2
+const AXES: Record<"along" | "across", [number, number][]> = {
+  along: [
+    [1, 0],
+    [0, 1],
+    [DIAGONAL, DIAGONAL],
+    [DIAGONAL, -DIAGONAL],
+  ],
+  across: [
+    [0, 1],
+    [1, 0],
+    [-DIAGONAL, DIAGONAL],
+    [DIAGONAL, DIAGONAL],
+  ],
+}
+
 /** A direction's unit vectors on the floor (x, z): along the wall, and across it. */
 export const cutAxes = (
   direction: number
-): { along: [number, number]; across: [number, number] } => {
-  const diagonal = Math.SQRT1_2
-  switch (direction) {
-    case CUT_DIRECTION.z:
-      return { along: [0, 1], across: [1, 0] }
-    case CUT_DIRECTION.rising:
-      return { along: [diagonal, diagonal], across: [-diagonal, diagonal] }
-    case CUT_DIRECTION.falling:
-      return { along: [diagonal, -diagonal], across: [diagonal, diagonal] }
-    default:
-      return { along: [1, 0], across: [0, 1] }
-  }
-}
+): { along: [number, number]; across: [number, number] } => ({
+  along: AXES.along[direction] ?? AXES.along[CUT_DIRECTION.x],
+  across: AXES.across[direction] ?? AXES.across[CUT_DIRECTION.x],
+})
 
 /** The direction a piece runs, from its local X axis in the world (x, z). */
 export const cutDirectionOf = (directionX: number, directionZ: number): CutDirection => {
@@ -84,132 +106,117 @@ export const cutDirectionOf = (directionX: number, directionZ: number): CutDirec
   return x * z > 0 ? CUT_DIRECTION.rising : CUT_DIRECTION.falling
 }
 
-/** The same in GLSL, and a direction's axes. */
-const CUT_DIRECTION_GLSL = /* glsl */ `
-  float cutDirectionOf(vec2 d) {
-    d = normalize(d);
-    if (abs(d.x) > 0.92) return 0.0;
-    if (abs(d.y) > 0.92) return 1.0;
-    return d.x * d.y > 0.0 ? 2.0 : 3.0;
-  }`
-const CUT_AXES_GLSL = /* glsl */ `
-  void cutAxes(float direction, out vec2 along, out vec2 across) {
-    float h = 0.70710678;
-    if (direction < 0.5) { along = vec2(1.0, 0.0); across = vec2(0.0, 1.0); }
-    else if (direction < 1.5) { along = vec2(0.0, 1.0); across = vec2(1.0, 0.0); }
-    else if (direction < 2.5) { along = vec2(h, h); across = vec2(-h, h); }
-    else { along = vec2(h, -h); across = vec2(h, h); }
-  }`
+/** A direction (CUT_DIRECTION) from a way along the floor (x, z), in the shader. */
+const getCutDirection = (direction: Node<"vec2">) => {
+  const unit = normalize(direction)
 
-const glsl = (value: number) => value.toFixed(4)
+  return select(
+    abs(unit.x).greaterThan(0.92),
+    float(CUT_DIRECTION.x),
+    select(
+      abs(unit.y).greaterThan(0.92),
+      float(CUT_DIRECTION.z),
+      select(
+        unit.x.mul(unit.y).greaterThan(0),
+        float(CUT_DIRECTION.rising),
+        float(CUT_DIRECTION.falling)
+      )
+    )
+  )
+}
+
+/** The vector for a direction (CUT_DIRECTION), in the shader. */
+const pickByDirection = (direction: Node<"float">, [x, z, rising, falling]: [number, number][]) =>
+  select(
+    direction.lessThan(0.5),
+    vec2(...x),
+    select(
+      direction.lessThan(1.5),
+      vec2(...z),
+      select(direction.lessThan(2.5), vec2(...rising), vec2(...falling))
+    )
+  )
+
+/** A direction's unit vectors on the floor (as cutAxes), in the shader. */
+const getCutAxes = (direction: Node<"float">) => ({
+  along: pickByDirection(direction, AXES.along),
+  across: pickByDirection(direction, AXES.across),
+})
 
 /**
- * Where each piece is anchored and which way it runs: from its own transform
+ * Where a piece is anchored and which way it runs: from its own transform
  * (one piece per mesh) or, in a merged mesh holding many, from per-vertex
  * attributes (see setCutAttributes).
  */
-const ANCHOR_FROM_MATRIX = /* glsl */ `
-  vCutAnchor = (modelMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
-  // Which way the piece runs: its local X (along its wall) in the world.
-  vCutAxis = cutDirectionOf((modelMatrix * vec4(1.0, 0.0, 0.0, 0.0)).xz);`
-const ANCHOR_FROM_ATTRIBUTES = /* glsl */ `
-  vCutAnchor = (modelMatrix * vec4(cutAnchor, 1.0)).xyz;
-  vCutAxis = cutAxis;`
+const getAnchor = (isMerged: boolean) =>
+  isMerged
+    ? {
+        position: modelWorldMatrix.mul(vec4(attribute<"vec3">("cutAnchor", "vec3"), 1)).xyz,
+        direction: attribute<"float">("cutAxis", "float"),
+      }
+    : {
+        position: modelWorldMatrix.mul(vec4(0, 0, 0, 1)).xyz,
+        // Which way the piece runs: its local X (along its wall) in the world.
+        direction: getCutDirection(modelWorldMatrix.mul(vec4(1, 0, 0, 0)).xz),
+      }
 
-const createPatch =
-  (band: number, isMerged: boolean) => (shader: WebGLProgramParametersWithUniforms) => {
-    shader.uniforms.cutaways = cutawayUniform
-    shader.uniforms.cutawayFloor = shownFloorUniform
-    shader.vertexShader = shader.vertexShader
-      .replace(
-        "#include <common>",
-        `#include <common>
-      varying vec3 vCutWorld;
-      varying vec3 vCutAnchor;
-      varying float vCutAxis;
-      ${isMerged ? "attribute vec3 cutAnchor;\nattribute float cutAxis;" : CUT_DIRECTION_GLSL}`
-      )
-      .replace(
-        "#include <project_vertex>",
-        `#include <project_vertex>
-      vCutWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;
-      ${isMerged ? ANCHOR_FROM_ATTRIBUTES : ANCHOR_FROM_MATRIX}`
-      )
-    shader.fragmentShader = shader.fragmentShader
-      .replace(
-        "#include <common>",
-        /* glsl */ `#include <common>
-      uniform vec4 cutaways[${MAX_CUTS}];
-      uniform float cutawayFloor;
-      varying vec3 vCutWorld;
-      varying vec3 vCutAnchor;
-      varying float vCutAxis;
-      ${CUT_AXES_GLSL}
-      float cutawayDepth(vec3 p) {
-        float depth = 0.0;
-        for (int i = 0; i < ${MAX_CUTS}; i++) {
-          vec4 cut = cutaways[i];
-          if (cut.w <= 0.0) continue;
-          vec2 alongAxis;
-          vec2 acrossAxis;
-          cutAxes(cut.x, alongAxis, acrossAxis);
-          float along = dot(p.xz, alongAxis);
-          float across = dot(p.xz, acrossAxis);
-          float cutAlong = 1.0 - smoothstep(${glsl(FULL)}, ${glsl(REACH)}, abs(along - cut.z));
-          float k;
-          if (abs(vCutAxis - cut.x) < 0.5) {
-            // Along the cut wall: on its line (by the anchor), or not at all.
-            float anchorAcross = dot(vCutAnchor.xz, acrossAxis);
-            k = abs(anchorAcross - cut.y) <= ${glsl(band)} ? cutAlong : 0.0;
-          } else {
-            // Crossing it: cut down at the junction, back up along its length.
-            k = cutAlong * (1.0 - smoothstep(${glsl(CROSS_FULL)}, ${glsl(CROSS_REACH)}, abs(across - cut.y)));
-          }
-          depth = max(depth, cut.w * k);
-        }
-        return depth;
-      }`
-      )
-      .replace(
-        "#include <clipping_planes_fragment>",
-        /* glsl */ `#include <clipping_planes_fragment>
-      float cutDepth = cutawayDepth(vCutWorld);
-      // Above the shown floor: a floor arriving a storey up isn't sliced at
-      // the ground floor's wall height (floors below never are).
-      float cutHeight = vCutWorld.y - cutawayFloor;
-      if (cutHeight > mix(${glsl(CUT_TOP)}, ${glsl(CUT_HEIGHT)}, cutDepth)) discard;
-      // Inner faces only show where it's cut open.
-      if (!gl_FrontFacing && cutDepth < 0.001) discard;`
-      )
-      .replace(
-        "#include <aomap_fragment>",
-        /* glsl */ `#include <aomap_fragment>
-      // The cut-open inside: lit by the ambient alone. The (cached) shadow
-      // maps still hold the uncut wall, which would stripe it dark.
-      if (!gl_FrontFacing) {
-        reflectedLight.directDiffuse = reflectedLight.indirectDiffuse * ${glsl(CAP_LIGHT - 1)};
-        reflectedLight.directSpecular = vec3(0.0);
-      }`
-      )
+/** How far this pixel is cut down (0…1), by the deepest cut it's under. */
+const getCutDepth = (band: number, isMerged: boolean) => {
+  const anchor = getAnchor(isMerged)
+  let depth: Node<"float"> = float(0)
+  for (let i = 0; i < MAX_CUTS; i++) {
+    const cut = cuts.element(i)
+    const axes = getCutAxes(cut.x)
+    const along = dot(positionWorld.xz, axes.along)
+    const across = dot(positionWorld.xz, axes.across)
+    const cutAlong = float(1).sub(smoothstep(FULL, REACH, abs(along.sub(cut.z))))
+    // Along the cut wall: on its line (by the anchor), or not at all.
+    const anchorAcross = dot(anchor.position.xz, axes.across)
+    const onItsLine = select(abs(anchorAcross.sub(cut.y)).lessThanEqual(band), cutAlong, float(0))
+    // Crossing it: cut down at the junction, back up along its length.
+    const crossing = cutAlong.mul(
+      float(1).sub(smoothstep(CROSS_FULL, CROSS_REACH, abs(across.sub(cut.y))))
+    )
+    const amount = select(abs(anchor.direction.sub(cut.x)).lessThan(0.5), onItsLine, crossing)
+    depth = max(depth, cut.w.mul(amount))
   }
 
-/** The shader patch for a surface the cutaway slices, and its program key. */
-const createCutawayPatch = (band: number, isMerged = false) => ({
-  patch: createPatch(band, isMerged),
-  key: `cutaway-${band}${isMerged ? "-merged" : ""}`,
-})
+  return depth
+}
+
+/**
+ * The cutaway's nodes for a surface it slices: which pixels stay (`mask`), and
+ * how its cut-open inside is lit (`isCutInside`: see surfaceShader.ts).
+ */
+const createCutaway = (band: number, isMerged = false) => {
+  const depth = getCutDepth(band, isMerged)
+  // Above the shown floor: a floor arriving a storey up isn't sliced at the
+  // ground floor's wall height (floors below never are).
+  const height = positionWorld.y.sub(shownFloorUniform)
+  const isBelowCut = height.lessThanEqual(mix(CUT_TOP, CUT_HEIGHT, depth))
+
+  return {
+    // Inner faces only show where it's cut open.
+    mask: isBelowCut.and(frontFacing.or(depth.greaterThanEqual(0.001))),
+    isCutInside: frontFacing.not(),
+  }
+}
+
+/** The cut-open top's light: a share of the ambient (no sun, so no shadows). */
+export const CUT_INSIDE_LIGHT = CAP_LIGHT
+
 /**
  * "wall" / "item": the band (see CUT_BAND). "merged…": many pieces in one
  * mesh, each vertex carrying its piece's anchor and direction. (Applied with
  * the rest of a surface's shader — see objects/surfaceShader.ts.)
  */
-export const CUTAWAY_PATCHES = {
-  wall: createCutawayPatch(CUT_BAND.wall),
-  item: createCutawayPatch(CUT_BAND.item),
-  mergedWall: createCutawayPatch(CUT_BAND.wall, true),
-  mergedItem: createCutawayPatch(CUT_BAND.item, true),
+export const CUTAWAYS = {
+  wall: createCutaway(CUT_BAND.wall),
+  item: createCutaway(CUT_BAND.item),
+  mergedWall: createCutaway(CUT_BAND.wall, true),
+  mergedItem: createCutaway(CUT_BAND.item, true),
 }
-export type CutawayKind = keyof typeof CUTAWAY_PATCHES
+export type CutawayKind = keyof typeof CUTAWAYS
 /** The merged variant of a single-piece kind. */
 export const MERGED_KIND = { wall: "mergedWall", item: "mergedItem" } as const
 

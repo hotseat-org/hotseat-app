@@ -4,6 +4,7 @@ import { useCutaway } from "../walls/cutaway"
 import { STOREY } from "./dimensions"
 import { useFloorPlace } from "./floorHeight"
 import { getSurfaceShader } from "./surfaceShader"
+import "../scene/nodeMaterials"
 
 /**
  * How the surrounding subtree should render its materials:
@@ -96,7 +97,7 @@ export const Surface = ({
   const opacity = (ghost === "translucent" ? 0.55 : 1) * baseOpacity
 
   return (
-    <meshStandardMaterial
+    <meshStandardNodeMaterial
       color={color}
       roughness={roughness}
       metalness={metalness}
@@ -107,16 +108,15 @@ export const Surface = ({
       opacity={translucent ? opacity : 1}
       depthWrite={!translucent}
       {...getDepthOffset(recess, floorPlace.base)}
-      // Contact shading (by its height on its floor), and the wall cutaway when it's
-      // sliced by one (inner faces then show where it's cut open) — see
-      // surfaceShader.ts. The
-      // cutaway's kind is marked, so the office-wide batch merges it with its like.
+      // Contact shading (by its height on its floor), and the wall cutaway when
+      // it's sliced by one (inner faces then show where it's cut open) — see
+      // surfaceShader.ts. The cutaway's kind is marked, so the office-wide
+      // batch merges it with its like.
       {...getSurfaceShader(cutaway, floorPlace)}
       {...(cutaway && { side: DoubleSide, userData: { cutaway } })}
-      // Never disposed with its piece: three.js frees a shader program once no
-      // material uses it, so a floor's furniture going (another floor shown)
-      // freed them all — and coming back compiled them all again, a stall
-      // every switch. A material holds nothing on the GPU itself.
+      // Never disposed with its piece: three.js frees a shader once no material
+      // uses it, so a floor's furniture going (another floor shown) freed them
+      // all — and coming back compiled them all again, a stall every switch.
       dispose={null}
     />
   )

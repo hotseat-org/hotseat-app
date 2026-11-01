@@ -3,9 +3,10 @@ import { useEffect, useMemo } from "react"
 import * as THREE from "three"
 import { useSurfaces } from "../scene/sceneTheme"
 import { BUILD_HALF, GRID } from "../types"
+import { abs, float, fract, fwidth, min, positionWorld, uniform } from "three/tsl"
+import { MeshBasicNodeMaterial } from "three/webgpu"
 import {
-  BUILD_AREA_GLSL,
-  createBuildAreaUniforms,
+  createBuildArea,
   hideBuildCursor,
   moveBuildCursor,
   useBuildArea,
@@ -95,46 +96,24 @@ export const Ground = ({
  */
 const BuildGrid = ({ color }: { color: string }) => {
   const applyBuildArea = useBuildArea()
-  const material = useMemo(
-    () =>
-      new THREE.ShaderMaterial({
-        uniforms: {
-          ...createBuildAreaUniforms(),
-          color: { value: new THREE.Color() },
-          cell: { value: GRID },
-        },
-        vertexShader: /* glsl */ `
-          varying vec3 vWorld;
-          void main() {
-            vec4 world = modelMatrix * vec4(position, 1.0);
-            vWorld = world.xyz;
-            gl_Position = projectionMatrix * viewMatrix * world;
-          }
-        `,
-        fragmentShader: /* glsl */ `
-          uniform vec3 color;
-          uniform float cell;
-          varying vec3 vWorld;
-          ${BUILD_AREA_GLSL}
-          void main() {
-            vec2 r = vWorld.xz / cell;
-            vec2 g = abs(fract(r - 0.5) - 0.5) / fwidth(r);
-            float line = 1.0 - min(min(g.x, g.y) + 0.1, 1.0);
-            float a = line * buildArea(vWorld.xz);
-            if (a <= 0.004) discard;
-            gl_FragColor = vec4(color, a);
-            #include <tonemapping_fragment>
-            #include <colorspace_fragment>
-          }
-        `,
-        transparent: true,
-        depthWrite: false,
-      }),
-    []
-  )
+  const { material, area, lineColor } = useMemo(() => {
+    const buildArea = createBuildArea()
+    const tint = uniform(new THREE.Color())
+    // A line on every cell edge, a pixel wide at any zoom.
+    const cells = positionWorld.xz.div(GRID)
+    const toEdge = abs(fract(cells.sub(0.5)).sub(0.5)).div(fwidth(cells))
+    const line = float(1).sub(min(min(toEdge.x, toEdge.y).add(0.1), 1))
+    const alpha = line.mul(buildArea.getArea(positionWorld.xz))
+    const gridMaterial = new MeshBasicNodeMaterial({ transparent: true, depthWrite: false })
+    gridMaterial.colorNode = tint
+    gridMaterial.opacityNode = alpha
+    gridMaterial.maskNode = alpha.greaterThan(0.004)
+
+    return { material: gridMaterial, area: buildArea, lineColor: tint }
+  }, [])
   useEffect(() => () => material.dispose(), [material])
-  material.uniforms.color.value.set(color)
-  applyBuildArea(material.uniforms)
+  lineColor.value.set(color)
+  applyBuildArea(area)
 
   return (
     <mesh

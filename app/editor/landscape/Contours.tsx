@@ -1,11 +1,35 @@
 import { useFrame, useThree } from "@react-three/fiber"
 import { useContext, useEffect, useMemo, useRef, useState } from "react"
 import * as THREE from "three"
+import {
+  attribute,
+  cameraProjectionMatrix,
+  cameraViewMatrix,
+  clamp,
+  dot,
+  float,
+  instancedBufferAttribute,
+  length,
+  max,
+  modelWorldMatrix,
+  normalize,
+  positionLocal,
+  positionWorld,
+  pow,
+  select,
+  uniform,
+  uv,
+  varying,
+  vec2,
+  vec3,
+  vec4,
+} from "three/tsl"
+import { MeshBasicNodeMaterial, PointsNodeMaterial, type Node } from "three/webgpu"
 import { DaylightContext } from "../lighting/daylight"
 import { useSurfaces } from "../scene/sceneTheme"
 import { useEditorStore } from "../store"
 import type { SceneObject } from "../types"
-import { BUILD_AREA_GLSL, createBuildAreaUniforms, useBuildArea } from "../building/buildArea"
+import { createBuildArea, useBuildArea } from "../building/buildArea"
 import { getViewCentre } from "../camera/viewCentre"
 import { TILE, tilesCovering, useLandscape, type ContourTile } from "./terrain"
 
@@ -22,6 +46,41 @@ const NIGHT = new THREE.Color("#2a2f3a")
 /** Contour line width, in device pixels. */
 const LINE_WIDTH = 1
 
+/** A point in clip space, from a point in the mesh's own space. */
+const toClip = (point: Node<"vec3">) =>
+  cameraProjectionMatrix.mul(cameraViewMatrix).mul(modelWorldMatrix).mul(vec4(point, 1))
+
+/**
+ * The land's look (TSL): shared by every tile — its colours, the build area
+ * the lines and stars give way to while editing, and the stars' amount.
+ * Lines: one material for every tile; stars: one per tile (each its own
+ * instances), all reading these same values.
+ */
+const createLook = () => {
+  const area = createBuildArea()
+  const isEditing = uniform(0)
+  const minorColor = uniform(new THREE.Color())
+  const majorColor = uniform(new THREE.Color())
+  /** The drawing buffer's size (device pixels). */
+  const resolution = uniform(new THREE.Vector2(1, 1))
+  const starAmount = uniform(0)
+  /** Where it's seen: 1, or giving way to the build area while editing. */
+  const getShown = () => select(isEditing.greaterThan(0.5), float(1).sub(area.getArea(positionWorld.xz)), float(1))
+
+  return {
+    area,
+    isEditing,
+    minorColor,
+    majorColor,
+    resolution,
+    starAmount,
+    lines: createLinesMaterial({ minorColor, majorColor, resolution, shown: getShown() }),
+    createStarsMaterial: (stars: StarInstances) =>
+      createStarsMaterial(stars, { amount: starAmount, shown: getShown() }),
+  }
+}
+type Look = ReturnType<typeof createLook>
+
 /**
  * Plain coloured lines that, while editing, give way to the build area (where
  * the grid shows, see buildArea.ts) and fade back in beyond it.
@@ -30,121 +89,90 @@ const LINE_WIDTH = 1
  * line: its shader works out how much of each pixel the line covers, so the
  * edges are smooth on any GPU and browser, with or without multisampling.
  */
-const lineMaterial = () =>
-  new THREE.ShaderMaterial({
-    uniforms: {
-      ...createBuildAreaUniforms(),
-      minorColor: { value: new THREE.Color() },
-      majorColor: { value: new THREE.Color() },
-      isEditing: { value: false },
-      /** The drawing buffer's size (device pixels). */
-      resolution: { value: new THREE.Vector2(1, 1) },
-    },
-    vertexShader: /* glsl */ `
-      attribute vec3 other;
-      attribute float side;
-      attribute float isEnd;
-      attribute float isMajor;
-      varying float vMajor;
-      uniform vec2 resolution;
-      varying vec3 vWorld;
-      varying float vEdge;
-      void main() {
-        vec4 world = modelMatrix * vec4(position, 1.0);
-        vWorld = world.xyz;
-        vec4 clip = projectionMatrix * viewMatrix * world;
-        vec4 otherClip = projectionMatrix * viewMatrix * modelMatrix * vec4(other, 1.0);
-        // Both ends on screen (px), then out sideways by half the width plus a
-        // pixel for the smoothed edge, and a half pixel past the end so
-        // consecutive segments join without a gap.
-        vec2 halfSize = 0.5 * resolution;
-        vec2 here = clip.xy / clip.w * halfSize;
-        vec2 there = otherClip.xy / otherClip.w * halfSize;
-        // Start → end, whichever end this corner is at.
-        vec2 along = (there - here) * (isEnd > 0.5 ? -1.0 : 1.0);
-        along = dot(along, along) > 0.0 ? normalize(along) : vec2(1.0, 0.0);
-        float outward = isEnd > 0.5 ? 0.5 : -0.5;
-        float reach = ${LINE_WIDTH.toFixed(1)} * 0.5 + 1.0;
-        vec2 offset = vec2(-along.y, along.x) * side * reach + along * outward;
-        clip.xy += offset / halfSize * clip.w;
-        vEdge = side * reach;
-        vMajor = isMajor;
-        gl_Position = clip;
-      }
-    `,
-    fragmentShader: /* glsl */ `
-      uniform vec3 minorColor;
-      uniform vec3 majorColor;
-      uniform bool isEditing;
-      varying vec3 vWorld;
-      varying float vEdge;
-      varying float vMajor;
-      ${BUILD_AREA_GLSL}
-      void main() {
-        // How much of this pixel the line covers (px from its centre line).
-        float coverage = clamp(${LINE_WIDTH.toFixed(1)} * 0.5 + 0.5 - abs(vEdge), 0.0, 1.0);
-        float a = coverage * (isEditing ? 1.0 - buildArea(vWorld.xz) : 1.0);
-        if (a <= 0.01) discard;
-        gl_FragColor = vec4(vMajor > 0.5 ? majorColor : minorColor, a);
-        #include <tonemapping_fragment>
-        #include <colorspace_fragment>
-      }
-    `,
+const createLinesMaterial = ({
+  minorColor,
+  majorColor,
+  resolution,
+  shown,
+}: {
+  minorColor: Node<"color">
+  majorColor: Node<"color">
+  resolution: Node<"vec2">
+  shown: Node<"float">
+}) => {
+  const isEnd = attribute<"float">("isEnd", "float").greaterThan(0.5)
+  const side = attribute<"float">("side", "float")
+  const clip = toClip(positionLocal)
+  const otherClip = toClip(attribute<"vec3">("other", "vec3"))
+  // Both ends on screen (px), then out sideways by half the width plus a pixel
+  // for the smoothed edge, and a half pixel past the end so consecutive
+  // segments join without a gap.
+  const halfSize = resolution.mul(0.5)
+  const here = clip.xy.div(clip.w).mul(halfSize)
+  const there = otherClip.xy.div(otherClip.w).mul(halfSize)
+  // Start → end, whichever end this corner is at.
+  const towards = there.sub(here).mul(select(isEnd, float(-1), float(1)))
+  const along = select(dot(towards, towards).greaterThan(0), normalize(towards), vec2(1, 0))
+  const reach = LINE_WIDTH * 0.5 + 1
+  const offset = vec2(along.y.negate(), along.x)
+    .mul(side)
+    .mul(reach)
+    .add(along.mul(select(isEnd, float(0.5), float(-0.5))))
+  // How far this corner is from the centre line (px): the edge's smoothing.
+  const edge = varying(side.mul(reach))
+  const isMajor = varying(attribute<"float">("isMajor", "float")).greaterThan(0.5)
+  // How much of this pixel the line covers.
+  const coverage = clamp(float(LINE_WIDTH * 0.5 + 0.5).sub(edge.abs()), 0, 1)
+  const alpha = coverage.mul(shown)
+
+  const material = new MeshBasicNodeMaterial({
     transparent: true,
     depthWrite: false,
     side: THREE.DoubleSide,
   })
+  material.vertexNode = vec4(clip.xy.add(offset.div(halfSize).mul(clip.w)), clip.zw)
+  material.colorNode = select(isMajor, majorColor, minorColor)
+  material.opacityNode = alpha
+  material.maskNode = alpha.greaterThan(0.01)
+
+  return material
+}
+
+/** A tile's stars, one instance each: where it is, and how bright. */
+interface StarInstances {
+  positions: THREE.InstancedBufferAttribute
+  brightness: THREE.InstancedBufferAttribute
+  count: number
+}
+
+const STAR_COLOR = new THREE.Color("#f4f1ff")
 
 /**
- * Stars at night: soft round points, a few pixels across at any zoom, that
- * fade in with the dark (`amount`) and, like the lines, give way to the build area.
+ * Stars at night: soft round dots, a few pixels across at any zoom, that
+ * fade in with the dark (`amount`) and, like the lines, give way to the build
+ * area. Drawn as instanced sprites (WebGPU's points are a pixel wide).
  */
-const starMaterial = () =>
-  new THREE.ShaderMaterial({
-    uniforms: {
-      ...createBuildAreaUniforms(),
-      color: { value: new THREE.Color("#f4f1ff") },
-      amount: { value: 0 },
-      pixelRatio: { value: 1 },
-      isEditing: { value: false },
-    },
-    vertexShader: /* glsl */ `
-      attribute float brightness;
-      uniform float pixelRatio;
-      varying vec3 vWorld;
-      varying float vBrightness;
-      void main() {
-        vec4 world = modelMatrix * vec4(position, 1.0);
-        vWorld = world.xyz;
-        vBrightness = brightness;
-        gl_PointSize = (2.0 + brightness * 3.5) * pixelRatio;
-        gl_Position = projectionMatrix * viewMatrix * world;
-      }
-    `,
-    fragmentShader: /* glsl */ `
-      uniform vec3 color;
-      uniform float amount;
-      uniform bool isEditing;
-      varying vec3 vWorld;
-      varying float vBrightness;
-      ${BUILD_AREA_GLSL}
-      void main() {
-        // A soft dot: bright core, glowing edge.
-        float r = length(gl_PointCoord - 0.5) * 2.0;
-        float glow = pow(max(0.0, 1.0 - r), 2.2);
-        float a = glow * vBrightness * amount;
-        if (isEditing) a *= 1.0 - buildArea(vWorld.xz);
-        if (a <= 0.01) discard;
-        gl_FragColor = vec4(color, a);
-        #include <tonemapping_fragment>
-        #include <colorspace_fragment>
-      }
-    `,
-    transparent: true,
-    depthWrite: false,
-  })
+const createStarsMaterial = (
+  stars: StarInstances,
+  { amount, shown }: { amount: Node<"float">; shown: Node<"float"> }
+) => {
+  const brightness = instancedBufferAttribute<"float">(stars.brightness, "float")
+  // A soft dot: bright core, glowing edge.
+  const fromCentre = length(uv().sub(0.5)).mul(2)
+  const glow = pow(max(float(0), float(1).sub(fromCentre)), 2.2)
+  const alpha = glow.mul(brightness).mul(amount).mul(shown)
 
-const starsGeometry = (stars: Float32Array) => {
+  const material = new PointsNodeMaterial({ transparent: true, depthWrite: false })
+  material.positionNode = instancedBufferAttribute<"vec3">(stars.positions, "vec3")
+  material.sizeNode = brightness.mul(3.5).add(2)
+  material.colorNode = vec3(STAR_COLOR.r, STAR_COLOR.g, STAR_COLOR.b)
+  material.opacityNode = alpha
+  material.maskNode = alpha.greaterThan(0.01)
+
+  return material
+}
+
+const getStarInstances = (stars: Float32Array): StarInstances => {
   const count = stars.length / 3
   const positions = new Float32Array(count * 3)
   const brightness = new Float32Array(count)
@@ -154,11 +182,12 @@ const starsGeometry = (stars: Float32Array) => {
     positions[i * 3 + 2] = stars[i * 3 + 1]
     brightness[i] = stars[i * 3 + 2]
   }
-  const geometry = new THREE.BufferGeometry()
-  geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3))
-  geometry.setAttribute("brightness", new THREE.BufferAttribute(brightness, 1))
 
-  return geometry
+  return {
+    positions: new THREE.InstancedBufferAttribute(positions, 3),
+    brightness: new THREE.InstancedBufferAttribute(brightness, 1),
+    count,
+  }
 }
 
 /**
@@ -254,15 +283,21 @@ const plateauGeometry = (loops: [number, number][][]) => {
   return geometry
 }
 
-/** One tile's lines as geometry, kept while it's in reach. */
+/** One tile's lines as geometry, and its stars, kept while it's in reach. */
 type TileGeometry = {
   lines: THREE.BufferGeometry
-  stars: THREE.BufferGeometry
+  stars: PointsNodeMaterial
+  starCount: number
 }
-const toGeometry = (tile: ContourTile): TileGeometry => ({
-  lines: segmentsGeometry(tile.minor, tile.major),
-  stars: starsGeometry(tile.stars),
-})
+const toGeometry = (tile: ContourTile, look: Look): TileGeometry => {
+  const stars = getStarInstances(tile.stars)
+
+  return {
+    lines: segmentsGeometry(tile.minor, tile.major),
+    stars: look.createStarsMaterial(stars),
+    starCount: stars.count,
+  }
+}
 const disposeGeometry = (geometry: TileGeometry) => {
   geometry.lines.dispose()
   geometry.stars.dispose()
@@ -292,16 +327,13 @@ export const Contours = ({
 
   // The tile under the view centre: re-chosen as the camera pans.
   const [centreTile, setCentreTile] = useState<[number, number]>([0, 0])
-  const linesMaterial = useMemo(lineMaterial, [])
-  const starsMaterial = useMemo(starMaterial, [])
+  const look = useMemo(createLook, [])
   const pixelRatio = useThree((state) => state.viewport.dpr)
   const size = useThree((state) => state.size)
   const applyBuildArea = useBuildArea()
-  for (const material of [linesMaterial, starsMaterial]) {
-    material.uniforms.isEditing.value = isEditing
-    applyBuildArea(material.uniforms)
-  }
-  linesMaterial.uniforms.resolution.value.set(size.width * pixelRatio, size.height * pixelRatio)
+  look.isEditing.value = isEditing ? 1 : 0
+  applyBuildArea(look.area)
+  look.resolution.value.set(size.width * pixelRatio, size.height * pixelRatio)
   useFrame(({ camera }) => {
     if (!getViewCentre(camera, viewCentre)) return
 
@@ -327,7 +359,7 @@ export const Contours = ({
     const key = `${tileX},${tileZ}`
     let geometry = geometries.current.get(key)
     if (!geometry) {
-      geometry = toGeometry(land.tile(tileX, tileZ))
+      geometry = toGeometry(land.tile(tileX, tileZ), look)
       geometries.current.set(key, geometry)
     }
 
@@ -342,25 +374,18 @@ export const Contours = ({
         geometries.current.delete(key)
       }
   })
-  useEffect(
-    () => () => {
-      linesMaterial.dispose()
-      starsMaterial.dispose()
-    },
-    [linesMaterial, starsMaterial]
-  )
+  useEffect(() => () => look.lines.dispose(), [look])
 
   const plateau = useMemo(() => plateauGeometry(land.plateau), [land])
   useEffect(() => () => plateau.dispose(), [plateau])
 
   // Lines aren't lit: in a theme whose night gets dark, dim them with the dusk.
   const dim = surfaces.nightDepth > 0 ? Math.min(1, nightness * 0.85) : 0
-  linesMaterial.uniforms.minorColor.value.set(surfaces.contour.minor).lerp(NIGHT, dim)
-  linesMaterial.uniforms.majorColor.value.set(surfaces.contour.major).lerp(NIGHT, dim)
+  look.minorColor.value.set(surfaces.contour.minor).lerp(NIGHT, dim)
+  look.majorColor.value.set(surfaces.contour.major).lerp(NIGHT, dim)
   // Stars come out once it's properly dark (none by day — not even drawn).
   const starAmount = THREE.MathUtils.smoothstep(nightness, 0.55, 0.95)
-  starsMaterial.uniforms.amount.value = starAmount
-  starsMaterial.uniforms.pixelRatio.value = pixelRatio
+  look.starAmount.value = starAmount
 
   return (
     <group>
@@ -382,11 +407,12 @@ export const Contours = ({
       </mesh>
       {tiles.map((tile) => (
         <group key={tile.key}>
-          <mesh geometry={tile.lines} material={linesMaterial} raycast={() => null} />
-          <points
-            geometry={tile.stars}
-            material={starsMaterial}
-            visible={starAmount > 0}
+          <mesh geometry={tile.lines} material={look.lines} raycast={() => null} />
+          <sprite
+            material={tile.stars}
+            count={tile.starCount}
+            visible={starAmount > 0 && tile.starCount > 0}
+            frustumCulled={false}
             raycast={() => null}
           />
         </group>

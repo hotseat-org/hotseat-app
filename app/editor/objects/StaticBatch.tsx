@@ -9,12 +9,14 @@ import {
   type Group,
   type Material,
   type Mesh,
+  type MeshStandardMaterial,
 } from "three"
+import type { MeshStandardNodeMaterial } from "three/webgpu"
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js"
 import { markShadowsDirty } from "../lighting/shadows"
 import { MERGED_KIND, cutDirectionOf, setCutAttributes } from "../walls/cutaway"
 import { useFloorPlace } from "./floorHeight"
-import { getSurfaceShader } from "./surfaceShader"
+import { copyAsNodeMaterial, getSurfaceShader } from "./surfaceShader"
 import { BATCH_PART, BatchContext, surfaceKey } from "./batching"
 
 interface Part {
@@ -119,11 +121,17 @@ export const StaticBatch = ({ enabled, children }: { enabled: boolean; children:
       meshes.forEach((mesh) => (mesh.visible = false))
       hidden.current.push(...meshes)
       // The look of the first, in white: the colours come from the vertices.
-      const material = (meshes[0].material as Material & { color: Color }).clone()
+      const source = meshes[0].material as Material
+      const isSolid =
+        (source as MeshStandardMaterial).isMeshStandardMaterial === true ||
+        (source as MeshStandardNodeMaterial).isMeshStandardNodeMaterial === true
+      const material = isSolid
+        ? copyAsNodeMaterial(source)
+        : (source.clone() as Material & { color: Color })
       material.color.set(0xffffff)
       material.vertexColors = true
-      // A clone loses its shader patch: the shading, and the cutaway's merged variant.
-      if (material.type === "MeshStandardMaterial")
+      // Shaded like a Surface — with the cutaway's merged variant, when it's cut.
+      if (isSolid)
         Object.assign(material, getSurfaceShader(cutaway ? MERGED_KIND[cutaway] : null, floorPlace))
 
       next.push({

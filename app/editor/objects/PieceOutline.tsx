@@ -7,12 +7,24 @@ import {
   Mesh,
   NotEqualStencilFunc,
   ReplaceStencilOp,
-  ShaderMaterial,
   Vector2,
   type Group,
   type Object3D,
 } from "three"
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js"
+import {
+  cameraProjectionMatrix,
+  cos,
+  float,
+  instanceIndex,
+  modelViewMatrix,
+  positionLocal,
+  sin,
+  uniform,
+  vec2,
+  vec4,
+} from "three/tsl"
+import { MeshBasicNodeMaterial } from "three/webgpu"
 import { ACCENT } from "../palette"
 import { getMatrixWithin } from "./localMatrix"
 
@@ -31,29 +43,36 @@ const DEPTH_BIAS = 0.15
 /** Our stencil mark: where the piece itself is (its outline goes round, not over it). */
 const STENCIL_MARK = 1
 
-const vertexShader = /* glsl */ `
-  uniform float uWidth;
-  uniform vec2 uResolution;
-  uniform float uDepthBias;
+/**
+ * The outline's material (TSL): the piece's shape, drawn once per direction
+ * (an instance each), shifted that way on screen by the outline's width —
+ * only outside the piece's stencil mark.
+ */
+const createOutlineMaterial = () => {
+  const tint = uniform(LOOK.hovered.color.clone())
+  const strength = uniform(0)
+  const width = uniform(LOOK.hovered.width)
+  const resolution = uniform(new Vector2(1, 1))
+  const viewPosition = modelViewMatrix.mul(vec4(positionLocal, 1))
+  const clip = cameraProjectionMatrix.mul(
+    vec4(viewPosition.xy, viewPosition.z.add(DEPTH_BIAS), viewPosition.w)
+  )
+  const angle = float(instanceIndex).mul((Math.PI * 2) / DIRECTIONS)
+  const shift = vec2(cos(angle), sin(angle)).mul(width).mul(2).div(resolution).mul(clip.w)
 
-  void main() {
-    vec4 viewPosition = modelViewMatrix * vec4(position, 1.0);
-    viewPosition.z += uDepthBias;
-    vec4 clipPosition = projectionMatrix * viewPosition;
-    float angle = float(gl_InstanceID) * 6.2831853 / ${DIRECTIONS}.0;
-    clipPosition.xy += vec2(cos(angle), sin(angle)) * uWidth * 2.0 / uResolution * clipPosition.w;
-    gl_Position = clipPosition;
-  }
-`
+  const material = new MeshBasicNodeMaterial({
+    transparent: true,
+    depthWrite: false,
+    stencilWrite: true,
+    stencilRef: STENCIL_MARK,
+    stencilFunc: NotEqualStencilFunc,
+  })
+  material.vertexNode = vec4(clip.xy.add(shift), clip.zw)
+  material.colorNode = tint
+  material.opacityNode = strength
 
-const fragmentShader = /* glsl */ `
-  uniform vec3 uColor;
-  uniform float uOpacity;
-
-  void main() {
-    gl_FragColor = vec4(uColor, uOpacity);
-  }
-`
+  return { material, tint, strength, width, resolution }
+}
 
 /**
  * The one visual language for "clickable" and "selected", in both modes: an
@@ -87,30 +106,12 @@ export const PieceOutline = ({
   }, [shapeKey])
 
   const size = useThree((state) => state.size)
-  const material = useMemo(
-    () =>
-      new ShaderMaterial({
-        vertexShader,
-        fragmentShader,
-        uniforms: {
-          uColor: { value: LOOK.hovered.color.clone() },
-          uOpacity: { value: 0 },
-          uWidth: { value: LOOK.hovered.width },
-          uResolution: { value: new Vector2(1, 1) },
-          uDepthBias: { value: DEPTH_BIAS },
-        },
-        transparent: true,
-        depthWrite: false,
-        stencilWrite: true,
-        stencilRef: STENCIL_MARK,
-        stencilFunc: NotEqualStencilFunc,
-      }),
-    []
-  )
+  const outlineLook = useMemo(createOutlineMaterial, [])
+  const { material } = outlineLook
   useEffect(() => () => material.dispose(), [material])
   useEffect(() => {
-    material.uniforms.uResolution.value.set(size.width, size.height)
-  }, [material, size.width, size.height])
+    outlineLook.resolution.value.set(size.width, size.height)
+  }, [outlineLook, size.width, size.height])
 
   const amount = useRef(0)
   useFrame((state, delta) => {
@@ -123,9 +124,9 @@ export const PieceOutline = ({
     if (!outline.visible) return
 
     const look = selected ? LOOK.selected : LOOK.hovered
-    material.uniforms.uColor.value.copy(look.color)
-    material.uniforms.uWidth.value = look.width * (0.6 + 0.4 * amount.current)
-    material.uniforms.uOpacity.value = amount.current
+    outlineLook.tint.value.copy(look.color)
+    outlineLook.width.value = look.width * (0.6 + 0.4 * amount.current)
+    outlineLook.strength.value = amount.current
     // Keep animating under frameloop="demand" while easing.
     if (Math.abs(target - amount.current) > 0.005) state.invalidate()
   })

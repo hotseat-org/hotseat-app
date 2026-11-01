@@ -1,13 +1,21 @@
 import { useContext, useLayoutEffect, useMemo, useRef } from "react"
 import { useThree } from "@react-three/fiber"
+import { AdditiveBlending, Color, Object3D, Vector3, type InstancedMesh } from "three"
 import {
-  AdditiveBlending,
-  Color,
-  Object3D,
-  ShaderMaterial,
-  Vector3,
-  type InstancedMesh,
-} from "three"
+  cameraProjectionMatrix,
+  float,
+  length,
+  max,
+  modelViewMatrix,
+  positionGeometry,
+  positionLocal,
+  pow,
+  uniform,
+  uv,
+  vec3,
+  vec4,
+} from "three/tsl"
+import { MeshBasicNodeMaterial } from "three/webgpu"
 import { useEditorStore } from "../store"
 import { DaylightContext } from "../lighting/daylight"
 import { ACCENT } from "../palette"
@@ -22,37 +30,30 @@ const point = new Vector3()
 
 /**
  * A soft glow that always faces the camera: no full-screen bloom pass, just a
- * small quad per light, added on top (walls still hide it).
+ * small quad per light, added on top (walls still hide it). Each instance is
+ * only moved, so its centre is where its corner is, less the corner's offset.
  */
-const createHaloMaterial = (color: string) =>
-  new ShaderMaterial({
-    uniforms: { color: { value: new Color(color) }, strength: { value: 0 }, size: { value: 1 } },
-    vertexShader: /* glsl */ `
-      uniform float size;
-      varying vec2 vUv;
-      void main() {
-        vUv = uv;
-        vec4 centre = viewMatrix * modelMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0);
-        centre.xy += position.xy * size;
-        gl_Position = projectionMatrix * centre;
-      }
-    `,
-    fragmentShader: /* glsl */ `
-      uniform vec3 color;
-      uniform float strength;
-      varying vec2 vUv;
-      void main() {
-        float d = length(vUv - 0.5) * 2.0;
-        float a = pow(max(0.0, 1.0 - d), 2.4) * strength;
-        if (a < 0.003) discard;
-        gl_FragColor = vec4(color, a);
-        #include <colorspace_fragment>
-      }
-    `,
+const createHaloMaterial = (color: string) => {
+  const strength = uniform(0)
+  const size = uniform(1)
+  const corner = positionGeometry.xy
+  const centre = modelViewMatrix.mul(vec4(positionLocal.sub(vec3(corner, 0)), 1))
+  const fromCentre = length(uv().sub(0.5)).mul(2)
+  const alpha = pow(max(float(0), float(1).sub(fromCentre)), 2.4).mul(strength)
+
+  const material = new MeshBasicNodeMaterial({
     transparent: true,
     blending: AdditiveBlending,
     depthWrite: false,
+    toneMapped: false,
   })
+  material.vertexNode = cameraProjectionMatrix.mul(vec4(centre.xy.add(corner.mul(size)), centre.zw))
+  material.colorNode = uniform(new Color(color))
+  material.opacityNode = alpha
+  material.maskNode = alpha.greaterThanEqual(0.003)
+
+  return { material, strength, size }
+}
 
 interface Props {
   /** Desks in view mode: whether someone sits there on the shown day (lit screen). */
@@ -132,10 +133,11 @@ const HaloSet = ({
   invalidate: () => void
 }) => {
   const ref = useRef<InstancedMesh>(null)
-  const material = useMemo(() => createHaloMaterial(color), [color])
+  const halo = useMemo(() => createHaloMaterial(color), [color])
+  const { material } = halo
   useLayoutEffect(() => () => material.dispose(), [material])
-  material.uniforms.size.value = size
-  material.uniforms.strength.value = strength
+  halo.size.value = size
+  halo.strength.value = strength
 
   useLayoutEffect(() => {
     const mesh = ref.current

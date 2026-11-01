@@ -1,4 +1,5 @@
 import { createContext, useContext } from "react"
+import { uniform } from "three/tsl"
 
 /**
  * The shown floor's height in the world (m): 0, except while the floors
@@ -7,10 +8,10 @@ import { createContext, useContext } from "react"
  * in the world, which a floor arriving a storey up (or one below) doesn't
  * share.
  */
-export const shownFloorUniform = { value: 0 }
+export const shownFloorUniform = uniform(0)
 
 /** The ground's height in the world (m): under the shown floor by its storeys, gliding with it. */
-export const groundUniform = { value: 0 }
+export const groundUniform = uniform(0)
 
 /** Where the pieces inside stand: their floor, from the shown floor's. */
 export interface FloorPlace {

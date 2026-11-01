@@ -1,5 +1,17 @@
-import type { WebGLProgramParametersWithUniforms } from "three"
-import { CUTAWAY_PATCHES, type CutawayKind } from "../walls/cutaway"
+import {
+  Fn,
+  abs,
+  float,
+  materialColor,
+  mix,
+  normalWorld,
+  positionWorld,
+  select,
+  smoothstep,
+} from "three/tsl"
+import { Material, type MeshStandardMaterial } from "three"
+import { MeshStandardNodeMaterial, type Node, type NodeMaterial } from "three/webgpu"
+import { CUTAWAYS, CUT_INSIDE_LIGHT, type CutawayKind } from "../walls/cutaway"
 import { groundUniform, shownFloorUniform, type FloorPlace } from "./floorHeight"
 
 /**
@@ -21,79 +33,75 @@ const GRADIENT_LOW = 0.94
 const GRADIENT_HIGH = 1.03
 const GRADIENT_REACH = 1.6
 
-const glsl = (value: number) => value.toFixed(4)
+/** How much a surface's colour is shaded here (×), by its height and facing. */
+const getShade = (place: FloorPlace, isInWall: boolean) => {
+  const upright = float(1).sub(abs(normalWorld.y))
+  const aboveFloor = positionWorld.y.sub(shownFloorUniform).sub(place.base)
+  const height = isInWall ? positionWorld.y.sub(groundUniform) : aboveFloor
+  const contact = mix(CONTACT_DARKEST, 1, smoothstep(0, CONTACT_REACH, height))
+  const gradient = mix(GRADIENT_LOW, GRADIENT_HIGH, smoothstep(0, GRADIENT_REACH, height))
+  const shade = mix(1, contact.mul(gradient), upright)
 
-const patchShading = (
-  shader: WebGLProgramParametersWithUniforms,
-  place: FloorPlace,
-  isInWall: boolean
-) => {
-  shader.uniforms.shownFloor = shownFloorUniform
-  shader.uniforms.groundLevel = groundUniform
-  shader.vertexShader = shader.vertexShader
-    .replace(
-      "#include <common>",
-      "#include <common>\nvarying vec3 vShadeWorld;\nvarying vec3 vShadeNormal;"
-    )
-    .replace(
-      "#include <project_vertex>",
-      `#include <project_vertex>
-      vShadeWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;
-      vShadeNormal = normalize(mat3(modelMatrix) * objectNormal);`
-    )
-  shader.fragmentShader = shader.fragmentShader
-    .replace(
-      "#include <common>",
-      "#include <common>\nuniform float shownFloor;\nuniform float groundLevel;\nvarying vec3 vShadeWorld;\nvarying vec3 vShadeNormal;"
-    )
-    .replace(
-      "#include <color_fragment>",
-      /* glsl */ `#include <color_fragment>
-      {
-        vec3 n = normalize(vShadeNormal);
-        float upright = 1.0 - abs(n.y);
-        float aboveFloor = vShadeWorld.y - shownFloor - (${glsl(place.base)});
-        float height = ${isInWall ? "vShadeWorld.y - groundLevel" : "aboveFloor"};
-        float contact = mix(${glsl(CONTACT_DARKEST)}, 1.0, smoothstep(0.0, ${glsl(CONTACT_REACH)}, height));
-        float gradient = mix(${glsl(GRADIENT_LOW)}, ${glsl(GRADIENT_HIGH)}, smoothstep(0.0, ${glsl(GRADIENT_REACH)}, height));
-        float shade = mix(1.0, contact * gradient, upright);
-        if (n.y < -0.5) shade *= ${glsl(UNDERSIDE)};
-        diffuseColor.rgb *= shade;
-      }`
-    )
+  return select(normalWorld.y.lessThan(-0.5), shade.mul(UNDERSIDE), shade)
 }
 
-const cache = new Map<
-  string,
-  {
-    onBeforeCompile: (shader: WebGLProgramParametersWithUniforms) => void
-    customProgramCacheKey: () => string
-  }
->()
+/** A surface's node props: what its node material (TSL) takes. */
+type SurfaceNodes = Partial<
+  Pick<MeshStandardNodeMaterial, "colorNode" | "maskNode" | "receivedShadowNode">
+>
+
+const cache = new Map<string, SurfaceNodes>()
 
 const SHOWN_FLOOR: FloorPlace = { base: 0 }
 
 /**
- * Material props for a Surface's shader: the shading above, plus the wall
- * cutaway when it's sliced by one (and so is in a wall) — on its floor
- * (`place`). One program per variant, shared.
+ * A Surface's node props: the shading above, plus the wall cutaway when it's
+ * sliced by one (and so is in a wall) — on its floor (`place`). Nodes are
+ * shared, so materials of one variant share one shader.
+ * The cut-open inside of a wall is lit by the ambient alone, a little
+ * stronger: the (cached) shadow maps still hold the uncut wall, which would
+ * stripe it dark.
  */
 export const getSurfaceShader = (cutaway: CutawayKind | null, place = SHOWN_FLOOR) => {
-  const placeKey = place.base ? `@${glsl(place.base)}` : ""
-  const id = `${cutaway ?? "plain"}${placeKey}`
-  let props = cache.get(id)
-  if (!props) {
-    const cutawayPatch = cutaway ? CUTAWAY_PATCHES[cutaway] : null
-    const key = `surface${cutawayPatch ? `-${cutawayPatch.key}` : ""}${placeKey}`
-    props = {
-      onBeforeCompile: (shader) => {
-        patchShading(shader, place, cutaway !== null)
-        cutawayPatch?.patch(shader)
-      },
-      customProgramCacheKey: () => key,
-    }
-    cache.set(id, props)
+  const id = `${cutaway ?? "plain"}@${place.base}`
+  let nodes = cache.get(id)
+  if (nodes === undefined) {
+    const shade = getShade(place, cutaway !== null)
+    const cut = cutaway ? CUTAWAYS[cutaway] : null
+    nodes = cut
+      ? {
+          colorNode: materialColor.mul(shade).mul(select(cut.isCutInside, CUT_INSIDE_LIGHT, 1)),
+          maskNode: cut.mask,
+          // Typed without its argument, but three hands it the shadow.
+          receivedShadowNode: Fn(([shadow]: [Node<"float">]) =>
+            select(cut.isCutInside, float(0), shadow)
+          ) as unknown as MeshStandardNodeMaterial["receivedShadowNode"],
+        }
+      : { colorNode: materialColor.mul(shade) }
+    cache.set(id, nodes)
   }
 
-  return props
+  return nodes
+}
+
+/**
+ * A copy of a solid's material as a node material, to take a Surface's nodes:
+ * a Surface's own as it is; a model's (loaded as a classic material) with
+ * its look carried over.
+ */
+export const copyAsNodeMaterial = (source: Material) => {
+  if ((source as NodeMaterial).isNodeMaterial) return source.clone() as MeshStandardNodeMaterial
+
+  const standard = source as MeshStandardMaterial
+  const material = new MeshStandardNodeMaterial()
+  Material.prototype.copy.call(material, standard)
+  material.color.copy(standard.color)
+  material.roughness = standard.roughness
+  material.metalness = standard.metalness
+  material.emissive.copy(standard.emissive)
+  material.emissiveIntensity = standard.emissiveIntensity
+  material.map = standard.map
+  material.flatShading = standard.flatShading
+
+  return material
 }

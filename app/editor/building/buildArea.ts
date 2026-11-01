@@ -1,13 +1,7 @@
 import { useEffect, useMemo } from "react"
-import {
-  DataTexture,
-  LinearFilter,
-  RedFormat,
-  UnsignedByteType,
-  Vector2,
-  Vector3,
-  type IUniform,
-} from "three"
+import { DataTexture, LinearFilter, RedFormat, UnsignedByteType, Vector2, Vector3 } from "three"
+import { distance, float, length, max, select, smoothstep, texture, uniform } from "three/tsl"
+import type { Node } from "three/webgpu"
 import { getStructureField } from "../landscape/structureField"
 import { useEditorStore } from "../store"
 import { GRID, type SceneObject, type Tool } from "../types"
@@ -29,50 +23,76 @@ export const buildCursor = new Vector3(1e6, 0, 1e6)
 export const moveBuildCursor = (x: number, z: number) => buildCursor.set(x, 0, z)
 export const hideBuildCursor = () => buildCursor.set(1e6, 0, 1e6)
 
-/** Uniforms for BUILD_AREA_GLSL (the cursor is the shared vector above). */
-export const createBuildAreaUniforms = () => ({
-  distanceMap: { value: null as DataTexture | null },
-  mapOrigin: { value: new Vector2() },
-  mapSize: { value: new Vector2(1, 1) },
-  hasStructure: { value: false },
-  reach: { value: EMPTY_REACH },
-  cursor: { value: buildCursor },
-  cursorReach: { value: 0 },
-})
+/** Stands in for the distance map while there's no structure (never read then). */
+const NO_MAP = new DataTexture(new Uint8Array([255]), 1, 1, RedFormat, UnsignedByteType)
+NO_MAP.needsUpdate = true
 
 /**
- * `buildArea(p)`: 1 on and near the structure (or the cursor), easing to 0.
- * Near the structure = by the distance map (metres to the nearest wall or
- * piece, stored as a fraction of `reach`); with none, round the origin.
+ * The build area for a material (TSL): `getArea(p)` is 1 on and near the
+ * structure (or the cursor), easing to 0 — near the structure by the distance
+ * map (metres to the nearest wall or piece, stored as a fraction of `reach`);
+ * with none, round the origin. Its uniforms are set by useBuildArea.
  */
-export const BUILD_AREA_GLSL = /* glsl */ `
-  uniform sampler2D distanceMap; // (not "distance": that's GLSL's built-in)
-  uniform vec2 mapOrigin;
-  uniform vec2 mapSize;
-  uniform bool hasStructure;
-  uniform float reach;
-  uniform vec3 cursor;
-  uniform float cursorReach;
-  float buildArea(vec2 p) {
-    float d = length(p);
-    if (hasStructure) {
-      vec2 uv = (p - mapOrigin) / mapSize;
-      bool inside = uv.x >= 0.0 && uv.y >= 0.0 && uv.x <= 1.0 && uv.y <= 1.0;
-      d = inside ? texture2D(distanceMap, uv).r * reach : reach;
-    }
-    float near = 1.0 - smoothstep(reach * 0.35, reach * 0.95, d);
-    float atCursor = cursorReach > 0.0
-      ? 1.0 - smoothstep(cursorReach * 0.3, cursorReach, distance(p, cursor.xz))
-      : 0.0;
-    return max(near, atCursor);
+export const createBuildArea = () => {
+  const mapOrigin = uniform(new Vector2())
+  const mapSize = uniform(new Vector2(1, 1))
+  const hasStructure = uniform(0)
+  const reach = uniform(EMPTY_REACH)
+  const cursorReach = uniform(0)
+  const cursor = uniform(buildCursor)
+  // One per material that reads it, all set together.
+  const distanceMaps: ReturnType<typeof texture>[] = []
+
+  const getArea = (point: Node<"vec2">) => {
+    const mapUv = point.sub(mapOrigin).div(mapSize)
+    const distanceMap = texture(NO_MAP, mapUv)
+    distanceMaps.push(distanceMap)
+    const isInside = mapUv.x
+      .greaterThanEqual(0)
+      .and(mapUv.y.greaterThanEqual(0))
+      .and(mapUv.x.lessThanEqual(1))
+      .and(mapUv.y.lessThanEqual(1))
+    const fromMap = select(isInside, distanceMap.r.mul(reach), reach)
+    const away = select(hasStructure.greaterThan(0.5), fromMap, length(point))
+    const near = float(1).sub(smoothstep(reach.mul(0.35), reach.mul(0.95), away))
+    const atCursor = select(
+      cursorReach.greaterThan(0),
+      float(1).sub(smoothstep(cursorReach.mul(0.3), cursorReach, distance(point, cursor.xz))),
+      float(0)
+    )
+
+    return max(near, atCursor)
   }
-`
+
+  return {
+    getArea,
+    set: ({ map, isPlacing }: { map: DistanceMap | null; isPlacing: boolean }) => {
+      for (const distanceMap of distanceMaps) distanceMap.value = map?.texture ?? NO_MAP
+      if (map) {
+        mapOrigin.value.copy(map.origin)
+        mapSize.value.copy(map.size)
+      }
+
+      hasStructure.value = map ? 1 : 0
+      reach.value = map ? STRUCTURE_REACH : EMPTY_REACH
+      cursorReach.value = isPlacing ? CURSOR_REACH : 0
+    },
+  }
+}
+export type BuildArea = ReturnType<typeof createBuildArea>
+
+/** The structure's distance map: a texture, and where it lies on the ground (m). */
+interface DistanceMap {
+  texture: DataTexture
+  origin: Vector2
+  size: Vector2
+}
 
 /**
  * The structure field's distances (see structureField.ts) as a byte texture —
  * a fraction of the reach — that the shaders blend smoothly.
  */
-const buildDistanceMap = (objects: SceneObject[]) => {
+const buildDistanceMap = (objects: SceneObject[]): DistanceMap | null => {
   const field = getStructureField(objects)
   if (!field) return null
 
@@ -99,8 +119,8 @@ const isPlacing = (tool: Tool, carryingId: string | null) =>
   carryingId !== null || (tool !== "select" && tool !== "paint")
 
 /**
- * The area's uniforms for the current layout and tool, for any material made
- * with createBuildAreaUniforms — set on every render (cheap: plain values).
+ * Sets a build area (made with createBuildArea) to the current layout and
+ * tool — on every render (cheap: plain values).
  */
 export const useBuildArea = () => {
   const objects = useEditorStore((state) => state.objects)
@@ -120,16 +140,5 @@ export const useBuildArea = () => {
   }, [objects, floors, currentFloor, otherFloorsPieces])
   useEffect(() => () => map?.texture.dispose(), [map])
 
-  // A ShaderMaterial's uniforms (made with createBuildAreaUniforms).
-  return (uniforms: Record<string, IUniform>) => {
-    uniforms.distanceMap.value = map?.texture ?? null
-    if (map) {
-      uniforms.mapOrigin.value.copy(map.origin)
-      uniforms.mapSize.value.copy(map.size)
-    }
-
-    uniforms.hasStructure.value = !!map
-    uniforms.reach.value = map ? STRUCTURE_REACH : EMPTY_REACH
-    uniforms.cursorReach.value = placing ? CURSOR_REACH : 0
-  }
+  return (area: BuildArea) => area.set({ map, isPlacing: placing })
 }
