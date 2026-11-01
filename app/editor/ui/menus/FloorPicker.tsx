@@ -1,9 +1,11 @@
-import { AlertDialog, Button, Popover } from "@heroui/react"
+import { AlertDialog, Button, Dropdown, Popover } from "@heroui/react"
 import clsx from "clsx"
-import { ChevronDown, ChevronUp, Pencil, Plus, Trash2 } from "lucide-react"
+import { BrickWall, ChevronDown, ChevronUp, Ellipsis, Pencil, Plus, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { MAX_FLOORS, MAX_FLOOR_NAME, getFloorId, getFloorNumber, type Floor } from "../../floors"
+import { useFloorNotes } from "../../modules"
 import { useEditorStore } from "../../store"
+import type { FloorNote } from "../../module"
 import { useI18n } from "~/i18n/I18nProvider"
 
 /** What a floor is called: its name, or (unnamed) "Floor 2". */
@@ -19,32 +21,23 @@ export const useFloorName = () => {
  * The layout's floors as a stack of slabs, the top floor on top: the shown
  * one in the accent, another a press away. Viewing, only with floors to
  * choose from. Editing, always — with a ghost slab on top to add a floor
- * there, and the floors' menu (names, order, delete) below. `isPhone`: in the
- * phone shell's colours.
+ * there, and the floors' menu (names, order, delete) below. Viewing, each
+ * with the modules' word on it (the office: "6 free"). A phone has its
+ * own, see FloorChip.
  */
-export const FloorPicker = ({
-  isEditing = false,
-  isPhone = false,
-}: {
-  isEditing?: boolean
-  isPhone?: boolean
-}) => {
+export const FloorPicker = ({ isEditing = false }: { isEditing?: boolean }) => {
   const { t } = useI18n()
   const floors = useEditorStore((state) => state.floors)
   const currentFloor = useEditorStore((state) => state.currentFloor)
   const showFloor = useEditorStore((state) => state.showFloor)
   const addFloor = useEditorStore((state) => state.addFloor)
   const getFloorName = useFloorName()
+  const floorNotes = useFloorNotes()
   if (!isEditing && floors.length < 2) return null
 
   return (
     <div
-      className={clsx(
-        "pointer-events-auto flex flex-col items-stretch p-1.5 shadow-overlay",
-        isPhone
-          ? "rounded-xl border border-chrome-border bg-chrome/95"
-          : "rounded-2xl border border-border bg-overlay"
-      )}
+      className="pointer-events-auto flex flex-col items-stretch rounded-2xl border border-border bg-overlay p-1.5 shadow-overlay"
       onPointerDown={(event) => event.stopPropagation()}
     >
       {isEditing && floors.length < MAX_FLOORS && (
@@ -83,6 +76,7 @@ export const FloorPicker = ({
       >
         {[...floors].reverse().map((floor) => {
           const isShown = floor.id === currentFloor
+          const note = isEditing ? undefined : floorNotes?.get(floor.id)
 
           return (
             <button
@@ -91,13 +85,18 @@ export const FloorPicker = ({
               role="radio"
               aria-checked={isShown}
               tabIndex={isShown ? 0 : -1}
-              aria-label={getFloorName(floor)}
-              title={getFloorName(floor)}
+              aria-label={composeFloorLabel(getFloorName(floor), note)}
+              title={composeFloorLabel(getFloorName(floor), note)}
               // The camera follows (see FloorShift): no refit.
               onClick={() => showFloor(floor.id)}
               className="group flex items-center gap-2 rounded-lg pr-2 outline-none focus-visible:ring-2 focus-visible:ring-focus"
             >
-              <Slab look={isShown ? "shown" : "other"} />
+              <span className="relative shrink-0">
+                <Slab look={isShown ? "shown" : "other"} />
+                {note?.yours && (
+                  <span className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-success ring-2 ring-overlay" />
+                )}
+              </span>
               <span
                 className={clsx(
                   "max-w-24 truncate text-xs",
@@ -108,6 +107,16 @@ export const FloorPicker = ({
               >
                 {floor.name || getFloorNumber(floors, floor.id)}
               </span>
+              {note && (
+                <span
+                  className={clsx(
+                    "ml-auto whitespace-nowrap pl-2 text-[11px] font-extrabold",
+                    note.tone === "positive" ? "text-success" : "text-warning"
+                  )}
+                >
+                  {note.text}
+                </span>
+              )}
             </button>
           )
         })}
@@ -117,11 +126,15 @@ export const FloorPicker = ({
   )
 }
 
+/** A floor's name, for assistive tech and its tooltip: with its note, and what of yours is there. */
+export const composeFloorLabel = (name: string, note: FloorNote | undefined) =>
+  [name, note?.text, note?.yours].filter(Boolean).join(", ")
+
 /**
  * A floor drawn as a flat slab seen from above at an angle — stacked, they
  * read as the building. `ghost`: dashed, a floor that could be added.
  */
-const Slab = ({ look }: { look: "shown" | "other" | "ghost" }) => (
+export const Slab = ({ look }: { look: "shown" | "other" | "ghost" }) => (
   <svg aria-hidden viewBox="0 0 44 20" className="h-5 w-11 shrink-0 overflow-visible">
     {/* The edge: the slab's thickness, under its top. */}
     <path
@@ -196,7 +209,14 @@ const FloorsMenu = () => {
   )
 }
 
-/** A floor in the menu: its name to edit, up and down, and delete. */
+/** What a floor's "…" menu offers. */
+type FloorAction = "add-walled" | "add-empty" | "move-up" | "move-down" | "delete"
+
+/**
+ * A floor in the menu: its number and name to edit, how much is on it, and
+ * its "…" menu — a floor above (with its outer walls, or empty), up and
+ * down, delete.
+ */
 const FloorRow = ({
   floor,
   isTop,
@@ -210,7 +230,9 @@ const FloorRow = ({
 }) => {
   const { t, tn } = useI18n()
   const floors = useEditorStore((state) => state.floors)
+  const isShown = useEditorStore((state) => state.currentFloor === floor.id)
   const renameFloor = useEditorStore((state) => state.renameFloor)
+  const addFloorAbove = useEditorStore((state) => state.addFloorAbove)
   const moveFloor = useEditorStore((state) => state.moveFloor)
   const deleteFloor = useEditorStore((state) => state.deleteFloor)
   // What's on it: deleting an empty floor asks nothing.
@@ -223,51 +245,100 @@ const FloorRow = ({
   )
   const [isConfirming, setIsConfirming] = useState(false)
   const placeholder = t("Floor {number}", { number: getFloorNumber(floors, floor.id) })
+  const name = floor.name || placeholder
+  const isFull = floors.length >= MAX_FLOORS
+  const disabledActions: FloorAction[] = [
+    ...(isFull ? (["add-walled", "add-empty"] as const) : []),
+    ...(isTop ? (["move-up"] as const) : []),
+    ...(isBottom ? (["move-down"] as const) : []),
+    ...(isOnly ? (["delete"] as const) : []),
+  ]
+
+  const handleAction = (action: FloorAction) => {
+    switch (action) {
+      case "add-walled":
+        return addFloorAbove(floor.id, true)
+      case "add-empty":
+        return addFloorAbove(floor.id, false)
+      case "move-up":
+        return moveFloor(floor.id, 1)
+      case "move-down":
+        return moveFloor(floor.id, -1)
+      case "delete":
+        return pieceCount > 0 ? setIsConfirming(true) : deleteFloor(floor.id)
+    }
+  }
 
   return (
-    <li className="flex items-center gap-1">
-      <input
-        // Keyed by name, so a name put back (undo, reorder) shows.
-        key={floor.name}
-        defaultValue={floor.name}
-        placeholder={placeholder}
-        aria-label={t("Name of {floor}", { floor: floor.name || placeholder })}
-        maxLength={MAX_FLOOR_NAME}
-        onBlur={(event) => renameFloor(floor.id, event.currentTarget.value)}
-        onKeyDown={(event) => event.key === "Enter" && event.currentTarget.blur()}
-        className="h-9 min-w-0 flex-1 rounded-lg border border-border bg-surface px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-focus"
-      />
-      <Button
-        isIconOnly
-        variant="ghost"
-        size="sm"
-        aria-label={t("Move up")}
-        isDisabled={isTop}
-        onPress={() => moveFloor(floor.id, 1)}
-      >
-        <ChevronUp className="size-4" />
-      </Button>
-      <Button
-        isIconOnly
-        variant="ghost"
-        size="sm"
-        aria-label={t("Move down")}
-        isDisabled={isBottom}
-        onPress={() => moveFloor(floor.id, -1)}
-      >
-        <ChevronDown className="size-4" />
-      </Button>
-      <Button
-        isIconOnly
-        variant="ghost"
-        size="sm"
-        aria-label={t("Delete {floor}", { floor: floor.name || placeholder })}
-        isDisabled={isOnly}
-        className="text-danger"
-        onPress={() => (pieceCount > 0 ? setIsConfirming(true) : deleteFloor(floor.id))}
-      >
-        <Trash2 className="size-4" />
-      </Button>
+    <li
+      className={clsx(
+        "flex items-center gap-2 rounded-xl border p-1.5",
+        isShown ? "border-accent/30 bg-accent/10" : "border-transparent"
+      )}
+    >
+      <label className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span
+          className={clsx(
+            "px-1 text-[11px] font-extrabold",
+            isShown ? "text-accent" : "text-muted"
+          )}
+        >
+          {placeholder}
+        </span>
+        <input
+          // Keyed by name, so a name put back (undo, reorder) shows.
+          key={floor.name}
+          defaultValue={floor.name}
+          placeholder={placeholder}
+          aria-label={t("Name of {floor}", { floor: name })}
+          maxLength={MAX_FLOOR_NAME}
+          onBlur={(event) => renameFloor(floor.id, event.currentTarget.value)}
+          onKeyDown={(event) => event.key === "Enter" && event.currentTarget.blur()}
+          className="h-8 min-w-0 rounded-lg border border-border bg-surface px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-focus"
+        />
+      </label>
+      <span className="w-16 shrink-0 self-end pb-2 text-right text-xs font-bold text-muted">
+        {tn(pieceCount, "{n} item", "{n} items")}
+      </span>
+      <Dropdown>
+        <Dropdown.Trigger
+          aria-label={t("More for {floor}", { floor: name })}
+          className="grid size-8 shrink-0 place-items-center self-end rounded-lg text-muted outline-none hover:bg-default hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
+        >
+          <Ellipsis className="size-4" />
+        </Dropdown.Trigger>
+        <Dropdown.Popover placement="bottom end">
+          <Dropdown.Menu
+            aria-label={name}
+            disabledKeys={disabledActions}
+            onAction={(action) => handleAction(action as FloorAction)}
+          >
+            <Dropdown.Item
+              id="add-walled"
+              textValue={t("Add a floor above, with these outer walls")}
+            >
+              <BrickWall className="size-4 text-muted" />
+              {t("Add a floor above, with these outer walls")}
+            </Dropdown.Item>
+            <Dropdown.Item id="add-empty" textValue={t("Add an empty floor above")}>
+              <Plus className="size-4 text-muted" />
+              {t("Add an empty floor above")}
+            </Dropdown.Item>
+            <Dropdown.Item id="move-up" textValue={t("Move up")}>
+              <ChevronUp className="size-4 text-muted" />
+              {t("Move up")}
+            </Dropdown.Item>
+            <Dropdown.Item id="move-down" textValue={t("Move down")}>
+              <ChevronDown className="size-4 text-muted" />
+              {t("Move down")}
+            </Dropdown.Item>
+            <Dropdown.Item id="delete" textValue={t("Delete floor")} variant="danger">
+              <Trash2 className="size-4" />
+              {t("Delete floor")}
+            </Dropdown.Item>
+          </Dropdown.Menu>
+        </Dropdown.Popover>
+      </Dropdown>
       <AlertDialog isOpen={isConfirming} onOpenChange={setIsConfirming}>
         <AlertDialog.Backdrop>
           <AlertDialog.Container>
@@ -277,7 +348,7 @@ const FloorRow = ({
                   <AlertDialog.Header>
                     <AlertDialog.Icon status="danger" />
                     <AlertDialog.Heading>
-                      {t("Delete {floor}?", { floor: floor.name || placeholder })}
+                      {t("Delete {floor}?", { floor: name })}
                     </AlertDialog.Heading>
                   </AlertDialog.Header>
                   <AlertDialog.Body>

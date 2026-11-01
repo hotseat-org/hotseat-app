@@ -4,7 +4,7 @@ import { useModules, usePlanDrawings, usePlanPieceStyles, useViewClicks } from "
 import { useEditorStore } from "../store"
 import { SURFACES } from "../palette"
 import { ContourLines } from "../landscape/ContourLines"
-import { FloorPicker } from "../ui/menus/FloorPicker"
+import { FLOOR_CHIP_HEIGHT, FloorChip } from "../ui/menus/FloorChip"
 import { isEdgeType } from "../types"
 import { PhoneControls } from "./PhoneControls"
 import { buildScene } from "./drawing/buildScene"
@@ -122,8 +122,15 @@ export const FloorPlan = ({
 
   // Frame the office on open, on Fit, and when the layout first gets content —
   // but not on every layout or size change (that would undo the viewer's pan).
+  const hasFloors = useEditorStore((state) => state.floors.length > 1)
   const insets: Insets = phoneChrome
-    ? { top: phoneChrome.top + 12, bottom: phoneChrome.bottom + 68, left: 16, right: 16 }
+    ? {
+        // Clear of the floor chip, when there's one.
+        top: phoneChrome.top + 12 + (hasFloors ? FLOOR_CHIP_HEIGHT + 8 : 0),
+        bottom: phoneChrome.bottom + 68,
+        left: 16,
+        right: 16,
+      }
     : { ...FIT_PAD, right: padRight }
   // The floor right below, faded: where this one stands — an empty upper floor
   // isn't a blank map — and with it the building framed whole, the same
@@ -212,10 +219,7 @@ export const FloorPlan = ({
 
       {phoneChrome && (
         <>
-          {/* Above turn and fit, on the right. */}
-          <div className="absolute right-4" style={{ bottom: phoneChrome.bottom + 12 + 56 }}>
-            <FloorPicker isPhone />
-          </div>
+          <FloorChip top={phoneChrome.top + 12} />
           <PhoneControls bottom={phoneChrome.bottom + 12} onTurn={turnBy} onFit={requestFit} />
         </>
       )}

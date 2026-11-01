@@ -1,4 +1,6 @@
-import { MAX_FLOORS, MAX_FLOOR_NAME, createFloorId, type Floor } from "../floors"
+import { nanoid } from "nanoid"
+import { MAX_FLOORS, MAX_FLOOR_NAME, createFloorId, getFloorId, type Floor } from "../floors"
+import { composeOuterWalls } from "../layout"
 import type { SceneObject } from "../types"
 import { composeSavedLayout, splitLayout } from "./objects"
 import type { GetState, SetState } from "./state"
@@ -15,6 +17,11 @@ export interface FloorsState {
   showFloor: (id: string) => void
   /** A new floor on top, shown. */
   addFloor: () => void
+  /**
+   * A new floor just above another, shown — empty, or with `isWalled` that
+   * one's outer walls to build in (its doors walled up).
+   */
+  addFloorAbove: (id: string, isWalled: boolean) => void
   renameFloor: (id: string, name: string) => void
   /** A floor one up (1) or down (-1) in the order. */
   moveFloor: (id: string, step: 1 | -1) => void
@@ -39,13 +46,24 @@ export const createFloorsActions = (
       showLayout(state.floors, composeSavedLayout(state).pieces, id)
     },
     addFloor: () => {
+      const { floors, addFloorAbove } = get()
+
+      addFloorAbove(floors[floors.length - 1].id, false)
+    },
+    addFloorAbove: (id, isWalled) => {
       const state = get()
-      if (state.floors.length >= MAX_FLOORS) return
+      const index = state.floors.findIndex((floor) => floor.id === id)
+      if (index < 0 || state.floors.length >= MAX_FLOORS) return
 
       const floor = { id: createFloorId(state.floors), name: "" }
-      // The pieces keep their floors (one floor's carry none in the saved layout).
-      const pieces = composeSavedLayout({ ...state, floors: [...state.floors, floor] }).pieces
-      showLayout([...state.floors, floor], pieces, floor.id)
+      const floors = [...state.floors.slice(0, index + 1), floor, ...state.floors.slice(index + 1)]
+      const pieces = composeSavedLayout({ ...state, floors }).pieces
+      const below = pieces.filter((piece) => getFloorId(piece, floors) === id)
+      const walls = isWalled
+        ? composeOuterWalls(below).map((wall) => ({ ...wall, id: nanoid(8), floor: floor.id }))
+        : []
+
+      showLayout(floors, [...pieces, ...walls], floor.id)
     },
     renameFloor: (id, name) =>
       set((state) => ({

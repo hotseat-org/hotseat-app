@@ -1,5 +1,6 @@
 /// <reference types="bun" />
 import { describe, expect, test } from "bun:test"
+import { roomEdges } from "../layout"
 import { createTestEditor } from "../testing"
 import type { SceneObject } from "../types"
 import { composeSavedLayout } from "./objects"
@@ -38,6 +39,23 @@ describe("floors", () => {
     expect(currentFloor).toBe(floors[1].id)
     expect(objects).toHaveLength(0)
     expect(getRows(otherFloorsPieces)).toEqual([wall.z])
+  })
+
+  test("a floor above another starts with its outer walls, between it and the next", () => {
+    const room = roomEdges({ x: 0, z: 0 }, { x: 2, z: 2 }).map(
+      (edge, index): SceneObject => ({ id: `room-${index}`, type: "wall", ...edge })
+    )
+    const desk: SceneObject = { id: "desk", type: "desk", x: 1, z: 1, rotation: 0 }
+    const { store } = createTestEditor({ objects: [...room, desk] })
+    store.getState().addFloor()
+    const [ground, top] = store.getState().floors
+
+    store.getState().addFloorAbove(ground.id, true)
+
+    const { floors, currentFloor, objects } = store.getState()
+    expect(floors.map((floor) => floor.id)).toEqual([ground.id, currentFloor, top.id])
+    expect(objects).toHaveLength(room.length)
+    expect(objects.every((piece) => piece.type === "wall")).toBe(true)
   })
 
   test("each piece is saved on its floor", () => {

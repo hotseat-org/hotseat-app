@@ -293,7 +293,17 @@ export const cs: Messages = {
   "Name of {floor}": "Název – {floor}",
   "Move up": "Posunout výš",
   "Move down": "Posunout níž",
-  "Delete {floor}": "Smazat {floor}",
+  "More for {floor}": "Další – {floor}",
+  "Add a floor above, with these outer walls": "Přidat patro nad, s těmito obvodovými zdmi",
+  "Add an empty floor above": "Přidat prázdné patro nad",
+  "{floor}. Choose a floor": "{floor}. Vybrat patro",
+  "your desk": "váš stůl",
+  "{n} free": {
+    one: "{n} volný",
+    few: "{n} volné",
+    many: "{n} volného",
+    other: "{n} volných",
+  },
   "Delete {floor}?": "Smazat {floor}?",
   "Delete floor": "Smazat patro",
   "Its {n} item goes with it. This can't be undone.": {

@@ -2,6 +2,7 @@ import { createContext, useContext, useMemo, useRef } from "react"
 import type { SceneObject } from "./types"
 import type {
   EditorModule,
+  FloorNote,
   PieceState,
   PlanDrawingContext,
   PlanDrawings,
@@ -36,6 +37,25 @@ export const usePieceStates = (isViewing: boolean): ReadonlyMap<string, PieceSta
     // One map (or null) per module — the list keeps its length; their own
     // memos keep them stable.
     states
+  )
+}
+
+/** What the modules say about each floor: the first one's word on it (null: none says anything). */
+export const useFloorNotes = (): ReadonlyMap<string, FloorNote> | null => {
+  const modules = useModules()
+  // Each module's hook, in a loop: safe, the list is fixed (see ModulesContext).
+  const notes = modules.map((module) => module.useFloorNotes?.() ?? null)
+
+  return useMemo(
+    () => {
+      const present = notes.filter((note) => note !== null)
+
+      return present.length > 1
+        ? new Map([...present].reverse().flatMap((note) => [...note]))
+        : (present[0] ?? null)
+    },
+    // One map (or null) per module — the list keeps its length.
+    notes
   )
 }
 

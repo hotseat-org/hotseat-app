@@ -1,5 +1,6 @@
 import { FURNITURE, FURNITURE_CATEGORIES } from "./catalog/furniture.render"
 import "./slots/objectFields"
+import { useFloorNotes } from "./booking/useBooking"
 import { useOfficePieceStyles, useOfficePlanDrawings } from "./plan/drawings"
 import { OfficePlanOverlays, OfficeRoutePath } from "./plan/layers"
 import { OFFICE_SCENE_LAYERS, useOfficePieceStates, useOfficeViewClicks } from "./scene/layers"
@@ -29,6 +30,7 @@ export const officeModule = defineModule<OfficeState>({
   sceneLayers: OFFICE_SCENE_LAYERS,
   usePieceStates: useOfficePieceStates,
   useViewClicks: useOfficeViewClicks,
+  useFloorNotes,
   plan: {
     usePieceStyles: useOfficePieceStyles,
     useDrawings: useOfficePlanDrawings,

@@ -44,6 +44,12 @@ export interface EditorModule {
    * their look from it (a lived-in desk, its lamp on).
    */
   usePieceStates?: (isViewing: boolean) => ReadonlyMap<string, PieceState> | null
+  /**
+   * A hook: a word on each floor, by floor id (the office: "6 free" on the
+   * shown day) — null when it has nothing to say. Shown with the floors
+   * while viewing.
+   */
+  useFloorNotes?: () => ReadonlyMap<string, FloorNote> | null
   /** A hook: what clicks do while viewing (the office: a desk opens its card). */
   useViewClicks?: () => ViewClicks
   /** What it adds to the simple (2D) plan. */
@@ -276,6 +282,16 @@ export interface SceneLayerProps {
 export interface PieceState {
   /** Someone's here: the lived-in look (a desk's clutter, its monitor on). */
   isOccupied?: boolean
+}
+
+/** What a module says about a floor, beside its name. */
+export interface FloorNote {
+  /** A few words ("6 free"). */
+  text: string
+  /** Good news, or a warning (full). */
+  tone: "positive" | "warning"
+  /** What of yours is there, in words (the office: "your desk", on the shown day). */
+  yours?: string
 }
 
 /** What clicks do while viewing. */

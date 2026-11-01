@@ -11,6 +11,7 @@ export type {
   AutosaveControls,
   EditorModule,
   EmptyStateProps,
+  FloorNote,
   InspectorSectionProps,
   MapLayer,
   Panel,
