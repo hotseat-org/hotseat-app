@@ -85,3 +85,18 @@ export const useHeldPiece = <Piece extends SceneObject | undefined>(piece: Piece
     [piece, placement]
   )
 }
+
+/**
+ * The pieces standing on the floor: all but one being carried (it's lifted
+ * off it, and held apart from the layout — see heldPlacement). For what's
+ * drawn under or around pieces: their shadows on the floor, their glows.
+ */
+export const useStandingObjects = () => {
+  const objects = useEditorStore((state) => state.objects)
+  const carryingId = useEditorStore((state) => state.carryingId)
+
+  return useMemo(
+    () => (carryingId ? objects.filter((piece) => piece.id !== carryingId) : objects),
+    [objects, carryingId]
+  )
+}

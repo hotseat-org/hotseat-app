@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react"
 import { useThree } from "@react-three/fiber"
 import { CanvasTexture, MathUtils, Object3D, type InstancedMesh } from "three"
-import { useEditorStore } from "../store"
+import { useStandingObjects } from "../store"
 import { GRID, isEdgeType, isMarker, isWallMounted, type ObjectType } from "../types"
 import { getItem } from "../catalog"
 
@@ -50,7 +50,7 @@ const createBlobTexture = () => {
  * mesh for the whole office — a single draw call.
  */
 export const ContactBlobs = () => {
-  const objects = useEditorStore((state) => state.objects)
+  const objects = useStandingObjects()
   const invalidate = useThree((state) => state.invalidate)
   const ref = useRef<InstancedMesh>(null)
   const texture = useMemo(createBlobTexture, [])

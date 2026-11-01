@@ -19,8 +19,10 @@ export const useOpeningCarry = (readOnly: boolean, tool: Tool, dragId: string | 
 
     storeApi.getState().beginBatch() // lift → carry → drop = one undo step
     const opening = storeApi.getState().liftOpening(id)
-    if (opening) setCarriedOpening(opening)
-    else storeApi.getState().endBatch()
+    if (!opening) return storeApi.getState().endBatch()
+
+    setCarriedOpening(opening)
+    storeApi.getState().setCarrying(opening.id)
   }
   const restoreOpening = () => {
     const opening = carriedOpeningRef.current
@@ -28,11 +30,13 @@ export const useOpeningCarry = (readOnly: boolean, tool: Tool, dragId: string | 
 
     storeApi.getState().placeOpening(opening, opening.x, opening.z)
     setCarriedOpening(null)
+    storeApi.getState().setCarrying(null)
     storeApi.getState().endBatch()
   }
   /** The carried opening went in (OpeningCarry placed it). */
   const finishOpening = () => {
     setCarriedOpening(null)
+    storeApi.getState().setCarrying(null)
     storeApi.getState().endBatch()
   }
 

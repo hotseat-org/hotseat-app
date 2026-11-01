@@ -16,7 +16,7 @@ import {
   vec4,
 } from "three/tsl"
 import { MeshBasicNodeMaterial } from "three/webgpu"
-import { useEditorStore } from "../store"
+import { useStandingObjects } from "../store"
 import { DaylightContext } from "../lighting/daylight"
 import { ACCENT } from "../palette"
 import type { SceneObject } from "../types"
@@ -67,7 +67,7 @@ interface Props {
  * once the lamps are on. Two instanced draw calls.
  */
 export const Halos = ({ pieceStates }: Props) => {
-  const objects = useEditorStore((state) => state.objects)
+  const objects = useStandingObjects()
   const nightness = useContext(DaylightContext)
   const isLampOn = useLampsOn()
   const invalidate = useThree((state) => state.invalidate)

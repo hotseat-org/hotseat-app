@@ -54,7 +54,13 @@ export const usePieceHover = ({
     isHovered,
     isPointedAt: !!cursor && (isHovered || isPointedElsewhere),
     handleEnter: (event: { buttons: number }) => {
-      if (!isCameraDrag(event.buttons, isEditing)) setIsHovered(true)
+      if (isCameraDrag(event.buttons, isEditing)) return
+      // Something carried: nothing else is pointable (an outline says it can
+      // be pressed). Read here, not subscribed: every piece would draw again
+      // at each pick-up and drop.
+      if (storeApi.getState().carryingId !== null) return
+
+      setIsHovered(true)
     },
     handleLeave: () => setIsHovered(false),
   }

@@ -8,6 +8,7 @@ export {
   useEditorStoreApi,
   useHeldPiece,
   useObjectsWithPaintPreview,
+  useStandingObjects,
 } from "./hooks"
 export { getAllPieces, getCollidables } from "./objects"
 export type { Layers, OfficeView } from "./preferences"
