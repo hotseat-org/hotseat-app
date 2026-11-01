@@ -292,8 +292,6 @@ export const cs: Messages = {
   "Edit floors": "Upravit patra",
   "Add a floor on top": "Přidat patro navrch",
   "Name of {floor}": "Název – {floor}",
-  "Move up": "Posunout výš",
-  "Move down": "Posunout níž",
   "More for {floor}": "Další – {floor}",
   "Add a floor above, with these outer walls": "Přidat patro nad, s těmito obvodovými zdmi",
   "Add an empty floor above": "Přidat prázdné patro nad",
@@ -307,7 +305,6 @@ export const cs: Messages = {
   },
   "Delete {floor}": "Smazat {floor}",
   "Delete {floor}?": "Smazat {floor}?",
-  "Drag to reorder": "Přetažením změníte pořadí",
   "Delete floor": "Smazat patro",
   "Its {n} item goes with it. This can't be undone.": {
     one: "Odstraní se s ním {n} předmět. Nejde to vrátit zpět.",
