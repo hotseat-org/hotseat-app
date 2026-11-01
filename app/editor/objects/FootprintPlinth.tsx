@@ -1,27 +1,42 @@
 import { useFrame } from "@react-three/fiber"
 import { useEffect, useMemo, useRef } from "react"
-import { ExtrudeGeometry, Path, Shape, type Group, type MeshBasicMaterial } from "three"
+import {
+  Color,
+  ExtrudeGeometry,
+  Path,
+  Shape,
+  type Group,
+  type MeshBasicMaterial,
+  type MeshStandardMaterial,
+} from "three"
 import { ACCENT } from "../palette"
 
 /** How far the plinth reaches past the footprint, how thick it is, and its rim's width (m). */
 const MARGIN = 0.08
-const THICKNESS = 0.03
-const RIM = 0.03
+const THICKNESS = 0.045
+const RIM = 0.025
+/** How far its contact shadow spreads past it (m). */
+const SHADOW_SPREAD = 0.05
 
-/** How strong each part shows: pointed at, and selected (0–1 opacity). */
+/**
+ * Its looks: a cream slab pointed at, an accent one (glowing a little, with
+ * a crisp rim) selected. Neither shares a hue with a zone's tint, and both
+ * are solid: a zone is a wash of colour on the floor, this a thing on it.
+ */
 const LOOK = {
-  hovered: { top: 0.3, side: 0.45, rim: 0 },
-  selected: { top: 0.5, side: 0.85, rim: 1 },
+  hovered: { color: new Color("#efe5d2"), glow: 0, rim: 0 },
+  selected: { color: new Color(ACCENT), glow: 0.25, rim: 1 },
 }
 
 /**
  * The one visual language for "clickable" and "selected", in both modes: a
- * thin tinted plinth the piece stands on, tracing its footprint (a rounded
- * rectangle, so in a tight desk pod it marks exactly THIS desk).
- *  - hovered  → a light, see-through slab ("you can click this")
- *  - selected → a solid one, a crisp rim round its top
- * Eases in (grow + fade) and out — animated per frame, no React re-renders.
- * Brand cyan with tone mapping off, so it catches a hint of bloom in view mode.
+ * solid, lit plinth the piece stands on, tracing its footprint (a rounded
+ * rectangle, so in a tight desk pod it marks exactly THIS desk), with a soft
+ * contact shadow round its foot.
+ *  - hovered  → cream ("you can click this")
+ *  - selected → accent, with a crisp rim round its top
+ * Eases in (grow + fade from clear to solid) and out — animated per frame,
+ * no React re-renders.
  */
 export const FootprintPlinth = ({
   width,
@@ -53,12 +68,19 @@ export const FootprintPlinth = ({
 
     return band
   }, [outerWidth, outerDepth])
+  const shadow = useMemo(
+    () =>
+      roundedRect(
+        new Shape(),
+        outerWidth + SHADOW_SPREAD * 2,
+        outerDepth + SHADOW_SPREAD * 2
+      ) as Shape,
+    [outerWidth, outerDepth]
+  )
   const group = useRef<Group>(null)
-  const materials = useRef<{
-    top: MeshBasicMaterial | null
-    side: MeshBasicMaterial | null
-    rim: MeshBasicMaterial | null
-  }>({ top: null, side: null, rim: null })
+  const slabMaterial = useRef<MeshStandardMaterial>(null)
+  const rimMaterial = useRef<MeshBasicMaterial>(null)
+  const shadowMaterial = useRef<MeshBasicMaterial>(null)
   const amount = useRef(0)
 
   useFrame((state, delta) => {
@@ -73,49 +95,50 @@ export const FootprintPlinth = ({
 
     plinth.scale.set(0.94 + 0.06 * strength, 1, 0.94 + 0.06 * strength)
     const look = selected ? LOOK.selected : LOOK.hovered
-    const { top, side, rim: rimMaterial } = materials.current
-    if (top) top.opacity = look.top * strength
-    if (side) side.opacity = look.side * strength
-    if (rimMaterial) rimMaterial.opacity = look.rim * strength
+    const slabSurface = slabMaterial.current
+    if (slabSurface) {
+      slabSurface.color.copy(look.color)
+      slabSurface.emissive.copy(look.color)
+      slabSurface.emissiveIntensity = look.glow
+      slabSurface.opacity = strength
+      // Solid once in: it hides what's under it, like the furniture does.
+      slabSurface.depthWrite = strength > 0.95
+    }
+    if (rimMaterial.current) rimMaterial.current.opacity = look.rim * strength
+    if (shadowMaterial.current) shadowMaterial.current.opacity = 0.28 * strength
     // Keep animating under frameloop="demand" while easing (a settled one needs no frames).
     if (Math.abs(target - strength) > 0.005) state.invalidate()
   })
 
   return (
     <group ref={group} visible={false}>
-      {/* The slab: extruded up from the floor (its caps the top, its sides the edge). */}
-      <mesh geometry={slab} rotation={[-Math.PI / 2, 0, 0]} position-y={0.002} renderOrder={1}>
+      {/* A soft contact shadow round its foot: it stands on the floor, not in it. */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position-y={0.004}>
+        <shapeGeometry args={[shadow, 8]} />
         <meshBasicMaterial
-          ref={(material) => {
-            materials.current.top = material
-          }}
-          attach="material-0"
-          color={ACCENT}
+          ref={shadowMaterial}
+          color="#000000"
           transparent
           opacity={0}
           depthWrite={false}
-          toneMapped={false}
         />
-        <meshBasicMaterial
-          ref={(material) => {
-            materials.current.side = material
-          }}
-          attach="material-1"
-          color={ACCENT}
+      </mesh>
+      {/* The slab, extruded up from the floor and lit like the furniture. */}
+      <mesh geometry={slab} rotation={[-Math.PI / 2, 0, 0]} position-y={0.005}>
+        <meshStandardMaterial
+          ref={slabMaterial}
+          roughness={0.55}
           transparent
           opacity={0}
           depthWrite={false}
-          toneMapped={false}
         />
       </mesh>
       {/* The rim round its top (selected). */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position-y={THICKNESS + 0.004} renderOrder={2}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position-y={THICKNESS + 0.008} renderOrder={2}>
         <shapeGeometry args={[rim, 8]} />
         <meshBasicMaterial
-          ref={(material) => {
-            materials.current.rim = material
-          }}
-          color="#d9f6ff"
+          ref={rimMaterial}
+          color="#e9fbff"
           transparent
           opacity={0}
           depthWrite={false}
