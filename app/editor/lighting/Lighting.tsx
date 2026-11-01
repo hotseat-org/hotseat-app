@@ -13,6 +13,8 @@ interface Props {
   centre?: [number, number]
   /** How far the office reaches from its centre (m): what the shadows cover. */
   reach?: number
+  /** How far the floors below go down from the shown one (m): their shadows too. */
+  depth?: number
 }
 
 /** Room round the office for shadows thrown outward by a low sun (m). */
@@ -31,14 +33,19 @@ const SHADOW_TEXEL = 0.012
  * when the layout or time changes), so a bigger map costs memory and a little
  * per-pixel lookup, not a redraw every frame.
  */
-const getShadowArea = (reach: number, maxMapSize: number) => {
-  const half = THREE.MathUtils.clamp(reach + SHADOW_MARGIN, MIN_SHADOW_HALF, MAX_SHADOW_HALF)
+const getShadowArea = (reach: number, depth: number, maxMapSize: number) => {
+  // Lower down, the sun's square lands further off: room for that too.
+  const half = THREE.MathUtils.clamp(
+    reach + SHADOW_MARGIN + depth,
+    MIN_SHADOW_HALF,
+    MAX_SHADOW_HALF
+  )
   const wanted = 2 ** Math.ceil(Math.log2((2 * half) / SHADOW_TEXEL))
 
   return { half, mapSize: THREE.MathUtils.clamp(wanted, 1024, maxMapSize) }
 }
 
-export const Lighting = ({ profile: profile, centre = [0, 0], reach = 0 }: Props) => {
+export const Lighting = ({ profile, centre = [0, 0], reach = 0, depth = 0 }: Props) => {
   // Dark theme swaps the sky for the app background; lighting is unchanged.
   const background = useSurfaces().background
   // The sun (and its shadow area) sits over the office, wherever on the endless
@@ -55,7 +62,7 @@ export const Lighting = ({ profile: profile, centre = [0, 0], reach = 0 }: Props
   const renderer = useThree((state) => state.gl)
   const invalidate = useThree((state) => state.invalidate)
   const maxMapSize = renderer.capabilities.maxTextureSize >= 16384 ? 4096 : 2048
-  const { half, mapSize } = getShadowArea(reach, maxMapSize)
+  const { half, mapSize } = getShadowArea(reach, depth, maxMapSize)
   useLayoutEffect(() => {
     const light = sun.current
     if (!light) return

@@ -2,7 +2,12 @@ import { OrbitControls, OrthographicCamera } from "@react-three/drei"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useThree } from "@react-three/fiber"
 import { MOUSE } from "three"
-import { useEditorStore, useEditorStoreApi, useObjectsWithPaintPreview } from "../store"
+import {
+  useAllPieces,
+  useEditorStore,
+  useEditorStoreApi,
+  useObjectsWithPaintPreview,
+} from "../store"
 import { composeWallColors, snapPlacement, wallMount } from "../layout"
 import { daylight, DaylightContext } from "../lighting/daylight"
 import { SURFACES } from "../palette"
@@ -44,6 +49,7 @@ import { useCachedShadows } from "../lighting/useCachedShadows"
 import { useFurnitureDrag } from "../carrying/useFurnitureDrag"
 import { useOpeningCarry } from "../carrying/useOpeningCarry"
 import { useRepeatPlacement } from "../building/useRepeatPlacement"
+import { STOREY } from "../objects/dimensions"
 import { FloorShift, FloorsBelow } from "./FloorStack"
 import { useOfficeArea } from "./useOfficeArea"
 import { useContextMenuPress } from "./useContextMenuPress"
@@ -87,7 +93,10 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
   const timeOfDay = useEditorStore((state) => state.timeOfDay)
   const surfaces = dark ? SURFACES.dark : SURFACES.light
   const profile = daylight(timeOfDay, surfaces.nightDepth)
-  const officeArea = useOfficeArea(objects)
+  // The whole building's, every floor's: shadows the same from any floor (and
+  // through the glide between them), none cut off at the shown floor's edge.
+  const officeArea = useOfficeArea(useAllPieces())
+  const buildingDepth = useEditorStore((state) => (state.floors.length - 1) * STOREY)
   const addObject = useEditorStore((state) => state.addObject)
   const removeObject = useEditorStore((state) => state.removeObject)
   const select = useEditorStore((state) => state.select)
@@ -314,7 +323,12 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
             />
             <CarryController carryId={readOnly ? null : dragId} grab={grab} />
 
-            <Lighting profile={profile} centre={officeArea.centre} reach={officeArea.reach} />
+            <Lighting
+              profile={profile}
+              centre={officeArea.centre}
+              reach={officeArea.reach}
+              depth={buildingDepth}
+            />
 
             {readOnly && <StudioEnvironment intensity={profile.envIntensity} />}
 
