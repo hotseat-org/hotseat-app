@@ -85,6 +85,11 @@ export const Surface = ({
       // cutaway's kind is marked, so the office-wide batch merges it with its like.
       {...getSurfaceShader(cutaway)}
       {...(cutaway && { side: DoubleSide, userData: { cutaway } })}
+      // Never disposed with its piece: three.js frees a shader program once no
+      // material uses it, so a floor's furniture going (another floor shown)
+      // freed them all — and coming back compiled them all again, a stall
+      // every switch. A material holds nothing on the GPU itself.
+      dispose={null}
     />
   )
 }

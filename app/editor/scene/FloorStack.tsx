@@ -28,26 +28,49 @@ const CEILING_RISE = 0.005
 /** How long the world takes to glide to another floor (ms). */
 const SHIFT_DURATION = 450
 
+/** What a floor below is drawn from: its pieces' kinds, places and looks. */
+const getPiecesSignature = (pieces: SceneObject[]) =>
+  pieces
+    .map((piece) => `${piece.type}:${piece.x}:${piece.z}:${piece.rotation}:${piece.color ?? ""}`)
+    .join("|")
+
 /**
  * The shown floor sits at height 0 — where everything is placed and drawn —
  * so the floors below sit one storey lower each, down to the ground. Their
  * order, and the ground floor's pieces (the land is shaped round them).
+ * Each floor keeps the same list of pieces while they're the same, however
+ * often floors are switched: its walls, ceiling and the land aren't worked
+ * out again (they were, every switch — the land is the slowest of all).
  */
 const useFloorLevels = () => {
   const floors = useEditorStore((state) => state.floors)
   const currentFloor = useEditorStore((state) => state.currentFloor)
   const objects = useEditorStore((state) => state.objects)
   const otherFloorsPieces = useEditorStore((state) => state.otherFloorsPieces)
+  const known = useRef(new Map<string, { signature: string; pieces: SceneObject[] }>())
 
   return useMemo(() => {
+    const getStable = (floorId: string, pieces: SceneObject[]) => {
+      const signature = getPiecesSignature(pieces)
+      const previous = known.current.get(floorId)
+      if (previous?.signature === signature) return previous.pieces
+
+      known.current.set(floorId, { signature, pieces })
+
+      return pieces
+    }
     const level = floors.findIndex((floor) => floor.id === currentFloor)
     const below = floors.slice(0, level).map((floor, floorLevel) => ({
       id: floor.id,
       level: floorLevel,
-      pieces: otherFloorsPieces.filter((piece) => piece.floor === floor.id),
+      pieces: getStable(
+        floor.id,
+        otherFloorsPieces.filter((piece) => piece.floor === floor.id)
+      ),
     }))
+    const groundPieces = level === 0 ? getStable(floors[0].id, objects) : (below[0]?.pieces ?? [])
 
-    return { level, below, groundPieces: level === 0 ? objects : (below[0]?.pieces ?? []) }
+    return { level, below, groundPieces }
   }, [floors, currentFloor, objects, otherFloorsPieces])
 }
 
@@ -67,7 +90,13 @@ export const FloorsBelow = ({ isEditing }: { isEditing: boolean }) => {
       {level > 0 && (
         <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
           <planeGeometry args={[GROUND_SIZE, GROUND_SIZE]} />
-          <meshStandardMaterial color={surfaces.floor} roughness={0.95} fog={false} />
+          {/* Kept (see Surface): its shader serves every upper floor. */}
+          <meshStandardMaterial
+            color={surfaces.floor}
+            roughness={0.95}
+            fog={false}
+            dispose={null}
+          />
         </mesh>
       )}
       <Contours isEditing={isEditing} pieces={groundPieces} />
@@ -135,20 +164,46 @@ export const FloorShift = ({ children }: { children: ReactNode }) => {
   const renderer = useThree((state) => state.gl)
   const invalidate = useThree((state) => state.invalidate)
 
-  // Before the frame with the new floor: it's drawn where the old one was.
+  const scene = useThree((state) => state.scene)
+  const camera = useThree((state) => state.camera)
+  const get = useThree((state) => state.get)
+  const setFrameloop = useThree((state) => state.setFrameloop)
+
+  // Before the frame with the new floor: it's drawn where the old one was —
+  // and held there while its shaders compile (in the background where the
+  // browser can: the page stays responsive), then it glides. Drawn at once,
+  // a floor's first frame compiled them all in one long stall, mid-glide.
   useLayoutEffect(() => {
     if (level === previousLevel.current) return
 
-    shift.current = { from: (level - previousLevel.current) * STOREY, startedAt: performance.now() }
+    const from = (level - previousLevel.current) * STOREY
     previousLevel.current = level
-    if (group.current) group.current.position.y = shift.current.from
+    shift.current = { from, startedAt: Infinity }
+    if (group.current) group.current.position.y = from
 
-    invalidate()
-  }, [level, invalidate])
+    let isCancelled = false
+    const { frameloop } = get()
+    setFrameloop("never")
+    renderer
+      .compileAsync(scene, camera)
+      .catch(() => {}) // compiled on the first frame instead, as before
+      .finally(() => {
+        if (isCancelled) return
+
+        shift.current.startedAt = performance.now()
+        setFrameloop(frameloop)
+        invalidate()
+      })
+
+    return () => {
+      isCancelled = true
+      setFrameloop(frameloop)
+    }
+  }, [level, renderer, scene, camera, get, setFrameloop, invalidate])
 
   useFrame(() => {
     const world = group.current
-    if (!world || world.position.y === 0) return
+    if (!world || world.position.y === 0 || shift.current.startedAt === Infinity) return
 
     const progress = Math.min(1, (performance.now() - shift.current.startedAt) / SHIFT_DURATION)
     const eased = 1 - (1 - progress) ** 3

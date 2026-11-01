@@ -38,8 +38,11 @@ interface Anim {
 export const CameraFit = ({ insets = NO_INSETS }: { insets?: FitInsets }) => {
   const nonce = useEditorStore((state) => state.fitNonce)
   // Also frame the office when it first gets content (e.g. a template picked
-  // on an empty office).
-  const hasObjects = useEditorStore((state) => state.objects.length > 0)
+  // on an empty office) — on any floor: showing a floor with pieces after an
+  // empty one isn't that (it zoomed in on that floor's structure).
+  const hasObjects = useEditorStore(
+    (state) => state.objects.length > 0 || state.otherFloorsPieces.length > 0
+  )
   const store = useEditorStoreApi()
   const camera = useThree((state) => state.camera) as OrthographicCamera
   const controls = useThree((state) => state.controls) as OrbitControlsImpl | null

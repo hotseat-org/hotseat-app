@@ -189,15 +189,18 @@ const FloorTiles = ({
   )
 }
 
+// Never disposed with the floor (see Surface): another floor shown and back
+// would compile the shader again.
 const FloorSurface = ({ color, isPlain }: { color: string; isPlain: boolean }) =>
   isPlain ? (
-    <meshStandardMaterial color={color} roughness={0.95} />
+    <meshStandardMaterial color={color} roughness={0.95} dispose={null} />
   ) : (
     <meshStandardMaterial
       color={color}
       roughness={0.92}
       onBeforeCompile={patchPlanks}
       customProgramCacheKey={planksKey}
+      dispose={null}
     />
   )
 

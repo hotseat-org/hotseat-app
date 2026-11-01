@@ -135,15 +135,13 @@ export const StaticBatch = ({ enabled, children }: { enabled: boolean; children:
     setParts(next)
   }, [enabled, version])
 
-  // New batch → the cached shadow maps must include it; free the old one.
+  // New batch → the cached shadow maps must include it; free the old one's
+  // geometry. Not its materials: three.js would free their shader programs,
+  // and the next batch (another floor shown and back) compile them all again.
   useLayoutEffect(() => {
     markShadowsDirty(renderer, invalidate)
 
-    return () =>
-      parts.forEach((part) => {
-        part.geometry.dispose()
-        part.material.dispose()
-      })
+    return () => parts.forEach((part) => part.geometry.dispose())
   }, [parts, renderer, invalidate])
 
   return (

@@ -59,7 +59,28 @@ export const FloorPicker = ({
           <Plus className="size-3.5" />
         </button>
       )}
-      <div role="radiogroup" aria-label={t("Choose a floor")} className="flex flex-col">
+      <div
+        role="radiogroup"
+        aria-label={t("Choose a floor")}
+        className="flex flex-col"
+        // Up and down move a floor (the stack's top is the top floor).
+        onKeyDown={(event) => {
+          const step = { ArrowUp: 1, ArrowDown: -1 }[event.key]
+          if (!step) return
+
+          event.preventDefault()
+          const index = floors.findIndex((floor) => floor.id === currentFloor)
+          const next = floors[index + step]
+          if (!next) return
+
+          showFloor(next.id)
+          // The focus goes with it (the shown floor is the one in the tab order).
+          const group = event.currentTarget
+          requestAnimationFrame(() =>
+            group.querySelector<HTMLElement>("[aria-checked=true]")?.focus()
+          )
+        }}
+      >
         {[...floors].reverse().map((floor) => {
           const isShown = floor.id === currentFloor
 
@@ -69,6 +90,7 @@ export const FloorPicker = ({
               type="button"
               role="radio"
               aria-checked={isShown}
+              tabIndex={isShown ? 0 : -1}
               aria-label={getFloorName(floor)}
               title={getFloorName(floor)}
               // The camera follows (see FloorShift): no refit.

@@ -5,14 +5,29 @@ import { useEditorStore } from "../store"
 import { SURFACES } from "../palette"
 import { ContourLines } from "../landscape/ContourLines"
 import { FloorPicker } from "../ui/menus/FloorPicker"
+import { isEdgeType } from "../types"
 import { PhoneControls } from "./PhoneControls"
 import { buildScene } from "./drawing/buildScene"
-import { fitView, turnObject, type Insets, type View } from "./planView"
+import { fitView, turnObject, type Bounds, type Insets, type View } from "./planView"
 import { useGlide, type Frame } from "./useFraming"
 import { usePlanGestures } from "./usePlanGestures"
 
 /** Room kept clear of the floating chrome when fitting (px). */
 const FIT_PAD = { top: 96, bottom: 112, left: 112 }
+
+/** How faded the floor below shows under an upper floor's plan. */
+const BELOW_OPACITY = 0.35
+
+/** The box round both drawings (either may be empty). */
+const mergeBounds = (first: Bounds | null, second: Bounds | null): Bounds | null =>
+  first && second
+    ? {
+        minX: Math.min(first.minX, second.minX),
+        maxX: Math.max(first.maxX, second.maxX),
+        minY: Math.min(first.minY, second.minY),
+        maxY: Math.max(first.maxY, second.maxY),
+      }
+    : (first ?? second)
 
 /**
  * Simple mode: the office as a top-down plan (SVG) — for phones, devices that
@@ -47,6 +62,21 @@ export const FloorPlan = ({
   const turn = useEditorStore((state) => state.planTurn)
   const turnBy = useEditorStore((state) => state.turnPlan)
   const objects = useMemo(() => layout.map((object) => turnObject(object, turn)), [layout, turn])
+  // The ground floor's pieces (the land is shaped round them, from every
+  // floor) and the walls of the floor right below (drawn faded under this one).
+  const floors = useEditorStore((state) => state.floors)
+  const currentFloor = useEditorStore((state) => state.currentFloor)
+  const otherFloorsPieces = useEditorStore((state) => state.otherFloorsPieces)
+  const { groundPieces, belowWalls } = useMemo(() => {
+    const level = floors.findIndex((floor) => floor.id === currentFloor)
+    const onFloor = (index: number) =>
+      otherFloorsPieces.filter((piece) => piece.floor === floors[index]?.id)
+
+    return {
+      groundPieces: level === 0 ? layout : onFloor(0),
+      belowWalls: level > 0 ? onFloor(level - 1).filter((piece) => isEdgeType(piece.type)) : [],
+    }
+  }, [floors, currentFloor, otherFloorsPieces, layout])
 
   const box = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState<{ width: number; height: number } | null>(null)
@@ -95,10 +125,30 @@ export const FloorPlan = ({
   const insets: Insets = phoneChrome
     ? { top: phoneChrome.top + 12, bottom: phoneChrome.bottom + 68, left: 16, right: 16 }
     : { ...FIT_PAD, right: padRight }
-  const frame = useRef<Frame>({ size, bounds: scene.bounds, insets })
-  frame.current = { size, bounds: scene.bounds, insets }
-  const hasContent = !!scene.bounds
+  // The floor right below, faded: where this one stands — an empty upper floor
+  // isn't a blank map — and with it the building framed whole, the same
+  // from every floor.
+  const belowScene = useMemo(
+    () =>
+      belowWalls.length > 0
+        ? buildScene({
+            objects: belowWalls.map((piece) => turnObject(piece, turn)),
+            wall: surfaces.wall,
+            floorInside: surfaces.ceiling,
+            styleOf: () => undefined,
+            isClickable: () => false,
+            onPiece: () => {},
+            drawings: [],
+          })
+        : null,
+    [belowWalls, turn, surfaces.wall, surfaces.ceiling]
+  )
+  const bounds = mergeBounds(scene.bounds, belowScene?.bounds ?? null)
+  const frame = useRef<Frame>({ size, bounds, insets })
+  frame.current = { size, bounds, insets }
+  const hasContent = !!bounds
   const measured = size !== null
+
   useLayoutEffect(() => {
     const { size: frameSize, bounds, insets: padding } = frame.current
     if (frameSize && bounds) setView(fitView(bounds, frameSize, padding))
@@ -142,13 +192,14 @@ export const FloorPlan = ({
           >
             {size && (
               <ContourLines
-                layout={layout}
+                layout={groundPieces}
                 turn={turn}
                 view={plan.view}
                 size={size}
                 colors={surfaces.contour}
               />
             )}
+            {belowScene && <g opacity={BELOW_OPACITY}>{belowScene.node}</g>}
             {scene.node}
             {svgLayers.map((Layer, index) => (
               <Layer key={index} plan={plan} />
