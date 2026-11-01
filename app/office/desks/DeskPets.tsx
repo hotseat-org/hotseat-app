@@ -1,5 +1,4 @@
-import { Suspense, useMemo, useState } from "react"
-import { useCursor } from "@react-three/drei"
+import { Suspense, useContext, useEffect, useId, useMemo, useState } from "react"
 import type { ThreeEvent } from "@react-three/fiber"
 import { useDesksOnDay } from "../booking/useBooking"
 import { useOfficeStore } from "../store"
@@ -8,6 +7,7 @@ import { personByEmail, usePeople } from "./people"
 import { spotFor, type Spot } from "./seatSpot"
 import { petFor } from "~/editor/core"
 import { WiggleModel } from "~/editor/kit"
+import { CursorHintContext } from "~/editor"
 
 const PET_SCALE = 0.4
 
@@ -67,7 +67,16 @@ const Pet = ({
   onHover: (isOver: boolean) => void
 }) => {
   const [hovered, setHovered] = useState(false)
-  useCursor(hovered)
+  // The scene's own hand, as over its desk.
+  const setCursorHint = useContext(CursorHintContext)
+  const id = useId()
+  useEffect(() => {
+    if (!hovered) return
+
+    setCursorHint(id, "point")
+
+    return () => setCursorHint(id, null)
+  }, [hovered, id, setCursorHint])
 
   return (
     <group

@@ -87,6 +87,9 @@ export {
   type SidePanelEntry,
 } from "./ui/sidePanels"
 
+// The scene's cursors, for what a module lays over or into it (desk tags, deskmates).
+export { CURSORS, CursorHintContext } from "./shell/cursors"
+
 // Editor UI an app shell may reuse (the office view's dock and map menu).
 export { TimeOfDay } from "./ui/bars/TimeOfDay"
 export { InspectorGroup } from "./ui/InspectorGroup"

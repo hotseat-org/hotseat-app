@@ -9,6 +9,7 @@ import { useHoveredPieceActions } from "./useHoveredPiece"
 import { getDeskTagTone } from "./deskTagTone"
 import { personByEmail, usePeople } from "./people"
 import { SeatAvatar } from "./SeatAvatar"
+import { CURSORS } from "~/editor"
 import { useI18n } from "~/i18n/I18nProvider"
 
 /**
@@ -105,7 +106,9 @@ export const SeatTags = () => {
               }}
               onPointerLeave={() => clearHoveredPiece(desk.id)}
               // The button itself isn't scaled (the UI kit sets buttons' scale): what's in it is.
-              className="group pointer-events-auto cursor-pointer select-none"
+              className="group pointer-events-auto select-none"
+              // The scene's own hand, as over its desk.
+              style={{ cursor: CURSORS.point }}
             >
               <span
                 className={clsx(
