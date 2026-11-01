@@ -104,23 +104,20 @@ const isPlacing = (tool: Tool, carryingId: string | null) =>
  */
 export const useBuildArea = () => {
   const objects = useEditorStore((state) => state.objects)
-  // Higher up, the floor right below too: its ceiling is what's built on.
-  const floorBelow = useEditorStore((state) => {
-    const level = state.floors.findIndex((floor) => floor.id === state.currentFloor)
-
-    return level > 0 ? state.floors[level - 1].id : null
-  })
+  // Higher up, the floors below too: their ceilings are what's built on.
+  const floors = useEditorStore((state) => state.floors)
+  const currentFloor = useEditorStore((state) => state.currentFloor)
   const otherFloorsPieces = useEditorStore((state) => state.otherFloorsPieces)
   const placing = useEditorStore((state) => isPlacing(state.tool, state.carryingId))
-  const map = useMemo(
-    () =>
-      buildDistanceMap(
-        floorBelow
-          ? [...objects, ...otherFloorsPieces.filter((piece) => piece.floor === floorBelow)]
-          : objects
-      ),
-    [objects, floorBelow, otherFloorsPieces]
-  )
+  const map = useMemo(() => {
+    const level = floors.findIndex((floor) => floor.id === currentFloor)
+    const below = new Set(floors.slice(0, Math.max(0, level)).map((floor) => floor.id))
+
+    return buildDistanceMap([
+      ...objects,
+      ...otherFloorsPieces.filter((piece) => piece.floor && below.has(piece.floor)),
+    ])
+  }, [objects, floors, currentFloor, otherFloorsPieces])
   useEffect(() => () => map?.texture.dispose(), [map])
 
   // A ShaderMaterial's uniforms (made with createBuildAreaUniforms).

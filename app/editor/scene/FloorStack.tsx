@@ -14,8 +14,17 @@ import { Walls } from "../walls/Walls"
 import { InteriorFloor } from "./InteriorFloor"
 import { useSurfaces } from "./sceneTheme"
 
-/** How far the ceiling sits under the floor above (its rooms are 0.006 up). */
-const CEILING_DROP = 0.012
+/**
+ * How far a floor below settles: its wall tops a hair under the shown
+ * floor's level, where its own rooms and the build grid lie (the same plane
+ * flickers). The walls above sink further into them: still no seam.
+ */
+const SETTLE = 0.01
+/**
+ * How far a ceiling sits over its walls' tops — they'd show through it as
+ * dashes — still under the shown floor's own rooms (0.006 up).
+ */
+const CEILING_RISE = 0.005
 /** How long the world takes to glide to another floor (ms). */
 const SHIFT_DURATION = 450
 
@@ -44,14 +53,13 @@ const useFloorLevels = () => {
 
 /**
  * What's under the shown floor: the ground and its land, at ground level
- * (the same land from every floor — the ground floor's), the floors below
- * by their walls, and — on the floor right below — its ceiling: where this
- * floor can be built on, like the Sims.
+ * (the same land from every floor — the ground floor's), and the floors
+ * below by their walls, each with its ceiling over its rooms: where the
+ * floors above stand, and this one can be built on, like the Sims.
  */
 export const FloorsBelow = ({ isEditing }: { isEditing: boolean }) => {
   const { level, below, groundPieces } = useFloorLevels()
   const surfaces = useSurfaces()
-  const floorBelow = below[below.length - 1]
 
   return (
     <group position-y={-level * STOREY}>
@@ -65,17 +73,15 @@ export const FloorsBelow = ({ isEditing }: { isEditing: boolean }) => {
       <Contours isEditing={isEditing} pieces={groundPieces} />
 
       {below.map(({ id, level: floorLevel, pieces }) => (
-        <group key={id} position-y={floorLevel * STOREY}>
+        <group key={id} position-y={floorLevel * STOREY - SETTLE}>
           <LowerFloor pieces={pieces} />
+          {/* Its ceiling, on its walls: from above, its roof — the floor
+              above's walls stand on it, and what's built up there. */}
+          <group position-y={STOREY + CEILING_RISE}>
+            <InteriorFloor pieces={pieces} color={surfaces.ceiling} />
+          </group>
         </group>
       ))}
-      {/* On its walls — a hair under their tops and this floor's own rooms,
-          which are at the same height. */}
-      {floorBelow && (
-        <group position-y={(floorBelow.level + 1) * STOREY - CEILING_DROP}>
-          <InteriorFloor pieces={floorBelow.pieces} color={surfaces.ceiling} />
-        </group>
-      )}
     </group>
   )
 }
