@@ -1,10 +1,12 @@
 import { Html } from "@react-three/drei"
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
-import { useState } from "react"
+import { useContext, useState } from "react"
 import { getFloorLink, getItem } from "../catalog"
 import { isFloorLink } from "../floorLinks"
 import { getFloorNumber, getFloorTitle } from "../floors"
 import { STOREY } from "../objects/dimensions"
+import { FootprintOutline } from "../objects/FootprintOutline"
+import { CursorHintContext } from "../shell/cursors"
 import { useEditorStore } from "../store"
 import { GRID, type SceneObject } from "../types"
 import { getStairsDestination } from "../useFloorLinkClick"
@@ -40,6 +42,8 @@ export const FloorLinkHints = () => {
   const liftPanelId = useEditorStore((state) => state.liftPanelId)
   const { arrivingStairs, passingLifts } = useShownFloorLinks()
   const [hovered, setHovered] = useState<HoveredLink | null>(null)
+  // The scene's own cursor (the hand), as pieces set it — the page's is under the canvas's.
+  const setCursorHint = useContext(CursorHintContext)
 
   const links: HoveredLink[] = [
     ...objects.filter(isFloorLink).map((piece) => ({ piece, isOpening: false })),
@@ -81,11 +85,11 @@ export const FloorLinkHints = () => {
             rotation-y={link.piece.rotation}
             onPointerOver={() => {
               setHovered(link)
-              document.body.style.cursor = "pointer"
+              setCursorHint(`link:${link.piece.id}`, "point")
             }}
             onPointerOut={() => {
               setHovered((current) => (current?.piece.id === link.piece.id ? null : current))
-              document.body.style.cursor = ""
+              setCursorHint(`link:${link.piece.id}`, null)
             }}
           >
             <boxGeometry
@@ -96,6 +100,20 @@ export const FloorLinkHints = () => {
               ]}
             />
           </mesh>
+        )
+      })}
+      {/* An opening pointed at: outlined like a piece (the pieces outline themselves). */}
+      {arrivingStairs.map((stairs) => {
+        const [cellsX, cellsZ] = getItem(stairs.type).footprint
+
+        return (
+          <group key={stairs.id} position={[stairs.x, 0, stairs.z]} rotation-y={stairs.rotation}>
+            <FootprintOutline
+              width={cellsX * GRID}
+              depth={cellsZ * GRID}
+              hovered={hovered?.isOpening === true && hovered.piece.id === stairs.id}
+            />
+          </group>
         )
       })}
       {hovered && hint && (
