@@ -79,12 +79,12 @@ const planksKey = () => "interior-planks"
  */
 export const InteriorFloor = ({
   pieces,
-  opacity = 1,
+  color,
 }: {
   /** Another floor's pieces (one below); unset, the shown floor's. */
   pieces?: SceneObject[]
-  /** Below 1, see-through (the slab over the floor below). */
-  opacity?: number
+  /** Every room in this one plain colour — a ceiling, not floorboards. */
+  color?: string
 }) => {
   // Rooms depend only on walls/doors/windows and floor paints — a key of those,
   // so moving furniture doesn't re-run the flood fill.
@@ -128,9 +128,13 @@ export const InteriorFloor = ({
 
   return (
     <>
-      {groups.map(([color, cells]) => (
-        <FloorTiles key={color} color={color} cells={cells} opacity={opacity} />
-      ))}
+      {color ? (
+        <FloorTiles color={color} cells={groups.flatMap(([, cells]) => cells)} isPlain />
+      ) : (
+        groups.map(([roomColor, cells]) => (
+          <FloorTiles key={roomColor} color={roomColor} cells={cells} />
+        ))
+      )}
     </>
   )
 }
@@ -139,11 +143,12 @@ export const InteriorFloor = ({
 const FloorTiles = ({
   color,
   cells: all,
-  opacity,
+  isPlain = false,
 }: {
   color: string
   cells: FloorCell[]
-  opacity: number
+  /** No floorboards (a ceiling). */
+  isPlain?: boolean
 }) => {
   const invalidate = useThree((state) => state.invalidate)
   const ref = useRef<InstancedMesh>(null)
@@ -176,25 +181,25 @@ const FloorTiles = ({
           receiveShadow
         >
           <planeGeometry args={[SEG, SEG]} />
-          <FloorSurface color={color} opacity={opacity} />
+          <FloorSurface color={color} isPlain={isPlain} />
         </instancedMesh>
       )}
-      {cutCells.length > 0 && <CutFloor color={color} cells={cutCells} opacity={opacity} />}
+      {cutCells.length > 0 && <CutFloor color={color} cells={cutCells} isPlain={isPlain} />}
     </>
   )
 }
 
-const FloorSurface = ({ color, opacity }: { color: string; opacity: number }) => (
-  <meshStandardMaterial
-    color={color}
-    roughness={0.92}
-    transparent={opacity < 1}
-    opacity={opacity}
-    depthWrite={opacity === 1}
-    onBeforeCompile={patchPlanks}
-    customProgramCacheKey={planksKey}
-  />
-)
+const FloorSurface = ({ color, isPlain }: { color: string; isPlain: boolean }) =>
+  isPlain ? (
+    <meshStandardMaterial color={color} roughness={0.95} />
+  ) : (
+    <meshStandardMaterial
+      color={color}
+      roughness={0.92}
+      onBeforeCompile={patchPlanks}
+      customProgramCacheKey={planksKey}
+    />
+  )
 
 /**
  * The squares a diagonal wall cuts: only their triangles inside the room (a
@@ -203,11 +208,11 @@ const FloorSurface = ({ color, opacity }: { color: string; opacity: number }) =>
 const CutFloor = ({
   color,
   cells,
-  opacity,
+  isPlain,
 }: {
   color: string
   cells: FloorCell[]
-  opacity: number
+  isPlain: boolean
 }) => {
   const geometry = useMemo(() => {
     const positions: number[] = []
@@ -236,7 +241,7 @@ const CutFloor = ({
 
   return (
     <mesh geometry={geometry} receiveShadow>
-      <FloorSurface color={color} opacity={opacity} />
+      <FloorSurface color={color} isPlain={isPlain} />
     </mesh>
   )
 }

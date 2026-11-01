@@ -77,6 +77,8 @@ export interface SurfacePalette {
   contour: { minor: string; major: string; plateau: string; plateau3d: string }
   floor: string
   floorInside: string
+  /** The floor below's ceiling, seen from the floor above: what can be built on. */
+  ceiling: string
   wall: string
   grid: string
   /**
@@ -98,6 +100,7 @@ export const SURFACES: Record<"light" | "dark", SurfacePalette> = {
     contour: { minor: "#b9a684", major: "#957d52", plateau: "#ede8de", plateau3d: "#efe4d0" },
     floor: PALETTE.floor,
     floorInside: PALETTE.floorInside,
+    ceiling: "#f4efe6",
     wall: "#c9ced8",
     grid: "#9c855e",
     nightDepth: 1.5,
@@ -109,6 +112,7 @@ export const SURFACES: Record<"light" | "dark", SurfacePalette> = {
     contour: { minor: "#4a5160", major: "#62809f", plateau: "#3e424c", plateau3d: "#363c4a" },
     floor: "#2e3441",
     floorInside: "#4a4135",
+    ceiling: "#5c6272",
     wall: "#8f97a8",
     grid: "#56607a",
     nightDepth: 0,

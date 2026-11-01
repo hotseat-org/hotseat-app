@@ -1,15 +1,14 @@
 import { useFrame, useThree } from "@react-three/fiber"
 import { useLayoutEffect, useMemo, useRef, type ReactNode } from "react"
 import type { Group } from "three"
-import { getRenderer } from "../catalog/rendering"
 import { GROUND_SIZE } from "../landscape/Ground"
 import { Contours } from "../landscape/Contours"
 import { markShadowsDirty } from "../lighting/shadows"
-import { STOREY } from "../objects/dimensions"
-import { ObjectRenderer } from "../objects/ObjectRenderer"
-import { StaticBatch } from "../objects/StaticBatch"
+import { STOREY, WALL } from "../objects/dimensions"
 import { useEditorStore } from "../store"
-import { isMarker, type SceneObject } from "../types"
+import { getRenderer } from "../catalog/rendering"
+import { ObjectRenderer } from "../objects/ObjectRenderer"
+import { isEdgeType, isMarker, type SceneObject } from "../types"
 import { Posts } from "../walls/Posts"
 import { Walls } from "../walls/Walls"
 import { InteriorFloor } from "./InteriorFloor"
@@ -17,10 +16,6 @@ import { useSurfaces } from "./sceneTheme"
 
 /** How long the world takes to glide to another floor (ms). */
 const SHIFT_DURATION = 450
-/** How see-through the floor below's ceiling is, where the shown floor can be built on. */
-const CEILING_OPACITY = 0.45
-/** Just under the shown floor's rooms (theirs are at 0.006), so the two never fight. */
-const CEILING_DROP = 0.02
 
 /**
  * The shown floor sits at height 0 — where everything is placed and drawn —
@@ -48,8 +43,8 @@ const useFloorLevels = () => {
 /**
  * What's under the shown floor: the ground and its land, at ground level
  * (the same land from every floor — the ground floor's), the floors below
- * as they are, and — over the floor right below — its ceiling, see-through:
- * where this floor can be built on, like the Sims.
+ * by their walls, and — on the floor right below — its ceiling: where this
+ * floor can be built on, like the Sims.
  */
 export const FloorsBelow = ({ isEditing }: { isEditing: boolean }) => {
   const { level, below, groundPieces } = useFloorLevels()
@@ -72,9 +67,10 @@ export const FloorsBelow = ({ isEditing }: { isEditing: boolean }) => {
           <LowerFloor pieces={pieces} />
         </group>
       ))}
+      {/* Lying on its walls, under this floor's own rooms. */}
       {floorBelow && (
-        <group position-y={level * STOREY - CEILING_DROP}>
-          <InteriorFloor pieces={floorBelow.pieces} opacity={CEILING_OPACITY} />
+        <group position-y={floorBelow.level * STOREY + WALL.height}>
+          <InteriorFloor pieces={floorBelow.pieces} color={surfaces.ceiling} />
         </group>
       )}
     </group>
@@ -83,30 +79,37 @@ export const FloorsBelow = ({ isEditing }: { isEditing: boolean }) => {
 
 const ignore = () => {}
 
-/** A floor below, as it is — its rooms, walls and pieces — but not to touch. */
-const LowerFloor = ({ pieces }: { pieces: SceneObject[] }) => (
-  <>
-    <InteriorFloor pieces={pieces} />
-    <Walls pieces={pieces} />
-    <Posts pieces={pieces} />
-    <StaticBatch enabled>
-      {pieces
-        .filter((piece) => !getRenderer(piece.type).isDrawnAsRun && !isMarker(piece.type))
-        .map((piece) => (
-          <ObjectRenderer
-            key={piece.id}
-            object={piece}
-            selected={false}
-            tool="select"
-            interactive={false}
-            onSelect={ignore}
-            onDelete={ignore}
-            onStartDrag={ignore}
-          />
-        ))}
-    </StaticBatch>
-  </>
-)
+/**
+ * A floor below: its walls, with their doors and windows — not its furniture,
+ * which would only crowd the view of the floor being shown (the ceiling
+ * covers its rooms anyway). The openings are drawn one by one, not batched:
+ * batched (StaticBatch), they showed up on the floor above.
+ */
+const LowerFloor = ({ pieces }: { pieces: SceneObject[] }) => {
+  const openings = pieces.filter(
+    (piece) =>
+      isEdgeType(piece.type) && !getRenderer(piece.type).isDrawnAsRun && !isMarker(piece.type)
+  )
+
+  return (
+    <>
+      <Walls pieces={pieces} />
+      <Posts pieces={pieces} />
+      {openings.map((piece) => (
+        <ObjectRenderer
+          key={piece.id}
+          object={piece}
+          selected={false}
+          tool="select"
+          interactive={false}
+          onSelect={ignore}
+          onDelete={ignore}
+          onStartDrag={ignore}
+        />
+      ))}
+    </>
+  )
+}
 
 /**
  * Showing another floor, the world glides there: it starts a storey (or
