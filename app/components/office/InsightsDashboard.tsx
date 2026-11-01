@@ -53,7 +53,7 @@ const Card = ({
   className?: string
 }) => (
   <figure
-    className={clsx("relative m-0 rounded-[18px] border border-border bg-surface p-4", className)}
+    className={clsx("relative m-0 rounded-2xl border border-border bg-surface p-4", className)}
   >
     <figcaption className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
       <span className="text-sm font-extrabold text-foreground">{title}</span>
@@ -64,7 +64,7 @@ const Card = ({
 )
 
 const Stat = ({ label, value, detail }: { label: string; value: ReactNode; detail: ReactNode }) => (
-  <div className="rounded-[18px] bg-surface-secondary p-4">
+  <div className="rounded-2xl bg-surface-secondary p-4">
     <p className="text-xs font-extrabold text-muted">{label}</p>
     <p className="mt-1 text-[30px] font-black leading-none text-foreground">{value}</p>
     <p className="mt-1.5 text-xs text-muted">{detail}</p>
@@ -314,7 +314,7 @@ export const InsightsDashboard = () => {
       />
       <section
         aria-label={t("Insights")}
-        className="modal-in relative flex h-fit w-full max-w-[1220px] flex-col gap-5 rounded-[28px] bg-overlay p-5 text-foreground shadow-overlay md:p-7"
+        className="modal-in relative flex h-fit w-full max-w-[1220px] flex-col gap-5 rounded-[calc(var(--radius)*3)] bg-overlay p-5 text-foreground shadow-overlay md:p-7"
       >
         <header className="flex flex-wrap items-center gap-3">
           <div className="min-w-60 flex-1">

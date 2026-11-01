@@ -20,10 +20,7 @@ export const SettingsCard = ({
   className?: string
 }) => (
   <section
-    className={clsx(
-      "rounded-[20px] border border-border bg-surface-secondary p-4 md:p-6",
-      className
-    )}
+    className={clsx("rounded-2xl border border-border bg-surface-secondary p-4 md:p-6", className)}
   >
     {children}
   </section>

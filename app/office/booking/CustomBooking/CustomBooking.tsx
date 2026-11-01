@@ -64,7 +64,7 @@ export const CustomBooking = () => {
             "max-w-full overflow-hidden p-0",
             isPhone
               ? "mt-auto h-[calc(var(--visual-viewport-height)-44px)] w-full rounded-t-3xl rounded-b-none"
-              : "w-[880px] rounded-3xl"
+              : "w-[880px] rounded-[calc(var(--radius)*3)]"
           )}
         >
           {/* Remount per desk: the picks start over. */}
