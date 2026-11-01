@@ -1,6 +1,7 @@
 import { createContext, useContext, useMemo } from "react"
 import { useStore, type StoreApi } from "zustand"
 import { paintWallFaces } from "../layout"
+import type { SceneObject } from "../types"
 import { getAllPieces, getCollidables } from "./objects"
 import type { EditorState, EditorStore } from "./state"
 
@@ -67,4 +68,20 @@ export const useCollidables = () => {
   const floorBlockers = useEditorStore((state) => state.floorBlockers)
 
   return useMemo(() => getCollidables({ objects, floorBlockers }), [objects, floorBlockers])
+}
+
+/**
+ * The piece where it's shown: carried, where it's held now (see
+ * heldPlacement) — the layout has it where it stood. Only the carried piece
+ * follows each step.
+ */
+export const useHeldPiece = <Piece extends SceneObject | undefined>(piece: Piece): Piece => {
+  const placement = useEditorStore((state) =>
+    piece && state.carryingId === piece.id ? state.heldPlacement : null
+  )
+
+  return useMemo(
+    () => (piece && placement ? { ...piece, ...placement } : piece),
+    [piece, placement]
+  )
 }

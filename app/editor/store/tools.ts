@@ -32,6 +32,19 @@ export interface ToolsState {
   /** Furniture currently being carried (rotating it then skips the overlap check). */
   carryingId: string | null
   setCarrying: (id: string | null) => void
+  /**
+   * Where the carried piece is held now. Apart from the layout until it's set
+   * down: the layout stays as it was through the carry, so nothing that reads
+   * it (rooms, walls, labels, the land…) works again at every step.
+   */
+  heldPlacement: HeldPlacement | null
+  setHeldPlacement: (placement: HeldPlacement | null) => void
+}
+
+export interface HeldPlacement {
+  x: number
+  z: number
+  rotation: number
 }
 
 export const createToolsState = (set: SetState, get: GetState): ToolsState => ({
@@ -62,4 +75,6 @@ export const createToolsState = (set: SetState, get: GetState): ToolsState => ({
   armKit: (armedKit) => set({ armedKit, tool: "select", selectedId: null }),
   carryingId: null,
   setCarrying: (carryingId) => set({ carryingId }),
+  heldPlacement: null,
+  setHeldPlacement: (heldPlacement) => set({ heldPlacement }),
 })

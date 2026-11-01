@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react"
+import { useEffect, useMemo } from "react"
 import { DataTexture, LinearFilter, RedFormat, UnsignedByteType, Vector2, Vector3 } from "three"
 import { distance, float, length, max, select, smoothstep, texture, uniform } from "three/tsl"
 import type { Node } from "three/webgpu"
@@ -123,15 +123,9 @@ const isPlacing = (tool: Tool, carryingId: string | null) =>
  * tool — on every render (cheap: plain values).
  */
 export const useBuildArea = () => {
-  const shown = useEditorStore((state) => state.objects)
-  // While a piece is carried, the area stays as it was (as the land does, see
-  // useLandscape): its field takes ~100 ms on a big office, too slow for every
-  // step of a drag. It follows once the piece is put down.
-  const isCarrying = useEditorStore((state) => state.carryingId !== null)
-  const settled = useRef(shown)
-  if (!isCarrying) settled.current = shown
-
-  const objects = settled.current
+  // A carried piece doesn't change it until it's set down (see heldPlacement):
+  // its field takes ~100 ms on a big office.
+  const objects = useEditorStore((state) => state.objects)
   // Higher up, the floors below too: their ceilings are what's built on.
   const floors = useEditorStore((state) => state.floors)
   const currentFloor = useEditorStore((state) => state.currentFloor)

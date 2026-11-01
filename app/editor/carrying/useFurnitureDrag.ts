@@ -22,40 +22,47 @@ export const useFurnitureDrag = (readOnly: boolean) => {
   const [grab, setGrab] = useState({ offsetX: 0, offsetZ: 0 })
   // Last refused drop (a timestamp) — the carried object shakes "no".
   const [blockedAt, setBlockedAt] = useState(0)
-  /** Where the dragged piece started — what Esc / a refused drop restores. */
-  const dragStart = useRef<{ id: string; x: number; z: number; rotation: number } | null>(null)
+  /** The piece being dragged (its placement is held apart, see heldPlacement). */
+  const draggedId = useRef<string | null>(null)
 
   const endDrag = () => {
-    dragStart.current = null
+    draggedId.current = null
     setDragId(null)
+    storeApi.getState().setHeldPlacement(null)
     storeApi.getState().endBatch() // the whole drag = one undo step (none if put back)
   }
 
+  // Back where it stood: the layout never moved it (see heldPlacement).
   const putBack = () => {
-    const start = dragStart.current
-    if (!start) return
+    if (!draggedId.current) return
 
-    storeApi.getState().moveObject(start.id, start)
     endDrag()
   }
 
   const tryDrop = () => {
-    const start = dragStart.current
-    if (!start) return
+    const id = draggedId.current
+    if (!id) return
 
-    const all = storeApi.getState().objects
-    const object = all.find((candidate) => candidate.id === start.id)
-    if (object && furnitureCollides(getCollidables(storeApi.getState()), object)) {
+    const state = storeApi.getState()
+    const stored = state.objects.find((candidate) => candidate.id === id)
+    const held = stored && state.heldPlacement ? { ...stored, ...state.heldPlacement } : null
+    if (!held || furnitureCollides(getCollidables(state), held)) {
       setBlockedAt(performance.now())
 
       return putBack()
     }
 
+    // Set down: into the layout, the one change of the whole carry (none if
+    // it's where it stood).
+    const hasMoved =
+      held.x !== stored?.x || held.z !== stored.z || held.rotation !== stored.rotation
+    if (hasMoved) state.moveObject(held.id, held)
+
     endDrag()
   }
 
   const handlePick = (id: string, event: ThreeEvent<PointerEvent>) => {
-    if (dragStart.current) return
+    if (draggedId.current) return
 
     const object = storeApi.getState().objects.find((candidate) => candidate.id === id)
     if (!object) return
@@ -69,9 +76,10 @@ export const useFurnitureDrag = (readOnly: boolean) => {
       if (Math.hypot(moveEvent.clientX - startX, moveEvent.clientY - startY) <= DRAG_PX) return
 
       window.removeEventListener("pointermove", move)
-      dragStart.current = { id, x: object.x, z: object.z, rotation: object.rotation }
+      draggedId.current = id
       setGrab(offset)
       storeApi.getState().beginBatch()
+      storeApi.getState().setHeldPlacement({ x: object.x, z: object.z, rotation: object.rotation })
       setDragId(id)
     }
     const up = () => {

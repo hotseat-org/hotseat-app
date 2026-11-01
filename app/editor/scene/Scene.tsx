@@ -290,11 +290,6 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
 
     return 0
   }
-  // The pieces as they stood when the carry began: only the carried one moves
-  // (out of the batch), so the batch needn't look again at each step.
-  const settledObjects = useRef(objects)
-  if (!dragId) settledObjects.current = objects
-
   const carried = dragId ? objects.find((object) => object.id === dragId) : undefined
   // Canvas cursor between camera gestures: the tool's, a closed hand while
   // carrying a piece, the plain arrow in display mode.
@@ -421,10 +416,7 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
 
                 {/* Walls render as merged runs (seamless); everything else individually. */}
                 <Walls />
-                <StaticBatch
-                  cellSize={readOnly ? undefined : CELL_SIZE}
-                  layout={settledObjects.current}
-                >
+                <StaticBatch cellSize={readOnly ? undefined : CELL_SIZE} layout={objects}>
                   {objects
                     .filter(
                       (object) => !getRenderer(object.type).isDrawnAsRun && !isMarker(object.type)

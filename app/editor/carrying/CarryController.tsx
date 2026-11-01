@@ -1,7 +1,7 @@
 import { useFrame, useThree } from "@react-three/fiber"
 import { useMemo } from "react"
 import { Plane, Vector3 } from "three"
-import { useEditorStore, useEditorStoreApi } from "../store"
+import { useEditorStoreApi } from "../store"
 import { snapPlacement, wallMount } from "../layout"
 import { isWallMounted } from "../types"
 import { aimAtWallHeight } from "../building/wallAim"
@@ -13,7 +13,8 @@ const GROUND = new Plane(new Vector3(0, 1, 0), 0)
  * grabbed at: `grab` is that spot's offset from its centre), tracked against a math ground
  * plane every frame — so it keeps following even when the cursor passes over
  * other objects or the carried object itself (which would otherwise swallow the
- * ground's pointer-move events).
+ * ground's pointer-move events). It moves the held placement (see
+ * heldPlacement), not the layout: that changes once, when it's set down.
  */
 export const CarryController = ({
   carryId,
@@ -24,26 +25,28 @@ export const CarryController = ({
 }) => {
   const { camera, raycaster, pointer } = useThree()
   const store = useEditorStoreApi()
-  const moveObject = useEditorStore((state) => state.moveObject)
   const hit = useMemo(() => new Vector3(), [])
 
   useFrame((state) => {
     if (!carryId) return
 
-    const carried = store.getState().objects.find((object) => object.id === carryId)
-    if (!carried) return
+    // Where it's held now: the layout keeps it where it stood until it's set down.
+    const { objects, heldPlacement, setHeldPlacement } = store.getState()
+    const stored = objects.find((object) => object.id === carryId)
+    if (!stored || !heldPlacement) return
+
+    const carried = { ...stored, ...heldPlacement }
 
     raycaster.setFromCamera(pointer, camera)
     if (!raycaster.ray.intersectPlane(GROUND, hit)) return
 
     // Wall items hop along wall faces (turning to face out); off a wall they
     // follow the cursor and can't be dropped.
-    const all = store.getState().objects
     const aim = isWallMounted(carried.type) ? aimAtWallHeight(raycaster, pointer, camera) : null
-    const placement = (aim && wallMount(all, carried.type, aim)) || {
+    const placement = (aim && wallMount(objects, carried.type, aim)) || {
       // Flush against a diagonal wall when turned beside one (see snapPlacement).
       ...snapPlacement(
-        all.filter((other) => other.id !== carried.id),
+        objects.filter((other) => other.id !== carried.id),
         carried,
         { x: hit.x + grab.offsetX, z: hit.z + grab.offsetZ }
       ),
@@ -54,7 +57,7 @@ export const CarryController = ({
       placement.z !== carried.z ||
       placement.rotation !== carried.rotation
     )
-      moveObject(carryId, placement)
+      setHeldPlacement(placement)
 
     state.invalidate() // keep following under frameloop="demand"
   })

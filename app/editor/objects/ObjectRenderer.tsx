@@ -16,6 +16,7 @@ import { edgeLength, edgeStretch } from "../layout"
 import { markShadowsDirty } from "../lighting/shadows"
 import { CutawayContext } from "../walls/cutaway"
 import { getItem } from "../catalog"
+import { useHeldPiece } from "../store"
 import { ObjectMesh } from "./ObjectMesh"
 import { PieceContext } from "./pieceContext"
 import { WALL } from "./dimensions"
@@ -86,7 +87,7 @@ const SHAKE = 0.35
  * every other piece in the office (the scene passes stable callbacks).
  */
 export const ObjectRenderer = memo(function ObjectRenderer({
-  object,
+  object: storedObject,
   selected,
   tool,
   interactive = true,
@@ -103,6 +104,8 @@ export const ObjectRenderer = memo(function ObjectRenderer({
   wallFront,
   wallBack,
 }: Props) {
+  // Carried, where it's held now (the layout has it where it stood).
+  const object = useHeldPiece(storedObject)
   // What it's picked by, measured from its model (see composeHitShape).
   const [hitShape, setHitShape] = useState<BufferGeometry | null>(null)
   // View mode: desks are clickable (seat card).

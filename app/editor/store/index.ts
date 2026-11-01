@@ -6,9 +6,11 @@ export {
   useAllPieces,
   useCollidables,
   useEditorStoreApi,
+  useHeldPiece,
   useObjectsWithPaintPreview,
 } from "./hooks"
 export { getAllPieces, getCollidables } from "./objects"
 export type { Layers, OfficeView } from "./preferences"
 export type { EditorState, EditorStore } from "./state"
+export type { HeldPlacement } from "./tools"
 export { nowHours } from "./view"

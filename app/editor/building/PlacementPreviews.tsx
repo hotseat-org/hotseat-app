@@ -1,5 +1,5 @@
 import { furnitureCollides } from "../layout"
-import { useCollidables, useEditorStore } from "../store"
+import { useCollidables, useEditorStore, useHeldPiece } from "../store"
 import { isObjectType, isWallMounted, type Cell, type ObjectType, type SceneObject } from "../types"
 import { AlignmentGuides } from "../carrying/AlignmentGuides"
 import { MeasureHints } from "../carrying/MeasureHints"
@@ -21,7 +21,7 @@ export const PlacementPreviews = ({
   repeatPlan,
   repeatBlocked,
   dragId,
-  carried,
+  carried: storedCarried,
 }: {
   /** A furniture tool is armed. */
   isFurniture: boolean
@@ -35,6 +35,8 @@ export const PlacementPreviews = ({
   dragId: string | null
   carried: SceneObject | undefined
 }) => {
+  // Where it's held now (the layout has it where it stood).
+  const carried = useHeldPiece(storedCarried)
   const objects = useEditorStore((state) => state.objects)
   const collidables = useCollidables()
   const tool = useEditorStore((state) => state.tool)

@@ -1,5 +1,4 @@
-import { useMemo, useRef } from "react"
-import { useEditorStore } from "../store"
+import { useMemo } from "react"
 import type { Cell, SceneObject } from "../types"
 import { getStructureField, PLATEAU_MARGIN } from "./structureField"
 
@@ -355,18 +354,11 @@ export const createLandscape = (objects: SceneObject[]): Landscape => {
 
 /**
  * The landscape for the current layout. Rebuilt when the layout changes (the
- * plateau and slopes follow every wall and piece) — but not while a piece is
- * being carried: it would retrace the land at every snap. It settles on drop.
+ * plateau and slopes follow every wall and piece) — a carried piece changes it
+ * only once it's set down (see heldPlacement).
  */
-export const useLandscape = (objects: SceneObject[]) => {
-  const isCarrying = useEditorStore((state) => state.carryingId !== null)
-  const settled = useRef(objects)
-  if (!isCarrying) settled.current = objects
-
-  const layout = settled.current
-
-  return useMemo(() => createLandscape(layout), [layout])
-}
+export const useLandscape = (objects: SceneObject[]) =>
+  useMemo(() => createLandscape(objects), [objects])
 
 /** The tiles (tx, tz) covering a world rectangle. */
 export const tilesCovering = (from: Cell, to: Cell) => {

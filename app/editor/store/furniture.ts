@@ -122,7 +122,10 @@ export const createFurnitureState = (
 
   rotateObject: (id) => {
     const state = get()
-    const piece = state.objects.find((candidate) => candidate.id === id)
+    const stored = state.objects.find((candidate) => candidate.id === id)
+    // Carried, it turns where it's held (the layout has it where it stood).
+    const isHeld = state.carryingId === id && state.heldPlacement !== null
+    const piece = stored && isHeld ? { ...stored, ...state.heldPlacement } : stored
     // Walls/doors live on grid edges — turning one in place would leave it
     // off the edge grid, so they don't rotate.
     if (!piece || isEdgeType(piece.type)) return
@@ -160,6 +163,8 @@ export const createFurnitureState = (
       }
     }
     const pendingTurn = composePendingTurn()
+    if (isHeld) return set({ heldPlacement: { ...snapped, rotation } })
+
     set({
       pendingTurn,
       objects: state.objects.map((candidate) =>
