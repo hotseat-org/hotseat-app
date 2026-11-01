@@ -1,10 +1,11 @@
 import { useFrame, useThree } from "@react-three/fiber"
-import { useLayoutEffect, useMemo, useRef, type ReactNode } from "react"
+import { useEffect, useLayoutEffect, useMemo, useRef, type ReactNode } from "react"
 import type { Group } from "three"
 import { GROUND_SIZE } from "../landscape/Ground"
 import { Contours } from "../landscape/Contours"
 import { markShadowsDirty } from "../lighting/shadows"
 import { STOREY } from "../objects/dimensions"
+import { FloorBaseContext, shownFloorUniform } from "../objects/floorHeight"
 import { useEditorStore } from "../store"
 import { getRenderer } from "../catalog/rendering"
 import { ObjectRenderer } from "../objects/ObjectRenderer"
@@ -103,7 +104,10 @@ export const FloorsBelow = ({ isEditing }: { isEditing: boolean }) => {
 
       {below.map(({ id, level: floorLevel, pieces }) => (
         <group key={id} position-y={floorLevel * STOREY - SETTLE}>
-          <LowerFloor pieces={pieces} />
+          {/* Shaded by height above its own floor, not the shown one's. */}
+          <FloorBaseContext.Provider value={(floorLevel - level) * STOREY - SETTLE}>
+            <LowerFloor pieces={pieces} />
+          </FloorBaseContext.Provider>
           {/* Its ceiling, on its walls: from above, its roof — the floor
               above's walls stand on it, and what's built up there. */}
           <group position-y={STOREY + CEILING_RISE}>
@@ -181,6 +185,8 @@ export const FloorShift = ({ children }: { children: ReactNode }) => {
     shift.current = { from, startedAt: Infinity }
     if (group.current) group.current.position.y = from
 
+    shownFloorUniform.value = from
+
     let isCancelled = false
     const { frameloop } = get()
     setFrameloop("never")
@@ -201,6 +207,14 @@ export const FloorShift = ({ children }: { children: ReactNode }) => {
     }
   }, [level, renderer, scene, camera, get, setFrameloop, invalidate])
 
+  // Gone mid-glide: the surfaces are shaded and cut from the ground again.
+  useEffect(
+    () => () => {
+      shownFloorUniform.value = 0
+    },
+    []
+  )
+
   useFrame(() => {
     const world = group.current
     if (!world || world.position.y === 0 || shift.current.startedAt === Infinity) return
@@ -208,6 +222,7 @@ export const FloorShift = ({ children }: { children: ReactNode }) => {
     const progress = Math.min(1, (performance.now() - shift.current.startedAt) / SHIFT_DURATION)
     const eased = 1 - (1 - progress) ** 3
     world.position.y = progress === 1 ? 0 : shift.current.from * (1 - eased)
+    shownFloorUniform.value = world.position.y
     // The shadows move with it (they're cached, see shadows.ts); next frame too.
     markShadowsDirty(renderer, invalidate)
   })

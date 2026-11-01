@@ -7,6 +7,7 @@ import {
   type WebGLProgramParametersWithUniforms,
 } from "three"
 import { WALL } from "../objects/dimensions"
+import { shownFloorUniform } from "../objects/floorHeight"
 
 /**
  * The wall cutaway, done on the GPU: walls, posts, doors, windows and wall
@@ -118,6 +119,7 @@ const ANCHOR_FROM_ATTRIBUTES = /* glsl */ `
 const createPatch =
   (band: number, isMerged: boolean) => (shader: WebGLProgramParametersWithUniforms) => {
     shader.uniforms.cutaways = cutawayUniform
+    shader.uniforms.cutawayFloor = shownFloorUniform
     shader.vertexShader = shader.vertexShader
       .replace(
         "#include <common>",
@@ -138,6 +140,7 @@ const createPatch =
         "#include <common>",
         /* glsl */ `#include <common>
       uniform vec4 cutaways[${MAX_CUTS}];
+      uniform float cutawayFloor;
       varying vec3 vCutWorld;
       varying vec3 vCutAnchor;
       varying float vCutAxis;
@@ -171,7 +174,10 @@ const createPatch =
         "#include <clipping_planes_fragment>",
         /* glsl */ `#include <clipping_planes_fragment>
       float cutDepth = cutawayDepth(vCutWorld);
-      if (vCutWorld.y > mix(${glsl(CUT_TOP)}, ${glsl(CUT_HEIGHT)}, cutDepth)) discard;
+      // Above the shown floor: a floor arriving a storey up isn't sliced at
+      // the ground floor's wall height (floors below never are).
+      float cutHeight = vCutWorld.y - cutawayFloor;
+      if (cutHeight > mix(${glsl(CUT_TOP)}, ${glsl(CUT_HEIGHT)}, cutDepth)) discard;
       // Inner faces only show where it's cut open.
       if (!gl_FrontFacing && cutDepth < 0.001) discard;`
       )

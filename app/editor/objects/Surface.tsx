@@ -1,6 +1,7 @@
 import { createContext, useContext } from "react"
 import { DoubleSide } from "three"
 import { useCutaway } from "../walls/cutaway"
+import { useFloorBase } from "./floorHeight"
 import { getSurfaceShader } from "./surfaceShader"
 
 /**
@@ -52,6 +53,7 @@ export const Surface = ({
 }: SurfaceProps) => {
   const ghost = useContext(GhostContext)
   const cutaway = useCutaway()
+  const floorBase = useFloorBase()
 
   if (ghost && typeof ghost === "object") {
     return (
@@ -80,10 +82,11 @@ export const Surface = ({
       opacity={translucent ? opacity : 1}
       depthWrite={!translucent}
       {...(isRecessed && RECESSED)}
-      // Contact shading, and the wall cutaway when it's sliced by one (inner
-      // faces then show where it's cut open) — see surfaceShader.ts. The
+      // Contact shading (above its own floor), and the wall cutaway when it's
+      // sliced by one (inner faces then show where it's cut open) — see
+      // surfaceShader.ts. The
       // cutaway's kind is marked, so the office-wide batch merges it with its like.
-      {...getSurfaceShader(cutaway)}
+      {...getSurfaceShader(cutaway, floorBase)}
       {...(cutaway && { side: DoubleSide, userData: { cutaway } })}
       // Never disposed with its piece: three.js frees a shader program once no
       // material uses it, so a floor's furniture going (another floor shown)
