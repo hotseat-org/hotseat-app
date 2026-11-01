@@ -20,6 +20,11 @@ export interface FloorsState {
   floorBlockers: SceneObject[]
   /** Show another floor — a scene of its own, so nothing to undo there yet. */
   showFloor: (id: string) => void
+  /**
+   * Another floor's pieces as they'd be shown — the very ones showFloor will
+   * show, if they're unchanged by then (for drawing a floor ahead, hidden).
+   */
+  getFloorObjects: (id: string) => SceneObject[]
   /** A new floor on top, shown. */
   addFloor: () => void
   /**
@@ -46,10 +51,17 @@ export const createFloorsActions = (
     shownBefore.set(state.currentFloor, state.objects)
 
     const layout = splitLayout({ floors, pieces }, floorId)
-    const before = shownBefore.get(layout.currentFloor)
-    const objects = before && isSameList(before, layout.objects) ? before : layout.objects
-    set({ ...layout, objects, selectedId: null })
+    set({ ...layout, objects: getKnown(layout.currentFloor, layout.objects), selectedId: null })
     get().resetHistory()
+  }
+  /** A floor's pieces: the ones it was shown (or drawn ahead) with, if they're the same. */
+  const getKnown = (floorId: string, objects: SceneObject[]) => {
+    const before = shownBefore.get(floorId)
+    if (before && isSameList(before, objects)) return before
+
+    shownBefore.set(floorId, objects)
+
+    return objects
   }
 
   return {
@@ -58,6 +70,14 @@ export const createFloorsActions = (
       if (id === state.currentFloor || !state.floors.some((floor) => floor.id === id)) return
 
       showLayout(state.floors, composeSavedLayout(state).pieces, id)
+    },
+    getFloorObjects: (id) => {
+      const state = get()
+      if (id === state.currentFloor) return state.objects
+
+      const { objects } = splitLayout(composeSavedLayout(state), id)
+
+      return getKnown(id, objects)
     },
     addFloor: () => {
       const { floors, addFloorAbove } = get()

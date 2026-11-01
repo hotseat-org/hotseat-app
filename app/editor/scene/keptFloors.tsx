@@ -1,4 +1,5 @@
-import { useLayoutEffect, useRef, type ReactNode } from "react"
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react"
+import { useThree } from "@react-three/fiber"
 import type { Group, Object3D } from "three"
 import type { Floor } from "../floors"
 
@@ -7,8 +8,76 @@ import type { Floor } from "../floors"
  * batched. Shown again (unchanged — see showLayout), they're simply there:
  * no piece built or merged anew, which made a switch take most of a second.
  */
-export const useKeptFloors = (floors: Floor[], currentFloor: string, shownPieces: ReactNode) =>
-  useKept(new Map([[currentFloor, shownPieces]]), (id) => floors.some((floor) => floor.id === id))
+export const useKeptFloors = ({
+  floors,
+  currentFloor,
+  shownPieces,
+  aheadPieces,
+}: {
+  floors: Floor[]
+  currentFloor: string
+  shownPieces: ReactNode
+  /** Floors not shown yet, being drawn ahead (see useFloorsAhead). */
+  aheadPieces: Map<string, { node: ReactNode; isComplete: boolean }>
+}) => {
+  const nodes = [...aheadPieces].map(([id, { node }]) => [id, node] as const)
+  const kept = useKept(new Map([[currentFloor, shownPieces], ...nodes]), (id) =>
+    floors.some((floor) => floor.id === id)
+  )
+
+  return kept.map((floor) => ({
+    ...floor,
+    isShown: floor.key === currentFloor,
+    isComplete: aheadPieces.get(floor.key)?.isComplete ?? true,
+  }))
+}
+
+/** Pieces drawn ahead at each idle moment (built and baked: a few ms each). */
+const AHEAD_STEP = 24
+/** How long the drawing ahead waits for idle time at most (ms): the first step waits out the load. */
+const FIRST_WAIT = 3000
+const NEXT_WAIT = 500
+
+/** Runs `callback` in idle time, or after `timeout` (ms); returns how to call it off. */
+const whenIdle = (callback: () => void, timeout: number) => {
+  if (typeof window.requestIdleCallback !== "function") {
+    const timer = window.setTimeout(callback, Math.min(timeout, 200))
+
+    return () => window.clearTimeout(timer)
+  }
+
+  const handle = window.requestIdleCallback(callback, { timeout })
+
+  return () => window.cancelIdleCallback(handle)
+}
+
+/**
+ * The floors not shown yet, drawn ahead — hidden, in idle time, a few pieces
+ * at a time — so even a first visit finds them there (one took most of a
+ * second). By floor: how many of its pieces are drawn so far. A floor once
+ * shown is drawn in full (and kept, see useKeptFloors).
+ */
+export const useFloorsAhead = (pieceCounts: Map<string, number>, currentFloor: string) => {
+  const [drawn, setDrawn] = useState(() => new Map<string, number>())
+  const shown = useRef(new Set<string>())
+  shown.current.add(currentFloor)
+
+  const next = [...pieceCounts].find(
+    ([id, count]) => !shown.current.has(id) && (drawn.get(id) ?? 0) < count
+  )?.[0]
+  const isFirst = drawn.size === 0
+  useEffect(() => {
+    if (!next) return
+
+    return whenIdle(
+      () =>
+        setDrawn((previous) => new Map(previous).set(next, (previous.get(next) ?? 0) + AHEAD_STEP)),
+      isFirst ? FIRST_WAIT : NEXT_WAIT
+    )
+  }, [next, drawn, isFirst])
+
+  return { drawn, shownFloors: shown.current }
+}
 
 /**
  * What's drawn now, by key, and what was drawn before, kept: the shown
@@ -32,7 +101,16 @@ const SHOWN_FLOOR = {}
  * three neither draws them nor works out their matrices at every frame — a
  * floor's thousands of meshes, all of them while the floors glide.
  */
-export const KeptFloor = ({ isShown, children }: { isShown: boolean; children: ReactNode }) => {
+export const KeptFloor = ({
+  isShown,
+  isComplete = true,
+  children,
+}: {
+  isShown: boolean
+  /** All its pieces are there (a floor drawn ahead may not be yet). */
+  isComplete?: boolean
+  children: ReactNode
+}) => {
   const self = useRef<Group>(null)
   const anchor = useRef<Group>(null)
   useLayoutEffect(() => {
@@ -44,6 +122,25 @@ export const KeptFloor = ({ isShown, children }: { isShown: boolean; children: R
 
     parent.add(floor)
     floor.updateMatrixWorld(true) // where it stands now (it wasn't kept up while out)
+  }, [isShown])
+
+  // Hidden and complete, never drawn: prepared for drawing in idle time
+  // (three's work for each new mesh, and the shaders), lit as the scene is —
+  // or the first frame it's shown in does it all at once.
+  const { gl: renderer, scene, camera } = useThree()
+  const isPrepared = useRef(false)
+  useEffect(() => {
+    const floor = self.current
+    if (!floor || isShown || !isComplete || isPrepared.current) return
+
+    return whenIdle(() => {
+      isPrepared.current = true
+      floor.updateMatrixWorld(true)
+      void renderer.compileAsync(floor, camera, scene).catch(() => {}) // prepared when drawn instead
+    }, NEXT_WAIT)
+  }, [isShown, isComplete, renderer, scene, camera])
+  useEffect(() => {
+    if (isShown) isPrepared.current = true // drawn: prepared by now
   }, [isShown])
 
   return (

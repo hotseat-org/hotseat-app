@@ -199,8 +199,11 @@ const mergeCell = (
 export const StaticBatch = ({
   cellSize,
   layout,
+  isPaused = false,
   children,
 }: {
+  /** Not merged for now: a hidden floor still being drawn ahead (merged once it's all there). */
+  isPaused?: boolean
   /** Merged in cells this size (m), each rebuilt on its own; without one, as a whole. */
   cellSize?: number
   /** The pieces as they stand: when it changes, the cells whose pieces moved are rebuilt. */
@@ -248,7 +251,7 @@ export const StaticBatch = ({
 
   useLayoutEffect(() => {
     const group = root.current
-    if (!group) return
+    if (!group || isPaused) return
 
     // Another floor: every cell anew, in that floor's materials. Not freed:
     // three.js would free their shader programs, and the next floor shown
@@ -300,7 +303,7 @@ export const StaticBatch = ({
     }
 
     setParts([...cells.current.values()].flatMap((cell) => cell.parts))
-  }, [version, layout, cellSize, floorPlace, getMaterial])
+  }, [version, layout, cellSize, isPaused, floorPlace, getMaterial])
 
   // New parts → the cached shadow maps must include them; free the geometry
   // of those no cell holds any more.

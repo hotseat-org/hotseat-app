@@ -100,6 +100,16 @@ describe("floors", () => {
     expect(store.getState().objects).toBe(shown)
   })
 
+  test("a floor drawn ahead is shown with the very same pieces", () => {
+    const { store } = createTwoFloors()
+    const { floors } = store.getState()
+    const ahead = store.getState().getFloorObjects(floors[0].id)
+
+    store.getState().showFloor(floors[0].id)
+
+    expect(store.getState().objects).toBe(ahead)
+  })
+
   test("a floor changed elsewhere is shown as it is now", () => {
     const { store } = createTwoFloors()
     const { floors } = store.getState()

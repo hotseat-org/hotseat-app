@@ -57,7 +57,7 @@ import { useShownFloorLinks } from "../useShownFloorLinks"
 import { useFloorLinkClick } from "../useFloorLinkClick"
 import { isFloorLink } from "../floorLinks"
 import { FloorPiecesContext } from "../objects/pieceContext"
-import { KeptFloor, useKeptFloors } from "./keptFloors"
+import { KeptFloor, useFloorsAhead, useKeptFloors } from "./keptFloors"
 import { LiftPanel } from "./LiftPanel"
 import { FloorLinkHints } from "./FloorLinkHints"
 import { FloorShift, FloorsBelow, ShownFloorLinks } from "./FloorStack"
@@ -294,10 +294,18 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
     return 0
   }
   const carried = dragId ? objects.find((object) => object.id === dragId) : undefined
-  // The shown floor's pieces, batched (see StaticBatch).
-  const shownPieces = (
-    <StaticBatch cellSize={readOnly ? undefined : CELL_SIZE} layout={objects}>
-      {objects
+  /** A floor's pieces, batched (see StaticBatch): the shown floor's, or one drawn ahead. */
+  const renderPieces = (
+    floorObjects: SceneObject[],
+    floorWallColors: typeof wallColors,
+    isPaused = false
+  ) => (
+    <StaticBatch
+      cellSize={readOnly ? undefined : CELL_SIZE}
+      layout={floorObjects}
+      isPaused={isPaused}
+    >
+      {floorObjects
         .filter((object) => !getRenderer(object.type).isDrawnAsRun && !isMarker(object.type))
         .map((object) => (
           <ObjectRenderer
@@ -316,13 +324,59 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
             onMenuPress={readOnly ? undefined : onMenuPress}
             onViewClick={getViewClick(object)}
             occupied={pieceStates?.get(object.id)?.isOccupied}
-            wallFront={wallColors.openings.get(object.id)?.[0]}
-            wallBack={wallColors.openings.get(object.id)?.[1]}
+            wallFront={floorWallColors.openings.get(object.id)?.[0]}
+            wallBack={floorWallColors.openings.get(object.id)?.[1]}
           />
         ))}
     </StaticBatch>
   )
-  const keptFloors = useKeptFloors(floors, currentFloor, shownPieces)
+
+  // The other floors, drawn ahead (hidden) in idle time: switched to, they're
+  // there (see useFloorsAhead). Their pieces are the very ones they'll be
+  // shown with (see getFloorObjects), so nothing is drawn again then.
+  const getFloorObjects = useEditorStore((state) => state.getFloorObjects)
+  const otherFloorsPieces = useEditorStore((state) => state.otherFloorsPieces)
+  const otherFloors = useMemo(
+    () =>
+      new Map(
+        floors
+          .filter((floor) => floor.id !== currentFloor)
+          .map((floor) => {
+            const pieces = getFloorObjects(floor.id)
+
+            return [floor.id, { pieces, wallColors: composeWallColors(pieces) }]
+          })
+      ),
+    [floors, currentFloor, otherFloorsPieces, getFloorObjects]
+  )
+  const pieceCounts = useMemo(
+    () => new Map([...otherFloors].map(([id, { pieces }]) => [id, pieces.length])),
+    [otherFloors]
+  )
+  const { drawn, shownFloors } = useFloorsAhead(pieceCounts, currentFloor)
+  // Drawn again only as more of them is drawn: hidden, the rest can wait
+  // until they're shown.
+  const aheadPieces = useMemo(
+    () =>
+      new Map(
+        [...drawn].flatMap(([id, count]) => {
+          const floor = otherFloors.get(id)
+          if (!floor || shownFloors.has(id)) return []
+
+          const isComplete = count >= floor.pieces.length
+          const node = renderPieces(floor.pieces.slice(0, count), floor.wallColors, !isComplete)
+
+          return [[id, { node, isComplete }] as const]
+        })
+      ),
+    [drawn, otherFloors]
+  )
+  const keptFloors = useKeptFloors({
+    floors,
+    currentFloor,
+    shownPieces: renderPieces(objects, wallColors),
+    aheadPieces,
+  })
 
   // Canvas cursor between camera gestures: the tool's, a closed hand while
   // carrying a piece, the plain arrow in display mode.
@@ -450,8 +504,8 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
                 {/* Walls render as merged runs (seamless); everything else individually. */}
                 <Walls />
                 {/* Each floor's pieces: the shown one's, and those once shown, hidden (see useKeptFloors). */}
-                {keptFloors.map(({ key, node, isShown }) => (
-                  <KeptFloor key={key} isShown={isShown}>
+                {keptFloors.map(({ key, node, isShown, isComplete }) => (
+                  <KeptFloor key={key} isShown={isShown} isComplete={isComplete}>
                     {node}
                   </KeptFloor>
                 ))}
