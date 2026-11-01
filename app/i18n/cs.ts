@@ -450,6 +450,7 @@ export const cs: Messages = {
   "Turn view right": "Otočit pohled doprava",
   "Fit the office": "Zobrazit celou kancelář",
   "Close desk": "Zavřít stůl",
+  "Open {desk}": "Otevřít: {desk}",
 
   // —— Office shell ——
   admin: "správce",

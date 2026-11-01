@@ -2,7 +2,7 @@ import { useCallback, useMemo } from "react"
 import { createPortal } from "react-dom"
 import { personByEmail, usePeople } from "../desks/people"
 import { SeatCardBody, useSeatCard } from "../booking/seatCard"
-import { useDeskFilter } from "../booking/useBooking"
+import { deskName, useDeskFilter } from "../booking/useBooking"
 import { useRoute } from "../wayfinding/wayfinding"
 import { RoutePath } from "../wayfinding/RoutePath"
 import { useOfficeStore } from "../store"
@@ -53,7 +53,8 @@ export const OfficeRoutePath = ({ plan }: PlanLayerProps) => {
  * tags — and the open desk's card.
  */
 export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
-  const { t } = useI18n()
+  const i18n = useI18n()
+  const { t } = i18n
   const { view, screen, turn, objects, isDark, phoneChrome } = plan
   const openSeatCard = useOfficeStore((state) => state.openSeatCard)
   const heatmap = useOfficeStore((state) => state.heatmap)
@@ -168,10 +169,17 @@ export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
           if (occupant) at.top -= avatarSize / 2 + 3
 
           return (
-            <div
+            // Pressed like its desk: opens its card (a pan ending on it doesn't).
+            <button
               key={desk.id}
-              className="pointer-events-none absolute -translate-x-1/2 -translate-y-full"
+              type="button"
+              aria-label={t("Open {desk}", { desk: deskName(i18n, desk) })}
+              className="absolute -translate-x-1/2 -translate-y-full cursor-pointer transition-transform hover:-translate-y-[calc(100%+2px)]"
               style={at}
+              onClick={(event) => {
+                event.stopPropagation()
+                if (!plan.isMoved()) openSeatCard(desk.id)
+              }}
             >
               <DeskTag
                 person={person}
@@ -180,7 +188,7 @@ export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
                 free={free}
                 resident={state.kind === "resident"}
               />
-            </div>
+            </button>
           )
         })}
 

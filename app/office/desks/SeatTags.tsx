@@ -2,7 +2,7 @@ import { Html } from "@react-three/drei"
 import clsx from "clsx"
 import { Pin } from "lucide-react"
 import { heatBarTop } from "../heatmap/heatmap"
-import { useDeskFilter, useDesksOnDay } from "../booking/useBooking"
+import { deskName, useDeskFilter, useDesksOnDay } from "../booking/useBooking"
 import { useOfficeStore } from "../store"
 import { getDeskTagTone } from "./deskTagTone"
 import { personByEmail, usePeople } from "./people"
@@ -23,8 +23,10 @@ export const SeatTags = () => {
   const matchesFilter = useDeskFilter()
   const booking = useOfficeStore((state) => state.booking.enabled)
   const past = useOfficeStore((state) => state.booking.day < state.booking.today)
-  // The open desk's card replaces its tag.
+  // The open desk's card replaces its tag; pressed, a tag opens its desk's card.
   const openId = useOfficeStore((state) => state.seatCard?.id)
+  const openSeatCard = useOfficeStore((state) => state.openSeatCard)
+  const i18n = useI18n()
   // Insights' heatmap: every desk's share of days in use, instead of who's in.
   const heatmap = useOfficeStore((state) => state.heatmap)
   if (heatmap)
@@ -73,7 +75,13 @@ export const SeatTags = () => {
             zIndexRange={[20, 0]}
             style={{ pointerEvents: "none" }}
           >
-            <div className="flex select-none flex-col items-center gap-1">
+            {/* Pressed like its desk: opens its card (to book it, see who's there). */}
+            <button
+              type="button"
+              aria-label={t("Open {desk}", { desk: deskName(i18n, desk) })}
+              onClick={() => openSeatCard(desk.id)}
+              className="pointer-events-auto flex cursor-pointer select-none flex-col items-center gap-1 transition-transform hover:-translate-y-0.5"
+            >
               {person && state.kind !== "free" && (
                 <SeatAvatar person={person} email={state.email} isMine={mine} size={40} />
               )}
@@ -91,7 +99,7 @@ export const SeatTags = () => {
                 )}
                 {free && <span>{t("Free")}</span>}
               </div>
-            </div>
+            </button>
           </Html>
         )
       })}
