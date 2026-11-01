@@ -1,9 +1,11 @@
-import { Canvas, useFrame, useThree } from "@react-three/fiber"
+import { Canvas, events, useFrame, useThree } from "@react-three/fiber"
+import type { Intersection } from "three"
 import { Suspense, useEffect, useRef } from "react"
 import { EditorStoreContextProvider, type EditorStore } from "../store"
 import { ModulesContext, useModules, useViewClicks } from "../modules"
 import type { FitInsets } from "../camera/CameraFit"
 import { Scene } from "./Scene"
+import { isOnHiddenFloor } from "./keptFloors"
 import { createRenderer } from "./createRenderer"
 import { FpsMeter, type FrameStats } from "./FpsMeter"
 import { I18nBridge, useI18n } from "~/i18n/I18nProvider"
@@ -46,6 +48,7 @@ const SceneCanvas = ({ store, readOnly, dark, fitInsets, showStats, onStats, onR
       // round it, not over it (PieceOutline).
       gl={createSceneRenderer}
       frameloop={showStats ? "always" : "demand"}
+      events={createPointerEvents}
       onPointerMissed={() => viewClicks.onFloor()}
     >
       <Suspense fallback={null}>
@@ -63,6 +66,12 @@ const SceneCanvas = ({ store, readOnly, dark, fitInsets, showStats, onStats, onR
     </Canvas>
   )
 }
+
+/** R3F's pointer events, past the pieces of floors kept hidden (see useKeptFloors). */
+const createPointerEvents = (store: Parameters<typeof events>[0]) => ({
+  ...events(store),
+  filter: (hits: Intersection[]) => hits.filter((hit) => !isOnHiddenFloor(hit.object)),
+})
 
 /** Frames to draw before the scene counts as ready (the first compiles shaders). */
 const FRAMES_TO_READY = 2

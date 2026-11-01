@@ -89,6 +89,37 @@ describe("floors", () => {
     expect(JSON.stringify(composeSavedLayout(store.getState()))).toBe(before)
   })
 
+  test("a floor shown again unchanged has the very same pieces", () => {
+    const { store } = createTwoFloors()
+    const { floors } = store.getState()
+    const shown = store.getState().objects
+
+    store.getState().showFloor(floors[0].id)
+    store.getState().showFloor(floors[1].id)
+
+    expect(store.getState().objects).toBe(shown)
+  })
+
+  test("a floor changed elsewhere is shown as it is now", () => {
+    const { store } = createTwoFloors()
+    const { floors } = store.getState()
+    store.getState().showFloor(floors[0].id)
+    const shown = store.getState().objects
+
+    store.getState().showFloor(floors[1].id)
+    store.setState({
+      otherFloorsPieces: store
+        .getState()
+        .otherFloorsPieces.map((piece) =>
+          piece.floor === floors[0].id ? { ...piece, z: 2 } : piece
+        ),
+    })
+    store.getState().showFloor(floors[0].id)
+
+    expect(store.getState().objects).not.toBe(shown)
+    expect(getRows(store.getState().objects)).toEqual([2])
+  })
+
   test("a deleted floor takes its pieces; the last floor's carry none again", () => {
     const { store } = createTwoFloors()
     const { floors } = store.getState()

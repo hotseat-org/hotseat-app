@@ -36,8 +36,19 @@ export const createFloorsActions = (
   set: SetState,
   get: GetState
 ): Omit<FloorsState, "floors" | "currentFloor" | "otherFloorsPieces" | "floorBlockers"> => {
+  // Each floor's pieces as last shown: shown again unchanged, the very same
+  // ones — so everything worked out from them (rooms, the land, the scene's
+  // pieces themselves) is still there, not worked out again.
+  const shownBefore = new Map<string, SceneObject[]>()
+
   const showLayout = (floors: Floor[], pieces: SceneObject[], floorId: string) => {
-    set({ ...splitLayout({ floors, pieces }, floorId), selectedId: null })
+    const state = get()
+    shownBefore.set(state.currentFloor, state.objects)
+
+    const layout = splitLayout({ floors, pieces }, floorId)
+    const before = shownBefore.get(layout.currentFloor)
+    const objects = before && isSameList(before, layout.objects) ? before : layout.objects
+    set({ ...layout, objects, selectedId: null })
     get().resetHistory()
   }
 
@@ -87,4 +98,16 @@ export const createFloorsActions = (
       showLayout(floors, pieces, shown)
     },
   }
+}
+
+/** The same pieces, in the same order, each with the same values. */
+const isSameList = (first: SceneObject[], second: SceneObject[]) =>
+  first.length === second.length && first.every((piece, index) => isSamePiece(piece, second[index]))
+
+const isSamePiece = (first: SceneObject, second: SceneObject) => {
+  const keys = Object.keys(first) as (keyof SceneObject)[]
+
+  return (
+    keys.length === Object.keys(second).length && keys.every((key) => first[key] === second[key])
+  )
 }

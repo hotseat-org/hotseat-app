@@ -1,6 +1,6 @@
 import { useFrame, useThree } from "@react-three/fiber"
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react"
-import type { Group } from "three"
+import type { Vector3 } from "three"
 import { GROUND_SIZE } from "../landscape/Ground"
 import { Contours } from "../landscape/Contours"
 import { markShadowsDirty } from "../lighting/shadows"
@@ -21,6 +21,7 @@ import { isEdgeType, isMarker, type SceneObject } from "../types"
 import { Posts } from "../walls/Posts"
 import { Walls } from "../walls/Walls"
 import { InteriorFloor } from "./InteriorFloor"
+import { KeptFloor, useKept } from "./keptFloors"
 import { useSurfaces } from "./sceneTheme"
 
 /**
@@ -101,6 +102,31 @@ const useFloorLevels = () => {
 export const FloorsBelow = ({ isEditing }: { isEditing: boolean }) => {
   const { level, below, groundPieces } = useFloorLevels()
   const surfaces = useSurfaces()
+  const floors = useEditorStore((state) => state.floors)
+  // Each floor below as seen from this one — kept, hidden, when another floor
+  // is shown (see useKept): seen from here again, it's there at once. By its
+  // height too: its shaders are its height's.
+  const shownBelow = new Map(
+    below.map(({ id, level: floorLevel, place, pieces }) => [
+      `${id}@${place.base}`,
+      <group key={id} position-y={floorLevel * STOREY}>
+        {/* Shaded on its own floor, not the shown one's. */}
+        <FloorPlaceContext.Provider value={place}>
+          <FloorPiecesContext.Provider value={pieces}>
+            <LowerFloor pieces={pieces} />
+          </FloorPiecesContext.Provider>
+        </FloorPlaceContext.Provider>
+        {/* Its ceiling, on its walls: from above, its roof — the floor
+            above's walls stand on it, and what's built up there. */}
+        <group position-y={STOREY - CEILING_DROP}>
+          <InteriorFloor pieces={pieces} color={surfaces.ceiling} holes={getStairs(pieces)} />
+        </group>
+      </group>,
+    ])
+  )
+  const keptBelow = useKept(shownBelow, (key) =>
+    floors.some((floor) => key.startsWith(`${floor.id}@`))
+  )
 
   return (
     <group position-y={-level * STOREY}>
@@ -119,20 +145,10 @@ export const FloorsBelow = ({ isEditing }: { isEditing: boolean }) => {
       )}
       <Contours isEditing={isEditing} pieces={groundPieces} />
 
-      {below.map(({ id, level: floorLevel, place, pieces }) => (
-        <group key={id} position-y={floorLevel * STOREY}>
-          {/* Shaded on its own floor, not the shown one's. */}
-          <FloorPlaceContext.Provider value={place}>
-            <FloorPiecesContext.Provider value={pieces}>
-              <LowerFloor pieces={pieces} />
-            </FloorPiecesContext.Provider>
-          </FloorPlaceContext.Provider>
-          {/* Its ceiling, on its walls: from above, its roof — the floor
-              above's walls stand on it, and what's built up there. */}
-          <group position-y={STOREY - CEILING_DROP}>
-            <InteriorFloor pieces={pieces} color={surfaces.ceiling} holes={getStairs(pieces)} />
-          </group>
-        </group>
+      {keptBelow.map(({ key, node, isShown }) => (
+        <KeptFloor key={key} isShown={isShown}>
+          {node}
+        </KeptFloor>
       ))}
     </group>
   )
@@ -273,44 +289,55 @@ const LowerFloor = ({ pieces }: { pieces: SceneObject[] }) => {
 }
 
 /**
- * Showing another floor, the world glides there: it starts a storey (or
- * more) off, where the floor left stood, and settles — as if the camera rose
- * (or sank) to the new floor. The camera itself stays put.
+ * Showing another floor, the view glides there: it starts a storey (or more)
+ * off, where the floor left stood, and settles — the camera rising (or
+ * sinking) to the new floor. The camera moves, not the world: moving the
+ * world worked out every piece's matrices again at every frame of the glide,
+ * and redrew the shadows (the world under the sun) — as they stand, they keep.
  */
 export const FloorShift = ({ children }: { children: ReactNode }) => {
-  const group = useRef<Group>(null)
   const level = useEditorStore((state) =>
     state.floors.findIndex((floor) => floor.id === state.currentFloor)
   )
   const previousLevel = useRef(level)
-  const shift = useRef({ from: 0, startedAt: 0 })
+  // The glide: how far off the camera started (m), when, and how far off it is now.
+  const shift = useRef({ from: 0, startedAt: Infinity, offset: 0 })
   const renderer = useThree((state) => state.gl)
   const invalidate = useThree((state) => state.invalidate)
 
   const scene = useThree((state) => state.scene)
   const camera = useThree((state) => state.camera)
+  const controls = useThree((state) => state.controls) as { target?: Vector3 } | null
   const get = useThree((state) => state.get)
   const setFrameloop = useThree((state) => state.setFrameloop)
 
-  // Before the frame with the new floor: it's drawn where the old one was —
+  /** The camera (and what it looks at) this far below where it belongs (m). */
+  const setOffset = (offset: number) => {
+    const change = shift.current.offset - offset
+    shift.current.offset = offset
+    camera.position.y += change
+    controls?.target?.setY(controls.target.y + change)
+  }
+
+  // The ground: the shown floor's storeys down (the shown floor stands at 0).
+  useLayoutEffect(() => {
+    shownFloorUniform.value = 0
+    groundUniform.value = -level * STOREY
+  }, [level])
+
+  // Before the frame with the new floor: it's seen where the old one was —
   // and held there while its shaders compile (in the background where the
   // browser can: the page stays responsive), then it glides. Drawn at once,
   // a floor's first frame compiled them all in one long stall, mid-glide.
   useLayoutEffect(() => {
-    if (level === previousLevel.current) {
-      // The ground: the shown floor's storeys down.
-      groundUniform.value = (group.current?.position.y ?? 0) - level * STOREY
+    if (level === previousLevel.current) return
 
-      return
-    }
-
-    const from = (level - previousLevel.current) * STOREY
+    const from = (level - previousLevel.current) * STOREY + shift.current.offset
     previousLevel.current = level
-    shift.current = { from, startedAt: Infinity }
-    if (group.current) group.current.position.y = from
-
-    shownFloorUniform.value = from
-    groundUniform.value = from - level * STOREY
+    setOffset(from)
+    shift.current.from = from
+    shift.current.startedAt = Infinity
+    markShadowsDirty() // another floor's pieces under the sun
 
     let isCancelled = false
     const { frameloop } = get()
@@ -332,27 +359,24 @@ export const FloorShift = ({ children }: { children: ReactNode }) => {
     }
   }, [level, renderer, scene, camera, get, setFrameloop, invalidate])
 
-  // Gone mid-glide: the surfaces are shaded and cut from the ground again.
+  // Gone mid-glide: the camera back where it belongs, the ground at ground level.
   useEffect(
     () => () => {
-      shownFloorUniform.value = 0
+      setOffset(0)
       groundUniform.value = 0
     },
     []
   )
 
   useFrame(() => {
-    const world = group.current
-    if (!world || world.position.y === 0 || shift.current.startedAt === Infinity) return
+    const { from, startedAt, offset } = shift.current
+    if (offset === 0 || startedAt === Infinity) return
 
-    const progress = Math.min(1, (performance.now() - shift.current.startedAt) / SHIFT_DURATION)
+    const progress = Math.min(1, (performance.now() - startedAt) / SHIFT_DURATION)
     const eased = 1 - (1 - progress) ** 3
-    world.position.y = progress === 1 ? 0 : shift.current.from * (1 - eased)
-    shownFloorUniform.value = world.position.y
-    groundUniform.value = world.position.y - level * STOREY
-    // The shadows move with it (they're cached, see shadows.ts); next frame too.
-    markShadowsDirty(invalidate)
+    setOffset(progress === 1 ? 0 : from * (1 - eased))
+    invalidate()
   })
 
-  return <group ref={group}>{children}</group>
+  return <>{children}</>
 }

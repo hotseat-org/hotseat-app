@@ -57,6 +57,7 @@ import { useShownFloorLinks } from "../useShownFloorLinks"
 import { useFloorLinkClick } from "../useFloorLinkClick"
 import { isFloorLink } from "../floorLinks"
 import { FloorPiecesContext } from "../objects/pieceContext"
+import { KeptFloor, useKeptFloors } from "./keptFloors"
 import { LiftPanel } from "./LiftPanel"
 import { FloorLinkHints } from "./FloorLinkHints"
 import { FloorShift, FloorsBelow, ShownFloorLinks } from "./FloorStack"
@@ -113,6 +114,8 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
   const refusedTurn = useEditorStore((state) => state.refusedTurn)
   // Higher up, the ground is drawn below (see FloorsBelow).
   const isGroundFloor = useEditorStore((state) => state.floors[0]?.id === state.currentFloor)
+  const floors = useEditorStore((state) => state.floors)
+  const currentFloor = useEditorStore((state) => state.currentFloor)
   const shownFloorLinks = useShownFloorLinks()
   // Viewing: stairs and lifts pressed take you to another floor.
   const handleLinkClick = useFloorLinkClick()
@@ -291,6 +294,36 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
     return 0
   }
   const carried = dragId ? objects.find((object) => object.id === dragId) : undefined
+  // The shown floor's pieces, batched (see StaticBatch).
+  const shownPieces = (
+    <StaticBatch cellSize={readOnly ? undefined : CELL_SIZE} layout={objects}>
+      {objects
+        .filter((object) => !getRenderer(object.type).isDrawnAsRun && !isMarker(object.type))
+        .map((object) => (
+          <ObjectRenderer
+            key={object.id}
+            object={object}
+            selected={!readOnly && selection.includes(object.id)}
+            carried={!readOnly && object.id === dragId}
+            blockedAt={getBlockedAt(object.id)}
+            tool={tool}
+            interactive={!readOnly}
+            onSelect={select}
+            onDelete={removeObject}
+            onStartDrag={onStartDrag}
+            onPickOpening={onPickOpening}
+            onToggleSelect={toggleSelect}
+            onMenuPress={readOnly ? undefined : onMenuPress}
+            onViewClick={getViewClick(object)}
+            occupied={pieceStates?.get(object.id)?.isOccupied}
+            wallFront={wallColors.openings.get(object.id)?.[0]}
+            wallBack={wallColors.openings.get(object.id)?.[1]}
+          />
+        ))}
+    </StaticBatch>
+  )
+  const keptFloors = useKeptFloors(floors, currentFloor, shownPieces)
+
   // Canvas cursor between camera gestures: the tool's, a closed hand while
   // carrying a piece, the plain arrow in display mode.
   const getCanvasCursor = () => {
@@ -416,33 +449,12 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
 
                 {/* Walls render as merged runs (seamless); everything else individually. */}
                 <Walls />
-                <StaticBatch cellSize={readOnly ? undefined : CELL_SIZE} layout={objects}>
-                  {objects
-                    .filter(
-                      (object) => !getRenderer(object.type).isDrawnAsRun && !isMarker(object.type)
-                    )
-                    .map((object) => (
-                      <ObjectRenderer
-                        key={object.id}
-                        object={object}
-                        selected={!readOnly && selection.includes(object.id)}
-                        carried={!readOnly && object.id === dragId}
-                        blockedAt={getBlockedAt(object.id)}
-                        tool={tool}
-                        interactive={!readOnly}
-                        onSelect={select}
-                        onDelete={removeObject}
-                        onStartDrag={onStartDrag}
-                        onPickOpening={onPickOpening}
-                        onToggleSelect={toggleSelect}
-                        onMenuPress={readOnly ? undefined : onMenuPress}
-                        onViewClick={getViewClick(object)}
-                        occupied={pieceStates?.get(object.id)?.isOccupied}
-                        wallFront={wallColors.openings.get(object.id)?.[0]}
-                        wallBack={wallColors.openings.get(object.id)?.[1]}
-                      />
-                    ))}
-                </StaticBatch>
+                {/* Each floor's pieces: the shown one's, and those once shown, hidden (see useKeptFloors). */}
+                {keptFloors.map(({ key, node, isShown }) => (
+                  <KeptFloor key={key} isShown={isShown}>
+                    {node}
+                  </KeptFloor>
+                ))}
 
                 {/* Corner posts finishing wall joints */}
                 <Posts />
