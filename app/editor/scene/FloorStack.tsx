@@ -4,7 +4,7 @@ import type { Group } from "three"
 import { GROUND_SIZE } from "../landscape/Ground"
 import { Contours } from "../landscape/Contours"
 import { markShadowsDirty } from "../lighting/shadows"
-import { STOREY, WALL } from "../objects/dimensions"
+import { STOREY } from "../objects/dimensions"
 import { useEditorStore } from "../store"
 import { getRenderer } from "../catalog/rendering"
 import { ObjectRenderer } from "../objects/ObjectRenderer"
@@ -14,6 +14,8 @@ import { Walls } from "../walls/Walls"
 import { InteriorFloor } from "./InteriorFloor"
 import { useSurfaces } from "./sceneTheme"
 
+/** How far the ceiling sits under the floor above (its rooms are 0.006 up). */
+const CEILING_DROP = 0.012
 /** How long the world takes to glide to another floor (ms). */
 const SHIFT_DURATION = 450
 
@@ -67,9 +69,10 @@ export const FloorsBelow = ({ isEditing }: { isEditing: boolean }) => {
           <LowerFloor pieces={pieces} />
         </group>
       ))}
-      {/* Lying on its walls, under this floor's own rooms. */}
+      {/* On its walls — a hair under their tops and this floor's own rooms,
+          which are at the same height. */}
       {floorBelow && (
-        <group position-y={floorBelow.level * STOREY + WALL.height}>
+        <group position-y={(floorBelow.level + 1) * STOREY - CEILING_DROP}>
           <InteriorFloor pieces={floorBelow.pieces} color={surfaces.ceiling} />
         </group>
       )}

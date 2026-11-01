@@ -11,10 +11,11 @@ export const WALL = {
 }
 
 /**
- * One storey: a floor's walls and the slab on them — how far each floor sits
- * above the one below.
+ * One storey: how far each floor sits above the one below — its walls' height,
+ * so the walls above stand on those below (their sunk base hides the joint:
+ * no seam).
  */
-export const STOREY = WALL.height + 0.12
+export const STOREY = WALL.height
 
 export const DESK = {
   width: 1.6,
