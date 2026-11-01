@@ -1,13 +1,47 @@
 import { AlertDialog, Button, Dropdown, Popover } from "@heroui/react"
 import clsx from "clsx"
 import { BrickWall, ChevronDown, ChevronUp, Ellipsis, Pencil, Plus, Trash2 } from "lucide-react"
-import { useState } from "react"
+import { useState, type ReactNode } from "react"
 import { MAX_FLOORS, MAX_FLOOR_NAME, getFloorId, getFloorNumber, type Floor } from "../../floors"
 import { useFloorNotes } from "../../modules"
 import { useEditorStore } from "../../store"
 import type { FloorNote } from "../../module"
 import { REVEAL_LABEL } from "../bars/revealLabel"
 import { useI18n } from "~/i18n/I18nProvider"
+
+/** Most floors the stack shows at once: more scroll by, so it never outgrows its corner. */
+const MAX_STACKED = 4
+
+/**
+ * Which floors the stack shows (top floor first): all of them, or MAX_STACKED
+ * in a row — scrolled by its arrows, and moved along to keep the shown floor
+ * in view whenever that changes.
+ */
+const useStackedFloors = (floors: Floor[], currentFloor: string) => {
+  const topFirst = [...floors].reverse()
+  const shownIndex = topFirst.findIndex((floor) => floor.id === currentFloor)
+  const lastStart = Math.max(0, topFirst.length - MAX_STACKED)
+  const getStartShowing = (start: number) =>
+    Math.min(lastStart, Math.max(0, shownIndex - MAX_STACKED + 1, Math.min(start, shownIndex)))
+  const [start, setStart] = useState(() => getStartShowing(0))
+  // Another floor shown (a press, the arrow keys, a desk on another floor): into view.
+  const [followedFloor, setFollowedFloor] = useState(currentFloor)
+  if (followedFloor !== currentFloor) {
+    setFollowedFloor(currentFloor)
+    setStart(getStartShowing(start))
+  }
+
+  const shownStart = Math.min(start, lastStart)
+
+  return {
+    stacked: topFirst.slice(shownStart, shownStart + MAX_STACKED),
+    isScrolling: topFirst.length > MAX_STACKED,
+    canScrollUp: shownStart > 0,
+    canScrollDown: shownStart < lastStart,
+    scrollUp: () => setStart(Math.max(0, shownStart - 1)),
+    scrollDown: () => setStart(Math.min(lastStart, shownStart + 1)),
+  }
+}
 
 /** What a floor is called: its name, or (unnamed) "Floor 2". */
 export const useFloorName = () => {
@@ -35,6 +69,7 @@ export const FloorPicker = ({ isEditing = false }: { isEditing?: boolean }) => {
   const addFloor = useEditorStore((state) => state.addFloor)
   const getFloorName = useFloorName()
   const floorNotes = useFloorNotes()
+  const stack = useStackedFloors(floors, currentFloor)
   if (!isEditing && floors.length < 2) return null
 
   return (
@@ -56,6 +91,15 @@ export const FloorPicker = ({ isEditing = false }: { isEditing?: boolean }) => {
           <Slab look="ghost" />
           <Plus className="size-3.5" />
         </button>
+      )}
+      {stack.isScrolling && (
+        <ScrollArrow
+          label={t("Show the floors above")}
+          isDisabled={!stack.canScrollUp}
+          onPress={stack.scrollUp}
+        >
+          <ChevronUp className="size-3.5" />
+        </ScrollArrow>
       )}
       <div
         role="radiogroup"
@@ -79,7 +123,7 @@ export const FloorPicker = ({ isEditing = false }: { isEditing?: boolean }) => {
           )
         }}
       >
-        {[...floors].reverse().map((floor) => {
+        {stack.stacked.map((floor) => {
           const isShown = floor.id === currentFloor
           const note = isEditing ? undefined : floorNotes?.get(floor.id)
 
@@ -155,6 +199,15 @@ export const FloorPicker = ({ isEditing = false }: { isEditing?: boolean }) => {
           )
         })}
       </div>
+      {stack.isScrolling && (
+        <ScrollArrow
+          label={t("Show the floors below")}
+          isDisabled={!stack.canScrollDown}
+          onPress={stack.scrollDown}
+        >
+          <ChevronDown className="size-3.5" />
+        </ScrollArrow>
+      )}
       {isEditing ? (
         <FloorsMenu />
       ) : (
@@ -163,6 +216,30 @@ export const FloorPicker = ({ isEditing = false }: { isEditing?: boolean }) => {
     </div>
   )
 }
+
+/** Scrolls the stack a floor up or down (more floors than it shows). */
+const ScrollArrow = ({
+  label,
+  isDisabled,
+  onPress,
+  children,
+}: {
+  label: string
+  isDisabled: boolean
+  onPress: () => void
+  children: ReactNode
+}) => (
+  <button
+    type="button"
+    aria-label={label}
+    title={label}
+    disabled={isDisabled}
+    onClick={onPress}
+    className="flex h-5 items-center justify-center rounded-md text-muted outline-none hover:bg-foreground/10 hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-30 disabled:hover:bg-transparent"
+  >
+    {children}
+  </button>
+)
 
 /** A floor's name, for assistive tech and its tooltip: with its note, and what of yours is there. */
 export const composeFloorLabel = (name: string, note: FloorNote | undefined) =>
