@@ -56,6 +56,29 @@ export const createDemoCompany = async (company: DemoCompany) => {
     },
   })
   await prisma.favoriteDesk.create({ data: { ...scope, ...company.favorite } })
+  await prisma.team.createMany({
+    data: company.teams.map(({ id, name, color, weekdays }) => ({
+      id,
+      organizationSlug: organization.slug,
+      name,
+      color,
+      weekdays,
+    })),
+  })
+  await prisma.teamMember.createMany({
+    data: company.teams.flatMap((team) =>
+      team.members.map((userEmail) => ({
+        teamId: team.id,
+        organizationSlug: organization.slug,
+        userEmail,
+      }))
+    ),
+  })
+  await prisma.teamZone.createMany({
+    data: company.teams.flatMap(({ id, zone, keepDays }) =>
+      zone ? [{ teamId: id, ...scope, zone, keepDays }] : []
+    ),
+  })
 }
 
 /**

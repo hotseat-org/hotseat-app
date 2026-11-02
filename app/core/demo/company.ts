@@ -45,6 +45,35 @@ const VISITOR = {
   avatarUrl: "https://randomuser.me/api/portraits/women/68.jpg",
 }
 
+/**
+ * The studio's teams: one for each zone (the team days its people come in
+ * most), and a club across them. The visitor is in Design.
+ */
+const TEAMS = [
+  {
+    key: "design",
+    name: "Design",
+    color: "teal",
+    weekdays: [2, 3],
+    zone: "Design",
+    keepDays: null,
+  },
+  {
+    key: "engineering",
+    name: "Engineering",
+    color: "denim",
+    weekdays: [1, 4],
+    zone: "Engineering",
+    keepDays: null,
+  },
+  // Kept for its own people until two days before: support needs to sit together.
+  { key: "support", name: "Support", color: "coral", weekdays: [], zone: "Support", keepDays: 2 },
+  { key: "plants", name: "Plant club", color: "sage", weekdays: [5], zone: null, keepDays: null },
+] as const
+
+/** Plant club's people (by index in PEOPLE): someone from every team. */
+const PLANT_CLUB = [1, 6, 13, 17]
+
 /** Zones across the studio's desks, west to east: their names and desk prefixes. */
 const ZONES = [
   { name: "Design", prefix: "D", count: 8 },
@@ -95,6 +124,15 @@ export interface DemoCompany {
   releases: { userEmail: string; deskId: string; date: Day }[]
   seatRules: { userEmail: string; rules: object[] }
   favorite: { userEmail: string; deskId: string }
+  teams: {
+    id: string
+    name: string
+    color: string
+    weekdays: number[]
+    members: string[]
+    zone: string | null
+    keepDays: number | null
+  }[]
 }
 
 /** A steady pseudo-random number in [0, 1) for a seed, so every copy looks the same. */
@@ -161,6 +199,24 @@ export const composeDemoCompany = ({
     })),
   ]
 
+  // Each team: its zone's people (the visitor in Design), or the club's.
+  const teams = TEAMS.map((team) => ({
+    id: `${organizationSlug}-${team.key}`,
+    name: team.name,
+    color: team.color,
+    weekdays: [...team.weekdays],
+    zone: team.zone,
+    keepDays: team.keepDays,
+    members: team.zone
+      ? [
+          ...(team.zone === VISITOR.zone ? [visitorEmail] : []),
+          ...PEOPLE.filter((person) => person.zone === team.zone).map((person) => person.email),
+        ]
+      : PLANT_CLUB.map((index) => PEOPLE[index].email),
+  }))
+  const teamDaysOf = (zone: string) =>
+    TEAMS.find((team) => team.zone === zone)?.weekdays ?? ([] as readonly number[])
+
   const residentDesks = new Set(RESIDENTS.map((person) => desks[person + 1].id))
   const bookable = desks.filter((desk) => !residentDesks.has(desk.id))
   const residents = new Set(RESIDENTS.map((person) => PEOPLE[person].email))
@@ -189,7 +245,10 @@ export const composeDemoCompany = ({
       // The visitor has nothing booked today (so finding a seat shows a pick).
       if (index === 0 && isToday) continue
       if (residents.has(email)) continue
-      if (!isTheoToday && getNoise(offset * 31 + index) > busyness) continue
+      // On their team's days, most of a team comes in.
+      const isTeamDay = (teamDaysOf(person.zone) as readonly number[]).includes(weekday)
+      const chance = isTeamDay ? Math.min(busyness + 0.25, 0.95) : busyness
+      if (!isTheoToday && getNoise(offset * 31 + index) > chance) continue
 
       // Their own zone first, then anywhere.
       const deskIndex = free.findIndex((desk) => desk.zone === person.zone)
@@ -221,15 +280,16 @@ export const composeDemoCompany = ({
     people,
     reservations,
     releases,
-    // What the visitor looks for: Design, near Theo, a standing desk — and a desk they like.
+    // What the visitor looks for: with their team, near Theo, a standing desk — and a desk they like.
     seatRules: {
       userEmail: visitorEmail,
       rules: [
-        { kind: "zone", zone: "Design", strength: "prefer" },
+        { kind: "team", teamId: teams[0].id, strength: "prefer" },
         { kind: "colleague", email: theo.email, strength: "prefer" },
         { kind: "feature", feature: "standing", strength: "prefer" },
       ],
     },
     favorite: { userEmail: visitorEmail, deskId: desks[2].id },
+    teams,
   }
 }
