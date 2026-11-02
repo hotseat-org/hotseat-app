@@ -3,6 +3,8 @@ import { shade } from "~/editor/kit"
 
 /** A zone's outline, inside its edge: this wide on screen (px), at any zoom. */
 const ZONE_LINE_PX = 2
+/** Dashed, as in 3D: a dash and a gap (px on screen). */
+const ZONE_DASH = "7 5"
 
 export interface ZonesInput {
   areas: ZoneArea[]
@@ -11,7 +13,7 @@ export interface ZonesInput {
   clipId: string
 }
 
-/** Team zones (the Zones layer): a tint on their floor, and a line just inside their edge. */
+/** Team zones (the Zones layer): a tint on their floor, and a dashed line just inside their edge. */
 export const drawZones = ({ areas, isDark, clipId }: ZonesInput) =>
   areas.map(({ zone, cells }, i) => {
     const path = composeZoneOutline(cells)
@@ -33,6 +35,7 @@ export const drawZones = ({ areas, isDark, clipId }: ZonesInput) =>
           strokeOpacity={isDark ? 0.55 : 0.85}
           // Twice as wide, half of it clipped away outside the zone.
           strokeWidth={ZONE_LINE_PX * 2}
+          strokeDasharray={ZONE_DASH}
           vectorEffect="non-scaling-stroke"
           clipPath={`url(#${zoneClipId})`}
         />

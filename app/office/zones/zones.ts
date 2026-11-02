@@ -127,7 +127,7 @@ export interface ZoneArea {
  * (x = i). Doors and glass close them too: a zone stays in its room. (Diagonal
  * walls cross squares, not their sides, and don't close any.)
  */
-const getClosedSides = (objects: SceneObject[]) => {
+export const getClosedSides = (objects: SceneObject[]) => {
   const sides = new Set<string>()
   for (const piece of objects) {
     if (!getEdge(piece.type)?.encloses) continue
@@ -146,7 +146,7 @@ const getClosedSides = (objects: SceneObject[]) => {
 }
 
 /** The four neighbours of a square, each with the side crossed to reach it. */
-const getNeighbours = (i: number, j: number) =>
+export const getNeighbours = (i: number, j: number) =>
   [
     [i, j + 1, `x:${getCellKey(i, j + 1)}`],
     [i, j - 1, `x:${getCellKey(i, j)}`],

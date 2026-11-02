@@ -4,8 +4,10 @@ import { Color, DataTexture, NearestFilter, RedFormat, Vector2 } from "three"
 import {
   Fn,
   If,
+  abs,
   float,
   floor,
+  fract,
   fwidth,
   length,
   min,
@@ -20,7 +22,7 @@ import {
 import { MeshBasicNodeMaterial, type Node } from "three/webgpu"
 import { useOfficeStore } from "../store"
 import { ZoneLettering, measureNameAspect, useFontsReady } from "./ZoneLettering"
-import { placeZoneLetters } from "./zoneLetters"
+import { composeLetteredZones } from "./zoneLetters"
 import { ZONE_CELL, ZONE_RADIUS, composeZoneAreas } from "./zones"
 
 /** Just above the interior floor's tint (0.006), below rugs and highlights. */
@@ -44,6 +46,13 @@ const STRENGTH = {
 const INSET = 0.14
 /** Line width, in zone squares. */
 const LINE_WIDTH = 0.07
+/**
+ * The line is dashed: a dash and a gap every this far (m), this share of it
+ * the dash. Measured along x + z, which grows along straight sides and
+ * rounded corners alike, so the dashes don't jump anywhere.
+ */
+const DASH_PERIOD = 0.32
+const DASH_SHARE = 0.6
 
 /**
  * The zone's squares (a mask texture, one texel each) drawn with rounded
@@ -138,9 +147,22 @@ const createZoneMaterial = ({
   const edge = getEdgeDistance().sub(INSET)
   const smoothing = fwidth(edge)
   const inside = smoothstep(smoothing.negate(), smoothing, edge)
-  const onLine = inside.mul(
-    float(1).sub(smoothstep(smoothing.negate().add(LINE_WIDTH), smoothing.add(LINE_WIDTH), edge))
+  // How far from a dash's middle (0–0.5 of a period): within half a dash, on it.
+  const along = positionWorld.x.add(positionWorld.z).div(DASH_PERIOD)
+  const fromDash = abs(fract(along).sub(0.5))
+  const dashSmoothing = fwidth(along)
+  const isOnDash = float(1).sub(
+    smoothstep(
+      dashSmoothing.negate().add(DASH_SHARE / 2),
+      dashSmoothing.add(DASH_SHARE / 2),
+      fromDash
+    )
   )
+  const onLine = inside
+    .mul(
+      float(1).sub(smoothstep(smoothing.negate().add(LINE_WIDTH), smoothing.add(LINE_WIDTH), edge))
+    )
+    .mul(isOnDash)
   const alpha = inside.mul(fill).add(onLine.mul(line.sub(fill)))
 
   const material = new MeshBasicNodeMaterial({
@@ -161,9 +183,17 @@ const createZoneMaterial = ({
  */
 export const ZoneFloor = ({ isEditing, isDark }: { isEditing: boolean; isDark: boolean }) => {
   const objects = useOfficeStore((state) => state.objects)
+  // Their names on their floors (measured in the page's font once it's in):
+  // a zone takes in the floor its name needs beside it.
+  const isFontReady = useFontsReady()
+  const lettered = useMemo(
+    () => composeLetteredZones(composeZoneAreas(objects), objects, measureNameAspect),
+    // Measured again once the font is in.
+    [objects, isFontReady]
+  )
   const areas = useMemo(
     () =>
-      composeZoneAreas(objects).map((area) => {
+      lettered.areas.map((area) => {
         const { zone, cells } = area
         // One square of room all round, for the inner corners' curves.
         const minI = Math.min(...cells.map(([i]) => i)) - 1
@@ -193,20 +223,9 @@ export const ZoneFloor = ({ isEditing, isDark }: { isEditing: boolean; isDark: b
           area,
         }
       }),
-    [objects]
+    [lettered]
   )
-  // Their names on their floors: measured in the page's font once it's in.
-  const isFontReady = useFontsReady()
-  const letters = useMemo(
-    () =>
-      placeZoneLetters(
-        areas.map(({ area }) => area),
-        objects,
-        measureNameAspect
-      ),
-    // Measured again once the font is in.
-    [areas, objects, isFontReady]
-  )
+  const { letters } = lettered
   // Strength follows mode and theme without rebuilding the zones.
   const strength = STRENGTH[isEditing ? "edit" : "view"][isDark ? "dark" : "light"]
   const invalidate = useThree((state) => state.invalidate)

@@ -10,11 +10,9 @@ import { useOfficeStore } from "../store"
 import { useHoveredPieceActions } from "../desks/useHoveredPiece"
 import { useKeptFor, useTeammateColors } from "../teams"
 import { getTagDetail, type TagDetail } from "../desks/tagDetail"
-import { placeZoneLetters } from "../zones/zoneLetters"
-import { measureNameAspect, useFontsReady } from "../zones/ZoneLettering"
 import { useRouteFraming, useSpotlight } from "./useFraming"
 import { DeskTag, HeatTag, Occupant, RouteEnd, SpotlightRing, ZoneLetters } from "./overlays"
-import { composeOccupants, usePlanDesks, usePlanZoneAreas } from "./drawings"
+import { composeOccupants, usePlanDesks, usePlanZones } from "./drawings"
 import { clamp } from "~/editor/core"
 import { turnPoint } from "~/editor/kit"
 import { type PlanLayerProps } from "~/editor"
@@ -81,7 +79,8 @@ export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
   const card = useSeatCard()
   const desks = usePlanDesks()
   const occupants = useMemo(() => composeOccupants(objects, desks), [objects, desks])
-  const zoneAreas = usePlanZoneAreas(objects)
+  // Zones' names on their floors, as in 3D.
+  const { areas: zoneAreas, letters: zoneLetters } = usePlanZones(objects)
 
   /** Where a desk is: its occupant's chair, else the desk. */
   const findSpot = useCallback(
@@ -111,13 +110,6 @@ export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
   const detailRef = useRef<TagDetail>("middle")
   detailRef.current = getTagDetail(view.zoom, detailRef.current)
   const tagDetail = detailRef.current
-  // Zones' names on their floors, as in 3D (measured in the page's font once it's in).
-  const isFontReady = useFontsReady()
-  const zoneLetters = useMemo(
-    () => placeZoneLetters(zoneAreas, objects, measureNameAspect),
-    // Measured again once the font is in.
-    [zoneAreas, objects, isFontReady]
-  )
   /** Whether a desk is one to show in full: yours, a teammate's, looked for or pointed at. */
   const isFocused = (deskId: string, email?: string) =>
     deskId === highlightId ||

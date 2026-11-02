@@ -4,6 +4,8 @@ import { spotFor } from "../desks/seatSpot"
 import { isSeatable } from "../catalog"
 import { useDeskFilter, useDesksOnDay, type DeskOnDay } from "../booking/useBooking"
 import { composeZoneAreas, type ZoneArea } from "../zones/zones"
+import { composeLetteredZones } from "../zones/zoneLetters"
+import { measureNameAspect, useFontsReady } from "../zones/ZoneLettering"
 import { drawZones } from "../zones/zoneDrawing"
 import { useOfficeStore } from "../store"
 import { GRID, type SceneObject } from "~/editor/core"
@@ -177,16 +179,30 @@ export const usePlanBookable = () =>
     (state) => state.booking.enabled && !(state.booking.day < state.booking.today) && !state.heatmap
   )
 
-/** Each turned layout's zones, worked out once (the drawing and the names share them). */
-const zoneAreasOf = new WeakMap<SceneObject[], ZoneArea[]>()
-export const usePlanZoneAreas = (objects: SceneObject[]) => {
+type LetteredZones = ReturnType<typeof composeLetteredZones>
+
+const NO_ZONES: LetteredZones = { areas: [], letters: new Map() }
+
+/**
+ * Each turned layout's zones and their names, worked out once (the drawing
+ * and the names share them) — again once the page's font is in, to measure them.
+ */
+const zonesOf = new WeakMap<SceneObject[], LetteredZones & { isFontReady: boolean }>()
+export const usePlanZones = (objects: SceneObject[]): LetteredZones => {
   const isShown = useOfficeStore((state) => state.layers.zones)
-  if (!isShown) return []
+  const isFontReady = useFontsReady()
+  if (!isShown) return NO_ZONES
 
-  let areas = zoneAreasOf.get(objects)
-  if (!areas) zoneAreasOf.set(objects, (areas = composeZoneAreas(objects)))
+  const known = zonesOf.get(objects)
+  if (known?.isFontReady === isFontReady) return known
 
-  return areas
+  const zones = {
+    ...composeLetteredZones(composeZoneAreas(objects), objects, measureNameAspect),
+    isFontReady,
+  }
+  zonesOf.set(objects, zones)
+
+  return zones
 }
 
 export const useOfficePieceStyles = () => {
@@ -211,7 +227,7 @@ export const useOfficePlanDrawings = ({
   const bookable = usePlanBookable()
   const matches = useDeskFilter()
   const heatmap = useOfficeStore((state) => state.heatmap)
-  const areas = usePlanZoneAreas(objects)
+  const { areas } = usePlanZones(objects)
   const freeTitle = t("Free — tap to book")
 
   return useMemo(
