@@ -36,6 +36,15 @@ export const useRuleText = () => {
       : t("Near {name}", { name: nameOf(rule.email) })
   }
 
+  /** Its kind, under it in a list: "Zone", "Colleague". */
+  const describeKind = (rule: SeatRule) => {
+    if (rule.kind === "zone") return t("Zone")
+    if (rule.kind === "favorite") return t("Favourite desks")
+    if (rule.kind === "feature") return t("Desk feature")
+
+    return t("Colleague")
+  }
+
   /** How it went for a desk, as its checklist says it. */
   const describeOutcome = (rule: SeatRule, isMet: boolean) => {
     if (rule.kind === "zone")
@@ -54,5 +63,5 @@ export const useRuleText = () => {
     return isMet ? t("Near {name}", { name }) : t("Not near {name}", { name })
   }
 
-  return { describe, describeOutcome }
+  return { describe, describeKind, describeOutcome }
 }

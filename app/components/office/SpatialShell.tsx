@@ -23,7 +23,7 @@ import {
 } from "~/editor"
 import { useOfficeStore } from "~/office/store"
 import { useOfficePanel, type OfficePanel } from "~/office/useOfficePanel"
-import { FindSeatPanel } from "~/office/findSeat/FindSeatPanel"
+import { FindSeatDialog } from "~/office/findSeat/FindSeatDialog"
 import { useDesksOnDay } from "~/office/booking/useBooking"
 import { useI18n } from "~/i18n/I18nProvider"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
@@ -208,7 +208,7 @@ export const SpatialShell = ({
           <MyBookings onShow={officePanel.close} />
         </RailModal>
       )}
-      {officePanel.panel === "find" && isBooking && <FindSeatPanel onClose={officePanel.close} />}
+      {officePanel.panel === "find" && isBooking && <FindSeatDialog onClose={officePanel.close} />}
       {officePanel.panel === "insights" && me.role === Role.ADMIN && <InsightsDashboard />}
 
       {/* Top-right: search + notifications + account */}
