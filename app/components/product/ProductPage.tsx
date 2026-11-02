@@ -19,7 +19,7 @@ import { useI18n } from "~/i18n/I18nProvider"
 import { LOCALES, LOCALE_NAMES } from "~/i18n/locales"
 import { useLocale } from "~/i18n/useLocale"
 
-/** The page's own pictures (public/images/product): a template office, and the demo organization's. */
+/** The page's own pictures (public/images/product): the Fern & Fox demo, see scripts/seed-demo.ts. */
 const PICTURES = {
   office: `${import.meta.env.BASE_URL}images/product/office-3d.jpg`,
   editor: `${import.meta.env.BASE_URL}images/product/office-editor.jpg`,
@@ -39,7 +39,7 @@ const SECONDARY_LINK =
 
 /**
  * Hotseat's product page — the front door for companies not using it yet:
- * what it does (each of it real, shown on a template office), how to start,
+ * what it does (each of it real, shown on the demo company), how to start,
  * and getting started (signing up) or trying the editor without an account.
  */
 export const ProductPage = () => {
@@ -52,14 +52,14 @@ export const ProductPage = () => {
       <main>
         <section className="mx-auto flex max-w-6xl flex-col items-center px-4 pt-10 pb-16 text-center sm:px-6 sm:pt-16">
           <p className="rounded-full bg-accent/12 px-3.5 py-1.5 text-xs font-extrabold uppercase tracking-[0.08em] text-accent">
-            {t("Desk booking for hybrid offices")}
+            {t("Desk booking without the paperwork")}
           </p>
           <h1 className="mt-5 max-w-3xl text-4xl font-black leading-[1.08] tracking-[-0.02em] sm:text-6xl">
-            {t("Your office as a map everyone can book from")}
+            {t("Your office, minus the musical chairs")}
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">
             {t(
-              "Draw your floor plan in 3D, and let people book a desk for a day, every Monday, or next to the colleagues they work with — on a laptop or a phone."
+              "Hotseat puts your office on a map. Grab a desk for tomorrow, for every Tuesday, or right next to the person you actually want to sit with. On a laptop or a phone."
             )}
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
@@ -67,15 +67,17 @@ export const ProductPage = () => {
               {t("Get started")}
             </Link>
             <Link to="/office-editor" className={SECONDARY_LINK}>
-              {t("Try the editor")}
+              {t("Play with the editor")}
             </Link>
           </div>
-          <p className="mt-3 text-sm text-muted">{t("No account needed to try the editor.")}</p>
+          <p className="mt-3 text-sm text-muted">
+            {t("No account needed. Go on, knock down a wall.")}
+          </p>
 
           <Picture
             src={PICTURES.office}
             alt={t(
-              "An office in Hotseat: desks labelled D-1 to D-36, meeting rooms and a lounge, in 3D"
+              "A cosy studio office in Hotseat, in 3D: desks with people's faces, free ones in green, a lounge and a glass meeting room"
             )}
             className="mt-12"
             isEager
@@ -85,50 +87,44 @@ export const ProductPage = () => {
         <section id="features" className="scroll-mt-20 bg-surface-secondary py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <SectionHeading
-              title={t("Everything a shared office needs")}
-              lead={t("For the people booking a desk, and for whoever runs the office.")}
+              title={t("What's inside")}
+              lead={t("Small things that save a lot of wandering around.")}
             />
             <ul className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <Feature icon={CalendarDays} title={t("Book a desk for any day")}>
-                {t(
-                  "One day, every Tuesday and Thursday, or a stretch of days — and see who's in at a glance."
-                )}
+              <Feature icon={CalendarDays} title={t("Book any day")}>
+                {t("Tomorrow, every Tuesday and Thursday, or all of next week. Two taps and done.")}
               </Feature>
               <Feature icon={Armchair} title={t("Find me a seat")}>
                 {t(
-                  "Say what you'd like — your team's zone, near a colleague, your preferred seat — and get the desk that fits best."
+                  "Say what you like — your team's corner, near a friend, a desk you can stand at — and it picks one for you."
                 )}
               </Feature>
               <Feature icon={Users} title={t("Who's in")}>
-                {t(
-                  "See who's in the office each day and where they sit, and find their desk on the map."
-                )}
+                {t("See who's coming in before you decide to. Or before you decide not to.")}
               </Feature>
               <Feature icon={Pin} title={t("Permanent desks")}>
                 {t(
-                  "Give people a desk of their own. When they're away, they give it up for the day and others can book it."
+                  "Some people like a desk of their own. Fair enough. When they're off, it doesn't sit there empty."
                 )}
               </Feature>
               <Feature icon={PencilRuler} title={t("Draw your office in 3D")}>
                 {t(
-                  "Walls, doors, windows and a catalogue of furniture, several floors — or a ready-made template to start from."
+                  "Walls, doors, windows, sofas, plants. More floors if you've got them. Or grab a template and tweak it."
                 )}
               </Feature>
               <Feature icon={Layers} title={t("Zones for teams")}>
-                {t("Colour the floor by team and number the desks after their zone.")}
+                {t("Give each team its own patch of floor, colour it in and number the desks.")}
               </Feature>
               <Feature icon={Footprints} title={t("Show the way")}>
-                {t("Directions to any desk, from the entrance or your own desk, across floors.")}
+                {t("First day? Hotseat walks you from the door to your desk, stairs included.")}
               </Feature>
-              <Feature icon={BarChart3} title={t("Insights for admins")}>
+              <Feature icon={BarChart3} title={t("Numbers for whoever runs the office")}>
                 {t(
-                  "See which desks are used and how full the office gets, to plan the space you have."
+                  "Which days are packed, which desks nobody wants, and whether you need more room or fewer chairs."
                 )}
               </Feature>
-              <Feature icon={Smartphone} title={t("Made for phones too")}>
-                {t(
-                  "A simple floor plan and booking where your thumb reaches — in English and Czech."
-                )}
+              <Feature icon={Smartphone} title={t("Fits in your pocket")}>
+                {t("A simple floor plan made for thumbs. In English and Czech.")}
               </Feature>
             </ul>
           </div>
@@ -138,83 +134,78 @@ export const ProductPage = () => {
           <Showcase
             title={t("Find me a seat")}
             lead={t(
-              "Say it once, in a sentence: the zone you'd like, the colleague to sit near, a standing desk. Hotseat picks the desk that fits best, for today or any day."
+              "“A seat today, ideally with Design, near Theo, at a standing desk.” Hotseat reads that, picks the best desk and tells you straight what it couldn't manage."
             )}
             points={[
-              t("Remembered for next time"),
+              t("Remembers what you like"),
               t("Shows what fits and what doesn't"),
-              t("Booked in one tap"),
+              t("One tap to book"),
             ]}
             picture={
               <Picture
                 src={PICTURES.findSeat}
                 alt={t(
-                  "Find a seat: “A seat today, ideally in Vývoj, with a standing desk and near Adam Černý”, and the closest match, Desk D-6"
+                  "Find a seat: “A seat today, ideally in Design, near Theo Park, with a standing desk”, and the best match, desk D6"
                 )}
               />
             }
           />
           <Showcase
-            title={t("See who's in")}
+            title={t("Check who's in before you put your shoes on")}
             lead={t(
-              "Everyone in the office that day, with their desk and their week at a glance. Find anyone on the map in one tap."
+              "Everyone coming in today, where they sit and how their week looks. Tap Find and the map takes you straight to them."
             )}
-            points={[t("Search by name or email"), t("Plan your days around your team")]}
+            points={[t("Search by name"), t("Plan your days around your people")]}
             picture={
               <Picture
                 src={PICTURES.whosIn}
-                alt={t("Who's in: 18 of 441 people in the office today, each with their desk")}
+                alt={t("Who's in today, each person with their desk and their week")}
                 className="mx-auto max-w-sm"
               />
             }
             isFlipped
           />
           <Showcase
-            title={t("Book from your phone")}
+            title={t("Book a desk on the tram")}
             lead={t(
-              "The office as a simple floor plan, with your teams' zones and who sits where. Pick a day with your thumb and find a seat."
+              "Finding a seat, booking it, seeing who's around — all of it works on a phone. You're sorted before your stop."
             )}
-            points={[
-              t("Pinch, turn and switch floors"),
-              t("Your bookings and colleagues a tab away"),
-            ]}
+            points={[t("Made for thumbs"), t("Bookings and colleagues one tab away")]}
             picture={
               <Picture
                 src={PICTURES.phone}
-                alt={t(
-                  "Hotseat on a phone: the floor plan with zones and people, and days to book"
-                )}
+                alt={t("Finding a seat on a phone: the sentence and the best match, desk D6")}
                 className="mx-auto max-w-[280px] rounded-[calc(var(--radius)*8)]"
               />
             }
           />
           <Showcase
-            title={t("Know how the office is used")}
+            title={t("Find out if Fridays really are that empty")}
             lead={t(
-              "Occupancy by week and by day, the busiest weekday, each floor and each desk — and how often permanent desks are given up."
+              "How full the office gets, the busiest day, every floor and every desk — and how often those permanent desks sit unused."
             )}
-            points={[t("Look back or plan ahead"), t("Export to CSV")]}
+            points={[t("Look back or plan ahead"), t("CSV for the spreadsheet fans")]}
             picture={
               <Picture
                 src={PICTURES.insights}
                 alt={t(
-                  "Insights: 54% occupancy, Tuesday the busiest weekday, desks in use per week and a heatmap of every working day"
+                  "Insights: 67% full, Wednesday the busiest day, desks in use per week and a heatmap of every working day"
                 )}
               />
             }
             isFlipped
           />
           <Showcase
-            title={t("Set up in an afternoon")}
+            title={t("Build your office in an afternoon")}
             lead={t(
-              "Start from a template or draw your own floor plan. Rooms measure themselves, desks are numbered in one click, and every change is saved as you go."
+              "Start from a template or draw your own. Rooms measure themselves, desks number themselves, and everything saves as you go. Moving the sofa has never been easier."
             )}
-            points={[t("Walls, doors, windows and furniture"), t("Several floors")]}
+            points={[t("Walls, doors, windows and furniture"), t("As many floors as you've got")]}
             picture={
               <Picture
                 src={PICTURES.editor}
                 alt={t(
-                  "Hotseat's office editor: a catalogue of furniture beside an office in 3D, its rooms measured"
+                  "The office editor: furniture to pick from beside the office in 3D, its rooms measured"
                 )}
               />
             }
@@ -223,16 +214,16 @@ export const ProductPage = () => {
 
         <section id="how" className="scroll-mt-20 bg-surface-secondary py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <SectionHeading title={t("How it works")} />
+            <SectionHeading title={t("Up and running in three steps")} />
             <ol className="mt-12 grid gap-4 md:grid-cols-3">
-              <Step number={1} title={t("Create your organization")}>
-                {t("Sign in with Google or GitHub and name your company.")}
+              <Step number={1} title={t("Create your company")}>
+                {t("Sign in with Google or GitHub and give it a name.")}
               </Step>
               <Step number={2} title={t("Draw your office")}>
-                {t("Start from a template or draw walls and furniture; add floors as you grow.")}
+                {t("Use a template or sketch your own. Add floors whenever.")}
               </Step>
-              <Step number={3} title={t("Invite your team")}>
-                {t("Share a link: people join and book their first desk in seconds.")}
+              <Step number={3} title={t("Invite your people")}>
+                {t("Send a link. They join, book a desk, and that's it. No training needed.")}
               </Step>
             </ol>
           </div>
@@ -244,10 +235,10 @@ export const ProductPage = () => {
             style={{ background: NIGHT }}
           >
             <h2 className="max-w-2xl text-3xl font-black tracking-[-0.01em] sm:text-4xl">
-              {t("Give your office a map")}
+              {t("Ready when you are")}
             </h2>
             <p className="mt-4 max-w-xl text-lg text-[#c9cde0]">
-              {t("Set up your first office today. Your team can book desks as soon as they join.")}
+              {t("Set up your office today. Your people can book a desk the minute they join.")}
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link to="/login" className={PRIMARY_LINK}>
@@ -257,7 +248,7 @@ export const ProductPage = () => {
                 to="/office-editor"
                 className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#f4efe6]/30 px-6 text-[15px] font-extrabold text-[#f4efe6] outline-none transition-colors hover:bg-[#f4efe6]/10 focus-visible:ring-2 focus-visible:ring-[#f4efe6]"
               >
-                {t("Try the editor")}
+                {t("Play with the editor")}
               </Link>
             </div>
           </div>

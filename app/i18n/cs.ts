@@ -1210,95 +1210,96 @@ export const cs: Messages = {
   "not near {name}": "daleko od: {name}",
   ideally: "ideálně",
   " and ": " a ",
-  "Desk booking for hybrid offices": "Rezervace stolů pro hybridní kanceláře",
-  "Your office as a map everyone can book from":
-    "Vaše kancelář jako mapa, ze které si každý zarezervuje stůl",
-  "Draw your floor plan in 3D, and let people book a desk for a day, every Monday, or next to the colleagues they work with — on a laptop or a phone.":
-    "Nakreslete půdorys ve 3D a nechte lidi rezervovat stůl na den, na každé pondělí nebo vedle kolegů, se kterými pracují — na notebooku i na telefonu.",
   "Get started": "Začít",
-  "Try the editor": "Vyzkoušet editor",
-  "No account needed to try the editor.": "Editor vyzkoušíte i bez účtu.",
-  "An office in Hotseat: desks labelled D-1 to D-36, meeting rooms and a lounge, in 3D":
-    "Kancelář v Hotseatu: stoly D-1 až D-36, zasedačky a odpočinková zóna, ve 3D",
-  "Everything a shared office needs": "Vše, co sdílená kancelář potřebuje",
-  "For the people booking a desk, and for whoever runs the office.":
-    "Pro ty, kdo si rezervují stůl, i pro správu kanceláře.",
-  "Book a desk for any day": "Stůl na kterýkoli den",
-  "One day, every Tuesday and Thursday, or a stretch of days — and see who's in at a glance.":
-    "Na jeden den, na každé úterý a čtvrtek nebo na více dní v řadě — a hned vidíte, kdo přijde.",
   "Find me a seat": "Najdi mi místo",
-  "Say what you'd like — your team's zone, near a colleague, your preferred seat — and get the desk that fits best.":
-    "Řekněte, co chcete — zónu svého týmu, blízko kolegů, preferovaný stůl — a dostanete stůl, který sedí nejlépe.",
-  "See who's in the office each day and where they sit, and find their desk on the map.":
-    "Podívejte se, kdo je který den v kanceláři a kde sedí, a najděte jejich stůl na mapě.",
-  "Give people a desk of their own. When they're away, they give it up for the day and others can book it.":
-    "Přidělte lidem vlastní stůl. Když nejsou v kanceláři, uvolní ho na den a mohou si ho zarezervovat ostatní.",
   "Draw your office in 3D": "Nakreslete kancelář ve 3D",
-  "Walls, doors, windows and a catalogue of furniture, several floors — or a ready-made template to start from.":
-    "Zdi, dveře, okna a katalog nábytku, více pater — nebo hotová šablona na začátek.",
   "Zones for teams": "Zóny pro týmy",
-  "Colour the floor by team and number the desks after their zone.":
-    "Obarvěte podlahu podle týmů a očíslujte stoly podle zóny.",
-  "Directions to any desk, from the entrance or your own desk, across floors.":
-    "Cesta ke kterémukoli stolu od vchodu nebo od vlastního stolu, i přes patra.",
-  "Insights for admins": "Přehledy pro správu",
-  "See which desks are used and how full the office gets, to plan the space you have.":
-    "Podívejte se, které stoly se využívají a jak plná kancelář bývá, a plánujte prostor, který máte.",
-  "Made for phones too": "Stavěno i pro telefony",
-  "A simple floor plan and booking where your thumb reaches — in English and Czech.":
-    "Jednoduchý půdorys a rezervace na dosah palce — česky i anglicky.",
-  "Set up in an afternoon": "Nastaveno za odpoledne",
-  "Start from a template or draw your own floor plan. Rooms measure themselves, desks are numbered in one click, and every change is saved as you go.":
-    "Začněte šablonou nebo nakreslete vlastní půdorys. Místnosti se změří samy, stoly očíslujete jedním kliknutím a každá změna se průběžně ukládá.",
-  "Hotseat's office editor: a catalogue of furniture beside an office in 3D, its rooms measured":
-    "Editor kanceláře v Hotseatu: katalog nábytku vedle kanceláře ve 3D se změřenými místnostmi",
   "How it works": "Jak to funguje",
-  "Create your organization": "Založte organizaci",
-  "Sign in with Google or GitHub and name your company.":
-    "Přihlaste se přes Google nebo GitHub a pojmenujte svou firmu.",
   "Draw your office": "Nakreslete kancelář",
-  "Start from a template or draw walls and furniture; add floors as you grow.":
-    "Začněte šablonou nebo nakreslete zdi a nábytek; s růstem přidávejte patra.",
-  "Invite your team": "Pozvěte tým",
-  "Share a link: people join and book their first desk in seconds.":
-    "Pošlete odkaz: lidé se připojí a první stůl mají za pár vteřin.",
-  "Give your office a map": "Dejte své kanceláři mapu",
-  "Set up your first office today. Your team can book desks as soon as they join.":
-    "Nastavte svou první kancelář ještě dnes. Tým si může rezervovat stoly hned po připojení.",
   Product: "Produkt",
   "Sign in": "Přihlásit se",
-  "Hotseat — desk booking on a map of your office":
-    "Hotseat — rezervace stolů na mapě vaší kanceláře",
-  "Draw your office in 3D and let your team book desks by the day, find a seat near colleagues, and see who's in.":
-    "Nakreslete kancelář ve 3D a nechte tým rezervovat stoly na den, hledat místo blízko kolegů a vidět, kdo přijde.",
   "What it does": "Co umí",
-  "Say it once, in a sentence: the zone you'd like, the colleague to sit near, a standing desk. Hotseat picks the desk that fits best, for today or any day.":
-    "Řekněte to jednou větou: zóna, kterou chcete, kolega nebo kolegyně, u kterých chcete sedět, stůl na stání. Hotseat vybere stůl, který sedí nejlépe — na dnešek i na kterýkoli den.",
-  "Remembered for next time": "Zapamatuje si to na příště",
   "Shows what fits and what doesn't": "Ukáže, co sedí a co ne",
-  "Booked in one tap": "Rezervace jedním klepnutím",
-  "Find a seat: “A seat today, ideally in Vývoj, with a standing desk and near Adam Černý”, and the closest match, Desk D-6":
-    "Najít místo: „Místo dnes, ideálně v zóně Vývoj, se stolem na stání a poblíž: Adam Černý“ a nejbližší shoda, stůl D-6",
-  "See who's in": "Podívejte se, kdo přijde",
-  "Everyone in the office that day, with their desk and their week at a glance. Find anyone on the map in one tap.":
-    "Všichni, kdo jsou ten den v kanceláři, s jejich stolem a týdnem na první pohled. Kohokoli najdete na mapě jedním klepnutím.",
-  "Plan your days around your team": "Plánujte dny podle svého týmu",
-  "Who's in: 18 of 441 people in the office today, each with their desk":
-    "Kdo přijde: dnes 18 z 441 lidí v kanceláři, každý se svým stolem",
-  "Book from your phone": "Rezervujte z telefonu",
-  "The office as a simple floor plan, with your teams' zones and who sits where. Pick a day with your thumb and find a seat.":
-    "Kancelář jako jednoduchý půdorys se zónami týmů a s tím, kdo kde sedí. Palcem vyberte den a najděte si místo.",
-  "Pinch, turn and switch floors": "Přibližujte, otáčejte a přepínejte patra",
-  "Your bookings and colleagues a tab away": "Rezervace i kolegové o záložku vedle",
-  "Hotseat on a phone: the floor plan with zones and people, and days to book":
-    "Hotseat na telefonu: půdorys se zónami a lidmi a dny k rezervaci",
-  "Know how the office is used": "Vězte, jak se kancelář využívá",
-  "Occupancy by week and by day, the busiest weekday, each floor and each desk — and how often permanent desks are given up.":
-    "Obsazenost po týdnech i dnech, nejrušnější den v týdnu, každé patro a každý stůl — a jak často se uvolňují stálé stoly.",
   "Look back or plan ahead": "Ohlédněte se zpět nebo plánujte dopředu",
-  "Export to CSV": "Export do CSV",
-  "Insights: 54% occupancy, Tuesday the busiest weekday, desks in use per week and a heatmap of every working day":
-    "Přehledy: obsazenost 54 %, nejrušnější je úterý, využité stoly po týdnech a teplotní mapa všech pracovních dnů",
   "Walls, doors, windows and furniture": "Zdi, dveře, okna a nábytek",
-  "Several floors": "Více pater",
+  "Desk booking without the paperwork": "Rezervace stolů bez papírování",
+  "Your office, minus the musical chairs": "Kancelář bez honby za volnou židlí",
+  "Hotseat puts your office on a map. Grab a desk for tomorrow, for every Tuesday, or right next to the person you actually want to sit with. On a laptop or a phone.":
+    "Hotseat dá vaši kancelář na mapu. Zaberte si stůl na zítřek, na každé úterý nebo hned vedle člověka, se kterým chcete sedět. Na notebooku i na telefonu.",
+  "Play with the editor": "Pohrát si s editorem",
+  "No account needed. Go on, knock down a wall.": "Bez účtu. Klidně zbourejte nějakou zeď.",
+  "A cosy studio office in Hotseat, in 3D: desks with people's faces, free ones in green, a lounge and a glass meeting room":
+    "Útulná kancelář v Hotseatu ve 3D: stoly s tvářemi lidí, volné zeleně, odpočívárna a prosklená zasedačka",
+  "What's inside": "Co v tom je",
+  "Small things that save a lot of wandering around.":
+    "Drobnosti, které ušetří spoustu bloudění po kanceláři.",
+  "Book any day": "Rezervace na kterýkoli den",
+  "Tomorrow, every Tuesday and Thursday, or all of next week. Two taps and done.":
+    "Zítra, každé úterý a čtvrtek nebo celý příští týden. Dvě klepnutí a hotovo.",
+  "Say what you like — your team's corner, near a friend, a desk you can stand at — and it picks one for you.":
+    "Řekněte, co máte rádi — kout svého týmu, blízko kamaráda, stůl na stání — a Hotseat vybere za vás.",
+  "See who's coming in before you decide to. Or before you decide not to.":
+    "Podívejte se, kdo přijde, než se rozhodnete jít taky. Nebo nejít.",
+  "Some people like a desk of their own. Fair enough. When they're off, it doesn't sit there empty.":
+    "Někdo chce svůj vlastní stůl. Proč ne. Když tu zrovna není, stůl nezůstane prázdný.",
+  "Walls, doors, windows, sofas, plants. More floors if you've got them. Or grab a template and tweak it.":
+    "Zdi, dveře, okna, gauče, kytky. Víc pater, pokud je máte. Nebo vezměte šablonu a upravte si ji.",
+  "Give each team its own patch of floor, colour it in and number the desks.":
+    "Dejte každému týmu kus podlahy, vybarvěte ho a očíslujte stoly.",
+  "First day? Hotseat walks you from the door to your desk, stairs included.":
+    "První den? Hotseat vás dovede ode dveří až ke stolu, i po schodech.",
+  "Numbers for whoever runs the office": "Čísla pro toho, kdo má kancelář na starost",
+  "Which days are packed, which desks nobody wants, and whether you need more room or fewer chairs.":
+    "Které dny praskají ve švech, o které stoly nikdo nestojí a jestli potřebujete víc místa, nebo míň židlí.",
+  "Fits in your pocket": "Vejde se do kapsy",
+  "A simple floor plan made for thumbs. In English and Czech.":
+    "Jednoduchý půdorys stavěný pro palce. Česky i anglicky.",
+  "“A seat today, ideally with Design, near Theo, at a standing desk.” Hotseat reads that, picks the best desk and tells you straight what it couldn't manage.":
+    "„Místo na dnešek, ideálně u designérů, blízko Thea, se stolem na stání.“ Hotseat to přečte, vybere nejlepší stůl a rovnou řekne, co se nepovedlo.",
+  "Remembers what you like": "Pamatuje si, co máte rádi",
+  "One tap to book": "Rezervace jedním klepnutím",
+  "Find a seat: “A seat today, ideally in Design, near Theo Park, with a standing desk”, and the best match, desk D6":
+    "Najít místo: „Místo dnes, ideálně v zóně Design, poblíž: Theo Park, se stolem na stání“ a nejlepší shoda, stůl D6",
+  "Check who's in before you put your shoes on": "Zjistěte, kdo přijde, ještě než se obujete",
+  "Everyone coming in today, where they sit and how their week looks. Tap Find and the map takes you straight to them.":
+    "Všichni, kdo dnes přijdou, kde sedí a jak vypadá jejich týden. Klepněte na Najít a mapa vás k nim dovede.",
+  "Search by name": "Hledání podle jména",
+  "Plan your days around your people": "Plánujte dny podle svých lidí",
+  "Who's in today, each person with their desk and their week":
+    "Kdo dnes přijde, každý se svým stolem a týdnem",
+  "Book a desk on the tram": "Stůl si zarezervujete v tramvaji",
+  "Finding a seat, booking it, seeing who's around — all of it works on a phone. You're sorted before your stop.":
+    "Najít místo, zarezervovat ho, zjistit, kdo je kolem — všechno jde na telefonu. Hotovo dřív, než vystoupíte.",
+  "Made for thumbs": "Stavěné pro palce",
+  "Bookings and colleagues one tab away": "Rezervace i kolegové o záložku vedle",
+  "Finding a seat on a phone: the sentence and the best match, desk D6":
+    "Hledání místa na telefonu: věta a nejlepší shoda, stůl D6",
+  "Find out if Fridays really are that empty": "Zjistěte, jestli jsou pátky opravdu tak prázdné",
+  "How full the office gets, the busiest day, every floor and every desk — and how often those permanent desks sit unused.":
+    "Jak plná kancelář bývá, který den je nejrušnější, každé patro a každý stůl — a jak často stálé stoly zejí prázdnotou.",
+  "CSV for the spreadsheet fans": "CSV pro milovníky tabulek",
+  "Insights: 67% full, Wednesday the busiest day, desks in use per week and a heatmap of every working day":
+    "Přehledy: obsazenost 67 %, nejrušnější středa, využité stoly po týdnech a teplotní mapa všech pracovních dnů",
+  "Build your office in an afternoon": "Kancelář postavíte za odpoledne",
+  "Start from a template or draw your own. Rooms measure themselves, desks number themselves, and everything saves as you go. Moving the sofa has never been easier.":
+    "Začněte šablonou, nebo si nakreslete vlastní. Místnosti se změří samy, stoly se očíslují samy a všechno se průběžně ukládá. Stěhování gauče nebylo nikdy snazší.",
+  "As many floors as you've got": "Tolik pater, kolik jich máte",
+  "The office editor: furniture to pick from beside the office in 3D, its rooms measured":
+    "Editor kanceláře: nábytek na výběr vedle kanceláře ve 3D se změřenými místnostmi",
+  "Create your company": "Založte svou firmu",
+  "Sign in with Google or GitHub and give it a name.":
+    "Přihlaste se přes Google nebo GitHub a dejte jí jméno.",
+  "Use a template or sketch your own. Add floors whenever.":
+    "Použijte šablonu, nebo si načrtněte vlastní. Patra přidáte kdykoli.",
+  "Invite your people": "Pozvěte své lidi",
+  "Send a link. They join, book a desk, and that's it. No training needed.":
+    "Pošlete odkaz. Připojí se, zarezervují si stůl a je to. Žádné školení.",
+  "Ready when you are": "Až budete chtít, jsme tady",
+  "Set up your office today. Your people can book a desk the minute they join.":
+    "Nastavte si kancelář ještě dnes. Vaši lidé si můžou zarezervovat stůl hned, jak se připojí.",
+  "Hotseat — book a desk on a map of your office":
+    "Hotseat — rezervace stolu na mapě vaší kanceláře",
+  "Put your office on a map. Book desks by the day, sit near your people and see who's in.":
+    "Dejte kancelář na mapu. Rezervujte stoly na dny, seďte u svých lidí a sledujte, kdo přijde.",
+  "Up and running in three steps": "Rozjedete to ve třech krocích",
 }

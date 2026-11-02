@@ -7,9 +7,9 @@ import { isAuthenticated } from "~/services/session.server"
 
 export const meta: MetaFunction = ({ matches }) => {
   const { t } = metaTranslator(matches)
-  const title = t("Hotseat — desk booking on a map of your office")
+  const title = t("Hotseat — book a desk on a map of your office")
   const description = t(
-    "Draw your office in 3D and let your team book desks by the day, find a seat near colleagues, and see who's in."
+    "Put your office on a map. Book desks by the day, sit near your people and see who's in."
   )
 
   return [

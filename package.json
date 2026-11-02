@@ -13,6 +13,7 @@
     "prisma:reset": "bunx prisma migrate reset --config=./app/repositories/main-repository/prisma/prisma.config.ts",
     "prisma:migrate": "bunx prisma migrate dev --config=./app/repositories/main-repository/prisma/prisma.config.ts",
     "prisma:migrate:production": "DATABASE_URL=\"$(npx -y neonctl connection-string --project-id damp-dawn-44534762 --database-name hotseat)\" bunx prisma migrate deploy --config=./app/repositories/main-repository/prisma/prisma.config.ts",
+    "seed:demo": "bun --env-file=.env scripts/seed-demo.ts",
     "prisma:studio": "bunx prisma studio --config=./app/repositories/main-repository/prisma/prisma.config.ts",
     "prisma:format": "bunx prisma format --config=./app/repositories/main-repository/prisma/prisma.config.ts",
     "prisma:validate": "bunx prisma validate --config=./app/repositories/main-repository/prisma/prisma.config.ts",
