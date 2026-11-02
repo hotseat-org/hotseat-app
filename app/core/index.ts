@@ -1,3 +1,4 @@
+import { clearStaleDemos, startDemo } from "./demo"
 import { createOffice } from "./office/create"
 import { getOffice } from "./office/get"
 import { saveOfficeLayout } from "./office/saveLayout"
@@ -124,6 +125,10 @@ export const createCore = (context: CoreContext) => ({
     release: releaseDesk(context),
     reclaim: reclaimDesk(context),
     releases: listDeskReleases(context),
+  },
+  demo: {
+    start: startDemo(context),
+    clearStale: clearStaleDemos(context),
   },
   notification: {
     list: listNotifications(context),

@@ -35,6 +35,7 @@ import type {
 } from "./methods/desk-preference"
 import type { FindUserArgs } from "./methods/user/find"
 import { UpdateUserArgs } from "./methods/user/update"
+import type { DemoCompany } from "~/core/demo/company"
 import type { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/client"
 
 export type PaginatedResult<Data> = {
@@ -236,6 +237,15 @@ export interface MainRepository {
     create: (args: CreateNotificationsArgs) => Promise<void>
     findMany: (args: FindNotificationsArgs) => Promise<{ items: Notification[]; unread: number }>
     markRead: (args: { userEmail: string }) => Promise<void>
+  }
+  demo: {
+    create: (company: DemoCompany) => Promise<void>
+    deleteStale: (args: {
+      before: Date
+      slugPrefix: string
+      visitorPrefix: string
+      domain: string
+    }) => Promise<{ organizations: number; visitors: number }>
   }
   reservation: {
     findMany: (args: FindReservationsArgs) => Promise<Reservation[]>

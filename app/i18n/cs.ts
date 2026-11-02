@@ -1226,7 +1226,6 @@ export const cs: Messages = {
   "Your office, minus the musical chairs": "Kancelář bez honby za volnou židlí",
   "Hotseat puts your office on a map. Grab a desk for tomorrow, for every Tuesday, or right next to the person you actually want to sit with. On a laptop or a phone.":
     "Hotseat dá vaši kancelář na mapu. Zaberte si stůl na zítřek, na každé úterý nebo hned vedle člověka, se kterým chcete sedět. Na notebooku i na telefonu.",
-  "Play with the editor": "Pohrát si s editorem",
   "No account needed. Go on, knock down a wall.": "Bez účtu. Klidně zbourejte nějakou zeď.",
   "A cosy studio office in Hotseat, in 3D: desks with people's faces, free ones in green, a lounge and a glass meeting room":
     "Útulná kancelář v Hotseatu ve 3D: stoly s tvářemi lidí, volné zeleně, odpočívárna a prosklená zasedačka",
@@ -1326,6 +1325,8 @@ export const cs: Messages = {
   "The app runs on Cloudflare and your bookings live in a Postgres database at Neon.":
     "Aplikace běží na Cloudflaru a vaše rezervace jsou v databázi Postgres u Neonu.",
   "Can we try it before we commit?": "Můžeme si to nejdřív vyzkoušet?",
-  "Sure. Play with the editor without an account, or set up your office and invite a few people first.":
-    "Jasně. Pohrajte si s editorem bez účtu, nebo si nastavte kancelář a pozvěte zatím pár lidí.",
+  "Look around a demo office": "Prohlédnout si ukázkovou kancelář",
+  "Setting up…": "Připravujeme…",
+  "Sure. Look around the demo office without an account — book a desk, find a seat, move the furniture. Or set up your own and invite a few people first.":
+    "Jasně. Prohlédněte si ukázkovou kancelář bez účtu — zarezervujte stůl, najděte místo, přestěhujte nábytek. Nebo si nastavte vlastní a pozvěte zatím pár lidí.",
 }

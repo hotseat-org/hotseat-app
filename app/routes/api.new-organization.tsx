@@ -14,6 +14,7 @@ import {
   useImageUpload,
   useNameCheck,
 } from "~/components/CreateModal"
+import { isDemoVisitor } from "~/core/demo"
 import { getCore } from "~/core/get-core"
 import { useI18n } from "~/i18n/I18nProvider"
 import { requireUser } from "~/services/session.server"
@@ -36,6 +37,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     return isAvailable
   }
+
+  // A demo visitor's own company starts with signing up for real.
+  if (intent === Intent.CREATE_ORGANIZATION && isDemoVisitor(user.email)) return redirect("/logout")
 
   if (intent === Intent.CREATE_ORGANIZATION) {
     const thumbnail = formData.get("thumbnail")

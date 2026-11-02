@@ -21,12 +21,16 @@ export default {
 
   // Hourly (wrangler.jsonc "triggers"): book usual desks on the days that just
   // opened up — offices are in different timezones, so days open at different
-  // hours — and hand freed desks to people waiting.
+  // hours — and hand freed desks to people waiting. And clear demo copies a day old.
   scheduled(_event: unknown, env: Env, ctx: { waitUntil: (work: Promise<unknown>) => void }) {
     ctx.waitUntil(
       runWithPrisma(env.HYPERDRIVE.connectionString, async () => {
-        const result = await getCore().reservation.runJobs()
+        const core = getCore()
+        const result = await core.reservation.runJobs()
         console.log("booking jobs", result)
+
+        const demos = await core.demo.clearStale()
+        console.log("demo copies cleared", demos)
       })
     )
   },

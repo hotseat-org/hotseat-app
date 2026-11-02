@@ -13,7 +13,7 @@ import {
   type LucideIcon,
 } from "lucide-react"
 import type { ReactNode } from "react"
-import { Link } from "react-router"
+import { Form, Link, useNavigation } from "react-router"
 import { HotseatLockup } from "~/components/HotseatMark"
 import { useI18n } from "~/i18n/I18nProvider"
 import { LOCALES, LOCALE_NAMES } from "~/i18n/locales"
@@ -66,9 +66,7 @@ export const ProductPage = () => {
             <Link to="/login" className={PRIMARY_LINK}>
               {t("Get started")}
             </Link>
-            <Link to="/office-editor" className={SECONDARY_LINK}>
-              {t("Play with the editor")}
-            </Link>
+            <DemoButton className={SECONDARY_LINK} />
           </div>
           <p className="mt-3 text-sm text-muted">
             {t("No account needed. Go on, knock down a wall.")}
@@ -270,7 +268,7 @@ export const ProductPage = () => {
             </Question>
             <Question title={t("Can we try it before we commit?")}>
               {t(
-                "Sure. Play with the editor without an account, or set up your office and invite a few people first."
+                "Sure. Look around the demo office without an account — book a desk, find a seat, move the furniture. Or set up your own and invite a few people first."
               )}
             </Question>
           </dl>
@@ -291,12 +289,7 @@ export const ProductPage = () => {
               <Link to="/login" className={PRIMARY_LINK}>
                 {t("Get started")}
               </Link>
-              <Link
-                to="/office-editor"
-                className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#f4efe6]/30 px-6 text-[15px] font-extrabold text-[#f4efe6] outline-none transition-colors hover:bg-[#f4efe6]/10 focus-visible:ring-2 focus-visible:ring-[#f4efe6]"
-              >
-                {t("Play with the editor")}
-              </Link>
+              <DemoButton className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#f4efe6]/30 px-6 text-[15px] font-extrabold text-[#f4efe6] outline-none transition-colors hover:bg-[#f4efe6]/10 focus-visible:ring-2 focus-visible:ring-[#f4efe6]" />
             </div>
           </div>
         </section>
@@ -304,6 +297,24 @@ export const ProductPage = () => {
 
       <Footer />
     </div>
+  )
+}
+
+/**
+ * "Look around a demo office": a POST (crawlers never start one) that makes
+ * the visitor their own copy of the demo company and signs them in to it.
+ */
+const DemoButton = ({ className }: { className: string }) => {
+  const { t } = useI18n()
+  const navigation = useNavigation()
+  const isStarting = navigation.formAction === "/demo"
+
+  return (
+    <Form method="post" action="/demo">
+      <button type="submit" disabled={isStarting} className={clsx(className, "min-w-56")}>
+        {isStarting ? t("Setting up…") : t("Look around a demo office")}
+      </button>
+    </Form>
   )
 }
 
