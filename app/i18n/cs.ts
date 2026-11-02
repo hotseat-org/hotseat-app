@@ -1272,4 +1272,33 @@ export const cs: Messages = {
   "Draw your office in 3D and let your team book desks by the day, find a seat near colleagues, and see who's in.":
     "Nakreslete kancelář ve 3D a nechte tým rezervovat stoly na den, hledat místo blízko kolegů a vidět, kdo přijde.",
   "What it does": "Co umí",
+  "Say it once, in a sentence: the zone you'd like, the colleague to sit near, a standing desk. Hotseat picks the desk that fits best, for today or any day.":
+    "Řekněte to jednou větou: zóna, kterou chcete, kolega nebo kolegyně, u kterých chcete sedět, stůl na stání. Hotseat vybere stůl, který sedí nejlépe — na dnešek i na kterýkoli den.",
+  "Remembered for next time": "Zapamatuje si to na příště",
+  "Shows what fits and what doesn't": "Ukáže, co sedí a co ne",
+  "Booked in one tap": "Rezervace jedním klepnutím",
+  "Find a seat: “A seat today, ideally in Vývoj, with a standing desk and near Adam Černý”, and the closest match, Desk D-6":
+    "Najít místo: „Místo dnes, ideálně v zóně Vývoj, se stolem na stání a poblíž: Adam Černý“ a nejbližší shoda, stůl D-6",
+  "See who's in": "Podívejte se, kdo přijde",
+  "Everyone in the office that day, with their desk and their week at a glance. Find anyone on the map in one tap.":
+    "Všichni, kdo jsou ten den v kanceláři, s jejich stolem a týdnem na první pohled. Kohokoli najdete na mapě jedním klepnutím.",
+  "Plan your days around your team": "Plánujte dny podle svého týmu",
+  "Who's in: 18 of 441 people in the office today, each with their desk":
+    "Kdo přijde: dnes 18 z 441 lidí v kanceláři, každý se svým stolem",
+  "Book from your phone": "Rezervujte z telefonu",
+  "The office as a simple floor plan, with your teams' zones and who sits where. Pick a day with your thumb and find a seat.":
+    "Kancelář jako jednoduchý půdorys se zónami týmů a s tím, kdo kde sedí. Palcem vyberte den a najděte si místo.",
+  "Pinch, turn and switch floors": "Přibližujte, otáčejte a přepínejte patra",
+  "Your bookings and colleagues a tab away": "Rezervace i kolegové o záložku vedle",
+  "Hotseat on a phone: the floor plan with zones and people, and days to book":
+    "Hotseat na telefonu: půdorys se zónami a lidmi a dny k rezervaci",
+  "Know how the office is used": "Vězte, jak se kancelář využívá",
+  "Occupancy by week and by day, the busiest weekday, each floor and each desk — and how often permanent desks are given up.":
+    "Obsazenost po týdnech i dnech, nejrušnější den v týdnu, každé patro a každý stůl — a jak často se uvolňují stálé stoly.",
+  "Look back or plan ahead": "Ohlédněte se zpět nebo plánujte dopředu",
+  "Export to CSV": "Export do CSV",
+  "Insights: 54% occupancy, Tuesday the busiest weekday, desks in use per week and a heatmap of every working day":
+    "Přehledy: obsazenost 54 %, nejrušnější je úterý, využité stoly po týdnech a teplotní mapa všech pracovních dnů",
+  "Walls, doors, windows and furniture": "Zdi, dveře, okna a nábytek",
+  "Several floors": "Více pater",
 }

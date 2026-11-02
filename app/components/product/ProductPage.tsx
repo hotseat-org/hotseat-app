@@ -3,6 +3,7 @@ import {
   Armchair,
   BarChart3,
   CalendarDays,
+  Check,
   Footprints,
   Layers,
   PencilRuler,
@@ -18,10 +19,14 @@ import { useI18n } from "~/i18n/I18nProvider"
 import { LOCALES, LOCALE_NAMES } from "~/i18n/locales"
 import { useLocale } from "~/i18n/useLocale"
 
-/** The page's own pictures (public/images/product): a template office, no people in it. */
+/** The page's own pictures (public/images/product): a template office, and the demo organization's. */
 const PICTURES = {
   office: `${import.meta.env.BASE_URL}images/product/office-3d.jpg`,
   editor: `${import.meta.env.BASE_URL}images/product/office-editor.jpg`,
+  findSeat: `${import.meta.env.BASE_URL}images/product/find-a-seat.jpg`,
+  whosIn: `${import.meta.env.BASE_URL}images/product/whos-in.jpg`,
+  phone: `${import.meta.env.BASE_URL}images/product/phone.jpg`,
+  insights: `${import.meta.env.BASE_URL}images/product/insights.jpg`,
 }
 
 /** The night blue of the sign-in screen: the closing call to action stands on it. */
@@ -129,24 +134,92 @@ export const ProductPage = () => {
           </div>
         </section>
 
-        <section className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-20 sm:px-6 lg:grid-cols-[2fr_3fr]">
-          <div>
-            <h2 className="text-3xl font-black tracking-[-0.01em] sm:text-4xl">
-              {t("Set up in an afternoon")}
-            </h2>
-            <p className="mt-4 text-lg leading-relaxed text-muted">
-              {t(
-                "Start from a template or draw your own floor plan. Rooms measure themselves, desks are numbered in one click, and every change is saved as you go."
-              )}
-            </p>
-          </div>
-          <Picture
-            src={PICTURES.editor}
-            alt={t(
-              "Hotseat's office editor: a catalogue of furniture beside an office in 3D, its rooms measured"
+        <div className="mx-auto flex max-w-6xl flex-col gap-24 px-4 py-24 sm:px-6">
+          <Showcase
+            title={t("Find me a seat")}
+            lead={t(
+              "Say it once, in a sentence: the zone you'd like, the colleague to sit near, a standing desk. Hotseat picks the desk that fits best, for today or any day."
             )}
+            points={[
+              t("Remembered for next time"),
+              t("Shows what fits and what doesn't"),
+              t("Booked in one tap"),
+            ]}
+            picture={
+              <Picture
+                src={PICTURES.findSeat}
+                alt={t(
+                  "Find a seat: “A seat today, ideally in Vývoj, with a standing desk and near Adam Černý”, and the closest match, Desk D-6"
+                )}
+              />
+            }
           />
-        </section>
+          <Showcase
+            title={t("See who's in")}
+            lead={t(
+              "Everyone in the office that day, with their desk and their week at a glance. Find anyone on the map in one tap."
+            )}
+            points={[t("Search by name or email"), t("Plan your days around your team")]}
+            picture={
+              <Picture
+                src={PICTURES.whosIn}
+                alt={t("Who's in: 18 of 441 people in the office today, each with their desk")}
+                className="mx-auto max-w-sm"
+              />
+            }
+            isFlipped
+          />
+          <Showcase
+            title={t("Book from your phone")}
+            lead={t(
+              "The office as a simple floor plan, with your teams' zones and who sits where. Pick a day with your thumb and find a seat."
+            )}
+            points={[
+              t("Pinch, turn and switch floors"),
+              t("Your bookings and colleagues a tab away"),
+            ]}
+            picture={
+              <Picture
+                src={PICTURES.phone}
+                alt={t(
+                  "Hotseat on a phone: the floor plan with zones and people, and days to book"
+                )}
+                className="mx-auto max-w-[280px] rounded-[calc(var(--radius)*8)]"
+              />
+            }
+          />
+          <Showcase
+            title={t("Know how the office is used")}
+            lead={t(
+              "Occupancy by week and by day, the busiest weekday, each floor and each desk — and how often permanent desks are given up."
+            )}
+            points={[t("Look back or plan ahead"), t("Export to CSV")]}
+            picture={
+              <Picture
+                src={PICTURES.insights}
+                alt={t(
+                  "Insights: 54% occupancy, Tuesday the busiest weekday, desks in use per week and a heatmap of every working day"
+                )}
+              />
+            }
+            isFlipped
+          />
+          <Showcase
+            title={t("Set up in an afternoon")}
+            lead={t(
+              "Start from a template or draw your own floor plan. Rooms measure themselves, desks are numbered in one click, and every change is saved as you go."
+            )}
+            points={[t("Walls, doors, windows and furniture"), t("Several floors")]}
+            picture={
+              <Picture
+                src={PICTURES.editor}
+                alt={t(
+                  "Hotseat's office editor: a catalogue of furniture beside an office in 3D, its rooms measured"
+                )}
+              />
+            }
+          />
+        </div>
 
         <section id="how" className="scroll-mt-20 bg-surface-secondary py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -298,6 +371,39 @@ const Picture = ({
   >
     <img src={src} alt={alt} loading={isEager ? "eager" : "lazy"} className="block h-auto w-full" />
   </div>
+)
+
+/** A feature up close: its picture beside what it does (sides alternate down the page). */
+const Showcase = ({
+  title,
+  lead,
+  points,
+  picture,
+  isFlipped = false,
+}: {
+  title: string
+  lead: string
+  points: string[]
+  picture: ReactNode
+  isFlipped?: boolean
+}) => (
+  <section className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
+    <div className={clsx(isFlipped && "lg:order-2")}>
+      <h2 className="text-3xl font-black tracking-[-0.01em] sm:text-4xl">{title}</h2>
+      <p className="mt-4 text-lg leading-relaxed text-muted">{lead}</p>
+      <ul className="mt-6 flex flex-col gap-2.5">
+        {points.map((point) => (
+          <li key={point} className="flex items-center gap-2.5 font-bold">
+            <span className="grid size-6 shrink-0 place-items-center rounded-full bg-success/15 text-success">
+              <Check className="size-3.5" strokeWidth={3} />
+            </span>
+            {point}
+          </li>
+        ))}
+      </ul>
+    </div>
+    {picture}
+  </section>
 )
 
 const SectionHeading = ({ title, lead }: { title: string; lead?: string }) => (
