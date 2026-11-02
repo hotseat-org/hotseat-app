@@ -41,11 +41,22 @@ const getPassword = (user) => {
   if (process.env.PRODUCTION_DATABASE_PASSWORD) return process.env.PRODUCTION_DATABASE_PASSWORD
 
   try {
-    return execFileSync(
+    const password = execFileSync(
       "security",
       ["find-generic-password", "-s", KEYCHAIN_SERVICE, "-a", user, "-w"],
       { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }
     ).trim()
+    // Stored without one (its prompts got no answer): as good as none.
+    if (password) return password
+
+    fail(
+      [
+        "The keychain holds an empty password for the production database. Store it again:",
+        `  security delete-generic-password -s ${KEYCHAIN_SERVICE} -a ${user}`,
+        `  security add-generic-password -s ${KEYCHAIN_SERVICE} -a ${user} -w`,
+        "(in a terminal of its own: it asks for the password twice).",
+      ].join("\n")
+    )
   } catch {
     fail(
       [
