@@ -11,7 +11,10 @@ import {
   Vector2,
 } from "three"
 import {
+  Fn,
+  abs,
   float,
+  int,
   mrt,
   normalView,
   orthographicDepthToViewZ,
@@ -22,7 +25,11 @@ import {
   positionView,
   reference,
   renderOutput,
+  rtt,
   sample,
+  textureSize,
+  uv,
+  vec2,
   saturation,
   unpackRGBToNormal,
   vec4,
@@ -31,16 +38,18 @@ import {
   PassNode,
   RenderPipeline,
   type Node,
+  type TextureNode,
   type NodeFrame,
   type WebGPURenderer,
 } from "three/webgpu"
 import { ao } from "three/examples/jsm/tsl/display/GTAONode.js"
-import { denoise } from "three/examples/jsm/tsl/display/DenoiseNode.js"
 import { OUTLINE_LAYER, shownOutlines } from "../objects/outlineLayer"
 import { DEPTH_BIAS } from "../objects/PieceOutline"
 
 /** Ambient occlusion: its reach (m) and strength (×), at half the screen's resolution. */
 const OCCLUSION = { radius: 0.6, scale: 1.1, resolution: 0.5 }
+/** How much nearer or farther a neighbour may be (× the distance) to be smoothed with. */
+const SMOOTHING_DEPTH_TOLERANCE = 0.05
 /** The grade over tone mapping (ACES greys light colours a little): a touch more colour and snap. */
 const GRADE = { saturation: 1.1, contrast: 0.06 }
 
@@ -115,6 +124,42 @@ const getViewZ = (depth: Node<"float">, camera: Camera) => {
 }
 
 /**
+ * GTAO's occlusion, smoothed. It's noisy by itself: its samples turn per pixel,
+ * in a pattern that repeats every 5×5 pixels — so the average over 5×5 takes
+ * the noise out. Only neighbours about as far away count, or the shade would
+ * bleed over an edge onto what's behind. At the occlusion's own resolution
+ * (half): three's DenoiseNode did as well for about 1 ms more a frame, with
+ * 17 lookups of the occlusion, depth and normals at every screen pixel.
+ */
+const smoothOcclusion = (occlusion: TextureNode, depth: TextureNode, camera: Camera) => {
+  const average = Fn(() => {
+    const size = textureSize(occlusion, int(0)) as unknown as Node<"ivec2">
+    const texel = vec2(1).div(vec2(size))
+    const getDistance = (at: Node<"vec2">) => getViewZ(depth.sample(at).r, camera)
+    const centerDistance = getDistance(uv())
+    const tolerance = abs(centerDistance).mul(SMOOTHING_DEPTH_TOLERANCE)
+    const sum = float(0).toVar()
+    const weights = float(0).toVar()
+
+    for (let x = -2; x <= 2; x++)
+      for (let y = -2; y <= 2; y++) {
+        const at = uv().add(vec2(x, y).mul(texel))
+        const difference = abs(getDistance(at).sub(centerDistance))
+        const weight = float(1).sub(difference.div(tolerance).saturate())
+        sum.addAssign(occlusion.sample(at).r.mul(weight))
+        weights.addAssign(weight)
+      }
+
+    return sum.div(weights) // never 0: the centre counts in full
+  })()
+
+  const smoothed = rtt(average as unknown as Node, null, null, { type: UnsignedByteType })
+  smoothed.setResolutionScale(OCCLUSION.resolution)
+
+  return smoothed as unknown as Node<"vec4">
+}
+
+/**
  * Post-processing (display mode only), in TSL: ambient occlusion (GTAO), the
  * pieces' outlines (their own pass, see outlineLayer.ts), ACES tone mapping
  * and a light grade. No vignette: the corners stay as bright as the rest. No tilt-shift: its blur towards the top and
@@ -144,11 +189,9 @@ export const PostFx = ({ highQuality = false }: { highQuality?: boolean }) => {
       occlusion.radius.value = OCCLUSION.radius
       occlusion.scale.value = OCCLUSION.scale
       occlusion.resolutionScale = OCCLUSION.resolution
-      // GTAO is noisy by itself (its samples turn per pixel): denoised, as
-      // three's own example does, it's smooth.
-      const smoothed = denoise(occlusion.getTextureNode(), sceneDepth, normals, camera)
+      const smoothed = smoothOcclusion(occlusion.getTextureNode(), sceneDepth, camera)
 
-      return sceneColor.rgb.mul((smoothed as unknown as Node<"vec4">).r)
+      return sceneColor.rgb.mul(smoothed.r)
     }
     const lit = highQuality ? getOccluded() : sceneColor.rgb
 
