@@ -1,11 +1,11 @@
 import { redirect, type ActionFunction } from "react-router"
-import { authenticator } from "../services/auth.server.js"
+import { authenticator, prepareSignIn } from "../services/auth.server.js"
 import { returnToPage } from "~/cookies"
 
 export const loader: ActionFunction = async ({ request, params }) => {
   const provider = params.provider
 
-  if (!provider) return redirect("/login")
+  if (!provider || !(await prepareSignIn(provider))) return redirect("/login")
 
   // Only honor same-origin, relative redirects (no open-redirect).
   const redirectTo = new URL(request.url).searchParams.get("redirectTo")

@@ -1,5 +1,5 @@
 import { redirect, type LoaderFunction } from "react-router"
-import { authenticator } from "../services/auth.server"
+import { authenticator, prepareSignIn } from "../services/auth.server"
 import { returnToPage } from "~/cookies"
 import { sessionStorage } from "~/services/session.server"
 
@@ -8,7 +8,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 
   const successRedirect = (await returnToPage.parse(request.headers.get("cookie"))) ?? "/"
 
-  if (!provider) return redirect("/login")
+  if (!provider || !(await prepareSignIn(provider))) return redirect("/login")
 
   const user = await authenticator.authenticate(provider, request)
 

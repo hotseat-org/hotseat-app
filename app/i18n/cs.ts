@@ -1346,4 +1346,8 @@ export const cs: Messages = {
   "Give the company a name.": "Pojmenujte firmu.",
   "It's been set up already, or that name won't do. Reload and try again.":
     "Už je nastavený, nebo tenhle název nejde použít. Obnovte stránku a zkuste to znovu.",
+  "No way to sign in is set up on this server yet.":
+    "Na tomto serveru zatím není nastavený žádný způsob přihlášení.",
+  "Continue with {name}": "Pokračovat přes {name}",
+  "Continue with single sign-on": "Pokračovat přes jednotné přihlášení",
 }

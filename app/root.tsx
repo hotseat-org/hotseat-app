@@ -30,6 +30,7 @@ import { BOOKING_ACTIONS, NOTIFICATION_ACTIONS, revalidateOn } from "~/utils/rev
 import { LocaleProvider } from "~/i18n/useLocale"
 import { getLocale } from "~/i18n/locale.server"
 import { EDITION } from "~/edition/edition.server"
+import { SIGN_IN_PROVIDERS } from "~/services/auth.server"
 import { useI18n } from "~/i18n/I18nProvider"
 import { createTranslator } from "~/i18n/translate"
 
@@ -67,7 +68,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const scheme = isSchemeId(savedScheme) ? savedScheme : DEFAULT_SCHEME
   const locale = await getLocale(request)
 
-  return { user, theme, scheme, locale, edition: EDITION }
+  return { user, theme, scheme, locale, edition: EDITION, signIn: SIGN_IN_PROVIDERS }
 }
 
 export default function AppWithProvider() {

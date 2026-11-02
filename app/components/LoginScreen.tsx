@@ -1,11 +1,13 @@
-import { GoogleStrategyDefaultName } from "@coji/remix-auth-google"
 import clsx from "clsx"
 import { useEffect, useState, type CSSProperties } from "react"
-import { Form, useSearchParams } from "react-router"
+import { KeyRound } from "lucide-react"
+import { Form, useRouteLoaderData, useSearchParams } from "react-router"
 import { DUSK, HotseatLockup } from "~/components/HotseatMark"
 import { useI18n } from "~/i18n/I18nProvider"
 import { LOCALES, LOCALE_NAMES } from "~/i18n/locales"
 import { useLocale } from "~/i18n/useLocale"
+import type { loader as rootLoader } from "~/root"
+import type { SignInProvider } from "~/services/signIn"
 import type { PageColor } from "~/utils/pageColor"
 
 /** The languages, each in itself — for someone not signed in yet. */
@@ -161,6 +163,35 @@ const Horizon = ({ isAnimated }: { isAnimated: boolean }) => (
   </svg>
 )
 
+/** A sign-in button's icon and words. */
+const ProviderLabel = ({ provider }: { provider: SignInProvider }) => {
+  const { t } = useI18n()
+
+  if (provider.kind === "google")
+    return (
+      <>
+        <span className="iconify-color devicon--google" />
+        {t("Continue with Google")}
+      </>
+    )
+  if (provider.kind === "github")
+    return (
+      <>
+        <span className="iconify devicon--github" />
+        {t("Continue with GitHub")}
+      </>
+    )
+
+  return (
+    <>
+      <KeyRound className="size-5" />
+      {provider.name
+        ? t("Continue with {name}", { name: provider.name })
+        : t("Continue with single sign-on")}
+    </>
+  )
+}
+
 const BUTTON =
   "flex h-[52px] w-full cursor-pointer items-center justify-center gap-2.5 rounded-full text-base font-extrabold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f6c560]"
 
@@ -184,6 +215,8 @@ export function LoginScreen({
   // Where to land after auth: an explicit prop (e.g. from the invite screen),
   // else a ?redirectTo query, else the auth default ("/").
   const target = redirectTo ?? searchParams.get("redirectTo") ?? undefined
+  // The ways to sign in this server offers.
+  const providers = useRouteLoaderData<typeof rootLoader>("root")?.signIn ?? []
   const isAnimated = useIsAnimated()
   const { t } = useI18n()
 
@@ -208,29 +241,28 @@ export function LoginScreen({
             t("Book a desk, see who's in, and walk into an office that's ready for you.")}
         </p>
         <div className="mt-2 flex w-full max-w-[360px] flex-col gap-3">
-          <Form method="get" action={`/auth/${GoogleStrategyDefaultName}`}>
-            {target && <input type="hidden" name="redirectTo" value={target} />}
-            <button
-              type="submit"
-              className={clsx(BUTTON, "bg-[#fbf6ee] text-[#2c3866] hover:bg-white")}
-            >
-              <span className="iconify-color devicon--google" />
-              {t("Continue with Google")}
-            </button>
-          </Form>
-          <Form method="get" action="/auth/github">
-            {target && <input type="hidden" name="redirectTo" value={target} />}
-            <button
-              type="submit"
-              className={clsx(
-                BUTTON,
-                "border-[1.5px] border-[#4a5688] bg-[#1f2850]/60 text-[#f4efe6] hover:border-[#7d88b8]"
-              )}
-            >
-              <span className="iconify devicon--github" />
-              {t("Continue with GitHub")}
-            </button>
-          </Form>
+          {providers.map((provider, index) => (
+            <Form key={provider.id} method="get" action={`/auth/${provider.id}`}>
+              {target && <input type="hidden" name="redirectTo" value={target} />}
+              <button
+                type="submit"
+                // The first is the main way in; the rest are outlined.
+                className={clsx(
+                  BUTTON,
+                  index === 0
+                    ? "bg-[#fbf6ee] text-[#2c3866] hover:bg-white"
+                    : "border-[1.5px] border-[#4a5688] bg-[#1f2850]/60 text-[#f4efe6] hover:border-[#7d88b8]"
+                )}
+              >
+                <ProviderLabel provider={provider} />
+              </button>
+            </Form>
+          ))}
+          {providers.length === 0 && (
+            <p className="rounded-2xl border border-[#4a5688] px-4 py-3 text-sm text-[#c9cde0]">
+              {t("No way to sign in is set up on this server yet.")}
+            </p>
+          )}
         </div>
         <p className="text-[13px] text-[#9aa1c0]">
           {t("New here? Signing in creates your account.")}
