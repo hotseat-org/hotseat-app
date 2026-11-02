@@ -1350,4 +1350,6 @@ export const cs: Messages = {
     "Na tomto serveru zatím není nastavený žádný způsob přihlášení.",
   "Continue with {name}": "Pokračovat přes {name}",
   "Continue with single sign-on": "Pokračovat přes jednotné přihlášení",
+  "That image couldn't be uploaded. Try another one.":
+    "Tento obrázek se nepodařilo nahrát. Zkuste jiný.",
 }

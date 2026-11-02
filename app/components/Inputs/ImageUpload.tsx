@@ -4,16 +4,22 @@ import { UploadCloud } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Rich, useI18n } from "~/i18n/I18nProvider"
 
-/** Upload an image (direct to the image service); resolves to its id. */
+/** A response's JSON, or an error if it isn't a success. */
+const readJson = async (response: Response) => {
+  if (!response.ok) throw new Error(`Upload failed (${response.status})`)
+
+  return response.json()
+}
+
+/** Upload an image (direct to the image service); resolves to its id, or throws. */
 export const uploadImage = async (file: File): Promise<string> => {
   const data = await fetch(`${import.meta.env.BASE_URL}api/upload-url`, {
     method: "POST",
-  }).then((res) => res.json())
+  }).then(readJson)
   const body = new FormData()
   body.append("file", file)
-  const uploadResult = await fetch(data.uploadUrl, { method: "POST", body }).then((res) =>
-    res.json()
-  )
+  const uploadResult = await fetch(data.uploadUrl, { method: "POST", body }).then(readJson)
+
   return uploadResult.result.id
 }
 
@@ -26,14 +32,22 @@ export const ImageUploadInput = ({ onChange, name }: Props) => {
   const { t } = useI18n()
   const [file, setFile] = useState<File | undefined>()
   const [thumbnail, setThumbnail] = useState<string | undefined>()
+  // The last pick couldn't be uploaded: back to picking, saying so.
+  const [hasFailed, setHasFailed] = useState(false)
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const newFile = e.target.files?.[0]
+    if (!newFile) return
 
-    if (newFile) {
-      setThumbnail(undefined)
-      setFile(newFile)
+    setThumbnail(undefined)
+    setHasFailed(false)
+    setFile(newFile)
+
+    try {
       setThumbnail(await uploadImage(newFile))
+    } catch {
+      setFile(undefined)
+      setHasFailed(true)
     }
   }
 
@@ -79,9 +93,15 @@ export const ImageUploadInput = ({ onChange, name }: Props) => {
                   values={{ click: <span className="font-semibold">{t("Click to upload")}</span> }}
                 />
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                SVG, PNG, JPG, WEBP, or GIF
-              </p>
+              {hasFailed ? (
+                <p role="alert" className="text-xs font-semibold text-danger">
+                  {t("That image couldn't be uploaded. Try another one.")}
+                </p>
+              ) : (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  SVG, PNG, JPG, WEBP, or GIF
+                </p>
+              )}
             </div>
           )}
 

@@ -12,7 +12,7 @@ import type { ImageService } from "./types"
 const IMAGES_DIR = process.env.IMAGES_DIR ?? ""
 const SECRET = process.env.COOKIES_SECRET ?? ""
 /** The app's public address, e.g. https://hotseat.acme.com (the upload URL is absolute). */
-const BASE_URL = (process.env.BASE_URL ?? "").replace(/\/+$/, "")
+const BASE_URL = process.env.BASE_URL ?? ""
 
 /** How long an upload URL works. */
 const UPLOAD_WINDOW_MS = 10 * 60 * 1000
@@ -75,7 +75,8 @@ export const readImage = async (id: string) => {
 const getUploadUrl = async () => {
   const imageId = crypto.randomUUID()
   const expires = Date.now() + UPLOAD_WINDOW_MS
-  const uploadUrl = new URL(`${BASE_URL}${import.meta.env.BASE_URL}api/images/${imageId}`)
+  // On BASE_URL's host, under the app's base path (BASE_URL may hold it too).
+  const uploadUrl = new URL(`${import.meta.env.BASE_URL}api/images/${imageId}`, BASE_URL)
   uploadUrl.searchParams.set("expires", String(expires))
   uploadUrl.searchParams.set("signature", sign(imageId, expires))
 
