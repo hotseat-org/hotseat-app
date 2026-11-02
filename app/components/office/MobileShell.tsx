@@ -164,7 +164,6 @@ const DayDock = ({ me, onFindSeat }: { me: ShellMember; onFindSeat: () => void }
   const { t } = i18n
   const day = useOfficeStore((s) => s.booking.day)
   const today = useOfficeStore((s) => s.booking.today)
-  const setDay = useOfficeStore((s) => s.setBookingDay)
   const spotlightSeat = useOfficeStore((s) => s.spotlightSeat)
   const { byPerson } = useDesksOnDay()
   const mine = byPerson.get(me.userEmail)
@@ -236,14 +235,7 @@ const DayDock = ({ me, onFindSeat }: { me: ShellMember; onFindSeat: () => void }
             <MapPin className="size-4" /> {t("Show")}
           </button>
         )}
-        <button
-          type="button"
-          onClick={() => setDay(today)}
-          disabled={day === today}
-          className="flex min-h-11 shrink-0 items-center rounded-xl px-2.5 text-sm font-extrabold text-accent transition-opacity disabled:opacity-35"
-        >
-          {t("Today")}
-        </button>
+        {/* Back to today: its day in the strip below (no button of its own: the room is the text's). */}
       </div>
       <div className="flex min-w-0 items-center gap-1.5">
         <button

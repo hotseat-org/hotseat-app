@@ -1,7 +1,7 @@
 import clsx from "clsx"
 import { ChevronDown } from "lucide-react"
 import { useState } from "react"
-import { getFloorNumber, getFloorTitle } from "../../floors"
+import { getFloorNumber, getFloorTitle, type Floor } from "../../floors"
 import { useFloorNotes } from "../../modules"
 import { useEditorStore } from "../../store"
 import { Slab, composeFloorLabel, useFloorName } from "./FloorsMenu"
@@ -10,6 +10,12 @@ import { useI18n } from "~/i18n/I18nProvider"
 
 /** The chip's height (px): what the plan keeps clear under it. */
 export const FLOOR_CHIP_HEIGHT = 40
+
+/** A floor's own name — none when it's named as its number ("Ground floor"): shown once, not twice. */
+const getOwnName = (floor: Floor, number: string) =>
+  floor.name && floor.name.trim().toLocaleLowerCase() !== number.toLocaleLowerCase()
+    ? floor.name
+    : undefined
 
 /**
  * A phone's floors: a chip under the top bar, always naming the floor shown —
@@ -28,6 +34,7 @@ export const FloorChip = ({ top }: { top: number }) => {
   if (floors.length < 2 || !shown) return null
 
   const shownNumber = getFloorTitle({ t }, getFloorNumber(floors, shown.id))
+  const shownName = getOwnName(shown, shownNumber)
 
   return (
     <>
@@ -43,7 +50,7 @@ export const FloorChip = ({ top }: { top: number }) => {
       >
         <Slab look="shown" />
         <span className="truncate">
-          {shown.name ? `${shownNumber} · ${shown.name}` : shownNumber}
+          {shownName ? `${shownNumber} · ${shownName}` : shownNumber}
         </span>
         <ChevronDown className="size-4 shrink-0 text-muted" />
       </button>
@@ -56,6 +63,7 @@ export const FloorChip = ({ top }: { top: number }) => {
                 const isShown = floor.id === currentFloor
                 const note = floorNotes?.get(floor.id)
                 const number = getFloorTitle({ t }, getFloorNumber(floors, floor.id))
+                const name = getOwnName(floor, number)
 
                 return (
                   <li key={floor.id}>
@@ -85,11 +93,11 @@ export const FloorChip = ({ top }: { top: number }) => {
                             isShown ? "font-black text-accent" : "font-extrabold text-foreground"
                           )}
                         >
-                          {floor.name || number}
+                          {name ?? number}
                         </span>
-                        {(floor.name || note?.yours) && (
+                        {(name || note?.yours) && (
                           <span className="truncate text-xs text-muted">
-                            {[floor.name && number, note?.yours].filter(Boolean).join(" · ")}
+                            {[name && number, note?.yours].filter(Boolean).join(" · ")}
                           </span>
                         )}
                       </span>
