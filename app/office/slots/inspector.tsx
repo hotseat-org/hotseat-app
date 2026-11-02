@@ -1,9 +1,11 @@
 import { Button } from "@heroui/react"
 import clsx from "clsx"
 import { useMemo, useState } from "react"
-import { ArrowRightLeft } from "lucide-react"
+import { ArrowRightLeft, UserRound } from "lucide-react"
 import { isRetiredDesk, isSeatable } from "../catalog"
-import { usePeople } from "../desks/people"
+import { personByEmail, usePeople, type Person } from "../desks/people"
+import { ResidentPicker } from "../desks/ResidentPicker"
+import { SeatAvatar } from "../desks/SeatAvatar"
 import { getZones } from "../zones/zones"
 import { DESK_FEATURES } from "../desks/deskFeatures"
 import { useOfficeStore } from "../store"
@@ -34,7 +36,6 @@ export const OfficeInspectorSection = ({ selected, count }: InspectorSectionProp
 const SeatSection = ({ id }: { id: string }) => {
   const seat = useOfficeStore((state) => state.objects.find((object) => object.id === id))
   const setSeatLabel = useOfficeStore((state) => state.setSeatLabel)
-  const assignSeat = useOfficeStore((state) => state.assignSeat)
   const numberDesks = useOfficeStore((state) => state.numberDesks)
   const toggleDeskFeature = useOfficeStore((state) => state.toggleDeskFeature)
   const people = usePeople()
@@ -54,31 +55,9 @@ const SeatSection = ({ id }: { id: string }) => {
         : [],
     [isBookingOn, byDay, today, id]
   )
-  /** A resident picked whose assignment would cancel someone's bookings: confirm first. */
-  const [pendingResident, setPendingResident] = useState<string | null>(null)
+  const [isPickingResident, setIsPickingResident] = useState(false)
   const nameOf = (email: string) =>
     people.members.find((member) => member.email === email)?.name ?? email
-  const lostTo = (resident: string) => bookings.filter((booking) => booking.email !== resident)
-  /** The new resident's own upcoming bookings in this office (any desk): they go too. */
-  const ownDays = (resident: string) =>
-    isBookingOn
-      ? Object.entries(byDay)
-          .filter(([date, desks]) => date >= today && Object.values(desks).includes(resident))
-          .map(([date]) => date as Day)
-          .sort()
-      : []
-  const cancels = (resident: string) =>
-    [
-      lostTo(resident).length ? describe(lostTo(resident)) : null,
-      ownDays(resident).length
-        ? t("{name}'s own bookings ({days})", {
-            name: nameOf(resident),
-            days: ownDays(resident).map(format.short).join(", "),
-          })
-        : null,
-    ]
-      .filter(Boolean)
-      .join(t(" and "))
   const describe = (list: typeof bookings) =>
     list.map((booking) => `${nameOf(booking.email)} (${format.short(booking.day)})`).join(", ")
   if (!seat) return null
@@ -137,66 +116,59 @@ const SeatSection = ({ id }: { id: string }) => {
       </InspectorGroup>
       {people.members.length > 0 && (
         <InspectorGroup title={t("Permanent resident")}>
-          <select
-            aria-label={t("Permanent resident")}
-            id={`resident-${seat.id}`}
-            value={seat.assignee ?? ""}
-            onChange={(event) => {
-              const email = event.currentTarget.value || null
-              if (email && (lostTo(email).length > 0 || ownDays(email).length > 0))
-                setPendingResident(email)
-              else assignSeat(seat.id, email)
-            }}
-            className="h-8 rounded-lg border border-border bg-surface px-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-focus"
-          >
-            <option value="">{t("None (anyone can book it)")}</option>
-            {people.members.map((member) => (
-              <option key={member.email} value={member.email}>
-                {member.name}
-              </option>
-            ))}
-          </select>
-          {pendingResident ? (
-            <div className="flex flex-col gap-2 rounded-lg bg-warning/15 px-2.5 py-2 text-xs text-foreground">
-              <p>
-                {t("Making {name} its resident cancels {bookings}.", {
-                  name: nameOf(pendingResident),
-                  bookings: cancels(pendingResident),
-                })}
-              </p>
-              <div className="flex justify-end gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setPendingResident(null)}
-                  className="rounded-md px-2 py-1 font-bold hover:bg-foreground/5"
-                >
-                  {t("Keep bookings")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    assignSeat(seat.id, pendingResident)
-                    setPendingResident(null)
-                  }}
-                  className="rounded-md bg-warning px-2 py-1 font-bold text-warning-foreground"
-                >
-                  {t("Assign anyway")}
-                </button>
-              </div>
-            </div>
-          ) : (
-            !seat.assignee &&
-            bookings.length > 0 && (
-              <p className="rounded-lg bg-foreground/5 px-2.5 py-2 text-xs text-muted">
-                {t("Booked: {bookings}. Giving it a resident or deleting it cancels these.", {
-                  bookings: describe(bookings),
-                })}
-              </p>
-            )
+          <ResidentButton
+            resident={personByEmail(people, seat.assignee)}
+            email={seat.assignee}
+            onPress={() => setIsPickingResident(true)}
+          />
+          {!seat.assignee && bookings.length > 0 && (
+            <p className="rounded-lg bg-foreground/5 px-2.5 py-2 text-xs text-muted">
+              {t("Booked: {bookings}. Giving it a resident or deleting it cancels these.", {
+                bookings: describe(bookings),
+              })}
+            </p>
+          )}
+          {isPickingResident && (
+            <ResidentPicker deskId={seat.id} onClose={() => setIsPickingResident(false)} />
           )}
         </InspectorGroup>
       )}
     </>
+  )
+}
+
+/** The desk's resident (or none), opening the picker. */
+const ResidentButton = ({
+  resident,
+  email,
+  onPress,
+}: {
+  resident: Person | null
+  email?: string
+  onPress: () => void
+}) => {
+  const { t } = useI18n()
+
+  return (
+    <button
+      type="button"
+      onClick={onPress}
+      className="flex min-h-10 items-center gap-2.5 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-left outline-none transition-colors hover:border-muted focus-visible:ring-2 focus-visible:ring-focus"
+    >
+      {email ? (
+        <SeatAvatar person={resident} email={email} isMine={false} size={26} />
+      ) : (
+        <span className="grid size-[26px] shrink-0 place-items-center rounded-full border border-dashed border-muted text-muted">
+          <UserRound className="size-3.5" />
+        </span>
+      )}
+      <span className="min-w-0 flex-1 truncate text-sm">
+        {email ? (resident?.name ?? email) : t("None (anyone can book it)")}
+      </span>
+      <span className="shrink-0 text-[11px] font-semibold text-accent">
+        {email ? t("Change") : t("Assign")}
+      </span>
+    </button>
   )
 }
 

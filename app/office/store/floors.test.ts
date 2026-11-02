@@ -47,3 +47,21 @@ describe("a desk on another floor", () => {
     expect(store.getState().seatCard?.id).toBe(desk.id)
   })
 })
+
+describe("a permanent resident", () => {
+  test("given a desk on another floor, leaves their desk on the first", () => {
+    const { store } = createTwoFloorOffice()
+    const upstairs = store.getState().addObject({ type: "workstation", x: 4, z: 4 })
+    const [first, second] = store.getState().floors
+
+    store.getState().showFloor(first.id)
+    store.getState().assignSeat(desk.id, "anna@example.com")
+    store.getState().showFloor(second.id)
+    store.getState().assignSeat(upstairs, "anna@example.com")
+
+    const residentDesks = [...store.getState().objects, ...store.getState().otherFloorsPieces]
+      .filter((piece) => piece.assignee === "anna@example.com")
+      .map((piece) => piece.id)
+    expect(residentDesks).toEqual([upstairs])
+  })
+})

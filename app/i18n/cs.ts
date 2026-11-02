@@ -230,8 +230,6 @@ export const cs: Messages = {
   Look: "Vzhled",
   Copy: "Kopírovat",
   Delete: "Smazat",
-  "{name}'s own bookings ({days})": "vlastní rezervace, které má {name} ({days})",
-  " and ": " a ",
   Seat: "Místo",
   "Label every unlabelled desk D-1, D-2…": "Očíslovat všechny stoly bez označení D-1, D-2…",
   Label: "Popisek",
@@ -242,10 +240,35 @@ export const cs: Messages = {
   Features: "Vybavení",
   "Permanent resident": "Stálý uživatel",
   "None (anyone can book it)": "Nikdo (rezervovat si ho může kdokoli)",
-  "Making {name} its resident cancels {bookings}.":
-    "Když stůl přidělíte uživateli {name}, zruší se: {bookings}.",
-  "Keep bookings": "Ponechat rezervace",
   "Assign anyway": "Přesto přidělit",
+  Assign: "Přidělit",
+  "This desk's resident": "Stálý uživatel tohoto stolu",
+  "Has {desk}": "Má {desk}",
+  Everyone: "Všichni",
+  "Without a desk": "Bez stolu",
+  "With a desk": "Se stolem",
+  "Search by name or email": "Hledat podle jména nebo e-mailu",
+  "Booked: {bookings}. A resident takes it from them.":
+    "Rezervace: {bookings}. Stálý uživatel jim stůl vezme.",
+  "No resident": "Bez stálého uživatele",
+  "Anyone can book it": "Rezervovat si ho může kdokoli",
+  "Nobody matches “{query}”": "Hledání „{query}“ nikoho nenašlo",
+  "Showing {shown} of {total} — search to narrow it down":
+    "Zobrazeno {shown} z {total} — upřesněte hledání",
+  "{name} leaves {desk}, which anyone can book then.":
+    "{name} uvolní {desk} a ten si pak může rezervovat kdokoli.",
+  "Booked on this desk, these lose it: {bookings}.": "O stůl přijdou tyto rezervace: {bookings}.",
+  "{name}'s own bookings here are cancelled ({days}): this desk is theirs every day.":
+    "Vlastní rezervace, které tu má {name}, se zruší ({days}): tento stůl bude mít každý den.",
+  "Make {name} its permanent resident?": "Přidělit stůl natrvalo uživateli {name}?",
+  "Next you choose what happens to them: moved to the nearest free desks, or cancelled. Everyone affected is told.":
+    "Potom vyberete, co s nimi: přesunout na nejbližší volné stoly, nebo zrušit. Všichni dotčení dostanou zprávu.",
+  "Their {n} booking here would be cancelled": {
+    one: "Zrušila by se {n} rezervace, kterou tu má",
+    few: "Zrušily by se {n} rezervace, které tu má",
+    many: "Zrušilo by se {n} rezervace, které tu má",
+    other: "Zrušilo by se {n} rezervací, které tu má",
+  },
   "Booked: {bookings}. Giving it a resident or deleting it cancels these.":
     "Rezervace: {bookings}. Přidělením stálému uživateli nebo smazáním stolu se zruší.",
 

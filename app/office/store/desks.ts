@@ -77,15 +77,22 @@ export const createDesksState = (set: OfficeSetState, _get: OfficeGetState): Des
       ),
     })),
   assignSeat: (id, email) =>
-    set((state) => ({
-      objects: state.objects.map((piece) => {
-        if (piece.id === id) return { ...piece, assignee: email ?? undefined }
-        // One desk per person: free their previous desk.
-        if (email && piece.assignee === email) return { ...piece, assignee: undefined }
+    set((state) => {
+      // One desk per person: free their previous desk — on any floor (saving
+      // refuses anyone who's the resident of two).
+      const freePrevious = (piece: SceneObject) =>
+        email && piece.assignee === email ? { ...piece, assignee: undefined } : piece
+      const hasOtherFloorDesk = state.otherFloorsPieces.some(
+        (piece) => email && piece.assignee === email
+      )
 
-        return piece
-      }),
-    })),
+      return {
+        objects: state.objects.map((piece) =>
+          piece.id === id ? { ...piece, assignee: email ?? undefined } : freePrevious(piece)
+        ),
+        ...(hasOtherFloorDesk && { otherFloorsPieces: state.otherFloorsPieces.map(freePrevious) }),
+      }
+    }),
   numberDesks: () =>
     set((state) => {
       const objects = numberUnlabelledDesks(state.objects)
