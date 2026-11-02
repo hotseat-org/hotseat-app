@@ -1,12 +1,20 @@
 # Installation
 
-Hotseat ships as a Docker image built from this repository, with a Compose
-file that runs it next to its own Postgres.
+Hotseat ships as a Docker image (`ghcr.io/hotseat-org/hotseat`, for amd64
+and arm64), with a Compose file that runs it next to its own Postgres.
 
-## 1. Get the code
+> **Alpha.** Hotseat 0.5 is an alpha: it works, but any release may still
+> change settings or behaviour. Pin the exact version (`HOTSEAT_VERSION`),
+> read the release notes before updating, and keep backups.
+
+## 1. Get the Compose file
+
+All you need is the `self-hosting` folder of the
+[repository](https://github.com/hotseat-org/hotseat-app): `compose.yml` and
+`.env.example`. Clone it, or download just those two files:
 
 ```sh
-git clone <this repository> hotseat
+git clone https://github.com/hotseat-org/hotseat-app.git hotseat
 cd hotseat/self-hosting
 ```
 
@@ -43,10 +51,10 @@ Every setting is in [Configuration](configuration.md).
 ## 3. Start it
 
 ```sh
-docker compose up -d --build
+docker compose up -d
 ```
 
-The first build takes a few minutes. Then:
+Docker downloads the image (`HOTSEAT_VERSION` in `.env`). Then:
 
 ```sh
 docker compose logs -f hotseat
@@ -127,8 +135,21 @@ BASE_PATH=/hotseat/
 BASE_URL=https://intranet.acme.com/hotseat
 ```
 
-and rebuild (`docker compose up -d --build`): the path is built into the
-app. Point the proxy's `/hotseat/` at port 3000 without stripping the path.
+The path is built into the app, so the published image (served at the root)
+won't do: build it yourself, from the repository, with the override that
+does so:
+
+```sh
+docker compose -f compose.yml -f compose.build.yml up -d --build
+```
+
+Point the proxy's `/hotseat/` at port 3000 without stripping the path.
+
+## Building it yourself
+
+The same command builds the image from the repository instead of
+downloading it: for a change of your own, or to run code not released yet.
+`/healthz` then reports the version as `dev`.
 
 ## Trying it on your own machine
 

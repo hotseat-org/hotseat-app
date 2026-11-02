@@ -1,0 +1,11 @@
+# Hotseat built from this repository instead of the published image — for a
+# change of your own, or to serve it under a path (BASE_PATH, built in):
+#   docker compose -f compose.yml -f compose.build.yml up -d --build
+services:
+  hotseat:
+    image: hotseat:local
+    build:
+      context: ..
+      args:
+        # Served under a path instead of the root? e.g. BASE_PATH=/hotseat/ in .env.
+        BASE_PATH: ${BASE_PATH:-/}

@@ -33,6 +33,20 @@ One company's own installation, on a plain Node server with Docker: the
 guide is in [docs/self-hosting](docs/self-hosting/README.md) (quick start:
 [SELF_HOSTING.md](SELF_HOSTING.md)).
 
+## Releasing the self-hosted image
+
+Set `version` in `package.json`, commit, then tag and push:
+
+```sh
+git tag v0.5.0-alpha && git push origin v0.5.0-alpha
+```
+
+`.github/workflows/release.yml` runs the checks, publishes
+`ghcr.io/hotseat-org/hotseat` for amd64 and arm64 (tags: the version, plus
+`alpha`/`beta`/`rc` for pre-releases, or `latest` and `0.5` for releases),
+and creates the GitHub Release with notes from the commits. Every pull request
+and push to `main` runs the same checks and a test build (`check.yml`).
+
 # License
 
 [Functional Source License 1.1, Apache 2.0 future license](LICENSE.md)

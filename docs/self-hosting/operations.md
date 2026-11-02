@@ -37,10 +37,18 @@ docker compose start hotseat
 
 ## Updating
 
+Read the [release notes](https://github.com/hotseat-org/hotseat-app/releases)
+of every version in between, take a backup, then set the new version in
+`.env` and:
+
 ```sh
-git pull
-docker compose up -d --build
+# HOTSEAT_VERSION=0.6.0-alpha
+docker compose pull
+docker compose up -d
 ```
+
+`/healthz` says which version is running. (Built yourself? `git pull`, then
+`docker compose -f compose.yml -f compose.build.yml up -d --build`.)
 
 On start, Hotseat applies the database migrations the new version brings,
 before it serves anyone. Each migration applies whole or not at all. Take a
@@ -77,6 +85,7 @@ What you'll see:
 
 - `27 migrations applied.` / `The database is up to date.`: on start.
 - `Hotseat on http://localhost:3000/`: it's serving.
+- `{"status":"ok","version":"0.5.0-alpha"}` at `/healthz`: the version running.
 - `booking jobs { usualBooked: …, waitlisted: … }`: every hour, a minute
   after starting first: usual desks booked as days open up, and freed desks
   handed to people waiting.

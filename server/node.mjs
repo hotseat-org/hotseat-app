@@ -59,7 +59,12 @@ const server = createServer(async (request, response) => {
         "Content-Type": "application/json",
         "Cache-Control": "no-store",
       })
-      .end(JSON.stringify({ status: isUp ? "ok" : "database unreachable" }))
+      .end(
+        JSON.stringify({
+          status: isUp ? "ok" : "database unreachable",
+          version: process.env.HOTSEAT_VERSION ?? "dev",
+        })
+      )
 
     return
   }

@@ -14,8 +14,11 @@ guide is in **[docs/self-hosting](docs/self-hosting/README.md)**:
 ```sh
 cd self-hosting
 cp .env.example .env    # BASE_URL, COOKIES_SECRET, POSTGRES_PASSWORD, a way to sign in
-docker compose up -d --build
+docker compose up -d    # pulls ghcr.io/hotseat-org/hotseat:$HOTSEAT_VERSION
 ```
+
+Hotseat 0.5 is an alpha: pin the exact version, and read the release notes
+before updating.
 
 Put HTTPS in front of port 3000, open your `BASE_URL`, and sign in as
 `HOTSEAT_ADMIN_EMAIL` to set it up.

@@ -48,6 +48,12 @@ shown through signed URLs that expire daily.
 Switching storage doesn't move images already kept: those uploaded before
 stop showing until uploaded again.
 
+## Version
+
+| Setting | Example | What it's for |
+| --- | --- | --- |
+| `HOTSEAT_VERSION` | `0.5.0-alpha` | The release to run ([releases](https://github.com/hotseat-org/hotseat-app/releases)). Pin the exact one: while Hotseat is in alpha, any release may change things. `alpha` follows the newest alpha. |
+
 ## Setting up
 
 | Setting | Default | What it's for |
@@ -72,7 +78,7 @@ Each one shows on the sign-in screen once its settings are filled in. See
 | Setting | Default | What it's for |
 | --- | --- | --- |
 | `PORT` | `3000` | The port on this machine (Compose maps it to the container's 3000). |
-| `BASE_PATH` | `/` | Serve under a path, e.g. `/hotseat/`. **Build-time**: rebuild after changing it. `BASE_URL` then includes the path. |
+| `BASE_PATH` | `/` | Serve under a path, e.g. `/hotseat/`. **Built in**: needs an image built yourself (see [Installation](installation.md#under-a-path-instead-of-a-domain)). `BASE_URL` then includes the path. |
 | `IMAGES_DIR` | `/data/images` | Where uploaded images are kept with `IMAGE_STORAGE=local` (the `images` volume). |
 
 ## Set in the image (no need to touch)

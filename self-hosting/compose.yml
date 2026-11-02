@@ -3,14 +3,11 @@
 # off. See docs/self-hosting.
 #   cp .env.example .env   (and fill it in)
 #   docker compose up -d
+# Built from this repository instead (or served under a path): compose.build.yml.
 services:
   hotseat:
-    build:
-      context: ..
-      # Served under a path instead of the root? e.g. BASE_PATH=/hotseat/ in .env.
-      args:
-        BASE_PATH: ${BASE_PATH:-/}
-    image: hotseat
+    # The release pinned in .env (HOTSEAT_VERSION).
+    image: ghcr.io/hotseat-org/hotseat:${HOTSEAT_VERSION:-alpha}
     restart: unless-stopped
     env_file: .env
     environment:

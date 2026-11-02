@@ -1,0 +1,85 @@
+# A release: push a version tag (git tag v0.5.0-alpha && git push origin v0.5.0-alpha).
+# After the checks, the self-hosted image is built for amd64 and arm64 and
+# published to ghcr.io/hotseat-org/hotseat, and a GitHub Release is made with
+# notes from the commits since the last one.
+#
+# Image tags: the exact version (0.5.0-alpha) always. Pre-releases also move
+# "alpha" / "beta" / "rc"; releases move "latest", "0.5" and, from 1.0, "1".
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  check:
+    uses: ./.github/workflows/verify.yml
+
+  image:
+    needs: check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/hotseat-org/hotseat
+          flavor: latest=false
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ !contains(github.ref_name, '-') }}
+            type=semver,pattern={{major}},enable=${{ !contains(github.ref_name, '-') && !startsWith(github.ref_name, 'v0.') }}
+            type=raw,value=latest,enable=${{ !contains(github.ref_name, '-') }}
+            type=raw,value=alpha,enable=${{ contains(github.ref_name, '-alpha') }}
+            type=raw,value=beta,enable=${{ contains(github.ref_name, '-beta') }}
+            type=raw,value=rc,enable=${{ contains(github.ref_name, '-rc') }}
+      - name: Build and publish
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: HOTSEAT_VERSION=${{ steps.meta.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ghcr.io/hotseat-org/hotseat
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+  release:
+    needs: image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: GitHub Release (a pre-release for alpha, beta and rc versions)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          # Notes: the changes since the previous release (all of them, the first time).
+          if [[ "$TAG" == *-* ]]; then
+            gh release create "$TAG" --title "Hotseat ${TAG#v}" --generate-notes --prerelease
+          else
+            gh release create "$TAG" --title "Hotseat ${TAG#v}" --generate-notes
+          fi

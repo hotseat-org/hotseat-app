@@ -6,7 +6,8 @@
 # (the lockfile is Bun's); the build itself runs on Node (React Router's build
 # doesn't run under Bun). The server bundles its packages, so the image below
 # needs only the few listed by scripts/runtime-packages.mjs.
-FROM node:25-slim AS build
+# (On the builder's own platform: its output is plain JavaScript, the same for every one.)
+FROM --platform=$BUILDPLATFORM node:25-slim AS build
 RUN npm install -g bun@1.3
 WORKDIR /app
 COPY package.json bun.lockb ./
@@ -23,8 +24,16 @@ RUN bun run prisma:generate \
 
 # Pure JavaScript and WebAssembly from here on (no native engines): Alpine.
 FROM node:25-alpine
+# The release (set by the release workflow; /healthz says it).
+ARG HOTSEAT_VERSION=dev
+LABEL org.opencontainers.image.title="Hotseat" \
+      org.opencontainers.image.description="Desk booking on a map of your office, self-hosted" \
+      org.opencontainers.image.source="https://github.com/hotseat-org/hotseat-app" \
+      org.opencontainers.image.licenses="FSL-1.1-ALv2" \
+      org.opencontainers.image.version="${HOTSEAT_VERSION}"
 WORKDIR /app
 ENV NODE_ENV=production \
+    HOTSEAT_VERSION=${HOTSEAT_VERSION} \
     HOTSEAT_EDITION=self-hosted \
     PORT=3000 \
     IMAGES_DIR=/data/images
