@@ -3,10 +3,12 @@ import { useMemo } from "react"
 import { RailModal } from "./RailModal"
 import { MemberAvatar, nameOf, type ShellMember } from "./shell-ui"
 import { WeekDots } from "./WeekDots"
-import { PeopleSearch } from "~/components/people/PeopleSearch"
+import { PeopleSearch, type PeopleFilter } from "~/components/people/PeopleSearch"
 import { useOfficeStore } from "~/office/store"
 import { deskName, useDesksOnDay, useWeekPresence } from "~/office/booking/useBooking"
 import { usePersonProfile } from "~/office/usePersonProfile"
+import { useTeams } from "~/office/teams"
+import { getTeamHex } from "~/utils/teams"
 import { useSettings } from "~/components/settings/useSettings"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { useI18n } from "~/i18n/I18nProvider"
@@ -38,6 +40,27 @@ export const WhosInList = ({
     [members, byPerson]
   )
   const inCount = roster.filter((r) => r.at).length
+  const teams = useTeams()
+  // Everyone, then each team (yours first) with how many of it are in.
+  const filters = useMemo(() => {
+    type Row = (typeof roster)[number]
+    const withPeople = teams
+      .filter((team) => team.members.length > 0)
+      .sort(
+        (first, second) =>
+          Number(second.members.includes(me.userEmail)) -
+            Number(first.members.includes(me.userEmail)) || first.name.localeCompare(second.name)
+      )
+    const teamFilters: PeopleFilter<Row>[] = withPeople.map((team) => ({
+      id: team.id,
+      label: team.name,
+      color: getTeamHex(team.color),
+      isIn: ({ m }) => team.members.includes(m.userEmail),
+      count: `${team.members.filter((email) => byPerson.has(email)).length}/${team.members.length}`,
+    }))
+
+    return [{ id: "everyone", label: t("Everyone"), isIn: () => true }, ...teamFilters]
+  }, [teams, me.userEmail, byPerson, t])
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -65,6 +88,7 @@ export const WhosInList = ({
         <PeopleSearch
           className="min-h-0 flex-1"
           items={roster}
+          filters={filters.length > 1 ? filters : undefined}
           getPerson={({ m }) => ({
             email: m.userEmail,
             name: m.userEmail === me.userEmail ? t("You") : nameOf(m),

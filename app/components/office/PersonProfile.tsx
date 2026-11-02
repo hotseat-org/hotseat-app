@@ -13,6 +13,9 @@ import { MAX_SEAT_RULES } from "~/office/findSeat/seatRulesSchema"
 import { useSavedRules, useShowSeatOnMap } from "~/office/findSeat/useFindSeat"
 import { useOfficeStore } from "~/office/store"
 import { usePersonProfile } from "~/office/usePersonProfile"
+import { useTeams } from "~/office/teams"
+import { TeamChip } from "~/components/teams/teamLook"
+import { getTeamsOf } from "~/utils/teams"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { addDays, type Day } from "~/utils/booking"
 
@@ -61,6 +64,7 @@ const ProfileDialog = ({
   const pieces = useAllPieces()
   const booking = useOfficeStore((state) => state.booking)
   const showOnMap = useShowSeatOnMap()
+  const teams = getTeamsOf(useTeams(), member.userEmail)
   const { open: openSettings } = useSettings()
   const name = nameOf(member)
 
@@ -98,6 +102,22 @@ const ProfileDialog = ({
           <h2 className="truncate text-xl font-black">{isMe ? t("You") : name}</h2>
           <p className="truncate text-sm text-muted">{member.userEmail}</p>
           <p className="mt-1 text-xs font-bold text-muted">{roleLabel(i18n, member.role)}</p>
+          {teams.length > 0 && (
+            <ul aria-label={t("Teams")} className="mt-2 flex flex-wrap gap-1.5">
+              {teams.map((team) => (
+                <li key={team.id} className="min-w-0">
+                  <TeamChip name={team.name} color={team.color}>
+                    {team.weekdays.length > 0 && (
+                      <span className="font-bold opacity-80">
+                        ·{" "}
+                        {team.weekdays.map((weekday) => format.weekShort()[weekday - 1]).join(", ")}
+                      </span>
+                    )}
+                  </TeamChip>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         <DialogCloseButton onClose={onClose} />
       </header>

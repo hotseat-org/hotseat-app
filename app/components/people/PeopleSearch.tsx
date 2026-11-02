@@ -18,6 +18,10 @@ export interface PeopleFilter<Item> {
   id: string
   label: string
   isIn: (item: Item) => boolean
+  /** A dot before the label (a team's colour). */
+  color?: string
+  /** What it says it holds (none: how many). */
+  count?: string
 }
 
 /** For searching: lower case, without accents ("Šťastná" is found by "stastna"). */
@@ -152,9 +156,16 @@ export const PeopleSearch = <Item,>({
                     : "border-border text-muted hover:border-muted hover:text-foreground"
                 )}
               >
+                {candidate.color && (
+                  <span
+                    aria-hidden
+                    className="mr-1.5 inline-block size-2 rounded-full align-middle"
+                    style={{ background: candidate.color }}
+                  />
+                )}
                 {candidate.label}{" "}
                 <span className="font-semibold opacity-70">
-                  {items.filter(candidate.isIn).length}
+                  {candidate.count ?? items.filter(candidate.isIn).length}
                 </span>
               </button>
             ))}

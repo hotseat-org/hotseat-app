@@ -1,6 +1,6 @@
 import { Input, Label, Spinner, TextField } from "@heroui/react"
 import clsx from "clsx"
-import { ChevronLeft, Plus, Trash2, UsersRound } from "lucide-react"
+import { ChevronLeft, Plus, Trash2, UsersRound, X } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useFetcher, useParams } from "react-router"
 import { useOrgSettingsData } from "../data"
@@ -332,20 +332,30 @@ const TeamEditor = ({
 
           <div className="flex flex-col gap-2">
             <h3 className="text-sm font-bold">{t("Where they sit")}</h3>
-            {offices.length === 0 ? (
-              <p className="text-sm text-muted">{t("No offices yet.")}</p>
-            ) : (
+            {/* Only the offices it has a zone in: the rest are added one by one. */}
+            {Object.keys(zones).length > 0 && (
               <ul className="flex flex-col divide-y divide-separator rounded-2xl border border-border bg-surface">
-                {offices.map((office) => (
+                {Object.entries(zones).map(([officeSlug, choice]) => (
                   <OfficeZoneRow
-                    key={office.slug}
-                    office={office}
-                    choice={zones[office.slug] ?? null}
-                    onChange={(choice) => setZone(office.slug, choice)}
+                    key={officeSlug}
+                    office={
+                      offices.find((office) => office.slug === officeSlug) ?? {
+                        slug: officeSlug,
+                        name: officeSlug,
+                        zones: [],
+                      }
+                    }
+                    choice={choice}
+                    onChange={(next) => setZone(officeSlug, next)}
                   />
                 ))}
               </ul>
             )}
+            <AddZone
+              offices={offices.filter((office) => office.zones.length > 0 && !zones[office.slug])}
+              hasAny={Object.keys(zones).length > 0}
+              onAdd={(officeSlug, zone) => setZone(officeSlug, { zone, keepDays: null })}
+            />
           </div>
 
           <div className="flex flex-col gap-2">
@@ -426,6 +436,51 @@ const TeamEditor = ({
   )
 }
 
+/**
+ * Adding a zone: one picker of every office's zones, grouped by office (those
+ * with none, or the team's zone already, left out) — short however many offices.
+ */
+const AddZone = ({
+  offices,
+  hasAny,
+  onAdd,
+}: {
+  offices: OfficeZones[]
+  /** Whether the team has a zone already (the picker's words say "another"). */
+  hasAny: boolean
+  onAdd: (officeSlug: string, zone: string) => void
+}) => {
+  const { t } = useI18n()
+
+  if (offices.length === 0)
+    return hasAny ? null : <p className="text-sm text-muted">{t("No office has zones yet.")}</p>
+
+  return (
+    <select
+      aria-label={t("Add a zone")}
+      value=""
+      onChange={(event) => {
+        const [officeSlug, zone] = JSON.parse(event.target.value) as [string, string]
+        onAdd(officeSlug, zone)
+      }}
+      className={clsx(SELECT, "self-start text-accent")}
+    >
+      <option value="" disabled>
+        {hasAny ? t("Add a zone in another office…") : t("Add a zone…")}
+      </option>
+      {offices.map((office) => (
+        <optgroup key={office.slug} label={office.name}>
+          {office.zones.map((zone) => (
+            <option key={zone} value={JSON.stringify([office.slug, zone])}>
+              {zone}
+            </option>
+          ))}
+        </optgroup>
+      ))}
+    </select>
+  )
+}
+
 /** One office: which of its zones is the team's, and whether it's kept for them. */
 const OfficeZoneRow = ({
   office,
@@ -433,83 +488,79 @@ const OfficeZoneRow = ({
   onChange,
 }: {
   office: OfficeZones
-  choice: ZoneChoice | null
+  choice: ZoneChoice
+  /** None: the team has no zone there any more. */
   onChange: (choice: ZoneChoice | null) => void
 }) => {
   const { t, tn } = useI18n()
   // A zone renamed or removed since: still shown, so it's not lost by accident.
-  const zones =
-    choice && !office.zones.includes(choice.zone) ? [...office.zones, choice.zone] : office.zones
+  const zones = office.zones.includes(choice.zone) ? office.zones : [...office.zones, choice.zone]
 
   return (
     <li className="flex flex-col gap-2 px-4 py-3">
       <div className="flex items-center gap-3">
         <span className="min-w-0 flex-1 truncate text-sm font-extrabold">{office.name}</span>
-        {office.zones.length === 0 && !choice ? (
-          <span className="text-xs text-muted">{t("No zones in this office")}</span>
-        ) : (
-          <select
-            aria-label={t("Zone in {office}", { office: office.name })}
-            value={choice?.zone ?? ""}
+        <select
+          aria-label={t("Zone in {office}", { office: office.name })}
+          value={choice.zone}
+          onChange={(event) => onChange({ ...choice, zone: event.target.value })}
+          className={SELECT}
+        >
+          {zones.map((zone) => (
+            <option key={zone} value={zone}>
+              {zone}
+            </option>
+          ))}
+        </select>
+        <Button
+          variant="ghost"
+          size="sm"
+          isIconOnly
+          aria-label={t("Remove the zone in {office}", { office: office.name })}
+          onPress={() => onChange(null)}
+        >
+          <X className="size-4" />
+        </Button>
+      </div>
+      <div className="flex flex-col gap-2">
+        <label className="flex items-center gap-3 text-sm">
+          <input
+            type="checkbox"
+            checked={choice.keepDays !== null}
             onChange={(event) =>
-              onChange(
-                event.target.value
-                  ? { zone: event.target.value, keepDays: choice?.keepDays ?? null }
-                  : null
-              )
+              onChange({
+                ...choice,
+                keepDays: event.target.checked ? KEEP_DAYS_CHOICES[1] : null,
+              })
             }
-            className={SELECT}
-          >
-            <option value="">{t("No zone")}</option>
-            {zones.map((zone) => (
-              <option key={zone} value={zone}>
-                {zone}
-              </option>
-            ))}
-          </select>
+            className="size-5 shrink-0 accent-[var(--accent)]"
+          />
+          <span className="min-w-0 flex-1">
+            <span className="block font-bold">{t("Keep it for the team")}</span>
+            <span className="block text-xs text-muted">
+              {choice.keepDays === null
+                ? t("Anyone can book its desks any time.")
+                : t("Others can book its desks only shortly before the day.")}
+            </span>
+          </span>
+        </label>
+        {choice.keepDays !== null && (
+          <label className="ml-8 flex items-center gap-2 text-xs font-bold text-muted">
+            {t("Open to everyone")}
+            <select
+              value={choice.keepDays}
+              onChange={(event) => onChange({ ...choice, keepDays: Number(event.target.value) })}
+              className={SELECT}
+            >
+              {KEEP_DAYS_CHOICES.map((days) => (
+                <option key={days} value={days}>
+                  {tn(days, "{n} day before", "{n} days before")}
+                </option>
+              ))}
+            </select>
+          </label>
         )}
       </div>
-      {choice && (
-        <div className="flex flex-col gap-2">
-          <label className="flex items-center gap-3 text-sm">
-            <input
-              type="checkbox"
-              checked={choice.keepDays !== null}
-              onChange={(event) =>
-                onChange({
-                  ...choice,
-                  keepDays: event.target.checked ? KEEP_DAYS_CHOICES[1] : null,
-                })
-              }
-              className="size-5 shrink-0 accent-[var(--accent)]"
-            />
-            <span className="min-w-0 flex-1">
-              <span className="block font-bold">{t("Keep it for the team")}</span>
-              <span className="block text-xs text-muted">
-                {choice.keepDays === null
-                  ? t("Anyone can book its desks any time.")
-                  : t("Others can book its desks only shortly before the day.")}
-              </span>
-            </span>
-          </label>
-          {choice.keepDays !== null && (
-            <label className="ml-8 flex items-center gap-2 text-xs font-bold text-muted">
-              {t("Open to everyone")}
-              <select
-                value={choice.keepDays}
-                onChange={(event) => onChange({ ...choice, keepDays: Number(event.target.value) })}
-                className={SELECT}
-              >
-                {KEEP_DAYS_CHOICES.map((days) => (
-                  <option key={days} value={days}>
-                    {tn(days, "{n} day before", "{n} days before")}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-        </div>
-      )}
     </li>
   )
 }
