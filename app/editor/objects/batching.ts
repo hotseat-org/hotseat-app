@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react"
-import type { Material } from "three"
+import type { Material, Object3D } from "three"
 
 export type AnyMaterial = Material & {
   color?: { getHexString(): string }
@@ -42,3 +42,21 @@ export const BATCH_PART = "batchPart"
 /** Set inside an enabled StaticBatch: a Baked piece calls it after (re)baking. */
 export const BatchContext = createContext<(() => void) | null>(null)
 export const useBatchChanged = () => useContext(BatchContext)
+
+const skipUpdate = () => {}
+
+/**
+ * Whether three works out a mesh's world matrix at every frame — it goes into
+ * every part of a piece, as the piece's own is worked out. Merged away (into
+ * its piece's bake, or the office-wide batch), a mesh is hidden: nothing needs
+ * it then, and what measures it works it out first (updateWorldMatrix).
+ */
+export const setWorldMatrixKept = (mesh: Object3D, isKept: boolean) => {
+  if (isKept)
+    Reflect.deleteProperty(mesh, "updateMatrixWorld") // three's own again
+  else mesh.updateMatrixWorld = skipUpdate
+}
+
+/** Whether three works out an object's world matrix at every frame (see setWorldMatrixKept). */
+export const isWorldMatrixKept = (object: Object3D) =>
+  !Object.prototype.hasOwnProperty.call(object, "updateMatrixWorld")

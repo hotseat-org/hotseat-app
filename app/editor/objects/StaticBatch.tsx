@@ -27,7 +27,14 @@ import { whenQuiet } from "../scene/whenQuiet"
 import { MERGED_KIND, cutDirectionOf, setCutAttributes } from "../walls/cutaway"
 import { useFloorPlace } from "./floorHeight"
 import { copyAsNodeMaterial, getSurfaceShader } from "./surfaceShader"
-import { BATCH_PART, BatchContext, materialKey, surfaceKey, type AnyMaterial } from "./batching"
+import {
+  BATCH_PART,
+  BatchContext,
+  materialKey,
+  setWorldMatrixKept,
+  surfaceKey,
+  type AnyMaterial,
+} from "./batching"
 
 /** The side of a cell (m) the office is merged in while editing. */
 export const CELL_SIZE = 8
@@ -147,6 +154,12 @@ const getCellKey = (toBatch: Matrix4, cellSize: number | undefined) => {
   return `${Math.floor(elements[12] / cellSize)},${Math.floor(elements[14] / cellSize)}`
 }
 
+/** A mesh merged into its cell: hidden, its world matrix left be (the merge works it out). */
+const setMerged = (mesh: Mesh, isMerged: boolean) => {
+  mesh.visible = !isMerged
+  setWorldMatrixKept(mesh, !isMerged)
+}
+
 /**
  * One cell's meshes merged: one mesh per kind of surface, their colours per
  * vertex. The merged meshes are hidden; one that can't merge keeps drawing itself.
@@ -168,7 +181,7 @@ const mergeCell = (
     const merged = mergeGeometries(kindSources.map(getPrepared), false)
     if (!merged) continue // couldn't merge: those keep drawing themselves
 
-    kindSources.forEach(({ mesh }) => (mesh.visible = false))
+    for (const { mesh } of kindSources) setMerged(mesh, true)
     parts.push({
       key: `${cellKey}|${kindKey}`,
       geometry: merged,
@@ -298,7 +311,7 @@ export const StaticBatch = ({
     if (staleKeys.length === 0 && newKeys.length === 0) return
 
     for (const cellKey of staleKeys) {
-      for (const mesh of cells.current.get(cellKey)?.meshes ?? []) mesh.visible = true
+      for (const mesh of cells.current.get(cellKey)?.meshes ?? []) setMerged(mesh, false)
       cells.current.delete(cellKey)
     }
 

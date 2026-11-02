@@ -186,15 +186,18 @@ const ignoreRaycast = () => {}
 
 /**
  * The model's parts merged into one shape (positions only), in its own space:
- * the originals, merged away by baking or not, but not the baked meshes
- * they're merged into (see BAKED_OUTPUT) — nor the outline itself.
+ * the originals, merged away by baking (and hidden, groups and all) or not,
+ * but not the baked meshes they're merged into (see BAKED_OUTPUT) — nor the
+ * outline itself.
  */
 const composeOutlineShape = (model: Object3D, outline: Object3D): BufferGeometry | null => {
   const parts: BufferGeometry[] = []
 
   const collect = (object: Object3D) => {
     if (object === outline || object.userData.isBakedOutput) return
-    if (!object.visible && !object.userData.isBakedOriginal) return
+
+    const isMerged = object.userData.isBakedOriginal || object.userData.isMergedGroup
+    if (!object.visible && !isMerged) return
 
     if (object instanceof Mesh) {
       const source = object.geometry as BufferGeometry

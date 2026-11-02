@@ -3,7 +3,14 @@ import { useThree } from "@react-three/fiber"
 import { BufferGeometry, Matrix4, Mesh, type Group, type Material, type Object3D } from "three"
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js"
 import { markShadowsDirty } from "../lighting/shadows"
-import { BATCH_PART, materialKey, useBatchChanged, type AnyMaterial } from "./batching"
+import {
+  BATCH_PART,
+  isWorldMatrixKept,
+  materialKey,
+  setWorldMatrixKept,
+  useBatchChanged,
+  type AnyMaterial,
+} from "./batching"
 
 /** Mark a subtree (e.g. an animated model) to be left out of baking. */
 export const NO_BAKE = { noBake: true }
@@ -21,14 +28,20 @@ interface Part {
 const noRaycast = () => {}
 const meshRaycast = Mesh.prototype.raycast
 
-/** Stop (or restart) three.js recomputing a mesh's matrices every frame. */
+/**
+ * Stop (or restart) three.js recomputing a mesh's matrices every frame. Merged,
+ * it's hidden and never hit; what measures it goes by its own matrix (see
+ * getMatrixWithin), or thaws it first, as baking does.
+ */
 const freeze = (mesh: Mesh) => {
   mesh.matrixAutoUpdate = false
   mesh.matrixWorldAutoUpdate = false
+  setWorldMatrixKept(mesh, false)
 }
 const thaw = (mesh: Mesh) => {
   mesh.matrixAutoUpdate = true
   mesh.matrixWorldAutoUpdate = true
+  setWorldMatrixKept(mesh, true)
 }
 
 /** An original merged into the baked meshes: hidden, not hit, frozen — or back to normal. */
@@ -38,6 +51,42 @@ const setOriginal = (mesh: Mesh, isMerged: boolean) => {
   mesh.raycast = isMerged ? noRaycast : meshRaycast
   if (isMerged) freeze(mesh)
   else thaw(mesh)
+}
+
+/**
+ * A group holding nothing but merged originals: hidden as well, its world
+ * matrix left be — three neither works it out nor looks into it at every
+ * frame (there are more such groups than meshes in an office). One that's
+ * given something new (a model loaded into it, say) is shown and worked out
+ * again, with the groups around it. Returns whether `object` is all merged.
+ */
+const setMergedGroups = (object: Object3D, skip: Object3D | null): boolean => {
+  if (object === skip || object.userData.noBake) return false
+
+  const areChildrenMerged = object.children
+    .map((child) => setMergedGroups(child, skip))
+    .every(Boolean)
+  if ((object as Mesh).isMesh) return object.userData.isBakedOriginal === true && areChildrenMerged
+  if (!(object as Group).isGroup) return false
+
+  setGroupMerged(object, areChildrenMerged)
+
+  return areChildrenMerged
+}
+const setGroupMerged = (group: Object3D, isMerged: boolean) => {
+  group.visible = !isMerged
+  group.userData.isMergedGroup = isMerged
+  setWorldMatrixKept(group, !isMerged)
+  if (isMerged) group.addEventListener("childadded", handleChildAdded)
+  else group.removeEventListener("childadded", handleChildAdded)
+}
+const handleChildAdded = ({ target }: { target: Object3D }) => {
+  // Up to the first one worked out (and so are the ones above it).
+  let group: Object3D | null = target
+  while (group && !isWorldMatrixKept(group)) {
+    setGroupMerged(group, false)
+    group = group.parent
+  }
 }
 
 /** The meshes to bake (skipping NO_BAKE subtrees and our own merged output). */
@@ -106,6 +155,7 @@ export const Baked = ({
       .join(";")
     // Hide and freeze originals every time (newly mounted ones included); cheap.
     for (const mesh of meshes) setOriginal(mesh, true)
+    for (const child of group.children) setMergedGroups(child, output.current)
     if (nextFingerprint === fingerprint.current) return
 
     fingerprint.current = nextFingerprint
@@ -168,6 +218,8 @@ export const Baked = ({
         receiveShadow: groupMeshes[0].receiveShadow,
       })
     }
+    // Some couldn't merge: drawn as they are, in groups worked out again.
+    for (const child of group.children) setMergedGroups(child, output.current)
     setParts(next)
   })
 
