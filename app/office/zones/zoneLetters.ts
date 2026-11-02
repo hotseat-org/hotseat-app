@@ -36,14 +36,16 @@ export interface ZoneLetters {
 }
 
 /**
- * A place a name fits: how much of its floor is its zone's own (0–1), and
- * how much clear floor it has round it (m, up to ROOM_STEPS' last).
+ * A place a name fits: how much of its length is on or beside its zone
+ * (0–1), and how much clear floor it has round it (m, up to ROOM_STEPS' last).
  */
-type Place = ZoneLetters & { room: number }
+type Place = ZoneLetters & { joinedShare: number; room: number }
 
 /** A place's score: a metre of clear floor round it is worth this many tab squares. */
 const ROOM_WEIGHT = 200
 const TAB_WEIGHT = 40
+/** …and a name with none of its length alongside its zone costs this much (half, half of it). */
+const APART_WEIGHT = 800
 
 /** Pieces that don't stand in a name's way: rugs, and what hangs on walls (the walls do). */
 const NOT_IN_THE_WAY = new Set(["rug", "note", "wallTv", "whiteboard"])
@@ -56,6 +58,8 @@ const WALL_CLEARANCE = 0.4
  */
 const MAX_TAB_SHARE = 0.6
 const MIN_TAB = 16
+/** At least this share of a name's length is on or beside its zone. */
+const MIN_JOINED = 0.5
 /** A name beside its zone is looked for this far (in squares) past its edge: an aisle along it. */
 const AISLE_REACH = 1
 
@@ -99,25 +103,6 @@ const getCells = (box: Box) => {
 
 /** A square's key in the maps below: a number, quicker than text. */
 const getKey = (i: number, j: number) => (i + 32_768) * 65_536 + (j + 32_768)
-
-/**
- * A tab reaches over this far (m) to its zone, from a name a little off it,
- * in one of four directions: [x, z] towards the zone.
- */
-const BRIDGES = [0.5].flatMap((reach): [number, number][] => [
-  [-reach, 0],
-  [reach, 0],
-  [0, -reach],
-  [0, reach],
-])
-
-/** A box reaching further one way: [x, z] (m; negative, towards −x or −z). */
-const reachBox = (box: Box, [x, z]: [number, number]): Box => ({
-  minX: box.minX + Math.min(0, x),
-  maxX: box.maxX + Math.max(0, x),
-  minZ: box.minZ + Math.min(0, z),
-  maxZ: box.maxZ + Math.max(0, z),
-})
 
 const growBox = (box: Box, by: number): Box => ({
   minX: box.minX - by,
@@ -264,30 +249,31 @@ const findPlaces = ({
     )
   }
 
-  // The squares a zone's outline has to go round, to take in a box: some the
-  // zone's (the tab joins it — else it's "apart"), none another zone's, no
-  // wall across, not too many.
-  const getTab = (box: Box): [number, number][] | "apart" | undefined => {
+  // Whether a square has a side open to one of the zone's own (no wall between).
+  const isBesideZone = ([i, j]: [number, number]) =>
+    getNeighbours(i, j).some(
+      ([nextI, nextJ, side]) =>
+        zoneOf.get(getKey(nextI, nextJ)) === area.zone.name && !closedSides.has(side)
+    )
+  // The squares a zone's outline has to go round, to take in a box: none
+  // another zone's, no wall across, not too many — and along its length at
+  // least half on or beside the zone (a name just off it runs alongside it).
+  const getTab = (box: Box, isAlongX: boolean) => {
     const around = getCells(box)
     const owners = around.map(([i, j]) => zoneOf.get(getKey(i, j)))
-    if (!owners.includes(area.zone.name)) return "apart"
     if (owners.some((owner) => owner && owner !== area.zone.name)) return undefined
 
     const cells = around.filter((_, index) => !owners[index])
     if (cells.length > Math.max(MIN_TAB, area.cells.length * MAX_TAB_SHARE)) return undefined
-    if (isWalled(around)) return undefined
 
-    return cells
-  }
-  // A name a little off its zone: the smallest tab reaching over to it.
-  const getBridgedTab = (margin: Box) => {
-    let smallest: [number, number][] | undefined
-    for (const bridge of BRIDGES) {
-      const tab = getTab(reachBox(margin, bridge))
-      if (Array.isArray(tab) && (!smallest || tab.length < smallest.length)) smallest = tab
-    }
+    const lengthOf = ([i, j]: [number, number]) => (isAlongX ? i : j)
+    const length = new Set(around.map(lengthOf)).size
+    const joined = new Set(
+      around.filter((cell, index) => owners[index] || isBesideZone(cell)).map(lengthOf)
+    ).size
+    if (joined < length * MIN_JOINED || isWalled(around)) return undefined
 
-    return smallest
+    return { cells, joinedShare: joined / length }
   }
 
   return steps.flatMap(([i, j]) =>
@@ -303,15 +289,14 @@ const findPlaces = ({
       }
       if (!floor.isClear(box)) return []
 
-      // Its tab: round it, or — a little off its zone — reaching over to it.
-      const margin = growBox(box, EDGE_MARGIN)
-      const tab = getTab(margin)
-      const cells = tab === "apart" ? getBridgedTab(margin) : tab
-      if (!cells) return []
+      const tab = getTab(growBox(box, EDGE_MARGIN), isAlongX)
+      if (!tab) return []
 
       const room = floor.getRoom(box)
 
-      return [{ x, z, isAlongX, height, width, cells, room }]
+      return [
+        { x, z, isAlongX, height, width, cells: tab.cells, joinedShare: tab.joinedShare, room },
+      ]
     })
   )
 }
@@ -331,6 +316,7 @@ const pickPlace = (area: ZoneArea, places: Place[]): ZoneLetters => {
     (place.isAlongX ? 0 : 5) -
     place.room * ROOM_WEIGHT +
     place.cells.length * TAB_WEIGHT +
+    (1 - place.joinedShare) * APART_WEIGHT +
     Math.hypot(place.x - centreX, place.z - centreZ)
   const best = places.reduce((chosen, place) => (score(place) < score(chosen) ? place : chosen))
 
