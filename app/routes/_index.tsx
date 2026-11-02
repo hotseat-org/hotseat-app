@@ -5,24 +5,30 @@ import { getCore } from "~/core/get-core"
 import { metaTranslator } from "~/i18n/translate"
 import { isAuthenticated } from "~/services/session.server"
 
-export const meta: MetaFunction = ({ matches }) => {
+export const meta: MetaFunction<typeof loader> = ({ loaderData, matches }) => {
   const { t } = metaTranslator(matches)
   const title = t("Hotseat — book a desk on a map of your office")
   const description = t(
     "Put your office on a map. Book desks by the day, sit near your people and see who's in."
   )
+  // Link previews (Slack, Teams…) need the picture's full address.
+  const picture = `${loaderData?.origin ?? ""}${import.meta.env.BASE_URL}images/product/share.jpg`
 
   return [
     { title },
     { name: "description", content: description },
     { property: "og:title", content: title },
     { property: "og:description", content: description },
+    { property: "og:image", content: picture },
+    { property: "og:image:width", content: "1200" },
+    { property: "og:image:height", content: "630" },
+    { name: "twitter:card", content: "summary_large_image" },
   ]
 }
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await isAuthenticated(request)
-  if (!user) return null
+  if (!user) return { origin: new URL(request.url).origin }
 
   // Straight to their office — one redirect, not a chain through every layout.
   return redirect(await getCore().user.landing(user.email))
