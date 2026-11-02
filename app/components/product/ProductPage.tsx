@@ -15,6 +15,7 @@ import {
 import type { ReactNode } from "react"
 import { Form, Link, useNavigation } from "react-router"
 import { HotseatLockup } from "~/components/HotseatMark"
+import { Horizon, NIGHT, NightSky, useIsAnimated } from "~/components/NightScene"
 import { Rich, useI18n } from "~/i18n/I18nProvider"
 import { LOCALES, LOCALE_NAMES } from "~/i18n/locales"
 import { useLocale } from "~/i18n/useLocale"
@@ -30,13 +31,14 @@ const PICTURES = {
   teams: `${import.meta.env.BASE_URL}images/product/teams.jpg`,
 }
 
-/** The night blue of the sign-in screen: the closing call to action stands on it. */
-const NIGHT = "#1f2850"
-
+/**
+ * On the night blue (the sign-in screen's, the header, the opening and the
+ * closing call): its buttons — cream, and outlined.
+ */
 const PRIMARY_LINK =
-  "inline-flex min-h-12 items-center justify-center rounded-full bg-accent px-6 text-[15px] font-black text-accent-foreground shadow-sm outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2"
+  "inline-flex min-h-12 items-center justify-center rounded-full bg-[#fbf6ee] px-6 text-[15px] font-black text-[#2c3866] outline-none transition-colors hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f6c560]"
 const SECONDARY_LINK =
-  "inline-flex min-h-12 items-center justify-center rounded-full border border-border bg-surface px-6 text-[15px] font-extrabold text-foreground outline-none transition-colors hover:bg-surface-secondary focus-visible:ring-2 focus-visible:ring-focus"
+  "inline-flex min-h-12 items-center justify-center rounded-full border-[1.5px] border-[#4a5688] bg-[#1f2850]/60 px-6 text-[15px] font-extrabold text-[#f4efe6] outline-none transition-colors hover:border-[#7d88b8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f6c560]"
 
 /**
  * Hotseat's product page — the front door for companies not using it yet:
@@ -45,41 +47,55 @@ const SECONDARY_LINK =
  */
 export const ProductPage = () => {
   const { t } = useI18n()
+  const isAnimated = useIsAnimated()
 
   return (
     <div className="min-h-dvh bg-background text-foreground">
       <ProductHeader />
 
       <main>
-        <section className="mx-auto flex max-w-6xl flex-col items-center px-4 pt-10 pb-16 text-center sm:px-6 sm:pt-16">
-          <p className="rounded-full bg-accent/12 px-3.5 py-1.5 text-xs font-extrabold uppercase tracking-[0.08em] text-accent">
-            {t("Desk booking without the paperwork")}
-          </p>
-          <h1 className="mt-5 max-w-3xl text-4xl font-black leading-[1.08] tracking-[-0.02em] sm:text-6xl">
-            {t("Your office, minus the musical chairs")}
-          </h1>
-          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted">
-            {t(
-              "Hotseat puts your office on a map. Grab a desk for tomorrow, for every Tuesday, or right next to the person you actually want to sit with. On a laptop or a phone."
-            )}
-          </p>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link to="/login" className={PRIMARY_LINK}>
-              {t("Get started")}
-            </Link>
-            <DemoButton className={SECONDARY_LINK} />
-          </div>
-          <p className="mt-3 text-sm text-muted">
-            {t("No account needed. Go on, knock down a wall.")}
-          </p>
+        {/* At dusk, as signing in is: the night sky, and the horizon's warm lines below the office. */}
+        <section className="relative overflow-hidden text-[#f4efe6]" style={{ background: NIGHT }}>
+          <NightSky isAnimated={isAnimated} />
+          <div className="relative z-10 mx-auto flex max-w-6xl flex-col items-center px-4 pt-10 text-center sm:px-6 sm:pt-16">
+            <p className="rounded-full bg-[#fbf6ee]/10 px-3.5 py-1.5 text-xs font-extrabold uppercase tracking-[0.08em] text-[#f6c560]">
+              {t("Desk booking without the paperwork")}
+            </p>
+            <h1 className="mt-5 max-w-3xl text-4xl font-black leading-[1.08] tracking-[-0.02em] sm:text-6xl">
+              {t("Your office, minus the musical chairs")}
+            </h1>
+            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-[#c9cde0]">
+              {t(
+                "Hotseat puts your office on a map. Grab a desk for tomorrow, for every Tuesday, or right next to the person you actually want to sit with. On a laptop or a phone."
+              )}
+            </p>
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
+              <Link to="/login" className={PRIMARY_LINK}>
+                {t("Get started")}
+              </Link>
+              <DemoButton className={SECONDARY_LINK} />
+            </div>
+            <p className="mt-3 text-sm text-[#9aa1c0]">
+              {t("No account needed. Go on, knock down a wall.")}
+            </p>
 
-          <Picture
-            src={PICTURES.office}
-            alt={t(
-              "A cosy studio office in Hotseat, in 3D: desks with people's faces, free ones in green, a lounge and a glass meeting room"
-            )}
-            className="mt-12"
-            isEager
+            <Picture
+              src={PICTURES.office}
+              alt={t(
+                "A cosy studio office in Hotseat, in 3D: desks with people's faces, free ones in green, a lounge and a glass meeting room"
+              )}
+              className="mt-12"
+              isEager
+            />
+          </div>
+          {/* The office stands on the horizon: its lines run behind the picture's lower part. */}
+          <div className="-mt-[clamp(90px,16vw,220px)]">
+            <Horizon isAnimated={isAnimated} />
+          </div>
+          {/* The night fades into the page, lines and all: no hard edge where the page begins. */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-[clamp(80px,12vw,160px)] bg-gradient-to-b from-transparent to-background"
           />
         </section>
 
@@ -214,7 +230,7 @@ export const ProductPage = () => {
                 src={PICTURES.insights}
                 isPanel
                 alt={t(
-                  "Insights: 67% full, Wednesday the busiest day, desks in use per week and a heatmap of every working day"
+                  "Insights: 72% full, Wednesday the busiest day, desks in use per week, a heatmap of every working day and how each team turns up"
                 )}
               />
             }
@@ -229,7 +245,7 @@ export const ProductPage = () => {
               <Picture
                 src={PICTURES.editor}
                 alt={t(
-                  "The office editor: furniture to pick from beside the office in 3D, its rooms measured"
+                  "The office editor: furniture to pick from beside the office in 3D, its rooms measured and its teams' zones named on the floor"
                 )}
               />
             }
@@ -314,20 +330,21 @@ export const ProductPage = () => {
 
         <section className="px-4 py-20 sm:px-6">
           <div
-            className="mx-auto flex max-w-6xl flex-col items-center rounded-[calc(var(--radius)*6)] px-6 py-16 text-center text-[#f4efe6]"
+            className="relative mx-auto flex max-w-6xl flex-col items-center overflow-hidden rounded-[calc(var(--radius)*6)] px-6 py-16 text-center text-[#f4efe6]"
             style={{ background: NIGHT }}
           >
-            <h2 className="max-w-2xl text-3xl font-black tracking-[-0.01em] sm:text-4xl">
+            <NightSky isAnimated={isAnimated} />
+            <h2 className="relative max-w-2xl text-3xl font-black tracking-[-0.01em] sm:text-4xl">
               {t("Ready when you are")}
             </h2>
-            <p className="mt-4 max-w-xl text-lg text-[#c9cde0]">
+            <p className="relative mt-4 max-w-xl text-lg text-[#c9cde0]">
               {t("Set up your office today. Your people can book a desk the minute they join.")}
             </p>
-            <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <div className="relative mt-8 flex flex-wrap justify-center gap-3">
               <Link to="/login" className={PRIMARY_LINK}>
                 {t("Get started")}
               </Link>
-              <DemoButton className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#f4efe6]/30 px-6 text-[15px] font-extrabold text-[#f4efe6] outline-none transition-colors hover:bg-[#f4efe6]/10 focus-visible:ring-2 focus-visible:ring-[#f4efe6]" />
+              <DemoButton className={SECONDARY_LINK} />
             </div>
           </div>
         </section>
@@ -364,51 +381,46 @@ export const ProductHeader = () => {
   const { t } = useI18n()
 
   return (
-    <header className="sticky top-0 z-10 border-b border-border/60 bg-background/90 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b border-[#f4efe6]/10 bg-[#1f2850]/95 text-[#f4efe6] backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 sm:px-6">
         <Link
           to="/"
           aria-label="Hotseat"
-          className="rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-focus"
+          className="rounded-lg outline-none focus-visible:outline-2 focus-visible:outline-[#f6c560]"
         >
           <HotseatLockup size={30} />
         </Link>
         <nav aria-label={t("Product")} className="ml-4 hidden gap-1 md:flex">
           <a
             href={`${HOME}#features`}
-            className="rounded-full px-3 py-2 text-sm font-bold text-muted hover:text-foreground"
+            className="rounded-full px-3 py-2 text-sm font-bold text-[#9aa1c0] hover:text-[#f4efe6]"
           >
             {t("What it does")}
           </a>
           <a
             href={`${HOME}#how`}
-            className="rounded-full px-3 py-2 text-sm font-bold text-muted hover:text-foreground"
+            className="rounded-full px-3 py-2 text-sm font-bold text-[#9aa1c0] hover:text-[#f4efe6]"
           >
             {t("How it works")}
           </a>
           <a
             href={`${HOME}#questions`}
-            className="rounded-full px-3 py-2 text-sm font-bold text-muted hover:text-foreground"
+            className="rounded-full px-3 py-2 text-sm font-bold text-[#9aa1c0] hover:text-[#f4efe6]"
           >
             {t("Questions")}
           </a>
           <Link
             to="/docs/self-hosting"
             prefetch="intent"
-            className="rounded-full px-3 py-2 text-sm font-bold text-muted hover:text-foreground"
+            className="rounded-full px-3 py-2 text-sm font-bold text-[#9aa1c0] hover:text-[#f4efe6]"
           >
             {t("Self-hosting")}
           </Link>
         </nav>
         <div className="ml-auto flex items-center gap-2">
-          <Link
-            to="/login"
-            className="hidden min-h-10 items-center rounded-full px-4 text-sm font-extrabold text-foreground hover:bg-surface-secondary sm:inline-flex"
-          >
-            {t("Sign in")}
-          </Link>
+          {/* One way in (signing in creates an account): "Get started" is the page's own. */}
           <Link to="/login" className={clsx(PRIMARY_LINK, "min-h-10 px-5 text-sm")}>
-            {t("Get started")}
+            {t("Sign in")}
           </Link>
         </div>
       </div>
