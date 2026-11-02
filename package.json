@@ -2,7 +2,7 @@
   "name": "remix-app-template",
   "private": true,
   "description": "",
-  "license": "",
+  "license": "FSL-1.1-ALv2",
   "type": "module",
   "scripts": {
     "build": "bun run prisma:generate && react-router build && node scripts/nest-client-build.js",

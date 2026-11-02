@@ -32,3 +32,10 @@ Locally, `bun run dev` runs the app in workerd too; Hyperdrive falls back to the
 One company's own installation, on a plain Node server with Docker: the
 guide is in [docs/self-hosting](docs/self-hosting/README.md) (quick start:
 [SELF_HOSTING.md](SELF_HOSTING.md)).
+
+# License
+
+[Functional Source License 1.1, Apache 2.0 future license](LICENSE.md)
+(`FSL-1.1-ALv2`): use it for anything but a product or service that competes
+with Hotseat, including running it for your own company. Each version
+becomes Apache 2.0 two years after it's released.

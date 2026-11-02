@@ -24,6 +24,19 @@ A self-hosted installation is **one company**. Whoever sets it up names it
 and decides who can join, usually everyone with a company email address.
 There's no "New organization" and no product page or demo.
 
+## License
+
+Hotseat is under the **Functional Source License** (FSL-1.1-ALv2, in
+`LICENSE.md` in the repository):
+
+- **Free to run for your own company**: install it, use it, change it for
+  your own needs.
+- **Not for competing with Hotseat**: you may not offer it, or something
+  built on it, as a product or service of the same kind (e.g. hosting desk
+  booking for other companies).
+- **Each version becomes Apache 2.0**, a permissive open-source license, two
+  years after it's released.
+
 ## What you need
 
 - A machine with **Docker** and Docker Compose. One CPU and 1 GB of memory
