@@ -1355,4 +1355,13 @@ export const cs: Messages = {
   "Time zone": "Časové pásmo",
   "Search, e.g. London": "Hledat, např. Praha",
   "What “today” is in this office, for bookings.": "Co je v této kanceláři „dnes“ — pro rezervace.",
+  "Self-hosting": "Vlastní hosting",
+  "Self-hosting guide": "Průvodce vlastním hostingem",
+  Overview: "Přehled",
+  "On this page": "Na této stránce",
+  Previous: "Předchozí",
+  "Can we run it on our own servers?": "Můžeme to provozovat na vlastních serverech?",
+  "Yes. One Docker image, your own database and your own sign-in — Microsoft, Google Workspace, Okta and friends. The {guide} walks you through it.":
+    "Ano. Jeden Docker image, vlastní databáze a vlastní přihlašování — Microsoft, Google Workspace, Okta a spol. Provede vás tím {guide}.",
+  "self-hosting guide": "průvodce vlastním hostingem",
 }

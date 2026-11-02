@@ -15,7 +15,7 @@ In every case below, replace `https://hotseat.acme.com` with your `BASE_URL`.
 Works with any OIDC provider. Register Hotseat as a **web application**
 with:
 
-| | |
+| Setting | Value |
 | --- | --- |
 | Redirect / callback URI | `https://hotseat.acme.com/auth/oidc/callback` |
 | Grant type | Authorization code (with PKCE) |

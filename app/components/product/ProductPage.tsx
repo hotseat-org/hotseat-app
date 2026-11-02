@@ -15,7 +15,7 @@ import {
 import type { ReactNode } from "react"
 import { Form, Link, useNavigation } from "react-router"
 import { HotseatLockup } from "~/components/HotseatMark"
-import { useI18n } from "~/i18n/I18nProvider"
+import { Rich, useI18n } from "~/i18n/I18nProvider"
 import { LOCALES, LOCALE_NAMES } from "~/i18n/locales"
 import { useLocale } from "~/i18n/useLocale"
 
@@ -47,7 +47,7 @@ export const ProductPage = () => {
 
   return (
     <div className="min-h-dvh bg-background text-foreground">
-      <Header />
+      <ProductHeader />
 
       <main>
         <section className="mx-auto flex max-w-6xl flex-col items-center px-4 pt-10 pb-16 text-center sm:px-6 sm:pt-16">
@@ -266,6 +266,20 @@ export const ProductPage = () => {
                 "The app runs on Cloudflare and your bookings live in a Postgres database at Neon."
               )}
             </Question>
+            <Question title={t("Can we run it on our own servers?")}>
+              <Rich
+                text={t(
+                  "Yes. One Docker image, your own database and your own sign-in — Microsoft, Google Workspace, Okta and friends. The {guide} walks you through it."
+                )}
+                values={{
+                  guide: (
+                    <Link to="/docs/self-hosting" className="font-bold text-accent hover:underline">
+                      {t("self-hosting guide")}
+                    </Link>
+                  ),
+                }}
+              />
+            </Question>
             <Question title={t("Can we try it before we commit?")}>
               {t(
                 "Sure. Look around the demo office without an account — book a desk, find a seat, move the furniture. Or set up your own and invite a few people first."
@@ -295,7 +309,7 @@ export const ProductPage = () => {
         </section>
       </main>
 
-      <Footer />
+      <ProductFooter />
     </div>
   )
 }
@@ -318,7 +332,11 @@ const DemoButton = ({ className }: { className: string }) => {
   )
 }
 
-const Header = () => {
+/** The front page's sections (on the front page itself, the browser just scrolls there). */
+const HOME = import.meta.env.BASE_URL
+
+/** The marketing pages' header: the product page's, and the self-hosting guide's. */
+export const ProductHeader = () => {
   const { t } = useI18n()
 
   return (
@@ -333,23 +351,30 @@ const Header = () => {
         </Link>
         <nav aria-label={t("Product")} className="ml-4 hidden gap-1 md:flex">
           <a
-            href="#features"
+            href={`${HOME}#features`}
             className="rounded-full px-3 py-2 text-sm font-bold text-muted hover:text-foreground"
           >
             {t("What it does")}
           </a>
           <a
-            href="#how"
+            href={`${HOME}#how`}
             className="rounded-full px-3 py-2 text-sm font-bold text-muted hover:text-foreground"
           >
             {t("How it works")}
           </a>
           <a
-            href="#questions"
+            href={`${HOME}#questions`}
             className="rounded-full px-3 py-2 text-sm font-bold text-muted hover:text-foreground"
           >
             {t("Questions")}
           </a>
+          <Link
+            to="/docs/self-hosting"
+            prefetch="intent"
+            className="rounded-full px-3 py-2 text-sm font-bold text-muted hover:text-foreground"
+          >
+            {t("Self-hosting")}
+          </Link>
         </nav>
         <div className="ml-auto flex items-center gap-2">
           <Link
@@ -367,7 +392,8 @@ const Header = () => {
   )
 }
 
-const Footer = () => {
+/** The marketing pages' footer: language, the self-hosting guide, signing in. */
+export const ProductFooter = () => {
   const { t } = useI18n()
   const [locale, pickLocale] = useLocale()
 
@@ -395,8 +421,14 @@ const Footer = () => {
             </button>
           ))}
           <Link
-            to="/login"
+            to="/docs/self-hosting"
             className="ml-2 min-h-9 rounded-full px-3 py-2 text-muted hover:text-foreground"
+          >
+            {t("Self-hosting")}
+          </Link>
+          <Link
+            to="/login"
+            className="min-h-9 rounded-full px-3 py-2 text-muted hover:text-foreground"
           >
             {t("Sign in")}
           </Link>

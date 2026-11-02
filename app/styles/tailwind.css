@@ -919,3 +919,84 @@ input:-webkit-autofill:focus {
     animation: none;
   }
 }
+
+/* The self-hosting guide's text (routes/docs.self-hosting…): Markdown rendered
+   on the server, in the product page's type. */
+@layer components {
+  .docs-prose {
+    @apply text-[16px] leading-relaxed text-foreground;
+  }
+  .docs-prose > * + * {
+    @apply mt-4;
+  }
+  .docs-prose h1 {
+    @apply text-4xl font-black tracking-[-0.02em] sm:text-5xl;
+  }
+  .docs-prose h1 + p {
+    @apply mt-5 text-lg text-muted;
+  }
+  .docs-prose h2 {
+    @apply mt-14 scroll-mt-24 border-t border-border pt-10 text-2xl font-black tracking-[-0.01em] sm:text-3xl;
+  }
+  .docs-prose h3 {
+    @apply mt-10 scroll-mt-24 text-xl font-black;
+  }
+  .docs-prose h4 {
+    @apply mt-8 scroll-mt-24 font-extrabold;
+  }
+  .docs-prose a {
+    @apply font-bold text-accent underline decoration-accent/30 underline-offset-2 hover:decoration-accent;
+  }
+  .docs-prose strong {
+    @apply font-extrabold;
+  }
+  .docs-prose ul,
+  .docs-prose ol {
+    @apply flex flex-col gap-1.5 pl-6;
+  }
+  .docs-prose ul {
+    @apply list-disc;
+  }
+  .docs-prose ol {
+    @apply list-decimal;
+  }
+  .docs-prose li::marker {
+    @apply text-muted;
+  }
+  .docs-prose li > ul,
+  .docs-prose li > ol {
+    @apply mt-1.5;
+  }
+  .docs-prose code {
+    @apply rounded-md bg-surface-secondary px-1.5 py-0.5 font-mono text-[0.88em];
+    /* Long URLs and settings wrap on phones rather than widen the page. */
+    overflow-wrap: anywhere;
+  }
+  .docs-prose a {
+    overflow-wrap: anywhere;
+  }
+  .docs-prose pre {
+    @apply overflow-x-auto rounded-2xl bg-[#1f2850] p-5 text-[13.5px] leading-relaxed text-[#e8ebf7];
+  }
+  .docs-prose pre code {
+    @apply bg-transparent p-0 text-inherit;
+    overflow-wrap: normal;
+  }
+  .docs-prose table {
+    @apply block w-full overflow-x-auto rounded-2xl border border-border text-[15px];
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+  .docs-prose th {
+    @apply bg-surface-secondary px-4 py-2.5 text-left text-sm font-extrabold;
+  }
+  .docs-prose td {
+    @apply border-t border-border px-4 py-2.5 align-top;
+  }
+  .docs-prose td:first-child {
+    @apply whitespace-nowrap;
+  }
+  .docs-prose blockquote {
+    @apply border-l-4 border-accent/40 pl-4 text-muted;
+  }
+}
