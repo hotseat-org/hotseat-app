@@ -13,6 +13,12 @@ export interface OfficePanelsState {
   customBooking: { id: string } | null
   openCustomBooking: (id: string) => void
   closeCustomBooking: () => void
+  /**
+   * Opens a colleague's profile (set by the page, which owns the URL: the
+   * desk card lives in the 3D scene, outside the router). Null: none to open.
+   */
+  showPerson: ((email: string) => void) | null
+  setShowPerson: (showPerson: ((email: string) => void) | null) => void
 }
 
 export const createOfficePanelsState = (
@@ -28,4 +34,6 @@ export const createOfficePanelsState = (
   customBooking: null,
   openCustomBooking: (id) => set({ customBooking: { id }, seatCard: null }),
   closeCustomBooking: () => set({ customBooking: null }),
+  showPerson: null,
+  setShowPerson: (showPerson) => set({ showPerson }),
 })

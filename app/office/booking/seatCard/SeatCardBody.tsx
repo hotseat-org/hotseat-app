@@ -15,7 +15,6 @@ import { useLayoutEffect, useRef, useState } from "react"
 import { type Person } from "../../desks/people"
 import { UsualStep } from "./UsualStep"
 import type { Option } from "./useSeatCard"
-import { usePersonProfile } from "~/office/usePersonProfile"
 import { DialogCloseButton } from "~/components/ui/DialogCloseButton"
 import { MemberAvatar } from "~/components/office/shell-ui"
 import { useSwipeToClose } from "~/components/ui/useSwipeToClose"
@@ -42,6 +41,8 @@ export interface BodyProps {
   dayLabel?: string
   state: "resident" | "booked" | "free"
   person: Person | null
+  /** Open their profile (none: the page has no profiles). */
+  onShowPerson?: () => void
   mine: boolean
   past: boolean
   note?: string
@@ -183,6 +184,7 @@ export const SeatCardBody = ({
   dayLabel,
   state,
   person,
+  onShowPerson,
   mine,
   past,
   note,
@@ -202,7 +204,6 @@ export const SeatCardBody = ({
 }: BodyProps & { layout?: "anchored" | "sheet" }) => {
   const isSheet = layout === "sheet"
   const { t } = i18n
-  const { open: openProfile } = usePersonProfile()
   const [step, setStep] = useState<"main" | "days" | "usual">("main")
   // The phone's sheet closes by a swipe down from its top too.
   const swipe = useSwipeToClose(onClose)
@@ -392,12 +393,12 @@ export const SeatCardBody = ({
 
           {/* Who has it, when, what it offers — and your star. */}
           <div className="mb-1.5 flex items-center gap-2.5 px-1 pt-0.5">
-            {person && (
+            {person && onShowPerson && (
               // Their face opens their profile.
               <button
                 type="button"
                 aria-label={t("{name}'s profile", { name: person.name })}
-                onClick={() => openProfile(person.email)}
+                onClick={onShowPerson}
                 className="shrink-0 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-focus"
               >
                 <MemberAvatar
@@ -410,6 +411,17 @@ export const SeatCardBody = ({
                   className={clsx("shrink-0 rounded-full", isSheet ? "size-10" : "size-9")}
                 />
               </button>
+            )}
+            {person && !onShowPerson && (
+              <MemberAvatar
+                m={{
+                  userEmail: person.email,
+                  displayName: person.name,
+                  avatarUrl: person.avatarUrl,
+                  role: "",
+                }}
+                className={clsx("shrink-0 rounded-full", isSheet ? "size-10" : "size-9")}
+              />
             )}
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1">

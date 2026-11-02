@@ -1,5 +1,5 @@
 import { EyeOff, MapPin, Settings2 } from "lucide-react"
-import { useMemo } from "react"
+import { useEffect, useMemo } from "react"
 import { createPortal } from "react-dom"
 import { MemberAvatar, nameOf, roleLabel, type ShellMember } from "./shell-ui"
 import { useSettings } from "~/components/settings/useSettings"
@@ -23,6 +23,14 @@ import { addDays, type Day } from "~/utils/booking"
  */
 export const PersonProfile = ({ me, members }: { me: ShellMember; members: ShellMember[] }) => {
   const profile = usePersonProfile()
+  // The desk card (in the 3D scene, outside the router) opens profiles through the store.
+  const setShowPerson = useOfficeStore((state) => state.setShowPerson)
+  const openProfile = profile.open
+  useEffect(() => {
+    setShowPerson(openProfile)
+
+    return () => setShowPerson(null)
+  }, [setShowPerson, openProfile])
   const member = members.find((candidate) => candidate.userEmail === profile.email)
 
   if (!profile.email || !member) return null

@@ -34,6 +34,7 @@ export const useSeatCard = () => {
   const openCustomBooking = useOfficeStore((editorState) => editorState.openCustomBooking)
   const showRoute = useOfficeStore((editorState) => editorState.showRoute)
   const applyFavorite = useOfficeStore((editorState) => editorState.applyFavorite)
+  const showPerson = useOfficeStore((editorState) => editorState.showPerson)
   const people = usePeople()
   const i18n = useI18n()
   const { t, tn, format } = i18n
@@ -219,6 +220,7 @@ export const useSeatCard = () => {
     dayLabel: booking.enabled ? format.long(day) : undefined,
     state: state.kind,
     person,
+    onShowPerson: person && showPerson ? () => showPerson(person.email) : undefined,
     mine,
     past,
     note,
