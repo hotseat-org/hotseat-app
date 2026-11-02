@@ -1,5 +1,5 @@
 import clsx from "clsx"
-import { Layers, SlidersHorizontal, Star, UserRound } from "lucide-react"
+import { Layers, SlidersHorizontal, Star, UserRound, UserX } from "lucide-react"
 import { useMemo, type CSSProperties } from "react"
 import { personByEmail, usePeople } from "../desks/people"
 import { getZones } from "../zones/zones"
@@ -11,20 +11,22 @@ import { useAllPieces } from "~/editor"
  * How a preference looks, wherever it's shown — the sentence's pills, the
  * preferences' rows, the kinds to add: a zone in its colour, a person with
  * their face, a preferred seat with its amber star, a feature in the accent,
- * someone avoided in amber.
+ * someone to sit away from in red.
  */
 
-/** A look's colours: the accent, a quiet one (a zone tints it its own), or amber. */
-export type RuleTone = "accent" | "neutral" | "warning"
+/** A look's colours: the accent, a quiet one (a zone tints it its own), amber, or red (away). */
+export type RuleTone = "accent" | "neutral" | "warning" | "away"
 
 export const TONES: Record<RuleTone, string> = {
   accent: "bg-accent/15 text-accent",
   neutral: "bg-foreground/[0.09] text-foreground",
   warning: "bg-warning/30 text-warning-foreground",
+  away: "bg-danger/15 text-danger",
 }
 
 export const getRuleTone = (rule: Pick<SeatRule, "kind" | "strength">): RuleTone => {
-  if (rule.strength === "avoid" || rule.kind === "favorite") return "warning"
+  if (rule.strength === "avoid") return "away"
+  if (rule.kind === "favorite") return "warning"
   if (rule.kind === "feature") return "accent"
 
   return "neutral"
@@ -64,11 +66,20 @@ const KIND_ICONS = {
 } as const
 
 /** A kind of preference, as the list to add one shows it: its icon in its tone. */
-export const KindTile = ({ kind }: { kind: SeatRule["kind"] }) => {
-  const Icon = KIND_ICONS[kind]
+export const KindTile = ({
+  kind,
+  isAway = false,
+}: {
+  kind: SeatRule["kind"]
+  /** Away from someone (its own icon and colour). */
+  isAway?: boolean
+}) => {
+  const Icon = isAway ? UserX : KIND_ICONS[kind]
 
   return (
-    <span className={clsx(TILE, TONES[getRuleTone({ kind, strength: "prefer" })])}>
+    <span
+      className={clsx(TILE, TONES[getRuleTone({ kind, strength: isAway ? "avoid" : "prefer" })])}
+    >
       <Icon className={clsx("size-[18px]", kind === "favorite" && "fill-current")} />
     </span>
   )
@@ -84,7 +95,7 @@ export const RuleTile = ({ rule }: { rule: SeatRule }) => {
         email={rule.email}
         className={clsx(
           "size-10 text-[15px]",
-          rule.strength === "avoid" && "ring-2 ring-warning ring-offset-2 ring-offset-overlay"
+          rule.strength === "avoid" && "ring-2 ring-danger ring-offset-2 ring-offset-overlay"
         )}
       />
     )

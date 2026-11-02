@@ -12,9 +12,8 @@ import { PeopleSearch } from "~/components/people/PeopleSearch"
 import { useAllPieces } from "~/editor"
 import { useI18n } from "~/i18n/I18nProvider"
 
-/** Strengths offered for a rule: a colleague can also be avoided (sat away from). */
-const getOfferedStrengths = (kind: SeatRule["kind"]): RuleStrength[] =>
-  kind === "colleague" ? ["must", "prefer", "avoid"] : ["must", "prefer"]
+/** How much a preference matters (sitting away from someone is its own preference). */
+const OFFERED_STRENGTHS: RuleStrength[] = ["must", "prefer"]
 
 /** People listed at most while choosing a colleague: the search narrows them. */
 const MAX_PEOPLE = 8
@@ -77,11 +76,13 @@ export const Preferences = ({
             <span className="min-w-0 flex-1 truncate text-[15px] font-extrabold">
               {describe(rule)}
             </span>
-            <StrengthSwitch
-              kind={rule.kind}
-              value={rule.strength}
-              onChange={(strength) => setStrength(index, strength)}
-            />
+            {/* Away from someone: no strength to choose. */}
+            {rule.strength !== "avoid" && (
+              <StrengthSwitch
+                value={rule.strength}
+                onChange={(strength) => setStrength(index, strength)}
+              />
+            )}
             <button
               type="button"
               aria-label={t("Remove {preference}", { preference: describe(rule) })}
@@ -108,11 +109,9 @@ export const Preferences = ({
 }
 
 const StrengthSwitch = ({
-  kind,
   value,
   onChange,
 }: {
-  kind: SeatRule["kind"]
   value: RuleStrength
   onChange: (strength: RuleStrength) => void
 }) => {
@@ -129,7 +128,7 @@ const StrengthSwitch = ({
       aria-label={t("How much it matters")}
       className="flex shrink-0 rounded-full bg-surface-tertiary p-[3px]"
     >
-      {getOfferedStrengths(kind).map((strength) => (
+      {OFFERED_STRENGTHS.map((strength) => (
         <button
           key={strength}
           type="button"
@@ -160,13 +159,18 @@ const AddRule = ({
   onBack: () => void
 }) => {
   const { t } = useI18n()
-  const [kind, setKind] = useState<RuleKind | null>(null)
+  const [kind, setKind] = useState<RuleKind | "away" | null>(null)
   const favorites = useOfficeStore((state) => state.booking.preferences.favorites)
   // Your preferred seats: the desks you starred — none starred, nothing to prefer.
   const canPreferSeat = favorites.length > 0 && !rules.some((rule) => rule.kind === "favorite")
-  const kinds: { kind: RuleKind; title: string; detail: string }[] = [
+  const kinds: { kind: RuleKind | "away"; title: string; detail: string }[] = [
     { kind: "zone", title: t("A zone"), detail: t("Where your team sits") },
     { kind: "colleague", title: t("Near a colleague"), detail: t("Wherever they sit that day") },
+    {
+      kind: "away",
+      title: t("Away from a colleague"),
+      detail: t("Only you see this"),
+    },
     { kind: "feature", title: t("What the desk has"), detail: t("A standing desk…") },
     ...(canPreferSeat
       ? [
@@ -183,6 +187,7 @@ const AddRule = ({
 
   if (kind === "zone") return <ZoneChoice back={back} onPick={onAdd} />
   if (kind === "colleague") return <ColleagueChoice back={back} onPick={onAdd} />
+  if (kind === "away") return <ColleagueChoice back={back} onPick={onAdd} isAway />
   if (kind === "feature") return <FeatureChoice back={back} onPick={onAdd} />
 
   return (
@@ -200,7 +205,11 @@ const AddRule = ({
               }
               className="flex min-h-14 w-full items-center gap-3 rounded-xl py-1.5 text-left outline-none hover:bg-surface-secondary focus-visible:ring-2 focus-visible:ring-focus"
             >
-              <KindTile kind={entry.kind} />
+              {entry.kind === "away" ? (
+                <KindTile kind="colleague" isAway />
+              ) : (
+                <KindTile kind={entry.kind} />
+              )}
               <span className="min-w-0">
                 <span className="block text-[15px] font-extrabold">{entry.title}</span>
                 <span className="block text-xs text-muted">{entry.detail}</span>
@@ -296,9 +305,12 @@ const FeatureChoice = ({
 const ColleagueChoice = ({
   back,
   onPick,
+  isAway = false,
 }: {
   back: React.ReactNode
   onPick: (rule: SeatRule) => void
+  /** Someone to sit away from, not near. */
+  isAway?: boolean
 }) => {
   const people = usePeople()
   const me = useOfficeStore((state) => state.booking.me)
@@ -316,7 +328,9 @@ const ColleagueChoice = ({
         sort={(first, second) => first.name.localeCompare(second.name)}
         maxRows={MAX_PEOPLE}
         isAutoFocused
-        onPick={(member) => onPick({ kind: "colleague", email: member.email, strength: "prefer" })}
+        onPick={(member) =>
+          onPick({ kind: "colleague", email: member.email, strength: isAway ? "avoid" : "prefer" })
+        }
       />
     </div>
   )

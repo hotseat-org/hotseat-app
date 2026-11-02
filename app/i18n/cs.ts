@@ -1455,4 +1455,6 @@ export const cs: Messages = {
   "Avoid sitting near {name}": "Nesedět blízko: {name}",
   "Only you can see this. Find a seat keeps you away from them.":
     "Vidíte to jen vy. Hledání místa vás posadí jinam.",
+  "Away from a colleague": "Daleko od někoho z kolegů",
+  "Only you see this": "Vidíte to jen vy",
 }

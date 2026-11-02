@@ -154,7 +154,7 @@ export const SeatSentence = ({
       )
 
     if (rule.strength === "avoid")
-      return withPill(t("not near {name}", { name: PILL }), personPill(rule.email, "warning"))
+      return withPill(t("not near {name}", { name: PILL }), personPill(rule.email, "away"))
 
     return withPill(t("near {name}", { name: PILL }), personPill(rule.email, "neutral"))
   }
