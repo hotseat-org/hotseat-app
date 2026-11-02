@@ -29,5 +29,6 @@ Locally, `bun run dev` runs the app in workerd too; Hyperdrive falls back to the
 
 # Self-hosting
 
-One company's own installation, on a plain Node server with Docker: see
-[SELF_HOSTING.md](SELF_HOSTING.md).
+One company's own installation, on a plain Node server with Docker: the
+guide is in [docs/self-hosting](docs/self-hosting/README.md) (quick start:
+[SELF_HOSTING.md](SELF_HOSTING.md)).
