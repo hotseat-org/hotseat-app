@@ -15,7 +15,7 @@ import { EmptyState } from "~/components/ui/EmptyState"
 import { useI18n } from "~/i18n/I18nProvider"
 import { msg } from "~/i18n/msg"
 import type { TeamActionData } from "~/routes/api.settings.org.$slug.teams"
-import { ALL_WEEKDAYS, addDays } from "~/utils/booking"
+import { ALL_WEEKDAYS } from "~/utils/booking"
 import {
   KEEP_DAYS_CHOICES,
   MAX_TEAM_NAME,
@@ -50,11 +50,12 @@ const useTeamsData = () => {
 type TeamsData = NonNullable<ReturnType<typeof useTeamsData>>
 type OfficeZones = TeamsData["offices"][number]
 
-/** The day names, Monday first (2 Nov 2026 is a Monday). */
+/** An ISO weekday's short name ("Tue"), as everywhere else. */
 const useWeekdayName = () => {
   const { format } = useI18n()
+  const names = format.weekShort()
 
-  return (weekday: number) => format.dow(addDays("2026-11-02", weekday - 1))
+  return (weekday: number) => names[weekday - 1]
 }
 
 /**

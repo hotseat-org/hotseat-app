@@ -114,9 +114,15 @@ export const SpatialShell = ({
     else officePanel.open(panel)
   }
   // Your day, by your avatar (top right).
-  const day = useDayStatus(me, () => {
-    sidePanels.close()
-    officePanel.open("bookings")
+  const day = useDayStatus(me, {
+    onOpenBookings: () => {
+      sidePanels.close()
+      officePanel.open("bookings")
+    },
+    onFindSeat: () => {
+      sidePanels.close()
+      officePanel.open("find")
+    },
   })
 
   // How many are in on the shown day: on Who's in's button, at a glance.
@@ -208,7 +214,7 @@ export const SpatialShell = ({
       <PersonProfile me={me} members={members} />
       {officePanel.panel === "bookings" && (
         <RailModal title={t("My bookings")} onClose={officePanel.close}>
-          <MyBookings onShow={officePanel.close} />
+          <MyBookings onShow={officePanel.close} onFindSeat={() => officePanel.open("find")} />
         </RailModal>
       )}
       {officePanel.panel === "find" && isBooking && <FindSeatDialog onClose={officePanel.close} />}

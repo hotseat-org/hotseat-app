@@ -93,7 +93,9 @@ export const MobileShell = ({ offices, me, members, empty = false }: Props) => {
           bottomInset={TAB_BAR_HEIGHT}
           onClose={officePanel.close}
         >
-          {(close) => <MyBookings isPhone onShow={close} />}
+          {(close) => (
+            <MyBookings isPhone onShow={close} onFindSeat={() => officePanel.open("find")} />
+          )}
         </BottomSheet>
       )}
       {sheet === "people" && (
@@ -212,7 +214,7 @@ const DayDock = ({ me, onFindSeat }: { me: ShellMember; onFindSeat: () => void }
                 </button>
               </>
             ) : (
-              t("Tap a free + on the plan to book one")
+              t("Or tap a free + on the plan")
             )}
           </p>
         </div>

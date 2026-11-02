@@ -1,14 +1,16 @@
 import { MapPin, Settings2 } from "lucide-react"
-import { useMemo } from "react"
+import clsx from "clsx"
+import { useMemo, useState } from "react"
 import { RailModal } from "./RailModal"
 import { MemberAvatar, nameOf, type ShellMember } from "./shell-ui"
 import { WeekDots } from "./WeekDots"
-import { PeopleSearch, type PeopleFilter } from "~/components/people/PeopleSearch"
+import { PeopleSearch, type PeopleGroup } from "~/components/people/PeopleSearch"
+import { TeamDot } from "~/components/teams/teamLook"
 import { useOfficeStore } from "~/office/store"
 import { deskName, useDesksOnDay, useWeekPresence } from "~/office/booking/useBooking"
 import { usePersonProfile } from "~/office/usePersonProfile"
 import { useTeams } from "~/office/teams"
-import { getTeamHex } from "~/utils/teams"
+import { getTeamHex, type OfficeTeam } from "~/utils/teams"
 import { useSettings } from "~/components/settings/useSettings"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { useI18n } from "~/i18n/I18nProvider"
@@ -41,26 +43,48 @@ export const WhosInList = ({
   )
   const inCount = roster.filter((r) => r.at).length
   const teams = useTeams()
-  // Everyone, then each team (yours first) with how many of it are in.
-  const filters = useMemo(() => {
+  const [view, setView] = useState<WhosInView>("everyone")
+  // By team: yours first (open), then the others and those in none (folded).
+  const groups = useMemo(() => {
     type Row = (typeof roster)[number]
+    const isMine = (team: OfficeTeam) => team.members.includes(me.userEmail)
     const withPeople = teams
-      .filter((team) => team.members.length > 0)
+      .filter((team) => team.members.length > 0 && (view !== "mine" || isMine(team)))
       .sort(
         (first, second) =>
-          Number(second.members.includes(me.userEmail)) -
-            Number(first.members.includes(me.userEmail)) || first.name.localeCompare(second.name)
+          Number(isMine(second)) - Number(isMine(first)) || first.name.localeCompare(second.name)
       )
-    const teamFilters: PeopleFilter<Row>[] = withPeople.map((team) => ({
+    const teamGroups: PeopleGroup<Row>[] = withPeople.map((team) => ({
       id: team.id,
-      label: team.name,
-      color: getTeamHex(team.color),
       isIn: ({ m }) => team.members.includes(m.userEmail),
-      count: `${team.members.filter((email) => byPerson.has(email)).length}/${team.members.length}`,
+      isOpenAtFirst: isMine(team),
+      renderHeading: () => (
+        <TeamHeading
+          name={team.name}
+          color={team.color}
+          isMine={isMine(team)}
+          inCount={team.members.filter((email) => byPerson.has(email)).length}
+          total={team.members.length}
+        />
+      ),
     }))
+    if (view === "mine") return teamGroups
 
-    return [{ id: "everyone", label: t("Everyone"), isIn: () => true }, ...teamFilters]
-  }, [teams, me.userEmail, byPerson, t])
+    const inTeam = new Set(teams.flatMap((team) => team.members))
+    const withoutTeam: PeopleGroup<Row> = {
+      id: "no-team",
+      isIn: ({ m }) => !inTeam.has(m.userEmail),
+      renderHeading: (found) => <TeamHeading name={t("No team")} total={found.length} />,
+    }
+
+    return [...teamGroups, withoutTeam]
+  }, [teams, me.userEmail, byPerson, view, t])
+  const isInTeam = teams.some((team) => team.members.includes(me.userEmail))
+  const views: [WhosInView, string][] = [
+    ["everyone", t("Everyone")],
+    ["teams", t("By team")],
+    ...(isInTeam ? [["mine", t("My teams")] as [WhosInView, string]] : []),
+  ]
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -88,7 +112,29 @@ export const WhosInList = ({
         <PeopleSearch
           className="min-h-0 flex-1"
           items={roster}
-          filters={filters.length > 1 ? filters : undefined}
+          groups={view === "everyone" ? undefined : groups}
+          toolbar={
+            teams.length > 0 && (
+              <div role="group" aria-label={t("Show")} className="flex gap-1.5">
+                {views.map(([id, label]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    aria-pressed={view === id}
+                    onClick={() => setView(id)}
+                    className={clsx(
+                      "min-h-9 rounded-full border px-3 text-xs font-bold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus",
+                      view === id
+                        ? "border-foreground bg-foreground text-background"
+                        : "border-border text-muted hover:border-muted hover:text-foreground"
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )
+          }
           getPerson={({ m }) => ({
             email: m.userEmail,
             name: m.userEmail === me.userEmail ? t("You") : nameOf(m),
@@ -124,6 +170,59 @@ export const WhosInList = ({
         />
       )}
     </div>
+  )
+}
+
+/** Who's in shown as one list, by team, or just your teams. */
+type WhosInView = "everyone" | "teams" | "mine"
+
+/** A team's heading: its colour, name, and how many of it are in that day. */
+const TeamHeading = ({
+  name,
+  color,
+  isMine = false,
+  inCount,
+  total,
+}: {
+  name: string
+  /** None: not a team (those in none). */
+  color?: string
+  isMine?: boolean
+  /** None: just how many. */
+  inCount?: number
+  total: number
+}) => {
+  const { t } = useI18n()
+
+  return (
+    <>
+      {color ? (
+        <TeamDot color={color} />
+      ) : (
+        <span className="size-2.5 shrink-0 rounded-full border-2 border-muted/60" />
+      )}
+      <span className="min-w-0 flex-1 truncate text-sm font-black">
+        {name}
+        {isMine && <span className="font-bold text-muted"> · {t("your team")}</span>}
+      </span>
+      <span className="shrink-0 text-xs font-extrabold tabular-nums">
+        {inCount === undefined ? total : t("{in} of {total}", { in: inCount, total })}
+      </span>
+      {inCount !== undefined && (
+        <span
+          aria-hidden
+          className="h-1.5 w-14 shrink-0 overflow-hidden rounded-full bg-foreground/10"
+        >
+          <span
+            className="block h-full rounded-full"
+            style={{
+              width: `${Math.round((inCount / total) * 100)}%`,
+              background: getTeamHex(color ?? ""),
+            }}
+          />
+        </span>
+      )}
+    </>
   )
 }
 

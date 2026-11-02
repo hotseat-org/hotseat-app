@@ -498,7 +498,6 @@ export const cs: Messages = {
   "Office full {when}": "Kancelář je plná {when}",
   "Join the waitlist": "Zapsat se do pořadníku",
   "No desk {when}.": "Nemáte stůl {when}.",
-  "Click a free one.": "Klikněte na volný.",
   "All my bookings": "Všechny mé rezervace",
   "of {total}": "z {total}",
   "Manage people": "Spravovat lidi",
@@ -518,7 +517,6 @@ export const cs: Messages = {
   "Past days can't be booked": "Minulé dny nejde rezervovat",
   "On the waitlist": "V pořadníku",
   "Office full": "Kancelář je plná",
-  "Tap a free + on the plan to book one": "Klepnutím na volné + v plánku si stůl zarezervujete",
   Show: "Ukázat",
   "Pick a day from the calendar": "Vybrat den v kalendáři",
   Days: "Dny",
@@ -542,10 +540,6 @@ export const cs: Messages = {
   "Permanent: {desk}": "Stálý: {desk}",
   "every day": "každý den",
   "No upcoming bookings": "Žádné nadcházející rezervace",
-  "Pick a day at the bottom of the Office tab, then tap a free desk.":
-    "Dole na kartě Kancelář vyberte den a klepněte na volný stůl.",
-  "Pick a day at the bottom, then click a free desk on the map.":
-    "Dole vyberte den a klikněte na volný stůl v mapě.",
   "Cancel {day}?": "Zrušit {day}?",
   Keep: "Ponechat",
   "Cancel it": "Zrušit",
@@ -1551,4 +1545,16 @@ export const cs: Messages = {
   "Others can book": "Ostatní si mohou rezervovat",
   "Days before": "Dní předem",
   "days before": "dní předem",
+  "Or tap a free + on the plan": "Nebo klepněte na volné + v plánu",
+  "{team} comes in on {days}.": "Tým {team} chodí do kanceláře: {days}.",
+  "Find a seat that suits you, or tap a free desk on the plan.":
+    "Najděte si místo, které vám sedne, nebo klepněte na volný stůl v plánu.",
+  "Find a seat that suits you, or click a free desk on the map.":
+    "Najděte si místo, které vám sedne, nebo klikněte na volný stůl na mapě.",
+  "{team}'s day": "Den týmu {team}",
+  "No team": "Bez týmu",
+  "By team": "Podle týmů",
+  "My teams": "Moje týmy",
+  "{in} of {total}": "{in} z {total}",
+  "Show {n} more": "Zobrazit další ({n})",
 }

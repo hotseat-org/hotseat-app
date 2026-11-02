@@ -26,9 +26,13 @@ export interface DayStatus {
 /**
  * Your day (desktop, by your avatar — see AccountMenu): where you sit on the
  * shown day — your permanent desk, a booking, away, waiting, or no desk yet —
- * and what to do about it: the way there, the waitlist, all your bookings.
+ * and what to do about it: the way there, the waitlist, finding a seat, all
+ * your bookings.
  */
-export const useDayStatus = (me: ShellMember, onOpenBookings: () => void): DayStatus => {
+export const useDayStatus = (
+  me: ShellMember,
+  { onOpenBookings, onFindSeat }: { onOpenBookings: () => void; onFindSeat: () => void }
+): DayStatus => {
   const i18n = useI18n()
   const { t, tn } = i18n
   const day = useOfficeStore((state) => state.booking.day)
@@ -92,7 +96,7 @@ export const useDayStatus = (me: ShellMember, onOpenBookings: () => void): DaySt
               text: t("No desk {when}.", { when }),
               actions: (
                 <>
-                  {day >= today && <span className="text-muted">{t("Click a free one.")}</span>}
+                  {day >= today && <Action onPress={onFindSeat}>{t("Find a seat")}</Action>}
                   {allBookings}
                 </>
               ),

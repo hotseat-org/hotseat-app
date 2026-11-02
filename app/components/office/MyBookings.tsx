@@ -1,10 +1,11 @@
 import { toast } from "@heroui/react"
-import { CalendarDays, MapPin, Pin, Repeat, Star } from "lucide-react"
+import { Armchair, MapPin, Pin, Repeat, Star } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useFetcher, useNavigate, useParams } from "react-router"
 import { BookingRow, deskText } from "./BookingRow"
 import { ScrollArea } from "~/components/ui/ScrollArea"
 import { useOfficeStore } from "~/office/store"
+import { useMyTeams, useTeamDays } from "~/office/teams"
 import { floorText, useDeskFloor } from "~/office/booking/useBooking"
 import { useAllPieces } from "~/editor"
 import type { MyBooking } from "~/core/reservation/mine"
@@ -22,10 +23,13 @@ import { useI18n } from "~/i18n/I18nProvider"
  */
 export const MyBookings = ({
   onShow,
+  onFindSeat,
   isPhone = false,
 }: {
   /** After Show moved the map to a booking (its modal or sheet closes, so the map shows). */
   onShow?: () => void
+  /** Opens Find a seat (nothing booked yet: the way to book). */
+  onFindSeat: () => void
   /** In the phone's sheet: its words are for touch. */
   isPhone?: boolean
 }) => {
@@ -97,6 +101,18 @@ export const MyBookings = ({
   }
 
   const count = days.reduce((n, [, bs]) => n + bs.length, 0)
+  const getTeamsIn = useTeamDays()
+  const myTeams = useMyTeams()
+  const weekdayNames = format.weekShort()
+  // "Design comes in on Tue, Thu": when to book, for someone with nothing booked.
+  const teamDays = myTeams
+    .filter((team) => team.weekdays.length > 0)
+    .map((team) =>
+      t("{team} comes in on {days}.", {
+        team: team.name,
+        days: team.weekdays.map((weekday) => weekdayNames[weekday - 1]).join(", "),
+      })
+    )
 
   return (
     <section aria-label={t("My bookings")} className="flex min-h-0 flex-1 flex-col">
@@ -149,16 +165,28 @@ export const MyBookings = ({
         {data && count === 0 && (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 py-8 text-center">
             <div className="grid size-11 place-items-center rounded-2xl bg-accent/12 text-accent">
-              <CalendarDays className="size-5" />
+              <Armchair className="size-5" />
             </div>
             <div>
               <p className="text-sm font-bold text-foreground">{t("No upcoming bookings")}</p>
               <p className="mt-0.5 text-xs text-muted">
                 {isPhone
-                  ? t("Pick a day at the bottom of the Office tab, then tap a free desk.")
-                  : t("Pick a day at the bottom, then click a free desk on the map.")}
+                  ? t("Find a seat that suits you, or tap a free desk on the plan.")
+                  : t("Find a seat that suits you, or click a free desk on the map.")}
               </p>
+              {teamDays.map((line) => (
+                <p key={line} className="mt-0.5 text-xs text-muted">
+                  {line}
+                </p>
+              ))}
             </div>
+            <button
+              type="button"
+              onClick={onFindSeat}
+              className="flex min-h-11 items-center gap-1.5 rounded-xl bg-accent px-4 text-sm font-extrabold text-accent-foreground outline-none focus-visible:ring-2 focus-visible:ring-focus"
+            >
+              <Armchair className="size-4" /> {t("Find a seat")}
+            </button>
           </div>
         )}
 
@@ -174,7 +202,10 @@ export const MyBookings = ({
               <BookingRow
                 key={keyOf(b)}
                 desk={deskText(i18n, b.deskLabel, b.deskFloor && floorText(i18n, b.deskFloor))}
-                detail={b.officeName}
+                detail={[
+                  b.officeName,
+                  ...getTeamsIn(b.date).map((team) => t("{team}'s day", { team: team.name })),
+                ].join(" · ")}
                 day={b.date}
                 onShow={() => show(b)}
                 onCancel={() => doCancel(b)}
