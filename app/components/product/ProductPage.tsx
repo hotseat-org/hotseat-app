@@ -14,7 +14,7 @@ import {
 } from "lucide-react"
 import type { ReactNode } from "react"
 import { Form, Link, useNavigation } from "react-router"
-import { HotseatLockup } from "~/components/HotseatMark"
+import { DUSK, HotseatLockup } from "~/components/HotseatMark"
 import { Horizon, NIGHT, NightSky, useIsAnimated } from "~/components/NightScene"
 import { Rich, useI18n } from "~/i18n/I18nProvider"
 import { LOCALES, LOCALE_NAMES } from "~/i18n/locales"
@@ -40,6 +40,11 @@ const PRIMARY_LINK =
 const SECONDARY_LINK =
   "inline-flex min-h-12 items-center justify-center rounded-full border-[1.5px] border-[#4a5688] bg-[#1f2850]/60 px-6 text-[15px] font-extrabold text-[#f4efe6] outline-none transition-colors hover:border-[#7d88b8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f6c560]"
 
+/** The whole page is at night: a card a step lighter than the sky, and the text's quieter shades. */
+const CARD = "rounded-2xl border border-[#34407a] bg-[#26305c]"
+const QUIET_TEXT = "text-[#c9cde0]"
+const FAINT_TEXT = "text-[#9aa1c0]"
+
 /**
  * Hotseat's product page — the front door for companies not using it yet:
  * what it does (each of it real, shown on the demo company), how to start,
@@ -50,12 +55,12 @@ export const ProductPage = () => {
   const isAnimated = useIsAnimated()
 
   return (
-    <div className="min-h-dvh bg-background text-foreground">
+    <div className="min-h-dvh text-[#f4efe6]" style={{ background: NIGHT }}>
       <ProductHeader />
 
       <main>
         {/* At dusk, as signing in is: the night sky, and the horizon's warm lines below the office. */}
-        <section className="relative overflow-hidden text-[#f4efe6]" style={{ background: NIGHT }}>
+        <section className="relative overflow-hidden">
           <NightSky isAnimated={isAnimated} />
           <div className="relative z-10 mx-auto flex max-w-6xl flex-col items-center px-4 pt-10 text-center sm:px-6 sm:pt-16">
             <p className="rounded-full bg-[#fbf6ee]/10 px-3.5 py-1.5 text-xs font-extrabold uppercase tracking-[0.08em] text-[#f6c560]">
@@ -64,7 +69,7 @@ export const ProductPage = () => {
             <h1 className="mt-5 max-w-3xl text-4xl font-black leading-[1.08] tracking-[-0.02em] sm:text-6xl">
               {t("Your office, minus the musical chairs")}
             </h1>
-            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-[#c9cde0]">
+            <p className={clsx("mt-5 max-w-2xl text-lg leading-relaxed", QUIET_TEXT)}>
               {t(
                 "Hotseat puts your office on a map. Grab a desk for tomorrow, for every Tuesday, or right next to the person you actually want to sit with. On a laptop or a phone."
               )}
@@ -75,7 +80,7 @@ export const ProductPage = () => {
               </Link>
               <DemoButton className={SECONDARY_LINK} />
             </div>
-            <p className="mt-3 text-sm text-[#9aa1c0]">
+            <p className={clsx("mt-3 text-sm", FAINT_TEXT)}>
               {t("No account needed. Go on, knock down a wall.")}
             </p>
 
@@ -92,55 +97,55 @@ export const ProductPage = () => {
           <div className="-mt-[clamp(90px,16vw,220px)]">
             <Horizon isAnimated={isAnimated} />
           </div>
-          {/* The night fades into the page, lines and all: no hard edge where the page begins. */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-[clamp(80px,12vw,160px)] bg-gradient-to-b from-transparent to-background"
-          />
         </section>
 
-        <section id="features" className="scroll-mt-20 bg-surface-secondary py-20">
+        <section id="features" className="scroll-mt-20 py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <SectionHeading
               title={t("What's inside")}
               lead={t("Small things that save a lot of wandering around.")}
             />
+            {/* Each card's icon in one of the horizon's colours, in turn. */}
             <ul className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <Feature icon={CalendarDays} title={t("Book any day")}>
+              <Feature icon={CalendarDays} color={DUSK.lines[0]} title={t("Book any day")}>
                 {t("Tomorrow, every Tuesday and Thursday, or all of next week. Two taps and done.")}
               </Feature>
-              <Feature icon={Armchair} title={t("Find me a seat")}>
+              <Feature icon={Armchair} color={DUSK.lines[1]} title={t("Find me a seat")}>
                 {t(
                   "Say what you like — your team's corner, near a friend, a desk you can stand at — and it picks one for you."
                 )}
               </Feature>
-              <Feature icon={Users} title={t("Who's in")}>
+              <Feature icon={Users} color={DUSK.lines[2]} title={t("Who's in")}>
                 {t("See who's coming in before you decide to. Or before you decide not to.")}
               </Feature>
-              <Feature icon={Pin} title={t("Permanent desks")}>
+              <Feature icon={Pin} color={DUSK.lines[0]} title={t("Permanent desks")}>
                 {t(
                   "Some people like a desk of their own. Fair enough. When they're off, it doesn't sit there empty."
                 )}
               </Feature>
-              <Feature icon={PencilRuler} title={t("Draw your office in 3D")}>
+              <Feature icon={PencilRuler} color={DUSK.lines[1]} title={t("Draw your office in 3D")}>
                 {t(
                   "Walls, doors, windows, sofas, plants. More floors if you've got them. Or grab a template and tweak it."
                 )}
               </Feature>
-              <Feature icon={Layers} title={t("Teams and their corners")}>
+              <Feature icon={Layers} color={DUSK.lines[2]} title={t("Teams and their corners")}>
                 {t(
                   "Give each team its own patch of floor and the days it comes in together. Finding a seat puts you right next to them."
                 )}
               </Feature>
-              <Feature icon={Footprints} title={t("Show the way")}>
+              <Feature icon={Footprints} color={DUSK.lines[0]} title={t("Show the way")}>
                 {t("First day? Hotseat walks you from the door to your desk, stairs included.")}
               </Feature>
-              <Feature icon={BarChart3} title={t("Numbers for whoever runs the office")}>
+              <Feature
+                icon={BarChart3}
+                color={DUSK.lines[1]}
+                title={t("Numbers for whoever runs the office")}
+              >
                 {t(
                   "Which days are packed, which desks nobody wants, and whether you need more room or fewer chairs."
                 )}
               </Feature>
-              <Feature icon={Smartphone} title={t("Fits in your pocket")}>
+              <Feature icon={Smartphone} color={DUSK.lines[2]} title={t("Fits in your pocket")}>
                 {t("A simple floor plan made for thumbs. In English and Czech.")}
               </Feature>
             </ul>
@@ -253,7 +258,7 @@ export const ProductPage = () => {
           />
         </div>
 
-        <section id="how" className="scroll-mt-20 bg-surface-secondary py-20">
+        <section id="how" className="scroll-mt-20 py-20">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <SectionHeading title={t("Up and running in three steps")} />
             <ol className="mt-12 grid gap-4 md:grid-cols-3">
@@ -313,7 +318,10 @@ export const ProductPage = () => {
                 )}
                 values={{
                   guide: (
-                    <Link to="/docs/self-hosting" className="font-bold text-accent hover:underline">
+                    <Link
+                      to="/docs/self-hosting"
+                      className="font-bold text-[#f6c560] hover:underline"
+                    >
                       {t("self-hosting guide")}
                     </Link>
                   ),
@@ -328,16 +336,17 @@ export const ProductPage = () => {
           </dl>
         </section>
 
-        <section className="px-4 py-20 sm:px-6">
+        <section className="px-4 pt-12 sm:px-6">
           <div
-            className="relative mx-auto flex max-w-6xl flex-col items-center overflow-hidden rounded-[calc(var(--radius)*6)] px-6 py-16 text-center text-[#f4efe6]"
-            style={{ background: NIGHT }}
+            className={clsx(
+              CARD,
+              "relative mx-auto flex max-w-6xl flex-col items-center overflow-hidden rounded-[calc(var(--radius)*6)] px-6 py-16 text-center"
+            )}
           >
-            <NightSky isAnimated={isAnimated} />
             <h2 className="relative max-w-2xl text-3xl font-black tracking-[-0.01em] sm:text-4xl">
               {t("Ready when you are")}
             </h2>
-            <p className="relative mt-4 max-w-xl text-lg text-[#c9cde0]">
+            <p className={clsx("relative mt-4 max-w-xl text-lg", QUIET_TEXT)}>
               {t("Set up your office today. Your people can book a desk the minute they join.")}
             </p>
             <div className="relative mt-8 flex flex-wrap justify-center gap-3">
@@ -348,6 +357,11 @@ export const ProductPage = () => {
             </div>
           </div>
         </section>
+
+        {/* The page ends on the horizon it opened with. */}
+        <div className="mt-16">
+          <Horizon isAnimated={isAnimated} />
+        </div>
       </main>
 
       <ProductFooter />
@@ -434,10 +448,10 @@ export const ProductFooter = () => {
   const [locale, pickLocale] = useLocale()
 
   return (
-    <footer className="border-t border-border">
+    <footer className="border-t border-[#f4efe6]/10 text-[#f4efe6]" style={{ background: NIGHT }}>
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-4 py-8 sm:px-6">
         <HotseatLockup size={22} />
-        <p className="text-sm text-muted">© {new Date().getFullYear()} Hotseat</p>
+        <p className={clsx("text-sm", FAINT_TEXT)}>© {new Date().getFullYear()} Hotseat</p>
         <div className="ml-auto flex items-center gap-1 text-[13px] font-bold">
           {LOCALES.map((option) => (
             <button
@@ -449,8 +463,8 @@ export const ProductFooter = () => {
               className={clsx(
                 "min-h-9 rounded-full px-3 transition-colors",
                 option === locale
-                  ? "bg-surface-secondary text-foreground"
-                  : "text-muted hover:text-foreground"
+                  ? "bg-[#26305c] text-[#f4efe6]"
+                  : clsx(FAINT_TEXT, "hover:text-[#f4efe6]")
               )}
             >
               {LOCALE_NAMES[option]}
@@ -458,13 +472,13 @@ export const ProductFooter = () => {
           ))}
           <Link
             to="/docs/self-hosting"
-            className="ml-2 min-h-9 rounded-full px-3 py-2 text-muted hover:text-foreground"
+            className={clsx("ml-2 min-h-9 rounded-full px-3 py-2 hover:text-[#f4efe6]", FAINT_TEXT)}
           >
             {t("Self-hosting")}
           </Link>
           <Link
             to="/login"
-            className="min-h-9 rounded-full px-3 py-2 text-muted hover:text-foreground"
+            className={clsx("min-h-9 rounded-full px-3 py-2 hover:text-[#f4efe6]", FAINT_TEXT)}
           >
             {t("Sign in")}
           </Link>
@@ -491,7 +505,7 @@ const Picture = ({
 }) => (
   <div
     className={clsx(
-      "w-full overflow-hidden shadow-overlay",
+      "w-full overflow-hidden shadow-[0_30px_60px_-20px_rgba(8,12,30,0.7),0_0_0_1px_rgba(244,239,230,0.08)]",
       isPanel ? "rounded-2xl" : "rounded-[calc(var(--radius)*4)]",
       className
     )}
@@ -517,11 +531,11 @@ const Showcase = ({
   <section className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
     <div className={clsx(isFlipped && "lg:order-2")}>
       <h2 className="text-3xl font-black tracking-[-0.01em] sm:text-4xl">{title}</h2>
-      <p className="mt-4 text-lg leading-relaxed text-muted">{lead}</p>
+      <p className={clsx("mt-4 text-lg leading-relaxed", QUIET_TEXT)}>{lead}</p>
       <ul className="mt-6 flex flex-col gap-2.5">
         {points.map((point) => (
           <li key={point} className="flex items-center gap-2.5 font-bold">
-            <span className="grid size-6 shrink-0 place-items-center rounded-full bg-success/15 text-success">
+            <span className="grid size-6 shrink-0 place-items-center rounded-full bg-[#f6c560]/15 text-[#f6c560]">
               <Check className="size-3.5" strokeWidth={3} />
             </span>
             {point}
@@ -536,32 +550,35 @@ const Showcase = ({
 const SectionHeading = ({ title, lead }: { title: string; lead?: string }) => (
   <div className="mx-auto max-w-2xl text-center">
     <h2 className="text-3xl font-black tracking-[-0.01em] sm:text-4xl">{title}</h2>
-    {lead && <p className="mt-3 text-lg text-muted">{lead}</p>}
+    {lead && <p className={clsx("mt-3 text-lg", QUIET_TEXT)}>{lead}</p>}
   </div>
 )
 
 const Feature = ({
   icon: Icon,
+  color,
   title,
   children,
 }: {
   icon: LucideIcon
+  /** One of the horizon's lines. */
+  color: string
   title: string
   children: ReactNode
 }) => (
-  <li className="rounded-2xl border border-border bg-surface p-6">
-    <span className="grid size-11 place-items-center rounded-xl bg-accent/12 text-accent">
+  <li className={clsx(CARD, "p-6")}>
+    <span className="grid size-11 place-items-center rounded-xl bg-[#f4efe6]/8" style={{ color }}>
       <Icon className="size-5" />
     </span>
     <h3 className="mt-4 text-lg font-black">{title}</h3>
-    <p className="mt-1.5 leading-relaxed text-muted">{children}</p>
+    <p className={clsx("mt-1.5 leading-relaxed", QUIET_TEXT)}>{children}</p>
   </li>
 )
 
 const Question = ({ title, children }: { title: string; children: ReactNode }) => (
   <div>
     <dt className="text-lg font-black">{title}</dt>
-    <dd className="mt-1.5 leading-relaxed text-muted">{children}</dd>
+    <dd className={clsx("mt-1.5 leading-relaxed", QUIET_TEXT)}>{children}</dd>
   </div>
 )
 
@@ -574,11 +591,11 @@ const Step = ({
   title: string
   children: ReactNode
 }) => (
-  <li className="rounded-2xl border border-border bg-surface p-6">
-    <span className="grid size-10 place-items-center rounded-full bg-accent text-base font-black text-accent-foreground">
+  <li className={clsx(CARD, "p-6")}>
+    <span className="grid size-10 place-items-center rounded-full bg-[#fbf6ee] text-base font-black text-[#2c3866]">
       {number}
     </span>
     <h3 className="mt-4 text-lg font-black">{title}</h3>
-    <p className="mt-1.5 leading-relaxed text-muted">{children}</p>
+    <p className={clsx("mt-1.5 leading-relaxed", QUIET_TEXT)}>{children}</p>
   </li>
 )

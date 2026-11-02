@@ -1,10 +1,15 @@
 import type { LoaderFunctionArgs, MetaFunction } from "react-router"
 import { redirect } from "react-router"
+import { NIGHT } from "~/components/NightScene"
 import { ProductPage } from "~/components/product/ProductPage"
 import { getCore } from "~/core/get-core"
 import { isSelfHosted } from "~/edition/edition.server"
 import { metaTranslator } from "~/i18n/translate"
 import { isAuthenticated } from "~/services/session.server"
+import type { PageColor } from "~/utils/pageColor"
+
+// The whole page is at night, as signing in is: the browser's bars too.
+export const handle = { pageColor: { background: NIGHT, isDark: true } satisfies PageColor }
 
 export const meta: MetaFunction<typeof loader> = ({ loaderData, matches }) => {
   const { t } = metaTranslator(matches)
