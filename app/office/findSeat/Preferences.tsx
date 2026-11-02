@@ -40,8 +40,8 @@ export const Preferences = ({
 }: {
   rules: SeatRule[]
   onChange: (rules: SeatRule[]) => void
-  /** Back to finding a seat, with these. */
-  onDone: () => void
+  /** Back to finding a seat, with these (none: they're edited beside the result). */
+  onDone?: () => void
 }) => {
   const { t } = useI18n()
   const { describe } = useRuleText()
@@ -65,7 +65,7 @@ export const Preferences = ({
 
   return (
     <div className="flex flex-col">
-      <BackButton label={t("Done")} onPress={onDone} />
+      {onDone && <BackButton label={t("Done")} onPress={onDone} />}
       {rules.length === 0 && (
         <p className="rounded-2xl bg-surface-secondary px-4 py-3 text-sm text-muted">
           {t("No preferences yet: any free desk will do.")}

@@ -1,11 +1,12 @@
 import clsx from "clsx"
 import { Check, MapPin, Minus, Pin, Star } from "lucide-react"
-import { useMemo, useState } from "react"
+import { useMemo, useState, type ReactNode } from "react"
 import { deskName, useDeskFloor } from "../booking/useBooking"
 import { useOfficeStore } from "../store"
-import { isPerfect, type MatchDesk, type SeatMatch } from "./matching"
+import { isPerfect, type MatchDesk, type SeatMatch, type SeatRule } from "./matching"
 import { Preferences } from "./Preferences"
 import { useRuleText } from "./ruleText"
+import { SeatSentence } from "./SeatSentence"
 import { useSavedRules, useSeatMatches } from "./useFindSeat"
 import { useI18n } from "~/i18n/I18nProvider"
 import type { Day } from "~/utils/booking"
@@ -30,17 +31,23 @@ const PRIMARY =
 const SECONDARY =
   "min-h-12 rounded-full border border-border bg-surface px-5 text-[15px] font-extrabold text-foreground outline-none hover:bg-surface-secondary focus-visible:ring-2 focus-visible:ring-focus"
 
+/** Stacked in one column (a phone's sheet), or the search beside its result (a dialog). */
+export type FindSeatLayout = "stacked" | "columns"
+
 /**
  * Finding a seat by what you'd like: pick a day (or any day), and the desk
  * that fits best is there — why it fits, others that do, one tap to book.
  * Your preferences (a zone, a colleague, a favourite, what the desk has),
- * each a must or a preference, are kept for next time.
+ * each a must or a preference, are kept for next time; the search reads as
+ * a sentence ("A seat today in Marketing, ideally near Anna").
  */
 export const FindSeat = ({
   onShowOnMap,
+  layout = "stacked",
 }: {
   /** Show a desk on the map, on its day (a phone's sheet closes for it). */
   onShowOnMap: (deskId: string, day: Day) => void
+  layout?: FindSeatLayout
 }) => {
   const { rules, setRules } = useSavedRules()
   const [view, setView] = useState<View>({ kind: "find" })
@@ -50,19 +57,24 @@ export const FindSeat = ({
       <Preferences rules={rules} onChange={setRules} onDone={() => setView({ kind: "find" })} />
     )
 
-  if (view.kind === "booked")
-    return (
+  const booked =
+    view.kind === "booked" ? (
       <Booked
         desk={view.desk}
         day={view.day}
         onShowOnMap={() => onShowOnMap(view.desk.id, view.day)}
         onFindAnother={() => setView({ kind: "find" })}
       />
-    )
+    ) : null
+
+  if (booked && layout === "stacked") return booked
 
   return (
     <Finder
+      layout={layout}
       rules={rules}
+      booked={booked}
+      onRules={setRules}
       onEditPreferences={() => setView({ kind: "preferences" })}
       onBooked={(desk, day) => setView({ kind: "booked", desk, day })}
       onShowOnMap={onShowOnMap}
@@ -71,19 +83,25 @@ export const FindSeat = ({
 }
 
 const Finder = ({
+  layout,
   rules,
+  booked,
+  onRules,
   onEditPreferences,
   onBooked,
   onShowOnMap,
 }: {
-  rules: ReturnType<typeof useSavedRules>["rules"]
+  layout: FindSeatLayout
+  rules: SeatRule[]
+  /** Booked just now: shown in place of the result (beside the search). */
+  booked: ReactNode
+  onRules: (rules: SeatRule[]) => void
   onEditPreferences: () => void
   onBooked: (desk: MatchDesk, day: Day) => void
   onShowOnMap: (deskId: string, day: Day) => void
 }) => {
   const i18n = useI18n()
   const { t, format } = i18n
-  const { describe } = useRuleText()
   const today = useOfficeStore((state) => state.booking.today)
   const shownDay = useOfficeStore((state) => state.booking.day)
   const reserve = useOfficeStore((state) => state.booking.reserve)
@@ -113,8 +131,6 @@ const Finder = ({
     onBooked(desk, day)
   }
 
-  const summary = rules.length ? rules.map(describe).join(" · ") : t("Any free desk")
-
   if (seats.isResident)
     return (
       <p className="flex items-center gap-2 rounded-2xl bg-surface-secondary px-4 py-3 text-sm">
@@ -132,42 +148,40 @@ const Finder = ({
       ? matches.find((match) => favorites.includes(match.desk.id))
       : undefined
 
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap gap-2" role="group" aria-label={t("Day")}>
-        {[...seats.dayChoices, ANY_DAY].map((choice) => (
-          <button
-            key={choice}
-            type="button"
-            aria-pressed={when === choice}
-            onClick={() => {
-              setWhen(choice)
-              setPickedDeskId(null)
-            }}
-            className={clsx(
-              CHIP,
-              when === choice
-                ? "border-foreground bg-foreground text-background"
-                : "border-border bg-surface text-foreground hover:border-muted"
-            )}
-          >
-            {choice === ANY_DAY ? t("Any day") : dayLabel(choice)}
-          </button>
-        ))}
-      </div>
+  const sentence = (
+    <SeatSentence
+      rules={rules}
+      day={when === ANY_DAY ? null : when}
+      dayChoices={seats.dayChoices}
+    />
+  )
 
-      <button
-        type="button"
-        onClick={onEditPreferences}
-        className="flex min-h-12 items-center gap-3 rounded-2xl bg-surface-secondary px-4 py-2 text-left outline-none hover:bg-surface-tertiary focus-visible:ring-2 focus-visible:ring-focus"
-      >
-        <span className="min-w-0 flex-1">
-          <span className="block text-xs font-extrabold text-muted">{t("Your preferences")}</span>
-          <span className="block truncate text-sm font-bold">{summary}</span>
-        </span>
-        <span className="shrink-0 text-sm font-extrabold text-accent">{t("Change")}</span>
-      </button>
+  const dayChips = (
+    <div className="flex flex-wrap gap-2" role="group" aria-label={t("Day")}>
+      {[...seats.dayChoices, ANY_DAY].map((choice) => (
+        <button
+          key={choice}
+          type="button"
+          aria-pressed={when === choice}
+          onClick={() => {
+            setWhen(choice)
+            setPickedDeskId(null)
+          }}
+          className={clsx(
+            CHIP,
+            when === choice
+              ? "border-foreground bg-foreground text-background"
+              : "border-border bg-surface text-foreground hover:border-muted"
+          )}
+        >
+          {choice === ANY_DAY ? t("Any day") : dayLabel(choice)}
+        </button>
+      ))}
+    </div>
+  )
 
+  const result = (
+    <>
       {when !== ANY_DAY && dayResult?.current && (
         <div className="flex items-center gap-3 rounded-2xl bg-surface-secondary px-4 py-3">
           <span className="min-w-0 flex-1 text-sm font-bold">
@@ -251,6 +265,39 @@ const Finder = ({
           onBook={book}
         />
       )}
+    </>
+  )
+
+  if (layout === "columns")
+    return (
+      <div className="grid min-h-full grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="flex min-w-0 flex-col gap-4">
+          <p className="text-xl font-extrabold leading-relaxed">{sentence}</p>
+          {dayChips}
+          <Preferences rules={rules} onChange={onRules} />
+        </div>
+        <div className="flex min-w-0 flex-col gap-4">{booked ?? result}</div>
+      </div>
+    )
+
+  return (
+    <div className="flex flex-col gap-4">
+      {dayChips}
+
+      <button
+        type="button"
+        onClick={onEditPreferences}
+        className="flex min-h-12 items-center gap-3 rounded-2xl bg-surface-secondary px-4 py-3 text-left outline-none hover:bg-surface-tertiary focus-visible:ring-2 focus-visible:ring-focus"
+      >
+        <span className="min-w-0 flex-1 text-[15px] font-extrabold leading-relaxed">
+          {sentence}
+        </span>
+        <span className="shrink-0 self-start pt-1 text-sm font-extrabold text-accent">
+          {t("Change")}
+        </span>
+      </button>
+
+      {result}
     </div>
   )
 }

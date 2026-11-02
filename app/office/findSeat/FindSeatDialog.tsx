@@ -20,7 +20,7 @@ export const FindSeatDialog = ({ onClose }: { onClose: () => void }) => {
   return (
     <Modal.Backdrop isOpen onOpenChange={(isOpen) => !isOpen && onClose()} isDismissable>
       <Modal.Container scroll="inside">
-        <Modal.Dialog className="flex h-[min(680px,86vh)] w-[480px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-[calc(var(--radius)*3)] p-0">
+        <Modal.Dialog className="flex h-[min(680px,86vh)] w-[880px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-[calc(var(--radius)*3)] p-0">
           <div className="flex shrink-0 items-center justify-between gap-2 px-6 pt-5 pb-3">
             <Modal.Heading className="text-lg font-black text-foreground">
               {t("Find a seat")}
@@ -35,7 +35,7 @@ export const FindSeatDialog = ({ onClose }: { onClose: () => void }) => {
             </button>
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6">
-            <FindSeat onShowOnMap={showOnMap} />
+            <FindSeat onShowOnMap={showOnMap} layout="columns" />
           </div>
         </Modal.Dialog>
       </Modal.Container>
