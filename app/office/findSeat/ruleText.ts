@@ -28,7 +28,7 @@ export const useRuleText = () => {
   /** What it asks for, as a list row says it: "Engineering zone", "Near Anna Nováková". */
   const describe = (rule: SeatRule) => {
     if (rule.kind === "zone") return t("{zone} zone", { zone: rule.zone })
-    if (rule.kind === "favorite") return t("One of my favourites")
+    if (rule.kind === "favorite") return t("My preferred seat")
     if (rule.kind === "feature") return featureOf(rule.feature)
 
     return rule.strength === "avoid"
@@ -41,7 +41,7 @@ export const useRuleText = () => {
     if (rule.kind === "zone")
       return isMet ? t("In {zone}", { zone: rule.zone }) : t("Not in {zone}", { zone: rule.zone })
     if (rule.kind === "favorite")
-      return isMet ? t("One of your favourites") : t("Not one of your favourites")
+      return isMet ? t("Your preferred seat") : t("Not your preferred seat")
     if (rule.kind === "feature")
       return isMet
         ? featureOf(rule.feature)

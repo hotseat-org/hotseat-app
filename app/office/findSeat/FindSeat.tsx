@@ -221,7 +221,7 @@ const Finder = ({
         <div className="flex items-center gap-3 rounded-2xl border border-border px-4 py-3">
           <Star className="size-4 shrink-0 text-warning" />
           <span className="min-w-0 flex-1 truncate text-sm font-bold">
-            {t("Your favourite {desk} is free", { desk: deskName(i18n, favorite.desk) })}
+            {t("Your preferred seat {desk} is free", { desk: deskName(i18n, favorite.desk) })}
           </span>
           <button
             type="button"

@@ -168,20 +168,22 @@ const AddRule = ({
 }) => {
   const { t } = useI18n()
   const [kind, setKind] = useState<RuleKind | null>(null)
-  const hasFavoriteRule = rules.some((rule) => rule.kind === "favorite")
+  const favorites = useOfficeStore((state) => state.booking.preferences.favorites)
+  // Your preferred seats: the desks you starred — none starred, nothing to prefer.
+  const canPreferSeat = favorites.length > 0 && !rules.some((rule) => rule.kind === "favorite")
   const kinds: { kind: RuleKind; title: string; detail: string }[] = [
     { kind: "zone", title: t("A zone"), detail: t("Where your team sits") },
     { kind: "colleague", title: t("Near a colleague"), detail: t("Wherever they sit that day") },
     { kind: "feature", title: t("What the desk has"), detail: t("A standing desk…") },
-    ...(hasFavoriteRule
-      ? []
-      : [
+    ...(canPreferSeat
+      ? [
           {
             kind: "favorite" as const,
-            title: t("One of my favourites"),
+            title: t("My preferred seat"),
             detail: t("The desks you starred"),
           },
-        ]),
+        ]
+      : []),
   ]
 
   const back = <BackButton label={t("Back")} onPress={kind ? () => setKind(null) : onBack} />

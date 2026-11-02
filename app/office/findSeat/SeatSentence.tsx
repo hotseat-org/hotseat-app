@@ -148,7 +148,7 @@ export const SeatSentence = ({
             </PillIcon>
           }
         >
-          {t("one of my favourites")}
+          {t("my preferred seat")}
         </Pill>
       )
 
