@@ -13,14 +13,16 @@ interface Props {
  * to and from editing — moments the page can freeze for a second or two. Its
  * ring and glow animate only transforms and opacity, which browsers run off
  * the main thread, so they keep moving through the freeze instead of stalling
- * with it.
+ * with it. While it's up, the scene can't be touched.
  */
 export const SceneLoading = ({ isVisible, label, isFirstLoad }: Props) => (
   <div
     aria-hidden={!isVisible}
     className={clsx(
-      "pointer-events-none absolute inset-0 grid place-items-center transition-opacity duration-300",
-      isVisible ? "opacity-100" : "opacity-0",
+      "absolute inset-0 grid place-items-center transition-opacity duration-300",
+      // While up, it takes the pointer: a zoom made while the scene is busy
+      // would otherwise wait and happen once it's free.
+      isVisible ? "opacity-100" : "pointer-events-none opacity-0",
       isFirstLoad ? "bg-background" : "bg-background/25"
     )}
   >

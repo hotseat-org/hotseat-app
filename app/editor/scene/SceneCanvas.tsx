@@ -73,12 +73,19 @@ const createPointerEvents = (store: Parameters<typeof events>[0]) => ({
   filter: (hits: Intersection[]) => hits.filter((hit) => !isOnHiddenFloor(hit.object)),
 })
 
-/** Frames to draw before the scene counts as ready (the first compiles shaders). */
-const FRAMES_TO_READY = 2
+/**
+ * When the scene counts as ready: once this many frames in a row came quickly
+ * (each within SETTLED_FRAME_MS of the last) — the first ones build materials
+ * and shaders and can block the page for a while; ready means it answers at
+ * once. At the latest after READY_CAP_MS, whatever happens.
+ */
+const SETTLED_FRAMES = 3
+const SETTLED_FRAME_MS = 100
+const READY_CAP_MS = 15_000
 
 /**
- * Tells the page when the scene is really there: a couple of frames drawn
- * after it loaded, or after a mode switch (whose first frames are the slow
+ * Tells the page when the scene is really there: drawn, and drawing smoothly,
+ * after it loaded or after a mode switch (whose first frames are the slow
  * ones). Inside the Suspense boundary, so loading models count too.
  */
 const ReadySignal = ({
@@ -88,18 +95,31 @@ const ReadySignal = ({
   readOnly: boolean
   onReady: (readOnly: boolean) => void
 }) => {
-  const frames = useRef(0)
+  const progress = useRef({ isReady: false, settled: 0, startedAt: 0, lastFrameAt: 0 })
   const invalidate = useThree((state) => state.invalidate)
-  useEffect(() => {
-    frames.current = 0
-    invalidate() // under frameloop="demand", make sure those frames come
-  }, [readOnly, invalidate])
-  useFrame(() => {
-    if (frames.current > FRAMES_TO_READY) return
 
-    frames.current++
-    if (frames.current === FRAMES_TO_READY) onReady(readOnly)
-    else invalidate()
+  useEffect(() => {
+    progress.current = { isReady: false, settled: 0, startedAt: performance.now(), lastFrameAt: 0 }
+    invalidate() // under frameloop="demand", make sure the frames come
+  }, [readOnly, invalidate])
+
+  useFrame(() => {
+    const state = progress.current
+    if (state.isReady) return
+
+    const now = performance.now()
+    const isQuick = state.lastFrameAt > 0 && now - state.lastFrameAt <= SETTLED_FRAME_MS
+    state.settled = isQuick ? state.settled + 1 : 0
+    state.lastFrameAt = now
+
+    if (state.settled >= SETTLED_FRAMES || now - state.startedAt > READY_CAP_MS) {
+      state.isReady = true
+      onReady(readOnly)
+
+      return
+    }
+
+    invalidate()
   })
 
   return null
