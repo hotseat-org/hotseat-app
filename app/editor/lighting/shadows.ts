@@ -1,5 +1,5 @@
-import type { DirectionalLight, LightShadow, PointLight, SpotLight } from "three"
-import { PCFSoftShadowFilter, reference, vec2, vec3 } from "three/tsl"
+import type { DirectionalLight, LightShadow, PointLight, SpotLight, Texture } from "three"
+import { reference, texture, vec2 } from "three/tsl"
 import type { Node } from "three/webgpu"
 
 /**
@@ -17,35 +17,46 @@ const cachedShadows = new Set<LightShadow>()
 
 /** What three hands a shadow filter: the map, where this pixel falls on it, and the light's shadow. */
 interface ShadowFilterInputs {
+  /** The shadow map (a depth texture, though three's typings say a node). */
   depthTexture: Node
   shadowCoord: Node<"vec3">
   shadow: LightShadow
   depthLayer: Node
 }
 
-/** three's smooth 3×3 shadow filter, as three calls it (its typings say otherwise). */
-const filterSmoothly = PCFSoftShadowFilter as unknown as (
-  inputs: ShadowFilterInputs
-) => Node<"float">
+/** Samples of the sun's shadow filter, and how far out they reach (× the shadow's radius, in texels). */
+const SAMPLES = 8
+const SPREAD = 0.85
+/** The samples' spots: a sunflower disk, the same for every pixel (no noise, so no grain). */
+const DISK = Array.from({ length: SAMPLES }, (_, index) => {
+  const distance = Math.sqrt((index + 0.5) / SAMPLES)
+  const angle = index * 2.399963 // the golden angle
+
+  return [Math.cos(angle) * distance, Math.sin(angle) * distance] as const
+})
 
 /**
- * A soft, smooth sun shadow: the smooth 3×3 filter (PCFSoft) at four points
- * spread over the shadow's radius, averaged. three's WebGPU PCF spreads its
- * few samples with per-pixel noise instead — grainy speckle along every edge,
- * worst under thin things (a monitor's stand, a railing, a lamp's pole).
+ * A soft, smooth sun shadow: eight looks into the shadow map on a fixed disk,
+ * each one filtered by the GPU itself (a comparison sampler, filtered
+ * linearly: a smooth 2×2 for free), averaged. Smooth without per-pixel
+ * noise — three's WebGPU PCF spreads its few samples with noise: grainy
+ * speckle along every edge, worst under thin things (a monitor's stand, a
+ * railing, a lamp's pole). It took four of three's smooth 3×3 filters before
+ * (16 gathers a pixel): about as soft, at half the reads into the map — and
+ * every lit pixel on screen pays for them.
  */
-const softShadowFilter = (inputs: ShadowFilterInputs) => {
-  const { shadowCoord, shadow } = inputs
+const softShadowFilter = ({ depthTexture, shadowCoord, shadow }: ShadowFilterInputs) => {
   const reach = reference("radius", "float", shadow)
-    .mul(0.5)
+    .mul(SPREAD)
     .div(reference("mapSize", "vec2", shadow))
-  const at = (x: number, y: number) =>
-    filterSmoothly({
-      ...inputs,
-      shadowCoord: vec3(shadowCoord.xy.add(vec2(x, y).mul(reach)), shadowCoord.z),
-    })
+  const lookAt = ([x, y]: readonly [number, number]) =>
+    texture(depthTexture as unknown as Texture, shadowCoord.xy.add(vec2(x, y).mul(reach))).compare(
+      shadowCoord.z
+    ).x
 
-  return at(-1, -1).add(at(1, -1)).add(at(-1, 1)).add(at(1, 1)).mul(0.25)
+  return DISK.map(lookAt)
+    .reduce((sum, sample) => sum.add(sample))
+    .mul(1 / SAMPLES)
 }
 
 /** A shadow-casting light's ref: its shadow map is cached, drawn afresh when marked dirty. */
