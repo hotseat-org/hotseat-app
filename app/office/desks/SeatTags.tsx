@@ -1,18 +1,47 @@
 import { Html } from "@react-three/drei"
-import { useThree } from "@react-three/fiber"
+import { useFrame, useThree } from "@react-three/fiber"
+import type { OrthographicCamera } from "three"
 import clsx from "clsx"
 import { Pin } from "lucide-react"
 import { heatBarTop } from "../heatmap/heatmap"
 import { deskName, useDeskFilter, useDesksOnDay } from "../booking/useBooking"
-import { useOfficeStore } from "../store"
+import { useOfficeStore, useOfficeStoreApi } from "../store"
 import { useKeptFor, useTeammateColors } from "../teams"
 import { useHoveredPieceActions } from "./useHoveredPiece"
 import { getDeskTagTone } from "./deskTagTone"
+import { getTagDetail, type TagDetail } from "./tagDetail"
 import { personByEmail, usePeople } from "./people"
 import { SeatAvatar } from "./SeatAvatar"
 import { CURSORS } from "~/editor"
 import { TeamDot } from "~/components/teams/teamLook"
+import { getTeamHex } from "~/utils/teams"
 import { useI18n } from "~/i18n/I18nProvider"
+
+/**
+ * Keeps the store's tag detail in step with the camera's zoom: written only
+ * when the level changes, so tags re-render at a threshold, not every frame.
+ */
+const TagDetailTracker = () => {
+  const store = useOfficeStoreApi()
+
+  useFrame(({ camera, size }) => {
+    const orthographic = camera as OrthographicCamera
+    const pixelsPerMetre =
+      (orthographic.zoom * size.height) / Math.max(1e-6, orthographic.top - orthographic.bottom)
+    const { tagDetail, setTagDetail } = store.getState()
+    const next = getTagDetail(pixelsPerMetre, tagDetail)
+    if (next !== tagDetail) setTagDetail(next)
+  })
+
+  return null
+}
+
+/** A tag's size at each level: a booked desk's face (px), and whether its name and number show. */
+const LOOK: Record<TagDetail, { face: number; hasName: boolean; hasLabel: boolean }> = {
+  far: { face: 22, hasName: false, hasLabel: false },
+  middle: { face: 30, hasName: true, hasLabel: false },
+  close: { face: 40, hasName: true, hasLabel: true },
+}
 
 /**
  * View mode: a floating tag over every desk for the shown day: who sits there
@@ -27,6 +56,8 @@ export const SeatTags = () => {
   const teammateColors = useTeammateColors()
   const getKeptFor = useKeptFor()
   const day = useOfficeStore((state) => state.booking.day)
+  const tagDetail = useOfficeStore((state) => state.tagDetail)
+  const spotlitId = useOfficeStore((state) => state.spotlight?.id)
   const { floorDesks: desks } = useDesksOnDay()
   const matchesFilter = useDeskFilter()
   const booking = useOfficeStore((state) => state.booking.enabled)
@@ -67,6 +98,7 @@ export const SeatTags = () => {
 
   return (
     <>
+      <TagDetailTracker />
       {desks.map(({ desk, state }) => {
         if (desk.id === openId) return null
 
@@ -80,6 +112,24 @@ export const SeatTags = () => {
         if (!person && !free && !keptFor && !desk.label) return null
 
         const mine = !!person && person.email === people.me?.email
+        // What you're after shows in full at any distance: your desk, the desk
+        // pointed at or looked for. Teammates, at least a face and a name.
+        const isFocused = mine || desk.id === hoveredId || desk.id === spotlitId
+        const isTeammate = !!person && teammateColors.has(person.email)
+        const getDetail = (): TagDetail => {
+          if (isFocused) return "close"
+          if (isTeammate && tagDetail === "far") return "middle"
+
+          return tagDetail
+        }
+        const detail = getDetail()
+        const look = LOOK[detail]
+        // Further out, a desk with nothing but its number shows nothing.
+        if (detail !== "close" && !person && !free && !keptFor) return null
+
+        // Further out, a free desk (or one kept for a team) is a dot; a booked one, just a face.
+        const isDot = !person && (detail === "far" || (detail === "middle" && free))
+        const hasPill = !isDot && (!person || look.hasName)
 
         return (
           <Html
@@ -131,29 +181,44 @@ export const SeatTags = () => {
                     email={state.email}
                     isMine={mine}
                     teamColor={teammateColors.get(state.email)}
-                    size={40}
+                    size={look.face}
                   />
                 )}
-                <div
-                  className={clsx(
-                    "flex items-center gap-1.5 whitespace-nowrap rounded-full border px-1.5 py-0.5 text-[11px] font-bold shadow-overlay",
-                    getDeskTagTone(mine, free)
-                  )}
-                >
-                  {desk.label && <span className="opacity-80">{desk.label}</span>}
-                  {/* First name only: neighbouring desks' tags would collide. */}
-                  {person && <span>{mine ? t("You") : person.name.split(" ")[0]}</span>}
-                  {state.kind === "resident" && (
-                    <Pin className="size-3 opacity-70" aria-label={t("Permanent desk")} />
-                  )}
-                  {free && <span>{t("Free")}</span>}
-                  {keptFor && (
-                    <span className="flex items-center gap-1">
-                      <TeamDot color={keptFor.color} className="size-2" />
-                      {keptFor.name}
-                    </span>
-                  )}
-                </div>
+                {isDot && (
+                  <span
+                    aria-hidden
+                    className={clsx(
+                      "block rounded-full border-2 border-overlay shadow-overlay",
+                      detail === "far" ? "size-3" : "size-4",
+                      free && "bg-success"
+                    )}
+                    style={keptFor ? { background: getTeamHex(keptFor.color) } : undefined}
+                  />
+                )}
+                {hasPill && (
+                  <div
+                    className={clsx(
+                      "flex items-center gap-1.5 whitespace-nowrap rounded-full border px-1.5 py-0.5 text-[11px] font-bold shadow-overlay",
+                      getDeskTagTone(mine, free)
+                    )}
+                  >
+                    {look.hasLabel && desk.label && (
+                      <span className="opacity-80">{desk.label}</span>
+                    )}
+                    {/* First name only: neighbouring desks' tags would collide. */}
+                    {person && <span>{mine ? t("You") : person.name.split(" ")[0]}</span>}
+                    {look.hasLabel && state.kind === "resident" && (
+                      <Pin className="size-3 opacity-70" aria-label={t("Permanent desk")} />
+                    )}
+                    {free && <span>{t("Free")}</span>}
+                    {keptFor && (
+                      <span className="flex items-center gap-1">
+                        <TeamDot color={keptFor.color} className="size-2" />
+                        {keptFor.name}
+                      </span>
+                    )}
+                  </div>
+                )}
               </span>
             </button>
           </Html>

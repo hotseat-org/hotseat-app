@@ -160,6 +160,8 @@ const createZoneMaterial = ({
  */
 export const ZoneFloor = ({ isEditing, isDark }: { isEditing: boolean; isDark: boolean }) => {
   const objects = useOfficeStore((state) => state.objects)
+  // Viewing close up, the desks' own tags say enough: the names make way.
+  const isNameShown = useOfficeStore((state) => isEditing || state.tagDetail !== "close")
   const areas = useMemo(
     () =>
       composeZoneAreas(objects).map(({ zone, cells, label }) => {
@@ -225,17 +227,19 @@ export const ZoneFloor = ({ isEditing, isDark }: { isEditing: boolean; isDark: b
           >
             <planeGeometry args={[size[0], size[1]]} />
           </mesh>
-          <Html
-            position={[label[0], HEIGHT, label[1]]}
-            center
-            zIndexRange={[5, 0]}
-            style={{ pointerEvents: "none" }}
-          >
-            <span className="flex items-center gap-1.5 whitespace-nowrap rounded-full bg-overlay px-2 py-0.5 text-[11px] font-bold text-foreground shadow-sm">
-              <span className="size-2 rounded-full" style={{ background: zone.color }} />
-              {zone.name}
-            </span>
-          </Html>
+          {isNameShown && (
+            <Html
+              position={[label[0], HEIGHT, label[1]]}
+              center
+              zIndexRange={[5, 0]}
+              style={{ pointerEvents: "none" }}
+            >
+              <span className="flex items-center gap-1.5 whitespace-nowrap rounded-full bg-overlay px-2 py-0.5 text-[11px] font-bold text-foreground shadow-sm">
+                <span className="size-2 rounded-full" style={{ background: zone.color }} />
+                {zone.name}
+              </span>
+            </Html>
+          )}
         </group>
       ))}
     </>

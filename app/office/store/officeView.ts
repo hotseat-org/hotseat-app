@@ -1,3 +1,4 @@
+import type { TagDetail } from "../desks/tagDetail"
 import { showFloorOf, type OfficeGetState, type OfficeSetState } from "./state"
 
 /** What the office shows over the map: the desk filter, the heatmap, a spotlit desk, the way to one. */
@@ -22,6 +23,9 @@ export interface OfficeViewState {
   showRoute: (deskId: string) => void
   setRouteFrom: (from: "desk" | "entrance") => void
   clearRoute: () => void
+  /** How much desk tags show, by how close the view is (see tagDetail). */
+  tagDetail: TagDetail
+  setTagDetail: (detail: TagDetail) => void
 }
 
 export const createOfficeViewState = (
@@ -56,4 +60,6 @@ export const createOfficeViewState = (
       state.route ? { route: { ...state.route, from, nonce: state.route.nonce + 1 } } : {}
     ),
   clearRoute: () => set({ route: null }),
+  tagDetail: "middle",
+  setTagDetail: (tagDetail) => set({ tagDetail }),
 })

@@ -1,5 +1,5 @@
 import clsx from "clsx"
-import { useCallback, useMemo } from "react"
+import { useCallback, useMemo, useRef } from "react"
 import { createPortal } from "react-dom"
 import { personByEmail, usePeople } from "../desks/people"
 import { SeatCardBody, useSeatCard } from "../booking/seatCard"
@@ -9,6 +9,7 @@ import { RoutePath } from "../wayfinding/RoutePath"
 import { useOfficeStore } from "../store"
 import { useHoveredPieceActions } from "../desks/useHoveredPiece"
 import { useKeptFor, useTeammateColors } from "../teams"
+import { getTagDetail, type TagDetail } from "../desks/tagDetail"
 import { useRouteFraming, useSpotlight } from "./useFraming"
 import { DeskTag, HeatTag, Occupant, RouteEnd, SpotlightRing, ZoneName } from "./overlays"
 import { composeOccupants, usePlanDesks, usePlanZoneAreas } from "./drawings"
@@ -23,6 +24,8 @@ const TAG_ZOOM = 22
 const AVATAR_SIZE = 0.8
 /** …this (px) — so who sits where reads even with the whole office in view. */
 const MIN_AVATAR_PX = 30
+/** …or, far out, this (px) for someone who isn't yours to look for (see tagDetail). */
+const FAR_AVATAR_PX = 18
 /** …nor bigger than this (px), so close up it doesn't bury the desk. */
 const MAX_AVATAR_PX = 56
 /** The rings round a desk (the way's end, the spotlight): this much wider than its avatar (px). */
@@ -102,6 +105,15 @@ export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
 
   const openId = card?.seat.id
   const avatarSize = clamp(AVATAR_SIZE * view.zoom, MIN_AVATAR_PX, MAX_AVATAR_PX)
+  // How much tags show at this zoom (held at a threshold's edge, as in 3D).
+  const detailRef = useRef<TagDetail>("middle")
+  detailRef.current = getTagDetail(view.zoom, detailRef.current)
+  const tagDetail = detailRef.current
+  /** Whether a desk is one to show in full: yours, a teammate's, looked for or pointed at. */
+  const isFocused = (deskId: string, email?: string) =>
+    deskId === highlightId ||
+    deskId === hoveredId ||
+    (!!email && (email === people.me?.email || teammateColors.has(email)))
   // The card's desk comes from the store, so it's turned here to match.
   const cardAt = card && turnPoint(card.seat.x, card.seat.z, turn)
   const highlighted = highlightId ? findSpot(highlightId) : undefined
@@ -119,6 +131,12 @@ export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
         <SpotlightRing size={avatarSize + RING_PAD} style={screen(highlighted.x, highlighted.z)} />
       )}
 
+      {/* Zones' names, under the faces (close up, the desks' own tags say enough). */}
+      {tagDetail !== "close" &&
+        zoneAreas.map(({ zone, label }) => (
+          <ZoneName key={zone.name} zone={zone} style={screen(label.x, label.z)} />
+        ))}
+
       {/* Who sits where — HTML, at least MIN_AVATAR_PX at any zoom. */}
       {!heatmap &&
         [...occupants.values()].map((occupant) =>
@@ -129,7 +147,12 @@ export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
               email={occupant.email}
               isMine={occupant.email === people.me?.email}
               teamColor={teammateColors.get(occupant.email)}
-              size={avatarSize}
+              // Far out, faces shrink — but not those you'd look for.
+              size={
+                tagDetail === "far" && !isFocused(occupant.id, occupant.email)
+                  ? clamp(AVATAR_SIZE * view.zoom, FAR_AVATAR_PX, MIN_AVATAR_PX)
+                  : avatarSize
+              }
               style={screen(occupant.x, occupant.z)}
               onClick={(event) => {
                 event.stopPropagation()
@@ -153,10 +176,6 @@ export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
           ) : null
         )}
 
-      {zoneAreas.map(({ zone, label }) => (
-        <ZoneName key={zone.name} zone={zone} style={screen(label.x, label.z)} />
-      ))}
-
       {/* Name tags — HTML, so they stay legible at any zoom. */}
       {!heatmap &&
         isTagsLayerOn &&
@@ -173,6 +192,10 @@ export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
           if (!person && !desk.label) return null
 
           const mine = !!person && person.email === people.me?.email
+          // Desk numbers show close up only (or on a desk you'd look for).
+          const isLabelShown = tagDetail === "close" || isFocused(desk.id, person?.email)
+          if (!person && !isLabelShown) return null
+
           // A booked desk's tag sits just above its avatar.
           const occupant = occupants.get(desk.id)
           const at = occupant ? screen(occupant.x, occupant.z) : screen(desk.x, desk.z - 0.45)
@@ -202,7 +225,7 @@ export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
               >
                 <DeskTag
                   person={person}
-                  label={desk.label}
+                  label={isLabelShown ? desk.label : undefined}
                   mine={mine}
                   free={free}
                   resident={state.kind === "resident"}
