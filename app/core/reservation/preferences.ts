@@ -72,6 +72,8 @@ export const getDeskPreferences =
       waiting: line.filter((e) => e.userEmail === userEmail).map((e) => e.date),
       waitingByDay,
       seatRules: parseSeatRules(seatRules),
+      /** Whether you ever chose what to look for here (none: a default may stand in). */
+      hasSavedSeatRules: seatRules !== null,
     }
   }
 

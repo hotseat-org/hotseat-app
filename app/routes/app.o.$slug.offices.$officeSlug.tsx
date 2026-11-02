@@ -19,6 +19,7 @@ import { loadOrganization } from "~/utils/loader-helpers/loadOrganization"
 import { requireProfile } from "~/utils/loader-helpers/requireProfile"
 import { NOTIFICATION_ACTIONS, revalidateOn } from "~/utils/revalidation"
 import { layoutSchema, parseLayout } from "~/office/schema"
+import { getDefaultSeatRules } from "~/office/findSeat/seatRulesSchema"
 import { isOfficePanel } from "~/office/useOfficePanel"
 import { EditorBoundary } from "~/editor"
 import { type Kit, type KitLibrary, type Layout } from "~/editor/core"
@@ -132,6 +133,11 @@ export const loader = async (args: LoaderFunctionArgs) => {
       // Who sits together, and where here.
       core.team.listForOffice({ organizationSlug, officeSlug: office.slug }),
     ])
+  // In a team, and never chose what to look for here: to sit with them.
+  const { hasSavedSeatRules, ...desks } = preferences
+  const deskPreferences = hasSavedSeatRules
+    ? desks
+    : { ...desks, seatRules: getDefaultSeatRules(teams, profile.userEmail) }
   // When it's open for booking: its weekdays, less its closed days (and why).
   const opening: OfficeOpening = {
     openWeekdays: office.openWeekdays,
@@ -159,7 +165,17 @@ export const loader = async (args: LoaderFunctionArgs) => {
     // Only admins edit the layout (it also sets who has a permanent desk).
     canEdit: isAdmin,
     kits,
-    booking: { today, day, from, lastDay, reservations, releases, preferences, opening, teams },
+    booking: {
+      today,
+      day,
+      from,
+      lastDay,
+      reservations,
+      releases,
+      preferences: deskPreferences,
+      opening,
+      teams,
+    },
   }
 }
 

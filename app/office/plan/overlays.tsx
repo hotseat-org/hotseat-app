@@ -18,6 +18,7 @@ export const Occupant = ({
   person,
   email,
   isMine,
+  teamColor,
   size,
   style,
   onClick,
@@ -25,6 +26,8 @@ export const Occupant = ({
   person: Person | null
   email: string
   isMine: boolean
+  /** A teammate: your team's colour. */
+  teamColor?: string
   size: number
   style: CSSProperties
   onClick: (event: React.MouseEvent) => void
@@ -47,7 +50,7 @@ export const Occupant = ({
       className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full before:absolute before:-inset-2 before:rounded-full before:content-['']"
       style={style}
     >
-      <SeatAvatar person={person} email={email} isMine={isMine} size={size} />
+      <SeatAvatar person={person} email={email} isMine={isMine} teamColor={teamColor} size={size} />
     </button>
   )
 }

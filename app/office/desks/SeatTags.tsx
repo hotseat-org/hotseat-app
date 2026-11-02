@@ -5,6 +5,7 @@ import { Pin } from "lucide-react"
 import { heatBarTop } from "../heatmap/heatmap"
 import { deskName, useDeskFilter, useDesksOnDay } from "../booking/useBooking"
 import { useOfficeStore } from "../store"
+import { useTeammateColors } from "../teams"
 import { useHoveredPieceActions } from "./useHoveredPiece"
 import { getDeskTagTone } from "./deskTagTone"
 import { personByEmail, usePeople } from "./people"
@@ -22,6 +23,7 @@ export const SeatTags = () => {
   // Bridged into the canvas; the tags' text is made here, outside <Html>'s own root.
   const { t } = useI18n()
   const people = usePeople()
+  const teammateColors = useTeammateColors()
   const { floorDesks: desks } = useDesksOnDay()
   const matchesFilter = useDeskFilter()
   const booking = useOfficeStore((state) => state.booking.enabled)
@@ -118,7 +120,13 @@ export const SeatTags = () => {
                 )}
               >
                 {person && state.kind !== "free" && (
-                  <SeatAvatar person={person} email={state.email} isMine={mine} size={40} />
+                  <SeatAvatar
+                    person={person}
+                    email={state.email}
+                    isMine={mine}
+                    teamColor={teammateColors.get(state.email)}
+                    size={40}
+                  />
                 )}
                 <div
                   className={clsx(

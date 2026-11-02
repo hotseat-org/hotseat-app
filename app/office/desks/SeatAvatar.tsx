@@ -5,17 +5,21 @@ import { colorForEmail } from "~/components/office/shell-ui"
 
 /**
  * Who sits at a booked desk: their photo (or initials on their colour) in a
- * ring — yours in the accent. The same marker on the plan and in 3D.
+ * ring — yours in the accent, a teammate's in your team's colour. The same
+ * marker on the plan and in 3D.
  */
 export const SeatAvatar = ({
   person,
   email,
   isMine,
+  teamColor,
   size,
 }: {
   person: Person | null
   email: string
   isMine: boolean
+  /** A teammate: your team's colour (their ring). */
+  teamColor?: string
   /** Diameter (px). */
   size: number
 }) => (
@@ -24,7 +28,12 @@ export const SeatAvatar = ({
       "shrink-0 rounded-full shadow-overlay ring-[2.5px]",
       isMine ? "ring-accent" : "ring-overlay"
     )}
-    style={{ width: size, height: size }}
+    style={{
+      width: size,
+      height: size,
+      // Round the overlay's ring: still clear on a dark floor.
+      ...(teamColor && !isMine && { outline: `2.5px solid ${teamColor}`, outlineOffset: 2.5 }),
+    }}
   >
     <Avatar.Image src={person?.avatarUrl} />
     <Avatar.Fallback

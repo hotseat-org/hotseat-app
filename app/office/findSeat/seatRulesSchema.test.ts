@@ -1,7 +1,7 @@
 /// <reference types="bun" />
 import { describe, expect, test } from "bun:test"
 import type { SeatRule } from "./matching"
-import { MAX_SEAT_RULES, parseSeatRules } from "./seatRulesSchema"
+import { MAX_SEAT_RULES, getDefaultSeatRules, parseSeatRules } from "./seatRulesSchema"
 
 describe("seat rules as kept", () => {
   test("valid ones are kept as they are", () => {
@@ -51,5 +51,23 @@ describe("seat rules as kept", () => {
 
     expect(parseSeatRules({ kind: "zone" })).toEqual([])
     expect(parseSeatRules(many)).toHaveLength(MAX_SEAT_RULES)
+  })
+})
+
+describe("the rules before anyone chooses", () => {
+  const teams = [
+    { id: "guild", members: ["me@example.com"], zone: null },
+    { id: "design", members: ["me@example.com", "eva@example.com"], zone: "Design corner" },
+    { id: "sales", members: ["jan@example.com"], zone: "Sales" },
+  ]
+
+  test("in a team: to sit with it — the one with a zone here first", () => {
+    expect(getDefaultSeatRules(teams, "me@example.com")).toEqual([
+      { kind: "team", teamId: "design", strength: "prefer" },
+    ])
+  })
+
+  test("in no team: none", () => {
+    expect(getDefaultSeatRules(teams, "nobody@example.com")).toEqual([])
   })
 })

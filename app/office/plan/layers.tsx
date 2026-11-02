@@ -8,6 +8,7 @@ import { useRoute } from "../wayfinding/wayfinding"
 import { RoutePath } from "../wayfinding/RoutePath"
 import { useOfficeStore } from "../store"
 import { useHoveredPieceActions } from "../desks/useHoveredPiece"
+import { useTeammateColors } from "../teams"
 import { useRouteFraming, useSpotlight } from "./useFraming"
 import { DeskTag, HeatTag, Occupant, RouteEnd, SpotlightRing, ZoneName } from "./overlays"
 import { composeOccupants, usePlanDesks, usePlanZoneAreas } from "./drawings"
@@ -69,6 +70,7 @@ export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
   )
   const matchesFilter = useDeskFilter()
   const people = usePeople()
+  const teammateColors = useTeammateColors()
   const card = useSeatCard()
   const desks = usePlanDesks()
   const occupants = useMemo(() => composeOccupants(objects, desks), [objects, desks])
@@ -124,6 +126,7 @@ export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
               person={personByEmail(people, occupant.email)}
               email={occupant.email}
               isMine={occupant.email === people.me?.email}
+              teamColor={teammateColors.get(occupant.email)}
               size={avatarSize}
               style={screen(occupant.x, occupant.z)}
               onClick={(event) => {

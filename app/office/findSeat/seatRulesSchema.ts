@@ -38,6 +38,20 @@ export const seatRuleSchema: z.ZodType<SeatRule> = z.preprocess(
   ])
 ) as unknown as z.ZodType<SeatRule>
 
+/**
+ * What someone in a team looks for before they ever choose: to sit with their
+ * team — the one with a zone in this office, if any, else the first.
+ */
+export const getDefaultSeatRules = (
+  teams: { id: string; members: string[]; zone: string | null }[],
+  email: string
+): SeatRule[] => {
+  const mine = teams.filter((team) => team.members.includes(email))
+  const team = mine.find((candidate) => candidate.zone) ?? mine[0]
+
+  return team ? [{ kind: "team", teamId: team.id, strength: "prefer" }] : []
+}
+
 /** Someone's rules as kept: the valid ones, at most MAX_SEAT_RULES (none: no rules). */
 export const parseSeatRules = (value: unknown): SeatRule[] =>
   Array.isArray(value)
