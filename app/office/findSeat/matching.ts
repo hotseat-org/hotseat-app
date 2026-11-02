@@ -1,4 +1,12 @@
-import { addDays, deskState, isWeekend, type BookingsByDay, type Day } from "~/utils/booking"
+import {
+  addDays,
+  deskState,
+  isOpenDay,
+  isWeekend,
+  type BookingsByDay,
+  type Day,
+  type OfficeOpening,
+} from "~/utils/booking"
 
 /**
  * Finding someone a seat by what they'd like: each preference is a rule with
@@ -53,6 +61,8 @@ export interface MatchContext {
   me: string
   favorites: string[]
   rules: SeatRule[]
+  /** When the office is open: other days aren't offered. */
+  opening: OfficeOpening
 }
 
 /** Near enough to a colleague (m, on the same floor): a desk or two away. */
@@ -156,7 +166,7 @@ export const matchAnyDay = (
   const found: DayMatches[] = []
 
   for (let day = from; day <= to && found.length < limit; day = addDays(day, 1)) {
-    if (isWeekend(day)) continue
+    if (isWeekend(day) || !isOpenDay(day, context.opening)) continue
 
     const result = matchDay(context, day)
     if (result.matches.length > 0) found.push(result)

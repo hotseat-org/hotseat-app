@@ -1413,4 +1413,38 @@ export const cs: Messages = {
     many: "Už v organizaci bylo: {n}.",
     other: "Už v organizaci bylo: {n}.",
   },
+  Opening: "Otevírací dny",
+  "The days people can book, and days the office is closed.":
+    "Dny, kdy lze rezervovat, a dny, kdy je kancelář zavřená.",
+  "Open for booking": "Otevřeno pro rezervace",
+  "People can book desks on these days of the week.": "V tyto dny v týdnu lze rezervovat stoly.",
+  "Bookings already made on days you close are cancelled.":
+    "Rezervace na dny, které zavřete, budou zrušeny.",
+  "Closed days": "Zavřené dny",
+  "Holidays and other days nobody can book. Bookings already made for them are cancelled, and their owners told.":
+    "Svátky a další dny, kdy nelze rezervovat. Už vytvořené rezervace se zruší a jejich majitelé dostanou zprávu.",
+  From: "Od",
+  To: "Do",
+  "Reason (optional)": "Důvod (nepovinné)",
+  "e.g. Christmas": "např. Vánoce",
+  "No closed days ahead.": "Žádné zavřené dny v nejbližší době.",
+  "Open on {day}": "Otevřít {day}",
+  "{office} is closed on {days} ({reason}): your booking was cancelled.":
+    "{office} je {days} zavřená ({reason}): vaše rezervace byla zrušena.",
+  "{office} is closed on {days}: your booking was cancelled.":
+    "{office} je {days} zavřená: vaše rezervace byla zrušena.",
+  "{office} is now closed on {days}: your booking was cancelled.":
+    "{office} je nově {days} zavřená: vaše rezervace byla zrušena.",
+  "Pick between 1 and 366 days.": "Vyberte 1 až 366 dní.",
+  "Days in the past can't be closed.": "Dny v minulosti nelze zavřít.",
+  "Keep at least one day open.": "Nechte otevřený aspoň jeden den.",
+  "The office is closed on {day}.": "Kancelář je {day} zavřená.",
+  Closed: "Zavřeno",
+  "The office is closed on {day} ({reason}).": "Kancelář je {day} zavřená ({reason}).",
+  "{n} booking was cancelled; its owner was told.": {
+    one: "Zrušená rezervace: {n}. Majitel dostal zprávu.",
+    few: "Zrušené rezervace: {n}. Majitelé dostali zprávu.",
+    many: "Zrušených rezervací: {n}. Majitelé dostali zprávu.",
+    other: "Zrušených rezervací: {n}. Majitelé dostali zprávu.",
+  },
 }

@@ -40,6 +40,7 @@ import {
   weekStart,
   type Day,
   type DeskDays,
+  type OfficeOpening,
 } from "~/utils/booking"
 
 // three / R3F are browser-only — keep them out of the server bundle.
@@ -107,7 +108,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const asked = new URL(args.request.url).searchParams.get("day")
   const day: Day = isDay(asked) && asked >= from && asked <= lastDay ? asked : today
   const isAdmin = profile.role === Role.ADMIN
-  const [{ reservations, releases }, occupancy, preferences, kits] = await Promise.all([
+  const [{ reservations, releases }, occupancy, preferences, kits, closedDays] = await Promise.all([
     core.reservation.listForOffice({
       organizationSlug,
       officeSlug: office.slug,
@@ -125,7 +126,14 @@ export const loader = async (args: LoaderFunctionArgs) => {
     }),
     // Saved rooms are for editing the layout: admins only.
     isAdmin ? core.office.listKits(organizationSlug) : [],
+    // Holidays and other closed days ahead.
+    core.office.closedDays({ organizationSlug, officeSlug: office.slug }),
   ])
+  // When it's open for booking: its weekdays, less its closed days (and why).
+  const opening: OfficeOpening = {
+    openWeekdays: office.openWeekdays,
+    closedDays: Object.fromEntries(closedDays.map((closed) => [closed.date, closed.reason ?? ""])),
+  }
 
   return {
     initialLayout: parseLayout(office.layout),
@@ -148,7 +156,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
     // Only admins edit the layout (it also sets who has a permanent desk).
     canEdit: isAdmin,
     kits,
-    booking: { today, day, from, lastDay, reservations, releases, preferences },
+    booking: { today, day, from, lastDay, reservations, releases, preferences, opening },
   }
 }
 

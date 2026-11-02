@@ -2,7 +2,13 @@ import { useEffect, useLayoutEffect } from "react"
 import type { People } from "../desks/people"
 import type { DeskPreferences, PreferenceChange } from "../store"
 import { useOfficeStore, useOfficeStoreApi } from "../store"
-import { groupBookings, type BookingRow, type Day, type DeskDays } from "~/utils/booking"
+import {
+  groupBookings,
+  type BookingRow,
+  type Day,
+  type DeskDays,
+  type OfficeOpening,
+} from "~/utils/booking"
 
 /** Desk booking data + actions for a real office, from the route. */
 export interface EditorBooking {
@@ -11,6 +17,8 @@ export interface EditorBooking {
   day: Day
   from: Day
   lastDay: Day
+  /** When the office is open for booking. */
+  opening: OfficeOpening
   reservations: BookingRow[]
   /** Days permanent residents gave their desks up. */
   releases: BookingRow[]
@@ -50,6 +58,10 @@ export const useBookingSync = (booking: EditorBooking | undefined, people: Peopl
   useLayoutEffect(() => {
     if (preferences) store.getState().setBooking({ preferences })
   }, [preferences, store])
+  const opening = booking?.opening
+  useLayoutEffect(() => {
+    if (opening) store.getState().setBooking({ opening })
+  }, [opening, store])
   useLayoutEffect(() => {
     if (onPreference) store.getState().setBooking({ setPreference: onPreference })
   }, [onPreference, store])

@@ -4,7 +4,7 @@ import { deskName } from "../useBooking"
 import { DESK_FEATURES } from "../../desks/deskFeatures"
 import { useOfficeStore } from "../../store"
 import type { BodyProps } from "./SeatCardBody"
-import { bookingPresets, deskState, type BookingPreset, type Day } from "~/utils/booking"
+import { bookingPresets, deskState, isOpenDay, type BookingPreset, type Day } from "~/utils/booking"
 import { useI18n } from "~/i18n/I18nProvider"
 
 /** Must match the `seat-pop-out` animation duration in tailwind.css. */
@@ -61,7 +61,7 @@ export const useSeatCard = () => {
   if (!card || !seat) return null
 
   const me = booking.me
-  const { day, today, lastDay, byDay, released } = booking
+  const { day, today, lastDay, byDay, released, opening } = booking
   const getState = () => {
     if (booking.enabled) return deskState(seat, day, byDay, released)
     if (seat.assignee) return { kind: "resident", email: seat.assignee } as const
@@ -83,7 +83,7 @@ export const useSeatCard = () => {
   if (isMyDesk && !past) {
     if (isGivenUp(day)) canReclaim = state.kind === "free"
     else {
-      const presets = bookingPresets(day, today, lastDay)
+      const presets = bookingPresets(day, today, lastDay, opening)
       releaseChoices = [
         { label: t("Just {day}", { day: format.short(day) }), days: presets.one },
         {
@@ -104,6 +104,12 @@ export const useSeatCard = () => {
       note = t("You gave {day} up, and it's been booked.", { day: format.short(day) })
     else if (state.kind === "free")
       note = t("You gave {day} up — others can book it.", { day: format.short(day) })
+  } else if (booking.enabled && !past && !isOpenDay(day, opening)) {
+    // The office is closed that day: nothing to book (other days still are, from the day picker).
+    const reason = opening.closedDays[day]
+    note = reason
+      ? t("The office is closed on {day} ({reason}).", { day: format.short(day), reason })
+      : t("The office is closed on {day}.", { day: format.short(day) })
   } else if (booking.enabled && me && state.kind !== "resident" && !past && !mine) {
     if (seat.assignee)
       note = t("{name}'s permanent desk — free on the days they're away.", {
@@ -114,7 +120,7 @@ export const useSeatCard = () => {
         desk: deskName(i18n, myResidentDesk),
       })
     else {
-      const presets = bookingPresets(day, today, lastDay)
+      const presets = bookingPresets(day, today, lastDay, opening)
       const describe = (days: Day[]) => {
         const free = days.filter((date) => deskState(seat, date, byDay, released).kind === "free")
         const taken = days.flatMap((date) => {

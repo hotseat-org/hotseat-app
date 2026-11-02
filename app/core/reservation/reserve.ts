@@ -31,7 +31,10 @@ export const reserveDesk =
   async (args: ReserveArgs): Promise<ReserveResult> => {
     const { mainRepository } = context
     const { organizationSlug, officeSlug, deskId, userEmail } = args
-    const { targetEmail, today, lastDay, desks, isReleased } = await bookingContext(context, args)
+    const { targetEmail, today, lastDay, desks, isReleased, isOpen } = await bookingContext(
+      context,
+      args
+    )
 
     const dates = [...new Set(args.dates)].sort()
     if (!dates.length || dates.length > MAX_DAYS_PER_REQUEST || !dates.every(isDay))
@@ -39,6 +42,9 @@ export const reserveDesk =
     if (dates[0] < today) throw new ReservationError("Days in the past can't be booked.")
     if (dates[dates.length - 1] > lastDay)
       throw new ReservationError("Desks can be booked up to {day}.", { day: { day: lastDay } })
+    const closed = dates.find((day) => !isOpen(day))
+    if (closed)
+      throw new ReservationError("The office is closed on {day}.", { day: { day: closed } })
 
     const desk = desks.find((d) => d.id === deskId)
     if (!desk) throw new ReservationError("This desk no longer exists.")

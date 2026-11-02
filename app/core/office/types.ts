@@ -12,4 +12,6 @@ export interface Office {
   timezone: string
   /** How many days ahead people can book. */
   bookingWindowDays: number
+  /** The weekdays it's open for booking (ISO: 1 = Monday … 7 = Sunday). */
+  openWeekdays: number[]
 }

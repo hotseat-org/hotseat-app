@@ -5,7 +5,7 @@ import { requireProfile } from "~/utils/loader-helpers/requireProfile"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { revalidateOn } from "~/utils/revalidation"
 
-const SECTIONS = ["general", "danger"]
+const SECTIONS = ["general", "opening", "danger"]
 
 /**
  * Office settings, as a modal over the office (the parent route renders the

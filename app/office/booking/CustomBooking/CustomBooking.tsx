@@ -27,6 +27,7 @@ import { useAllPieces } from "~/editor"
 import {
   addDays,
   deskState,
+  isOpenDay,
   isWeekend,
   weekNumber,
   weekStart,
@@ -91,13 +92,16 @@ const CustomBookingBody = ({
   const people = usePeople()
   const i18n = useI18n()
   const { t, tn, format } = i18n
-  const { me, today, lastDay, byDay, released } = booking
+  const { me, today, lastDay, byDay, released, opening } = booking
 
   const weeks = useMemo(() => {
     const desks = objects.filter((object) => isSeatable(object.type))
     const describe = (day: Day): Cell => {
       if (day < today) return { kind: "closed", day, label: "" }
       if (day > lastDay) return { kind: "closed", day, label: t("Not open") }
+      // The office closed that day: a holiday says which.
+      if (!isOpenDay(day, opening))
+        return { kind: "closed", day, label: opening.closedDays[day] || t("Closed") }
 
       const state = deskState(desk, day, byDay, released)
       if (state.kind !== "free" && state.email === me) return { kind: "yours", day }
@@ -128,7 +132,7 @@ const CustomBookingBody = ({
       })
 
     return generatedWeeks
-  }, [objects, desk, today, lastDay, byDay, released, me, people, t])
+  }, [objects, desk, today, lastDay, opening, byDay, released, me, people, t])
 
   const cells = weeks.flatMap((week) => week.cells)
   // Days you can pick: free ones, and taken ones with a desk to move to.

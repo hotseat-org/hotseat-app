@@ -12,6 +12,7 @@ import {
   setSeatRules,
   setUsualDesk,
 } from "./methods/desk-preference"
+import { createClosedDays, deleteClosedDays, findClosedDays } from "./methods/closed-day"
 import { createDemoCompany, deleteStaleDemoCompanies } from "./methods/demo"
 import {
   createDeskReleases,
@@ -126,6 +127,7 @@ export const createMainMysqlRepository = (): MainRepository => {
       markRead: markNotificationsRead,
     },
     demo: { create: createDemoCompany, deleteStale: deleteStaleDemoCompanies },
+    closedDay: { findMany: findClosedDays, create: createClosedDays, delete: deleteClosedDays },
     reservation: {
       findMany: findReservations,
       book: bookReservations,

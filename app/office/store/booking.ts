@@ -1,6 +1,12 @@
 import type { SeatRule } from "../findSeat/matching"
 import { type OfficeGetState, type OfficeSetState } from "./state"
-import type { BookingsByDay, Day, DeskDays } from "~/utils/booking"
+import {
+  ALL_WEEKDAYS,
+  type BookingsByDay,
+  type Day,
+  type DeskDays,
+  type OfficeOpening,
+} from "~/utils/booking"
 
 /** Your desk preferences in this office (see core/reservation/preferences). */
 export interface DeskPreferences {
@@ -44,6 +50,8 @@ export interface Booking {
   /** First and last day with data (bookable up to `lastDay`). */
   from: Day
   lastDay: Day
+  /** When the office is open for booking: its weekdays, less closed days. */
+  opening: OfficeOpening
   byDay: BookingsByDay
   /** Permanent desks their resident gave up, by day (day → desk → resident). */
   released: BookingsByDay
@@ -67,6 +75,7 @@ const NO_BOOKING: Booking = {
   day: "",
   from: "",
   lastDay: "",
+  opening: { openWeekdays: ALL_WEEKDAYS, closedDays: {} },
   byDay: {},
   released: {},
   pending: false,

@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   Building,
   Building2,
+  CalendarDays,
   Mail,
   Palette,
   PawPrint,
@@ -18,6 +19,7 @@ import { OrgInvitations } from "./panels/OrgInvitations"
 import { OrgMembers } from "./panels/OrgMembers"
 import { OrgOffices } from "./panels/OrgOffices"
 import { OfficeGeneral, useOfficeData } from "./panels/OfficeGeneral"
+import { OfficeOpening } from "./panels/OfficeOpening"
 import { OfficeDanger } from "./panels/OfficeDanger"
 import { UserDanger } from "./panels/UserDanger"
 import { UserInvitations } from "./panels/UserInvitations"
@@ -91,11 +93,18 @@ const officeLinks: SettingsLink[] = [
     icon: SlidersHorizontal,
     description: msg("Name, cover and a quick look at this office."),
   },
+  {
+    id: "opening",
+    label: msg("Opening"),
+    icon: CalendarDays,
+    description: msg("The days people can book, and days the office is closed."),
+  },
   { id: "danger", label: msg("Danger zone"), icon: AlertTriangle, danger: true },
 ]
 
 const officePanels: Record<string, ReactNode> = {
   general: <OfficeGeneral />,
+  opening: <OfficeOpening />,
   danger: <OfficeDanger />,
 }
 

@@ -125,6 +125,9 @@ model Office {
   // can book up to `bookingWindowDays` ahead.
   timezone          String               @default("Europe/Prague")
   bookingWindowDays Int                  @default(14)
+  // The weekdays it's open for booking (ISO: 1 = Monday … 7 = Sunday).
+  openWeekdays      Int[]                @default([1, 2, 3, 4, 5, 6, 7])
+  closedDays        OfficeClosedDay[]
   reservations      Reservation[]
   deskReleases      DeskRelease[]
   favoriteDesks     FavoriteDesk[]
@@ -232,6 +235,22 @@ model DeskRelease {
   createdAt DateTime @default(now())
 
   @@id([organizationSlug, officeSlug, deskId, date])
+}
+
+// A day an office is closed (a holiday, a move): nobody books it, and
+// bookings made before it was closed are cancelled.
+model OfficeClosedDay {
+  organizationSlug String
+  officeSlug       String
+  office           Office   @relation(fields: [organizationSlug, officeSlug], references: [organizationSlug, slug], onDelete: Cascade, onUpdate: Cascade)
+  // The office's local calendar day.
+  date             DateTime @db.Date
+  // Why ("Christmas"), shown where the day is.
+  reason           String?
+
+  createdAt DateTime @default(now())
+
+  @@id([organizationSlug, officeSlug, date])
 }
 
 // A desk someone likes: shown first to them, and tried first when a desk is

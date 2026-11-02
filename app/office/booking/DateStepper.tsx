@@ -4,7 +4,7 @@ import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react"
 import { useMemo, useState } from "react"
 import { isSeatable } from "../catalog"
 import { useOfficeStore } from "../store"
-import { addDays, weekStart, type Day } from "~/utils/booking"
+import { isOpenDay, addDays, weekStart, type Day } from "~/utils/booking"
 import { useI18n } from "~/i18n/I18nProvider"
 import { useAllPieces } from "~/editor"
 
@@ -114,6 +114,7 @@ export const MonthCalendar = ({
   const day = useOfficeStore((state) => state.booking.day)
   const today = useOfficeStore((state) => state.booking.today)
   const from = useOfficeStore((state) => state.booking.from)
+  const opening = useOfficeStore((state) => state.booking.opening)
   const lastDay = useOfficeStore((state) => state.booking.lastDay)
   const byDay = useOfficeStore((state) => state.booking.byDay)
   const objects = useAllPieces()
@@ -182,6 +183,9 @@ export const MonthCalendar = ({
           const enabled = inMonth && cellDay >= from && cellDay <= lastDay
           const selected = cellDay === day
           const isMine = enabled && mine(cellDay)
+          // Closed (a holiday, a weekend it doesn't open): shown, struck through.
+          const isClosed = enabled && !isOpenDay(cellDay, opening)
+          const closedReason = opening.closedDays[cellDay]
 
           return (
             <button
@@ -189,13 +193,19 @@ export const MonthCalendar = ({
               type="button"
               disabled={!enabled}
               onClick={() => onPick(cellDay)}
-              aria-label={format.long(cellDay)}
+              aria-label={
+                isClosed
+                  ? `${format.long(cellDay)} · ${closedReason || t("Closed")}`
+                  : format.long(cellDay)
+              }
+              title={isClosed ? closedReason || t("Closed") : undefined}
               aria-pressed={selected}
               className={clsx(
                 "flex h-10 flex-col items-center justify-center gap-1 rounded-lg text-[0.8rem] font-extrabold tabular-nums outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus",
                 !inMonth && "invisible",
                 getDayTone(selected, enabled),
-                !selected && cellDay === today && "text-accent"
+                !selected && cellDay === today && "text-accent",
+                isClosed && !selected && "text-muted line-through decoration-2"
               )}
             >
               {Number(cellDay.slice(8))}

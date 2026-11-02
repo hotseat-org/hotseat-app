@@ -5,7 +5,7 @@ import { useOfficeStore, useOfficeStoreApi } from "../store"
 import { matchAnyDay, matchDay, type MatchContext, type MatchDesk, type SeatRule } from "./matching"
 import { parseSeatRules } from "./seatRulesSchema"
 import { useAllPieces } from "~/editor"
-import { addDays, isWeekend, type Day } from "~/utils/booking"
+import { addDays, isOpenDay, isWeekend, type Day, type OfficeOpening } from "~/utils/booking"
 
 /** Days shown to pick from (working days, from today). */
 const DAY_CHOICES = 5
@@ -57,10 +57,10 @@ export const useSavedRules = () => {
 }
 
 /** The next working days you can book, from today. */
-export const getDayChoices = (today: Day, lastDay: Day) => {
+export const getDayChoices = (today: Day, lastDay: Day, opening: OfficeOpening) => {
   const days: Day[] = []
   for (let day = today; day <= lastDay && days.length < DAY_CHOICES; day = addDays(day, 1))
-    if (!isWeekend(day)) days.push(day)
+    if (!isWeekend(day) && isOpenDay(day, opening)) days.push(day)
 
   return days
 }
@@ -78,26 +78,27 @@ export const useSeatMatches = (rules: SeatRule[]) => {
   const today = useOfficeStore((state) => state.booking.today)
   const lastDay = useOfficeStore((state) => state.booking.lastDay)
   const favorites = useOfficeStore((state) => state.booking.preferences.favorites)
+  const opening = useOfficeStore((state) => state.booking.opening)
 
   const context: MatchContext | null = useMemo(() => {
     if (!me) return null
 
     const desks: MatchDesk[] = pieces.filter((piece) => isSeatable(piece.type))
 
-    return { desks, bookings, released, me, favorites, rules }
-  }, [pieces, bookings, released, me, favorites, rules])
+    return { desks, bookings, released, me, favorites, rules, opening }
+  }, [pieces, bookings, released, me, favorites, rules, opening])
 
   const isResident = !!me && pieces.some((piece) => piece.assignee === me)
 
   return useMemo(
     () => ({
       isResident,
-      dayChoices: getDayChoices(today, lastDay),
+      dayChoices: getDayChoices(today, lastDay, opening),
       onDay: (day: Day) => (context ? matchDay(context, day) : null),
       anyDay: (limit = ANY_DAY_LIMIT) =>
         context ? matchAnyDay(context, { from: today, to: lastDay, limit }) : [],
     }),
-    [context, isResident, today, lastDay]
+    [context, isResident, today, lastDay, opening]
   )
 }
 

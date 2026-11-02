@@ -1,6 +1,7 @@
 /// <reference types="bun" />
 import { describe, expect, test } from "bun:test"
 import { matchAnyDay, matchDay, type MatchContext, type MatchDesk } from "./matching"
+import { ALL_WEEKDAYS } from "~/utils/booking"
 
 const desk = (id: string, x: number, extra: Partial<MatchDesk> = {}): MatchDesk => ({
   id,
@@ -25,6 +26,7 @@ const createContext = (overrides: Partial<MatchContext> = {}): MatchContext => (
   me: "me@example.com",
   favorites: [],
   rules: [],
+  opening: { openWeekdays: ALL_WEEKDAYS, closedDays: {} },
   ...overrides,
 })
 
@@ -82,6 +84,15 @@ describe("finding a seat", () => {
     const context = createContext({ bookings: { [MONDAY]: { "D-2": "me@example.com" } } })
 
     expect(matchDay(context, MONDAY)).toMatchObject({ matches: [], current: { id: "D-2" } })
+  })
+
+  test("any day: days the office is closed aren't offered", () => {
+    const context = createContext({
+      opening: { openWeekdays: ALL_WEEKDAYS, closedDays: { [MONDAY]: "Holiday" } },
+    })
+    const found = matchAnyDay(context, { from: MONDAY, to: TUESDAY, limit: 5 })
+
+    expect(found.map((result) => result.day)).toEqual([TUESDAY])
   })
 
   test("any day: the earliest working days with a desk that fits", () => {

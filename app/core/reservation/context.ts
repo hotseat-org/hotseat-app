@@ -2,7 +2,7 @@ import type { CoreContext } from "../types"
 import { parseLayout } from "~/office/schema"
 import { isSeatable } from "~/office/catalog"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
-import { addDays, todayIn } from "~/utils/booking"
+import { addDays, isOpenDay, todayIn, type Day, type OfficeOpening } from "~/utils/booking"
 
 /**
  * Shared checks for booking calls: the caller is a member, the office exists,
@@ -43,5 +43,18 @@ export const bookingContext = async (
   const released = new Set(releases.map((r) => `${r.deskId}|${r.date}`))
   const isReleased = (deskId: string, day: string) => released.has(`${deskId}|${day}`)
 
-  return { profile, office, targetEmail, today, lastDay, desks, isReleased }
+  // When it's open: its weekdays, less its closed days.
+  const closedDays = await mainRepository.closedDay.findMany({
+    organizationSlug,
+    officeSlug,
+    from: today,
+    to: lastDay,
+  })
+  const opening: OfficeOpening = {
+    openWeekdays: office.openWeekdays,
+    closedDays: Object.fromEntries(closedDays.map((closed) => [closed.date, closed.reason ?? ""])),
+  }
+  const isOpen = (day: Day) => isOpenDay(day, opening)
+
+  return { profile, office, targetEmail, today, lastDay, desks, isReleased, isOpen }
 }

@@ -13,6 +13,7 @@ export interface UpdateOfficeArgs {
     description?: string | null
     thumbnail?: string | null
     timezone?: string
+    openWeekdays?: number[]
   }
 }
 
@@ -30,6 +31,7 @@ export const updateOffice = async ({
       ...(data.description !== undefined ? { description: data.description } : {}),
       ...(data.thumbnail !== undefined ? { thumbnail: data.thumbnail } : {}),
       ...(data.timezone !== undefined ? { timezone: data.timezone } : {}),
+      ...(data.openWeekdays !== undefined ? { openWeekdays: data.openWeekdays } : {}),
     },
   })
 

@@ -34,6 +34,12 @@ import type {
   UsualDeskKey,
   WaitlistEntry,
 } from "./methods/desk-preference"
+import type {
+  ClosedDay,
+  CreateClosedDaysArgs,
+  DeleteClosedDaysArgs,
+  FindClosedDaysArgs,
+} from "./methods/closed-day"
 import type { FindUserArgs } from "./methods/user/find"
 import { UpdateUserArgs } from "./methods/user/update"
 import type { DemoCompany } from "~/core/demo/company"
@@ -105,6 +111,8 @@ export interface Office {
   /** IANA timezone that decides "today" for bookings. */
   timezone: string
   bookingWindowDays: number
+  /** The weekdays it's open for booking (ISO: 1 = Monday … 7 = Sunday). */
+  openWeekdays: number[]
 
   createdAt: Date
   updatedAt: Date
@@ -253,6 +261,11 @@ export interface MainRepository {
       visitorPrefix: string
       domain: string
     }) => Promise<{ organizations: number; visitors: number }>
+  }
+  closedDay: {
+    findMany: (args: FindClosedDaysArgs) => Promise<ClosedDay[]>
+    create: (args: CreateClosedDaysArgs) => Promise<void>
+    delete: (args: DeleteClosedDaysArgs) => Promise<void>
   }
   reservation: {
     findMany: (args: FindReservationsArgs) => Promise<Reservation[]>

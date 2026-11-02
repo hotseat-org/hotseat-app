@@ -1,6 +1,12 @@
 import { clearStaleDemos, startDemo } from "./demo"
 import { getInstallation, joinInstallationByDomain, setUpInstallation } from "./installation"
 import { createOffice } from "./office/create"
+import {
+  closeOfficeDays,
+  listClosedDays,
+  reopenOfficeDays,
+  setOfficeWeekdays,
+} from "./office/opening"
 import { getOffice } from "./office/get"
 import { saveOfficeLayout } from "./office/saveLayout"
 import { updateOffice } from "./office/update"
@@ -105,6 +111,10 @@ export const createCore = (context: CoreContext) => ({
     delete: deleteOffice(context),
     occupancyToday: getOfficesOccupancy(context),
     insights: getOfficeInsights(context),
+    closedDays: listClosedDays(context),
+    closeDays: closeOfficeDays(context),
+    reopenDays: reopenOfficeDays(context),
+    setWeekdays: setOfficeWeekdays(context),
     listKits: listRoomKits(context),
     saveKit: saveRoomKit(context),
     deleteKit: deleteRoomKit(context),

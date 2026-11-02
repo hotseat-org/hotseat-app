@@ -5,7 +5,7 @@ import { reserveDesk } from "./reserve"
 import { MAX_DAYS_PER_REQUEST, ReservationError } from "./types"
 import type { LayoutObject } from "~/office/schema"
 import { MAX_SEAT_RULES, parseSeatRules } from "~/office/findSeat/seatRulesSchema"
-import { addDays, daysBetween, isDay, weekday, type Day } from "~/utils/booking"
+import { addDays, daysBetween, isDay, isoWeekday, type Day } from "~/utils/booking"
 import { encodeNotification } from "~/i18n/notifications"
 
 /**
@@ -19,7 +19,6 @@ type Desk = LayoutObject
 type Office = { organizationSlug: string; officeSlug: string }
 
 /** ISO weekday: 1 = Monday … 7 = Sunday. */
-const isoWeekday = (day: Day) => ((weekday(day) + 6) % 7) + 1
 
 /** Desks free on a day: not someone's permanent desk (unless given up), not booked. */
 const freeDesks = (
@@ -179,13 +178,16 @@ export const bookUsualDesks =
       } catch {
         continue // left the organization, or the office is gone
       }
-      const { today, lastDay, desks, isReleased } = booking
+      const { today, lastDay, desks, isReleased, isOpen } = booking
       const { organizationSlug, officeSlug, userEmail } = rule
       const start =
         rule.bookedThrough && rule.bookedThrough >= today ? addDays(rule.bookedThrough, 1) : today
       const days =
         start <= lastDay
-          ? daysBetween(start, lastDay).filter((d) => rule.weekdays.includes(isoWeekday(d)))
+          ? daysBetween(start, lastDay).filter(
+              // Its weekdays, on days the office is open.
+              (d) => rule.weekdays.includes(isoWeekday(d)) && isOpen(d)
+            )
           : []
       if (days.length) {
         const [mine, waiting, taken, favorites] = await Promise.all([
@@ -287,12 +289,15 @@ export const bookUsualDesks =
 export const joinWaitlist =
   (context: CoreContext) => async (args: Office & { userEmail: string; dates: Day[] }) => {
     const { mainRepository } = context
-    const { today, lastDay, desks, isReleased } = await bookingContext(context, args)
+    const { today, lastDay, desks, isReleased, isOpen } = await bookingContext(context, args)
     const dates = [...new Set(args.dates)].sort()
     if (!dates.length || dates.length > MAX_DAYS_PER_REQUEST || !dates.every(isDay))
       throw new ReservationError("Pick between 1 and 31 days.")
     if (dates[0] < today || dates[dates.length - 1] > lastDay)
       throw new ReservationError("You can wait for days up to {day}.", { day: { day: lastDay } })
+    const closed = dates.find((day) => !isOpen(day))
+    if (closed)
+      throw new ReservationError("The office is closed on {day}.", { day: { day: closed } })
     const { organizationSlug, officeSlug, userEmail } = args
     if (desks.some((d) => d.assignee === userEmail))
       throw new ReservationError("You have a permanent desk here — no need to wait.")
@@ -348,9 +353,9 @@ export const fillWaitlist =
       } catch {
         continue
       }
-      const { today, desks, isReleased } = booking
-      if (day < today) {
-        // A day gone by: nobody's waiting for it any more.
+      const { today, desks, isReleased, isOpen } = booking
+      if (day < today || !isOpen(day)) {
+        // A day gone by, or the office closed: nobody's waiting for it any more.
         for (const e of waiting) await mainRepository.waitlist.remove({ ...e, dates: [day] })
         continue
       }

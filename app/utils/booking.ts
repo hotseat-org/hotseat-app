@@ -44,6 +44,25 @@ export const isWeekend = (day: Day) => {
   return w === 0 || w === 6
 }
 
+/** ISO weekday: 1 = Monday … 7 = Sunday. */
+export const isoWeekday = (day: Day) => weekday(day) || 7
+
+/** Every weekday open (an office's default). */
+export const ALL_WEEKDAYS = [1, 2, 3, 4, 5, 6, 7]
+
+/**
+ * When an office is open for booking: the weekdays it's open (ISO), and the
+ * days it's closed anyway (a holiday: day → its reason, or "").
+ */
+export interface OfficeOpening {
+  openWeekdays: number[]
+  closedDays: Record<Day, string>
+}
+
+/** Whether people can book a day in an office. */
+export const isOpenDay = (day: Day, { openWeekdays, closedDays }: OfficeOpening) =>
+  openWeekdays.includes(isoWeekday(day)) && !(day in closedDays)
+
 /** Monday of the day's week. */
 export const weekStart = (day: Day) => addDays(day, -((weekday(day) + 6) % 7))
 
@@ -114,10 +133,16 @@ export const deskState = (
  *  - just that day
  *  - the rest of its working week (to Friday)
  *  - the same weekday every week, as far as the booking window allows
- * Only bookable days are included (today or later, within the window).
+ * Only bookable days are included (today or later, within the window, the
+ * office open).
  */
-export const bookingPresets = (day: Day, today: Day, lastDay: Day) => {
-  const bookable = (d: Day) => d >= today && d <= lastDay
+export const bookingPresets = (
+  day: Day,
+  today: Day,
+  lastDay: Day,
+  opening: OfficeOpening = { openWeekdays: ALL_WEEKDAYS, closedDays: {} }
+) => {
+  const bookable = (d: Day) => d >= today && d <= lastDay && isOpenDay(d, opening)
   const week: Day[] = []
   if (!isWeekend(day))
     for (let d = day; !isWeekend(d); d = addDays(d, 1)) if (bookable(d)) week.push(d)
