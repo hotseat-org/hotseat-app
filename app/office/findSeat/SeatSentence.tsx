@@ -4,8 +4,10 @@ import { Fragment, type CSSProperties, type ReactNode } from "react"
 import { DESK_FEATURES } from "../desks/deskFeatures"
 import { personByEmail, usePeople } from "../desks/people"
 import { useOfficeStore } from "../store"
+import { teamById, useTeams } from "../teams"
 import { isAwayRule, type SeatRule } from "./matching"
 import { Face, TONES, getZoneTint, useZoneColors, type RuleTone } from "./ruleLook"
+import { TeamDot, getTeamTint } from "~/components/teams/teamLook"
 import { useI18n } from "~/i18n/I18nProvider"
 import type { Day } from "~/utils/booking"
 
@@ -78,6 +80,7 @@ export const SeatSentence = ({
   const { t, format } = useI18n()
   const people = usePeople()
   const zoneColors = useZoneColors()
+  const teams = useTeams()
   const today = useOfficeStore((state) => state.booking.today)
   const featureOf = (id: string) => {
     const feature = DESK_FEATURES.find((candidate) => candidate.id === id)
@@ -154,6 +157,25 @@ export const SeatSentence = ({
           {featureOf(rule.feature)}
         </Pill>
       )
+
+    if (rule.kind === "team") {
+      const team = teamById(teams, rule.teamId)
+
+      return withPill(
+        t("with {team}", { team: PILL }),
+        <Pill
+          tone="neutral"
+          icon={
+            <span className="grid size-5 shrink-0 place-items-center">
+              <TeamDot color={team?.color ?? "slate"} />
+            </span>
+          }
+          style={team ? getTeamTint(team.color) : undefined}
+        >
+          {team?.name ?? t("your team")}
+        </Pill>
+      )
+    }
 
     if (isAwayRule(rule))
       return withPill(t("not near {name}", { name: PILL }), personPill(rule.email, "away"))

@@ -108,27 +108,30 @@ export const loader = async (args: LoaderFunctionArgs) => {
   const asked = new URL(args.request.url).searchParams.get("day")
   const day: Day = isDay(asked) && asked >= from && asked <= lastDay ? asked : today
   const isAdmin = profile.role === Role.ADMIN
-  const [{ reservations, releases }, occupancy, preferences, kits, closedDays] = await Promise.all([
-    core.reservation.listForOffice({
-      organizationSlug,
-      officeSlug: office.slug,
-      from,
-      to: maxDay(lastDay, day),
-    }),
-    // "5 of 9 in today" for each office in the switcher.
-    core.office.occupancyToday(organizationSlug, offices.data),
-    // Your favourites, usual desk and waitlist days here.
-    core.reservation.preferences({
-      organizationSlug,
-      officeSlug: office.slug,
-      userEmail: profile.userEmail,
-      from: today,
-    }),
-    // Saved rooms are for editing the layout: admins only.
-    isAdmin ? core.office.listKits(organizationSlug) : [],
-    // Holidays and other closed days ahead.
-    core.office.closedDays({ organizationSlug, officeSlug: office.slug }),
-  ])
+  const [{ reservations, releases }, occupancy, preferences, kits, closedDays, teams] =
+    await Promise.all([
+      core.reservation.listForOffice({
+        organizationSlug,
+        officeSlug: office.slug,
+        from,
+        to: maxDay(lastDay, day),
+      }),
+      // "5 of 9 in today" for each office in the switcher.
+      core.office.occupancyToday(organizationSlug, offices.data),
+      // Your favourites, usual desk and waitlist days here.
+      core.reservation.preferences({
+        organizationSlug,
+        officeSlug: office.slug,
+        userEmail: profile.userEmail,
+        from: today,
+      }),
+      // Saved rooms are for editing the layout: admins only.
+      isAdmin ? core.office.listKits(organizationSlug) : [],
+      // Holidays and other closed days ahead.
+      core.office.closedDays({ organizationSlug, officeSlug: office.slug }),
+      // Who sits together, and where here.
+      core.team.listForOffice({ organizationSlug, officeSlug: office.slug }),
+    ])
   // When it's open for booking: its weekdays, less its closed days (and why).
   const opening: OfficeOpening = {
     openWeekdays: office.openWeekdays,
@@ -156,7 +159,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
     // Only admins edit the layout (it also sets who has a permanent desk).
     canEdit: isAdmin,
     kits,
-    booking: { today, day, from, lastDay, reservations, releases, preferences, opening },
+    booking: { today, day, from, lastDay, reservations, releases, preferences, opening, teams },
   }
 }
 

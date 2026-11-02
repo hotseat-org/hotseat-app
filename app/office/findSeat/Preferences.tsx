@@ -4,13 +4,16 @@ import { useMemo, useState } from "react"
 import { DESK_FEATURES } from "../desks/deskFeatures"
 import { usePeople } from "../desks/people"
 import { useOfficeStore } from "../store"
+import { useMyTeams } from "../teams"
 import { getZones } from "../zones/zones"
 import type { RuleStrength, SeatRule } from "./matching"
 import { KindTile, RuleTile, TONES, getZoneTint } from "./ruleLook"
 import { useRuleText } from "./ruleText"
 import { PeopleSearch } from "~/components/people/PeopleSearch"
 import { useAllPieces } from "~/editor"
+import { TeamDot, getTeamTint } from "~/components/teams/teamLook"
 import { useI18n } from "~/i18n/I18nProvider"
+import type { OfficeTeam } from "~/utils/teams"
 
 /** How much a preference matters. */
 const OFFERED_STRENGTHS: RuleStrength[] = ["must", "prefer"]
@@ -157,10 +160,20 @@ const AddRule = ({
   const { t } = useI18n()
   const [kind, setKind] = useState<RuleKind | "away" | "away-zone" | null>(null)
   const favorites = useOfficeStore((state) => state.booking.preferences.favorites)
+  const myTeams = useMyTeams()
   // Your preferred seats: the desks you starred — none starred, nothing to prefer.
   const canPreferSeat = favorites.length > 0 && !rules.some((rule) => rule.kind === "favorite")
   const kinds: { kind: RuleKind | "away" | "away-zone"; title: string; detail: string }[] = [
-    { kind: "zone", title: t("A zone"), detail: t("Where your team sits") },
+    ...(myTeams.length > 0
+      ? [
+          {
+            kind: "team" as const,
+            title: t("With my team"),
+            detail: t("Wherever they sit that day"),
+          },
+        ]
+      : []),
+    { kind: "zone", title: t("A zone"), detail: t("A part of the office") },
     { kind: "away-zone", title: t("Away from a zone"), detail: t("A part of the office to avoid") },
     { kind: "colleague", title: t("Near a colleague"), detail: t("Wherever they sit that day") },
     {
@@ -187,6 +200,7 @@ const AddRule = ({
   if (kind === "colleague") return <ColleagueChoice back={back} onPick={onAdd} />
   if (kind === "away") return <ColleagueChoice back={back} onPick={onAdd} isAway />
   if (kind === "feature") return <FeatureChoice back={back} onPick={onAdd} />
+  if (kind === "team") return <TeamChoice back={back} teams={myTeams} onPick={onAdd} />
 
   return (
     <div className="flex flex-col">
@@ -196,11 +210,13 @@ const AddRule = ({
           <li key={entry.kind}>
             <button
               type="button"
-              onClick={() =>
-                entry.kind === "favorite"
-                  ? onAdd({ kind: "favorite", strength: "prefer" })
-                  : setKind(entry.kind)
-              }
+              onClick={() => {
+                if (entry.kind === "favorite") onAdd({ kind: "favorite", strength: "prefer" })
+                // In one team: nothing to choose.
+                else if (entry.kind === "team" && myTeams.length === 1)
+                  onAdd({ kind: "team", teamId: myTeams[0].id, strength: "prefer" })
+                else setKind(entry.kind)
+              }}
               className="flex min-h-14 w-full items-center gap-3 rounded-xl py-1.5 text-left outline-none hover:bg-surface-secondary focus-visible:ring-2 focus-visible:ring-focus"
             >
               <EntryTile kind={entry.kind} />
@@ -306,6 +322,34 @@ const FeatureChoice = ({
     </div>
   )
 }
+
+const TeamChoice = ({
+  back,
+  teams,
+  onPick,
+}: {
+  back: React.ReactNode
+  teams: OfficeTeam[]
+  onPick: (rule: SeatRule) => void
+}) => (
+  <div className="flex flex-col">
+    {back}
+    <div className="flex flex-wrap gap-2">
+      {teams.map((team) => (
+        <button
+          key={team.id}
+          type="button"
+          onClick={() => onPick({ kind: "team", teamId: team.id, strength: "prefer" })}
+          className={CHOICE}
+          style={getTeamTint(team.color)}
+        >
+          <TeamDot color={team.color} />
+          {team.name}
+        </button>
+      ))}
+    </div>
+  </div>
+)
 
 const ColleagueChoice = ({
   back,

@@ -1,10 +1,20 @@
 import clsx from "clsx"
-import { CircleOff, Layers, SlidersHorizontal, Star, UserRound, UserX } from "lucide-react"
+import {
+  CircleOff,
+  Layers,
+  SlidersHorizontal,
+  Star,
+  UserRound,
+  UserX,
+  UsersRound,
+} from "lucide-react"
 import { useMemo, type CSSProperties } from "react"
 import { personByEmail, usePeople } from "../desks/people"
+import { teamById, useTeams } from "../teams"
 import { getZones } from "../zones/zones"
 import { isAwayRule, type SeatRule } from "./matching"
 import { PersonFace } from "~/components/people/PeopleSearch"
+import { TeamTile } from "~/components/teams/teamLook"
 import { useAllPieces } from "~/editor"
 
 /**
@@ -71,6 +81,7 @@ const KIND_ICONS = {
   colleague: UserRound,
   feature: SlidersHorizontal,
   favorite: Star,
+  team: UsersRound,
 } as const
 
 /** A kind of preference, as the list to add one shows it: its icon in its tone. */
@@ -99,6 +110,17 @@ export const KindTile = ({
 /** A preference, as its row shows it: a person's face, a zone's colour, a seat's star. */
 export const RuleTile = ({ rule }: { rule: SeatRule }) => {
   const zoneColors = useZoneColors()
+  const teams = useTeams()
+
+  if (rule.kind === "team") {
+    const team = teamById(teams, rule.teamId)
+
+    return team ? (
+      <TeamTile name={team.name} color={team.color} className="size-10 rounded-xl text-[13px]" />
+    ) : (
+      <KindTile kind="team" />
+    )
+  }
 
   if (rule.kind === "colleague")
     return (

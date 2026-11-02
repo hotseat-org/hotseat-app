@@ -328,7 +328,7 @@ const BestMatch = ({
               <span className="grid size-5 shrink-0 place-items-center rounded-full bg-success text-success-foreground">
                 <Check className="size-3" strokeWidth={3.4} />
               </span>
-              {describeOutcome(rule, true)}
+              {describeOutcome(rule, true, match.teammates)}
             </li>
           ))}
           {match.missed.map((rule, index) => (

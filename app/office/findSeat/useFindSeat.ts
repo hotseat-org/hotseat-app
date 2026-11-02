@@ -79,14 +79,15 @@ export const useSeatMatches = (rules: SeatRule[]) => {
   const lastDay = useOfficeStore((state) => state.booking.lastDay)
   const favorites = useOfficeStore((state) => state.booking.preferences.favorites)
   const opening = useOfficeStore((state) => state.booking.opening)
+  const teams = useOfficeStore((state) => state.booking.teams)
 
   const context: MatchContext | null = useMemo(() => {
     if (!me) return null
 
     const desks: MatchDesk[] = pieces.filter((piece) => isSeatable(piece.type))
 
-    return { desks, bookings, released, me, favorites, rules, opening }
-  }, [pieces, bookings, released, me, favorites, rules, opening])
+    return { desks, bookings, released, me, favorites, rules, opening, teams }
+  }, [pieces, bookings, released, me, favorites, rules, opening, teams])
 
   const isResident = !!me && pieces.some((piece) => piece.assignee === me)
 

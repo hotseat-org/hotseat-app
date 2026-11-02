@@ -7,6 +7,7 @@ import {
   type DeskDays,
   type OfficeOpening,
 } from "~/utils/booking"
+import type { OfficeTeam } from "~/utils/teams"
 
 /** Your desk preferences in this office (see core/reservation/preferences). */
 export interface DeskPreferences {
@@ -52,6 +53,8 @@ export interface Booking {
   lastDay: Day
   /** When the office is open for booking: its weekdays, less closed days. */
   opening: OfficeOpening
+  /** The organization's teams, each with its zone here. */
+  teams: OfficeTeam[]
   byDay: BookingsByDay
   /** Permanent desks their resident gave up, by day (day → desk → resident). */
   released: BookingsByDay
@@ -76,6 +79,7 @@ const NO_BOOKING: Booking = {
   from: "",
   lastDay: "",
   opening: { openWeekdays: ALL_WEEKDAYS, closedDays: {} },
+  teams: [],
   byDay: {},
   released: {},
   pending: false,

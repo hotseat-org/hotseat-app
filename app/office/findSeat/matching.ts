@@ -29,6 +29,7 @@ export type SeatRule =
   | { kind: "favorite"; strength: RuleStrength }
   | { kind: "colleague"; email: string; strength: RuleStrength; isAway?: boolean }
   | { kind: "feature"; feature: string; strength: RuleStrength }
+  | { kind: "team"; teamId: string; strength: RuleStrength }
 
 /** Whether a rule keeps you away (from a zone, from someone). */
 export const isAwayRule = (rule: SeatRule) => "isAway" in rule && rule.isAway === true
@@ -51,6 +52,8 @@ export interface SeatMatch {
   /** The rules it meets — for an avoided one, that it stays clear of it. */
   met: SeatRule[]
   missed: SeatRule[]
+  /** Your teammates sitting near it that day (of the teams you asked to sit with). */
+  teammates: string[]
 }
 
 /** One day's outcome: the desks that fit, best first — or the desk you already have. */
@@ -59,6 +62,13 @@ export interface DayMatches {
   matches: SeatMatch[]
   /** Your desk that day already (booked, or your permanent one): nothing to find. */
   current: MatchDesk | null
+}
+
+/** A team as matching needs it: its people, and its zone in this office. */
+export interface MatchTeam {
+  id: string
+  members: string[]
+  zone: string | null
 }
 
 export interface MatchContext {
@@ -70,10 +80,13 @@ export interface MatchContext {
   rules: SeatRule[]
   /** When the office is open: other days aren't offered. */
   opening: OfficeOpening
+  teams: MatchTeam[]
 }
 
 /** Near enough to a colleague (m, on the same floor): a desk or two away. */
 export const NEAR_COLLEAGUE = 3.5
+/** Near enough to your team (m, on the same floor): a few desks away. */
+export const NEAR_TEAM = 5
 
 const distanceBetween = (first: MatchDesk, second: MatchDesk) =>
   first.floor === second.floor ? Math.hypot(first.x - second.x, first.z - second.z) : Infinity
@@ -98,11 +111,45 @@ interface DayScope {
   deskOf: Map<string, MatchDesk>
 }
 
+/** Where your teammates (in a team rule's team) sit that day: you left out. */
+const getTeammateDesks = (rule: SeatRule, { context, deskOf }: DayScope) => {
+  if (rule.kind !== "team") return []
+
+  const team = context.teams.find((candidate) => candidate.id === rule.teamId)
+
+  return (team?.members ?? []).flatMap((email) => {
+    const desk = email === context.me ? undefined : deskOf.get(email)
+
+    return desk ? [{ email, desk }] : []
+  })
+}
+
+/** Your teammates sitting near a desk that day (in the teams your rules ask for). */
+const getTeammatesNear = (desk: MatchDesk, rules: SeatRule[], scope: DayScope) => [
+  ...new Set(
+    rules.flatMap((rule) =>
+      getTeammateDesks(rule, scope)
+        .filter((teammate) => distanceBetween(desk, teammate.desk) <= NEAR_TEAM)
+        .map((teammate) => teammate.email)
+    )
+  ),
+]
+
 /** Whether a desk is what the rule asks for (for an avoided rule: what it stays clear of). */
-const isWhatRuleAsks = (rule: SeatRule, desk: MatchDesk, { context, deskOf }: DayScope) => {
+const isWhatRuleAsks = (rule: SeatRule, desk: MatchDesk, scope: DayScope) => {
+  const { context, deskOf } = scope
   if (rule.kind === "zone") return desk.zone === rule.zone
   if (rule.kind === "favorite") return context.favorites.includes(desk.id)
   if (rule.kind === "feature") return !!desk.features?.includes(rule.feature)
+  if (rule.kind === "team") {
+    // In the team's zone, or near one of them that day.
+    const zone = context.teams.find((team) => team.id === rule.teamId)?.zone
+    if (zone && desk.zone === zone) return true
+
+    return getTeammateDesks(rule, scope).some(
+      (teammate) => distanceBetween(desk, teammate.desk) <= NEAR_TEAM
+    )
+  }
 
   const colleagueDesk = deskOf.get(rule.email)
 
@@ -116,12 +163,26 @@ const isMet = (rule: SeatRule, desk: MatchDesk, scope: DayScope) => {
   return isAwayRule(rule) ? !isAsked : isAsked
 }
 
-/** How far a desk is from the colleagues it should be near (m, summed): closer ranks higher. */
-const getColleagueDistance = (desk: MatchDesk, rules: SeatRule[], deskOf: Map<string, MatchDesk>) =>
+/**
+ * How far a desk is from the people it should be near (m, summed; a team
+ * counts as the average distance to those of it who are in): closer ranks higher.
+ */
+const getColleagueDistance = (desk: MatchDesk, rules: SeatRule[], scope: DayScope) =>
   rules.reduce((sum, rule) => {
+    if (rule.kind === "team") {
+      const teammates = getTeammateDesks(rule, scope)
+      if (!teammates.length) return sum
+
+      const total = teammates.reduce(
+        (teamSum, teammate) => teamSum + Math.min(distanceBetween(desk, teammate.desk), 100),
+        0
+      )
+
+      return sum + total / teammates.length
+    }
     if (rule.kind !== "colleague" || isAwayRule(rule)) return sum
 
-    const colleagueDesk = deskOf.get(rule.email)
+    const colleagueDesk = scope.deskOf.get(rule.email)
 
     return colleagueDesk ? sum + Math.min(distanceBetween(desk, colleagueDesk), 100) : sum
   }, 0)
@@ -140,7 +201,7 @@ export const matchDay = (context: MatchContext, day: Day): DayMatches => {
       const met = context.rules.filter((rule) => isMet(rule, desk, scope))
       const missed = context.rules.filter((rule) => !met.includes(rule))
 
-      return { desk, day, met, missed, distance: getColleagueDistance(desk, context.rules, deskOf) }
+      return { desk, day, met, missed, distance: getColleagueDistance(desk, context.rules, scope) }
     })
     .filter(({ missed }) => !missed.some((rule) => rule.strength === "must"))
     .sort(
@@ -154,7 +215,13 @@ export const matchDay = (context: MatchContext, day: Day): DayMatches => {
 
   return {
     day,
-    matches: ranked.map(({ desk, met, missed }) => ({ desk, day, met, missed })),
+    matches: ranked.map(({ desk, met, missed }) => ({
+      desk,
+      day,
+      met,
+      missed,
+      teammates: getTeammatesNear(desk, context.rules, scope),
+    })),
     current,
   }
 }

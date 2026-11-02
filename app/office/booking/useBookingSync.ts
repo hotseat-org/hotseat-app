@@ -9,6 +9,7 @@ import {
   type DeskDays,
   type OfficeOpening,
 } from "~/utils/booking"
+import type { OfficeTeam } from "~/utils/teams"
 
 /** Desk booking data + actions for a real office, from the route. */
 export interface EditorBooking {
@@ -19,6 +20,8 @@ export interface EditorBooking {
   lastDay: Day
   /** When the office is open for booking. */
   opening: OfficeOpening
+  /** The organization's teams, each with its zone here. */
+  teams: OfficeTeam[]
   reservations: BookingRow[]
   /** Days permanent residents gave their desks up. */
   releases: BookingRow[]
@@ -62,6 +65,10 @@ export const useBookingSync = (booking: EditorBooking | undefined, people: Peopl
   useLayoutEffect(() => {
     if (opening) store.getState().setBooking({ opening })
   }, [opening, store])
+  const teams = booking?.teams
+  useLayoutEffect(() => {
+    if (teams) store.getState().setBooking({ teams })
+  }, [teams, store])
   useLayoutEffect(() => {
     if (onPreference) store.getState().setBooking({ setPreference: onPreference })
   }, [onPreference, store])

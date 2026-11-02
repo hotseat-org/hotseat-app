@@ -27,6 +27,7 @@ const createContext = (overrides: Partial<MatchContext> = {}): MatchContext => (
   favorites: [],
   rules: [],
   opening: { openWeekdays: ALL_WEEKDAYS, closedDays: {} },
+  teams: [],
   ...overrides,
 })
 
@@ -101,6 +102,36 @@ describe("finding a seat", () => {
     })
 
     expect(matchDay(context, MONDAY).matches.map((match) => match.desk.id)).toEqual(["D-4"])
+  })
+
+  test("with my team: near those of it who are in, closest to the group first", () => {
+    const context = createContext({
+      desks: [...createContext().desks, desk("D-5", 22, { zone: "Marketing" })],
+      bookings: { [MONDAY]: { "D-1": "anna@example.com", "D-3": "jan@example.com" } },
+      teams: [
+        {
+          id: "design",
+          members: ["anna@example.com", "jan@example.com", "me@example.com"],
+          zone: null,
+        },
+      ],
+      rules: [{ kind: "team", teamId: "design", strength: "must" }],
+    })
+
+    expect(labelsOf(context)).toEqual(["D-2"])
+    expect(matchDay(context, MONDAY).matches[0].teammates).toEqual([
+      "anna@example.com",
+      "jan@example.com",
+    ])
+  })
+
+  test("with my team: their zone counts, even with nobody in", () => {
+    const context = createContext({
+      teams: [{ id: "marketing", members: ["me@example.com"], zone: "Marketing" }],
+      rules: [{ kind: "team", teamId: "marketing", strength: "must" }],
+    })
+
+    expect(labelsOf(context)).toEqual(["D-4"])
   })
 
   test("any day: days the office is closed aren't offered", () => {

@@ -34,6 +34,7 @@ export const seatRuleSchema: z.ZodType<SeatRule> = z.preprocess(
     z.object({ kind: z.literal("favorite"), strength }),
     z.object({ kind: z.literal("colleague"), email: name, strength, isAway }),
     z.object({ kind: z.literal("feature"), feature: name, strength }),
+    z.object({ kind: z.literal("team"), teamId: name, strength }),
   ])
 ) as unknown as z.ZodType<SeatRule>
 
