@@ -1486,14 +1486,8 @@ export const cs: Messages = {
   "Delete team": "Smazat tým",
   "No office has zones yet.": "Zatím žádná kancelář nemá zóny.",
   "Add a zone": "Přidat zónu",
-  "Add a zone in another office…": "Přidat zónu v další kanceláři…",
-  "Add a zone…": "Přidat zónu…",
-  "Zone in {office}": "Zóna v kanceláři {office}",
   "Remove the zone in {office}": "Odebrat zónu v kanceláři {office}",
-  "Keep it for the team": "Držet pro tým",
   "Anyone can book its desks any time.": "Její stoly si může kdokoli rezervovat kdykoli.",
-  "Others can book its desks only shortly before the day.":
-    "Ostatní si její stoly mohou rezervovat až krátce předem.",
   "Open to everyone": "Otevřít všem",
   "{n} person": { one: "{n} člověk", few: "{n} lidé", many: "{n} člověka", other: "{n} lidí" },
   "+ {n} office": {
@@ -1543,4 +1537,18 @@ export const cs: Messages = {
     "Do týmů: {teams}. Týmy, které ještě nejsou, se vytvoří.",
   "Put them in teams": "Zařadit do týmů",
   "New teams: {teams}.": "Nové týmy: {teams}.",
+  "Change the zone": "Změnit zónu",
+  "Where the team sits. Find a seat puts its people there first.":
+    "Kde tým sedí. Hledání místa nabídne jeho lidem nejdřív tuto zónu.",
+  "Search offices and zones": "Hledat kanceláře a zóny",
+  "No other office has zones yet.": "Žádná další kancelář zatím nemá zóny.",
+  "Nothing matches “{query}”": "Nic neodpovídá „{query}“",
+  "{n} zone": { one: "{n} zóna", few: "{n} zóny", many: "{n} zóny", other: "{n} zón" },
+  "Add a zone in another office": "Přidat zónu v další kanceláři",
+  "This zone is no longer on the plan": "Tato zóna už v plánu není",
+  "Who can book its desks": "Kdo si může rezervovat její stoly",
+  "Kept for the team": "Vyhrazeno pro tým",
+  "Others can book": "Ostatní si mohou rezervovat",
+  "Days before": "Dní předem",
+  "days before": "dní předem",
 }

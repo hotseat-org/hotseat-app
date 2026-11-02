@@ -42,7 +42,7 @@ export const listOfficeTeams =
     return teams.map((team) => toOfficeTeam(team, officeSlug))
   }
 
-/** Each office with the names of its zones (where a team can sit). */
+/** Each office with its zones — name, colour, how many desks — where a team can sit. */
 export const listOfficeZones =
   ({ mainRepository }: CoreContext) =>
   async (organizationSlug: string) => {
@@ -51,7 +51,7 @@ export const listOfficeZones =
     return offices.data.map((office) => ({
       slug: office.slug,
       name: office.name,
-      zones: getZones(parseLayout(office.layout).pieces).map((zone) => zone.name),
+      zones: getZones(parseLayout(office.layout).pieces),
     }))
   }
 

@@ -6,6 +6,7 @@ import { useFetcher, useParams } from "react-router"
 import { useOrgSettingsData } from "../data"
 import { CardTitle, SettingsCard } from "../ui"
 import { useSettings } from "../useSettings"
+import { ZonePickerDialog } from "../dialogs/ZonePicker"
 import { Button } from "~/components/Button"
 import { PeopleSearch, PersonFace, type SearchedPerson } from "~/components/people/PeopleSearch"
 import { TeamTile, getTeamTint } from "~/components/teams/teamLook"
@@ -36,10 +37,6 @@ const COLOR_LABELS: Record<TeamColor, string> = {
   rose: msg("Rose"),
   slate: msg("Slate"),
 }
-
-/** A native select's look in settings. */
-const SELECT =
-  "h-10 min-w-0 rounded-xl border border-border bg-surface px-3 text-sm font-semibold outline-none focus-visible:border-accent"
 
 /** The panel's data (loaded with the page): its teams, the people and each office's zones. */
 const useTeamsData = () => {
@@ -232,6 +229,10 @@ const TeamEditor = ({
     )
   )
   const [isDeleting, setIsDeleting] = useState(false)
+  // Choosing a zone: for another office (no slug), or a new one for this office.
+  const [picking, setPicking] = useState<{ officeSlug?: string } | null>(null)
+  // Offices it could sit in too: with zones, and none of them its yet.
+  const addable = offices.filter((office) => office.zones.length > 0 && !zones[office.slug])
 
   // Saved (or deleted): back to the list.
   const result = fetcher.state === "idle" ? fetcher.data : undefined
@@ -332,30 +333,55 @@ const TeamEditor = ({
 
           <div className="flex flex-col gap-2">
             <h3 className="text-sm font-bold">{t("Where they sit")}</h3>
-            {/* Only the offices it has a zone in: the rest are added one by one. */}
             {Object.keys(zones).length > 0 && (
-              <ul className="flex flex-col divide-y divide-separator rounded-2xl border border-border bg-surface">
+              <ul className="flex flex-col gap-2">
                 {Object.entries(zones).map(([officeSlug, choice]) => (
-                  <OfficeZoneRow
+                  <ZoneCard
                     key={officeSlug}
-                    office={
-                      offices.find((office) => office.slug === officeSlug) ?? {
-                        slug: officeSlug,
-                        name: officeSlug,
-                        zones: [],
-                      }
-                    }
+                    office={offices.find((office) => office.slug === officeSlug)}
+                    officeSlug={officeSlug}
                     choice={choice}
                     onChange={(next) => setZone(officeSlug, next)}
+                    onChangeZone={() => setPicking({ officeSlug })}
                   />
                 ))}
               </ul>
             )}
-            <AddZone
-              offices={offices.filter((office) => office.zones.length > 0 && !zones[office.slug])}
-              hasAny={Object.keys(zones).length > 0}
-              onAdd={(officeSlug, zone) => setZone(officeSlug, { zone, keepDays: null })}
-            />
+            {addable.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => setPicking({})}
+                className="flex min-h-12 items-center gap-3 rounded-2xl border-[1.5px] border-dashed border-border px-3 text-sm font-extrabold text-accent outline-none transition-colors hover:border-accent/60 hover:bg-accent/5 focus-visible:ring-2 focus-visible:ring-focus"
+              >
+                <Plus className="size-[18px]" />
+                {Object.keys(zones).length > 0
+                  ? t("Add a zone in another office")
+                  : t("Add a zone")}
+              </button>
+            ) : (
+              Object.keys(zones).length === 0 && (
+                <p className="text-sm text-muted">{t("No office has zones yet.")}</p>
+              )
+            )}
+            {picking && (
+              <ZonePickerDialog
+                offices={
+                  picking.officeSlug
+                    ? offices.filter((office) => office.slug === picking.officeSlug)
+                    : addable
+                }
+                chosen={
+                  picking.officeSlug && zones[picking.officeSlug]
+                    ? { officeSlug: picking.officeSlug, zone: zones[picking.officeSlug].zone }
+                    : undefined
+                }
+                onPick={(officeSlug, zone) => {
+                  setZone(officeSlug, { zone, keepDays: zones[officeSlug]?.keepDays ?? null })
+                  setPicking(null)
+                }}
+                onClose={() => setPicking(null)}
+              />
+            )}
           </div>
 
           <div className="flex flex-col gap-2">
@@ -437,129 +463,130 @@ const TeamEditor = ({
 }
 
 /**
- * Adding a zone: one picker of every office's zones, grouped by office (those
- * with none, or the team's zone already, left out) — short however many offices.
+ * A zone the team has, as a card: the zone in its colour, its office, a way to
+ * change or drop it — and whether it's kept for the team, and until when.
  */
-const AddZone = ({
-  offices,
-  hasAny,
-  onAdd,
-}: {
-  offices: OfficeZones[]
-  /** Whether the team has a zone already (the picker's words say "another"). */
-  hasAny: boolean
-  onAdd: (officeSlug: string, zone: string) => void
-}) => {
-  const { t } = useI18n()
-
-  if (offices.length === 0)
-    return hasAny ? null : <p className="text-sm text-muted">{t("No office has zones yet.")}</p>
-
-  return (
-    <select
-      aria-label={t("Add a zone")}
-      value=""
-      onChange={(event) => {
-        const [officeSlug, zone] = JSON.parse(event.target.value) as [string, string]
-        onAdd(officeSlug, zone)
-      }}
-      className={clsx(SELECT, "self-start text-accent")}
-    >
-      <option value="" disabled>
-        {hasAny ? t("Add a zone in another office…") : t("Add a zone…")}
-      </option>
-      {offices.map((office) => (
-        <optgroup key={office.slug} label={office.name}>
-          {office.zones.map((zone) => (
-            <option key={zone} value={JSON.stringify([office.slug, zone])}>
-              {zone}
-            </option>
-          ))}
-        </optgroup>
-      ))}
-    </select>
-  )
-}
-
-/** One office: which of its zones is the team's, and whether it's kept for them. */
-const OfficeZoneRow = ({
+const ZoneCard = ({
   office,
+  officeSlug,
   choice,
   onChange,
+  onChangeZone,
 }: {
-  office: OfficeZones
+  /** None: the office is gone (its zone still shown, so it isn't lost by accident). */
+  office?: OfficeZones
+  officeSlug: string
   choice: ZoneChoice
   /** None: the team has no zone there any more. */
   onChange: (choice: ZoneChoice | null) => void
+  onChangeZone: () => void
 }) => {
   const { t, tn } = useI18n()
-  // A zone renamed or removed since: still shown, so it's not lost by accident.
-  const zones = office.zones.includes(choice.zone) ? office.zones : [...office.zones, choice.zone]
+  const zone = office?.zones.find((candidate) => candidate.name === choice.zone)
+  const color = zone?.color ?? "var(--muted)"
+  const officeName = office?.name ?? officeSlug
+  const isKept = choice.keepDays !== null
 
   return (
-    <li className="flex flex-col gap-2 px-4 py-3">
-      <div className="flex items-center gap-3">
-        <span className="min-w-0 flex-1 truncate text-sm font-extrabold">{office.name}</span>
-        <select
-          aria-label={t("Zone in {office}", { office: office.name })}
-          value={choice.zone}
-          onChange={(event) => onChange({ ...choice, zone: event.target.value })}
-          className={SELECT}
+    <li className="overflow-hidden rounded-2xl border border-border bg-surface">
+      <div className="flex items-center gap-3 p-3">
+        <span
+          aria-hidden
+          className="grid size-11 shrink-0 place-items-center rounded-xl"
+          style={{ background: `color-mix(in srgb, ${color} 22%, transparent)` }}
         >
-          {zones.map((zone) => (
-            <option key={zone} value={zone}>
-              {zone}
-            </option>
-          ))}
-        </select>
+          <span className="size-3.5 rounded-full" style={{ background: color }} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[15px] font-black">{choice.zone}</span>
+          <span className="block truncate text-xs text-muted">
+            {zone
+              ? `${officeName} · ${tn(zone.deskCount, "{n} desk", "{n} desks")}`
+              : `${officeName} · ${t("This zone is no longer on the plan")}`}
+          </span>
+        </span>
+        {office && (
+          <Button variant="ghost" size="sm" onPress={onChangeZone}>
+            {t("Change")}
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="sm"
           isIconOnly
-          aria-label={t("Remove the zone in {office}", { office: office.name })}
+          aria-label={t("Remove the zone in {office}", { office: officeName })}
           onPress={() => onChange(null)}
         >
           <X className="size-4" />
         </Button>
       </div>
-      <div className="flex flex-col gap-2">
-        <label className="flex items-center gap-3 text-sm">
-          <input
-            type="checkbox"
-            checked={choice.keepDays !== null}
-            onChange={(event) =>
-              onChange({
-                ...choice,
-                keepDays: event.target.checked ? KEEP_DAYS_CHOICES[1] : null,
-              })
-            }
-            className="size-5 shrink-0 accent-[var(--accent)]"
-          />
-          <span className="min-w-0 flex-1">
-            <span className="block font-bold">{t("Keep it for the team")}</span>
-            <span className="block text-xs text-muted">
-              {choice.keepDays === null
-                ? t("Anyone can book its desks any time.")
-                : t("Others can book its desks only shortly before the day.")}
-            </span>
-          </span>
-        </label>
-        {choice.keepDays !== null && (
-          <label className="ml-8 flex items-center gap-2 text-xs font-bold text-muted">
-            {t("Open to everyone")}
-            <select
-              value={choice.keepDays}
-              onChange={(event) => onChange({ ...choice, keepDays: Number(event.target.value) })}
-              className={SELECT}
+
+      <div className="flex flex-col gap-2.5 border-t border-separator bg-surface-secondary/60 px-3 py-3">
+        <div
+          role="radiogroup"
+          aria-label={t("Who can book its desks")}
+          className="grid grid-cols-2 rounded-xl bg-surface-tertiary p-[3px]"
+        >
+          {[false, true].map((option) => (
+            <button
+              key={String(option)}
+              type="button"
+              role="radio"
+              aria-checked={isKept === option}
+              onClick={() =>
+                onChange({
+                  ...choice,
+                  keepDays: option ? (choice.keepDays ?? KEEP_DAYS_CHOICES[1]) : null,
+                })
+              }
+              className={clsx(
+                "min-h-9 rounded-[10px] px-2 text-xs font-extrabold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus",
+                isKept === option
+                  ? "bg-surface text-foreground shadow-sm"
+                  : "text-muted hover:text-foreground"
+              )}
             >
-              {KEEP_DAYS_CHOICES.map((days) => (
-                <option key={days} value={days}>
-                  {tn(days, "{n} day before", "{n} days before")}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
+              {option ? t("Kept for the team") : t("Open to everyone")}
+            </button>
+          ))}
+        </div>
+        {/* Reserved: the card keeps its height either way. */}
+        <div className="flex min-h-9 items-center gap-2">
+          {isKept ? (
+            <>
+              <span className="min-w-0 flex-1 text-xs font-bold text-muted">
+                {t("Others can book")}
+              </span>
+              <span
+                role="radiogroup"
+                aria-label={t("Days before")}
+                className="flex rounded-full bg-surface-tertiary p-[3px]"
+              >
+                {KEEP_DAYS_CHOICES.map((days) => (
+                  <button
+                    key={days}
+                    type="button"
+                    role="radio"
+                    aria-checked={choice.keepDays === days}
+                    aria-label={tn(days, "{n} day before", "{n} days before")}
+                    onClick={() => onChange({ ...choice, keepDays: days })}
+                    className={clsx(
+                      "size-7 rounded-full text-xs font-extrabold tabular-nums outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus",
+                      choice.keepDays === days
+                        ? "bg-accent text-accent-foreground"
+                        : "text-muted hover:text-foreground"
+                    )}
+                  >
+                    {days}
+                  </button>
+                ))}
+              </span>
+              <span className="shrink-0 text-xs font-bold text-muted">{t("days before")}</span>
+            </>
+          ) : (
+            <span className="text-xs text-muted">{t("Anyone can book its desks any time.")}</span>
+          )}
+        </div>
       </div>
     </li>
   )
