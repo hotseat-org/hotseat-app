@@ -356,7 +356,7 @@ const Picture = ({
 }) => (
   <div
     className={clsx(
-      "w-full overflow-hidden rounded-[calc(var(--radius)*4)] border border-border bg-surface shadow-overlay",
+      "w-full overflow-hidden rounded-[calc(var(--radius)*4)] bg-[#1f2330] shadow-overlay ring-1 ring-foreground/10",
       className
     )}
   >
