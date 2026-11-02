@@ -1539,4 +1539,8 @@ export const cs: Messages = {
     "Tento stůl je vyhrazený pro tým {team}: ostatní si ho mohou rezervovat od {day}.",
   "Kept for {team}: you can book it from {day}.":
     "Vyhrazeno pro tým {team}: rezervovat si ho můžete od {day}.",
+  "Into their teams: {teams}. Teams not there yet are made.":
+    "Do týmů: {teams}. Týmy, které ještě nejsou, se vytvoří.",
+  "Put them in teams": "Zařadit do týmů",
+  "New teams: {teams}.": "Nové týmy: {teams}.",
 }

@@ -7,6 +7,7 @@ import { getTranslator } from "~/i18n/locale.server"
 import { translateError } from "~/i18n/errors"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { requireProfile } from "~/utils/loader-helpers/requireProfile"
+import { MAX_TEAM_NAME } from "~/utils/teams"
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const profile = await requireProfile(args, { requiredRole: Role.ADMIN })
@@ -31,6 +32,7 @@ export const action = async (args: ActionFunctionArgs) => {
           email: z.string().trim().email().max(254),
           displayName: z.string().trim().max(120).optional(),
           role: z.enum(Role),
+          teams: z.array(z.string().trim().min(1).max(MAX_TEAM_NAME)).max(20).optional(),
         })
       )
       .min(1)

@@ -20,6 +20,8 @@ interface ImportResult {
   intent?: "import"
   added?: number
   alreadyMembers?: number
+  /** Teams the list named that weren't there yet. */
+  teamsMade?: string[]
 }
 
 /**
@@ -45,6 +47,9 @@ export function ImportMembersDialog({ memberEmails }: { memberEmails: Set<string
   const chosen = list.people.filter(inChosenGroups)
   const newPeople = chosen.filter((person) => !memberEmails.has(person.email))
   const memberCount = chosen.length - newPeople.length
+  // With teams, everyone listed is sent: members already join their teams too.
+  const hasTeams = list.teams.length > 0
+  const sent = hasTeams ? chosen : newPeople
   const result = fetcher.state === "idle" && fetcher.data?.intent === "import" ? fetcher.data : null
 
   const readFile = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -70,10 +75,11 @@ export function ImportMembersDialog({ memberEmails }: { memberEmails: Set<string
       {
         intent: "import",
         people: JSON.stringify(
-          newPeople.slice(0, MAX_IMPORT).map((person) => ({
+          sent.slice(0, MAX_IMPORT).map((person) => ({
             email: person.email,
             displayName: person.displayName || undefined,
             role: person.isAdmin ? Role.ADMIN : Role.USER,
+            ...(person.teams.length > 0 && { teams: person.teams }),
           }))
         ),
       },
@@ -102,7 +108,11 @@ export function ImportMembersDialog({ memberEmails }: { memberEmails: Set<string
 
             <Modal.Body>
               {result?.ok ? (
-                <ImportDone added={result.added ?? 0} alreadyMembers={result.alreadyMembers ?? 0} />
+                <ImportDone
+                  added={result.added ?? 0}
+                  alreadyMembers={result.alreadyMembers ?? 0}
+                  teamsMade={result.teamsMade ?? []}
+                />
               ) : (
                 <div className="flex flex-col gap-4">
                   <div className="flex flex-col gap-2">
@@ -158,6 +168,14 @@ export function ImportMembersDialog({ memberEmails }: { memberEmails: Set<string
                     </div>
                   )}
 
+                  {hasTeams && (
+                    <p className="text-xs text-muted">
+                      {t("Into their teams: {teams}. Teams not there yet are made.", {
+                        teams: list.teams.join(", "),
+                      })}
+                    </p>
+                  )}
+
                   {/* Fixed height: the dialog doesn't grow as a list arrives. */}
                   <div className="flex h-64 flex-col overflow-hidden rounded-xl border border-border">
                     <p className="border-b border-border bg-surface-secondary px-3 py-2 text-xs font-bold text-muted">
@@ -208,13 +226,15 @@ export function ImportMembersDialog({ memberEmails }: { memberEmails: Set<string
                   </Button>
                   <Button
                     variant="primary"
-                    isDisabled={newPeople.length === 0}
+                    isDisabled={sent.length === 0}
                     isPending={fetcher.state !== "idle"}
                     onPress={importPeople}
                   >
                     {newPeople.length > 0
                       ? tn(newPeople.length, "Add {n} person", "Add {n} people")
-                      : t("Add people")}
+                      : hasTeams
+                        ? t("Put them in teams")
+                        : t("Add people")}
                   </Button>
                 </>
               )}
@@ -235,7 +255,9 @@ const PersonRow = ({ person, isMember }: { person: ImportPerson; isMember: boole
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold">{person.displayName || person.email}</p>
         <p className="truncate text-xs text-muted">
-          {[person.displayName && person.email, person.group].filter(Boolean).join(" · ")}
+          {[person.displayName && person.email, person.group, ...person.teams]
+            .filter(Boolean)
+            .join(" · ")}
         </p>
       </div>
       {isMember ? (
@@ -248,8 +270,16 @@ const PersonRow = ({ person, isMember }: { person: ImportPerson; isMember: boole
 }
 
 /** After the import: how many were added. */
-const ImportDone = ({ added, alreadyMembers }: { added: number; alreadyMembers: number }) => {
-  const { tn } = useI18n()
+const ImportDone = ({
+  added,
+  alreadyMembers,
+  teamsMade,
+}: {
+  added: number
+  alreadyMembers: number
+  teamsMade: string[]
+}) => {
+  const { t, tn } = useI18n()
 
   return (
     <div className="flex h-64 flex-col items-center justify-center gap-2 text-center">
@@ -257,6 +287,11 @@ const ImportDone = ({ added, alreadyMembers }: { added: number; alreadyMembers: 
       {alreadyMembers > 0 && (
         <p className="text-sm text-muted">
           {tn(alreadyMembers, "{n} was a member already.", "{n} were members already.")}
+        </p>
+      )}
+      {teamsMade.length > 0 && (
+        <p className="text-sm text-muted">
+          {t("New teams: {teams}.", { teams: teamsMade.join(", ") })}
         </p>
       )}
     </div>

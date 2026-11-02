@@ -5,14 +5,18 @@
  * return, and the server checks it again.
  */
 
+import { MAX_TEAM_NAME } from "./teams"
+
 export interface ImportPerson {
   /** Lower case. */
   email: string
   /** As given, else from first and last name; may be empty (the address's own then). */
   displayName: string
   isAdmin: boolean
-  /** An org unit, department or team, to import part of a list ("/Prague"). */
+  /** An org unit or department, to import part of a list ("/Prague"). */
   group: string
+  /** The teams to put them in (by name; made if new). */
+  teams: string[]
 }
 
 export interface ImportList {
@@ -21,6 +25,8 @@ export interface ImportList {
   invalid: { line: number; text: string }[]
   /** The groups found, A–Z (empty: the list has none). */
   groups: string[]
+  /** The teams named, A–Z (empty: the list has no team column). */
+  teams: string[]
 }
 
 const EMAIL = /^[^\s@,;<>"]+@[^\s@,;<>"]+\.[^\s@,;<>"]+$/
@@ -39,7 +45,8 @@ const COLUMNS = {
   firstName: ["firstname", "givenname", "first"],
   lastName: ["lastname", "surname", "familyname", "last"],
   role: ["role", "hotseatrole"],
-  group: ["orgunitpath", "orgunit", "organizationalunit", "department", "team", "office", "group"],
+  group: ["orgunitpath", "orgunit", "organizationalunit", "department", "office", "group"],
+  teams: ["team", "teams", "hotseatteam", "hotseatteams"],
 } as const
 
 type Column = keyof typeof COLUMNS
@@ -148,6 +155,15 @@ export const readImportList = (text: string): ImportList => {
         displayName: cell(row, "name") || fullName,
         isAdmin: isAdminRole(cell(row, "role")),
         group: cell(row, "group"),
+        // Several, separated: "Design; Frontend guild".
+        teams: [
+          ...new Set(
+            cell(row, "teams")
+              .split(/[;|]/)
+              .map((team) => team.trim().replace(/\s+/g, " ").slice(0, MAX_TEAM_NAME))
+              .filter(Boolean)
+          ),
+        ],
       })
     })
   } else {
@@ -157,12 +173,13 @@ export const readImportList = (text: string): ImportList => {
       const found = emails.filter((value) => EMAIL.test(value.toLowerCase()))
       if (!found.length) invalid.push({ line: index + 1, text: row.join(", ").slice(0, 80) })
       for (const email of found)
-        add({ email: email.toLowerCase(), displayName: "", isAdmin: false, group: "" })
+        add({ email: email.toLowerCase(), displayName: "", isAdmin: false, group: "", teams: [] })
     })
   }
 
   const list = [...people.values()]
   const groups = [...new Set(list.map((person) => person.group).filter(Boolean))].sort()
+  const teams = [...new Set(list.flatMap((person) => person.teams))].sort()
 
-  return { people: list, invalid, groups }
+  return { people: list, invalid, groups, teams }
 }

@@ -42,8 +42,20 @@ describe("readImportList", () => {
     const list = readImportList(csv)
 
     expect(list.people).toEqual([
-      { email: "ada@acme.com", displayName: "Ada Lovelace", isAdmin: false, group: "/Prague" },
-      { email: "grace@acme.com", displayName: "Grace Hopper", isAdmin: false, group: "/Brno" },
+      {
+        email: "ada@acme.com",
+        displayName: "Ada Lovelace",
+        isAdmin: false,
+        group: "/Prague",
+        teams: [],
+      },
+      {
+        email: "grace@acme.com",
+        displayName: "Grace Hopper",
+        isAdmin: false,
+        group: "/Brno",
+        teams: [],
+      },
     ])
     expect(list.groups).toEqual(["/Brno", "/Prague"])
     expect(list.invalid).toEqual([])
@@ -61,6 +73,7 @@ describe("readImportList", () => {
         displayName: "Ada Lovelace",
         isAdmin: false,
         group: "Engineering",
+        teams: [],
       },
     ])
   })
@@ -80,6 +93,24 @@ describe("readImportList", () => {
       ["grace@acme.com", false],
     ])
     expect(list.invalid).toEqual([{ line: 3, text: "not an email, Bob, " }])
+  })
+
+  test("a team column: people into teams, several separated", () => {
+    const csv = [
+      "Email,Name,Team",
+      "ada@acme.com,Ada,Design; Frontend guild",
+      "grace@acme.com,Grace,Design",
+      "linus@acme.com,Linus,",
+    ].join("\n")
+    const list = readImportList(csv)
+
+    expect(list.people.map((person) => person.teams)).toEqual([
+      ["Design", "Frontend guild"],
+      ["Design"],
+      [],
+    ])
+    expect(list.teams).toEqual(["Design", "Frontend guild"])
+    expect(list.groups).toEqual([])
   })
 
   test("just addresses, pasted: one per line, or separated", () => {
