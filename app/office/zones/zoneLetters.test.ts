@@ -70,6 +70,22 @@ describe("zones' names on their floors", () => {
     expect(Math.abs(place.z)).toBeGreaterThan(0.5)
   })
 
+  test("stay where they were while they still fit there", () => {
+    const desks = row("Engineering", 0, 4)
+    const areas = composeZoneAreas(desks)
+    const best = placeZoneLetters(areas, desks).get("Engineering")!
+    // A plant on the best place sends the name elsewhere…
+    const withPlant = [...desks, place("plant", { x: best.x, z: best.z })]
+    const elsewhere = placeZoneLetters(composeZoneAreas(withPlant), withPlant).get("Engineering")!
+    expect([elsewhere.x, elsewhere.z]).not.toEqual([best.x, best.z])
+
+    // …and taken away again, the name stays there: it still fits.
+    const kept = placeZoneLetters(areas, desks, {
+      previous: new Map([["Engineering", elsewhere]]),
+    }).get("Engineering")!
+    expect([kept.x, kept.z, kept.isAlongX]).toEqual([elsewhere.x, elsewhere.z, elsewhere.isAlongX])
+  })
+
   test("aren't lettered where they can't fit whole by their zone", () => {
     const name = "A name far, far longer than its one desk's zone could ever hold"
     const objects = [place("workstation", { x: 0, z: 0, zone: name })]

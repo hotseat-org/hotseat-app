@@ -307,7 +307,7 @@ const findPlaces = ({
  * by a table its top hides it under from the tilted view), taking in few
  * squares beside its zone, and near its middle.
  */
-const pickPlace = (area: ZoneArea, places: Place[]): ZoneLetters => {
+const pickPlace = (area: ZoneArea, places: Place[]): Place => {
   const centreX =
     (area.cells.reduce((sum, [i]) => sum + i, 0) / area.cells.length + 0.5) * ZONE_CELL
   const centreZ =
@@ -318,23 +318,32 @@ const pickPlace = (area: ZoneArea, places: Place[]): ZoneLetters => {
     place.cells.length * TAB_WEIGHT +
     (1 - place.joinedShare) * APART_WEIGHT +
     Math.hypot(place.x - centreX, place.z - centreZ)
-  const best = places.reduce((chosen, place) => (score(place) < score(chosen) ? place : chosen))
 
-  return {
-    x: best.x,
-    z: best.z,
-    isAlongX: best.isAlongX,
-    height: best.height,
-    width: best.width,
-    cells: best.cells,
-  }
+  return places.reduce((chosen, place) => (score(place) < score(chosen) ? place : chosen))
 }
+
+/** A place as the lettering needs it. */
+const toLetters = ({ x, z, isAlongX, height, width, cells }: Place): ZoneLetters => ({
+  x,
+  z,
+  isAlongX,
+  height,
+  width,
+  cells,
+})
 
 /** Where each zone's name is lettered (by its name); a zone with no room for it, none. */
 export const placeZoneLetters = (
   areas: ZoneArea[],
   objects: SceneObject[],
-  getAspect: NameAspect = estimateNameAspect
+  {
+    getAspect = estimateNameAspect,
+    previous,
+  }: {
+    getAspect?: NameAspect
+    /** Where the names were before (the layout changed): kept where they still fit. */
+    previous?: Map<string, ZoneLetters>
+  } = {}
 ): Map<string, ZoneLetters> => {
   const floor = createFloorGrid(
     objects.filter((piece) => !NOT_IN_THE_WAY.has(piece.type)).map(boxOf)
@@ -374,32 +383,57 @@ export const placeZoneLetters = (
     ...[...fitting.values()].filter((fit) => fit !== undefined),
     LETTER_HEIGHTS[0]
   )
+  const heightOf = (area: ZoneArea) => Math.min(fitting.get(area) ?? 0, officeHeight)
+
+  // Tightest first — the zones with the fewest places — so a roomier zone's
+  // tab doesn't take the only aisle a tight one had.
+  const placing = areas
+    .filter((area) => fitting.get(area) !== undefined)
+    .sort(
+      (first, second) =>
+        getPlaces(first, heightOf(first)).length - getPlaces(second, heightOf(second)).length
+    )
 
   // That height — smaller only where a name before it took the floor it
-  // needed — in the open where it can be. The squares one takes in are its, then: a name
-  // after it doesn't take them too (its places are looked for again).
+  // needed — in the open where it can be; where it was, if it still fits
+  // there. The squares one takes in are its, then: a name after it doesn't
+  // take them too (its places are looked for again).
   const letters = new Map<string, ZoneLetters>()
-  for (const area of areas) {
-    const fit = fitting.get(area)
-    if (fit === undefined) continue
-
+  let isFloorTaken = false
+  for (const area of placing) {
     // Before any tab's taken, the places looked for already hold.
-    const find = letters.size ? placesAt : getPlaces
-    const places = LETTER_HEIGHTS.filter((height) => height <= Math.min(fit, officeHeight))
+    const find: (area: ZoneArea, height: number) => Place[] = isFloorTaken ? placesAt : getPlaces
+    const places = LETTER_HEIGHTS.filter((height) => height <= heightOf(area))
       .map((height) => find(area, height))
       .find((found) => found.length)
     if (!places) continue
 
     const roomy = places.filter((place) => place.room >= MIN_ROOM)
-
-    const place = pickPlace(area, roomy.length ? roomy : places)
+    const before = previous?.get(area.zone.name)
+    const kept = before && places.find((place) => isSamePlace(place, before))
+    const place = kept ?? pickPlace(area, roomy.length ? roomy : places)
     for (const [i, j] of place.cells) zoneOf.set(getKey(i, j), area.zone.name)
+    isFloorTaken ||= place.cells.length > 0
 
-    letters.set(area.zone.name, place)
+    letters.set(area.zone.name, toLetters(place))
   }
 
   return letters
 }
+
+const isSamePlace = (first: ZoneLetters, second: ZoneLetters) =>
+  first.x === second.x &&
+  first.z === second.z &&
+  first.isAlongX === second.isAlongX &&
+  first.height === second.height
+
+/** Zones taking in the squares their names need beside them. */
+export const addLetterCells = (areas: ZoneArea[], letters: Map<string, ZoneLetters>) =>
+  areas.map((area) => {
+    const cells = letters.get(area.zone.name)?.cells ?? []
+
+    return cells.length ? { ...area, cells: [...area.cells, ...cells] } : area
+  })
 
 /** Zones with their names placed: each taking in the squares its name needs beside it. */
 export const composeLetteredZones = (
@@ -407,14 +441,7 @@ export const composeLetteredZones = (
   objects: SceneObject[],
   getAspect: NameAspect = estimateNameAspect
 ) => {
-  const letters = placeZoneLetters(areas, objects, getAspect)
+  const letters = placeZoneLetters(areas, objects, { getAspect })
 
-  return {
-    areas: areas.map((area) => {
-      const cells = letters.get(area.zone.name)?.cells ?? []
-
-      return cells.length ? { ...area, cells: [...area.cells, ...cells] } : area
-    }),
-    letters,
-  }
+  return { areas: addLetterCells(areas, letters), letters }
 }

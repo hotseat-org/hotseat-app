@@ -25,9 +25,9 @@ import {
 } from "three/tsl"
 import { MeshBasicNodeMaterial, type Node } from "three/webgpu"
 import { useOfficeStore } from "../store"
-import { ZoneLettering, measureNameAspect, useFontsReady } from "./ZoneLettering"
-import { composeLetteredZones } from "./zoneLetters"
-import { ZONE_CELL, ZONE_RADIUS, composeZoneAreas } from "./zones"
+import { ZoneLettering } from "./ZoneLettering"
+import { useLetteredZones } from "./useLetteredZones"
+import { ZONE_CELL, ZONE_RADIUS } from "./zones"
 
 /** Just above the interior floor's tint (0.006), below rugs and highlights. */
 const HEIGHT = 0.009
@@ -229,14 +229,8 @@ const createZoneMaterial = ({
  */
 export const ZoneFloor = ({ isEditing, isDark }: { isEditing: boolean; isDark: boolean }) => {
   const objects = useOfficeStore((state) => state.objects)
-  // Their names on their floors (measured in the page's font once it's in):
-  // a zone takes in the floor its name needs beside it.
-  const isFontReady = useFontsReady()
-  const lettered = useMemo(
-    () => composeLetteredZones(composeZoneAreas(objects), objects, measureNameAspect),
-    // Measured again once the font is in.
-    [objects, isFontReady]
-  )
+  // Their names on their floors: a zone takes in the floor its name needs beside it.
+  const lettered = useLetteredZones(objects, isEditing)
   const areas = useMemo(
     () =>
       lettered.areas.map((area) => {
