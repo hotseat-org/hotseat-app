@@ -23,7 +23,6 @@ import { SceneLoading } from "./ui/SceneLoading"
 import { CommandSearch } from "./ui/menus/CommandSearch"
 import { composeCommands } from "./ui/menus/commands"
 import { ContextMenu } from "./ui/menus/ContextMenu"
-import { GuidedTour } from "./ui/guide/GuidedTour"
 import { MapControls } from "./ui/menus/MapControls"
 import { FloorTower, getGatheredTowerHeight } from "./ui/menus/FloorTower"
 import { useRoomAbove } from "./shell/useRoomAbove"
@@ -292,7 +291,6 @@ const EditorInner = ({
           <>
             <ContextMenu />
             <CommandSearch commands={commands} />
-            {!isEmpty && <GuidedTour />}
           </>
         )}
 

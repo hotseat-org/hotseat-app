@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useEditorStore, useEditorStoreApi } from "../store"
-import { isTourDone } from "../ui/guide/GuidedTour"
 import { hasWebGL } from "./webgl"
 import { useIsMobile } from "~/utils/hooks/useIsMobile"
 import { useI18n } from "~/i18n/I18nProvider"
@@ -70,11 +69,9 @@ export const useEditorMode = ({
     },
     [mode, readyFor]
   )
-  // Leaving editing closes its menus (and the tour); the first time in, the tour.
+  // Leaving editing closes its menus.
   useEffect(() => {
-    if (readOnly)
-      store.setState({ contextMenu: null, isCommandSearchOpen: false, isTourOpen: false })
-    else if (!isTourDone()) store.setState({ isTourOpen: true })
+    if (readOnly) store.setState({ contextMenu: null, isCommandSearchOpen: false })
   }, [readOnly, store])
 
   // "Edit layout" from the office settings (outside this tree) → edit mode.

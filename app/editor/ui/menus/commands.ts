@@ -2,7 +2,6 @@ import {
   Clipboard,
   ClipboardPaste,
   Copy,
-  GraduationCap,
   LayoutGrid,
   LogOut,
   Maximize,
@@ -198,14 +197,6 @@ export const VIEW_COMMANDS: Command[] = [
     shortcut: "M",
     isAvailable: always,
     run: (state) => state.toggleMeasureHints(),
-  },
-  {
-    id: "tour",
-    label: msg("Show the tour"),
-    group: GROUP.view,
-    icon: GraduationCap,
-    isAvailable: (state) => !state.isTourOpen,
-    run: (state) => state.setTourOpen(true),
   },
 ]
 

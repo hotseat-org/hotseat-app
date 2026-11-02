@@ -7,7 +7,6 @@ import type { View } from "./plan/planView"
 import type { EditorState, GetState, SetState } from "./store/state"
 import type { SceneObject } from "./types"
 import type { Command } from "./ui/menus/commands"
-import type { TourStep } from "./ui/guide/GuidedTour"
 import type { Translator } from "~/i18n/translate"
 
 /**
@@ -71,8 +70,6 @@ export interface EditorModule {
   sidePanels?: SidePanel[]
   /** What it adds to the bottom bar, before the time of day (the office: the day). */
   bottomBarItems?: ComponentType[]
-  /** Its steps in the editor's guided tour, each after the step it follows. */
-  tourSteps?: { after: string; step: TourStep }[]
   /**
    * What matters about some pieces, in a few words — a room's, a saved
    * room's, a template's (the office: "8 desks"); null when nothing does.

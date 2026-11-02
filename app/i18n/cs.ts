@@ -1078,30 +1078,7 @@ export const cs: Messages = {
     many: "Zóna s {n} stolu",
     other: "Zóna s {n} stoly",
   },
-  // Office editor: the guided tour.
-  "Welcome to the editor": "Vítejte v editoru",
-  "Six quick steps. Try each one as you go — the tour moves on by itself.":
-    "Šest rychlých kroků. Každý si rovnou vyzkoušejte — průvodce pak sám pokračuje.",
-  "Draw a room": "Nakreslete místnost",
-  "Open Structure, pick Room and drag across the floor. Later, drag a wall by its foot to resize the room.":
-    "Otevřete Stavbu, vyberte Místnost a táhněte po podlaze. Velikost místnosti pak změníte tažením zdi za její patu.",
-  "Add desks": "Přidejte stoly",
-  "In Desks, pick the desk and click the floor. Choose Row or Pod and drag to lay many at once.":
-    "V Pracovních stolech vyberte stůl a klikněte na podlahu. Zvolte Řadu nebo Ostrůvek a tažením jich položíte víc najednou.",
-  "Select, move, turn": "Vyberte, přesuňte, otočte",
-  "Click a piece to select it, drag to move it, press R to turn it. Right-click for more — like saving a room to use again.":
-    "Kliknutím kus vyberete, tažením přesunete, klávesou R otočíte. Pravé tlačítko nabídne víc — třeba uložit místnost k dalšímu použití.",
-  "Find anything": "Najděte cokoli",
-  "Press ⌘K (Ctrl+K) to search every command and every piece by name.":
-    "Stiskněte ⌘K (Ctrl+K) a vyhledejte jakýkoli příkaz nebo kus nábytku podle názvu.",
-  "Teams and booking": "Týmy a rezervace",
-  "Select desks and give them a zone, so each team finds and books its own area. Everything saves as you go.":
-    "Vyberte stoly a přiřaďte jim zónu — každý tým tak najde a zarezervuje svou část kanceláře. Vše se ukládá průběžně.",
-  "{step} of {count}": "{step} z {count}",
-  "Skip tour": "Přeskočit průvodce",
-  Finish: "Hotovo",
   Next: "Další",
-  "Show the tour": "Spustit průvodce",
   "Couldn't save the room. Try again.": "Místnost se nepodařilo uložit. Zkuste to znovu.",
   // Office editor: layers.
   "Show on the map": "Zobrazit na mapě",
@@ -1266,14 +1243,14 @@ export const cs: Messages = {
   "How full the office gets, the busiest day, every floor and every desk — how often those permanent desks sit unused, and whether teams really turn up on their team days.":
     "Jak plná kancelář bývá, který den je nejrušnější, každé patro a každý stůl — jak často stálé stoly zejí prázdnotou a jestli týmy na své týmové dny opravdu dorazí.",
   "CSV for the spreadsheet fans": "CSV pro milovníky tabulek",
-  "Insights: 67% full, Wednesday the busiest day, desks in use per week and a heatmap of every working day":
-    "Přehledy: obsazenost 67 %, nejrušnější středa, využité stoly po týdnech a teplotní mapa všech pracovních dnů",
+  "Insights: 72% full, Wednesday the busiest day, desks in use per week, a heatmap of every working day and how each team turns up":
+    "Statistiky: obsazenost 72 %, nejrušnější středa, obsazené stoly po týdnech, teplotní mapa všech pracovních dnů a jak chodí jednotlivé týmy",
   "Build your office in an afternoon": "Kancelář postavíte za odpoledne",
   "Start from a template or draw your own. Rooms measure themselves, desks number themselves, and everything saves as you go. Moving the sofa has never been easier.":
     "Začněte šablonou, nebo si nakreslete vlastní. Místnosti se změří samy, stoly se očíslují samy a všechno se průběžně ukládá. Stěhování gauče nebylo nikdy snazší.",
   "As many floors as you've got": "Tolik pater, kolik jich máte",
-  "The office editor: furniture to pick from beside the office in 3D, its rooms measured":
-    "Editor kanceláře: nábytek na výběr vedle kanceláře ve 3D se změřenými místnostmi",
+  "The office editor: furniture to pick from beside the office in 3D, its rooms measured and its teams' zones named on the floor":
+    "Editor kanceláře: nábytek na výběr vedle kanceláře ve 3D, změřené místnosti a názvy týmových zón na podlaze",
   "Create your company": "Založte svou firmu",
   "Sign in with Google or GitHub and give it a name.":
     "Přihlaste se přes Google nebo GitHub a dejte jí jméno.",

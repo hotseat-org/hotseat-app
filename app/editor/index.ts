@@ -32,7 +32,6 @@ export type {
   ViewClicks,
 } from "./module"
 export { GROUP, selectAll, type Command } from "./ui/menus/commands"
-export type { TourStep } from "./ui/guide/GuidedTour"
 
 // The store: the layout, the editor's state and each module's own.
 export {

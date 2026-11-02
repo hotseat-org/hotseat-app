@@ -11,7 +11,6 @@ import { OfficeDay, describeDesks, prepareNewOfficePieces } from "./slots/extras
 import { OFFICE_MAP_LAYERS } from "./slots/mapLayers"
 import { OFFICE_SIDE_PANELS } from "./slots/sidePanels"
 import { OFFICE_PANELS } from "./slots/panels"
-import { OFFICE_TOUR_STEPS } from "./slots/tourSteps"
 import { useLayoutImpactGuard } from "./slots/saveGuard"
 import { createOfficeState, type OfficeState } from "./store"
 import { useOfficeData } from "./useOfficeData"
@@ -44,7 +43,6 @@ export const officeModule = defineModule<OfficeState>({
   mapLayers: OFFICE_MAP_LAYERS,
   sidePanels: OFFICE_SIDE_PANELS,
   bottomBarItems: [OfficeDay],
-  tourSteps: OFFICE_TOUR_STEPS,
   describePieces: describeDesks,
   EmptyState: OfficeEmptyState,
 })

@@ -13,9 +13,6 @@ export interface PanelsState {
   /** The command search (⌘K). */
   isCommandSearchOpen: boolean
   setCommandSearchOpen: (isOpen: boolean) => void
-  /** The guided tour of the editor (first run, or asked for). */
-  isTourOpen: boolean
-  setTourOpen: (isOpen: boolean) => void
   /** The side panel open beside the rail (see SidePanel), by id. */
   openSidePanelId: string | null
   /** Open it, or close it when it's the one open. */
@@ -29,8 +26,6 @@ export const createPanelsState = (set: SetState, _get: GetState): PanelsState =>
   closeContextMenu: () => set({ contextMenu: null }),
   isCommandSearchOpen: false,
   setCommandSearchOpen: (isCommandSearchOpen) => set({ isCommandSearchOpen, contextMenu: null }),
-  isTourOpen: false,
-  setTourOpen: (isTourOpen) => set({ isTourOpen }),
   openSidePanelId: null,
   toggleSidePanel: (id) =>
     set((state) => ({ openSidePanelId: state.openSidePanelId === id ? null : id })),
