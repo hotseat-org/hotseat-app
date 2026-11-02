@@ -124,8 +124,8 @@ export const Walls = ({ pieces }: { pieces?: SceneObject[] }) => {
   // The cursor cutaway slices these runs in their shader (see cutaway.ts):
   // they stay whole, however the cut moves.
   const runs = useMemo(() => buildRuns(walls, wallColor), [walls, wallColor])
-  // Glass partitions merge the same way. They never trigger the cutaway —
-  // you can see through them already.
+  // Glass partitions merge the same way, and are cut away the same way (like
+  // the doors in them).
   const glassRuns = useMemo(
     () =>
       buildRuns(
@@ -215,11 +215,14 @@ const GlassRuns = ({ runs }: { runs: Run[] }) => {
     const panes: BufferGeometry[] = []
     const place = new Matrix4()
     for (const run of runs) {
-      // The run's place: turned to run its way, at its middle.
+      // The run's place: turned to run its way, at its middle — its anchor
+      // for the cutaway, like a solid run's.
       place.makeRotationY(run.rotation).setPosition(run.x, 0, run.z)
+      const anchor = new Vector3(run.x, 0, run.z)
       for (const part of getGlassRunParts(run.length)) {
         const box = new BoxGeometry(...part.args)
         box.translate(...part.position).applyMatrix4(place)
+        setCutAttributes(box, anchor, CUT_DIRECTION[run.direction])
         if (part.isPane) panes.push(box)
         else frames.set(run.color, [...(frames.get(run.color) ?? []), box])
       }
@@ -245,7 +248,7 @@ const GlassRuns = ({ runs }: { runs: Run[] }) => {
   )
 
   return (
-    <>
+    <CutawayContext.Provider value="mergedWall">
       {meshes.frames.map(
         (frame) =>
           frame.geometry && (
@@ -260,6 +263,6 @@ const GlassRuns = ({ runs }: { runs: Run[] }) => {
           <GlassSurface />
         </mesh>
       )}
-    </>
+    </CutawayContext.Provider>
   )
 }

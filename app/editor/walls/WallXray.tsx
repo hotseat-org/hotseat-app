@@ -106,11 +106,11 @@ export const WallXray = ({ enabled, isEditing }: Props) => {
 
     // While editing only walls cut: pointing straight at a door/window keeps it
     // solid (so it can be picked up); it's still cut with a section round it.
-    // Viewing, there's nothing to pick up: doors and windows cut too. Glass
-    // partitions never do — you can see through them already.
+    // Viewing, there's nothing to pick up: doors and windows cut too. What
+    // makes rooms cuts — solid or glass, like the doors in them; fences don't.
     const hits: (Aim & { distance: number })[] = []
     for (const object of objects) {
-      if (!isEdgeType(object.type) || getEdge(object.type)?.isSeeThrough) continue
+      if (!isEdgeType(object.type) || !getEdge(object.type)?.encloses) continue
       if (isEditing && !isWall(object.type)) continue
       if (!intersectEdge(ray, object, { target: hitPoint, slack: SLACK })) continue
 
