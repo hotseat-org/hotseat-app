@@ -4,6 +4,7 @@ import { Armchair, BarChart3, Building2, Calendar, Pencil, Users } from "lucide-
 import type { LucideIcon } from "lucide-react"
 import { PANEL, PANEL_HOVER, type ShellMember, type ShellOffice } from "./shell-ui"
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher"
+import { PersonProfile } from "./PersonProfile"
 import { WhosInModal } from "./WhosIn"
 import { RailModal } from "./RailModal"
 import { useDayStatus } from "./dayStatus"
@@ -203,6 +204,7 @@ export const SpatialShell = ({
       {officePanel.panel === "people" && (
         <WhosInModal me={me} members={members} onClose={officePanel.close} />
       )}
+      <PersonProfile me={me} members={members} />
       {officePanel.panel === "bookings" && (
         <RailModal title={t("My bookings")} onClose={officePanel.close}>
           <MyBookings onShow={officePanel.close} />

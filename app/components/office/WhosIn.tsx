@@ -6,6 +6,7 @@ import { WeekDots } from "./WeekDots"
 import { PeopleSearch } from "~/components/people/PeopleSearch"
 import { useOfficeStore } from "~/office/store"
 import { deskName, useDesksOnDay, useWeekPresence } from "~/office/booking/useBooking"
+import { usePersonProfile } from "~/office/usePersonProfile"
 import { useSettings } from "~/components/settings/useSettings"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { useI18n } from "~/i18n/I18nProvider"
@@ -26,6 +27,7 @@ export const WhosInList = ({
   const i18n = useI18n()
   const { t } = i18n
   const { open: openSettings } = useSettings()
+  const { open: openProfile } = usePersonProfile()
   const { byPerson } = useDesksOnDay()
   const week = useWeekPresence()
   const roster = useMemo(
@@ -69,6 +71,8 @@ export const WhosInList = ({
             avatarUrl: m.avatarUrl,
           })}
           renderFace={({ m }) => <MemberAvatar m={m} className="size-10 shrink-0 rounded-xl" />}
+          // A row opens their profile (Find, beside it, their desk).
+          onPick={({ m }) => openProfile(m.userEmail)}
           renderDetail={({ m, at }) => (
             <span className="flex items-center gap-2">
               {/* Fixed width: every row's dots start at the same spot. */}

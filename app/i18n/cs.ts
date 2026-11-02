@@ -1447,4 +1447,9 @@ export const cs: Messages = {
     many: "Zrušených rezervací: {n}. Majitelé dostali zprávu.",
     other: "Zrušených rezervací: {n}. Majitelé dostali zprávu.",
   },
+  "In the office": "V kanceláři",
+  "At their own desk.": "U svého stálého stolu.",
+  "No days booked ahead.": "Žádné rezervované dny dopředu.",
+  "Manage in members": "Spravovat v seznamu členů",
+  "{name}'s profile": "Profil: {name}",
 }

@@ -6,7 +6,7 @@ import type { ShouldRevalidateFunctionArgs } from "react-router"
  * its rail (`panel`). Opening or closing one mustn't re-run the loaders of
  * the page underneath.
  */
-const OVERLAY_PARAMS = ["settings", "dialog", "modal", "panel"]
+const OVERLAY_PARAMS = ["settings", "dialog", "modal", "panel", "person"]
 
 /** Actions that change an office's bookings (and its desk preferences): no one else's data. */
 export const BOOKING_ACTIONS = "/api/reservations/"

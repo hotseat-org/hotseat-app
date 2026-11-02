@@ -7,6 +7,7 @@ import { WorkspaceSwitcher } from "./WorkspaceSwitcher"
 import { AccountMenu } from "./AccountMenu"
 import { MyBookings } from "./MyBookings"
 import { NotificationsBell } from "./Notifications"
+import { PersonProfile } from "./PersonProfile"
 import { WhosInList } from "./WhosIn"
 import { MOBILE_CHROME } from "./mobile"
 import { BottomSheet } from "~/components/ui/BottomSheet"
@@ -88,6 +89,7 @@ export const MobileShell = ({ offices, me, members, empty = false }: Props) => {
           {(close) => <WhosInList me={me} members={members} onFind={close} />}
         </BottomSheet>
       )}
+      <PersonProfile me={me} members={members} />
       {sheet === "find" && (
         <BottomSheet
           title={t("Find a seat")}
