@@ -12,6 +12,7 @@
     "prisma:generate": "bunx prisma generate --config=./app/repositories/main-repository/prisma/prisma.config.ts",
     "prisma:reset": "bunx prisma migrate reset --config=./app/repositories/main-repository/prisma/prisma.config.ts",
     "prisma:migrate": "bunx prisma migrate dev --config=./app/repositories/main-repository/prisma/prisma.config.ts",
+    "prisma:migrate:production": "node scripts/migrate-production.mjs",
     "prisma:studio": "bunx prisma studio --config=./app/repositories/main-repository/prisma/prisma.config.ts",
     "prisma:format": "bunx prisma format --config=./app/repositories/main-repository/prisma/prisma.config.ts",
     "prisma:validate": "bunx prisma validate --config=./app/repositories/main-repository/prisma/prisma.config.ts",
