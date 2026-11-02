@@ -1352,4 +1352,7 @@ export const cs: Messages = {
   "Continue with single sign-on": "Pokračovat přes jednotné přihlášení",
   "That image couldn't be uploaded. Try another one.":
     "Tento obrázek se nepodařilo nahrát. Zkuste jiný.",
+  "Time zone": "Časové pásmo",
+  "Search, e.g. London": "Hledat, např. Praha",
+  "What “today” is in this office, for bookings.": "Co je v této kanceláři „dnes“ — pro rezervace.",
 }

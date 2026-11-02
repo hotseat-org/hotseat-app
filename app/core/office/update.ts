@@ -12,6 +12,8 @@ export interface UpdateOfficeArgs {
     name?: string
     description?: string | null
     thumbnail?: string | null
+    /** IANA time zone: what "today" is there. */
+    timezone?: string
   }
 }
 

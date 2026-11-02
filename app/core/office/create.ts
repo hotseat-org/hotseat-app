@@ -9,11 +9,19 @@ export interface CreateOfficeArgs {
   thumbnail: string
   organizationSlug: string
   userEmail: string
+  /** IANA time zone (the creator's, from their browser); unset: the default. */
+  timezone?: string
 }
 
 export const createOffice =
   ({ mainRepository, mappers }: CoreContext) =>
-  async ({ name, userEmail, thumbnail, organizationSlug }: CreateOfficeArgs): Promise<Office> => {
+  async ({
+    name,
+    userEmail,
+    thumbnail,
+    organizationSlug,
+    timezone,
+  }: CreateOfficeArgs): Promise<Office> => {
     const core = getCore()
 
     const profile = await mainRepository.profile.find({
@@ -36,6 +44,7 @@ export const createOffice =
       organizationSlug,
       slug,
       thumbnail,
+      timezone,
     })
 
     return mappers.office.fromRepository(office)

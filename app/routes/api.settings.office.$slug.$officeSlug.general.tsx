@@ -1,5 +1,6 @@
 import { data, redirect, type ActionFunctionArgs } from "react-router"
 import { z } from "zod"
+import { isTimeZone } from "~/utils/timeZone"
 import { getCore } from "~/core/get-core"
 import { OfficeNameTakenError, officeSlugForName } from "~/core/office/update"
 import { getTranslator } from "~/i18n/locale.server"
@@ -38,12 +39,24 @@ export const action = async (args: ActionFunctionArgs) => {
     }
     case "update-general": {
       const fields = z
-        .object({ name: z.string().trim().min(1), description: z.string() })
-        .parse({ name: formData.get("name"), description: formData.get("description") })
+        .object({
+          name: z.string().trim().min(1),
+          description: z.string(),
+          timezone: z.string().refine(isTimeZone).optional(),
+        })
+        .parse({
+          name: formData.get("name"),
+          description: formData.get("description"),
+          timezone: formData.get("timezone") ?? undefined,
+        })
       try {
         const office = await core.office.update({
           ...who,
-          data: { name: fields.name, description: fields.description.trim() || null },
+          data: {
+            name: fields.name,
+            description: fields.description.trim() || null,
+            timezone: fields.timezone,
+          },
         })
         // A new slug: the same page under the new URL.
         if (office.slug !== slug) return redirectToRenamed(formData, "/offices/", slug, office.slug)

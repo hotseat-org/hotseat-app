@@ -53,6 +53,9 @@
 @import "@heroui/styles/components/popover.css" layer(components);
 @import "@heroui/styles/components/tooltip.css" layer(components);
 @import "@heroui/styles/components/combo-box.css" layer(components);
+@import "@heroui/styles/components/input-group.css" layer(components);
+@import "@heroui/styles/components/list-box.css" layer(components);
+@import "@heroui/styles/components/list-box-item.css" layer(components);
 @import "@heroui/styles/components/select.css" layer(components);
 @import "@heroui/styles/components/kbd.css" layer(components);
 @import "@heroui/styles/themes/default" layer(theme);
@@ -162,7 +165,6 @@
   --scrim-tone: rgb(51 40 24);
   --scrim-strength: 30%;
   --scrim: color-mix(in srgb, var(--scrim-tone) var(--scrim-strength), transparent);
-
 }
 
 /* Dark — "lifted slate": the editor's cool night slate, with a real step
@@ -233,7 +235,6 @@
   --scrim-tone: rgb(4 6 12);
   --scrim-strength: 60%;
   --scrim: color-mix(in srgb, var(--scrim-tone) var(--scrim-strength), transparent);
-
 }
 
 /* ============================================================

@@ -69,7 +69,7 @@ What you'll see:
 | Signing in loops back to the sign-in screen | HTTPS: see [Sign-in](sign-in.md#when-sign-in-doesnt-work). |
 | Saving anything fails ("does not match origin") | The reverse proxy doesn't pass the `Host` header: see [Installation](installation.md#4-https-with-a-reverse-proxy). |
 | Image uploads fail | `BASE_URL` must be exactly the address people use (uploads go there). Behind nginx, `client_max_body_size` at least `12m`. Images: PNG, JPEG, GIF or WebP up to 10 MB (no SVG). |
-| Bookings land on the wrong day | Offices use Europe/Prague as "today" for now: see [Administration](administration.md#offices). |
+| Bookings land on the wrong day | The office's time zone: office settings → General → Time zone (see [Administration](administration.md#offices)). |
 | Invite link previews show a plain picture | Expected: the picture with the company's logo is only drawn on the hosted service. |
 
 ## Running without Docker

@@ -9,7 +9,9 @@ import {
   useParams,
 } from "react-router"
 import { ImagePlus } from "lucide-react"
+import { useEffect, useState } from "react"
 import { z } from "zod"
+import { getBrowserTimeZone, isTimeZone } from "~/utils/timeZone"
 import { Button } from "~/components/Button"
 import {
   CreateDialog,
@@ -53,12 +55,15 @@ export const action = async (args: ActionFunctionArgs) => {
 
   if (intent === Intent.CREATE_OFFICE) {
     const thumbnail = z.string().parse(formData.get("thumbnail"))
+    // The creator's browser's: where the office most likely is (changeable in its settings).
+    const timezone = formData.get("timezone")
 
     const office = await core.office.create({
       name,
       organizationSlug: profile.organizationSlug,
       thumbnail,
       userEmail: profile.userEmail,
+      timezone: isTimeZone(timezone) ? timezone : undefined,
     })
 
     return redirect(`/app/o/${office.organizationSlug}/offices/${office.slug}`)
@@ -87,6 +92,9 @@ export const NewOffice = () => {
     intent: Intent.CHECK_AVAILABILITY,
   })
   const cover = useImageUpload()
+  // Where the person creating it is (the browser knows; the server doesn't).
+  const [timeZone, setTimeZone] = useState("")
+  useEffect(() => setTimeZone(getBrowserTimeZone() ?? ""), [])
   const create = useFetcher()
   const isCreating = create.state !== "idle"
 
@@ -95,6 +103,7 @@ export const NewOffice = () => {
       {(closeDialog) => (
         <create.Form method="POST" action={action}>
           <input type="hidden" name="thumbnail" value={cover.id ?? ""} />
+          <input type="hidden" name="timezone" value={timeZone} />
           <ContourBanner image={cover.preview} className="h-[190px]">
             <BannerClose onPress={closeDialog} />
             {/* The whole banner picks the photo; the pill says so. */}

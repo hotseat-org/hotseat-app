@@ -5,6 +5,7 @@ import { useFetcher, useParams, useRouteLoaderData } from "react-router"
 import { DeleteLogoDialog } from "../dialogs/DeleteLogo"
 import { SetLogoDialog } from "../dialogs/SetLogo"
 import { CardTitle, NameField, SaveBar, SettingsCard } from "../ui"
+import { TimeZoneField } from "../TimeZoneField"
 import { useRename } from "../useRename"
 import { useSettings } from "../useSettings"
 import { officeSlugForName } from "~/core/office/slug"
@@ -14,11 +15,18 @@ import { type SceneObject } from "~/editor/core"
 import { isSeatable } from "~/office/catalog"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { useProfile } from "~/utils/remix"
+import { DEFAULT_TIME_ZONE } from "~/utils/timeZone"
 import { useI18n } from "~/i18n/I18nProvider"
 import { msg } from "~/i18n/msg"
 
 interface OfficeRouteData {
-  office: { name: string; slug: string; description?: string; thumbnail?: string }
+  office: {
+    name: string
+    slug: string
+    description?: string
+    thumbnail?: string
+    timezone: string
+  }
   initialObjects: SceneObject[]
 }
 
@@ -51,7 +59,11 @@ export function OfficeGeneral() {
 
   const [description, setDescription] = useState(office?.description ?? "")
   useEffect(() => setDescription(office?.description ?? ""), [office?.description])
-  const dirty = rename.renamed || description !== (office?.description ?? "")
+  const savedTimeZone = office?.timezone ?? DEFAULT_TIME_ZONE
+  const [timeZone, setTimeZone] = useState(savedTimeZone)
+  useEffect(() => setTimeZone(savedTimeZone), [savedTimeZone])
+  const dirty =
+    rename.renamed || description !== (office?.description ?? "") || timeZone !== savedTimeZone
 
   // At a glance — from the saved layout (refreshed after every autosave).
   const stats = useMemo(() => {
@@ -120,6 +132,12 @@ export function OfficeGeneral() {
               <Label>{t("Description")}</Label>
               <Input placeholder={t("e.g. 3rd floor, entrance from the courtyard (optional)")} />
             </TextField>
+            <TimeZoneField
+              name="timezone"
+              value={timeZone}
+              onChange={setTimeZone}
+              isDisabled={!isAdmin}
+            />
           </fieldset>
           {!isAdmin && (
             <p className="text-xs text-muted">{t("Only admins can edit office details.")}</p>
@@ -168,6 +186,7 @@ export function OfficeGeneral() {
           onDiscard={() => {
             rename.setName(office.name)
             setDescription(office.description ?? "")
+            setTimeZone(savedTimeZone)
           }}
         />
       )}

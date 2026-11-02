@@ -64,13 +64,15 @@ Removing someone cancels their bookings and frees their permanent desk.
   as you go.
 - **Permanent desks**: select a desk in the editor and give it a resident.
   When they're away, they give it up for the day and others can book it.
-- **Office settings**: name, description, a cover photo.
+- **Office settings**: name, description, a cover photo, and its **time
+  zone**.
 - **Insights** (admins): how full each office gets, the busiest days, which
   desks are used, and CSV export.
 
 Every office decides what "today" is (and when the hourly job books usual
-desks) by its time zone, Europe/Prague for now. There's no setting for it
-in the app yet.
+desks) by its time zone. A new office takes the time zone of the admin who
+creates it (their browser's). Change it in the office's settings, e.g. for
+an office created from abroad.
 
 ## Deleting
 

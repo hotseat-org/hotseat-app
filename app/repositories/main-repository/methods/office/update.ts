@@ -12,6 +12,7 @@ export interface UpdateOfficeArgs {
     slug?: string
     description?: string | null
     thumbnail?: string | null
+    timezone?: string
   }
 }
 
@@ -28,6 +29,7 @@ export const updateOffice = async ({
       ...(data.slug !== undefined ? { slug: data.slug } : {}),
       ...(data.description !== undefined ? { description: data.description } : {}),
       ...(data.thumbnail !== undefined ? { thumbnail: data.thumbnail } : {}),
+      ...(data.timezone !== undefined ? { timezone: data.timezone } : {}),
     },
   })
 

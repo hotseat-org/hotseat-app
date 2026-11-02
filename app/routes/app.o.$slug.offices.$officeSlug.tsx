@@ -135,6 +135,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
       slug: office.slug,
       description: office.description,
       thumbnail: office.thumbnail,
+      timezone: office.timezone,
     },
     offices: offices.data.map((o) => ({
       name: o.name,
