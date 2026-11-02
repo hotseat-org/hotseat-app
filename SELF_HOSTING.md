@@ -91,6 +91,14 @@ docker compose up -d --build
 
 The database is migrated on start.
 
+## If an update fails to start
+
+On start, Hotseat applies any new database migrations, each one whole or not
+at all, and stops if one fails. The log says which one. Fix the cause (often
+the database itself: disk space, permissions), then start it again. If a
+migration was left marked as failed in `_prisma_migrations` (by Prisma's own
+tools), resolve it with `prisma migrate resolve` first.
+
 ## Without Docker
 
 Build for Node and run the server yourself (Node 25+, Bun to install):
@@ -102,8 +110,8 @@ HOTSEAT_EDITION=self-hosted DATABASE_URL=postgres://… IMAGES_DIR=/var/lib/hots
   BASE_URL=https://hotseat.acme.com COOKIES_SECRET=… node server/node.mjs
 ```
 
-Run `bunx prisma migrate deploy --config=./app/repositories/main-repository/prisma/prisma.config.ts`
-before starting a new version. `BASE_PATH` serves Hotseat under a path
+Bring the database up to date before starting a new version:
+`DATABASE_URL=postgres://… node server/migrate.mjs app/repositories/main-repository/prisma/migrations`. `BASE_PATH` serves Hotseat under a path
 instead (e.g. `/hotseat/`), and `BASE_URL` then includes it.
 
 ## Not included in a self-hosted installation

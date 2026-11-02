@@ -21,6 +21,15 @@ const NODE_PRISMA_CLIENT = fileURLToPath(
   )
 )
 
+/**
+ * What the Node server loads from node_modules rather than its bundle:
+ * Prisma's client runtime (it loads its query compiler from its own files),
+ * the Postgres driver (server/migrate.mjs uses it too), and workers-og (Cloudflare-only: loaded lazily, and
+ * missing on Node on purpose). The Docker image installs just these (see
+ * scripts/runtime-packages.mjs).
+ */
+const NODE_RUNTIME_PACKAGES = ["@prisma/client", "@prisma/adapter-pg", "pg", "workers-og"]
+
 export default defineConfig({
   base: BASE_PATH,
   // Changes with every build: what the browser keeps between visits (the
@@ -55,8 +64,15 @@ export default defineConfig({
       : [],
   },
   // The Node server's entry: the app's handler and hourly jobs (see server/app.ts).
+  // Its packages are bundled in (only what it uses — the image then needs just
+  // NODE_RUNTIME_PACKAGES installed), but for those that can't be.
   ...(isNodeTarget && {
-    environments: { ssr: { build: { rollupOptions: { input: "./server/app.ts" } } } },
+    environments: {
+      ssr: {
+        resolve: { noExternal: true, external: NODE_RUNTIME_PACKAGES },
+        build: { rollupOptions: { input: "./server/app.ts" } },
+      },
+    },
   }),
   optimizeDeps: {
     // Pre-bundle everything the (lazily-loaded) editor and its route pull in.
