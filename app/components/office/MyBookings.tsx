@@ -1,8 +1,8 @@
-import { Button, toast } from "@heroui/react"
-import clsx from "clsx"
+import { toast } from "@heroui/react"
 import { CalendarDays, MapPin, Pin, Repeat, Star } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useFetcher, useNavigate, useParams } from "react-router"
+import { BookingRow, deskText } from "./BookingRow"
 import { useOfficeStore } from "~/office/store"
 import { floorText, useDeskFloor } from "~/office/booking/useBooking"
 import { useAllPieces } from "~/editor"
@@ -11,14 +11,6 @@ import type { MyBookingsData } from "~/routes/api.my-bookings.$slug"
 import type { ReservationActionData } from "~/routes/api.reservations.$slug.$officeSlug"
 import type { Day } from "~/utils/booking"
 import { useI18n } from "~/i18n/I18nProvider"
-import type { Translator } from "~/i18n/translate"
-
-/** "Desk B2" (or "A desk") — with its floor in an office with floors: "Desk B2 · Attic". */
-const deskText = ({ t }: Translator, label?: string, floor?: string) => {
-  const desk = label ? t("Desk {label}", { label }) : t("A desk")
-
-  return floor ? `${desk} · ${floor}` : desk
-}
 
 /**
  * "My bookings": your upcoming days in every office of the organization, and
@@ -56,7 +48,6 @@ export const MyBookings = ({
 
   // Rows being cancelled: hidden at once, restored if the server says no.
   const [hidden, setHidden] = useState<Set<string>>(new Set())
-  const [confirming, setConfirming] = useState<string | null>(null)
   useEffect(() => {
     const d = cancel.data
     if (!d || cancel.state !== "idle") return
@@ -96,7 +87,6 @@ export const MyBookings = ({
     onShow?.()
   }
   const doCancel = (b: MyBooking) => {
-    setConfirming(null)
     setHidden((h) => new Set(h).add(keyOf(b)))
     if (b.officeSlug === officeSlug && me) applyCancel(me, [b.date])
     cancel.submit(
@@ -179,54 +169,16 @@ export const MyBookings = ({
                 <span className="ml-1.5 text-accent">{t("Today")}</span>
               )}
             </p>
-            {bookings.map((b) => {
-              const key = keyOf(b)
-              const asking = confirming === key
-              return (
-                // Fixed height: asking "Cancel?" swaps the row's content in place.
-                <div
-                  key={key}
-                  className={clsx(
-                    "flex h-16 items-center gap-3 rounded-xl border px-3",
-                    asking ? "border-danger/40 bg-danger/5" : "border-border bg-surface"
-                  )}
-                >
-                  {asking ? (
-                    <>
-                      <p className="min-w-0 flex-1 text-sm font-semibold text-foreground">
-                        {t("Cancel {day}?", { day: format.short(b.date) })}
-                      </p>
-                      <Button size="sm" variant="ghost" onPress={() => setConfirming(null)}>
-                        {t("Keep")}
-                      </Button>
-                      <Button size="sm" variant="danger" onPress={() => doCancel(b)}>
-                        {t("Cancel it")}
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-bold text-foreground">
-                          {deskText(i18n, b.deskLabel, b.deskFloor && floorText(i18n, b.deskFloor))}
-                        </p>
-                        <p className="truncate text-xs text-muted">{b.officeName}</p>
-                      </div>
-                      <Button size="sm" variant="ghost" onPress={() => show(b)}>
-                        <MapPin className="size-4" /> {t("Show")}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-danger"
-                        onPress={() => setConfirming(key)}
-                      >
-                        {t("Cancel")}
-                      </Button>
-                    </>
-                  )}
-                </div>
-              )
-            })}
+            {bookings.map((b) => (
+              <BookingRow
+                key={keyOf(b)}
+                desk={deskText(i18n, b.deskLabel, b.deskFloor && floorText(i18n, b.deskFloor))}
+                detail={b.officeName}
+                day={b.date}
+                onShow={() => show(b)}
+                onCancel={() => doCancel(b)}
+              />
+            ))}
           </div>
         ))}
       </div>

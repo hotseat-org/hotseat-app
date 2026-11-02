@@ -1,5 +1,5 @@
 import clsx from "clsx"
-import { Check, MapPin, Minus, Pencil, Pin, Star } from "lucide-react"
+import { Check, Minus, Pencil, Pin, Star } from "lucide-react"
 import { useMemo, useState, type ReactNode } from "react"
 import { deskName, useDeskFloor } from "../booking/useBooking"
 import { useOfficeStore } from "../store"
@@ -8,6 +8,7 @@ import { Preferences } from "./Preferences"
 import { useRuleText } from "./ruleText"
 import { SeatSentence } from "./SeatSentence"
 import { useSavedRules, useSeatMatches } from "./useFindSeat"
+import { BookingRow, deskText } from "~/components/office/BookingRow"
 import { useI18n } from "~/i18n/I18nProvider"
 import type { Day } from "~/utils/booking"
 
@@ -66,7 +67,7 @@ export const FindSeat = ({
         desk={view.desk}
         day={view.day}
         onShowOnMap={() => onShowOnMap(view.desk.id, view.day)}
-        onFindAnother={() => setView({ kind: "find" })}
+        onDone={() => setView({ kind: "find" })}
       />
     ) : null
 
@@ -183,19 +184,11 @@ const Finder = ({
   const result = (
     <>
       {when !== ANY_DAY && dayResult?.current && (
-        <div className="flex items-center gap-3 rounded-2xl bg-surface-secondary px-4 py-3">
-          <span className="min-w-0 flex-1 text-sm font-bold">
-            {t("You're at {desk} that day.", { desk: deskName(i18n, dayResult.current) })}
-          </span>
-          <button
-            type="button"
-            onClick={() => onShowOnMap(dayResult.current!.id, when)}
-            className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm font-extrabold text-accent"
-          >
-            <MapPin className="size-4" />
-            {t("Show")}
-          </button>
-        </div>
+        <YourBooking
+          desk={dayResult.current}
+          day={when}
+          onShowOnMap={() => onShowOnMap(dayResult.current!.id, when)}
+        />
       )}
 
       {when !== ANY_DAY && !dayResult?.current && !best && (
@@ -427,39 +420,73 @@ const AnyDayList = ({
   )
 }
 
-const Booked = ({
+/**
+ * Your booking that day, as your bookings show it — Show, and Cancel (asked
+ * once): cancelled, the day's free desks are offered again.
+ */
+const YourBooking = ({
   desk,
   day,
   onShowOnMap,
-  onFindAnother,
+  onCancelled,
 }: {
   desk: MatchDesk
   day: Day
   onShowOnMap: () => void
-  onFindAnother: () => void
+  onCancelled?: () => void
 }) => {
   const i18n = useI18n()
   const { t, format } = i18n
+  const getDeskFloor = useDeskFloor()
+  const cancel = useOfficeStore((state) => state.booking.cancel)
 
   return (
-    <div className="flex flex-col items-center gap-4 py-6 text-center">
-      <span className="grid size-14 place-items-center rounded-full bg-success text-success-foreground">
-        <Check className="size-7" strokeWidth={3} />
-      </span>
-      <div>
-        <p className="text-xl font-black">{deskName(i18n, desk)}</p>
-        <p className="text-sm text-muted">
-          {t("Booked for you {day}", { day: format.onDay(day) })}
-        </p>
+    <div className="flex flex-col gap-1.5">
+      <p className="text-xs font-extrabold text-muted">{t("Your booking")}</p>
+      <BookingRow
+        desk={deskText(i18n, desk.label, getDeskFloor(desk))}
+        detail={format.long(day)}
+        day={day}
+        onShow={onShowOnMap}
+        onCancel={() => {
+          cancel([day])
+          onCancelled?.()
+        }}
+      />
+    </div>
+  )
+}
+
+/** Just booked: said so, and the booking as your bookings show it (Show, Cancel). */
+const Booked = ({
+  desk,
+  day,
+  onShowOnMap,
+  onDone,
+}: {
+  desk: MatchDesk
+  day: Day
+  onShowOnMap: () => void
+  /** Back to finding a seat (another, or this one cancelled). */
+  onDone: () => void
+}) => {
+  const { t, format } = useI18n()
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center gap-3">
+        <span className="grid size-11 shrink-0 place-items-center rounded-full bg-success text-success-foreground">
+          <Check className="size-6" strokeWidth={3} />
+        </span>
+        <div>
+          <p className="text-lg font-black">{t("Booked for you")}</p>
+          <p className="text-sm text-muted">{format.long(day)}</p>
+        </div>
       </div>
-      <div className="flex w-full gap-2">
-        <button type="button" onClick={onFindAnother} className={clsx(SECONDARY, "flex-1")}>
-          {t("Find another")}
-        </button>
-        <button type="button" onClick={onShowOnMap} className={clsx(PRIMARY, "flex-1")}>
-          {t("Show on map")}
-        </button>
-      </div>
+      <YourBooking desk={desk} day={day} onShowOnMap={onShowOnMap} onCancelled={onDone} />
+      <button type="button" onClick={onDone} className={SECONDARY}>
+        {t("Find another")}
+      </button>
     </div>
   )
 }

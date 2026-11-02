@@ -1158,7 +1158,8 @@ export const cs: Messages = {
   Tomorrow: "Zítra",
   "You have a permanent desk here: it's yours every day.": "Máte tu stálý stůl: je váš každý den.",
   "Any day": "Kdykoli",
-  "You're at {desk} that day.": "Ten den máte {desk}.",
+  "Your booking": "Vaše rezervace",
+  "Booked for you": "Zarezervováno",
   "Nothing fits that day.": "Ten den nic nevyhovuje.",
   "Try any day": "Zkusit kdykoli",
   "Your preferred seat {desk} is free": "Váš preferovaný {desk} je volný",
@@ -1171,7 +1172,6 @@ export const cs: Messages = {
   Book: "Rezervovat",
   "No day fits while desks can be booked.": "Dokud lze rezervovat, nevyhovuje žádný den.",
   "Everything you asked for": "Vše, co chcete",
-  "Booked for you {day}": "Zarezervováno {day}",
   "Find another": "Najít jiné",
   "No preferences yet: any free desk will do.":
     "Zatím žádné preference: poslouží jakýkoli volný stůl.",
