@@ -11,7 +11,9 @@ import { personByEmail, usePeople } from "~/office/desks/people"
 import { useOfficeStore } from "~/office/store"
 import { useOfficePanel } from "~/office/useOfficePanel"
 import { floorText } from "~/office/booking/useBooking"
-import type { InsightsPeriod, OfficeInsights } from "~/core/office/insights"
+import type { InsightsPeriod, OfficeInsights, TeamInsights } from "~/core/office/insights"
+import { TeamDot } from "~/components/teams/teamLook"
+import { getTeamHex } from "~/utils/teams"
 import type { InsightsData } from "~/routes/api.insights.$slug.$officeSlug"
 import { addDays, weekStart, type Day } from "~/utils/booking"
 import { useI18n } from "~/i18n/I18nProvider"
@@ -271,6 +273,96 @@ const downloadCsv = ({ t }: Translator, data: OfficeInsights, officeSlug: string
  * what's booked for the next two. "Show on the office" lays the desks' usage
  * over the office itself as a heatmap.
  */
+/**
+ * Teams: how much of each comes in on an average day, how often most of it is
+ * in together, whether its team days work, and how its zone is used.
+ */
+const TeamsCard = ({ teams }: { teams: TeamInsights[] }) => {
+  const { t, tn, format } = useI18n()
+
+  return (
+    <Card title={t("Teams")}>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[640px] border-collapse text-[13px]">
+          <thead>
+            <tr className="text-left text-[11px] text-muted">
+              <th className="py-1 font-extrabold">{t("Team")}</th>
+              <th className="font-extrabold">{t("In, an average day")}</th>
+              <th className="font-extrabold">{t("Together")}</th>
+              <th className="font-extrabold">{t("Team days")}</th>
+              <th className="font-extrabold">{t("Their zone")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {teams.map((team) => (
+              <tr key={team.id} className="border-t border-separator align-top">
+                <td className="py-2 pr-3">
+                  <span className="flex items-center gap-2 font-bold">
+                    <TeamDot color={team.color} />
+                    {team.name}
+                  </span>
+                  <span className="pl-[18px] text-muted">
+                    {tn(team.memberCount, "{n} person", "{n} people")}
+                  </span>
+                </td>
+                <td className="py-2 pr-3">
+                  <span className="inline-flex items-center gap-2">
+                    <span
+                      className="inline-block h-2 rounded-full"
+                      style={{
+                        width: Math.max(3, team.presence * 90),
+                        background: getTeamHex(team.color),
+                      }}
+                    />
+                    <b>{format.percent(team.presence)}</b>
+                  </span>
+                </td>
+                <td className="py-2 pr-3">
+                  {tn(team.togetherDays, "{n} day", "{n} days")}
+                  <span className="block text-muted">{t("most of it in")}</span>
+                </td>
+                <td className="py-2 pr-3">
+                  {team.onTeamDays ? (
+                    <>
+                      <b>{format.percent(team.onTeamDays.teamDays)}</b>
+                      <span className="text-muted">
+                        {" "}
+                        {t("vs {percent} other days", {
+                          percent: format.percent(team.onTeamDays.otherDays),
+                        })}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-muted">{t("None set")}</span>
+                  )}
+                </td>
+                <td className="py-2">
+                  {team.zone ? (
+                    <>
+                      <b>{team.zone.name}</b>{" "}
+                      <span className="text-muted">
+                        {t("{percent} full", { percent: format.percent(team.zone.ratio) })}
+                      </span>
+                      <span className="block text-muted">
+                        {t("{share} of it the team's · {there} of their days there", {
+                          share: format.percent(team.zone.teamShare),
+                          there: format.percent(team.zone.sitsThere),
+                        })}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-muted">{t("No zone here")}</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Card>
+  )
+}
+
 export const InsightsDashboard = () => {
   const { slug, officeSlug } = useParams()
   const i18n = useI18n()
@@ -503,6 +595,8 @@ export const InsightsDashboard = () => {
                 </ul>
               </Card>
             )}
+
+            {data.teams.length > 0 && <TeamsCard teams={data.teams} />}
 
             <div className="grid gap-4 lg:grid-cols-2">
               <Card title={t("Desks")}>

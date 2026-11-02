@@ -3,6 +3,7 @@ import { parseLayout } from "~/office/schema"
 import { isSeatable } from "~/office/catalog"
 import { getFloorId, getFloorLabel, type FloorLabel } from "~/editor/core"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
+import { toOfficeTeam } from "~/utils/teams"
 import {
   addDays,
   daysBetween,
@@ -65,6 +66,23 @@ export interface OfficeInsights {
   permanent: { deskId: string; label?: string; resident: string; givenUp: number }[]
   /** With floors (two or more): each one's desks, and the share of them in use on an average working day. */
   byFloor: { floor: FloorLabel; deskCount: number; ratio: number }[]
+  /** Each team with people: how much it comes in, together, and to its zone. */
+  teams: TeamInsights[]
+}
+
+export interface TeamInsights {
+  id: string
+  name: string
+  color: string
+  memberCount: number
+  /** Share of its people in, an average working day (0–1). */
+  presence: number
+  /** Working days most of it (half, and two or more) was in together. */
+  togetherDays: number
+  /** Its presence on its team days and on the others (none: it has no team days). */
+  onTeamDays: { teamDays: number; otherDays: number } | null
+  /** Its zone here: how full (0–1), how much of that is the team, and how often it sits there. */
+  zone: { name: string; ratio: number; teamShare: number; sitsThere: number } | null
 }
 
 const rangeFor = (period: InsightsPeriod, today: Day, lastDay: Day) => {
@@ -103,7 +121,7 @@ export const getOfficeInsights =
     const before = { from: addDays(from, -length), to: addDays(from, -1) }
     const loadFrom = period === "next" ? from : before.from
 
-    const [reservations, releases, waitlist, members] = await Promise.all([
+    const [reservations, releases, waitlist, members, teams] = await Promise.all([
       mainRepository.reservation.findMany({
         filter: { organizationSlug, officeSlug, from: loadFrom, to },
       }),
@@ -112,6 +130,7 @@ export const getOfficeInsights =
         ? mainRepository.waitlist.findMany({ organizationSlug, officeSlug, from, to })
         : Promise.resolve([]),
       mainRepository.profile.findMany({ filter: { organizationSlug } }),
+      mainRepository.team.findMany({ organizationSlug }),
     ])
 
     // Who sat where, day by day.
@@ -166,6 +185,80 @@ export const getOfficeInsights =
           personDays.set(d.assignee as string, (personDays.get(d.assignee as string) ?? 0) + 1)
     }
     const totalPersonDays = [...personDays.values()].reduce((s, n) => s + n, 0)
+
+    // Each person's desk, day by day: their booking, or their permanent desk.
+    const desksById = new Map(desks.map((desk) => [desk.id, desk]))
+    const deskOfOn = (date: Day) => {
+      const deskOf = new Map<string, (typeof desks)[number]>()
+      for (const [deskId, email] of bookedOn.get(date) ?? []) {
+        const desk = desksById.get(deskId)
+        if (desk) deskOf.set(email, desk)
+      }
+      for (const desk of residents)
+        if (!released.has(`${desk.id}|${date}`)) deskOf.set(desk.assignee as string, desk)
+
+      return deskOf
+    }
+    const deskOfByDay = new Map(dates.map((date) => [date, deskOfOn(date)]))
+    const isoWeekdayOf = (date: Day) => ((weekday(date) + 6) % 7) + 1
+    const teamInsights = teams
+      .map((team) => toOfficeTeam(team, officeSlug))
+      .filter((team) => team.members.length > 0)
+      .map((team): TeamInsights => {
+        const inOn = (date: Day) =>
+          team.members.filter((email) => deskOfByDay.get(date)?.has(email))
+        const shareOn = (list: Day[]) =>
+          mean(list.map((date) => inOn(date).length / team.members.length))
+        const teamDays = dates.filter((date) => team.weekdays.includes(isoWeekdayOf(date)))
+        const zoneDeskCount = team.zone ? desks.filter((desk) => desk.zone === team.zone).length : 0
+        const getZone = () => {
+          if (!team.zone || zoneDeskCount === 0) return null
+
+          // Desk-days in the zone (in use, by the team), and the team's days in and in its zone.
+          let used = 0
+          let byTeam = 0
+          let teamPresent = 0
+          let teamInZone = 0
+          for (const date of dates)
+            for (const [email, desk] of deskOfByDay.get(date) ?? []) {
+              const isMember = team.members.includes(email)
+              const isInZone = desk.zone === team.zone
+              if (isInZone) used++
+              if (isInZone && isMember) byTeam++
+              if (isMember) teamPresent++
+              if (isMember && isInZone) teamInZone++
+            }
+
+          return {
+            name: team.zone,
+            ratio: dates.length ? used / (zoneDeskCount * dates.length) : 0,
+            teamShare: used ? byTeam / used : 0,
+            sitsThere: teamPresent ? teamInZone / teamPresent : 0,
+          }
+        }
+
+        return {
+          id: team.id,
+          name: team.name,
+          color: team.color,
+          memberCount: team.members.length,
+          presence: shareOn(dates),
+          togetherDays: dates.filter((date) => {
+            const count = inOn(date).length
+
+            return count >= 2 && count >= team.members.length / 2
+          }).length,
+          onTeamDays:
+            team.weekdays.length > 0
+              ? {
+                  teamDays: shareOn(teamDays),
+                  otherDays: shareOn(dates.filter((date) => !teamDays.includes(date))),
+                }
+              : null,
+          zone: getZone(),
+        }
+      })
+      .sort((first, second) => second.presence - first.presence)
     const weekCount = Math.max(1, dates.length / 5)
 
     return {
@@ -234,5 +327,6 @@ export const getOfficeInsights =
                   : 0,
               }
             }),
+      teams: teamInsights,
     }
   }

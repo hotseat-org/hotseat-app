@@ -1557,4 +1557,15 @@ export const cs: Messages = {
   "My teams": "Moje týmy",
   "{in} of {total}": "{in} z {total}",
   "Show {n} more": "Zobrazit další ({n})",
+  Team: "Tým",
+  "In, an average day": "V kanceláři, průměrný den",
+  Together: "Pohromadě",
+  "Their zone": "Jejich zóna",
+  "most of it in": "většina týmu v kanceláři",
+  "vs {percent} other days": "oproti {percent} v jiné dny",
+  "None set": "Nenastaveno",
+  "{percent} full": "obsazeno {percent}",
+  "{share} of it the team's · {there} of their days there":
+    "{share} z toho tým · {there} jejich dnů tam",
+  "No zone here": "Zde bez zóny",
 }
