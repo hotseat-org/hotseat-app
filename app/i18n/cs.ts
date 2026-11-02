@@ -572,12 +572,11 @@ export const cs: Messages = {
 
   // —— Search, notifications, account ——
   "Desk assigned": "Přidělený stůl",
-  "No desk in this office": "V této kanceláři nemá stůl",
   "Find a person or seat (⌘K)": "Najít člověka nebo místo (⌘K)",
   "Find a person or seat…": "Najít člověka nebo místo…",
-  "Name, email or desk…": "Jméno, e-mail nebo stůl…",
-  "Search people and desks": "Hledat lidi a stoly",
-  "No people or desks match.": "Nic tomu neodpovídá.",
+  "Name, team or desk…": "Jméno, tým nebo stůl…",
+  "Search people, teams and desks": "Hledat lidi, týmy a stoly",
+  "No people, teams or desks match.": "Žádní lidé, týmy ani stoly neodpovídají.",
   "Notifications, {n} unread": "Oznámení, nepřečtená: {n}",
   Notifications: "Oznámení",
   "You're all caught up": "Všechno máte přečtené",
@@ -1568,4 +1567,5 @@ export const cs: Messages = {
   "{share} of it the team's · {there} of their days there":
     "{share} z toho tým · {there} jejich dnů tam",
   "No zone here": "Zde bez zóny",
+  "{in} of {total} in": "{in} z {total} v kanceláři",
 }

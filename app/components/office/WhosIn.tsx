@@ -1,6 +1,7 @@
 import { MapPin, Settings2 } from "lucide-react"
 import clsx from "clsx"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { useSearchParams } from "react-router"
 import { RailModal } from "./RailModal"
 import { MemberAvatar, nameOf, type ShellMember } from "./shell-ui"
 import { WeekDots } from "./WeekDots"
@@ -43,7 +44,13 @@ export const WhosInList = ({
   )
   const inCount = roster.filter((r) => r.at).length
   const teams = useTeams()
-  const [view, setView] = useState<WhosInView>("everyone")
+  // Opened at a team (from the search): by team, just that one open.
+  const [searchParams] = useSearchParams()
+  const focusedTeam = searchParams.get("team")
+  const [view, setView] = useState<WhosInView>(focusedTeam ? "teams" : "everyone")
+  useEffect(() => {
+    if (focusedTeam) setView("teams")
+  }, [focusedTeam])
   // By team: yours first (open), then the others and those in none (folded).
   const groups = useMemo(() => {
     type Row = (typeof roster)[number]
@@ -57,7 +64,7 @@ export const WhosInList = ({
     const teamGroups: PeopleGroup<Row>[] = withPeople.map((team) => ({
       id: team.id,
       isIn: ({ m }) => team.members.includes(m.userEmail),
-      isOpenAtFirst: isMine(team),
+      isOpenAtFirst: focusedTeam ? team.id === focusedTeam : isMine(team),
       renderHeading: () => (
         <TeamHeading
           name={team.name}
@@ -78,7 +85,7 @@ export const WhosInList = ({
     }
 
     return [...teamGroups, withoutTeam]
-  }, [teams, me.userEmail, byPerson, view, t])
+  }, [teams, me.userEmail, byPerson, view, t, focusedTeam])
   const isInTeam = teams.some((team) => team.members.includes(me.userEmail))
   const views: [WhosInView, string][] = [
     ["everyone", t("Everyone")],
@@ -111,6 +118,8 @@ export const WhosInList = ({
       ) : (
         <PeopleSearch
           className="min-h-0 flex-1"
+          // Another team picked: its groups start over, that one open.
+          key={focusedTeam ?? "everyone"}
           items={roster}
           groups={view === "everyone" ? undefined : groups}
           toolbar={

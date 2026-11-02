@@ -2,11 +2,12 @@ import type { ShouldRevalidateFunctionArgs } from "react-router"
 
 /**
  * Search params that only drive overlays: settings modals (`settings`, their
- * sub-dialog `dialog`), create modals (`modal`) and an office's modals from
- * its rail (`panel`). Opening or closing one mustn't re-run the loaders of
- * the page underneath.
+ * sub-dialog `dialog`), create modals (`modal`), an office's modals from its
+ * rail (`panel`), a colleague's profile (`person`) and the team Who's in opens
+ * at (`team`). Opening or closing one mustn't re-run the loaders of the page
+ * underneath.
  */
-const OVERLAY_PARAMS = ["settings", "dialog", "modal", "panel", "person"]
+const OVERLAY_PARAMS = ["settings", "dialog", "modal", "panel", "person", "team"]
 
 /** Actions that change an office's bookings (and its desk preferences): no one else's data. */
 export const BOOKING_ACTIONS = "/api/reservations/"

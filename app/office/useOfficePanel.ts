@@ -28,13 +28,27 @@ export const useOfficePanel = () => {
   const panel = isOfficePanel(match?.params.panel) ? match.params.panel : null
   const officePath = `/app/o/${slug}/offices/${officeSlug}`
 
+  /** The search without a panel's own params (`team`): they go with it. */
+  const getSearch = useCallback(
+    (params: Record<string, string | undefined> = {}) => {
+      const next = new URLSearchParams(search)
+      next.delete("team")
+      for (const [key, value] of Object.entries(params)) if (value) next.set(key, value)
+      const text = next.toString()
+
+      return text ? `?${text}` : ""
+    },
+    [search]
+  )
+  /** Open a panel; Who's in can open at a team (`{ team: id }`). */
   const open = useCallback(
-    (next: OfficePanel) => navigate(`${officePath}/${next}${search}`, { preventScrollReset: true }),
-    [navigate, officePath, search]
+    (next: OfficePanel, params?: { team?: string }) =>
+      navigate(`${officePath}/${next}${getSearch(params)}`, { preventScrollReset: true }),
+    [navigate, officePath, getSearch]
   )
   const close = useCallback(
-    () => navigate(`${officePath}${search}`, { preventScrollReset: true }),
-    [navigate, officePath, search]
+    () => navigate(`${officePath}${getSearch()}`, { preventScrollReset: true }),
+    [navigate, officePath, getSearch]
   )
 
   return { panel, open, close }
