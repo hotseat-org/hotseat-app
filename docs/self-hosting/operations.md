@@ -9,10 +9,12 @@ Two things hold your data:
 
 | What | Where | Holds |
 | --- | --- | --- |
-| The database | the `database` volume | Everything but images: the company, people, offices and layouts, bookings. |
-| Images | the `images` volume (`/data/images`) | Logos, office covers, people's photos. |
+| The database | the `database` volume, or [your own Postgres](configuration.md#database) | Everything but images: the company, people, offices and layouts, bookings. |
+| Images | the `images` volume (`/data/images`), or [your Cloudflare Images](configuration.md#images) | Logos, office covers, people's photos. |
 
-Back up the database with `pg_dump`, e.g. nightly from cron:
+With your own Postgres or Cloudflare Images, back those up the way you
+back up the rest of your data there. With the ones alongside, back up the
+database with `pg_dump`, e.g. nightly from cron:
 
 ```sh
 docker compose exec -T postgres pg_dump -U hotseat -Fc hotseat > hotseat-$(date +%F).dump

@@ -1,4 +1,6 @@
-# Hotseat for one company, with its own Postgres. See SELF_HOSTING.md.
+# Hotseat for one company, with its own Postgres (the "database" profile,
+# on in .env.example) — or with your own: set DATABASE_URL and turn the profile
+# off. See docs/self-hosting.
 #   cp .env.example .env   (and fill it in)
 #   docker compose up -d
 services:
@@ -12,7 +14,8 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
-      DATABASE_URL: postgres://hotseat:${POSTGRES_PASSWORD}@postgres:5432/hotseat
+      # Your own database's, if DATABASE_URL is set; else the one alongside.
+      DATABASE_URL: ${DATABASE_URL:-postgres://hotseat:${POSTGRES_PASSWORD:-}@postgres:5432/hotseat}
       # Inside the container it's always 3000; PORT (.env) is this machine's.
       PORT: 3000
     ports:
@@ -22,9 +25,13 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+        # Not there when you use your own database (the profile is off).
+        required: false
 
+  # The database alongside: only with the "database" profile (COMPOSE_PROFILES in .env).
   postgres:
     image: postgres:17
+    profiles: [database]
     restart: unless-stopped
     environment:
       POSTGRES_USER: hotseat

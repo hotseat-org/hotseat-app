@@ -45,9 +45,11 @@ There's no "New organization" and no product page or demo.
   date on start, serves the app, keeps uploaded images on a volume, and runs
   the hourly booking job (usual desks, waitlists).
 - **postgres**: Postgres 17 in its own container, with its data on a volume.
-  You can use your own Postgres instead (see [Configuration](configuration.md)).
+  Or your own Postgres, e.g. a managed one (see [Configuration](configuration.md#database)).
+- **Images**: on a volume, or in your own Cloudflare Images account (see
+  [Configuration](configuration.md#images)).
 - **Reverse proxy**: yours (Caddy, nginx, Traefik…). It handles HTTPS.
 
 Nothing calls home: Hotseat talks only to your database, your sign-in
-provider, and (when someone signs in) the place their profile photo is kept,
-which it copies once.
+provider, Cloudflare if you keep images there, and (when someone signs in)
+the place their profile photo is kept, which it copies once.

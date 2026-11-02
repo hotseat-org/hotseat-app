@@ -25,6 +25,10 @@ POSTGRES_PASSWORD=…                          # openssl rand -hex 16
 HOTSEAT_ADMIN_EMAIL=you@acme.com             # who sets it up
 ```
 
+Using your own Postgres instead of the one Compose runs? Remove
+`COMPOSE_PROFILES=database` and set `DATABASE_URL` (see
+[Configuration](configuration.md#database)).
+
 …and one way to sign in (see [Sign-in](sign-in.md)), e.g. for Microsoft:
 
 ```sh
