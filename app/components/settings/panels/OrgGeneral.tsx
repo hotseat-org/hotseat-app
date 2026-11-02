@@ -1,4 +1,4 @@
-import { Input, Label, TextField } from "@heroui/react"
+import { Description, Input, Label, TextField } from "@heroui/react"
 import { useEffect, useState } from "react"
 import { useFetcher, useParams } from "react-router"
 import { DeleteLogoDialog } from "../dialogs/DeleteLogo"
@@ -9,6 +9,7 @@ import { useSettings } from "../useSettings"
 import { Button } from "~/components/Button"
 import { ThumbAvatar } from "~/components/office/shell-ui"
 import { useOrganizationContext } from "~/utils/hooks/useProfileData"
+import { useIsSelfHosted } from "~/edition/edition"
 import { useI18n } from "~/i18n/I18nProvider"
 
 const FORM = "org-general"
@@ -26,7 +27,15 @@ export function OrgGeneral() {
 
   const [description, setDescription] = useState(organization.description ?? "")
   useEffect(() => setDescription(organization.description ?? ""), [organization.description])
-  const dirty = rename.renamed || description !== (organization.description ?? "")
+  // Self-hosted: who joins by their email's domain, as one line of text.
+  const isSelfHosted = useIsSelfHosted()
+  const savedDomains = (organization.allowedDomains ?? []).join(", ")
+  const [domains, setDomains] = useState(savedDomains)
+  useEffect(() => setDomains(savedDomains), [savedDomains])
+  const dirty =
+    rename.renamed ||
+    description !== (organization.description ?? "") ||
+    (isSelfHosted && domains !== savedDomains)
 
   return (
     <>
@@ -68,6 +77,17 @@ export function OrgGeneral() {
             <Label>{t("Description")}</Label>
             <Input placeholder={t("What your organization is about (optional)")} />
           </TextField>
+          {isSelfHosted && (
+            <TextField name="allowedDomains" value={domains} onChange={setDomains}>
+              <Label>{t("Who can join")}</Label>
+              <Input placeholder="acme.com, acme.cz" />
+              <Description>
+                {t(
+                  "Anyone signing in with an email at these domains joins straight away. Leave it empty to invite people yourself."
+                )}
+              </Description>
+            </TextField>
+          )}
           {fetcher.data?.ok === false && fetcher.data.error && (
             <p className="text-sm font-bold text-danger">{fetcher.data.error}</p>
           )}
@@ -82,6 +102,7 @@ export function OrgGeneral() {
         onDiscard={() => {
           rename.setName(organization.name)
           setDescription(organization.description ?? "")
+          setDomains(savedDomains)
         }}
       />
 

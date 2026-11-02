@@ -8,6 +8,8 @@ export interface Organization {
   description?: string
   thumbnailUrl?: string
   invitationHash?: string
+  /** Self-hosted: email domains whose people join without an invite. */
+  allowedDomains?: string[]
 }
 
 /** One of someone's organizations, for the switcher: their role and how many members. */

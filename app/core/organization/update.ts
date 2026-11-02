@@ -12,6 +12,7 @@ export interface UpdateOrganizationArgs {
     name?: string
     thumbnail?: string | null
     description?: string
+    allowedDomains?: string[]
   }
 }
 

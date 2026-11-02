@@ -1,6 +1,8 @@
 import { data, type ActionFunctionArgs } from "react-router"
 import { z } from "zod"
 import { getCore } from "~/core/get-core"
+import { parseDomains } from "~/core/installation"
+import { isSelfHosted } from "~/edition/edition.server"
 import { OrganizationNameTakenError, slugForName } from "~/core/organization/update"
 import { getTranslator } from "~/i18n/locale.server"
 import { translateError } from "~/i18n/errors"
@@ -27,8 +29,22 @@ export const action = async (args: ActionFunctionArgs) => {
     }
     case "update-general": {
       const updateData = z
-        .object({ name: z.string().trim().min(1).optional(), description: z.string().optional() })
-        .parse({ name: formData.get("name"), description: formData.get("description") })
+        .object({
+          name: z.string().trim().min(1).optional(),
+          description: z.string().optional(),
+          // Self-hosted only: who joins by their email's domain.
+          allowedDomains: z
+            .string()
+            .max(1000)
+            .transform(parseDomains)
+            .optional()
+            .refine((domains) => !domains || isSelfHosted),
+        })
+        .parse({
+          name: formData.get("name"),
+          description: formData.get("description"),
+          allowedDomains: formData.get("allowedDomains") ?? undefined,
+        })
       try {
         const org = await core.organization.update({
           slug,

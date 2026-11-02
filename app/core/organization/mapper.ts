@@ -9,11 +9,13 @@ export const organizationMapper = (imageService: ImageService) => ({
     description,
     thumbnail,
     invitationHash,
+    allowedDomains,
   }: RepositoryOrganization): Promise<Organization> => ({
     name,
     slug,
     description,
     invitationHash,
+    allowedDomains,
     thumbnailUrl: thumbnail && (await imageService.getSignedUrl(thumbnail, "thumbnail")),
   }),
 })
