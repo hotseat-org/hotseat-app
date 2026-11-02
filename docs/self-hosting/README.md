@@ -26,8 +26,8 @@ There's no "New organization" and no product page or demo.
 
 ## License
 
-Hotseat is under the **Functional Source License** (FSL-1.1-ALv2, in
-`LICENSE.md` in the repository):
+Hotseat is under the **Functional Source License**
+([FSL-1.1-ALv2](https://github.com/hotseat-org/hotseat-app/blob/main/LICENSE.md)):
 
 - **Free to run for your own company**: install it, use it, change it for
   your own needs.

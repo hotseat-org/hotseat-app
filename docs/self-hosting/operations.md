@@ -1,7 +1,8 @@
 # Operations
 
 Keeping a self-hosted Hotseat running: backups, updates, logs, and what to
-do when something's off. Commands run in the `self-hosting/` folder.
+do when something's off. Commands run in the folder with your `compose.yml`
+and `.env`.
 
 ## Backups
 
@@ -37,9 +38,8 @@ docker compose start hotseat
 
 ## Updating
 
-Read the [release notes](https://github.com/hotseat-org/hotseat-app/releases)
-of every version in between, take a backup, then set the new version in
-`.env` and:
+Read the [release notes](https://github.com/hotseat-org/hotseat-app/releases) of every version in between, and
+take a backup. Then set the new version in `.env` and:
 
 ```sh
 # HOTSEAT_VERSION=0.6.0-alpha
@@ -47,8 +47,13 @@ docker compose pull
 docker compose up -d
 ```
 
-`/healthz` says which version is running. (Built yourself? `git pull`, then
-`docker compose -f compose.yml -f compose.build.yml up -d --build`.)
+When the release notes say `compose.yml` changed, download it from the new
+release first (as in [Installation](installation.md#1-get-the-compose-file-and-its-settings),
+with the new version). `/healthz` says which version is running.
+
+Built it yourself? In the source folder, `git fetch --tags && git checkout`
+the new release's tag, then
+`docker compose -f compose.yml -f compose.build.yml up -d --build`.
 
 On start, Hotseat applies the database migrations the new version brings,
 before it serves anyone. Each migration applies whole or not at all. Take a
@@ -107,8 +112,8 @@ What you'll see:
 ## Running without Docker
 
 Hotseat is a Node app (Node 25 or newer, Bun to install dependencies) with
-Postgres 15 or newer. `node server/admin.mjs` (see [Admin access](#admin-access))
-works the same with `DATABASE_URL` set.
+Postgres 15 or newer. In a copy of the [source](https://github.com/hotseat-org/hotseat-app) at the release you
+want (`git clone --branch v0.5.0-alpha https://github.com/hotseat-org/hotseat-app.git`):
 
 ```sh
 bun install
@@ -128,3 +133,5 @@ node server/node.mjs
 
 …with the sign-in settings from [Configuration](configuration.md). Run it
 under systemd (or similar) and behind a reverse proxy, as with Docker.
+`node server/admin.mjs` (see [Admin access](#admin-access)) works the same,
+with `DATABASE_URL` set.

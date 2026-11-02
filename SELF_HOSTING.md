@@ -1,7 +1,8 @@
 # Self-hosting Hotseat
 
 Run Hotseat on your own server as one company's own installation. The full
-guide is in **[docs/self-hosting](docs/self-hosting/README.md)**:
+guide is in **[docs/self-hosting](docs/self-hosting/README.md)** (also on the
+web: https://alpha.vidlak.net/hotseat/docs/self-hosting):
 
 - [Installation](docs/self-hosting/installation.md): Docker Compose, HTTPS with a reverse proxy
 - [Configuration](docs/self-hosting/configuration.md): every setting
@@ -12,9 +13,11 @@ guide is in **[docs/self-hosting](docs/self-hosting/README.md)**:
 ## Quick start
 
 ```sh
-cd self-hosting
-cp .env.example .env    # BASE_URL, COOKIES_SECRET, POSTGRES_PASSWORD, a way to sign in
-docker compose up -d    # pulls ghcr.io/hotseat-org/hotseat:$HOTSEAT_VERSION
+mkdir hotseat && cd hotseat
+curl -fsSLO https://raw.githubusercontent.com/hotseat-org/hotseat-app/v0.5.0-alpha/self-hosting/compose.yml
+curl -fsSL https://raw.githubusercontent.com/hotseat-org/hotseat-app/v0.5.0-alpha/self-hosting/.env.example -o .env
+# Fill in .env: BASE_URL, COOKIES_SECRET, POSTGRES_PASSWORD, a way to sign in.
+docker compose up -d    # pulls ghcr.io/hotseat-org/hotseat:0.5.0-alpha
 ```
 
 Hotseat 0.5 is an alpha: pin the exact version, and read the release notes

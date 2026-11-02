@@ -1,7 +1,7 @@
 # Configuration
 
 Hotseat reads its settings from environment variables. With Docker Compose
-they live in `self-hosting/.env`. Change one, then `docker compose up -d`
+they live in `.env`, next to `compose.yml`. Change one, then `docker compose up -d`
 (or `--build` for the build-time ones).
 
 ## Required

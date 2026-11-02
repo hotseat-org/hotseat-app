@@ -1,9 +1,10 @@
-# Hotseat for one company, with its own Postgres (the "database" profile,
-# on in .env.example) — or with your own: set DATABASE_URL and turn the profile
-# off. See docs/self-hosting.
-#   cp .env.example .env   (and fill it in)
+# Hotseat for one company, with its own Postgres (the "database" profile, on
+# in the settings) — or with your own: set DATABASE_URL, turn the profile off.
+# Next to it: .env, its settings (from .env.example, filled in). Then:
 #   docker compose up -d
-# Built from this repository instead (or served under a path): compose.build.yml.
+# Guide: https://github.com/hotseat-org/hotseat-app/tree/main/docs/self-hosting
+# Built from the source instead (or served under a path): compose.build.yml,
+# https://github.com/hotseat-org/hotseat-app/tree/main/self-hosting
 services:
   hotseat:
     # The release pinned in .env (HOTSEAT_VERSION).

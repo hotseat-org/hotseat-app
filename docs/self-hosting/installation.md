@@ -7,22 +7,21 @@ and arm64), with a Compose file that runs it next to its own Postgres.
 > change settings or behaviour. Pin the exact version (`HOTSEAT_VERSION`),
 > read the release notes before updating, and keep backups.
 
-## 1. Get the Compose file
+## 1. Get the Compose file and its settings
 
-All you need is the `self-hosting` folder of the
-[repository](https://github.com/hotseat-org/hotseat-app): `compose.yml` and
-`.env.example`. Clone it, or download just those two files:
+Two files, from the release you're installing: the Compose file, and the
+settings to fill in (saved as `.env`). In a folder of their own:
 
 ```sh
-git clone https://github.com/hotseat-org/hotseat-app.git hotseat
-cd hotseat/self-hosting
+mkdir hotseat && cd hotseat
+curl -fsSLO https://raw.githubusercontent.com/hotseat-org/hotseat-app/v0.5.0-alpha/self-hosting/compose.yml
+curl -fsSL https://raw.githubusercontent.com/hotseat-org/hotseat-app/v0.5.0-alpha/self-hosting/.env.example -o .env
 ```
+
+That's 0.5.0-alpha. The newest release is on the
+[releases page](https://github.com/hotseat-org/hotseat-app/releases): use its version in both lines.
 
 ## 2. Fill in the settings
-
-```sh
-cp .env.example .env
-```
 
 Open `.env` and set at least:
 
@@ -136,20 +135,25 @@ BASE_URL=https://intranet.acme.com/hotseat
 ```
 
 The path is built into the app, so the published image (served at the root)
-won't do: build it yourself, from the repository, with the override that
-does so:
-
-```sh
-docker compose -f compose.yml -f compose.build.yml up -d --build
-```
-
-Point the proxy's `/hotseat/` at port 3000 without stripping the path.
+won't do: [build it yourself](#building-it-yourself). Point the proxy's
+`/hotseat/` at port 3000 without stripping the path.
 
 ## Building it yourself
 
-The same command builds the image from the repository instead of
-downloading it: for a change of your own, or to run code not released yet.
-`/healthz` then reports the version as `dev`.
+To serve Hotseat under a path, run a change of your own, or try code not
+released yet, build the image from the [source](https://github.com/hotseat-org/hotseat-app) instead of
+downloading it. Get the release's code (or `main`, for the newest) and put
+your `.env` next to its Compose files:
+
+```sh
+git clone --branch v0.5.0-alpha https://github.com/hotseat-org/hotseat-app.git hotseat-source
+cp .env hotseat-source/self-hosting/
+cd hotseat-source/self-hosting
+docker compose -f compose.yml -f compose.build.yml up -d --build
+```
+
+`compose.build.yml` builds the image there, from the code. `/healthz` then
+reports the version as `dev`.
 
 ## Trying it on your own machine
 

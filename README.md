@@ -35,7 +35,10 @@ guide is in [docs/self-hosting](docs/self-hosting/README.md) (quick start:
 
 ## Releasing the self-hosted image
 
-Set `version` in `package.json`, commit, then tag and push:
+Set the new version in `package.json`, in `HOTSEAT_VERSION` in
+`self-hosting/.env.example`, and in the download commands of
+`docs/self-hosting/installation.md` and `SELF_HOSTING.md`. Commit, then tag
+and push:
 
 ```sh
 git tag v0.5.0-alpha && git push origin v0.5.0-alpha
