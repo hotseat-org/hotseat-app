@@ -3,6 +3,7 @@ import { useMemo } from "react"
 import { RailModal } from "./RailModal"
 import { MemberAvatar, nameOf, type ShellMember } from "./shell-ui"
 import { WeekDots } from "./WeekDots"
+import { PeopleSearch } from "~/components/people/PeopleSearch"
 import { useOfficeStore } from "~/office/store"
 import { deskName, useDesksOnDay, useWeekPresence } from "~/office/booking/useBooking"
 import { useSettings } from "~/components/settings/useSettings"
@@ -59,38 +60,40 @@ export const WhosInList = ({
           )}
         </div>
       ) : (
-        <ul className="-mx-1 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-1">
-          {roster.map(({ m, at }) => (
-            <li key={m.userEmail} className="flex items-center gap-3 rounded-xl px-1 py-1.5">
-              <MemberAvatar m={m} className="size-10 shrink-0 rounded-xl" />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-bold text-foreground">
-                  {m.userEmail === me.userEmail ? t("You") : nameOf(m)}
-                </p>
-                <p className="flex items-center gap-2 text-xs text-muted">
-                  {/* Fixed width: every row's dots start at the same spot. */}
-                  <span className="w-16 shrink-0 truncate">
-                    {at ? deskName(i18n, at.desk) : t("Not in")}
-                  </span>
-                  <WeekDots email={m.userEmail} presence={week} />
-                </p>
-              </div>
-              {at && (
-                <button
-                  type="button"
-                  aria-label={t("Show {name}'s desk on the plan", { name: nameOf(m) })}
-                  onClick={() => {
-                    spotlightSeat(at.desk.id)
-                    onFind()
-                  }}
-                  className="flex min-h-11 items-center gap-1.5 rounded-xl bg-default px-3 text-sm font-bold text-foreground"
-                >
-                  <MapPin className="size-4" /> {t("Find")}
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
+        <PeopleSearch
+          className="min-h-0 flex-1"
+          items={roster}
+          getPerson={({ m }) => ({
+            email: m.userEmail,
+            name: m.userEmail === me.userEmail ? t("You") : nameOf(m),
+            avatarUrl: m.avatarUrl,
+          })}
+          renderFace={({ m }) => <MemberAvatar m={m} className="size-10 shrink-0 rounded-xl" />}
+          renderDetail={({ m, at }) => (
+            <span className="flex items-center gap-2">
+              {/* Fixed width: every row's dots start at the same spot. */}
+              <span className="w-16 shrink-0 truncate">
+                {at ? deskName(i18n, at.desk) : t("Not in")}
+              </span>
+              <WeekDots email={m.userEmail} presence={week} />
+            </span>
+          )}
+          renderAside={({ m, at }) =>
+            at && (
+              <button
+                type="button"
+                aria-label={t("Show {name}'s desk on the plan", { name: nameOf(m) })}
+                onClick={() => {
+                  spotlightSeat(at.desk.id)
+                  onFind()
+                }}
+                className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl bg-default px-3 text-sm font-bold text-foreground"
+              >
+                <MapPin className="size-4" /> {t("Find")}
+              </button>
+            )
+          }
+        />
       )}
     </div>
   )

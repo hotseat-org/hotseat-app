@@ -1,27 +1,16 @@
 import clsx from "clsx"
 import { CalendarDays, SlidersHorizontal, Star } from "lucide-react"
-import { Fragment, useMemo, type CSSProperties, type ReactNode } from "react"
+import { Fragment, type CSSProperties, type ReactNode } from "react"
 import { DESK_FEATURES } from "../desks/deskFeatures"
 import { personByEmail, usePeople } from "../desks/people"
-import { SeatAvatar } from "../desks/SeatAvatar"
 import { useOfficeStore } from "../store"
-import { getZones } from "../zones/zones"
 import type { SeatRule } from "./matching"
-import { useAllPieces } from "~/editor"
+import { Face, TONES, getZoneTint, useZoneColors, type RuleTone } from "./ruleLook"
 import { useI18n } from "~/i18n/I18nProvider"
 import type { Day } from "~/utils/booking"
 
 /** Where a pill goes in a phrase's words (never typed by anyone). */
 const PILL = "\u0000"
-
-/** A pill's look: the day's accent, a place's colour, a person's, a favourite's or an avoided one's amber. */
-type PillTone = "accent" | "neutral" | "warning"
-
-const TONES: Record<PillTone, string> = {
-  accent: "bg-accent/15 text-accent",
-  neutral: "bg-surface-tertiary text-foreground",
-  warning: "bg-warning/30 text-warning-foreground",
-}
 
 const Pill = ({
   tone = "accent",
@@ -29,7 +18,7 @@ const Pill = ({
   style,
   children,
 }: {
-  tone?: PillTone
+  tone?: RuleTone
   /** Before the words: an icon, a colour dot, a face. */
   icon?: ReactNode
   /** A colour of its own (a zone's), over the tone's. */
@@ -38,7 +27,8 @@ const Pill = ({
 }) => (
   <span
     className={clsx(
-      "inline-flex max-w-full items-center gap-1.5 whitespace-nowrap rounded-full py-0.5 align-middle leading-snug",
+      // One height for every pill, its icon in the same round slot: they line up, line on line.
+      "inline-flex h-7 max-w-full items-center gap-1.5 whitespace-nowrap rounded-full align-middle leading-none",
       icon ? "pl-1 pr-2.5" : "px-2.5",
       TONES[tone]
     )}
@@ -64,7 +54,7 @@ const withPill = (template: string, pill: ReactNode) => {
 
 /** A round icon at a pill's start, the size of a face. */
 const PillIcon = ({ children }: { children: ReactNode }) => (
-  <span className="grid size-5 shrink-0 place-items-center rounded-full bg-surface/70">
+  <span className="grid size-5 shrink-0 place-items-center rounded-full bg-background/70">
     {children}
   </span>
 )
@@ -87,8 +77,7 @@ export const SeatSentence = ({
 }) => {
   const { t, format } = useI18n()
   const people = usePeople()
-  const pieces = useAllPieces()
-  const zones = useMemo(() => getZones(pieces), [pieces])
+  const zoneColors = useZoneColors()
   const today = useOfficeStore((state) => state.booking.today)
   const featureOf = (id: string) => {
     const feature = DESK_FEATURES.find((candidate) => candidate.id === id)
@@ -104,14 +93,11 @@ export const SeatSentence = ({
     return format.onDay(day)
   }
 
-  const personPill = (email: string, tone: PillTone) => {
+  const personPill = (email: string, tone: RuleTone) => {
     const person = personByEmail(people, email)
 
     return (
-      <Pill
-        tone={tone}
-        icon={<SeatAvatar person={person} email={email} isMine={false} size={20} />}
-      >
+      <Pill tone={tone} icon={<Face email={email} className="size-5 text-[9px]" />}>
         {person?.name ?? email.split("@")[0]}
       </Pill>
     )
@@ -119,18 +105,18 @@ export const SeatSentence = ({
 
   const phraseOf = (rule: SeatRule) => {
     if (rule.kind === "zone") {
-      const color = zones.find((zone) => zone.name === rule.zone)?.color
+      const color = zoneColors.get(rule.zone)
 
       return withPill(
         t("in {zone}", { zone: PILL }),
         <Pill
           tone="neutral"
           icon={
-            <span className="ml-1.5 size-2.5 shrink-0 rounded-full" style={{ background: color }} />
+            <span className="grid size-5 shrink-0 place-items-center">
+              <span className="size-2.5 rounded-full" style={{ background: color }} />
+            </span>
           }
-          style={
-            color ? { backgroundColor: `color-mix(in srgb, ${color} 22%, transparent)` } : undefined
-          }
+          style={getZoneTint(color)}
         >
           {rule.zone}
         </Pill>

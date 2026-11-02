@@ -248,6 +248,7 @@ export const cs: Messages = {
   "Without a desk": "Bez stolu",
   "With a desk": "Se stolem",
   "Search by name or email": "Hledat podle jména nebo e-mailu",
+  "Nobody here": "Nikdo tu není",
   "Booked: {bookings}. A resident takes it from them.":
     "Rezervace: {bookings}. Stálý uživatel jim stůl vezme.",
   "No resident": "Bez stálého uživatele",

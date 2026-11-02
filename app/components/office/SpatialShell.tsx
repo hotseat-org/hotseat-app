@@ -24,6 +24,7 @@ import {
 import { useOfficeStore } from "~/office/store"
 import { useOfficePanel, type OfficePanel } from "~/office/useOfficePanel"
 import { FindSeatDialog } from "~/office/findSeat/FindSeatDialog"
+import { useFindSeatRoute } from "~/office/findSeat/useFindSeatRoute"
 import { useDesksOnDay } from "~/office/booking/useBooking"
 import { useI18n } from "~/i18n/I18nProvider"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
@@ -108,8 +109,16 @@ export const SpatialShell = ({
   /** Open one of the rail's modals (closing a side panel), or close it if it's open. */
   const toggleModal = (panel: OfficePanel) => {
     sidePanels.close()
-    if (officePanel.panel === panel) officePanel.close()
+    // Finding a seat has its own address: leaving it, the panel opens instead.
+    if (findSeat.isOpen) findSeat.close(panel)
+    else if (officePanel.panel === panel) officePanel.close()
     else officePanel.open(panel)
+  }
+  const findSeat = useFindSeatRoute()
+  const toggleFindSeat = () => {
+    sidePanels.close()
+    if (findSeat.isOpen) findSeat.close()
+    else findSeat.open()
   }
   // Your day, by your avatar (top right).
   const day = useDayStatus(me, () => {
@@ -148,7 +157,7 @@ export const SpatialShell = ({
         <RailLink
           icon={Building2}
           label={t("Office")}
-          active={!officePanel.panel && !hasHeatmap && !sidePanels.openPanel}
+          active={!officePanel.panel && !findSeat.isOpen && !hasHeatmap && !sidePanels.openPanel}
           onClick={() => {
             sidePanels.close()
             officePanel.close()
@@ -172,8 +181,8 @@ export const SpatialShell = ({
           <RailLink
             icon={Armchair}
             label={t("Find a seat")}
-            active={officePanel.panel === "find"}
-            onClick={() => toggleModal("find")}
+            active={findSeat.isOpen}
+            onClick={toggleFindSeat}
           />
         )}
         {me.role === Role.ADMIN && (
@@ -208,7 +217,7 @@ export const SpatialShell = ({
           <MyBookings onShow={officePanel.close} />
         </RailModal>
       )}
-      {officePanel.panel === "find" && isBooking && <FindSeatDialog onClose={officePanel.close} />}
+      {findSeat.isOpen && isBooking && <FindSeatDialog onClose={() => findSeat.close()} />}
       {officePanel.panel === "insights" && me.role === Role.ADMIN && <InsightsDashboard />}
 
       {/* Top-right: search + notifications + account */}

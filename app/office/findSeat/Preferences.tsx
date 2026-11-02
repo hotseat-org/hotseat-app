@@ -1,12 +1,14 @@
 import clsx from "clsx"
-import { ChevronLeft, Plus, Search, X } from "lucide-react"
+import { ChevronLeft, Plus, X } from "lucide-react"
 import { useMemo, useState } from "react"
 import { DESK_FEATURES } from "../desks/deskFeatures"
 import { usePeople } from "../desks/people"
 import { useOfficeStore } from "../store"
 import { getZones } from "../zones/zones"
 import type { RuleStrength, SeatRule } from "./matching"
-import { getRuleIcon, useRuleText } from "./ruleText"
+import { KindTile, RuleTile, TONES, getZoneTint } from "./ruleLook"
+import { useRuleText } from "./ruleText"
+import { PeopleSearch } from "~/components/people/PeopleSearch"
 import { useAllPieces } from "~/editor"
 import { useI18n } from "~/i18n/I18nProvider"
 
@@ -17,13 +19,6 @@ const OFFERED_STRENGTHS: RuleStrength[] = ["must", "prefer"]
 const MAX_PEOPLE = 8
 
 type RuleKind = SeatRule["kind"]
-
-/** For searching: lower case, without accents. */
-const toSearchable = (text: string) =>
-  text
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLowerCase()
 
 /** Whether two rules ask for the same thing (whatever their strength). */
 const isSameAsk = (first: SeatRule, second: SeatRule) =>
@@ -72,35 +67,29 @@ export const Preferences = ({
         </p>
       )}
       <ul className="flex flex-col">
-        {rules.map((rule, index) => {
-          const Icon = getRuleIcon(rule)
-
-          return (
-            <li
-              key={`${rule.kind}-${index}`}
-              className="flex items-center gap-3 border-b border-border/70 py-2.5"
+        {rules.map((rule, index) => (
+          <li
+            key={`${rule.kind}-${index}`}
+            className="flex items-center gap-3 border-b border-border/70 py-2.5"
+          >
+            <RuleTile rule={rule} />
+            <span className="min-w-0 flex-1 truncate text-[15px] font-extrabold">
+              {describe(rule)}
+            </span>
+            <StrengthSwitch
+              value={rule.strength}
+              onChange={(strength) => setStrength(index, strength)}
+            />
+            <button
+              type="button"
+              aria-label={t("Remove {preference}", { preference: describe(rule) })}
+              onClick={() => remove(index)}
+              className="grid size-11 shrink-0 place-items-center rounded-full text-muted outline-none hover:bg-surface-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
             >
-              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent/10 text-accent">
-                <Icon className="size-[18px]" />
-              </span>
-              <span className="min-w-0 flex-1 truncate text-[15px] font-extrabold">
-                {describe(rule)}
-              </span>
-              <StrengthSwitch
-                value={rule.strength}
-                onChange={(strength) => setStrength(index, strength)}
-              />
-              <button
-                type="button"
-                aria-label={t("Remove {preference}", { preference: describe(rule) })}
-                onClick={() => remove(index)}
-                className="grid size-11 shrink-0 place-items-center rounded-full text-muted outline-none hover:bg-surface-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
-              >
-                <X className="size-4" />
-              </button>
-            </li>
-          )
-        })}
+              <X className="size-4" />
+            </button>
+          </li>
+        ))}
       </ul>
       <button
         type="button"
@@ -196,31 +185,25 @@ const AddRule = ({
     <div className="flex flex-col">
       {back}
       <ul className="flex flex-col">
-        {kinds.map((entry) => {
-          const Icon = getRuleIcon({ kind: entry.kind, strength: "prefer" } as SeatRule)
-
-          return (
-            <li key={entry.kind}>
-              <button
-                type="button"
-                onClick={() =>
-                  entry.kind === "favorite"
-                    ? onAdd({ kind: "favorite", strength: "prefer" })
-                    : setKind(entry.kind)
-                }
-                className="flex min-h-14 w-full items-center gap-3 rounded-xl py-1.5 text-left outline-none hover:bg-surface-secondary focus-visible:ring-2 focus-visible:ring-focus"
-              >
-                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent/10 text-accent">
-                  <Icon className="size-[18px]" />
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-[15px] font-extrabold">{entry.title}</span>
-                  <span className="block text-xs text-muted">{entry.detail}</span>
-                </span>
-              </button>
-            </li>
-          )
-        })}
+        {kinds.map((entry) => (
+          <li key={entry.kind}>
+            <button
+              type="button"
+              onClick={() =>
+                entry.kind === "favorite"
+                  ? onAdd({ kind: "favorite", strength: "prefer" })
+                  : setKind(entry.kind)
+              }
+              className="flex min-h-14 w-full items-center gap-3 rounded-xl py-1.5 text-left outline-none hover:bg-surface-secondary focus-visible:ring-2 focus-visible:ring-focus"
+            >
+              <KindTile kind={entry.kind} />
+              <span className="min-w-0">
+                <span className="block text-[15px] font-extrabold">{entry.title}</span>
+                <span className="block text-xs text-muted">{entry.detail}</span>
+              </span>
+            </button>
+          </li>
+        ))}
       </ul>
     </div>
   )
@@ -238,8 +221,9 @@ const BackButton = ({ label, onPress }: { label: string; onPress: () => void }) 
   </button>
 )
 
+/** A choice's shape; its colours are the preference's own (see ruleLook). */
 const CHOICE =
-  "min-h-11 rounded-full border border-border bg-surface px-4 text-sm font-bold outline-none hover:border-muted focus-visible:ring-2 focus-visible:ring-focus"
+  "flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-bold outline-none transition-[filter] hover:brightness-95 focus-visible:ring-2 focus-visible:ring-focus"
 
 const ZoneChoice = ({
   back,
@@ -264,7 +248,8 @@ const ZoneChoice = ({
               key={zone.name}
               type="button"
               onClick={() => onPick({ kind: "zone", zone: zone.name, strength: "prefer" })}
-              className={clsx(CHOICE, "flex items-center gap-2")}
+              className={clsx(CHOICE, TONES.neutral)}
+              style={getZoneTint(zone.color)}
             >
               <span className="size-2.5 rounded-full" style={{ background: zone.color }} />
               {zone.name}
@@ -294,7 +279,7 @@ const FeatureChoice = ({
             key={feature.id}
             type="button"
             onClick={() => onPick({ kind: "feature", feature: feature.id, strength: "prefer" })}
-            className={CHOICE}
+            className={clsx(CHOICE, TONES.accent)}
           >
             {t(feature.label)}
           </button>
@@ -311,54 +296,24 @@ const ColleagueChoice = ({
   back: React.ReactNode
   onPick: (rule: SeatRule) => void
 }) => {
-  const { t } = useI18n()
   const people = usePeople()
   const me = useOfficeStore((state) => state.booking.me)
-  const [query, setQuery] = useState("")
-  const searchable = toSearchable(query.trim())
-  const listed = people.members
-    .filter(
-      (member) =>
-        member.email !== me &&
-        (!searchable ||
-          toSearchable(member.name).includes(searchable) ||
-          toSearchable(member.email).includes(searchable))
-    )
-    .slice(0, MAX_PEOPLE)
+  const others = useMemo(
+    () => people.members.filter((member) => member.email !== me),
+    [people.members, me]
+  )
 
   return (
     <div className="flex flex-col">
       {back}
-      <label className="flex h-11 items-center gap-2 rounded-xl border border-border bg-surface px-3 focus-within:ring-2 focus-within:ring-focus">
-        <Search className="size-4 shrink-0 text-muted" />
-        <input
-          autoFocus
-          value={query}
-          onChange={(event) => setQuery(event.currentTarget.value)}
-          placeholder={t("Search by name or email")}
-          aria-label={t("Search by name or email")}
-          className="min-w-0 flex-1 bg-transparent text-[15px] outline-none"
-        />
-      </label>
-      <ul className="mt-2 flex flex-col">
-        {listed.map((member) => (
-          <li key={member.email}>
-            <button
-              type="button"
-              onClick={() => onPick({ kind: "colleague", email: member.email, strength: "prefer" })}
-              className="flex min-h-12 w-full flex-col justify-center rounded-xl px-2 text-left outline-none hover:bg-surface-secondary focus-visible:ring-2 focus-visible:ring-focus"
-            >
-              <span className="truncate text-[15px] font-extrabold">{member.name}</span>
-              <span className="truncate text-xs text-muted">{member.email}</span>
-            </button>
-          </li>
-        ))}
-        {listed.length === 0 && (
-          <li className="px-2 py-6 text-center text-sm text-muted">
-            {t("Nobody matches “{query}”", { query: query.trim() })}
-          </li>
-        )}
-      </ul>
+      <PeopleSearch
+        items={others}
+        getPerson={(member) => member}
+        sort={(first, second) => first.name.localeCompare(second.name)}
+        maxRows={MAX_PEOPLE}
+        isAutoFocused
+        onPick={(member) => onPick({ kind: "colleague", email: member.email, strength: "prefer" })}
+      />
     </div>
   )
 }

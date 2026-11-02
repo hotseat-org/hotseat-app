@@ -1,30 +1,17 @@
 import { Modal } from "@heroui/react"
 import clsx from "clsx"
-import { AlertTriangle, Armchair, Check, Search, X } from "lucide-react"
+import { AlertTriangle, Armchair, Check, X } from "lucide-react"
 import { useMemo, useState } from "react"
 import { isSeatable } from "../catalog"
 import { deskName, useDeskFloor } from "../booking/useBooking"
 import { useOfficeStore } from "../store"
-import { SeatAvatar } from "./SeatAvatar"
 import { usePeople, type Person } from "./people"
+import { PeopleSearch } from "~/components/people/PeopleSearch"
 import { useAllPieces } from "~/editor"
 import { type SceneObject } from "~/editor/core"
 import { useI18n } from "~/i18n/I18nProvider"
 import type { Day } from "~/utils/booking"
 import { useIsMobile } from "~/utils/hooks/useIsMobile"
-
-/** Who's listed: everyone, those without a permanent desk here, or those with one. */
-type Filter = "all" | "free" | "resident"
-
-/** Rows drawn at most: a big organization is narrowed down by the search. */
-const MAX_ROWS = 100
-
-/** For searching: lower case, without accents ("Šťastná" is found by "stastna"). */
-const toSearchable = (text: string) =>
-  text
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLowerCase()
 
 /** A day someone has booked a desk. */
 interface Booked {
@@ -80,8 +67,6 @@ const ResidentPickerBody = ({
   const byDay = useOfficeStore((state) => state.booking.byDay)
   const today = useOfficeStore((state) => state.booking.today)
   const isBookingOn = useOfficeStore((state) => state.booking.enabled)
-  const [query, setQuery] = useState("")
-  const [filter, setFilter] = useState<Filter>("all")
   /** Picked, but it would cancel bookings or move them: confirmed first. */
   const [pendingEmail, setPendingEmail] = useState<string | null>(null)
 
@@ -155,38 +140,6 @@ const ResidentPickerBody = ({
     onClose()
   }
 
-  const counts = {
-    all: people.members.length,
-    free: people.members.filter((member) => !residentDesks.has(member.email)).length,
-    resident: people.members.filter((member) => residentDesks.has(member.email)).length,
-  }
-  const searchable = toSearchable(query.trim())
-  const listed = people.members
-    .filter((member) => {
-      if (filter === "free" && residentDesks.has(member.email)) return false
-      if (filter === "resident" && !residentDesks.has(member.email)) return false
-
-      return (
-        !searchable ||
-        toSearchable(member.name).includes(searchable) ||
-        toSearchable(member.email).includes(searchable)
-      )
-    })
-    // This desk's resident first, then by name.
-    .sort(
-      (first, second) =>
-        Number(second.email === desk.assignee) - Number(first.email === desk.assignee) ||
-        first.name.localeCompare(second.name)
-    )
-  const shown = listed.slice(0, MAX_ROWS)
-  const isNoneListed = !searchable && filter !== "resident"
-
-  const filters: { id: Filter; label: string }[] = [
-    { id: "all", label: t("Everyone") },
-    { id: "free", label: t("Without a desk") },
-    { id: "resident", label: t("With a desk") },
-  ]
-
   return (
     <>
       <div className="flex h-[68px] shrink-0 items-center gap-3 border-b border-border pl-6 pr-4">
@@ -222,131 +175,97 @@ const ResidentPickerBody = ({
           }}
         />
       ) : (
-        <>
-          <div className="flex shrink-0 flex-col gap-2.5 px-6 pt-4 pb-3">
-            <label className="flex h-10 items-center gap-2 rounded-xl border border-border bg-surface px-3 focus-within:ring-2 focus-within:ring-focus">
-              <Search className="size-4 shrink-0 text-muted" />
-              <input
-                autoFocus
-                value={query}
-                onChange={(event) => setQuery(event.currentTarget.value)}
-                placeholder={t("Search by name or email")}
-                aria-label={t("Search by name or email")}
-                className="min-w-0 flex-1 bg-transparent text-sm outline-none"
-              />
-            </label>
-            <div className="flex flex-wrap gap-1.5" role="group" aria-label={t("Show")}>
-              {filters.map(({ id, label }) => (
-                <button
-                  key={id}
-                  type="button"
-                  aria-pressed={filter === id}
-                  onClick={() => setFilter(id)}
-                  className={clsx(
-                    "h-7 rounded-full border px-2.5 text-xs font-bold transition-colors",
-                    filter === id
-                      ? "border-accent bg-accent/15 text-accent"
-                      : "border-border text-muted hover:border-muted hover:text-foreground"
-                  )}
-                >
-                  {label} <span className="font-semibold opacity-70">{counts[id]}</span>
-                </button>
-              ))}
-            </div>
-            {/* Whoever becomes its resident, these go: said once, up top. */}
-            {deskBookings.length > 0 && (
-              <p className="flex gap-2 rounded-xl bg-warning/15 px-3 py-2 text-xs text-foreground">
-                <AlertTriangle className="mt-px size-3.5 shrink-0 text-warning" />
-                <span>
-                  {t("Booked: {bookings}. A resident takes it from them.", {
-                    bookings: deskBookings
-                      .map((booking) => `${nameOf(booking.email)} (${format.short(booking.day)})`)
-                      .join(", "),
-                  })}
-                </span>
-              </p>
-            )}
-          </div>
-
-          <ul className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
-            {isNoneListed && (
+        <div className="flex min-h-0 flex-1 flex-col px-5 pt-4 pb-4">
+          {/* Whoever becomes its resident, these go: said once, up top. */}
+          {deskBookings.length > 0 && (
+            <p className="mb-2.5 flex gap-2 rounded-xl bg-warning/15 px-3 py-2 text-xs text-foreground">
+              <AlertTriangle className="mt-px size-3.5 shrink-0 text-warning" />
+              <span>
+                {t("Booked: {bookings}. A resident takes it from them.", {
+                  bookings: deskBookings
+                    .map((booking) => `${nameOf(booking.email)} (${format.short(booking.day)})`)
+                    .join(", "),
+                })}
+              </span>
+            </p>
+          )}
+          <PeopleSearch
+            className="min-h-0 flex-1"
+            items={people.members}
+            getPerson={(member) => member}
+            filters={[
+              { id: "all", label: t("Everyone"), isIn: () => true },
+              {
+                id: "free",
+                label: t("Without a desk"),
+                isIn: (member) => !residentDesks.has(member.email),
+              },
+              {
+                id: "resident",
+                label: t("With a desk"),
+                isIn: (member) => residentDesks.has(member.email),
+              },
+            ]}
+            // This desk's resident first, then by name.
+            sort={(first, second) =>
+              Number(second.email === desk.assignee) - Number(first.email === desk.assignee) ||
+              first.name.localeCompare(second.name)
+            }
+            isAutoFocused
+            leading={
               <li>
                 <PickerRow
                   isCurrent={!desk.assignee}
                   onPress={() => pick(null)}
-                  avatar={
-                    <span className="grid size-9 shrink-0 place-items-center rounded-full border border-dashed border-muted text-muted">
-                      <Armchair className="size-4" />
-                    </span>
-                  }
                   title={t("No resident")}
                   detail={t("Anyone can book it")}
                 />
               </li>
-            )}
-            {shown.map((member) => {
-              const { ownDays, movesFrom } = getImpact(member.email)
-              const isCurrent = member.email === desk.assignee
+            }
+            renderDetail={(member) =>
+              getRowDetail(
+                member,
+                member.email === desk.assignee,
+                getImpact(member.email).movesFrom
+              )
+            }
+            renderNote={(member) => {
+              const { ownDays } = getImpact(member.email)
+              if (member.email === desk.assignee || ownDays.length === 0) return null
 
               return (
-                <li key={member.email}>
-                  <PickerRow
-                    isCurrent={isCurrent}
-                    onPress={() => pick(member.email)}
-                    avatar={<PersonAvatar person={member} />}
-                    title={member.name}
-                    detail={getRowDetail(member, isCurrent, movesFrom)}
-                    warning={
-                      !isCurrent && ownDays.length > 0
-                        ? tn(
-                            ownDays.length,
-                            "Their {n} booking here would be cancelled",
-                            "Their {n} bookings here would be cancelled"
-                          )
-                        : undefined
-                    }
-                  />
-                </li>
+                <span className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-warning">
+                  <AlertTriangle className="size-3 shrink-0" />
+                  <span className="truncate">
+                    {tn(
+                      ownDays.length,
+                      "Their {n} booking here would be cancelled",
+                      "Their {n} bookings here would be cancelled"
+                    )}
+                  </span>
+                </span>
               )
-            })}
-            {listed.length === 0 && (
-              <li className="px-2 py-10 text-center text-sm text-muted">
-                {t("Nobody matches “{query}”", { query: query.trim() })}
-              </li>
-            )}
-            {listed.length > shown.length && (
-              <li className="px-2 pt-3 text-center text-xs text-muted">
-                {t("Showing {shown} of {total} — search to narrow it down", {
-                  shown: shown.length,
-                  total: listed.length,
-                })}
-              </li>
-            )}
-          </ul>
-        </>
+            }}
+            isSelected={(member) => member.email === desk.assignee}
+            onPick={(member) => pick(member.email)}
+          />
+        </div>
       )}
     </>
   )
 }
 
-const PersonAvatar = ({ person }: { person: Person }) => (
-  <SeatAvatar person={person} email={person.email} isMine={false} size={36} />
-)
-
+/** "No resident": the row before the people, an empty seat. */
 const PickerRow = ({
   isCurrent,
   onPress,
-  avatar,
   title,
   detail,
-  warning,
 }: {
   isCurrent: boolean
   onPress: () => void
-  avatar: React.ReactNode
   title: string
   detail: string
-  warning?: string
 }) => (
   <button
     type="button"
@@ -357,16 +276,12 @@ const PickerRow = ({
       isCurrent ? "bg-accent/10" : "hover:bg-foreground/5"
     )}
   >
-    {avatar}
+    <span className="grid size-10 shrink-0 place-items-center rounded-full border border-dashed border-muted text-muted">
+      <Armchair className="size-4" />
+    </span>
     <span className="min-w-0 flex-1">
       <span className="block truncate text-sm font-bold text-foreground">{title}</span>
       <span className="block truncate text-xs text-muted">{detail}</span>
-      {warning && (
-        <span className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-warning">
-          <AlertTriangle className="size-3 shrink-0" />
-          <span className="truncate">{warning}</span>
-        </span>
-      )}
     </span>
     {isCurrent && <Check className="size-4 shrink-0 text-accent" strokeWidth={2.6} />}
   </button>

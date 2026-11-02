@@ -1,5 +1,5 @@
 import clsx from "clsx"
-import { Check, MapPin, Minus, Pin, Star } from "lucide-react"
+import { Check, MapPin, Minus, Pencil, Pin, Star } from "lucide-react"
 import { useMemo, useState, type ReactNode } from "react"
 import { deskName, useDeskFloor } from "../booking/useBooking"
 import { useOfficeStore } from "../store"
@@ -273,10 +273,12 @@ const Finder = ({
     <button
       type="button"
       onClick={onEditPreferences}
-      className="flex min-h-12 items-center gap-3 rounded-2xl bg-surface-secondary px-4 py-3 text-left outline-none hover:bg-surface-tertiary focus-visible:ring-2 focus-visible:ring-focus"
+      className="flex flex-col gap-1 rounded-2xl bg-surface-secondary px-4 pt-3 pb-2 text-left outline-none hover:bg-surface-tertiary focus-visible:ring-2 focus-visible:ring-focus"
     >
-      <span className="min-w-0 flex-1 text-[15px] font-extrabold leading-relaxed">{sentence}</span>
-      <span className="shrink-0 self-start pt-1 text-sm font-extrabold text-accent">
+      {/* Tall lines: pills on two lines don't touch. */}
+      <span className="text-[15px] font-extrabold leading-[2.25]">{sentence}</span>
+      <span className="flex min-h-9 items-center gap-1.5 self-end text-sm font-extrabold text-accent">
+        <Pencil className="size-3.5" strokeWidth={2.6} />
         {t("Change")}
       </span>
     </button>

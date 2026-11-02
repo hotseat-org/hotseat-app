@@ -1,0 +1,103 @@
+import clsx from "clsx"
+import { Layers, SlidersHorizontal, Star, UserRound } from "lucide-react"
+import { useMemo, type CSSProperties } from "react"
+import { personByEmail, usePeople } from "../desks/people"
+import { getZones } from "../zones/zones"
+import type { SeatRule } from "./matching"
+import { PersonFace } from "~/components/people/PeopleSearch"
+import { useAllPieces } from "~/editor"
+
+/**
+ * How a preference looks, wherever it's shown — the sentence's pills, the
+ * preferences' rows, the kinds to add: a zone in its colour, a person with
+ * their face, a preferred seat with its amber star, a feature in the accent,
+ * someone avoided in amber.
+ */
+
+/** A look's colours: the accent, a quiet one (a zone tints it its own), or amber. */
+export type RuleTone = "accent" | "neutral" | "warning"
+
+export const TONES: Record<RuleTone, string> = {
+  accent: "bg-accent/15 text-accent",
+  neutral: "bg-foreground/[0.09] text-foreground",
+  warning: "bg-warning/30 text-warning-foreground",
+}
+
+export const getRuleTone = (rule: Pick<SeatRule, "kind" | "strength">): RuleTone => {
+  if (rule.strength === "avoid" || rule.kind === "favorite") return "warning"
+  if (rule.kind === "feature") return "accent"
+
+  return "neutral"
+}
+
+/** A zone's colour as a tint behind it (none: the tone's). */
+export const getZoneTint = (color: string | undefined): CSSProperties | undefined =>
+  color ? { backgroundColor: `color-mix(in srgb, ${color} 22%, transparent)` } : undefined
+
+/** Each zone's colour, by its name. */
+export const useZoneColors = () => {
+  const pieces = useAllPieces()
+
+  return useMemo(() => new Map(getZones(pieces).map((zone) => [zone.name, zone.color])), [pieces])
+}
+
+/** A person's face (or initials on their colour), round: no ring, no shadow. */
+export const Face = ({ email, className }: { email: string; className: string }) => {
+  const person = personByEmail(usePeople(), email)
+
+  return (
+    <PersonFace
+      person={{ email, name: person?.name ?? email, avatarUrl: person?.avatarUrl }}
+      className={className}
+    />
+  )
+}
+
+const TILE = "grid size-10 shrink-0 place-items-center rounded-xl"
+
+/** A kind's icon, before it's chosen what of it (no zone, no person yet). */
+const KIND_ICONS = {
+  zone: Layers,
+  colleague: UserRound,
+  feature: SlidersHorizontal,
+  favorite: Star,
+} as const
+
+/** A kind of preference, as the list to add one shows it: its icon in its tone. */
+export const KindTile = ({ kind }: { kind: SeatRule["kind"] }) => {
+  const Icon = KIND_ICONS[kind]
+
+  return (
+    <span className={clsx(TILE, TONES[getRuleTone({ kind, strength: "prefer" })])}>
+      <Icon className={clsx("size-[18px]", kind === "favorite" && "fill-current")} />
+    </span>
+  )
+}
+
+/** A preference, as its row shows it: a person's face, a zone's colour, a seat's star. */
+export const RuleTile = ({ rule }: { rule: SeatRule }) => {
+  const zoneColors = useZoneColors()
+
+  if (rule.kind === "colleague")
+    return (
+      <Face
+        email={rule.email}
+        className={clsx(
+          "size-10 text-[15px]",
+          rule.strength === "avoid" && "ring-2 ring-warning ring-offset-2 ring-offset-overlay"
+        )}
+      />
+    )
+
+  if (rule.kind === "zone") {
+    const color = zoneColors.get(rule.zone)
+
+    return (
+      <span className={clsx(TILE, TONES.neutral)} style={getZoneTint(color)}>
+        <span className="size-3.5 rounded-full" style={{ background: color }} />
+      </span>
+    )
+  }
+
+  return <KindTile kind={rule.kind} />
+}

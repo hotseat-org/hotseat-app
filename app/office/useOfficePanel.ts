@@ -1,8 +1,8 @@
 import { useCallback } from "react"
 import { useSearchParams } from "react-router"
 
-/** The office's panels opened from its rail: who's in, your bookings, finding a seat, Insights (admins). */
-export const OFFICE_PANELS = ["people", "bookings", "find", "insights"] as const
+/** The office's modals opened from its rail: who's in, your bookings, Insights (admins). */
+export const OFFICE_PANELS = ["people", "bookings", "insights"] as const
 
 export type OfficePanel = (typeof OFFICE_PANELS)[number]
 

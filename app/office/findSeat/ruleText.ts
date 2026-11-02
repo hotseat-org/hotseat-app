@@ -1,18 +1,7 @@
-import { Ban, Layers, SlidersHorizontal, Star, UserRound, type LucideIcon } from "lucide-react"
 import { DESK_FEATURES } from "../desks/deskFeatures"
 import { personByEmail, usePeople } from "../desks/people"
 import type { SeatRule } from "./matching"
 import { useI18n } from "~/i18n/I18nProvider"
-
-/** A rule's icon, by what it asks for (avoiding someone: a no-entry sign). */
-export const getRuleIcon = (rule: SeatRule): LucideIcon => {
-  if (rule.strength === "avoid") return Ban
-  if (rule.kind === "zone") return Layers
-  if (rule.kind === "favorite") return Star
-  if (rule.kind === "colleague") return UserRound
-
-  return SlidersHorizontal
-}
 
 /** Rules' words: what each asks for, and how it went for a desk. */
 export const useRuleText = () => {
