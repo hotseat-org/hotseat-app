@@ -1452,4 +1452,7 @@ export const cs: Messages = {
   "No days booked ahead.": "Žádné rezervované dny dopředu.",
   "Manage in members": "Spravovat v seznamu členů",
   "{name}'s profile": "Profil: {name}",
+  "Avoid sitting near {name}": "Nesedět blízko: {name}",
+  "Only you can see this. Find a seat keeps you away from them.":
+    "Vidíte to jen vy. Hledání místa vás posadí jinam.",
 }

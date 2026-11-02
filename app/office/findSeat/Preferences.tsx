@@ -12,8 +12,9 @@ import { PeopleSearch } from "~/components/people/PeopleSearch"
 import { useAllPieces } from "~/editor"
 import { useI18n } from "~/i18n/I18nProvider"
 
-/** Strengths offered for now: avoiding someone comes later (the matching knows it already). */
-const OFFERED_STRENGTHS: RuleStrength[] = ["must", "prefer"]
+/** Strengths offered for a rule: a colleague can also be avoided (sat away from). */
+const getOfferedStrengths = (kind: SeatRule["kind"]): RuleStrength[] =>
+  kind === "colleague" ? ["must", "prefer", "avoid"] : ["must", "prefer"]
 
 /** People listed at most while choosing a colleague: the search narrows them. */
 const MAX_PEOPLE = 8
@@ -77,6 +78,7 @@ export const Preferences = ({
               {describe(rule)}
             </span>
             <StrengthSwitch
+              kind={rule.kind}
               value={rule.strength}
               onChange={(strength) => setStrength(index, strength)}
             />
@@ -106,9 +108,11 @@ export const Preferences = ({
 }
 
 const StrengthSwitch = ({
+  kind,
   value,
   onChange,
 }: {
+  kind: SeatRule["kind"]
   value: RuleStrength
   onChange: (strength: RuleStrength) => void
 }) => {
@@ -125,7 +129,7 @@ const StrengthSwitch = ({
       aria-label={t("How much it matters")}
       className="flex shrink-0 rounded-full bg-surface-tertiary p-[3px]"
     >
-      {OFFERED_STRENGTHS.map((strength) => (
+      {getOfferedStrengths(kind).map((strength) => (
         <button
           key={strength}
           type="button"

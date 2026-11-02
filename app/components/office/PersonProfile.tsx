@@ -1,4 +1,4 @@
-import { MapPin, Settings2 } from "lucide-react"
+import { EyeOff, MapPin, Settings2 } from "lucide-react"
 import { useMemo } from "react"
 import { createPortal } from "react-dom"
 import { MemberAvatar, nameOf, roleLabel, type ShellMember } from "./shell-ui"
@@ -8,7 +8,8 @@ import { InlineModal } from "~/components/ui/InlineModal"
 import { useAllPieces } from "~/editor"
 import { useI18n } from "~/i18n/I18nProvider"
 import { deskName } from "~/office/booking/useBooking"
-import { useShowSeatOnMap } from "~/office/findSeat/useFindSeat"
+import { MAX_SEAT_RULES } from "~/office/findSeat/seatRulesSchema"
+import { useSavedRules, useShowSeatOnMap } from "~/office/findSeat/useFindSeat"
 import { useOfficeStore } from "~/office/store"
 import { usePersonProfile } from "~/office/usePersonProfile"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
@@ -132,6 +133,8 @@ const ProfileDialog = ({
         </section>
       </div>
 
+      {!isMe && <AvoidToggle email={member.userEmail} name={name} />}
+
       {isAdmin && !isMe && (
         <footer className="mt-4 border-t border-separator pt-4">
           <button
@@ -146,6 +149,49 @@ const ProfileDialog = ({
       )}
     </InlineModal>,
     document.body
+  )
+}
+
+/**
+ * Sit away from someone: an "avoid" rule in your own booking preferences for
+ * this office (Find a seat keeps you clear of them). Yours alone — nobody
+ * else, admins included, ever sees it.
+ */
+const AvoidToggle = ({ email, name }: { email: string; name: string }) => {
+  const { t } = useI18n()
+  const { rules, setRules } = useSavedRules()
+  const isAvoided = rules.some(
+    (rule) => rule.kind === "colleague" && rule.email === email && rule.strength === "avoid"
+  )
+  // Its own: any other rule about them goes (you can't prefer and avoid someone).
+  const others = rules.filter((rule) => !(rule.kind === "colleague" && rule.email === email))
+  const isFull = !isAvoided && others.length >= MAX_SEAT_RULES
+
+  return (
+    <section className="mt-4 rounded-2xl border border-border bg-surface px-4 py-3">
+      <label className="flex cursor-pointer items-center gap-3">
+        <EyeOff className="size-5 shrink-0 text-muted" />
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-bold">
+            {t("Avoid sitting near {name}", { name })}
+          </span>
+          <span className="block text-xs text-muted">
+            {t("Only you can see this. Find a seat keeps you away from them.")}
+          </span>
+        </span>
+        <input
+          type="checkbox"
+          checked={isAvoided}
+          disabled={isFull}
+          onChange={() =>
+            setRules(
+              isAvoided ? others : [...others, { kind: "colleague", email, strength: "avoid" }]
+            )
+          }
+          className="size-5 shrink-0 accent-[var(--accent)]"
+        />
+      </label>
+    </section>
   )
 }
 
