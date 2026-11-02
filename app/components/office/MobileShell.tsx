@@ -23,14 +23,12 @@ import {
 import { daysBetween, isWeekend, type Day } from "~/utils/booking"
 import { FindSeat } from "~/office/findSeat/FindSeat"
 import { useShowSeatOnMap } from "~/office/findSeat/useFindSeat"
-import { useFindSeatRoute } from "~/office/findSeat/useFindSeatRoute"
+import { useOfficePanel } from "~/office/useOfficePanel"
 import { useI18n } from "~/i18n/I18nProvider"
 import { msg } from "~/i18n/msg"
 import { useBarColor } from "~/utils/pageColor"
 
 type Tab = "office" | "bookings" | "people"
-
-/** A sheet over the office: a tab's, or finding a seat (from the day dock). */
 
 /** The top bar: switcher and account, px. */
 const TOP_BAR_HEIGHT = MOBILE_CHROME.top
@@ -57,11 +55,10 @@ interface Props {
  */
 export const MobileShell = ({ offices, me, members, empty = false }: Props) => {
   const { t } = useI18n()
-  // The sheet over the office (Bookings, People); none, the office itself.
-  const [sheet, setSheet] = useState<Exclude<Tab, "office"> | null>(null)
-  const closeSheet = () => setSheet(null)
-  // Finding a seat has its own address (see useFindSeatRoute).
-  const findSeat = useFindSeatRoute()
+  // The sheet over the office — Bookings, People, finding a seat — by its
+  // address (see useOfficePanel); none, the office itself.
+  const officePanel = useOfficePanel()
+  const sheet = officePanel.panel
   const showSeatOnMap = useShowSeatOnMap()
 
   if (empty) return <TopBar offices={offices} />
@@ -70,28 +67,33 @@ export const MobileShell = ({ offices, me, members, empty = false }: Props) => {
     <>
       <TopBar offices={offices} />
       <MapButtons />
-      <DayDock me={me} onFindSeat={findSeat.open} />
+      <DayDock me={me} onFindSeat={() => officePanel.open("find")} />
       {sheet === "bookings" && (
         <BottomSheet
           title={t("My bookings")}
           isTall
           bottomInset={TAB_BAR_HEIGHT}
-          onClose={closeSheet}
+          onClose={officePanel.close}
         >
           {(close) => <MyBookings isPhone onShow={close} />}
         </BottomSheet>
       )}
       {sheet === "people" && (
-        <BottomSheet title={t("Who's in")} isTall bottomInset={TAB_BAR_HEIGHT} onClose={closeSheet}>
+        <BottomSheet
+          title={t("Who's in")}
+          isTall
+          bottomInset={TAB_BAR_HEIGHT}
+          onClose={officePanel.close}
+        >
           {(close) => <WhosInList me={me} members={members} onFind={close} />}
         </BottomSheet>
       )}
-      {findSeat.isOpen && (
+      {sheet === "find" && (
         <BottomSheet
           title={t("Find a seat")}
           isTall
           bottomInset={TAB_BAR_HEIGHT}
-          onClose={() => findSeat.close()}
+          onClose={officePanel.close}
         >
           {(close) => (
             <FindSeat
@@ -104,11 +106,8 @@ export const MobileShell = ({ offices, me, members, empty = false }: Props) => {
         </BottomSheet>
       )}
       <TabBar
-        tab={sheet ?? "office"}
-        onChange={(tab) => {
-          if (findSeat.isOpen) findSeat.close()
-          setSheet(tab === "office" ? null : tab)
-        }}
+        tab={sheet === "bookings" || sheet === "people" ? sheet : "office"}
+        onChange={(tab) => (tab === "office" ? officePanel.close() : officePanel.open(tab))}
       />
     </>
   )

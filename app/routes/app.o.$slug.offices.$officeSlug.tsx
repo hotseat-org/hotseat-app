@@ -19,6 +19,7 @@ import { loadOrganization } from "~/utils/loader-helpers/loadOrganization"
 import { requireProfile } from "~/utils/loader-helpers/requireProfile"
 import { NOTIFICATION_ACTIONS, revalidateOn } from "~/utils/revalidation"
 import { layoutSchema, parseLayout } from "~/office/schema"
+import { isOfficePanel } from "~/office/useOfficePanel"
 import { EditorBoundary } from "~/editor"
 import { type Kit, type KitLibrary, type Layout } from "~/editor/core"
 import type { PreferenceChange } from "~/office/store"
@@ -59,7 +60,9 @@ const toMember = (p: Profile): ShellMember => ({
 /**
  * The office: its 3D scene (view + editor) and app chrome. It's the layout of
  * the office's URLs, so it stays mounted while child routes open over it —
- * office settings (`/settings/:section`) render as a modal over the scene.
+ * office settings (`/settings/:section`) render as a modal over the scene, and
+ * the rail's panels (`/people`, `/bookings`, `/find`, `/insights`) are drawn
+ * by the office itself (see useOfficePanel).
  */
 export const loader = async (args: LoaderFunctionArgs) => {
   const profile = await requireProfile(args)
@@ -72,6 +75,12 @@ export const loader = async (args: LoaderFunctionArgs) => {
     throw redirect(
       `/app/o/${args.params.slug}/offices/${slug}/settings/${legacy.split("/")[1] ?? "general"}`
     )
+  // Old links opened the rail's panels with ?panel=people (now each has its path).
+  const panel = url.searchParams.get("panel")
+  if (isOfficePanel(panel)) {
+    url.searchParams.delete("panel")
+    throw redirect(`/app/o/${args.params.slug}/offices/${slug}/${panel}${url.search}`)
+  }
   const core = getCore()
   const organizationSlug = profile.organizationSlug
 
