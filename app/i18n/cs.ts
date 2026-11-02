@@ -1460,4 +1460,52 @@ export const cs: Messages = {
   "A part of the office to avoid": "Část kanceláře, které se chcete vyhnout",
   "not in {zone}": "mimo zónu {zone}",
   "Away from {zone}": "Mimo zónu {zone}",
+
+  // —— Teams ——
+  Teams: "Týmy",
+  "People who like to sit together: their zone and their days.":
+    "Lidé, kteří chtějí sedět spolu: jejich zóna a jejich dny.",
+  Teal: "Petrolejová",
+  Denim: "Džínová",
+  Coral: "Korálová",
+  Amber: "Jantarová",
+  Rose: "Růžová",
+  Slate: "Břidlicová",
+  "No teams yet": "Zatím žádné týmy",
+  "Group people who like to sit together. They can find a seat near each other, and see who's in.":
+    "Seskupte lidi, kteří chtějí sedět spolu. Najdou si místo blízko sebe a uvidí, kdo z nich je v kanceláři.",
+  "New team": "Nový tým",
+  "People who like to sit together. Someone can be in more than one.":
+    "Lidé, kteří chtějí sedět spolu. Kdokoli může být ve více týmech.",
+  "e.g. Design": "např. Design",
+  "Where they sit": "Kde sedí",
+  "Team days": "Týmové dny",
+  "The days you come in together. Members see them when they pick a day.":
+    "Dny, kdy chodíte do kanceláře spolu. Členové je uvidí při výběru dne.",
+  "In the team": "V týmu",
+  "Delete team": "Smazat tým",
+  "No zones in this office": "Tato kancelář nemá zóny",
+  "Zone in {office}": "Zóna v kanceláři {office}",
+  "No zone": "Bez zóny",
+  "Keep it for the team": "Držet pro tým",
+  "Anyone can book its desks any time.": "Její stoly si může kdokoli rezervovat kdykoli.",
+  "Others can book its desks only shortly before the day.":
+    "Ostatní si její stoly mohou rezervovat až krátce předem.",
+  "Open to everyone": "Otevřít všem",
+  "{n} person": { one: "{n} člověk", few: "{n} lidé", many: "{n} člověka", other: "{n} lidí" },
+  "+ {n} office": {
+    one: "+ {n} kancelář",
+    few: "+ {n} kanceláře",
+    many: "+ {n} kanceláře",
+    other: "+ {n} kanceláří",
+  },
+  "{n} day before": {
+    one: "{n} den předem",
+    few: "{n} dny předem",
+    many: "{n} dne předem",
+    other: "{n} dní předem",
+  },
+  "Give the team a name.": "Pojmenujte tým.",
+  "An organization can have up to 200 teams.": "Organizace může mít nejvýš 200 týmů.",
+  "There's a team with this name already.": "Tým s tímto názvem už existuje.",
 }

@@ -11,6 +11,7 @@ import {
   SlidersHorizontal,
   UserRound,
   Users,
+  UsersRound,
 } from "lucide-react"
 import { SettingsShell, type SettingsLink } from "./SettingsShell"
 import { OrgDanger } from "./panels/OrgDanger"
@@ -18,6 +19,7 @@ import { OrgGeneral } from "./panels/OrgGeneral"
 import { OrgInvitations } from "./panels/OrgInvitations"
 import { OrgMembers } from "./panels/OrgMembers"
 import { OrgOffices } from "./panels/OrgOffices"
+import { OrgTeams } from "./panels/OrgTeams"
 import { OfficeGeneral, useOfficeData } from "./panels/OfficeGeneral"
 import { OfficeOpening } from "./panels/OfficeOpening"
 import { OfficeDanger } from "./panels/OfficeDanger"
@@ -82,6 +84,7 @@ const orgPanels: Record<string, ReactNode> = {
   general: <OrgGeneral />,
   invitations: <OrgInvitations />,
   members: <OrgMembers />,
+  teams: <OrgTeams />,
   offices: <OrgOffices />,
   danger: <OrgDanger />,
 }
@@ -164,6 +167,12 @@ function OrgSettings({ section }: { section?: string }) {
       icon: Users,
       count: memberCount,
       description: msg("Who's in the organization, and their roles."),
+    },
+    {
+      id: "teams",
+      label: msg("Teams"),
+      icon: UsersRound,
+      description: msg("People who like to sit together: their zone and their days."),
     },
     {
       id: "invitations",

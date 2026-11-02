@@ -53,6 +53,13 @@ import {
   setFavoriteDesk,
   setUsualDesk,
 } from "./reservation/preferences"
+import {
+  deleteTeam,
+  listOfficeTeams,
+  listOfficeZones,
+  listTeams,
+  saveTeam,
+} from "./team"
 import type { CoreContext } from "./types"
 import { createUser } from "./user/create"
 import { getUser } from "./user/get"
@@ -120,6 +127,13 @@ export const createCore = (context: CoreContext) => ({
     deleteKit: deleteRoomKit(context),
     renamedTo: (organizationSlug: string, oldSlug: string) =>
       context.mainRepository.slugRedirect.findOffice(organizationSlug, oldSlug),
+  },
+  team: {
+    list: listTeams(context),
+    listForOffice: listOfficeTeams(context),
+    officeZones: listOfficeZones(context),
+    save: saveTeam(context),
+    delete: deleteTeam(context),
   },
   reservation: {
     list: listReservations(context),

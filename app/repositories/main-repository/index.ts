@@ -13,6 +13,7 @@ import {
   setUsualDesk,
 } from "./methods/desk-preference"
 import { createClosedDays, deleteClosedDays, findClosedDays } from "./methods/closed-day"
+import { addToTeams, deleteTeam, findTeams, saveTeam } from "./methods/team"
 import { createDemoCompany, deleteStaleDemoCompanies } from "./methods/demo"
 import {
   createDeskReleases,
@@ -127,6 +128,7 @@ export const createMainMysqlRepository = (): MainRepository => {
       markRead: markNotificationsRead,
     },
     demo: { create: createDemoCompany, deleteStale: deleteStaleDemoCompanies },
+    team: { findMany: findTeams, save: saveTeam, delete: deleteTeam, addMembers: addToTeams },
     closedDay: { findMany: findClosedDays, create: createClosedDays, delete: deleteClosedDays },
     reservation: {
       findMany: findReservations,

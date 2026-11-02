@@ -58,6 +58,7 @@ model Profile {
   usualDesks    UsualDesk[]
   waitlist      WaitlistEntry[]
   seatRules     SeatRules[]
+  teams         TeamMember[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -80,6 +81,7 @@ model Organization {
 
   renamedFrom OrganizationSlugRedirect[]
   roomKits    RoomKit[]
+  teams       Team[]
 
   description String?
   thumbnail   String?
@@ -134,6 +136,7 @@ model Office {
   usualDesks        UsualDesk[]
   waitlist          WaitlistEntry[]
   seatRules         SeatRules[]
+  teamZones         TeamZone[]
   renamedFrom       OfficeSlugRedirect[]
 
   createdAt DateTime @default(now())
@@ -340,4 +343,55 @@ model RoomKit {
   createdAt DateTime @default(now())
 
   @@index([organizationSlug])
+}
+
+// People who like to sit together (any office). Someone can be in several.
+model Team {
+  id               String       @id @default(cuid())
+  organizationSlug String
+  organization     Organization @relation(fields: [organizationSlug], references: [slug], onDelete: Cascade, onUpdate: Cascade)
+
+  name     String
+  // A key of TEAM_COLORS (app/utils/teams.ts).
+  color    String
+  // The days the team comes in together: ISO weekdays (1 = Monday).
+  weekdays Int[]  @default([])
+
+  members TeamMember[]
+  zones   TeamZone[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([organizationSlug, name])
+}
+
+model TeamMember {
+  teamId           String
+  team             Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  organizationSlug String
+  userEmail        String
+  profile          Profile @relation(fields: [userEmail, organizationSlug], references: [userEmail, organizationSlug], onDelete: Cascade, onUpdate: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@id([teamId, userEmail])
+  @@index([organizationSlug, userEmail])
+}
+
+// Where a team sits in an office: one of its zones (by name).
+model TeamZone {
+  teamId           String
+  team             Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  organizationSlug String
+  officeSlug       String
+  office           Office @relation(fields: [organizationSlug, officeSlug], references: [organizationSlug, slug], onDelete: Cascade, onUpdate: Cascade)
+
+  zone     String
+  // Its desks are the team's until this many days before; others can book
+  // them from then. Null: anyone can book them any time.
+  keepDays Int?
+
+  @@id([teamId, officeSlug])
+  @@index([organizationSlug, officeSlug])
 }

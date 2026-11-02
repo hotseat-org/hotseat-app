@@ -40,9 +40,11 @@ import type {
   DeleteClosedDaysArgs,
   FindClosedDaysArgs,
 } from "./methods/closed-day"
+import type { SaveTeamArgs } from "./methods/team"
 import type { FindUserArgs } from "./methods/user/find"
 import { UpdateUserArgs } from "./methods/user/update"
 import type { DemoCompany } from "~/core/demo/company"
+import type { Team } from "~/utils/teams"
 import type { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/client"
 
 export type PaginatedResult<Data> = {
@@ -261,6 +263,17 @@ export interface MainRepository {
       visitorPrefix: string
       domain: string
     }) => Promise<{ organizations: number; visitors: number }>
+  }
+  team: {
+    findMany: (args: { organizationSlug: string }) => Promise<Team[]>
+    /** Create or replace a team: its id. */
+    save: (args: SaveTeamArgs) => Promise<string>
+    delete: (args: { organizationSlug: string; id: string }) => Promise<void>
+    /** People into teams by name (made if new): the names of the teams made. */
+    addMembers: (args: {
+      organizationSlug: string
+      memberships: { email: string; team: string }[]
+    }) => Promise<{ created: string[] }>
   }
   closedDay: {
     findMany: (args: FindClosedDaysArgs) => Promise<ClosedDay[]>

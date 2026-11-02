@@ -55,6 +55,24 @@ export async function loadOrgSettings(request: Request, profile: Profile) {
         offices: offices.data.map(({ slug, name, thumbnail }) => ({ slug, name, thumbnail })),
       }
     }
+    case "teams": {
+      const [teams, members, offices] = await Promise.all([
+        core.team.list(profile.organizationSlug),
+        core.organization.listMembers(profile.organizationSlug),
+        core.team.officeZones(profile.organizationSlug),
+      ])
+
+      return {
+        section,
+        teams,
+        teamPeople: members.data.map(({ userEmail, displayName, avatarUrl }) => ({
+          email: userEmail,
+          name: displayName?.trim() || userEmail.split("@")[0],
+          avatarUrl: avatarUrl ?? undefined,
+        })),
+        teamOffices: offices,
+      }
+    }
     default:
       return { section }
   }
