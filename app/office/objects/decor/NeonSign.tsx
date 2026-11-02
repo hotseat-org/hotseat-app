@@ -1,36 +1,77 @@
-import { useContext, useEffect, useMemo } from "react"
-import { CanvasTexture, LinearFilter, SRGBColorSpace } from "three"
+import { useContext, useEffect, useMemo, useState } from "react"
+import { CanvasTexture, Color, LinearFilter, SRGBColorSpace } from "three"
 import { float, texture, uniform } from "three/tsl"
 import { MeshBasicNodeMaterial } from "three/webgpu"
 import { WALL_FACE } from "../wallItem"
-import { useFontsReady } from "../../zones/ZoneLettering"
 import { DEFAULT_SIGN_TEXT, DEFAULT_NEON_COLOR } from "../../catalog/neonSign"
-import { DaylightContext, GhostContext, NO_BAKE, Surface, usePiece } from "~/editor/kit"
+import scriptLatin from "~/styles/fonts/dancing-script-latin-700.woff2?url"
+import scriptLatinExt from "~/styles/fonts/dancing-script-latin-ext-700.woff2?url"
+import { DaylightContext, NO_BAKE, usePiece } from "~/editor/kit"
 
 interface Props {
   /** The tubes' colour. */
   color?: string
 }
 
-const HANG_HEIGHT = 0.95
-/** The most the sign takes on the wall (m): a long text gets smaller letters. */
-const MAX_WIDTH = 1.8
-const MAX_HEIGHT = 0.42
+const HANG_HEIGHT = 0.8
+/**
+ * The most the sign takes on the wall (m), glow included: its footprint's
+ * width, and up to the wall's top. A long text gets smaller letters.
+ */
+const MAX_WIDTH = 2
+const MAX_HEIGHT = 0.95
 /** The texture's letters (px), and the room round them the glow spreads into. */
-const FONT_SIZE = 120
-const GLOW = 36
-const FONT = `800 ${FONT_SIZE}px Nunito, ui-rounded, system-ui, sans-serif`
+const FONT_SIZE = 140
+const GLOW = 40
+const SCRIPT = "Neon script"
+const FONT = `700 ${FONT_SIZE}px "${SCRIPT}", cursive`
 
 /**
- * The text bent in neon: each letter's outline as a tube in its colour, with
- * a pale core and a soft glow round it, on clear (the canvas's alpha).
+ * The handwritten face the tubes are bent to (Dancing Script, Czech
+ * letters included). Loaded the first time a sign is drawn — no other page
+ * downloads it.
+ */
+let scriptLoading: Promise<unknown> | null = null
+const loadScript = () => {
+  scriptLoading ??= Promise.all(
+    [
+      [scriptLatin, "U+0000-00FF, U+0131, U+0152-0153, U+2000-206F, U+20AC, U+2122"],
+      [scriptLatinExt, "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF"],
+    ].map(async ([url, unicodeRange]) => {
+      const face = new FontFace(SCRIPT, `url(${url})`, { weight: "700", unicodeRange })
+      document.fonts.add(await face.load())
+    })
+  ).catch(() => {})
+
+  return scriptLoading
+}
+
+/** Once the script has loaded: the tubes are bent again in it. */
+const useScriptReady = () => {
+  const [isReady, setIsReady] = useState(false)
+  useEffect(() => {
+    let isCurrent = true
+    void loadScript().then(() => isCurrent && setIsReady(true))
+
+    return () => {
+      isCurrent = false
+    }
+  }, [])
+
+  return isReady
+}
+
+/**
+ * The text bent in neon, in handwriting: each stroke a tube with a pale core
+ * and a rim in its colour, and a soft glow round it, on clear (the canvas's
+ * alpha).
  */
 const drawNeon = (text: string, color: string) => {
   const canvas = document.createElement("canvas")
   const context = canvas.getContext("2d")!
   context.font = FONT
-  canvas.width = Math.ceil(context.measureText(text).width) + GLOW * 2
-  canvas.height = Math.ceil(FONT_SIZE * 1.3) + GLOW * 2
+  canvas.width = Math.ceil(context.measureText(text).width + FONT_SIZE * 0.3) + GLOW * 2
+  canvas.height = Math.ceil(FONT_SIZE * 1.45) + GLOW * 2
 
   context.font = FONT
   context.textAlign = "center"
@@ -38,19 +79,20 @@ const drawNeon = (text: string, color: string) => {
   context.lineJoin = "round"
   const centre: [number, number] = [canvas.width / 2, canvas.height / 2]
 
-  // The glow: the tube drawn blurred, twice for strength.
+  // The glow: the strokes drawn blurred, twice for strength.
   context.shadowColor = color
   context.shadowBlur = GLOW * 0.8
-  context.strokeStyle = color
-  context.lineWidth = FONT_SIZE * 0.09
-  context.strokeText(text, ...centre)
-  context.strokeText(text, ...centre)
+  context.fillStyle = color
+  context.fillText(text, ...centre)
+  context.fillText(text, ...centre)
 
-  // The core: the gas's light, almost white.
+  // The tube: its rim in the colour, its core the gas's light, almost white.
   context.shadowBlur = 0
-  context.strokeStyle = "rgba(255, 250, 240, 0.85)"
+  context.strokeStyle = color
   context.lineWidth = FONT_SIZE * 0.035
   context.strokeText(text, ...centre)
+  context.fillStyle = `#${new Color(color).lerp(new Color("#fffaf0"), 0.7).getHexString()}`
+  context.fillText(text, ...centre)
 
   const map = new CanvasTexture(canvas)
   map.colorSpace = SRGBColorSpace
@@ -61,16 +103,15 @@ const drawNeon = (text: string, color: string) => {
 }
 
 /**
- * A neon sign on a clear acrylic panel, saying what's written on it (the
- * Inspector's Sign) in its colour. It glows a little by day, brightly after
- * dark. Its letters aren't baked into the furniture's batches (their
- * texture is the sign's own): one draw call per sign.
+ * A neon sign straight on the wall, handwritten, saying what's written on it
+ * (the Inspector's Sign) in its colour. It glows a little by day, brightly
+ * after dark. Its letters aren't baked into the furniture's batches (their
+ * texture is the sign's own): one draw call per sign — and what picks it.
  */
 export const NeonSign = ({ color = DEFAULT_NEON_COLOR }: Props) => {
   const piece = usePiece()
-  const ghost = useContext(GhostContext)
   const nightness = useContext(DaylightContext)
-  const isFontReady = useFontsReady()
+  const isScriptReady = useScriptReady()
   const text = piece?.signText ?? DEFAULT_SIGN_TEXT
 
   const look = useMemo(() => {
@@ -88,7 +129,7 @@ export const NeonSign = ({ color = DEFAULT_NEON_COLOR }: Props) => {
 
     return { map, material, brightness, aspect: width / height }
     // Drawn again once the page's own font is in.
-  }, [text, color, isFontReady])
+  }, [text, color, isScriptReady])
   useEffect(
     () => () => {
       look.map.dispose()
@@ -103,34 +144,9 @@ export const NeonSign = ({ color = DEFAULT_NEON_COLOR }: Props) => {
 
   return (
     <group position={[0, HANG_HEIGHT, WALL_FACE]}>
-      {/* Clear panel, a shade bigger than the letters, on four standoffs */}
-      <mesh position={[0, 0, 0.05]}>
-        <boxGeometry args={[width * 0.86, height * 0.72, 0.01]} />
-        <Surface color="#dfe8ec" roughness={0.1} metalness={0.2} opacity={0.2} />
+      <mesh position={[0, 0, 0.03]} material={look.material} userData={NO_BAKE}>
+        <planeGeometry args={[width, height]} />
       </mesh>
-      {[-1, 1].flatMap((x) =>
-        [-1, 1].map((y) => (
-          <mesh
-            key={`${x}${y}`}
-            position={[x * width * 0.4, y * height * 0.3, 0.025]}
-            rotation={[Math.PI / 2, 0, 0]}
-          >
-            <cylinderGeometry args={[0.008, 0.008, 0.05, 6]} />
-            <Surface color="#b9bcc4" roughness={0.3} metalness={0.7} />
-          </mesh>
-        ))
-      )}
-      {/* The tubes (not while placing it: its ghost is the panel) */}
-      {!ghost && (
-        <mesh
-          position={[0, 0, 0.06]}
-          material={look.material}
-          userData={NO_BAKE}
-          raycast={() => null}
-        >
-          <planeGeometry args={[width, height]} />
-        </mesh>
-      )}
     </group>
   )
 }
