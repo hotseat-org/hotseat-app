@@ -1,6 +1,7 @@
 import { createRequestHandler } from "react-router"
 import { getCore } from "~/core/get-core"
 import { runWithPrisma } from "~/services/prisma.server"
+import { isHttpsRequest, withSecurityHeaders } from "~/services/securityHeaders"
 
 const requestHandler = createRequestHandler(
   () => import("virtual:react-router/server-build"),
@@ -16,7 +17,9 @@ export default {
       return Response.redirect(url.toString(), 301)
     }
 
-    return runWithPrisma(env.HYPERDRIVE.connectionString, () => requestHandler(request))
+    return runWithPrisma(env.HYPERDRIVE.connectionString, () => requestHandler(request)).then(
+      (response) => withSecurityHeaders(response, isHttpsRequest(request))
+    )
   },
 
   // Hourly (wrangler.jsonc "triggers"): book usual desks on the days that just

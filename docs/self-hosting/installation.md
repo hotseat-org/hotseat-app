@@ -69,6 +69,11 @@ HTTPS (`localhost` is the one exception). Your proxy must also pass the
 original **`Host`** header through. Hotseat checks that forms are posted
 from its own host, and without it every save fails.
 
+Hotseat sends its own security headers (no framing by other sites, no type
+sniffing, a strict referrer policy), and HSTS when the proxy says the request
+came over HTTPS (`X-Forwarded-Proto: https`). Don't add them again in the
+proxy. Its health check is at `/healthz` (see [Operations](operations.md#health)).
+
 ### Caddy (simplest: gets its own certificates)
 
 ```caddyfile

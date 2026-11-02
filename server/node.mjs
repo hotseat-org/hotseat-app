@@ -8,7 +8,8 @@ import { extname, join, normalize } from "node:path"
 import { fileURLToPath } from "node:url"
 import { createRequestListener } from "@remix-run/node-fetch-server"
 
-const { basePath, handleRequest, runHourlyJobs } = await import("../build/server/index.js")
+const { SECURITY_HEADERS, basePath, handleRequest, isHealthy, runHourlyJobs } =
+  await import("../build/server/index.js")
 
 const PORT = Number(process.env.PORT ?? 3000)
 const CLIENT_DIR = fileURLToPath(new URL("../build/client/", import.meta.url))
@@ -49,6 +50,20 @@ const appListener = createRequestListener(handleRequest)
 const server = createServer(async (request, response) => {
   const { pathname } = new URL(request.url ?? "/", "http://localhost")
 
+  // Health (Docker, load balancers, monitoring): up, and the database answers.
+  // At the root as well as under the base path, so probes needn't know it.
+  if (pathname === "/healthz" || pathname === `${basePath}healthz`) {
+    const isUp = await isHealthy()
+    response
+      .writeHead(isUp ? 200 : 503, {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-store",
+      })
+      .end(JSON.stringify({ status: isUp ? "ok" : "database unreachable" }))
+
+    return
+  }
+
   // The bare base path ("/hotseat") → with its slash, where the app is.
   if (basePath !== "/" && pathname === basePath.slice(0, -1)) {
     response.writeHead(301, { Location: basePath }).end()
@@ -62,6 +77,7 @@ const server = createServer(async (request, response) => {
   // Hashed build assets never change; the rest (images, icons) for an hour.
   const isHashed = pathname.startsWith(`${basePath}assets/`)
   response.writeHead(200, {
+    ...SECURITY_HEADERS,
     "Content-Type": TYPES[extname(file.path).toLowerCase()] ?? "application/octet-stream",
     "Content-Length": file.size,
     "Cache-Control": isHashed ? "public, max-age=31536000, immutable" : "public, max-age=3600",

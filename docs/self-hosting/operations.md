@@ -47,6 +47,26 @@ before it serves anyone. Each migration applies whole or not at all. Take a
 backup first. You can't go back to an older version once a newer one has
 migrated the database (restore the backup instead).
 
+## Health
+
+`/healthz` answers `{"status":"ok"}` (200) while Hotseat is serving and its
+database answers, else `{"status":"database unreachable"}` (503). Point your
+load balancer or monitoring at it. Docker uses it too: `docker compose ps`
+shows the container as *healthy*.
+
+## Admin access
+
+When nobody who can manage the company can sign in any more (the only admin
+left, or lost their account), make someone an admin from the server:
+
+```sh
+docker compose exec hotseat node server/admin.mjs list-admins
+docker compose exec hotseat node server/admin.mjs make-admin someone@acme.com
+```
+
+They sign in as usual. If they've never signed in, their account is waiting
+for them.
+
 ## Logs
 
 ```sh
@@ -68,6 +88,7 @@ What you'll see:
 | --- | --- |
 | It won't start: "Migration … failed" | The log says why (often the database: disk space, permissions). Fix that and start again. Nothing of the failed migration was applied. |
 | It won't start: "… failed earlier and needs fixing by hand" | A migration was left half-done by Prisma's own tools. Resolve it with `prisma migrate resolve` (see Prisma's docs), then start again. |
+| Nobody can manage the company any more | Make someone an admin from the server: see [Admin access](#admin-access). |
 | Signing in loops back to the sign-in screen | HTTPS: see [Sign-in](sign-in.md#when-sign-in-doesnt-work). |
 | Saving anything fails ("does not match origin") | The reverse proxy doesn't pass the `Host` header: see [Installation](installation.md#4-https-with-a-reverse-proxy). |
 | Image uploads fail | `BASE_URL` must be exactly the address people use (uploads go there). Behind nginx, `client_max_body_size` at least `12m`. Images: PNG, JPEG, GIF or WebP up to 10 MB (no SVG). |
@@ -77,7 +98,8 @@ What you'll see:
 ## Running without Docker
 
 Hotseat is a Node app (Node 25 or newer, Bun to install dependencies) with
-Postgres 15 or newer.
+Postgres 15 or newer. `node server/admin.mjs` (see [Admin access](#admin-access))
+works the same with `DATABASE_URL` set.
 
 ```sh
 bun install

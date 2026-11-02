@@ -36,12 +36,15 @@ RUN npm install --omit=dev --no-audit --no-fund \
     && find node_modules/@prisma/client/runtime -type f \
        \( -name "*.map" -o \( -name "query_compiler_*" ! -name "query_compiler_fast_bg.postgresql.*" \) \) -delete
 COPY --from=build /app/build ./build
-COPY server/node.mjs server/migrate.mjs ./server/
+COPY server/node.mjs server/migrate.mjs server/admin.mjs ./server/
 COPY app/repositories/main-repository/prisma/migrations ./prisma/migrations
 # Uploaded images (logos, office photos, people's photos): mount a volume here.
 RUN mkdir -p /data/images && chown -R node:node /data
 VOLUME /data
 EXPOSE 3000
+# Healthy: serving, and the database answers (see /healthz).
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+    CMD wget -q -O /dev/null http://127.0.0.1:3000/healthz || exit 1
 USER node
 # Bring the database up to date, then serve.
 CMD ["sh", "-c", "node server/migrate.mjs prisma/migrations && node server/node.mjs"]

@@ -1,6 +1,7 @@
 import { createRequestHandler } from "react-router"
 import { getCore } from "~/core/get-core"
 import { createPrismaClient, runWithClient } from "~/services/prisma.server"
+import { isHttpsRequest, withSecurityHeaders } from "~/services/securityHeaders"
 
 /**
  * The app for a plain Node server (self-hosting; built with HOTSEAT_TARGET=node
@@ -19,7 +20,22 @@ const prisma = createPrismaClient(process.env.DATABASE_URL ?? "")
 export const basePath = import.meta.env.BASE_URL
 
 export const handleRequest = (request: Request) =>
-  runWithClient(prisma, () => handleAppRequest(request))
+  runWithClient(prisma, () => handleAppRequest(request)).then((response) =>
+    withSecurityHeaders(response, isHttpsRequest(request))
+  )
+
+/** For the static files server/node.mjs serves itself. */
+export { SECURITY_HEADERS } from "~/services/securityHeaders"
+
+/** How long the database may take to answer a health check (ms). */
+const HEALTH_TIMEOUT = 3000
+
+/** Whether the app can reach its database (/healthz): one trivial query, in good time. */
+export const isHealthy = () =>
+  Promise.race([
+    prisma.$queryRaw`SELECT 1`.then(() => true),
+    new Promise<boolean>((resolve) => setTimeout(() => resolve(false), HEALTH_TIMEOUT)),
+  ]).catch(() => false)
 
 /** Book usual desks on the days that just opened up, and hand freed desks to people waiting. */
 export const runHourlyJobs = () =>
