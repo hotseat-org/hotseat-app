@@ -1,3 +1,4 @@
+import clsx from "clsx"
 import { useEffect, useState, type CSSProperties } from "react"
 import { DUSK } from "~/components/HotseatMark"
 
@@ -103,15 +104,26 @@ export const NightSky = ({ isAnimated }: { isAnimated: boolean }) => (
 /**
  * The three warm lines, as a band along the bottom of the page — in the flow,
  * so whatever the screen's height they never run over the buttons above.
+ * Whole: mid-page, where no screen edge hides their lower part, the band is
+ * as tall as the lines' breathing needs (on a phone it crops only the sides).
  */
-export const Horizon = ({ isAnimated }: { isAnimated: boolean }) => (
+export const Horizon = ({
+  isAnimated,
+  isWhole = false,
+}: {
+  isAnimated: boolean
+  isWhole?: boolean
+}) => (
   <svg
     aria-hidden
-    viewBox="0 500 1440 400"
+    viewBox={isWhole ? "0 490 1440 470" : "0 500 1440 400"}
     preserveAspectRatio="xMidYMin slice"
     fill="none"
     strokeLinecap="round"
-    className="pointer-events-none relative h-[clamp(170px,32vh,340px)] w-full shrink-0"
+    className={clsx(
+      "pointer-events-none relative w-full shrink-0",
+      isWhole ? "h-[max(150px,32.7vw)]" : "h-[clamp(170px,32vh,340px)]"
+    )}
   >
     {HORIZON.map(({ color, y, seconds }, i) => (
       <path key={color} d={curve(y, BREATHS[0])} stroke={color} strokeWidth={30}>

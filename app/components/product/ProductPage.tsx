@@ -95,7 +95,7 @@ export const ProductPage = () => {
           </div>
           {/* The office stands on the horizon: its lines run behind the picture's lower part. */}
           <div className="-mt-[clamp(90px,16vw,220px)]">
-            <Horizon isAnimated={isAnimated} />
+            <Horizon isAnimated={isAnimated} isWhole />
           </div>
         </section>
 
@@ -360,7 +360,7 @@ export const ProductPage = () => {
 
         {/* The page ends on the horizon it opened with. */}
         <div className="mt-16">
-          <Horizon isAnimated={isAnimated} />
+          <Horizon isAnimated={isAnimated} isWhole />
         </div>
       </main>
 
