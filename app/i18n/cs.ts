@@ -16,7 +16,7 @@ export const cs: Messages = {
     "Tato stránka neexistuje, nebo k ní nemáte přístup.",
   "An unexpected error happened. Try again in a moment.":
     "Stala se nečekaná chyba. Zkuste to za chvíli znovu.",
-  "Back to your offices": "Zpět na vaše kanceláře",
+  "Back to your offices": "Zpět na přehled kanceláří",
 
   // —— Desks & days ——
   "Desk {label}": "Stůl {label}",
@@ -325,8 +325,8 @@ export const cs: Messages = {
   "Add a floor on top": "Přidat patro navrch",
   "Name of {floor}": "Název – {floor}",
   "More for {floor}": "Další – {floor}",
-  "Add a floor above, with these outer walls": "Přidat patro nad, s těmito obvodovými zdmi",
-  "Add an empty floor above": "Přidat prázdné patro nad",
+  "Add a floor above, with these outer walls": "Přidat patro nahoru se stejnými obvodovými zdmi",
+  "Add an empty floor above": "Přidat prázdné patro nahoru",
   "{floor}. Choose a floor": "{floor}. Vybrat patro",
   "your desk": "váš stůl",
   "{n} free": {
@@ -359,7 +359,7 @@ export const cs: Messages = {
   Controls: "Ovládání",
   "Hide controls": "Skrýt ovládání",
   "Previous day": "Předchozí den",
-  "Showing {day}. Pick another day": "Zobrazen {day}. Vybrat jiný den",
+  "Showing {day}. Pick another day": "Zobrazený den: {day}. Vybrat jiný den",
   Today: "Dnes",
   "Pick a day": "Vybrat den",
   "Next day": "Další den",
@@ -384,17 +384,17 @@ export const cs: Messages = {
   "Pick all of week {week}": "Vybrat celý týden {week}",
   "W{week}": "T{week}",
   Yours: "Váš",
-  "You already have this desk {when}.": "Tento stůl už máte {when}.",
-  "{holder} has this desk {when}.": "{holder} má tento stůl {when}.",
+  "You already have this desk {when}.": "{When} už tento stůl máte.",
+  "{holder} has this desk {when}.": "{holder} má {when} tento stůl.",
   "{holder} has this desk {when}, so you get {alternative}, the nearest free desk. Tap to drop the day.":
-    "{holder} má tento stůl {when}, takže dostanete nejbližší volný stůl ({alternative}). Klepnutím den zrušíte.",
+    "{holder} má {when} tento stůl, takže dostanete nejbližší volný stůl ({alternative}). Klepnutím den zrušíte.",
   "{holder} has this desk {when}. Tap to book {alternative}, the nearest free desk, instead.":
-    "{holder} má tento stůl {when}. Klepnutím si místo něj zarezervujete nejbližší volný stůl ({alternative}).",
+    "{holder} má {when} tento stůl. Klepnutím si místo něj zarezervujete nejbližší volný stůl ({alternative}).",
   "Moves you": "Přesune vás",
   "You sit at {desk} {when}. Booking moves you here.":
-    "Máte {when} jiný stůl ({desk}). Rezervace vás přesune sem.",
+    "{When} máte jiný stůl ({desk}). Rezervace vás přesune sem.",
   "You sit at {desk} {when}. Picking it moves you here.":
-    "Máte {when} jiný stůl ({desk}). Když tento den vyberete, přesunete se sem.",
+    "{When} máte jiný stůl ({desk}). Když tento den vyberete, přesunete se sem.",
   free: "volno",
   Every: "Vždy",
   "Week {week}": "Týden {week}",
@@ -486,8 +486,8 @@ export const cs: Messages = {
   Insights: "Statistiky",
   "Permanent desk {label}": "Stálý stůl {label}",
   "Desk {label} {when}": "Stůl {label} {when}",
-  "You have a desk {when}": "Máte stůl {when}",
-  "On the waitlist {when}": "V pořadníku {when}",
+  "You have a desk {when}": "{When} máte stůl",
+  "On the waitlist {when}": "{When} jste v pořadníku",
   "({n} waiting)": {
     one: "(čeká {n})",
     few: "(čekají {n})",
@@ -495,9 +495,9 @@ export const cs: Messages = {
     other: "(čeká {n})",
   },
   Leave: "Odhlásit se",
-  "Office full {when}": "Kancelář je plná {when}",
+  "Office full {when}": "{When} je kancelář plná",
   "Join the waitlist": "Zapsat se do pořadníku",
-  "No desk {when}.": "Nemáte stůl {when}.",
+  "No desk {when}.": "{When} nemáte stůl.",
   "All my bookings": "Všechny mé rezervace",
   "of {total}": "z {total}",
   "Manage people": "Spravovat lidi",
@@ -508,10 +508,10 @@ export const cs: Messages = {
 
   // —— Phone shell ——
   Day: "Den",
-  "Away {when}": "Jste pryč {when}",
-  "No desk {when}": "Nemáte stůl {when}",
+  "Away {when}": "{When} nejste v kanceláři",
+  "No desk {when}": "{When} nemáte stůl",
   "Your permanent desk": "Váš stálý stůl",
-  "Yours {when}": "Váš {when}",
+  "Yours {when}": "{When} je váš",
   "You gave {desk} up — others can book it":
     "Uvolnili jste stůl ({desk}) — ostatní si ho mohou zarezervovat",
   "Past days can't be booked": "Minulé dny nejde rezervovat",
@@ -521,8 +521,8 @@ export const cs: Messages = {
   "Pick a day from the calendar": "Vybrat den v kalendáři",
   Days: "Dny",
   "Who's in": "Kdo tu je",
-  "{in} of {total} in the office": "v kanceláři {in} z {total}",
-  "Show {name}'s desk on the plan": "Ukázat v plánku stůl: {name}",
+  "{in} of {total} in the office": "{in} z {total} v kanceláři",
+  "Show {name}'s desk on the plan": "Ukázat v plánku, kde sedí {name}",
   Find: "Najít",
   Bookings: "Rezervace",
   Main: "Hlavní",
@@ -626,7 +626,7 @@ export const cs: Messages = {
   "{percent} on average": "v průměru {percent}",
   "People booked": "Rezervovali si",
   "People who came in": "Přišli do kanceláře",
-  "{n} days a week each": "každý {n} dne v týdnu",
+  "{n} days a week each": "každý v průměru {n}× týdně",
   "Full days": "Plné dny",
   "{n} person waiting now": {
     one: "teď čeká {n} člověk",
@@ -641,7 +641,7 @@ export const cs: Messages = {
   "Every working day": "Každý pracovní den",
   "By floor, an average working day": "Podle pater, průměrný pracovní den",
   "In use": "Obsazenost",
-  "Last used": "Naposledy",
+  "Last used": "Naposledy obsazený",
   never: "nikdy",
   "Permanent desks": "Stálé stoly",
   Resident: "Uživatel",
@@ -863,7 +863,7 @@ export const cs: Messages = {
   // —— Sign-in, joining, creating ——
   "Find your seat.": "Najděte si místo.",
   "Book a desk, see who's in, and walk into an office that's ready for you.":
-    "Zarezervujte si stůl, podívejte se, kdo je v kanceláři, a přijďte do kanceláře připravené pro vás.",
+    "Zarezervujte si stůl, podívejte se, kdo přijde, a přijďte do kanceláře, která na vás čeká.",
   "Continue with Google": "Pokračovat přes Google",
   "Continue with GitHub": "Pokračovat přes GitHub",
   "New here? Signing in creates your account.": "Jste tu poprvé? Přihlášením si vytvoříte účet.",
@@ -877,7 +877,7 @@ export const cs: Messages = {
   "is free": "je volné",
   "is taken": "je obsazené",
   "{click} or drag and drop": "{click} nebo sem soubor přetáhněte",
-  "Click to upload": "Klikněte pro nahrání",
+  "Click to upload": "Klikněte a nahrajte",
   "Change cover photo": "Změnit úvodní fotku",
   "Add a cover photo": "Přidat úvodní fotku",
   "Name your office": "Pojmenujte kancelář",
@@ -995,7 +995,7 @@ export const cs: Messages = {
     "Tato organizace zatím nemá žádné kanceláře. Požádejte správce, ať vytvoří první.",
   "Join {name}": "Připojit se k {name}",
   "You've been invited to a Hotseat workspace.": "Máte pozvánku do pracoviště v Hotseatu.",
-  "Sign in to accept the invitation": "Pro přijetí pozvánky se přihlaste",
+  "Sign in to accept the invitation": "Přihlaste se a přijměte pozvánku",
   "Invite not valid": "Neplatná pozvánka",
   "This invite link is invalid or has expired. Ask a teammate for a fresh one.":
     "Odkaz na pozvánku je neplatný nebo vypršel. Požádejte kolegu o nový.",
@@ -1073,10 +1073,10 @@ export const cs: Messages = {
   "Number every desk after its zone: ENG-1, ENG-2… (the rest D-1…)":
     "Očísluje každý stůl podle jeho zóny: ENG-1, ENG-2… (ostatní D-1…)",
   "Zone of {n} desk": {
-    one: "Zóna {n} stolu",
-    few: "Zóna {n} stolů",
-    many: "Zóna {n} stolu",
-    other: "Zóna {n} stolů",
+    one: "Zóna s {n} stolem",
+    few: "Zóna se {n} stoly",
+    many: "Zóna s {n} stolu",
+    other: "Zóna s {n} stoly",
   },
   // Office editor: the guided tour.
   "Welcome to the editor": "Vítejte v editoru",
@@ -1155,7 +1155,7 @@ export const cs: Messages = {
   "Booked for you": "Zarezervováno",
   "Nothing fits that day.": "Ten den nic nevyhovuje.",
   "Try any day": "Zkusit kdykoli",
-  "Your preferred seat {desk} is free": "Váš preferovaný {desk} je volný",
+  "Your preferred seat {desk} is free": "Váš preferovaný stůl je volný: {desk}",
   Pick: "Vybrat",
   "Also fits": "Vyhovuje i",
   "{met} of {total}": "{met} z {total}",
@@ -1163,7 +1163,7 @@ export const cs: Messages = {
   "Closest match": "Nejbližší shoda",
   "Show on map": "Ukázat na plánu",
   Book: "Rezervovat",
-  "No day fits while desks can be booked.": "Dokud lze rezervovat, nevyhovuje žádný den.",
+  "No day fits while desks can be booked.": "V dnech, které lze rezervovat, nevyhovuje žádný.",
   "Everything you asked for": "Vše, co chcete",
   "Find another": "Najít jiné",
   "No preferences yet: any free desk will do.":
@@ -1211,7 +1211,7 @@ export const cs: Messages = {
   "Sign in": "Přihlásit se",
   "What it does": "Co umí",
   "Shows what fits and what doesn't": "Ukáže, co sedí a co ne",
-  "Look back or plan ahead": "Ohlédněte se zpět nebo plánujte dopředu",
+  "Look back or plan ahead": "Ohlédněte se, nebo plánujte dopředu",
   "Walls, doors, windows and furniture": "Zdi, dveře, okna a nábytek",
   "Desk booking without the paperwork": "Rezervace stolů bez papírování",
   "Your office, minus the musical chairs": "Kancelář bez honby za volnou židlí",
@@ -1319,7 +1319,7 @@ export const cs: Messages = {
   "Sure. Look around the demo office without an account — book a desk, find a seat, move the furniture. Or set up your own and invite a few people first.":
     "Jasně. Prohlédněte si ukázkovou kancelář bez účtu — zarezervujte stůl, najděte místo, přestěhujte nábytek. Nebo si nastavte vlastní a pozvěte zatím pár lidí.",
   "You're not in {name} yet. Ask an admin there for an invite.":
-    "Do {name} zatím nepatříte. Požádejte tamní správu o pozvánku.",
+    "Do organizace {name} zatím nepatříte. Požádejte jejího správce o pozvánku.",
   "Set up Hotseat": "Nastavení Hotseatu",
   "Two things, and you can change both later in the settings.":
     "Dvě věci a obě můžete později změnit v nastavení.",
@@ -1343,7 +1343,8 @@ export const cs: Messages = {
     "Tento obrázek se nepodařilo nahrát. Zkuste jiný.",
   "Time zone": "Časové pásmo",
   "Search, e.g. London": "Hledat, např. Praha",
-  "What “today” is in this office, for bookings.": "Co je v této kanceláři „dnes“ — pro rezervace.",
+  "What “today” is in this office, for bookings.":
+    "Podle něj se v této kanceláři pro rezervace počítá, kdy je „dnes“.",
   "Self-hosting": "Vlastní hosting",
   "Self-hosting guide": "Průvodce vlastním hostingem",
   Overview: "Přehled",
@@ -1419,17 +1420,17 @@ export const cs: Messages = {
   "No closed days ahead.": "Žádné zavřené dny v nejbližší době.",
   "Open on {day}": "Otevřít {day}",
   "{office} is closed on {days} ({reason}): your booking was cancelled.":
-    "{office} je {days} zavřená ({reason}): vaše rezervace byla zrušena.",
+    "Kancelář {office} je zavřená ({days}, {reason}): vaše rezervace byla zrušena.",
   "{office} is closed on {days}: your booking was cancelled.":
-    "{office} je {days} zavřená: vaše rezervace byla zrušena.",
+    "Kancelář {office} je zavřená ({days}): vaše rezervace byla zrušena.",
   "{office} is now closed on {days}: your booking was cancelled.":
-    "{office} je nově {days} zavřená: vaše rezervace byla zrušena.",
+    "Kancelář {office} bude nově zavřená ({days}): vaše rezervace byla zrušena.",
   "Pick between 1 and 366 days.": "Vyberte 1 až 366 dní.",
   "Days in the past can't be closed.": "Dny v minulosti nelze zavřít.",
   "Keep at least one day open.": "Nechte otevřený aspoň jeden den.",
-  "The office is closed on {day}.": "Kancelář je {day} zavřená.",
+  "The office is closed on {day}.": "Kancelář je zavřená: {day}.",
   Closed: "Zavřeno",
-  "The office is closed on {day} ({reason}).": "Kancelář je {day} zavřená ({reason}).",
+  "The office is closed on {day} ({reason}).": "Kancelář je zavřená: {day} ({reason}).",
   "{n} booking was cancelled; its owner was told.": {
     one: "Zrušená rezervace: {n}. Majitel dostal zprávu.",
     few: "Zrušené rezervace: {n}. Majitelé dostali zprávu.",
@@ -1562,7 +1563,7 @@ export const cs: Messages = {
   "None set": "Nenastaveno",
   "{percent} full": "obsazeno {percent}",
   "{share} of it the team's · {there} of their days there":
-    "{share} z toho tým · {there} jejich dnů tam",
+    "{share} obsazenosti připadá na tým · {there} jeho dnů v zóně",
   "No zone here": "Zde bez zóny",
   "{in} of {total} in": "{in} z {total} v kanceláři",
   "Keep the gang together": "Parta pěkně pohromadě",

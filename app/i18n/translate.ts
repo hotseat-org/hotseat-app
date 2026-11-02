@@ -149,7 +149,8 @@ const isDeskParam = (value: unknown): value is DeskParam =>
 /**
  * A translator for one language. Messages are written in English, which is
  * also their key; a missing translation falls back to the English text.
- * `{name}` in a message is replaced by `params.name`.
+ * `{name}` in a message is replaced by `params.name`; `{Name}`, by it with
+ * a capital first letter (a translation that starts a sentence with it).
  */
 export const createTranslator = (locale: Locale = DEFAULT_LOCALE) => {
   const messages = MESSAGES[locale] ?? {}
@@ -159,17 +160,27 @@ export const createTranslator = (locale: Locale = DEFAULT_LOCALE) => {
     params
       ? text
           .replace(/\{(\w+)\}/g, (match, name: string) => {
-            const value = params[name]
-            if (value === undefined) return match
-            if (isDayParam(value)) return format.long(value.day)
-            if (isDaysParam(value)) return daysText(value.days)
-            if (isDeskParam(value))
-              return value.desk ? t("desk {label}", { label: value.desk }) : t("a desk")
-            return typeof value === "number" ? format.number(value) : value
+            if (params[name] !== undefined) return fillValue(params[name])
+
+            // Capitalised ("{When}"), a value that starts a sentence: "Dnes nemáte stůl".
+            const lowerName = name[0].toLowerCase() + name.slice(1)
+            if (lowerName === name || params[lowerName] === undefined) return match
+
+            const value = fillValue(params[lowerName])
+
+            return value.charAt(0).toLocaleUpperCase(locale) + value.slice(1)
           })
           // A value ending a sentence with its own full stop (a Czech date: "27. 10.").
           .replace(/(?<!\.)\.\.(?!\.)/g, ".")
       : text
+  const fillValue = (value: Params[string]): string => {
+    if (isDayParam(value)) return format.long(value.day)
+    if (isDaysParam(value)) return daysText(value.days)
+    if (isDeskParam(value))
+      return value.desk ? t("desk {label}", { label: value.desk }) : t("a desk")
+
+    return typeof value === "number" ? format.number(value) : value
+  }
   const daysText = (days: Day[]) => {
     const sorted = [...days].sort()
     if (sorted.length === 1) return format.long(sorted[0])
