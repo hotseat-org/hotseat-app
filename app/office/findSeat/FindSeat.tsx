@@ -114,10 +114,13 @@ const Finder = ({
   const getDeskFloor = useDeskFloor()
   const getTeamsIn = useTeamDays()
 
-  // The day shown on the map, if it's one to pick; else the first that is.
-  const [when, setWhen] = useState<When>(() =>
-    seats.dayChoices.includes(shownDay) ? shownDay : (seats.dayChoices[0] ?? ANY_DAY)
-  )
+  // The day picked; till then the day shown on the map, if it's one to pick,
+  // else the first that is (worked out as the days come in: opened by a
+  // link, they're not there yet).
+  const [pickedWhen, setWhen] = useState<When | null>(null)
+  const when =
+    pickedWhen ??
+    (seats.dayChoices.includes(shownDay) ? shownDay : (seats.dayChoices[0] ?? ANY_DAY))
   const [pickedDeskId, setPickedDeskId] = useState<string | null>(null)
   const dayResult = useMemo(() => (when === ANY_DAY ? null : seats.onDay(when)), [seats, when])
   const anyDays = useMemo(() => (when === ANY_DAY ? seats.anyDay() : []), [seats, when])

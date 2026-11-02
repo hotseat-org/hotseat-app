@@ -59,6 +59,9 @@ export const useSavedRules = () => {
 /** The next working days you can book, from today. */
 export const getDayChoices = (today: Day, lastDay: Day, opening: OfficeOpening) => {
   const days: Day[] = []
+  // Before the office's bookings are in, no days yet.
+  if (!today || !lastDay) return days
+
   for (let day = today; day <= lastDay && days.length < DAY_CHOICES; day = addDays(day, 1))
     if (!isWeekend(day) && isOpenDay(day, opening)) days.push(day)
 
