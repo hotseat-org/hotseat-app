@@ -35,6 +35,32 @@ describe("a saved layout", () => {
     expect(parsed.pieces[1].noteText).toBe("Fix the door")
   })
 
+  test("holds the lounge, kitchen, games, plants and decor, with what a sign says", () => {
+    const types = [
+      "loungeBench",
+      "beanBag",
+      "coffeeStation",
+      "diningTable",
+      "receptionDesk",
+      "tableFootball",
+      "pingPongTable",
+      "dartboard",
+      "tallPlant",
+      "hangingPlant",
+      "mossWall",
+      "photoWall",
+    ]
+    const parsed = layoutSchema.parse([
+      ...types.map((type) => pieceOf(type)),
+      pieceOf("neonSign", { signText: "Good vibes", color: "#3fd0ff" }),
+    ])
+
+    expect(parsed.pieces[types.length].signText).toBe("Good vibes")
+    expect(
+      layoutSchema.safeParse([pieceOf("neonSign", { signText: "x".repeat(33) })]).success
+    ).toBe(false)
+  })
+
   test("refuses what isn't in the catalogue", () => {
     expect(layoutSchema.safeParse([pieceOf("spaceship")]).success).toBe(false)
   })

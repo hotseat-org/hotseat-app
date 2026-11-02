@@ -13,6 +13,8 @@ declare module "~/editor/types" {
     features?: string[]
     /** Desks: the zone (team neighbourhood) it belongs to, by name. */
     zone?: string
+    /** Neon signs: what it says (see catalog/neonSign.ts). */
+    signText?: string
   }
 }
 

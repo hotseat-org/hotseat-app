@@ -1,8 +1,11 @@
 import {
   ArchiveIcon,
   ArmchairIcon,
+  BeanIcon,
   BeerIcon,
   CircleIcon,
+  CloudIcon,
+  ConciergeBellIcon,
   ClockIcon,
   CoffeeIcon,
   CookingPotIcon,
@@ -10,11 +13,14 @@ import {
   DropletIcon,
   Flower2Icon,
   FrameIcon,
+  Gamepad2Icon,
   GlassWaterIcon,
   ImageIcon,
+  ImagesIcon,
   LampCeilingIcon,
   LampDeskIcon,
   LampWallDownIcon,
+  LeafIcon,
   LibraryIcon,
   LockIcon,
   MartiniIcon,
@@ -24,24 +30,44 @@ import {
   PawPrintIcon,
   PresentationIcon,
   PrinterIcon,
+  RectangleHorizontalIcon,
   RefrigeratorIcon,
   Rows4Icon,
   ServerIcon,
   ShirtIcon,
   ShowerHeadIcon,
+  ShrubIcon,
+  SignatureIcon,
   SofaIcon,
   SproutIcon,
   SquareIcon,
   Table2Icon,
   TableIcon,
+  TargetIcon,
   ToiletIcon,
+  TreePalmIcon,
   Trash2Icon,
   TvIcon,
   UmbrellaIcon,
+  UtensilsCrossedIcon,
   UtensilsIcon,
+  VolleyballIcon,
   WineIcon,
 } from "lucide-react"
 import { Armchair } from "../objects/seating/Armchair"
+import { BeanBag } from "../objects/seating/BeanBag"
+import { LoungeBench } from "../objects/seating/LoungeBench"
+import { CoffeeStation } from "../objects/kitchen/CoffeeStation"
+import { DiningTable } from "../objects/tables/DiningTable"
+import { ReceptionDesk } from "../objects/tables/ReceptionDesk"
+import { TableFootball } from "../objects/play/TableFootball"
+import { PingPongTable } from "../objects/play/PingPongTable"
+import { Dartboard } from "../objects/play/Dartboard"
+import { TallPlant } from "../objects/decor/TallPlant"
+import { HangingPlant } from "../objects/decor/HangingPlant"
+import { MossWall } from "../objects/decor/MossWall"
+import { PhotoWall } from "../objects/decor/PhotoWall"
+import { NeonSign } from "../objects/decor/NeonSign"
 import { BarStool } from "../objects/seating/BarStool"
 import { BarTable } from "../objects/tables/BarTable"
 import { BathroomSink } from "../objects/bathroom/BathroomSink"
@@ -86,6 +112,7 @@ import { Workstation } from "../objects/tables/Workstation"
 import { DeskmatePreview } from "../objects/pets/DeskmatePreview"
 import { FURNITURE_SYMBOLS } from "./furnitureSymbols"
 import { FURNITURE_ITEMS } from "./furniture"
+import { GamesIcon } from "./GamesIcon"
 import {
   BathroomIcon,
   DecorIcon,
@@ -146,6 +173,16 @@ export const FURNITURE = composeItemsWithLooks(FURNITURE_ITEMS, {
     drawSymbol: FURNITURE_SYMBOLS.barStool,
     tile: { label: msg("Bar stool"), icon: BeerIcon, category: "seating" },
   },
+  loungeBench: {
+    Mesh: LoungeBench,
+    drawSymbol: FURNITURE_SYMBOLS.loungeBench,
+    tile: { label: msg("Lounge bench"), icon: RectangleHorizontalIcon, category: "seating" },
+  },
+  beanBag: {
+    Mesh: BeanBag,
+    drawSymbol: FURNITURE_SYMBOLS.beanBag,
+    tile: { label: msg("Bean bag"), icon: CloudIcon, category: "seating" },
+  },
   coffeeTable: {
     Mesh: CoffeeTable,
     drawSymbol: FURNITURE_SYMBOLS.coffeeTable,
@@ -180,6 +217,11 @@ export const FURNITURE = composeItemsWithLooks(FURNITURE_ITEMS, {
     Mesh: OvalBarTable,
     drawSymbol: FURNITURE_SYMBOLS.ovalBarTable,
     tile: { label: msg("Oval bar table"), icon: WineIcon, category: "tables" },
+  },
+  receptionDesk: {
+    Mesh: ReceptionDesk,
+    drawSymbol: FURNITURE_SYMBOLS.receptionDesk,
+    tile: { label: msg("Reception desk"), icon: ConciergeBellIcon, category: "tables" },
   },
   bookshelf: {
     Mesh: Bookshelf,
@@ -246,6 +288,31 @@ export const FURNITURE = composeItemsWithLooks(FURNITURE_ITEMS, {
     drawSymbol: FURNITURE_SYMBOLS.vendingMachine,
     tile: { label: msg("Vending machine"), icon: UtensilsIcon, category: "kitchen" },
   },
+  coffeeStation: {
+    Mesh: CoffeeStation,
+    drawSymbol: FURNITURE_SYMBOLS.coffeeStation,
+    tile: { label: msg("Coffee machine"), icon: BeanIcon, category: "kitchen" },
+  },
+  diningTable: {
+    Mesh: DiningTable,
+    drawSymbol: FURNITURE_SYMBOLS.diningTable,
+    tile: { label: msg("Dining table"), icon: UtensilsCrossedIcon, category: "kitchen" },
+  },
+  tableFootball: {
+    Mesh: TableFootball,
+    drawSymbol: FURNITURE_SYMBOLS.tableFootball,
+    tile: { label: msg("Table football"), icon: Gamepad2Icon, category: "games" },
+  },
+  pingPongTable: {
+    Mesh: PingPongTable,
+    drawSymbol: FURNITURE_SYMBOLS.pingPongTable,
+    tile: { label: msg("Ping-pong table"), icon: VolleyballIcon, category: "games" },
+  },
+  dartboard: {
+    Mesh: Dartboard,
+    drawSymbol: FURNITURE_SYMBOLS.dartboard,
+    tile: { label: msg("Dartboard"), icon: TargetIcon, category: "games" },
+  },
   wallTv: {
     Mesh: WallTv,
     drawSymbol: FURNITURE_SYMBOLS.wallTv,
@@ -266,6 +333,21 @@ export const FURNITURE = composeItemsWithLooks(FURNITURE_ITEMS, {
     drawSymbol: FURNITURE_SYMBOLS.wallShelf,
     tile: { label: msg("Wall shelf"), icon: PanelTopIcon, category: "wall" },
   },
+  neonSign: {
+    Mesh: NeonSign,
+    drawSymbol: FURNITURE_SYMBOLS.neonSign,
+    tile: { label: msg("Neon sign"), icon: SignatureIcon, category: "wall" },
+  },
+  photoWall: {
+    Mesh: PhotoWall,
+    drawSymbol: FURNITURE_SYMBOLS.photoWall,
+    tile: { label: msg("Team photos"), icon: ImagesIcon, category: "wall" },
+  },
+  mossWall: {
+    Mesh: MossWall,
+    drawSymbol: FURNITURE_SYMBOLS.mossWall,
+    tile: { label: msg("Moss wall"), icon: ShrubIcon, category: "wall" },
+  },
   toilet: {
     Mesh: Toilet,
     drawSymbol: FURNITURE_SYMBOLS.toilet,
@@ -285,6 +367,16 @@ export const FURNITURE = composeItemsWithLooks(FURNITURE_ITEMS, {
     Mesh: Plant,
     drawSymbol: FURNITURE_SYMBOLS.plant,
     tile: { label: msg("Plant"), icon: SproutIcon, key: "9", category: "decor" },
+  },
+  tallPlant: {
+    Mesh: TallPlant,
+    drawSymbol: FURNITURE_SYMBOLS.tallPlant,
+    tile: { label: msg("Tall plant"), icon: TreePalmIcon, category: "decor" },
+  },
+  hangingPlant: {
+    Mesh: HangingPlant,
+    drawSymbol: FURNITURE_SYMBOLS.hangingPlant,
+    tile: { label: msg("Hanging plant"), icon: LeafIcon, category: "decor" },
   },
   planterBox: {
     Mesh: PlanterBox,
@@ -378,6 +470,11 @@ export const FURNITURE_CATEGORIES: CategoryDefinition[] = [
     id: "kitchen",
     label: msg("Kitchen"),
     icon: KitchenIcon,
+  },
+  {
+    id: "games",
+    label: msg("Games"),
+    icon: GamesIcon,
   },
   {
     id: "wall",

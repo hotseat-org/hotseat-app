@@ -3,6 +3,7 @@ import { createDesksState } from "./desks"
 import { createOfficePanelsState } from "./officePanels"
 import { createOfficeViewState } from "./officeView"
 import { createPeopleState } from "./people"
+import { createSignsState } from "./signs"
 import type { OfficeGetState, OfficeSetState, OfficeState } from "./state"
 
 export const createOfficeState = (set: OfficeSetState, get: OfficeGetState): OfficeState => ({
@@ -11,6 +12,7 @@ export const createOfficeState = (set: OfficeSetState, get: OfficeGetState): Off
   ...createOfficeViewState(set, get),
   ...createOfficePanelsState(set, get),
   ...createPeopleState(set, get),
+  ...createSignsState(set, get),
 })
 
 export {

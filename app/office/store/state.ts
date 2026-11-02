@@ -3,11 +3,12 @@ import type { DesksState } from "./desks"
 import type { OfficePanelsState } from "./officePanels"
 import type { OfficeViewState } from "./officeView"
 import type { PeopleState } from "./people"
+import type { SignsState } from "./signs"
 import type { EditorState, GetState, SetState } from "~/editor"
 
-/** The office's part of the editor's state: desks, booking, and what it shows and opens. */
+/** The office's part of the editor's state: desks, booking, signs, and what it shows and opens. */
 export interface OfficeState
-  extends DesksState, BookingState, OfficeViewState, OfficePanelsState, PeopleState {}
+  extends DesksState, BookingState, OfficeViewState, OfficePanelsState, PeopleState, SignsState {}
 
 /** The editor's state with the office's on top. */
 export type OfficeEditorState = EditorState & OfficeState

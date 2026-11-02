@@ -12,6 +12,9 @@ export { Glass } from "./objects/GlassWall"
 export { Model } from "./objects/Model"
 export { WiggleModel } from "./objects/WiggleModel"
 export { NO_BAKE } from "./objects/Baked"
+// What a model is drawn for: its piece (null in a thumbnail), and whether as a ghost (placing it).
+export { usePiece } from "./objects/pieceContext"
+export { GhostContext } from "./objects/Surface"
 
 // The scene they stand in: time of day, lamps, shadows, motion, theme.
 export { DaylightContext } from "./lighting/daylight"

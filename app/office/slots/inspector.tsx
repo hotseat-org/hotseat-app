@@ -7,6 +7,12 @@ import { personByEmail, usePeople, type Person } from "../desks/people"
 import { ResidentPicker } from "../desks/ResidentPicker"
 import { SeatAvatar } from "../desks/SeatAvatar"
 import { getZones } from "../zones/zones"
+import {
+  DEFAULT_NEON_COLOR,
+  DEFAULT_SIGN_TEXT,
+  MAX_SIGN_TEXT,
+  NEON_TUBES,
+} from "../catalog/neonSign"
 import { DESK_FEATURES } from "../desks/deskFeatures"
 import { useOfficeStore } from "../store"
 import { InspectorGroup, type InspectorSectionProps } from "~/editor"
@@ -24,9 +30,55 @@ export const OfficeInspectorSection = ({ selected, count }: InspectorSectionProp
       <RetiredDeskNote id={selected.id} type={selected.type} />
     )}
     {count === 1 && isSeatable(selected.type) && <SeatSection key={selected.id} id={selected.id} />}
+    {count === 1 && selected.type === "neonSign" && (
+      <SignSection key={selected.id} id={selected.id} />
+    )}
     <ZoneSection />
   </>
 )
+
+/** A neon sign's group: what it says, and its tubes' colour. */
+const SignSection = ({ id }: { id: string }) => {
+  const sign = useOfficeStore((state) => state.objects.find((object) => object.id === id))
+  const setSignText = useOfficeStore((state) => state.setSignText)
+  const setSignColor = useOfficeStore((state) => state.setSignColor)
+  const { t } = useI18n()
+  if (!sign) return null
+
+  const current = sign.color ?? DEFAULT_NEON_COLOR
+
+  return (
+    <InspectorGroup title={t("Sign")}>
+      <input
+        // Saved when it loses focus (or on Enter): one undo step, not one per letter.
+        defaultValue={sign.signText ?? ""}
+        placeholder={DEFAULT_SIGN_TEXT}
+        maxLength={MAX_SIGN_TEXT}
+        onBlur={(event) => setSignText(sign.id, event.currentTarget.value)}
+        onKeyDown={(event) => event.key === "Enter" && event.currentTarget.blur()}
+        aria-label={t("What the sign says")}
+        className="h-8 rounded-lg border border-border bg-surface px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-focus"
+      />
+      <div className="mt-2 flex flex-wrap gap-1.5" role="group" aria-label={t("Neon colour")}>
+        {NEON_TUBES.map(({ color, name }) => (
+          <button
+            key={color}
+            type="button"
+            aria-label={t(name)}
+            title={t(name)}
+            aria-pressed={color === current}
+            onClick={() => setSignColor(sign.id, color)}
+            className={clsx(
+              "size-7 rounded-full border-2 transition-transform hover:scale-110",
+              color === current ? "border-foreground" : "border-transparent"
+            )}
+            style={{ background: color, boxShadow: `0 0 8px ${color}` }}
+          />
+        ))}
+      </div>
+    </InspectorGroup>
+  )
+}
 
 /**
  * A desk's groups: its label, what it offers, and its permanent resident

@@ -529,4 +529,148 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
     return sketch.done(0.9)
   },
   ceilingLight: null,
+  loungeBench: ({ sketch, color }) => {
+    sketch.rect(-1.45, -0.4, 1.45, 0.4, PALETTE.deskTop, 0.04)
+    sketch.rect(-1.43, -0.37, 1.43, 0.4, color, 0.06)
+    sketch.rect(-1.45, -0.4, 1.45, -0.26, shade(color, 0.86), 0.06)
+    for (const [x, cushion] of [
+      [-0.95, "#e8c07a"],
+      [-0.3, "#f3e4d0"],
+      [0.35, "#b96f6f"],
+      [0.95, "#f3e4d0"],
+    ] as [number, string][])
+      sketch.rect(x - 0.17, -0.27, x + 0.17, -0.15, cushion, 0.04)
+    sketch.shadowRect(-1.45, -0.4, 1.45, 0.4)
+
+    return sketch.done(0.6)
+  },
+  beanBag: ({ sketch, color }) => {
+    sketch.ellipse(0, 0.02, 0.44, 0.42, color)
+    sketch.ellipse(0, -0.18, 0.3, 0.17, shade(color, 0.88), 0)
+    sketch.ellipse(0.04, 0.1, 0.2, 0.16, shade(color, 1.08), 0)
+    sketch.shadowCircle(0, 0, 0.44)
+
+    return sketch.done(0.5)
+  },
+  coffeeStation: ({ sketch, color }) => {
+    sketch.rect(-0.49, -0.5, 0.49, 0.1, PALETTE.deskTop, 0.02)
+    sketch.rect(-0.47, 0.06, 0.47, 0.1, color, 0.01, false)
+    sketch.rect(-0.36, -0.44, 0.0, -0.08, STEEL, 0.03)
+    sketch.circle(-0.18, -0.05, 0.04, CERAMIC)
+    sketch.rect(0.05, -0.44, 0.19, -0.28, DARK, 0.02)
+    for (const [x, mug] of [
+      [0.1, "#c9564f"],
+      [0.2, CERAMIC],
+      [0.3, "#6d90c9"],
+    ] as [number, string][])
+      sketch.circle(x, -0.05, 0.035, mug)
+    sketch.circle(0.36, -0.32, 0.06, "#6b4a33")
+    sketch.shadowRect(-0.49, -0.5, 0.49, 0.1)
+
+    return sketch.done(0.9)
+  },
+  diningTable: ({ sketch, color }) => {
+    for (const z of [-0.68, 0.68]) {
+      sketch.rect(-1.1, z - 0.17, 1.1, z + 0.17, color, 0.03)
+      sketch.shadowRect(-1.1, z - 0.17, 1.1, z + 0.17)
+    }
+    sketch.rect(-1.2, -0.45, 1.2, 0.45, color, 0.04)
+    sketch.rect(-1.12, -0.38, 1.12, 0.38, shade(color, 1.05), 0.03, false)
+    plate(sketch, { x: -0.75, z: 0.24, food: "#7fa66a" })
+    plate(sketch, { x: 0.6, z: -0.24 })
+    sketch.circle(0, 0, 0.12, CERAMIC)
+    sketch.circle(-0.03, 0.02, 0.04, "#c9564f", false)
+    sketch.circle(0.04, -0.03, 0.04, "#e8c07a", false)
+    sketch.shadowRect(-1.2, -0.45, 1.2, 0.45)
+
+    return sketch.done(0.8)
+  },
+  receptionDesk: ({ sketch, color }) => {
+    chair(sketch, { x: -0.2, z: -0.42 })
+    sketch.rect(-1.3, -0.28, 1.3, 0.42, PALETTE.deskTop, 0.03)
+    sketch.rect(-1.3, -0.28, -1.22, 0.5, color, 0.02)
+    sketch.rect(1.22, -0.28, 1.3, 0.5, color, 0.02)
+    sketch.rect(-1.33, 0.2, 1.33, 0.52, shade(PALETTE.deskTop, 1.06), 0.03)
+    sketch.rect(-1.3, 0.42, 1.3, 0.5, color, 0.01, false)
+    sketch.rect(-0.78, -0.03, -0.22, 0.01, DARK, 0.01)
+    sketch.circle(0.55, 0.36, 0.05, "#e8c07a")
+    sketch.rect(-0.06, 0.26, 0.26, 0.46, "#5f8a86", 0.01)
+    sketch.circle(-0.95, 0.36, 0.08, "#e9876a")
+    sketch.shadowRect(-1.33, -0.28, 1.33, 0.52)
+
+    return sketch.done(1.05)
+  },
+  tableFootball: ({ sketch, color }) => {
+    sketch.rect(-0.6, -0.35, 0.6, 0.35, color, 0.03)
+    sketch.rect(-0.55, -0.3, 0.55, 0.3, "#5f9a5a", 0.01, false)
+    sketch.line(0, -0.3, 0, 0.3, CERAMIC, 0.01)
+    for (const [x, team] of [
+      [-0.5, 0],
+      [-0.36, 0],
+      [-0.2, 1],
+      [-0.07, 0],
+      [0.07, 1],
+      [0.2, 0],
+      [0.36, 1],
+      [0.5, 1],
+    ]) {
+      sketch.line(x, -0.47, x, 0.47, STEEL, 0.015)
+      sketch.circle(x, team ? 0.45 : -0.45, 0.025, DARK, false)
+      sketch.rect(x - 0.015, -0.03, x + 0.015, 0.03, team ? "#3f6a9a" : "#c9564f", 0.005, false)
+    }
+    sketch.shadowRect(-0.6, -0.35, 0.6, 0.35)
+
+    return sketch.done(0.9)
+  },
+  pingPongTable: ({ sketch, color }) => {
+    sketch.rect(-1.37, -0.76, 1.37, 0.76, color, 0.02)
+    sketch.rect(-1.34, -0.73, 1.34, 0.73, color, 0.01, false)
+    sketch.line(-1.35, -0.74, 1.35, -0.74, CERAMIC, 0.02)
+    sketch.line(-1.35, 0.74, 1.35, 0.74, CERAMIC, 0.02)
+    sketch.line(-1.35, -0.74, -1.35, 0.74, CERAMIC, 0.02)
+    sketch.line(1.35, -0.74, 1.35, 0.74, CERAMIC, 0.02)
+    sketch.line(-1.35, 0, 1.35, 0, CERAMIC, 0.008)
+    sketch.line(0, -0.9, 0, 0.9, DARK, 0.03)
+    sketch.circle(-0.9, 0.4, 0.075, "#c9564f")
+    sketch.circle(0.85, -0.35, 0.075, DARK)
+    sketch.circle(0.3, 0.25, 0.02, "#f3a65a", false)
+    sketch.shadowRect(-1.37, -0.76, 1.37, 0.76, 0.02)
+
+    return sketch.done(0.76)
+  },
+  dartboard: ({ sketch, color }) => {
+    sketch.rect(-0.3, -0.21, 0.3, -0.18, "#b98a5a", 0.01)
+    sketch.rect(-0.24, -0.18, 0.24, -0.15, color, 0.015)
+
+    return sketch.done(1.2)
+  },
+  tallPlant: ({ sketch, color }) => {
+    sketch.circle(0, 0, 0.23, "#c9a27e")
+    plant(sketch, { x: 0, z: 0, radius: 0.42, leaf: color })
+
+    return sketch.done(1.6)
+  },
+  hangingPlant: null,
+  mossWall: ({ sketch, color }) => {
+    sketch.rect(-0.9, -0.21, 0.9, -0.12, PALETTE.deskTop, 0.015)
+    sketch.rect(-0.86, -0.18, 0.86, -0.11, color, 0.015, false)
+
+    return sketch.done(1.2)
+  },
+  photoWall: ({ sketch, color }) => {
+    for (const [minX, maxX] of [
+      [-0.7, -0.3],
+      [-0.21, 0.09],
+      [0.19, 0.65],
+    ])
+      sketch.rect(minX, -0.21, maxX, -0.16, color, 0.01)
+
+    return sketch.done(1.1)
+  },
+  neonSign: ({ sketch, color }) => {
+    sketch.rect(-0.78, -0.21, 0.78, -0.17, "#dfe8ec", 0.01)
+    sketch.line(-0.7, -0.15, 0.7, -0.15, color, 0.025)
+
+    return sketch.done(1.2)
+  },
 }

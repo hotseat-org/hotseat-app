@@ -1,6 +1,7 @@
 import { z } from "zod"
 // Registers every item a saved layout may hold, before any is checked.
 import "./catalog"
+import { SIGN_FIELDS } from "./catalog/neonSign"
 import { NOTE_FIELDS } from "~/examples/notes/items"
 import {
   MAX_FLOORS,
@@ -38,6 +39,7 @@ export const sceneObjectSchema = z.object({
   variant: z.number().int().min(0).optional(),
   // Its floor's id (see Layout): unset, the first.
   floor: z.string().max(32).optional(),
+  ...SIGN_FIELDS,
   ...NOTE_FIELDS,
 })
 

@@ -1,3 +1,4 @@
+import { DEFAULT_NEON_COLOR } from "./neonSign"
 import { PALETTE, defineItem, registerItems } from "~/editor/core"
 
 /** Furniture: what stands on the floor, hangs on walls or from the ceiling. */
@@ -73,6 +74,34 @@ export const FURNITURE_ITEMS = {
   coatRack: defineItem({ footprint: [1, 1], defaultColor: PALETTE.deskLeg, hasLooks: true }),
   planterBox: defineItem({ footprint: [4, 1], defaultColor: "#8f9aa6", hasLooks: true }),
   divider: defineItem({ footprint: [4, 1], defaultColor: "#5f8a86" }),
+  loungeBench: defineItem({ footprint: [6, 2], defaultColor: "#c0876a", hasLooks: true }),
+  beanBag: defineItem({ footprint: [2, 2], defaultColor: "#e9876a" }),
+  coffeeStation: defineItem({ footprint: [2, 2], defaultColor: "#3d4657" }),
+  diningTable: defineItem({ footprint: [6, 4], defaultColor: PALETTE.deskTop }),
+  receptionDesk: defineItem({ footprint: [6, 3], defaultColor: "#f3ead8" }),
+  tableFootball: defineItem({ footprint: [3, 2], defaultColor: "#8f6a4a" }),
+  pingPongTable: defineItem({ footprint: [6, 4], defaultColor: "#3f6a9a" }),
+  dartboard: defineItem({ mount: "wall", footprint: [2, 1], defaultColor: "#2c313c" }),
+  tallPlant: defineItem({ footprint: [2, 2], defaultColor: PALETTE.plantLeaf, hasLooks: true }),
+  hangingPlant: defineItem({
+    mount: "ceiling",
+    footprint: [1, 1],
+    defaultColor: PALETTE.plantLeaf,
+  }),
+  mossWall: defineItem({ mount: "wall", footprint: [4, 1], defaultColor: "#6b9159" }),
+  photoWall: defineItem({
+    mount: "wall",
+    footprint: [3, 1],
+    defaultColor: "#3d4657",
+    hasLooks: true,
+  }),
+  // Its colour is one of the tubes' (the sign's own section offers them), not the swatches'.
+  neonSign: defineItem({
+    mount: "wall",
+    footprint: [4, 1],
+    defaultColor: DEFAULT_NEON_COLOR,
+    isRecolorable: false,
+  }),
 }
 
 type FurnitureItems = typeof FURNITURE_ITEMS
