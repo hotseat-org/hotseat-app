@@ -59,6 +59,7 @@ import {
   listOfficeZones,
   listTeams,
   saveTeam,
+  setMemberTeams,
 } from "./team"
 import type { CoreContext } from "./types"
 import { createUser } from "./user/create"
@@ -134,6 +135,7 @@ export const createCore = (context: CoreContext) => ({
     officeZones: listOfficeZones(context),
     save: saveTeam(context),
     delete: deleteTeam(context),
+    setMemberTeams: setMemberTeams(context),
   },
   reservation: {
     list: listReservations(context),

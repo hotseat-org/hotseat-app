@@ -124,6 +124,35 @@ export const saveTeam =
     }
   }
 
+/** Which teams a member is in, set by an admin (Members → Teams…). */
+export const setMemberTeams =
+  (context: CoreContext) =>
+  async ({
+    organizationSlug,
+    userEmail,
+    memberEmail,
+    teamIds,
+  }: {
+    organizationSlug: string
+    /** Who's doing it: an admin. */
+    userEmail: string
+    memberEmail: string
+    teamIds: string[]
+  }) => {
+    await requireAdmin(context, organizationSlug, userEmail)
+    const member = await context.mainRepository.profile.find({
+      organizationSlug,
+      userEmail: memberEmail,
+    })
+    if (!member) throw new Error("Not Found")
+
+    await context.mainRepository.team.setMemberTeams({
+      organizationSlug,
+      email: memberEmail,
+      teamIds: [...new Set(teamIds)],
+    })
+  }
+
 /** Delete a team: its people stay in the organization. */
 export const deleteTeam =
   (context: CoreContext) =>

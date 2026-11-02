@@ -26,7 +26,7 @@ const teamSchema = z.object({
 })
 
 export type TeamActionData =
-  | { ok: true; intent: "save" | "delete"; id?: string }
+  | { ok: true; intent: "save" | "delete" | "member-teams"; id?: string }
   | { ok: false; error: string }
 
 /** Organization settings → Teams (admins only): save a team, or delete one. */
@@ -35,6 +35,20 @@ export const action = async (args: ActionFunctionArgs) => {
   const form = await args.request.formData()
   const who = { organizationSlug: profile.organizationSlug, userEmail: profile.userEmail }
   const core = getCore()
+
+  // Someone's teams, from Members.
+  if (form.get("intent") === "member-teams") {
+    await core.team.setMemberTeams({
+      ...who,
+      memberEmail: z.string().max(254).parse(form.get("email")),
+      teamIds: z
+        .array(z.string().max(100))
+        .max(500)
+        .parse(JSON.parse(z.string().parse(form.get("teamIds")))),
+    })
+
+    return data<TeamActionData>({ ok: true, intent: "member-teams" })
+  }
 
   if (form.get("intent") === "delete") {
     await core.team.delete({ ...who, id: z.string().parse(form.get("id")) })

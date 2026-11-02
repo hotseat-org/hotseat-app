@@ -269,6 +269,12 @@ export interface MainRepository {
     /** Create or replace a team: its id. */
     save: (args: SaveTeamArgs) => Promise<string>
     delete: (args: { organizationSlug: string; id: string }) => Promise<void>
+    /** Someone's teams, all at once (in these, out of the rest). */
+    setMemberTeams: (args: {
+      organizationSlug: string
+      email: string
+      teamIds: string[]
+    }) => Promise<void>
     /** People into teams by name (made if new): the names of the teams made. */
     addMembers: (args: {
       organizationSlug: string

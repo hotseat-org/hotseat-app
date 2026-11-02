@@ -1,11 +1,20 @@
 import { Chip, Dropdown, Spinner, Table } from "@heroui/react"
-import { ChevronUp, ChevronsUp, CornerUpLeft, FileUp, Search, UserMinus } from "lucide-react"
-import { useState } from "react"
+import {
+  ChevronUp,
+  ChevronsUp,
+  CornerUpLeft,
+  FileUp,
+  Search,
+  UserMinus,
+  UsersRound,
+} from "lucide-react"
+import { useMemo, useState } from "react"
 import { useFetcher, useParams } from "react-router"
 import { useSettings } from "../useSettings"
 import { useOrgSettingsData } from "../data"
 import { ImportMembersDialog } from "../dialogs/ImportMembers"
 import { RemoveMemberDialog } from "../dialogs/RemoveMember"
+import { MemberTeamsDialog, type MemberTeam } from "../dialogs/MemberTeams"
 import { useIsHydrated } from "~/utils/hooks/useIsHydrated"
 import { useOrganizationContext } from "~/utils/hooks/useProfileData"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
@@ -14,6 +23,7 @@ import { Button } from "~/components/Button"
 import { isFound, toSearchable } from "~/components/people/PeopleSearch"
 import { useProgressiveList } from "~/utils/hooks/useProgressiveList"
 import { Rich, useI18n } from "~/i18n/I18nProvider"
+import { TeamChip } from "~/components/teams/teamLook"
 
 const MANAGE =
   "inline-flex h-8 cursor-pointer items-center rounded-lg px-3 text-sm font-medium text-foreground transition-colors hover:bg-foreground/10"
@@ -23,7 +33,17 @@ export function OrgMembers() {
   const { t } = useI18n()
 
   // Loaded on the server with the page; refreshed after a role change.
-  const members = useOrgSettingsData("members")?.members
+  const settings = useOrgSettingsData("members")
+  const members = settings?.members
+  const teams = useMemo(() => settings?.memberTeams ?? [], [settings?.memberTeams])
+  // Each member's teams, by their email.
+  const teamsByEmail = useMemo(() => {
+    const byEmail = new Map<string, MemberTeam[]>()
+    for (const team of teams)
+      for (const email of team.members) byEmail.set(email, [...(byEmail.get(email) ?? []), team])
+
+    return byEmail
+  }, [teams])
   // Hundreds of people: found by name or email, drawn a page at a time.
   const [query, setQuery] = useState("")
   const searched = toSearchable(query.trim())
@@ -31,6 +51,9 @@ export function OrgMembers() {
     isFound({ email: member.userEmail, name: member.displayName ?? "" }, searched)
   )
   const pages = useProgressiveList(found, query)
+  const choosingTeams = dialog?.startsWith("teams:")
+    ? members?.data.find((m) => m.userEmail === dialog.slice("teams:".length))
+    : undefined
   const removing = dialog?.startsWith("remove:")
     ? members?.data.find((m) => m.userEmail === dialog.slice("remove:".length))
     : undefined
@@ -92,6 +115,7 @@ export function OrgMembers() {
                       {member.displayName ?? member.userEmail}
                     </p>
                     <p className="truncate text-xs text-muted">{member.userEmail}</p>
+                    <MemberTeamChips teams={teamsByEmail.get(member.userEmail)} />
                   </div>
                   <RoleChip role={member.role} />
                   <ManageMenu member={member} />
@@ -104,6 +128,7 @@ export function OrgMembers() {
                   <Table.Header>
                     <Table.Column isRowHeader>{t("EMAIL")}</Table.Column>
                     <Table.Column>{t("NAME")}</Table.Column>
+                    <Table.Column>{t("TEAMS")}</Table.Column>
                     <Table.Column>{t("ROLE")}</Table.Column>
                     <Table.Column>{t("ACTIONS")}</Table.Column>
                   </Table.Header>
@@ -112,6 +137,9 @@ export function OrgMembers() {
                       <Table.Row key={member.userEmail}>
                         <Table.Cell>{member.userEmail}</Table.Cell>
                         <Table.Cell>{member.displayName}</Table.Cell>
+                        <Table.Cell>
+                          <MemberTeamChips teams={teamsByEmail.get(member.userEmail)} />
+                        </Table.Cell>
                         <Table.Cell>
                           <RoleChip role={member.role} />
                         </Table.Cell>
@@ -140,6 +168,13 @@ export function OrgMembers() {
           name={removing.displayName ?? removing.userEmail}
         />
       )}
+      {choosingTeams && (
+        <MemberTeamsDialog
+          email={choosingTeams.userEmail}
+          name={choosingTeams.displayName ?? choosingTeams.userEmail}
+          teams={teams}
+        />
+      )}
       {dialog === "import" && members && (
         <ImportMembersDialog
           memberEmails={new Set(members.data.map((member) => member.userEmail.toLowerCase()))}
@@ -150,6 +185,21 @@ export function OrgMembers() {
 }
 
 type Member = { userEmail: string; displayName?: string; role: Role }
+
+/** Someone's teams, as small chips (none: nothing). */
+const MemberTeamChips = ({ teams }: { teams?: MemberTeam[] }) =>
+  teams?.length ? (
+    <span className="mt-1 flex flex-wrap gap-1">
+      {teams.map((team) => (
+        <TeamChip
+          key={team.id}
+          name={team.name}
+          color={team.color}
+          className="h-6 px-2 text-[11px]"
+        />
+      ))}
+    </span>
+  ) : null
 
 const RoleChip = ({ role }: { role: Role }) => {
   const i18n = useI18n()
@@ -186,8 +236,8 @@ const ManageMenu = ({ member }: { member: Member }) => {
         <Dropdown.Menu
           aria-label={t("Manage {name}", { name: member.displayName ?? member.userEmail })}
           onAction={(action) =>
-            action === "remove"
-              ? openDialog(`remove:${member.userEmail}`)
+            action === "remove" || action === "teams"
+              ? openDialog(`${action}:${member.userEmail}`)
               : roleFetcher.submit(
                   { role: String(action), userEmail: member.userEmail },
                   { method: "POST", action: url }
@@ -212,6 +262,12 @@ const ManageMenu = ({ member }: { member: Member }) => {
               </div>
             </Dropdown.Item>
           )}
+          <Dropdown.Item id="teams" textValue={t("Teams…")}>
+            <div className="flex gap-2 items-center">
+              <UsersRound size={28} className="p-1 bg-accent/10 text-accent rounded-small" />
+              {t("Teams…")}
+            </div>
+          </Dropdown.Item>
           {/* Not yourself: you leave from your own settings. */}
           {member.userEmail !== profile.userEmail ? (
             <Dropdown.Item id="remove" textValue={t("Remove")} variant="danger">

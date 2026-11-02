@@ -73,6 +73,35 @@ export const deleteTeam = async ({
   await prisma.team.deleteMany({ where: { id, organizationSlug } })
 }
 
+/** Someone's teams, all at once: in these (of the organization's), out of the rest. */
+export const setMemberTeams = async ({
+  organizationSlug,
+  email,
+  teamIds,
+}: {
+  organizationSlug: string
+  email: string
+  teamIds: string[]
+}) =>
+  prisma.$transaction(async (transaction) => {
+    const teams = await transaction.team.findMany({
+      where: { organizationSlug, id: { in: teamIds } },
+      select: { id: true },
+    })
+
+    await transaction.teamMember.deleteMany({
+      where: {
+        organizationSlug,
+        userEmail: email,
+        teamId: { notIn: teams.map((team) => team.id) },
+      },
+    })
+    await transaction.teamMember.createMany({
+      data: teams.map((team) => ({ teamId: team.id, organizationSlug, userEmail: email })),
+      skipDuplicates: true,
+    })
+  })
+
 /** Add people to teams by name, making the teams that don't exist yet (an import). */
 export const addToTeams = async ({
   organizationSlug,

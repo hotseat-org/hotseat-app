@@ -40,8 +40,24 @@ export async function loadOrgSettings(request: Request, profile: Profile) {
   const core = getCore()
   const args = { userEmail: profile.userEmail, slug: profile.organizationSlug }
   switch (section) {
-    case "members":
-      return { section, members: await core.organization.getMembers(args) }
+    case "members": {
+      const [members, teams] = await Promise.all([
+        core.organization.getMembers(args),
+        core.team.list(profile.organizationSlug),
+      ])
+
+      return {
+        section,
+        members,
+        // Each member's teams, shown and changed beside them.
+        memberTeams: teams.map(({ id, name, color, members: emails }) => ({
+          id,
+          name,
+          color,
+          members: emails,
+        })),
+      }
+    }
     case "invitations":
       return {
         section,
