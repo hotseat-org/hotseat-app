@@ -1205,7 +1205,6 @@ export const cs: Messages = {
   "Get started": "Začít",
   "Find me a seat": "Najdi mi místo",
   "Draw your office in 3D": "Nakreslete kancelář ve 3D",
-  "Zones for teams": "Zóny pro týmy",
   "How it works": "Jak to funguje",
   "Draw your office": "Nakreslete kancelář",
   Product: "Produkt",
@@ -1235,8 +1234,6 @@ export const cs: Messages = {
     "Někdo chce svůj vlastní stůl. Proč ne. Když tu zrovna není, stůl nezůstane prázdný.",
   "Walls, doors, windows, sofas, plants. More floors if you've got them. Or grab a template and tweak it.":
     "Zdi, dveře, okna, gauče, kytky. Víc pater, pokud je máte. Nebo vezměte šablonu a upravte si ji.",
-  "Give each team its own patch of floor, colour it in and number the desks.":
-    "Dejte každému týmu kus podlahy, vybarvěte ho a očíslujte stoly.",
   "First day? Hotseat walks you from the door to your desk, stairs included.":
     "První den? Hotseat vás dovede ode dveří až ke stolu, i po schodech.",
   "Numbers for whoever runs the office": "Čísla pro toho, kdo má kancelář na starost",
@@ -1266,8 +1263,8 @@ export const cs: Messages = {
   "Finding a seat on a phone: the sentence and the best match, desk D6":
     "Hledání místa na telefonu: věta a nejlepší shoda, stůl D6",
   "Find out if Fridays really are that empty": "Zjistěte, jestli jsou pátky opravdu tak prázdné",
-  "How full the office gets, the busiest day, every floor and every desk — and how often those permanent desks sit unused.":
-    "Jak plná kancelář bývá, který den je nejrušnější, každé patro a každý stůl — a jak často stálé stoly zejí prázdnotou.",
+  "How full the office gets, the busiest day, every floor and every desk — how often those permanent desks sit unused, and whether teams really turn up on their team days.":
+    "Jak plná kancelář bývá, který den je nejrušnější, každé patro a každý stůl — jak často stálé stoly zejí prázdnotou a jestli týmy na své týmové dny opravdu dorazí.",
   "CSV for the spreadsheet fans": "CSV pro milovníky tabulek",
   "Insights: 67% full, Wednesday the busiest day, desks in use per week and a heatmap of every working day":
     "Přehledy: obsazenost 67 %, nejrušnější středa, využité stoly po týdnech a teplotní mapa všech pracovních dnů",
@@ -1532,7 +1529,7 @@ export const cs: Messages = {
   "New teams: {teams}.": "Nové týmy: {teams}.",
   "Change the zone": "Změnit zónu",
   "Where the team sits. Find a seat puts its people there first.":
-    "Kde tým sedí. Hledání místa nabídne jeho lidem nejdřív tuto zónu.",
+    "Kde tým sedí. „Najít místo“ nabídne jeho lidem nejdřív tuto zónu.",
   "Search offices and zones": "Hledat kanceláře a zóny",
   "No other office has zones yet.": "Žádná další kancelář zatím nemá zóny.",
   "Nothing matches “{query}”": "Nic neodpovídá „{query}“",
@@ -1568,4 +1565,14 @@ export const cs: Messages = {
     "{share} z toho tým · {there} jejich dnů tam",
   "No zone here": "Zde bez zóny",
   "{in} of {total} in": "{in} z {total} v kanceláři",
+  "Keep the gang together": "Parta pěkně pohromadě",
+  "Put people in teams and give each one its corner of the office and its days. Find a seat sits you next to them, and Who's in shows who's around, team by team.":
+    "Rozdělte lidi do týmů a dejte každému jeho kout kanceláře a jeho dny. „Najít místo“ vás posadí k nim a v „Kdo tu je“ vidíte, kdo dorazil, tým po týmu.",
+  "Team days marked in the calendar": "Týmové dny vyznačené v kalendáři",
+  "A corner kept for the team, if you want one": "Kout vyhrazený pro tým, když o něj stojíte",
+  "Who's in by team: Design, Engineering, Plant club with its four people, Support — and how many of each are in":
+    "Kdo tu je podle týmů: Design, Engineering, Plant club se svými čtyřmi lidmi, Support — a kolik z každého je v kanceláři",
+  "Teams and their corners": "Týmy a jejich kouty",
+  "Give each team its own patch of floor and the days it comes in together. Finding a seat puts you right next to them.":
+    "Dejte každému týmu jeho kus kanceláře a dny, kdy chodí spolu. Při hledání místa vás posadíme rovnou k nim.",
 }

@@ -17,8 +17,8 @@ This guide is for whoever installs and looks after it.
 ## What you get
 
 The same Hotseat as the hosted service: the 3D office, booking by the day,
-Find a seat, Who's in, permanent desks, the office editor, insights, phones,
-English and Czech.
+Find a seat, Who's in, teams, permanent desks, opening days and holidays,
+the office editor, insights, phones, English and Czech.
 
 A self-hosted installation is **one company**. Whoever sets it up names it
 and decides who can join, usually everyone with a company email address.

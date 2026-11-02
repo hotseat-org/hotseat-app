@@ -27,6 +27,7 @@ const PICTURES = {
   whosIn: `${import.meta.env.BASE_URL}images/product/whos-in.jpg`,
   phone: `${import.meta.env.BASE_URL}images/product/phone.jpg`,
   insights: `${import.meta.env.BASE_URL}images/product/insights.jpg`,
+  teams: `${import.meta.env.BASE_URL}images/product/teams.jpg`,
 }
 
 /** The night blue of the sign-in screen: the closing call to action stands on it. */
@@ -110,8 +111,10 @@ export const ProductPage = () => {
                   "Walls, doors, windows, sofas, plants. More floors if you've got them. Or grab a template and tweak it."
                 )}
               </Feature>
-              <Feature icon={Layers} title={t("Zones for teams")}>
-                {t("Give each team its own patch of floor, colour it in and number the desks.")}
+              <Feature icon={Layers} title={t("Teams and their corners")}>
+                {t(
+                  "Give each team its own patch of floor and the days it comes in together. Finding a seat puts you right next to them."
+                )}
               </Feature>
               <Feature icon={Footprints} title={t("Show the way")}>
                 {t("First day? Hotseat walks you from the door to your desk, stairs included.")}
@@ -180,9 +183,30 @@ export const ProductPage = () => {
             }
           />
           <Showcase
+            title={t("Keep the gang together")}
+            lead={t(
+              "Put people in teams and give each one its corner of the office and its days. Find a seat sits you next to them, and Who's in shows who's around, team by team."
+            )}
+            points={[
+              t("Team days marked in the calendar"),
+              t("A corner kept for the team, if you want one"),
+            ]}
+            picture={
+              <Picture
+                src={PICTURES.teams}
+                isPanel
+                alt={t(
+                  "Who's in by team: Design, Engineering, Plant club with its four people, Support — and how many of each are in"
+                )}
+                className="mx-auto max-w-sm"
+              />
+            }
+            isFlipped
+          />
+          <Showcase
             title={t("Find out if Fridays really are that empty")}
             lead={t(
-              "How full the office gets, the busiest day, every floor and every desk — and how often those permanent desks sit unused."
+              "How full the office gets, the busiest day, every floor and every desk — how often those permanent desks sit unused, and whether teams really turn up on their team days."
             )}
             points={[t("Look back or plan ahead"), t("CSV for the spreadsheet fans")]}
             picture={
@@ -194,7 +218,6 @@ export const ProductPage = () => {
                 )}
               />
             }
-            isFlipped
           />
           <Showcase
             title={t("Build your office in an afternoon")}
@@ -210,6 +233,7 @@ export const ProductPage = () => {
                 )}
               />
             }
+            isFlipped
           />
         </div>
 

@@ -53,8 +53,40 @@ limit sign-in there, e.g. by assigning the app to a group.
   desks, and sees insights.
 - **User**: books desks, sees who's in, finds seats.
 
-Make someone an admin, or remove them from the company, from their row.
-Removing someone cancels their bookings and frees their permanent desk.
+Make someone an admin, put them in teams, or remove them from the company,
+from their row (**Manage**). Removing someone cancels their bookings and
+frees their permanent desk.
+
+**Import people** adds many at once from a CSV: an export of Google
+Workspace or Microsoft 365 users, or any spreadsheet with an email column.
+They're members straight away, before they ever sign in. Columns are
+recognised by their names:
+
+| Column | What it does |
+| --- | --- |
+| `email` (or `primary email`, `user principal name`…) | Required. Who they are. |
+| `name`, or `first name` + `last name` | How they're shown until they sign in. |
+| `role` | `admin` makes them an admin. |
+| `department`, `org unit`… | Lets you import part of the list. |
+| `team` | Puts them in teams, several separated by `;`. Teams not there yet are made. |
+
+## Teams
+
+People who like to sit together, in any office: **Settings → Teams**.
+Someone can be in several. For each team:
+
+- **People**: pick them here, from Members (**Manage → Teams…**), or with
+  the import's `team` column.
+- **Where they sit**: a zone in each office (zones are drawn in the editor).
+  A zone can be **kept for the team**: others can book its desks only from
+  1–7 days before the day. The usual-desk job and the waitlist respect it too.
+- **Team days**: the weekdays the team comes in together. People see them
+  in the day picker, and get a nudge on those days if they haven't booked.
+
+What people get: **Find a seat → With my team** (it starts with that for
+anyone in a team who hasn't chosen anything else), Who's in **by team**,
+their teammates ringed in the team's colour on the map, and teams in
+search and on profiles.
 
 ## Offices
 
@@ -64,10 +96,13 @@ Removing someone cancels their bookings and frees their permanent desk.
   as you go.
 - **Permanent desks**: select a desk in the editor and give it a resident.
   When they're away, they give it up for the day and others can book it.
-- **Office settings**: name, description, a cover photo, and its **time
-  zone**.
+- **Office settings**: name, description, a cover photo, its **time
+  zone**, and **opening**: the weekdays people can book, and days it's
+  closed (holidays, a move). Closing a day cancels the bookings already made
+  for it, and their people are told why.
 - **Insights** (admins): how full each office gets, the busiest days, which
-  desks are used, and CSV export.
+  desks are used, how each team comes in (together, on its team days, to
+  its zone), and CSV export.
 
 Every office decides what "today" is (and when the hourly job books usual
 desks) by its time zone. A new office takes the time zone of the admin who
