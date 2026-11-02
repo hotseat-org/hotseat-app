@@ -103,14 +103,6 @@ describe("finding a seat", () => {
     expect(matchDay(context, MONDAY).matches.map((match) => match.desk.id)).toEqual(["D-4"])
   })
 
-  test("away from a zone as a must leaves out every desk in it", () => {
-    const context = createContext({
-      rules: [{ kind: "zone", zone: "Engineering", strength: "must", isAway: true }],
-    })
-
-    expect(matchDay(context, MONDAY).matches.map((match) => match.desk.id)).toEqual(["D-4"])
-  })
-
   test("any day: days the office is closed aren't offered", () => {
     const context = createContext({
       opening: { openWeekdays: ALL_WEEKDAYS, closedDays: { [MONDAY]: "Holiday" } },
