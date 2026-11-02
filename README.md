@@ -20,10 +20,9 @@ bun run deploy                         # build + wrangler deploy
 bunx wrangler secret put <NAME>        # COOKIES_SECRET, GOOGLE_*, GITHUB_*, CLOUDFLARE_*
 ```
 
-`prisma:migrate:production` finds the database where Hyperdrive does (`wrangler hyperdrive
-get`: host, port, database, user) and takes its password from the macOS keychain — stored
-once with `security add-generic-password -s hotseat-production-db -a <user> -w` — or from
-`PRODUCTION_DATABASE_PASSWORD`. Cloudflare never hands the password out.
+`prisma:migrate:production` asks Neon for the production database's connection string
+(`neonctl connection-string`, the direct one, as migrations need; neonctl logs in on first
+use) and runs `prisma migrate deploy` with it.
 
 Locally, `bun run dev` runs the app in workerd too; Hyperdrive falls back to the
 `localConnectionString` (the docker Postgres) and secrets come from `.env`.
