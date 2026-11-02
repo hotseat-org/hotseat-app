@@ -1,4 +1,3 @@
-import { Html } from "@react-three/drei"
 import { useThree } from "@react-three/fiber"
 import { useEffect, useLayoutEffect, useMemo } from "react"
 import { Color, DataTexture, NearestFilter, RedFormat, Vector2 } from "three"
@@ -20,9 +19,9 @@ import {
 } from "three/tsl"
 import { MeshBasicNodeMaterial, type Node } from "three/webgpu"
 import { useOfficeStore } from "../store"
-import { ZoneLettering } from "./ZoneLettering"
-import { getZoneLabelStyle } from "./zoneLabelStyle"
-import { ZONE_CELL, ZONE_RADIUS, composeZoneAreas, type ZoneArea } from "./zones"
+import { ZoneLettering, measureNameAspect, useFontsReady } from "./ZoneLettering"
+import { placeZoneLetters } from "./zoneLetters"
+import { ZONE_CELL, ZONE_RADIUS, composeZoneAreas } from "./zones"
 
 /** Just above the interior floor's tint (0.006), below rugs and highlights. */
 const HEIGHT = 0.009
@@ -156,34 +155,16 @@ const createZoneMaterial = ({
   return { material, fill, shade, line }
 }
 
-/** A zone's name as a pill, over the scene. */
-const ZonePill = ({ area, at }: { area: ZoneArea; at: readonly [number, number] }) => (
-  <Html
-    position={[at[0], HEIGHT, at[1]]}
-    center
-    zIndexRange={[5, 0]}
-    style={{ pointerEvents: "none" }}
-  >
-    <span className="flex items-center gap-1.5 whitespace-nowrap rounded-full bg-overlay px-2 py-0.5 text-[11px] font-bold text-foreground shadow-sm">
-      <span className="size-2 rounded-full" style={{ background: area.zone.color }} />
-      {area.zone.name}
-    </span>
-  </Html>
-)
-
 /**
  * Each zone's part of the floor — under and round its desks — faintly tinted
  * in its colour with a fine line and rounded corners, its name in the middle.
  */
 export const ZoneFloor = ({ isEditing, isDark }: { isEditing: boolean; isDark: boolean }) => {
   const objects = useOfficeStore((state) => state.objects)
-  // Viewing close up, the desks' own tags say enough: the names make way.
-  const isNameShown = useOfficeStore((state) => isEditing || state.tagDetail !== "close")
-  const labelStyle = useMemo(getZoneLabelStyle, [])
   const areas = useMemo(
     () =>
       composeZoneAreas(objects).map((area) => {
-        const { zone, cells, label } = area
+        const { zone, cells } = area
         // One square of room all round, for the inner corners' curves.
         const minI = Math.min(...cells.map(([i]) => i)) - 1
         const minJ = Math.min(...cells.map(([, j]) => j)) - 1
@@ -209,11 +190,22 @@ export const ZoneFloor = ({ isEditing, isDark }: { isEditing: boolean; isDark: b
           look,
           centre: [(minI + columns / 2) * ZONE_CELL, (minJ + rows / 2) * ZONE_CELL] as const,
           size: [columns * ZONE_CELL, rows * ZONE_CELL] as const,
-          label: [label.x, label.z] as const,
           area,
         }
       }),
     [objects]
+  )
+  // Their names on their floors: measured in the page's font once it's in.
+  const isFontReady = useFontsReady()
+  const letters = useMemo(
+    () =>
+      placeZoneLetters(
+        areas.map(({ area }) => area),
+        objects,
+        measureNameAspect
+      ),
+    // Measured again once the font is in.
+    [areas, objects, isFontReady]
   )
   // Strength follows mode and theme without rebuilding the zones.
   const strength = STRENGTH[isEditing ? "edit" : "view"][isDark ? "dark" : "light"]
@@ -237,7 +229,7 @@ export const ZoneFloor = ({ isEditing, isDark }: { isEditing: boolean; isDark: b
 
   return (
     <>
-      {areas.map(({ zone, look, centre, size, label, area }) => (
+      {areas.map(({ zone, look, centre, size }) => (
         <group key={zone.name}>
           <mesh
             position={[centre[0], HEIGHT, centre[1]]}
@@ -247,11 +239,9 @@ export const ZoneFloor = ({ isEditing, isDark }: { isEditing: boolean; isDark: b
           >
             <planeGeometry args={[size[0], size[1]]} />
           </mesh>
-          {labelStyle === "floor" && <ZoneLettering area={area} isDark={isDark} />}
-          {labelStyle === "edge" && (
-            <ZonePill area={area} at={[area.edgeLabel.x, area.edgeLabel.z]} />
+          {letters.has(zone.name) && (
+            <ZoneLettering zone={zone} letters={letters.get(zone.name)!} isDark={isDark} />
           )}
-          {labelStyle === "pill" && isNameShown && <ZonePill area={area} at={label} />}
         </group>
       ))}
     </>

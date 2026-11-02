@@ -5,7 +5,8 @@ import { getDeskTagTone } from "../desks/deskTagTone"
 import { heatColor } from "../heatmap/heatmap"
 import type { Person } from "../desks/people"
 import { SeatAvatar } from "../desks/SeatAvatar"
-import { ZONE_LETTER_HEIGHT, type Zone } from "../zones/zones"
+import type { ZoneLetters as Letters } from "../zones/zoneLetters"
+import type { Zone } from "../zones/zones"
 import { useI18n } from "~/i18n/I18nProvider"
 
 /**
@@ -140,21 +141,22 @@ export const HeatTag = ({
 /** A zone's name, on its floor. */
 /**
  * A zone's name lettered on its floor, like a district on a map: spaced
- * capitals in its colour, faint, along its longer side — too small to read
- * (far out), left out.
+ * capitals in its colour, faint, where placeZoneLetters found it room — the
+ * same size as the 3D's. Too small to read (far out), left out.
  */
 export const ZoneLetters = ({
   zone,
-  isAlongX,
+  letters,
   zoom,
   style,
 }: {
   zone: Zone
-  isAlongX: boolean
+  letters: Letters
   zoom: number
   style: CSSProperties
 }) => {
-  const size = ZONE_LETTER_HEIGHT * zoom * 0.75
+  // The letters' height on the floor is their line's (see ZoneLettering): the font a share of it.
+  const size = (letters.height / 1.3) * zoom
   if (size < 7) return null
 
   return (
@@ -167,19 +169,10 @@ export const ZoneLetters = ({
         letterSpacing: "0.14em",
         color: zone.color,
         opacity: 0.75,
-        transform: `translate(-50%, -50%) rotate(${isAlongX ? 0 : -90}deg)`,
+        transform: `translate(-50%, -50%) rotate(${letters.isAlongX ? 0 : -90}deg)`,
       }}
     >
       {zone.name}
     </div>
   )
 }
-
-export const ZoneName = ({ zone, style }: { zone: Zone; style: CSSProperties }) => (
-  <div className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2" style={style}>
-    <span className="flex items-center gap-1.5 whitespace-nowrap rounded-full bg-overlay px-2 py-0.5 text-[11px] font-bold text-foreground shadow-sm">
-      <span className="size-2 rounded-full" style={{ background: zone.color }} />
-      {zone.name}
-    </span>
-  </div>
-)

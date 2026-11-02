@@ -119,14 +119,6 @@ export interface ZoneArea {
   cells: [number, number][]
   /** Where its name goes: the middle of its square nearest its middle (m). */
   label: { x: number; z: number }
-  /**
-   * Where its name is lettered on its floor: its most open square (furthest
-   * from its desks), running along its longer side (`isAlongX`), at most
-   * `maxWidth` long (m) — the run of its squares through that one.
-   */
-  floorLabel: { x: number; z: number; isAlongX: boolean; maxWidth: number }
-  /** Its name at its edge: the middle of its back side (the one furthest from the default view). */
-  edgeLabel: { x: number; z: number }
 }
 
 /**
@@ -263,132 +255,9 @@ export const composeZoneAreas = (objects: SceneObject[]): ZoneArea[] => {
         zone,
         cells,
         label: { x: (labelI + 0.5) * ZONE_CELL, z: (labelJ + 0.5) * ZONE_CELL },
-        floorLabel: getFloorLabel(cells, zone.name, objects),
-        edgeLabel: getEdgeLabel(cells),
       },
     ]
   })
-}
-
-/** Letters' height on a zone's floor (m), unless its floor is too short for its name. */
-export const ZONE_LETTER_HEIGHT = 0.55
-
-/** Pieces that don't stand on the floor in the way of a name: walls and what's on them, rugs. */
-const NOT_IN_THE_WAY = new Set(["wall", "door", "window", "rug", "note", "wallTv", "whiteboard"])
-
-/** A name's length on the floor (m), in spaced capitals ZONE_LETTER_HEIGHT high (about). */
-const getNameLength = (name: string) => ZONE_LETTER_HEIGHT * (0.78 * name.length + 0.6)
-
-interface Box {
-  minX: number
-  maxX: number
-  minZ: number
-  maxZ: number
-}
-
-/** How much two boxes overlap (m²). */
-const getOverlap = (first: Box, second: Box) =>
-  Math.max(0, Math.min(first.maxX, second.maxX) - Math.max(first.minX, second.minX)) *
-  Math.max(0, Math.min(first.maxZ, second.maxZ) - Math.max(first.minZ, second.minZ))
-
-/** A piece's footprint on the floor. */
-const boxOf = (piece: SceneObject): Box => {
-  const [width, depth] = footprintCells(piece.type, piece.rotation)
-
-  return {
-    minX: piece.x - (width * GRID) / 2,
-    maxX: piece.x + (width * GRID) / 2,
-    minZ: piece.z - (depth * GRID) / 2,
-    maxZ: piece.z + (depth * GRID) / 2,
-  }
-}
-
-/**
- * Where a zone's name is lettered on its floor: a strip of its floor the
- * name's length (or its run of squares, if shorter) that the least furniture
- * stands on — along either side — the whole name fitting, then nearer its
- * middle, winning ties.
- */
-const getFloorLabel = (
-  cells: [number, number][],
-  name: string,
-  pieces: SceneObject[]
-): ZoneArea["floorLabel"] => {
-  const isOwn = new Set(cells.map(([i, j]) => `${i},${j}`))
-  const obstacles = pieces.filter((piece) => !NOT_IN_THE_WAY.has(piece.type)).map(boxOf)
-  const centreI = cells.reduce((sum, [i]) => sum + i, 0) / cells.length
-  const centreJ = cells.reduce((sum, [, j]) => sum + j, 0) / cells.length
-  const nameLength = getNameLength(name)
-  const halfThickness = ZONE_LETTER_HEIGHT / 2 + 0.1
-
-  const candidates = cells.flatMap(([i, j]) =>
-    [true, false].map((isAlongX) => {
-      const step = isAlongX ? [1, 0] : [0, 1]
-      const runFrom = (direction: 1 | -1) => {
-        let length = 0
-        while (
-          isOwn.has(
-            `${i + step[0] * direction * (length + 1)},${j + step[1] * direction * (length + 1)}`
-          )
-        )
-          length++
-
-        return length
-      }
-      const before = runFrom(-1)
-      const after = runFrom(1)
-      const run = (before + after + 1) * ZONE_CELL
-      const length = Math.min(nameLength, run * 0.9)
-      // Centred on the square, kept inside its run of squares.
-      const middle = { x: (i + 0.5) * ZONE_CELL, z: (j + 0.5) * ZONE_CELL }
-      const centre = isAlongX ? middle.x : middle.z
-      const runStart = centre - (before + 0.5) * ZONE_CELL
-      const runEnd = centre + (after + 0.5) * ZONE_CELL
-      const along = Math.min(Math.max(centre, runStart + length / 2), runEnd - length / 2)
-      const x = isAlongX ? along : middle.x
-      const z = isAlongX ? middle.z : along
-      const box: Box = isAlongX
-        ? {
-            minX: x - length / 2,
-            maxX: x + length / 2,
-            minZ: z - halfThickness,
-            maxZ: z + halfThickness,
-          }
-        : {
-            minX: x - halfThickness,
-            maxX: x + halfThickness,
-            minZ: z - length / 2,
-            maxZ: z + length / 2,
-          }
-      const blocked = obstacles.reduce((sum, obstacle) => sum + getOverlap(box, obstacle), 0)
-
-      return {
-        label: { x, z, isAlongX, maxWidth: run },
-        blocked,
-        isWhole: run * 0.9 >= nameLength,
-        distance: Math.hypot(i - centreI, j - centreJ),
-      }
-    })
-  )
-
-  const best = candidates.reduce((chosen, candidate) => {
-    const blockedBy = candidate.blocked - chosen.blocked
-    if (Math.abs(blockedBy) > 0.01) return blockedBy < 0 ? candidate : chosen
-    if (candidate.isWhole !== chosen.isWhole) return candidate.isWhole ? candidate : chosen
-
-    return candidate.distance < chosen.distance ? candidate : chosen
-  })
-
-  return best.label
-}
-
-/** A zone's name at its edge: the middle of its back side (smallest z), just past it. */
-const getEdgeLabel = (cells: [number, number][]): ZoneArea["edgeLabel"] => {
-  const backRow = Math.min(...cells.map(([, j]) => j))
-  const backCells = cells.filter(([, j]) => j === backRow).map(([i]) => i)
-  const middle = (Math.min(...backCells) + Math.max(...backCells) + 1) / 2
-
-  return { x: middle * ZONE_CELL, z: backRow * ZONE_CELL }
 }
 
 /** A unit edge of a zone's outline. */

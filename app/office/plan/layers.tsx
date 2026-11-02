@@ -10,17 +10,10 @@ import { useOfficeStore } from "../store"
 import { useHoveredPieceActions } from "../desks/useHoveredPiece"
 import { useKeptFor, useTeammateColors } from "../teams"
 import { getTagDetail, type TagDetail } from "../desks/tagDetail"
-import { getZoneLabelStyle } from "../zones/zoneLabelStyle"
+import { placeZoneLetters } from "../zones/zoneLetters"
+import { measureNameAspect, useFontsReady } from "../zones/ZoneLettering"
 import { useRouteFraming, useSpotlight } from "./useFraming"
-import {
-  DeskTag,
-  HeatTag,
-  Occupant,
-  RouteEnd,
-  SpotlightRing,
-  ZoneLetters,
-  ZoneName,
-} from "./overlays"
+import { DeskTag, HeatTag, Occupant, RouteEnd, SpotlightRing, ZoneLetters } from "./overlays"
 import { composeOccupants, usePlanDesks, usePlanZoneAreas } from "./drawings"
 import { clamp } from "~/editor/core"
 import { turnPoint } from "~/editor/kit"
@@ -118,7 +111,13 @@ export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
   const detailRef = useRef<TagDetail>("middle")
   detailRef.current = getTagDetail(view.zoom, detailRef.current)
   const tagDetail = detailRef.current
-  const zoneLabelStyle = useMemo(getZoneLabelStyle, [])
+  // Zones' names on their floors, as in 3D (measured in the page's font once it's in).
+  const isFontReady = useFontsReady()
+  const zoneLetters = useMemo(
+    () => placeZoneLetters(zoneAreas, objects, measureNameAspect),
+    // Measured again once the font is in.
+    [zoneAreas, objects, isFontReady]
+  )
   /** Whether a desk is one to show in full: yours, a teammate's, looked for or pointed at. */
   const isFocused = (deskId: string, email?: string) =>
     deskId === highlightId ||
@@ -142,22 +141,19 @@ export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
       )}
 
       {/* Zones' names, under the faces (close up, the desks' own tags say enough). */}
-      {zoneAreas.map(({ zone, label, floorLabel, edgeLabel }) => {
-        if (zoneLabelStyle === "floor")
-          return (
+      {zoneAreas.map(({ zone }) => {
+        const place = zoneLetters.get(zone.name)
+
+        return (
+          place && (
             <ZoneLetters
               key={zone.name}
               zone={zone}
-              isAlongX={floorLabel.isAlongX}
+              letters={place}
               zoom={view.zoom}
-              style={screen(floorLabel.x, floorLabel.z)}
+              style={screen(place.x, place.z)}
             />
           )
-        if (zoneLabelStyle === "edge")
-          return <ZoneName key={zone.name} zone={zone} style={screen(edgeLabel.x, edgeLabel.z)} />
-
-        return tagDetail === "close" ? null : (
-          <ZoneName key={zone.name} zone={zone} style={screen(label.x, label.z)} />
         )
       })}
 

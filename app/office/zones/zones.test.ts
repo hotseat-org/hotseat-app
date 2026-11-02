@@ -60,33 +60,6 @@ describe("zones", () => {
     const [eng, ops] = areas.map((area) => new Set(area.cells.map(([i, j]) => `${i},${j}`)))
     expect([...eng].some((key) => ops.has(key))).toBe(false)
   })
-  test("letter their name on their floor away from desks, along their longer side", () => {
-    // A row of three desks along x: the name runs along x, off the desks' line.
-    const [area] = composeZoneAreas([
-      place("workstation", { x: 0, z: 0, zone: "Eng" }),
-      place("workstation", { x: 2, z: 0, zone: "Eng" }),
-      place("workstation", { x: 4, z: 0, zone: "Eng" }),
-    ])
-    const deskDistance = Math.min(
-      ...[0, 2, 4].map((x) => Math.hypot(area.floorLabel.x - x, area.floorLabel.z))
-    )
-
-    expect(area.floorLabel.isAlongX).toBe(true)
-    expect(deskDistance).toBeGreaterThan(0.5)
-    expect(area.floorLabel.maxWidth).toBeGreaterThan(4)
-  })
-  test("put their name at their back edge, in its middle", () => {
-    const [area] = composeZoneAreas([
-      place("workstation", { x: 0, z: 2, zone: "Eng" }),
-      place("workstation", { x: 4, z: 2, zone: "Eng" }),
-    ])
-    const backEdge = Math.min(...area.cells.map(([, j]) => j))
-
-    expect(area.edgeLabel.z).toBeLessThan(2)
-    expect(area.edgeLabel.z).toBeCloseTo(backEdge * 0.5, 5)
-    expect(area.edgeLabel.x).toBeGreaterThan(0)
-    expect(area.edgeLabel.x).toBeLessThan(4)
-  })
 })
 
 describe("zones and fences", () => {

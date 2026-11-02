@@ -3,20 +3,24 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { CanvasTexture, Color, LinearFilter, type Group, Vector3 } from "three"
 import { float, texture, uniform } from "three/tsl"
 import { MeshBasicNodeMaterial } from "three/webgpu"
-import { ZONE_LETTER_HEIGHT, type ZoneArea } from "./zones"
+import type { ZoneLetters } from "./zoneLetters"
+import type { Zone } from "./zones"
 
 /** Just above the zone's tint (0.009). */
 const HEIGHT = 0.011
-/** The name fills at most this share of its run of floor. */
-const FILL = 0.9
 /** How strong the letters are: a floor marking, not a sign. */
 const OPACITY = { light: 0.62, dark: 0.5 }
+/**
+ * Where furniture stands in front of a name (from the view's angle), it shows
+ * through it this faintly (a share of its strength): never cut off.
+ */
+const THROUGH = 0.38
 /** The texture's letters (px): sharp from afar and close. */
 const FONT_SIZE = 96
 const FONT = `900 ${FONT_SIZE}px Nunito, ui-rounded, system-ui, sans-serif`
 
-/** Once the page's fonts have loaded (Nunito): the letters are drawn again in it. */
-const useFontsReady = () => {
+/** Once the page's fonts have loaded (Nunito): the letters are measured and drawn again in it. */
+export const useFontsReady = () => {
   const [isReady, setIsReady] = useState(
     () => typeof document === "undefined" || document.fonts.status === "loaded"
   )
@@ -34,16 +38,51 @@ const useFontsReady = () => {
   return isReady
 }
 
-/** A name in spaced capitals, white on clear (the material colours it): its texture and shape. */
+/** Letters' height in a name's texture, as a share of its font size. */
+const LINE = 1.3
+/** Spacing between letters, as a share of the font size. */
+const SPACING = 0.14
+
+/** A name's texture size (px), in spaced capitals: its letters' run, and room at the ends. */
+const measureName = (context: CanvasRenderingContext2D, text: string) => {
+  context.font = FONT
+
+  return {
+    width:
+      Math.ceil(context.measureText(text).width + FONT_SIZE * SPACING * text.length) +
+      FONT_SIZE / 2,
+    height: Math.ceil(FONT_SIZE * LINE),
+  }
+}
+
+const aspectOf = new Map<string, number>()
+
+/**
+ * A name's width on the floor per metre of its letters' height — as it's
+ * drawn, so where it's placed it fits (see placeZoneLetters).
+ */
+export const measureNameAspect = (name: string) => {
+  const known = aspectOf.get(name)
+  if (known) return known
+
+  const context = document.createElement("canvas").getContext("2d")!
+  const { width, height } = measureName(context, name.toLocaleUpperCase())
+  const aspect = width / height
+  // Kept once the page's own font is in (measured before, it's a stand-in's).
+  if (document.fonts.status === "loaded") aspectOf.set(name, aspect)
+
+  return aspect
+}
+
+/** A name in spaced capitals, white on clear (the material colours it): its texture. */
 const drawName = (name: string) => {
   const canvas = document.createElement("canvas")
   const context = canvas.getContext("2d")!
   const text = name.toLocaleUpperCase()
-  const spacing = FONT_SIZE * 0.14
-  context.font = FONT
-  const width = Math.ceil(context.measureText(text).width + spacing * text.length) + FONT_SIZE / 2
+  const spacing = FONT_SIZE * SPACING
+  const { width, height } = measureName(context, text)
   canvas.width = width
-  canvas.height = Math.ceil(FONT_SIZE * 1.3)
+  canvas.height = height
   context.font = FONT
   context.letterSpacing = `${spacing}px`
   context.fillStyle = "#ffffff"
@@ -54,7 +93,7 @@ const drawName = (name: string) => {
   map.minFilter = LinearFilter
   map.generateMipmaps = false
 
-  return { map, aspect: canvas.width / canvas.height }
+  return map
 }
 
 /**
@@ -73,32 +112,55 @@ const getTurn = (isAlongX: boolean, forward: Vector3) => {
  * them. It runs along the zone's longer side and turns to stay readable as
  * the view goes round.
  */
-export const ZoneLettering = ({ area, isDark }: { area: ZoneArea; isDark: boolean }) => {
+export const ZoneLettering = ({
+  zone,
+  letters,
+  isDark,
+}: {
+  zone: Zone
+  letters: ZoneLetters
+  isDark: boolean
+}) => {
   const isFontReady = useFontsReady()
-  const { zone, floorLabel } = area
   const look = useMemo(() => {
-    const { map, aspect } = drawName(zone.name)
+    const map = drawName(zone.name)
     const opacity = uniform(OPACITY.light)
     const material = new MeshBasicNodeMaterial({
       transparent: true,
       depthWrite: false,
       toneMapped: false,
     })
-    material.colorNode = uniform(new Color(zone.color))
+    const color = uniform(new Color(zone.color))
+    material.colorNode = color
     material.opacityNode = texture(map).a.mul(opacity)
     material.maskNode = texture(map).a.greaterThan(float(0.01))
-    const height = Math.min(ZONE_LETTER_HEIGHT, (floorLabel.maxWidth * FILL) / aspect)
+    // Its ghost, drawn over whatever hides it.
+    const through = new MeshBasicNodeMaterial({
+      transparent: true,
+      depthWrite: false,
+      depthTest: false,
+      toneMapped: false,
+    })
+    through.colorNode = material.colorNode
+    through.opacityNode = texture(map).a.mul(opacity).mul(THROUGH)
+    through.maskNode = material.maskNode
 
-    return { map, material, opacity, width: height * aspect, height }
+    return { map, material, through, opacity, color }
     // Redrawn in the page's font once it's loaded.
-  }, [zone.name, zone.color, floorLabel.maxWidth, isFontReady])
+  }, [zone.name, zone.color, isFontReady])
   useEffect(() => {
     look.opacity.value = OPACITY[isDark ? "dark" : "light"]
-  }, [look, isDark])
+    // A step off the zone's own colour (lighter at night, darker by day): it
+    // stands out from the zone's tint under it.
+    look.color.value
+      .set(zone.color)
+      .lerp(new Color(isDark ? "#ffffff" : "#000000"), isDark ? 0.4 : 0.25)
+  }, [look, isDark, zone.color])
   useEffect(
     () => () => {
       look.map.dispose()
       look.material.dispose()
+      look.through.dispose()
     },
     [look]
   )
@@ -110,14 +172,17 @@ export const ZoneLettering = ({ area, isDark }: { area: ZoneArea; isDark: boolea
     if (!group.current) return
 
     camera.getWorldDirection(forward)
-    const angle = getTurn(floorLabel.isAlongX, forward)
+    const angle = getTurn(letters.isAlongX, forward)
     if (group.current.rotation.y !== angle) group.current.rotation.y = angle
   })
 
   return (
-    <group ref={group} position={[floorLabel.x, HEIGHT, floorLabel.z]}>
+    <group ref={group} position={[letters.x, HEIGHT, letters.z]}>
       <mesh rotation={[-Math.PI / 2, 0, 0]} material={look.material} renderOrder={2}>
-        <planeGeometry args={[look.width, look.height]} />
+        <planeGeometry args={[letters.width, letters.height]} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} material={look.through} renderOrder={3}>
+        <planeGeometry args={[letters.width, letters.height]} />
       </mesh>
     </group>
   )
