@@ -21,7 +21,8 @@ import {
   useWaitlist,
 } from "~/office/booking/useBooking"
 import { daysBetween, isWeekend, type Day } from "~/utils/booking"
-import { FindSeatSheet } from "~/office/findSeat/FindSeatSheet"
+import { FindSeat } from "~/office/findSeat/FindSeat"
+import { useShowSeatOnMap } from "~/office/findSeat/useFindSeat"
 import { useI18n } from "~/i18n/I18nProvider"
 import { msg } from "~/i18n/msg"
 import { useBarColor } from "~/utils/pageColor"
@@ -59,6 +60,7 @@ export const MobileShell = ({ offices, me, members, empty = false }: Props) => {
   // The sheet over the office (Bookings, People, finding a seat); none, the office itself.
   const [sheet, setSheet] = useState<Sheet | null>(null)
   const closeSheet = () => setSheet(null)
+  const showSeatOnMap = useShowSeatOnMap()
 
   if (empty) return <TopBar offices={offices} />
 
@@ -82,7 +84,23 @@ export const MobileShell = ({ offices, me, members, empty = false }: Props) => {
           {(close) => <WhosInList me={me} members={members} onFind={close} />}
         </BottomSheet>
       )}
-      {sheet === "find" && <FindSeatSheet bottomInset={TAB_BAR_HEIGHT} onClose={closeSheet} />}
+      {sheet === "find" && (
+        <BottomSheet
+          title={t("Find a seat")}
+          isTall
+          bottomInset={TAB_BAR_HEIGHT}
+          onClose={closeSheet}
+        >
+          {(close) => (
+            <FindSeat
+              onShowOnMap={(deskId, day) => {
+                showSeatOnMap(deskId, day)
+                close()
+              }}
+            />
+          )}
+        </BottomSheet>
+      )}
       <TabBar
         tab={sheet === "find" || !sheet ? "office" : sheet}
         onChange={(tab) => setSheet(tab === "office" ? null : tab)}

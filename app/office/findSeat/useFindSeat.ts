@@ -11,8 +11,7 @@ import {
   type SeatRule,
 } from "./matching"
 import { useAllPieces } from "~/editor"
-import { getFloorId } from "~/editor/core"
-import { addDays, deskState, isWeekend, type Day } from "~/utils/booking"
+import { addDays, isWeekend, type Day } from "~/utils/booking"
 
 /** Days shown to pick from (working days, from today). */
 const DAY_CHOICES = 5
@@ -114,47 +113,6 @@ export const useSeatMatches = (rules: SeatRule[]) => {
     }),
     [context, isResident, today, lastDay]
   )
-}
-
-/** The desks your colleagues (those you'd sit near) have on a day. */
-export const useColleagueDeskIds = (rules: SeatRule[], day: Day | null) => {
-  const pieces = useAllPieces()
-  const bookings = useOfficeStore((state) => state.booking.byDay)
-  const released = useOfficeStore((state) => state.booking.released)
-
-  return useMemo(() => {
-    const emails = new Set(
-      rules.flatMap((rule) =>
-        rule.kind === "colleague" && rule.strength !== "avoid" ? [rule.email] : []
-      )
-    )
-    if (!day || emails.size === 0) return []
-
-    return pieces
-      .filter((piece) => isSeatable(piece.type))
-      .filter((desk) => {
-        const state = deskState(desk, day, bookings, released)
-
-        return state.kind !== "free" && emails.has(state.email)
-      })
-      .map((desk) => desk.id)
-  }, [rules, day, pieces, bookings, released])
-}
-
-/** Every desk on the same floor as `desk`. */
-export const useFloorDesks = (desk: MatchDesk | undefined) => {
-  const pieces = useAllPieces()
-  const floors = useOfficeStore((state) => state.floors)
-
-  return useMemo(() => {
-    if (!desk) return []
-
-    const floor = getFloorId(desk, floors)
-
-    return pieces.filter(
-      (piece) => isSeatable(piece.type) && getFloorId(piece, floors) === floor
-    ) as MatchDesk[]
-  }, [pieces, floors, desk])
 }
 
 /** Shows a desk on the map, on its day (its floor too). */
