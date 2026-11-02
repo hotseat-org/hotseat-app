@@ -3,6 +3,7 @@ import type { CoreContext } from "../types"
 import { bookingContext } from "./context"
 import { MAX_DAYS_PER_REQUEST, ReservationError, ReservationRaceError } from "./types"
 import { isDay, type Day } from "~/utils/booking"
+import { getOpensToEveryoneOn } from "~/utils/teams"
 import { msg } from "~/i18n/msg"
 
 export interface ReserveArgs {
@@ -31,10 +32,8 @@ export const reserveDesk =
   async (args: ReserveArgs): Promise<ReserveResult> => {
     const { mainRepository } = context
     const { organizationSlug, officeSlug, deskId, userEmail } = args
-    const { targetEmail, today, lastDay, desks, isReleased, isOpen } = await bookingContext(
-      context,
-      args
-    )
+    const { targetEmail, today, lastDay, desks, isReleased, isOpen, getKeptFor } =
+      await bookingContext(context, args)
 
     const dates = [...new Set(args.dates)].sort()
     if (!dates.length || dates.length > MAX_DAYS_PER_REQUEST || !dates.every(isDay))
@@ -48,6 +47,14 @@ export const reserveDesk =
 
     const desk = desks.find((d) => d.id === deskId)
     if (!desk) throw new ReservationError("This desk no longer exists.")
+    // Its zone kept for a team you're not in: not yet.
+    const keptDay = dates.find((day) => getKeptFor(desk, day, targetEmail))
+    const keptFor = keptDay && getKeptFor(desk, keptDay, targetEmail)
+    if (keptDay && keptFor)
+      throw new ReservationError("This desk is kept for {team}: others can book it from {day}.", {
+        team: keptFor.name,
+        day: { day: getOpensToEveryoneOn(keptFor, keptDay) },
+      })
     // A permanent desk: bookable only on the days its resident gave it up.
     let free = dates
     if (desk.assignee) {

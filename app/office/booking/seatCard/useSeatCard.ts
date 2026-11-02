@@ -5,6 +5,7 @@ import { DESK_FEATURES } from "../../desks/deskFeatures"
 import { useOfficeStore } from "../../store"
 import type { BodyProps } from "./SeatCardBody"
 import { bookingPresets, deskState, isOpenDay, type BookingPreset, type Day } from "~/utils/booking"
+import { getKeepingTeam, getOpensToEveryoneOn } from "~/utils/teams"
 import { useI18n } from "~/i18n/I18nProvider"
 
 /** Must match the `seat-pop-out` animation duration in tailwind.css. */
@@ -97,6 +98,10 @@ export const useSeatCard = () => {
     }
   }
 
+  /** The team its zone is kept for, that day, if you're not in it (none: you can book it). */
+  const getKeptFor = (date: Day) =>
+    me ? getKeepingTeam(booking.teams, { zone: seat.zone, day: date, today, email: me }) : null
+
   // Quick choices, for a bookable desk someone could still take.
   let options: Option[] = []
   let note: string | undefined
@@ -111,6 +116,13 @@ export const useSeatCard = () => {
     note = reason
       ? t("The office is closed on {day} ({reason}).", { day: format.short(day), reason })
       : t("The office is closed on {day}.", { day: format.short(day) })
+  } else if (booking.enabled && me && state.kind === "free" && !past && getKeptFor(day)) {
+    // Its zone is kept for a team you're not in: bookable from shortly before.
+    const team = getKeptFor(day)!
+    note = t("Kept for {team}: you can book it from {day}.", {
+      team: team.name,
+      day: format.short(getOpensToEveryoneOn(team, day)),
+    })
   } else if (booking.enabled && me && state.kind !== "resident" && !past && !mine) {
     if (seat.assignee)
       note = t("{name}'s permanent desk — free on the days they're away.", {
@@ -123,7 +135,9 @@ export const useSeatCard = () => {
     else {
       const presets = bookingPresets(day, today, lastDay, opening)
       const describe = (days: Day[]) => {
-        const free = days.filter((date) => deskState(seat, date, byDay, released).kind === "free")
+        const free = days.filter(
+          (date) => deskState(seat, date, byDay, released).kind === "free" && !getKeptFor(date)
+        )
         const taken = days.flatMap((date) => {
           const dayState = deskState(seat, date, byDay, released)
 

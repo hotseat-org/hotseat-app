@@ -1535,4 +1535,8 @@ export const cs: Messages = {
     other: "Přijdou: {names} a {n} dalších.",
   },
   "{team}'s days": "Dny týmu {team}",
+  "This desk is kept for {team}: others can book it from {day}.":
+    "Tento stůl je vyhrazený pro tým {team}: ostatní si ho mohou rezervovat od {day}.",
+  "Kept for {team}: you can book it from {day}.":
+    "Vyhrazeno pro tým {team}: rezervovat si ho můžete od {day}.",
 }

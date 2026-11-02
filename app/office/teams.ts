@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from "react"
 import { useOfficeStore } from "./store"
 import { isoWeekday, type Day } from "~/utils/booking"
-import { getTeamHex, getTeamsOf, type OfficeTeam } from "~/utils/teams"
+import { getKeepingTeam, getTeamHex, getTeamsOf, type OfficeTeam } from "~/utils/teams"
 
 /** The organization's teams, each with its zone in this office. */
 export const useTeams = () => useOfficeStore((state) => state.booking.teams)
@@ -21,6 +21,19 @@ export const useTeamDays = () => {
   return useCallback(
     (day: Day) => myTeams.filter((team) => team.weekdays.includes(isoWeekday(day))),
     [myTeams]
+  )
+}
+
+/** The team a desk's zone is kept for on a day, if you're not in it (none: you can book it). */
+export const useKeptFor = () => {
+  const teams = useTeams()
+  const today = useOfficeStore((state) => state.booking.today)
+  const me = useOfficeStore((state) => state.booking.me)
+
+  return useCallback(
+    (zone: string | undefined, day: Day) =>
+      me ? getKeepingTeam(teams, { zone, day, today, email: me }) : null,
+    [teams, today, me]
   )
 }
 

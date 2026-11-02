@@ -8,7 +8,7 @@ import { useRoute } from "../wayfinding/wayfinding"
 import { RoutePath } from "../wayfinding/RoutePath"
 import { useOfficeStore } from "../store"
 import { useHoveredPieceActions } from "../desks/useHoveredPiece"
-import { useTeammateColors } from "../teams"
+import { useKeptFor, useTeammateColors } from "../teams"
 import { useRouteFraming, useSpotlight } from "./useFraming"
 import { DeskTag, HeatTag, Occupant, RouteEnd, SpotlightRing, ZoneName } from "./overlays"
 import { composeOccupants, usePlanDesks, usePlanZoneAreas } from "./drawings"
@@ -71,6 +71,8 @@ export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
   const matchesFilter = useDeskFilter()
   const people = usePeople()
   const teammateColors = useTeammateColors()
+  const getKeptFor = useKeptFor()
+  const shownDay = useOfficeStore((state) => state.booking.day)
   const card = useSeatCard()
   const desks = usePlanDesks()
   const occupants = useMemo(() => composeOccupants(objects, desks), [objects, desks])
@@ -163,7 +165,8 @@ export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
           if (desk.id === openId) return null
 
           const person = state.kind === "free" ? null : personByEmail(people, state.email)
-          const free = state.kind === "free" && bookable
+          // Kept for a team you're not in: not free to you (its card says until when).
+          const free = state.kind === "free" && bookable && !getKeptFor(desk.zone, shownDay)
           // Filtered out: no tag for a free desk (its taker still shows).
           if (free && !matchesFilter(desk)) return null
           // A free desk already shows its "+" ring: a tag only for its label.

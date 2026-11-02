@@ -7,6 +7,7 @@ import {
   type Day,
   type OfficeOpening,
 } from "~/utils/booking"
+import { getKeepingTeam } from "~/utils/teams"
 
 /**
  * Finding someone a seat by what they'd like: each preference is a rule with
@@ -64,11 +65,13 @@ export interface DayMatches {
   current: MatchDesk | null
 }
 
-/** A team as matching needs it: its people, and its zone in this office. */
+/** A team as matching needs it: its people, its zone in this office, and how long it's kept. */
 export interface MatchTeam {
   id: string
   members: string[]
   zone: string | null
+  /** Its zone is the team's until this many days before (none: open to all). */
+  keepDays: number | null
 }
 
 export interface MatchContext {
@@ -81,6 +84,8 @@ export interface MatchContext {
   /** When the office is open: other days aren't offered. */
   opening: OfficeOpening
   teams: MatchTeam[]
+  /** The office's today: a team's kept zone opens to everyone some days before. */
+  today: Day
 }
 
 /** Near enough to a colleague (m, on the same floor): a desk or two away. */
@@ -98,8 +103,17 @@ const getDayState = (context: MatchContext, day: Day) => {
 
   for (const desk of context.desks) {
     const state = deskState(desk, day, context.bookings, context.released)
-    if (state.kind === "free") freeDesks.push(desk)
-    else deskOf.set(state.email, desk)
+    if (state.kind !== "free") deskOf.set(state.email, desk)
+    // Kept for a team you're not in: not yours to book yet.
+    else if (
+      !getKeepingTeam(context.teams, {
+        zone: desk.zone,
+        day,
+        today: context.today,
+        email: context.me,
+      })
+    )
+      freeDesks.push(desk)
   }
 
   return { deskOf, freeDesks }

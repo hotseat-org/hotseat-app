@@ -3,6 +3,7 @@ import { parseLayout } from "~/office/schema"
 import { isSeatable } from "~/office/catalog"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { addDays, isOpenDay, todayIn, type Day, type OfficeOpening } from "~/utils/booking"
+import { getKeepingTeam, toOfficeTeam } from "~/utils/teams"
 
 /**
  * Shared checks for booking calls: the caller is a member, the office exists,
@@ -56,5 +57,13 @@ export const bookingContext = async (
   }
   const isOpen = (day: Day) => isOpenDay(day, opening)
 
-  return { profile, office, targetEmail, today, lastDay, desks, isReleased, isOpen }
+  // Zones kept for their teams: others book their desks only shortly before.
+  const teams = (await mainRepository.team.findMany({ organizationSlug }))
+    .map((team) => toOfficeTeam(team, officeSlug))
+    .filter((team) => team.zone && team.keepDays !== null)
+  /** The team a desk is kept from someone for, that day (none: they can book it). */
+  const getKeptFor = (desk: { zone?: string }, day: Day, email: string) =>
+    getKeepingTeam(teams, { zone: desk.zone, day, today, email })
+
+  return { profile, office, targetEmail, today, lastDay, desks, isReleased, isOpen, getKeptFor }
 }

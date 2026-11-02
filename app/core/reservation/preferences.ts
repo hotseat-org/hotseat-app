@@ -180,7 +180,7 @@ export const bookUsualDesks =
       } catch {
         continue // left the organization, or the office is gone
       }
-      const { today, lastDay, desks, isReleased, isOpen } = booking
+      const { today, lastDay, desks, isReleased, isOpen, getKeptFor } = booking
       const { organizationSlug, officeSlug, userEmail } = rule
       const start =
         rule.bookedThrough && rule.bookedThrough >= today ? addDays(rule.bookedThrough, 1) : today
@@ -213,7 +213,9 @@ export const bookUsualDesks =
         )
         for (const day of todo) {
           const booked = new Set(taken.filter((r) => r.date === day).map((r) => r.deskId))
-          const free = freeDesks(desks, day, booked, isReleased)
+          const free = freeDesks(desks, day, booked, isReleased).filter(
+            (desk) => !getKeptFor(desk, day, userEmail)
+          )
           const pick =
             usual && free.some((d) => d.id === usual.id)
               ? usual
@@ -291,7 +293,10 @@ export const bookUsualDesks =
 export const joinWaitlist =
   (context: CoreContext) => async (args: Office & { userEmail: string; dates: Day[] }) => {
     const { mainRepository } = context
-    const { today, lastDay, desks, isReleased, isOpen } = await bookingContext(context, args)
+    const { today, lastDay, desks, isReleased, isOpen, getKeptFor } = await bookingContext(
+      context,
+      args
+    )
     const dates = [...new Set(args.dates)].sort()
     if (!dates.length || dates.length > MAX_DAYS_PER_REQUEST || !dates.every(isDay))
       throw new ReservationError("Pick between 1 and 31 days.")
@@ -318,7 +323,7 @@ export const joinWaitlist =
           d,
           new Set(taken.filter((r) => r.date === d).map((r) => r.deskId)),
           isReleased
-        ).length > 0
+        ).filter((desk) => !getKeptFor(desk, d, userEmail)).length > 0
     )
     if (open)
       throw new ReservationError("There are free desks on {day} — book one.", {
@@ -355,7 +360,7 @@ export const fillWaitlist =
       } catch {
         continue
       }
-      const { today, desks, isReleased, isOpen } = booking
+      const { today, desks, isReleased, isOpen, getKeptFor } = booking
       if (day < today || !isOpen(day)) {
         // A day gone by, or the office closed: nobody's waiting for it any more.
         for (const e of waiting) await mainRepository.waitlist.remove({ ...e, dates: [day] })
@@ -382,10 +387,12 @@ export const fillWaitlist =
           officeSlug,
           userEmail,
         })
+        // Desks kept for a team they're not in aren't theirs to take yet.
         const pick = pickDesk(
-          free,
+          free.filter((desk) => !getKeptFor(desk, day, userEmail)),
           favorites.map((f) => f.deskId)
-        ) as Desk
+        )
+        if (!pick) continue
         try {
           const r = await reserveDesk(context)({
             organizationSlug,

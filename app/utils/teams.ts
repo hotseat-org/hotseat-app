@@ -1,3 +1,5 @@
+import { addDays, type Day } from "./booking"
+
 /**
  * Teams: people who like to sit together, in any office of the organization.
  * Someone can be in several. Each office can give a team one of its zones,
@@ -65,6 +67,28 @@ export const toOfficeTeam = (team: Team, officeSlug: string): OfficeTeam => {
 
   return { ...rest, zone: here?.zone ?? null, keepDays: here?.keepDays ?? null }
 }
+
+/**
+ * The team a desk is kept from someone for, on a day: its zone is a team's,
+ * kept for it until some days before — and they're not in it. None: free to book.
+ */
+export const getKeepingTeam = <Item extends Pick<OfficeTeam, "zone" | "keepDays" | "members">>(
+  teams: Item[],
+  { zone, day, today, email }: { zone?: string; day: Day; today: Day; email: string }
+) =>
+  (zone &&
+    teams.find(
+      (team) =>
+        team.zone === zone &&
+        team.keepDays !== null &&
+        !team.members.includes(email) &&
+        day > addDays(today, team.keepDays)
+    )) ||
+  null
+
+/** The first day a kept desk opens to everyone (its team's days before `day`). */
+export const getOpensToEveryoneOn = (team: Pick<OfficeTeam, "keepDays">, day: Day) =>
+  addDays(day, -(team.keepDays ?? 0))
 
 /** The teams someone is in. */
 export const getTeamsOf = <Item extends { members: string[] }>(teams: Item[], email: string) =>

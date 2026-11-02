@@ -28,6 +28,7 @@ const createContext = (overrides: Partial<MatchContext> = {}): MatchContext => (
   rules: [],
   opening: { openWeekdays: ALL_WEEKDAYS, closedDays: {} },
   teams: [],
+  today: MONDAY,
   ...overrides,
 })
 
@@ -113,6 +114,7 @@ describe("finding a seat", () => {
           id: "design",
           members: ["anna@example.com", "jan@example.com", "me@example.com"],
           zone: null,
+          keepDays: null,
         },
       ],
       rules: [{ kind: "team", teamId: "design", strength: "must" }],
@@ -127,11 +129,21 @@ describe("finding a seat", () => {
 
   test("with my team: their zone counts, even with nobody in", () => {
     const context = createContext({
-      teams: [{ id: "marketing", members: ["me@example.com"], zone: "Marketing" }],
+      teams: [{ id: "marketing", members: ["me@example.com"], zone: "Marketing", keepDays: null }],
       rules: [{ kind: "team", teamId: "marketing", strength: "must" }],
     })
 
     expect(labelsOf(context)).toEqual(["D-4"])
+  })
+
+  test("a zone kept for a team you're not in isn't offered until shortly before", () => {
+    const context = createContext({
+      teams: [{ id: "marketing", members: ["eva@example.com"], zone: "Marketing", keepDays: 1 }],
+    })
+
+    // Tuesday is within a day: open to all. Wednesday isn't yet.
+    expect(labelsOf(context, TUESDAY)).toContain("D-4")
+    expect(labelsOf(context, "2026-11-04")).not.toContain("D-4")
   })
 
   test("any day: days the office is closed aren't offered", () => {

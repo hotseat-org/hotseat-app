@@ -86,8 +86,8 @@ export const useSeatMatches = (rules: SeatRule[]) => {
 
     const desks: MatchDesk[] = pieces.filter((piece) => isSeatable(piece.type))
 
-    return { desks, bookings, released, me, favorites, rules, opening, teams }
-  }, [pieces, bookings, released, me, favorites, rules, opening, teams])
+    return { desks, bookings, released, me, favorites, rules, opening, teams, today }
+  }, [pieces, bookings, released, me, favorites, rules, opening, teams, today])
 
   const isResident = !!me && pieces.some((piece) => piece.assignee === me)
 

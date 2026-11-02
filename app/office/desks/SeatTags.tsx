@@ -5,12 +5,13 @@ import { Pin } from "lucide-react"
 import { heatBarTop } from "../heatmap/heatmap"
 import { deskName, useDeskFilter, useDesksOnDay } from "../booking/useBooking"
 import { useOfficeStore } from "../store"
-import { useTeammateColors } from "../teams"
+import { useKeptFor, useTeammateColors } from "../teams"
 import { useHoveredPieceActions } from "./useHoveredPiece"
 import { getDeskTagTone } from "./deskTagTone"
 import { personByEmail, usePeople } from "./people"
 import { SeatAvatar } from "./SeatAvatar"
 import { CURSORS } from "~/editor"
+import { TeamDot } from "~/components/teams/teamLook"
 import { useI18n } from "~/i18n/I18nProvider"
 
 /**
@@ -24,6 +25,8 @@ export const SeatTags = () => {
   const { t } = useI18n()
   const people = usePeople()
   const teammateColors = useTeammateColors()
+  const getKeptFor = useKeptFor()
+  const day = useOfficeStore((state) => state.booking.day)
   const { floorDesks: desks } = useDesksOnDay()
   const matchesFilter = useDeskFilter()
   const booking = useOfficeStore((state) => state.booking.enabled)
@@ -68,10 +71,13 @@ export const SeatTags = () => {
         if (desk.id === openId) return null
 
         const person = state.kind === "free" ? null : personByEmail(people, state.email)
-        const free = state.kind === "free" && booking && !past
+        const isBookable = state.kind === "free" && booking && !past
+        // Its zone kept for a team you're not in: its name, not "Free".
+        const keptFor = isBookable ? getKeptFor(desk.zone, day) : null
+        const free = isBookable && !keptFor
         // Filtered out: a free desk gets no tag (its taker still shows).
         if (free && !matchesFilter(desk)) return null
-        if (!person && !free && !desk.label) return null
+        if (!person && !free && !keptFor && !desk.label) return null
 
         const mine = !!person && person.email === people.me?.email
 
@@ -141,6 +147,12 @@ export const SeatTags = () => {
                     <Pin className="size-3 opacity-70" aria-label={t("Permanent desk")} />
                   )}
                   {free && <span>{t("Free")}</span>}
+                  {keptFor && (
+                    <span className="flex items-center gap-1">
+                      <TeamDot color={keptFor.color} className="size-2" />
+                      {keptFor.name}
+                    </span>
+                  )}
                 </div>
               </span>
             </button>
