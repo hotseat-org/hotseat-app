@@ -1364,4 +1364,53 @@ export const cs: Messages = {
   "Yes. One Docker image, your own database and your own sign-in — Microsoft, Google Workspace, Okta and friends. The {guide} walks you through it.":
     "Ano. Jeden Docker image, vlastní databáze a vlastní přihlašování — Microsoft, Google Workspace, Okta a spol. Provede vás tím {guide}.",
   "self-hosting guide": "průvodce vlastním hostingem",
+  "Import people": "Importovat lidi",
+  "They're members straight away: in Who's in, ready for a desk. Their first sign-in takes over the account.":
+    "Budou členy hned: uvidíte je v přehledu, kdo přijde, a můžete jim přidělit stůl. Při prvním přihlášení účet převezmou.",
+  "Choose a CSV file": "Vyberte soubor CSV",
+  "From Google Workspace (Users → Download users), Microsoft 365, or a spreadsheet with an email column.":
+    "Z Google Workspace (Uživatelé → Stáhnout uživatele), z Microsoft 365 nebo z tabulky se sloupcem s e-mailem.",
+  "…or paste email addresses, one per line": "…nebo vložte e-mailové adresy, každou na řádek",
+  "Email addresses": "E-mailové adresy",
+  Groups: "Skupiny",
+  "Who'd be added shows here.": "Tady uvidíte, koho přidáte.",
+  "Add people": "Přidat lidi",
+  "Already a member": "Už v organizaci",
+  "{n} new": { one: "Nově: {n}", few: "Nově: {n}", many: "Nově: {n}", other: "Nově: {n}" },
+  "{n} already a member": {
+    one: "Už v organizaci: {n}",
+    few: "Už v organizaci: {n}",
+    many: "Už v organizaci: {n}",
+    other: "Už v organizaci: {n}",
+  },
+  "{n} row without an email": {
+    one: "{n} řádek bez e-mailu",
+    few: "{n} řádky bez e-mailu",
+    many: "{n} řádku bez e-mailu",
+    other: "{n} řádků bez e-mailu",
+  },
+  "…and {n} more": {
+    one: "…a {n} další",
+    few: "…a {n} další",
+    many: "…a {n} dalšího",
+    other: "…a {n} dalších",
+  },
+  "Add {n} person": {
+    one: "Přidat {n} člověka",
+    few: "Přidat {n} lidi",
+    many: "Přidat {n} člověka",
+    other: "Přidat {n} lidí",
+  },
+  "{n} person added": {
+    one: "Přidáno: {n}",
+    few: "Přidáno: {n}",
+    many: "Přidáno: {n}",
+    other: "Přidáno: {n}",
+  },
+  "{n} was a member already.": {
+    one: "Už v organizaci bylo: {n}.",
+    few: "Už v organizaci bylo: {n}.",
+    many: "Už v organizaci bylo: {n}.",
+    other: "Už v organizaci bylo: {n}.",
+  },
 }

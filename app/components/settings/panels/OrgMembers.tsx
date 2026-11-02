@@ -1,20 +1,22 @@
 import { Chip, Dropdown, Spinner, Table } from "@heroui/react"
-import { ChevronUp, ChevronsUp, CornerUpLeft, UserMinus } from "lucide-react"
+import { ChevronUp, ChevronsUp, CornerUpLeft, FileUp, UserMinus } from "lucide-react"
 import { useFetcher, useParams } from "react-router"
 import { useSettings } from "../useSettings"
 import { useOrgSettingsData } from "../data"
+import { ImportMembersDialog } from "../dialogs/ImportMembers"
 import { RemoveMemberDialog } from "../dialogs/RemoveMember"
 import { useIsHydrated } from "~/utils/hooks/useIsHydrated"
 import { useOrganizationContext } from "~/utils/hooks/useProfileData"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { roleLabel } from "~/components/office/shell-ui"
+import { Button } from "~/components/Button"
 import { Rich, useI18n } from "~/i18n/I18nProvider"
 
 const MANAGE =
   "inline-flex h-8 cursor-pointer items-center rounded-lg px-3 text-sm font-medium text-foreground transition-colors hover:bg-foreground/10"
 
 export function OrgMembers() {
-  const { selectSection, dialog } = useSettings()
+  const { selectSection, dialog, openDialog } = useSettings()
   const { t } = useI18n()
 
   // Loaded on the server with the page; refreshed after a role change.
@@ -26,7 +28,7 @@ export function OrgMembers() {
   return (
     <div className="flex flex-col gap-10">
       <div className="flex flex-col gap-4">
-        <div>
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-muted">
             <Rich
               text={t("To add new members, {invite} them.")}
@@ -43,6 +45,11 @@ export function OrgMembers() {
               }}
             />
           </p>
+          {members && (
+            <Button size="sm" variant="secondary" onPress={() => openDialog("import")}>
+              <FileUp className="size-4" /> {t("Import people")}
+            </Button>
+          )}
         </div>
 
         {members === undefined ? (
@@ -104,6 +111,11 @@ export function OrgMembers() {
         <RemoveMemberDialog
           email={removing.userEmail}
           name={removing.displayName ?? removing.userEmail}
+        />
+      )}
+      {dialog === "import" && members && (
+        <ImportMembersDialog
+          memberEmails={new Set(members.data.map((member) => member.userEmail.toLowerCase()))}
         />
       )}
     </div>

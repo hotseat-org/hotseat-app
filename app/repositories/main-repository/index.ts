@@ -50,6 +50,7 @@ import { createProfile } from "./methods/profile/create"
 import { deleteProfile } from "./methods/profile/delete"
 import { findProfile } from "./methods/profile/find"
 import { findProfiles } from "./methods/profile/findMany"
+import { importProfiles } from "./methods/profile/importMany"
 import { updateProfile } from "./methods/profile/update"
 import { bookReservations } from "./methods/reservation/book"
 import { deleteReservations } from "./methods/reservation/deleteMany"
@@ -87,6 +88,7 @@ export const createMainMysqlRepository = (): MainRepository => {
       create: createProfile,
       update: updateProfile,
       delete: deleteProfile,
+      importMany: importProfiles,
     },
     office: {
       find: findOffice,

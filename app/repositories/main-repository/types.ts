@@ -17,6 +17,7 @@ import type { CreateProfileArgs } from "./methods/profile/create"
 import { DeleteProfileArgs } from "./methods/profile/delete"
 import type { FindProfileArgs } from "./methods/profile/find"
 import type { FindProfilesArgs } from "./methods/profile/findMany"
+import type { ImportProfilesArgs } from "./methods/profile/importMany"
 import type { UpdateProfileArgs } from "./methods/profile/update"
 import type { BookReservationsArgs, BookReservationsResult } from "./methods/reservation/book"
 import type { DeleteReservationsArgs } from "./methods/reservation/deleteMany"
@@ -185,6 +186,8 @@ export interface MainRepository {
     create: (args: CreateProfileArgs) => Promise<Profile>
     update: (args: UpdateProfileArgs) => Promise<Profile>
     delete: (args: DeleteProfileArgs) => Promise<Profile>
+    /** Members, many at once (an import): the emails added. */
+    importMany: (args: ImportProfilesArgs) => Promise<string[]>
   }
   office: {
     find: (args: FindOfficeArgs) => Promise<Office | null>

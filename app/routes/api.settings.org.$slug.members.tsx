@@ -1,6 +1,7 @@
 import { data, type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router"
 import { z } from "zod"
 import { getCore } from "~/core/get-core"
+import { MAX_IMPORT } from "~/core/organization/importMembers"
 import { MemberRemovalError } from "~/core/organization/leave"
 import { getTranslator } from "~/i18n/locale.server"
 import { translateError } from "~/i18n/errors"
@@ -21,6 +22,27 @@ export const action = async (args: ActionFunctionArgs) => {
   const profile = await requireProfile(args, { requiredRole: Role.ADMIN })
   const formData = await args.request.formData()
   const core = getCore()
+
+  // A list of people, added at once (from a CSV: see ImportMembers).
+  if (formData.get("intent") === "import") {
+    const people = z
+      .array(
+        z.object({
+          email: z.string().trim().email().max(254),
+          displayName: z.string().trim().max(120).optional(),
+          role: z.enum(Role),
+        })
+      )
+      .min(1)
+      .max(MAX_IMPORT)
+      .parse(JSON.parse(z.string().parse(formData.get("people"))))
+    const result = await core.organization.importMembers({
+      organizationSlug: profile.organizationSlug,
+      people,
+    })
+
+    return data({ ok: true as const, intent: "import" as const, ...result })
+  }
 
   if (formData.get("intent") === "remove") {
     const memberEmail = z.string().parse(formData.get("userEmail"))

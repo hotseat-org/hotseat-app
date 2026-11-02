@@ -5,21 +5,39 @@ import { GoogleStrategy, GoogleStrategyDefaultName } from "@coji/remix-auth-goog
 import type { SignInProvider } from "./signIn"
 import { getCore } from "~/core/get-core"
 import type { User } from "~/core/user/types"
+import { imageService } from "~/services/images"
 
 export const authenticator = new Authenticator<User>()
 
 const env = process.env
 
-/** A signed-in person's account: found by their email, or made on their first sign-in. */
+/**
+ * A signed-in person's account: found by their email (as given, else in lower
+ * case — how imports keep it, while some providers send "Ada@Acme.com"), or
+ * made on their first sign-in. An account made by an import gets its photo now.
+ */
 const findOrCreateUser = async (profile: {
   email: string
   displayName: string
   avatarUrl?: string
 }) => {
   const core = getCore()
-  const user = await core.user.get(profile.email)
+  const email = profile.email.toLowerCase()
+  const user =
+    (await core.user.get(profile.email)) ??
+    (email !== profile.email ? await core.user.get(email) : null)
+  if (!user) return core.user.create({ ...profile, email })
 
-  return user ?? (await core.user.create(profile))
+  if (!user.photo && profile.avatarUrl) await addPhoto(user.email, profile.avatarUrl)
+
+  return user
+}
+
+/** Their sign-in photo, copied in — a photo that won't copy is just left out. */
+const addPhoto = async (email: string, url: string) => {
+  const core = getCore()
+  const photo = await imageService.importFromUrl(url).catch(() => null)
+  if (photo) await core.user.update({ email, data: { avatarUrl: photo } })
 }
 
 /**

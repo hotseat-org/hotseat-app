@@ -18,6 +18,7 @@ import { getOrganizationForUser } from "./organization/getForUser"
 import { getOrganizationInvites } from "./organization/getInvites"
 import { getOrganizationMembers, listOrganizationMembers } from "./organization/getMembers"
 import { getOrganizationOffices, listOrganizationOffices } from "./organization/getOffices"
+import { importOrganizationMembers } from "./organization/importMembers"
 import { organizationInviteMember } from "./organization/inviteMember"
 import { organizationIsAvailable } from "./organization/isAvailable"
 import { joinOrganizationWithHash } from "./organization/joinWithHash"
@@ -84,6 +85,7 @@ export const createCore = (context: CoreContext) => ({
     getMembers: getOrganizationMembers(context),
     listMembers: listOrganizationMembers(context),
     setMemberRole: setOrganizationMemberRole(context),
+    importMembers: importOrganizationMembers(context),
     leave: leaveOrganization(context),
     removeMember: removeOrganizationMember(context),
     getOffices: getOrganizationOffices(context),
