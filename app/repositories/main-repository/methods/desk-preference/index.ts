@@ -169,3 +169,25 @@ export const removeFromWaitlist = async ({
     },
   })
 }
+
+// --- Seat rules (what someone looks for, finding a seat) --------------------
+
+export type SeatRulesKey = Pick<UsualDesk, "organizationSlug" | "officeSlug" | "userEmail">
+
+/** Someone's rules in an office, as kept (unchecked JSON); none kept: null. */
+export const findSeatRules = async (key: SeatRulesKey): Promise<unknown | null> => {
+  const row = await prisma.seatRules.findUnique({
+    where: { organizationSlug_officeSlug_userEmail: key },
+    select: { rules: true },
+  })
+
+  return row?.rules ?? null
+}
+
+export const setSeatRules = async (key: SeatRulesKey, rules: object[]) => {
+  await prisma.seatRules.upsert({
+    where: { organizationSlug_officeSlug_userEmail: key },
+    create: { ...key, rules },
+    update: { rules },
+  })
+}

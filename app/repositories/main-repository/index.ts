@@ -2,12 +2,14 @@ import {
   addFavoriteDesk,
   addToWaitlist,
   findFavoriteDesks,
+  findSeatRules,
   findUsualDesks,
   findWaitlist,
   markUsualDeskBooked,
   removeFavoriteDesk,
   removeFromWaitlist,
   removeUsualDesk,
+  setSeatRules,
   setUsualDesk,
 } from "./methods/desk-preference"
 import {
@@ -99,6 +101,7 @@ export const createMainMysqlRepository = (): MainRepository => {
       markBooked: markUsualDeskBooked,
       remove: removeUsualDesk,
     },
+    seatRules: { find: findSeatRules, set: setSeatRules },
     waitlist: { findMany: findWaitlist, add: addToWaitlist, remove: removeFromWaitlist },
     roomKit: { findMany: findRoomKits, create: createRoomKit, delete: deleteRoomKit },
     deskRelease: {

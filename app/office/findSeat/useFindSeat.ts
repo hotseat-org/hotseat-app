@@ -1,15 +1,9 @@
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo } from "react"
 import { useParams } from "react-router"
 import { isSeatable } from "../catalog"
-import { useOfficeStore } from "../store"
-import {
-  matchAnyDay,
-  matchDay,
-  type MatchContext,
-  type MatchDesk,
-  type RuleStrength,
-  type SeatRule,
-} from "./matching"
+import { useOfficeStore, useOfficeStoreApi } from "../store"
+import { matchAnyDay, matchDay, type MatchContext, type MatchDesk, type SeatRule } from "./matching"
+import { parseSeatRules } from "./seatRulesSchema"
 import { useAllPieces } from "~/editor"
 import { addDays, isWeekend, type Day } from "~/utils/booking"
 
@@ -18,54 +12,46 @@ const DAY_CHOICES = 5
 /** Days "any day" lists at first. */
 const ANY_DAY_LIMIT = 5
 
-const STRENGTHS: RuleStrength[] = ["must", "prefer", "avoid"]
-
-/** A stored rule, checked: anything else (an older shape, edited by hand) is dropped. */
-const isRule = (value: unknown): value is SeatRule => {
-  const rule = value as Partial<SeatRule> & Record<string, unknown>
-  if (!rule || !STRENGTHS.includes(rule.strength as RuleStrength)) return false
-
-  if (rule.kind === "zone") return typeof rule.zone === "string"
-  if (rule.kind === "colleague") return typeof rule.email === "string"
-  if (rule.kind === "feature") return typeof rule.feature === "string"
-
-  return rule.kind === "favorite"
-}
-
-/** Where an office's preferences are kept in this browser. */
-const getStorageKey = (organization?: string, office?: string) =>
+/** Where this browser kept an office's rules, before they were kept on the server. */
+const getLegacyStorageKey = (organization?: string, office?: string) =>
   `hotseat:find-seat:${organization ?? ""}/${office ?? ""}`
 
-const readRules = (key: string): SeatRule[] => {
+/** Rules this browser kept (none, or unreadable: none) — taken out, they're moved once. */
+const takeLegacyRules = (key: string): SeatRule[] => {
   try {
-    const parsed: unknown = JSON.parse(localStorage.getItem(key) ?? "[]")
+    const rules = parseSeatRules(JSON.parse(localStorage.getItem(key) ?? "[]"))
+    localStorage.removeItem(key)
 
-    return Array.isArray(parsed) ? parsed.filter(isRule) : []
+    return rules
   } catch {
     return []
   }
 }
 
 /**
- * Your preferences for this office, kept in this browser (across visits) —
- * set again, they're saved.
+ * What you look for when finding a seat in this office — kept on the server,
+ * so it's there on any device. Changed, it shows at once and is saved behind.
+ * Rules this browser kept before are moved there once (if none are yet).
  */
 export const useSavedRules = () => {
   const { slug, officeSlug } = useParams()
-  const key = getStorageKey(slug, officeSlug)
-  const [rules, setRulesState] = useState(() => readRules(key))
+  const rules = useOfficeStore((state) => state.booking.preferences.seatRules)
+  const store = useOfficeStoreApi()
 
   const setRules = useCallback(
     (next: SeatRule[]) => {
-      setRulesState(next)
-      try {
-        localStorage.setItem(key, JSON.stringify(next))
-      } catch {
-        // Not kept (private window, storage full): they still apply now.
-      }
+      const { booking, setBooking } = store.getState()
+      setBooking({ preferences: { ...booking.preferences, seatRules: next } })
+      booking.setPreference({ intent: "seat-rules", rules: JSON.stringify(next) })
     },
-    [key]
+    [store]
   )
+
+  useEffect(() => {
+    const legacy = takeLegacyRules(getLegacyStorageKey(slug, officeSlug))
+    if (legacy.length > 0 && store.getState().booking.preferences.seatRules.length === 0)
+      setRules(legacy)
+  }, [slug, officeSlug, store, setRules])
 
   return { rules, setRules }
 }

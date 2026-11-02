@@ -1,3 +1,4 @@
+import type { SeatRule } from "../findSeat/matching"
 import { type OfficeGetState, type OfficeSetState } from "./state"
 import type { BookingsByDay, Day, DeskDays } from "~/utils/booking"
 
@@ -11,6 +12,8 @@ export interface DeskPreferences {
   waiting: Day[]
   /** How many wait for a desk on each day. */
   waitingByDay: Record<Day, number>
+  /** What you look for when finding a seat (see findSeat). */
+  seatRules: SeatRule[]
 }
 
 export const NO_PREFERENCES: DeskPreferences = {
@@ -18,6 +21,7 @@ export const NO_PREFERENCES: DeskPreferences = {
   usual: null,
   waiting: [],
   waitingByDay: {},
+  seatRules: [],
 }
 
 /** Preference changes, sent as they are to the reservations API (see its intents). */
@@ -26,6 +30,7 @@ export type PreferenceChange =
   | { intent: "usual"; deskId: string; weekdays: string }
   | { intent: "usual-clear" }
   | { intent: "waitlist-join" | "waitlist-leave"; dates: string }
+  | { intent: "seat-rules"; rules: string }
 
 /** Desk booking state for the office view (see ~/utils/booking). */
 export interface Booking {

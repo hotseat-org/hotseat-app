@@ -49,6 +49,7 @@ model Profile {
   favoriteDesks FavoriteDesk[]
   usualDesks    UsualDesk[]
   waitlist      WaitlistEntry[]
+  seatRules     SeatRules[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -117,6 +118,7 @@ model Office {
   favoriteDesks     FavoriteDesk[]
   usualDesks        UsualDesk[]
   waitlist          WaitlistEntry[]
+  seatRules         SeatRules[]
   renamedFrom       OfficeSlugRedirect[]
 
   createdAt DateTime @default(now())
@@ -252,6 +254,23 @@ model UsualDesk {
   bookedThrough    DateTime? @db.Date
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([organizationSlug, officeSlug, userEmail])
+}
+
+// What someone looks for when finding a seat in an office ("in Marketing,
+// ideally near Anna"): their rules, each a must or a preference — kept so
+// they're there on any device. One per person per office.
+model SeatRules {
+  organizationSlug String
+  officeSlug       String
+  office           Office  @relation(fields: [organizationSlug, officeSlug], references: [organizationSlug, slug], onDelete: Cascade, onUpdate: Cascade)
+  userEmail        String
+  profile          Profile @relation(fields: [userEmail, organizationSlug], references: [userEmail, organizationSlug], onDelete: Cascade, onUpdate: Cascade)
+  // [{ kind, strength, … }] — see app/office/findSeat/matching.ts (checked on the way in).
+  rules            Json
+
   updatedAt DateTime @updatedAt
 
   @@id([organizationSlug, officeSlug, userEmail])

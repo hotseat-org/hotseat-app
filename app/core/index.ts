@@ -36,6 +36,7 @@ import { getMyBookings } from "./reservation/mine"
 import { reserveDesk } from "./reservation/reserve"
 import {
   getDeskPreferences,
+  setSeatRules,
   joinWaitlist,
   leaveWaitlist,
   removeUsualDesk,
@@ -114,6 +115,7 @@ export const createCore = (context: CoreContext) => ({
     setFavorite: setFavoriteDesk(context),
     setUsual: setUsualDesk(context),
     removeUsual: removeUsualDesk(context),
+    setSeatRules: setSeatRules(context),
     joinWaitlist: joinWaitlist(context),
     leaveWaitlist: leaveWaitlist(context),
     runJobs: runBookingJobs(context),

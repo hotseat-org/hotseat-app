@@ -28,6 +28,7 @@ import type {
   DeskPreferenceScope,
   FavoriteDesk,
   FindWaitlistArgs,
+  SeatRulesKey,
   UsualDesk,
   UsualDeskKey,
   WaitlistEntry,
@@ -198,6 +199,10 @@ export interface MainRepository {
     set: (usual: Omit<UsualDesk, "bookedThrough">) => Promise<void>
     markBooked: (key: UsualDeskKey, through: string) => Promise<void>
     remove: (key: UsualDeskKey) => Promise<void>
+  }
+  seatRules: {
+    find: (key: SeatRulesKey) => Promise<unknown | null>
+    set: (key: SeatRulesKey, rules: object[]) => Promise<void>
   }
   waitlist: {
     findMany: (args: FindWaitlistArgs) => Promise<WaitlistEntry[]>

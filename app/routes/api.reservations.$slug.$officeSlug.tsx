@@ -43,6 +43,11 @@ const schema = z.discriminatedUnion("intent", [
     ),
   }),
   z.object({ intent: z.literal("usual-clear") }),
+  // What you look for when finding a seat here (checked in core).
+  z.object({
+    intent: z.literal("seat-rules"),
+    rules: z.preprocess((v) => (typeof v === "string" ? JSON.parse(v) : v), z.array(z.unknown())),
+  }),
   // Wait for a desk on full days, or stop waiting.
   z.object({ intent: z.literal("waitlist-join"), dates: datesSchema }),
   z.object({ intent: z.literal("waitlist-leave"), dates: datesSchema }),
@@ -63,7 +68,10 @@ export type ReservationActionData =
       reclaimed: string[]
       taken: { date: string; userEmail: string }[]
     }
-  | { ok: true; intent: "favorite" | "usual-clear" | "waitlist-join" | "waitlist-leave" }
+  | {
+      ok: true
+      intent: "favorite" | "usual-clear" | "seat-rules" | "waitlist-join" | "waitlist-leave"
+    }
   | {
       ok: true
       intent: "usual"
@@ -77,7 +85,8 @@ export type ReservationActionData =
  * Desk bookings for an office: `intent=reserve` (picks: days per desk),
  * `intent=cancel` (dates), and for a permanent resident `intent=release` /
  * `intent=reclaim` (their deskId + dates). Preferences: `favorite` (deskId,
- * isFavorite), `usual` (deskId, weekdays) / `usual-clear`, and
+ * isFavorite), `usual` (deskId, weekdays) / `usual-clear`, `seat-rules`
+ * (rules: what you look for when finding a seat), and
  * `waitlist-join` / `waitlist-leave` (dates). Failures come back as data with a message the UI
  * can show, never as a thrown error (a failing fetcher would take the page down).
  */
@@ -145,6 +154,10 @@ export const action = async (args: ActionFunctionArgs) => {
     if (parsed.data.intent === "usual-clear") {
       await core.reservation.removeUsual(base)
       return data<ReservationActionData>({ ok: true, intent: "usual-clear" })
+    }
+    if (parsed.data.intent === "seat-rules") {
+      await core.reservation.setSeatRules({ ...base, rules: parsed.data.rules })
+      return data<ReservationActionData>({ ok: true, intent: "seat-rules" })
     }
     if (parsed.data.intent === "waitlist-join") {
       await core.reservation.joinWaitlist({ ...base, dates: parsed.data.dates })

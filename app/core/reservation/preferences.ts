@@ -4,6 +4,7 @@ import { bookingContext } from "./context"
 import { reserveDesk } from "./reserve"
 import { MAX_DAYS_PER_REQUEST, ReservationError } from "./types"
 import type { LayoutObject } from "~/office/schema"
+import { MAX_SEAT_RULES, parseSeatRules } from "~/office/findSeat/seatRulesSchema"
 import { addDays, daysBetween, isDay, weekday, type Day } from "~/utils/booking"
 import { encodeNotification } from "~/i18n/notifications"
 
@@ -51,16 +52,18 @@ const pickDesk = (free: Desk[], favorites: string[], like?: Desk): Desk | undefi
 
 /**
  * Your desk preferences in an office (for the page): favourites, your usual
- * desk, the days you're waiting for — and how many wait on each day.
+ * desk, the days you're waiting for — and how many wait on each day — and
+ * what you look for when finding a seat.
  */
 export const getDeskPreferences =
   (context: CoreContext) => async (args: Office & { userEmail: string; from: Day }) => {
     const { mainRepository } = context
     const { organizationSlug, officeSlug, userEmail } = args
-    const [favorites, usual, line] = await Promise.all([
+    const [favorites, usual, line, seatRules] = await Promise.all([
       mainRepository.favoriteDesk.findMany({ organizationSlug, officeSlug, userEmail }),
       mainRepository.usualDesk.findMany({ organizationSlug, officeSlug, userEmail }),
       mainRepository.waitlist.findMany({ organizationSlug, officeSlug, from: args.from }),
+      mainRepository.seatRules.find({ organizationSlug, officeSlug, userEmail }),
     ])
     const waitingByDay: Record<Day, number> = {}
     for (const e of line) waitingByDay[e.date] = (waitingByDay[e.date] ?? 0) + 1
@@ -69,7 +72,30 @@ export const getDeskPreferences =
       usual: usual[0] ? { deskId: usual[0].deskId, weekdays: usual[0].weekdays } : null,
       waiting: line.filter((e) => e.userEmail === userEmail).map((e) => e.date),
       waitingByDay,
+      seatRules: parseSeatRules(seatRules),
     }
+  }
+
+// --- Finding a seat --------------------------------------------------------
+
+/** Keep what you look for when finding a seat here (your rules, checked). */
+export const setSeatRules =
+  (context: CoreContext) => async (args: Office & { userEmail: string; rules: unknown }) => {
+    await bookingContext(context, args)
+    if (!Array.isArray(args.rules) || args.rules.length > MAX_SEAT_RULES)
+      throw new ReservationError("Invalid request.")
+
+    const rules = parseSeatRules(args.rules)
+    if (rules.length !== args.rules.length) throw new ReservationError("Invalid request.")
+
+    await context.mainRepository.seatRules.set(
+      {
+        organizationSlug: args.organizationSlug,
+        officeSlug: args.officeSlug,
+        userEmail: args.userEmail,
+      },
+      rules
+    )
   }
 
 // --- Favourites --------------------------------------------------------------
