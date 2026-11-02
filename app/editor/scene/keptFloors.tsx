@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "re
 import { useThree } from "@react-three/fiber"
 import type { Group, Object3D } from "three"
 import type { Floor } from "../floors"
+import { whenQuiet } from "./whenQuiet"
 
 /**
  * Floors once shown stay in the scene, hidden: their pieces built, baked and
@@ -32,28 +33,13 @@ export const useKeptFloors = ({
   }))
 }
 
-/** Pieces drawn ahead at each idle moment (built and baked: a few ms each). */
-const AHEAD_STEP = 24
-/** How long the drawing ahead waits for idle time at most (ms): the first step waits out the load. */
-const FIRST_WAIT = 3000
-const NEXT_WAIT = 500
-
-/** Runs `callback` in idle time, or after `timeout` (ms); returns how to call it off. */
-const whenIdle = (callback: () => void, timeout: number) => {
-  if (typeof window.requestIdleCallback !== "function") {
-    const timer = window.setTimeout(callback, Math.min(timeout, 200))
-
-    return () => window.clearTimeout(timer)
-  }
-
-  const handle = window.requestIdleCallback(callback, { timeout })
-
-  return () => window.cancelIdleCallback(handle)
-}
+/** Pieces drawn ahead at each quiet moment (built and baked: a few ms each). */
+const AHEAD_STEP = 8
 
 /**
- * The floors not shown yet, drawn ahead — hidden, in idle time, a few pieces
- * at a time — so even a first visit finds them there (one took most of a
+ * The floors not shown yet, drawn ahead — hidden, a few pieces at a time,
+ * whenever nobody's using the page (see whenQuiet) — so even a first visit
+ * finds them there (one took most of a
  * second). By floor: how many of its pieces are drawn so far. A floor once
  * shown is drawn in full (and kept, see useKeptFloors).
  */
@@ -65,16 +51,13 @@ export const useFloorsAhead = (pieceCounts: Map<string, number>, currentFloor: s
   const next = [...pieceCounts].find(
     ([id, count]) => !shown.current.has(id) && (drawn.get(id) ?? 0) < count
   )?.[0]
-  const isFirst = drawn.size === 0
   useEffect(() => {
     if (!next) return
 
-    return whenIdle(
-      () =>
-        setDrawn((previous) => new Map(previous).set(next, (previous.get(next) ?? 0) + AHEAD_STEP)),
-      isFirst ? FIRST_WAIT : NEXT_WAIT
+    return whenQuiet(() =>
+      setDrawn((previous) => new Map(previous).set(next, (previous.get(next) ?? 0) + AHEAD_STEP))
     )
-  }, [next, drawn, isFirst])
+  }, [next, drawn])
 
   return { drawn, shownFloors: shown.current }
 }
@@ -133,11 +116,11 @@ export const KeptFloor = ({
     const floor = self.current
     if (!floor || isShown || !isComplete || isPrepared.current) return
 
-    return whenIdle(() => {
+    return whenQuiet(() => {
       isPrepared.current = true
       floor.updateMatrixWorld(true)
       void renderer.compileAsync(floor, camera, scene).catch(() => {}) // prepared when drawn instead
-    }, NEXT_WAIT)
+    })
   }, [isShown, isComplete, renderer, scene, camera])
   useEffect(() => {
     if (isShown) isPrepared.current = true // drawn: prepared by now

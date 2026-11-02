@@ -298,12 +298,13 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
   const renderPieces = (
     floorObjects: SceneObject[],
     floorWallColors: typeof wallColors,
-    isPaused = false
+    ahead?: { isComplete: boolean }
   ) => (
     <StaticBatch
       cellSize={readOnly ? undefined : CELL_SIZE}
       layout={floorObjects}
-      isPaused={isPaused}
+      isPaused={ahead ? !ahead.isComplete : false}
+      isInBackground={!!ahead}
     >
       {floorObjects
         .filter((object) => !getRenderer(object.type).isDrawnAsRun && !isMarker(object.type))
@@ -364,7 +365,7 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
           if (!floor || shownFloors.has(id)) return []
 
           const isComplete = count >= floor.pieces.length
-          const node = renderPieces(floor.pieces.slice(0, count), floor.wallColors, !isComplete)
+          const node = renderPieces(floor.pieces.slice(0, count), floor.wallColors, { isComplete })
 
           return [[id, { node, isComplete }] as const]
         })

@@ -23,6 +23,7 @@ import {
 import type { MeshStandardNodeMaterial } from "three/webgpu"
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js"
 import { markShadowsDirty } from "../lighting/shadows"
+import { whenQuiet } from "../scene/whenQuiet"
 import { MERGED_KIND, cutDirectionOf, setCutAttributes } from "../walls/cutaway"
 import { useFloorPlace } from "./floorHeight"
 import { copyAsNodeMaterial, getSurfaceShader } from "./surfaceShader"
@@ -30,6 +31,8 @@ import { BATCH_PART, BatchContext, materialKey, surfaceKey, type AnyMaterial } f
 
 /** The side of a cell (m) the office is merged in while editing. */
 export const CELL_SIZE = 8
+/** Cells merged at each quiet moment, in the background. */
+const BACKGROUND_CELLS = 2
 
 interface Part {
   key: string
@@ -200,10 +203,16 @@ export const StaticBatch = ({
   cellSize,
   layout,
   isPaused = false,
+  isInBackground = false,
   children,
 }: {
   /** Not merged for now: a hidden floor still being drawn ahead (merged once it's all there). */
   isPaused?: boolean
+  /**
+   * Merged a few cells at a time, whenever the page is quiet (see whenQuiet):
+   * a hidden floor drawn ahead, which mustn't stall the one in use.
+   */
+  isInBackground?: boolean
   /** Merged in cells this size (m), each rebuilt on its own; without one, as a whole. */
   cellSize?: number
   /** The pieces as they stand: when it changes, the cells whose pieces moved are rebuilt. */
@@ -249,7 +258,9 @@ export const StaticBatch = ({
     [floorPlace]
   )
 
+  const cancelNextMerge = useRef(() => {})
   useLayoutEffect(() => {
+    cancelNextMerge.current()
     const group = root.current
     if (!group || isPaused) return
 
@@ -291,9 +302,15 @@ export const StaticBatch = ({
       cells.current.delete(cellKey)
     }
 
-    // …then are merged anew.
+    // …then are merged anew (in the background, a few at a time: the rest
+    // stay as they are until the next quiet moment).
+    let merges = 0
     for (const [cellKey, sources] of found) {
       if (cells.current.has(cellKey)) continue
+      if (isInBackground && merges++ >= BACKGROUND_CELLS) {
+        cancelNextMerge.current = whenQuiet(notify)
+        break
+      }
 
       cells.current.set(cellKey, {
         signature: signatures.get(cellKey) ?? "",
@@ -303,7 +320,8 @@ export const StaticBatch = ({
     }
 
     setParts([...cells.current.values()].flatMap((cell) => cell.parts))
-  }, [version, layout, cellSize, isPaused, floorPlace, getMaterial])
+  }, [version, layout, cellSize, isPaused, isInBackground, floorPlace, getMaterial])
+  useEffect(() => () => cancelNextMerge.current(), [])
 
   // New parts → the cached shadow maps must include them; free the geometry
   // of those no cell holds any more.

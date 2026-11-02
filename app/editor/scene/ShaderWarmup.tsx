@@ -9,11 +9,10 @@ import {
 import { useThree } from "@react-three/fiber"
 import { DaylightContext } from "../lighting/daylight"
 import { markShadowsDirty } from "../lighting/shadows"
+import { whenQuiet } from "./whenQuiet"
 
 /** How dark it must be before lamps switch on (shared by every lamp). */
 export const LAMPS_ON = 0.02
-/** Wait for the office to load and settle before warming up (ms). */
-const DELAY = 1200
 
 /**
  * While warming up: lamps show their lights in the other state than the time
@@ -41,8 +40,8 @@ export const useLampsOn = () => {
  * Compiles the other time of day's shaders ahead of time. Lamp lights exist
  * only after dusk, and in three.js a change in the number of lights recompiles
  * every lit material — a long stall the moment the time slider crosses dusk
- * (worst on Windows, where browsers translate shaders for Direct3D). Shortly
- * after the office loads, with rendering paused, the lamps flip to the other
+ * (worst on Windows, where browsers translate shaders for Direct3D). Once the
+ * office has loaded and nobody's using it, with rendering paused, the lamps flip to the other
  * state while three.js compiles those variants in the background (in parallel
  * where the browser can); each material keeps every variant it has compiled,
  * so crossing dusk later just switches.
@@ -53,13 +52,13 @@ export const ShaderWarmup = ({ children }: { children: ReactNode }) => {
   const setFrameloop = useThree((state) => state.setFrameloop)
   const [forced, setForced] = useState<boolean | null>(null)
 
-  // Once, after the office has loaded.
-  useEffect(() => {
-    const timer = window.setTimeout(() => setForced(!(nightness > LAMPS_ON)), DELAY)
-
-    return () => window.clearTimeout(timer)
+  // Once, after the office has loaded, when nobody's using it: rendering
+  // pauses while it compiles (see whenQuiet).
+  useEffect(
+    () => whenQuiet(() => setForced(!(nightness > LAMPS_ON))),
     // Only the time of day at load decides which way to warm up.
-  }, [])
+    []
+  )
 
   // The lamps have flipped (this commit): compile, then put them back.
   useEffect(() => {
