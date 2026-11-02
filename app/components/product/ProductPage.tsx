@@ -232,6 +232,50 @@ export const ProductPage = () => {
           </div>
         </section>
 
+        <section id="questions" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-20 sm:px-6">
+          <SectionHeading title={t("Questions people ask")} />
+          <dl className="mt-12 grid gap-x-12 gap-y-8 md:grid-cols-2">
+            <Question title={t("Who can see where I sit?")}>
+              {t(
+                "Only people in your company. Hotseat is invite-only, so the rest of the internet won't know you sit by the window."
+              )}
+            </Question>
+            <Question title={t("How do people sign in?")}>
+              {t("With Google or GitHub. No new password to forget.")}
+            </Question>
+            <Question title={t("Is there an app?")}>
+              {t(
+                "It's a website that works properly on phones. No app store, no updates — pop it on your home screen and you're set."
+              )}
+            </Question>
+            <Question title={t("How big can our office be?")}>
+              {t(
+                "Pretty big. As many offices as you like, up to 20 floors each, and as many desks as fit."
+              )}
+            </Question>
+            <Question title={t("Do we have to draw the office first?")}>
+              {t(
+                "Pick a template and people can book in minutes. Make it look like your real office whenever you get round to it."
+              )}
+            </Question>
+            <Question title={t("Is it in Czech?")}>
+              {t(
+                "Ano! Czech and English, picked from your browser. Switch any time at the bottom of the page."
+              )}
+            </Question>
+            <Question title={t("Where is our data kept?")}>
+              {t(
+                "The app runs on Cloudflare and your bookings live in a Postgres database at Neon."
+              )}
+            </Question>
+            <Question title={t("Can we try it before we commit?")}>
+              {t(
+                "Sure. Play with the editor without an account, or set up your office and invite a few people first."
+              )}
+            </Question>
+          </dl>
+        </section>
+
         <section className="px-4 py-20 sm:px-6">
           <div
             className="mx-auto flex max-w-6xl flex-col items-center rounded-[calc(var(--radius)*6)] px-6 py-16 text-center text-[#f4efe6]"
@@ -288,6 +332,12 @@ const Header = () => {
             className="rounded-full px-3 py-2 text-sm font-bold text-muted hover:text-foreground"
           >
             {t("How it works")}
+          </a>
+          <a
+            href="#questions"
+            className="rounded-full px-3 py-2 text-sm font-bold text-muted hover:text-foreground"
+          >
+            {t("Questions")}
           </a>
         </nav>
         <div className="ml-auto flex items-center gap-2">
@@ -427,6 +477,13 @@ const Feature = ({
     <h3 className="mt-4 text-lg font-black">{title}</h3>
     <p className="mt-1.5 leading-relaxed text-muted">{children}</p>
   </li>
+)
+
+const Question = ({ title, children }: { title: string; children: ReactNode }) => (
+  <div>
+    <dt className="text-lg font-black">{title}</dt>
+    <dd className="mt-1.5 leading-relaxed text-muted">{children}</dd>
+  </div>
 )
 
 const Step = ({

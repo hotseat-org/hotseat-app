@@ -1302,4 +1302,30 @@ export const cs: Messages = {
   "Put your office on a map. Book desks by the day, sit near your people and see who's in.":
     "Dejte kancelář na mapu. Rezervujte stoly na dny, seďte u svých lidí a sledujte, kdo přijde.",
   "Up and running in three steps": "Rozjedete to ve třech krocích",
+  "Questions people ask": "Na co se lidi ptají",
+  Questions: "Otázky",
+  "Who can see where I sit?": "Kdo uvidí, kde sedím?",
+  "Only people in your company. Hotseat is invite-only, so the rest of the internet won't know you sit by the window.":
+    "Jen lidé z vaší firmy. Do Hotseatu se dostanete jen na pozvánku, takže zbytek internetu se nedozví, že sedíte u okna.",
+  "How do people sign in?": "Jak se lidé přihlásí?",
+  "With Google or GitHub. No new password to forget.":
+    "Přes Google nebo GitHub. Žádné nové heslo, které byste zapomněli.",
+  "Is there an app?": "Je k tomu aplikace?",
+  "It's a website that works properly on phones. No app store, no updates — pop it on your home screen and you're set.":
+    "Je to web, který na telefonu opravdu funguje. Žádný obchod s aplikacemi, žádné aktualizace — připněte si ho na plochu a máte hotovo.",
+  "How big can our office be?": "Jak velká může být naše kancelář?",
+  "Pretty big. As many offices as you like, up to 20 floors each, and as many desks as fit.":
+    "Pořádně velká. Kolik chcete kanceláří, každá až s 20 patry a tolika stoly, kolik se jich vejde.",
+  "Do we have to draw the office first?": "Musíme kancelář nejdřív nakreslit?",
+  "Pick a template and people can book in minutes. Make it look like your real office whenever you get round to it.":
+    "Vyberte šablonu a lidé můžou rezervovat za pár minut. Aby vypadala jako ta vaše, doladíte, až se k tomu dostanete.",
+  "Is it in Czech?": "Je to česky?",
+  "Ano! Czech and English, picked from your browser. Switch any time at the bottom of the page.":
+    "Ano! Česky i anglicky, podle vašeho prohlížeče. Přepnout můžete kdykoli dole na stránce.",
+  "Where is our data kept?": "Kde jsou uložená naše data?",
+  "The app runs on Cloudflare and your bookings live in a Postgres database at Neon.":
+    "Aplikace běží na Cloudflaru a vaše rezervace jsou v databázi Postgres u Neonu.",
+  "Can we try it before we commit?": "Můžeme si to nejdřív vyzkoušet?",
+  "Sure. Play with the editor without an account, or set up your office and invite a few people first.":
+    "Jasně. Pohrajte si s editorem bez účtu, nebo si nastavte kancelář a pozvěte zatím pár lidí.",
 }
