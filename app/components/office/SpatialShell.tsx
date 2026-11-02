@@ -1,6 +1,6 @@
 import { type ReactNode } from "react"
 import { Button } from "@heroui/react"
-import { BarChart3, Building2, Calendar, Pencil, Users } from "lucide-react"
+import { Armchair, BarChart3, Building2, Calendar, Pencil, Users } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { PANEL, PANEL_HOVER, type ShellMember, type ShellOffice } from "./shell-ui"
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher"
@@ -23,6 +23,7 @@ import {
 } from "~/editor"
 import { useOfficeStore } from "~/office/store"
 import { useOfficePanel, type OfficePanel } from "~/office/useOfficePanel"
+import { FindSeatPanel } from "~/office/findSeat/FindSeatPanel"
 import { useDesksOnDay } from "~/office/booking/useBooking"
 import { useI18n } from "~/i18n/I18nProvider"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
@@ -95,6 +96,7 @@ export const SpatialShell = ({
 }: Props) => {
   const { t } = useI18n()
   const hasHeatmap = useOfficeStore((s) => s.heatmap !== null)
+  const isBooking = useOfficeStore((s) => s.booking.enabled)
   // Who sits where on the shown day: permanent residents + bookings.
   const { byPerson } = useDesksOnDay()
   // The rail's modals — who's in, your bookings, Insights — one at a time, in
@@ -166,6 +168,14 @@ export const SpatialShell = ({
           active={officePanel.panel === "bookings"}
           onClick={() => toggleModal("bookings")}
         />
+        {isBooking && (
+          <RailLink
+            icon={Armchair}
+            label={t("Find a seat")}
+            active={officePanel.panel === "find"}
+            onClick={() => toggleModal("find")}
+          />
+        )}
         {me.role === Role.ADMIN && (
           <RailLink
             icon={BarChart3}
@@ -198,6 +208,7 @@ export const SpatialShell = ({
           <MyBookings onShow={officePanel.close} />
         </RailModal>
       )}
+      {officePanel.panel === "find" && isBooking && <FindSeatPanel onClose={officePanel.close} />}
       {officePanel.panel === "insights" && me.role === Role.ADMIN && <InsightsDashboard />}
 
       {/* Top-right: search + notifications + account */}

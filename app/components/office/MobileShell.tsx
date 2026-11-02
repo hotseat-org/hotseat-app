@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import clsx from "clsx"
-import { Building2, CalendarDays, Layers, MapPin, Pin, Users } from "lucide-react"
+import { Armchair, Building2, CalendarDays, Layers, MapPin, Pin, Users } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { MemberAvatar, type ShellMember, type ShellOffice } from "./shell-ui"
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher"
@@ -21,11 +21,16 @@ import {
   useWaitlist,
 } from "~/office/booking/useBooking"
 import { daysBetween, isWeekend, type Day } from "~/utils/booking"
+import { FindSeat } from "~/office/findSeat/FindSeat"
+import { useShowSeatOnMap } from "~/office/findSeat/FindSeatPanel"
 import { useI18n } from "~/i18n/I18nProvider"
 import { msg } from "~/i18n/msg"
 import { useBarColor } from "~/utils/pageColor"
 
 type Tab = "office" | "bookings" | "people"
+
+/** A sheet over the office: a tab's, or finding a seat (from the day dock). */
+type Sheet = Exclude<Tab, "office"> | "find"
 
 /** The top bar: switcher and account, px. */
 const TOP_BAR_HEIGHT = MOBILE_CHROME.top
@@ -52,9 +57,10 @@ interface Props {
  */
 export const MobileShell = ({ offices, me, members, empty = false }: Props) => {
   const { t } = useI18n()
-  // The sheet over the office (Bookings, People); none, the office itself.
-  const [sheet, setSheet] = useState<Exclude<Tab, "office"> | null>(null)
+  // The sheet over the office (Bookings, People, finding a seat); none, the office itself.
+  const [sheet, setSheet] = useState<Sheet | null>(null)
   const closeSheet = () => setSheet(null)
+  const showSeatOnMap = useShowSeatOnMap()
 
   if (empty) return <TopBar offices={offices} />
 
@@ -62,7 +68,7 @@ export const MobileShell = ({ offices, me, members, empty = false }: Props) => {
     <>
       <TopBar offices={offices} />
       <MapButtons />
-      <DayDock me={me} />
+      <DayDock me={me} onFindSeat={() => setSheet("find")} />
       {sheet === "bookings" && (
         <BottomSheet
           title={t("My bookings")}
@@ -78,7 +84,27 @@ export const MobileShell = ({ offices, me, members, empty = false }: Props) => {
           {(close) => <WhosInList me={me} members={members} onFind={close} />}
         </BottomSheet>
       )}
-      <TabBar tab={sheet ?? "office"} onChange={(tab) => setSheet(tab === "office" ? null : tab)} />
+      {sheet === "find" && (
+        <BottomSheet
+          title={t("Find a seat")}
+          isTall
+          bottomInset={TAB_BAR_HEIGHT}
+          onClose={closeSheet}
+        >
+          {(close) => (
+            <FindSeat
+              onShowOnMap={(deskId, day) => {
+                showSeatOnMap(deskId, day)
+                close()
+              }}
+            />
+          )}
+        </BottomSheet>
+      )}
+      <TabBar
+        tab={sheet === "find" || !sheet ? "office" : sheet}
+        onChange={(tab) => setSheet(tab === "office" ? null : tab)}
+      />
     </>
   )
 }
@@ -108,7 +134,7 @@ export const TopBar = ({ offices }: { offices: ShellOffice[] }) => (
  * (always there, dimmed while today is shown — so nothing moves), then the
  * calendar and the strip of days.
  */
-const DayDock = ({ me }: { me: ShellMember }) => {
+const DayDock = ({ me, onFindSeat }: { me: ShellMember; onFindSeat: () => void }) => {
   const i18n = useI18n()
   const { t } = i18n
   const day = useOfficeStore((s) => s.booking.day)
@@ -167,6 +193,15 @@ const DayDock = ({ me }: { me: ShellMember }) => {
             )}
           </p>
         </div>
+        {!mine && !givenUp && day >= today && (
+          <button
+            type="button"
+            onClick={onFindSeat}
+            className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl bg-accent px-3 text-sm font-extrabold text-accent-foreground"
+          >
+            <Armchair className="size-4" /> {t("Find a seat")}
+          </button>
+        )}
         {mine && (
           <button
             type="button"
