@@ -77,7 +77,20 @@ export const getUploadUrl = async () => {
   }
 }
 
+/** Cloudflare fetches the image itself. */
+const importFromUrl = async (url: string) => {
+  const { uploadUrl } = await getUploadUrl()
+  const body = new FormData()
+  body.append("url", url)
+  const uploaded = await fetch(uploadUrl, { method: "POST", body }).then((response) =>
+    response.json()
+  )
+
+  return uploaded.result.id as string
+}
+
 export const cloudflareImageService: ImageService = {
   getSignedUrl,
   getUploadUrl,
+  importFromUrl,
 }

@@ -10,21 +10,10 @@ interface CreateUserArgs {
 export const createUser =
   ({ mainRepository, imageService, mappers }: CoreContext) =>
   async ({ email, displayName, avatarUrl }: CreateUserArgs): Promise<User> => {
-    const { uploadUrl } = await imageService.getUploadUrl()
-
-    let avatar = undefined
-
-    if (avatarUrl) {
-      const body = new FormData()
-
-      body.append("url", avatarUrl)
-      const uploadResult = await fetch(uploadUrl, {
-        method: "POST",
-        body,
-      }).then((res) => res.json())
-
-      avatar = uploadResult.result.id
-    }
+    // Their sign-in photo, kept as one of ours (a photo that fails to copy: none).
+    const avatar = avatarUrl
+      ? await imageService.importFromUrl(avatarUrl).catch(() => undefined)
+      : undefined
 
     const user = await mainRepository.user.create({
       email,

@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url"
 import { cloudflare } from "@cloudflare/vite-plugin"
 import { reactRouter } from "@react-router/dev/vite"
 import { defineConfig } from "vite"
@@ -5,8 +6,23 @@ import tsconfigPaths from "vite-tsconfig-paths"
 import tailwind from "@tailwindcss/vite"
 import devtoolsJson from "vite-plugin-devtools-json"
 
+/**
+ * Two builds: the hosted one on Cloudflare (the default), and a plain Node
+ * server for self-hosting (HOTSEAT_TARGET=node; server/app.ts, served by
+ * server/node.mjs) — with the Node flavour of the Prisma client. BASE_PATH:
+ * where it's served ("/hotseat/" hosted; a self-hosted one usually "/").
+ */
+const isNodeTarget = process.env.HOTSEAT_TARGET === "node"
+const BASE_PATH = process.env.BASE_PATH ?? "/hotseat/"
+const NODE_PRISMA_CLIENT = fileURLToPath(
+  new URL(
+    "./app/repositories/main-repository/prisma/generated/prisma-client-node/",
+    import.meta.url
+  )
+)
+
 export default defineConfig({
-  base: "/hotseat/",
+  base: BASE_PATH,
   // Changes with every build: what the browser keeps between visits (the
   // catalog's stills) is kept per build, so a new one never shows stale models.
   define: {
@@ -17,7 +33,7 @@ export default defineConfig({
     allowedHosts: ["hotseat.vidlak.net"],
   },
   plugins: [
-    cloudflare({ viteEnvironment: { name: "ssr" } }),
+    ...(isNodeTarget ? [] : [cloudflare({ viteEnvironment: { name: "ssr" } })]),
     reactRouter(),
     tsconfigPaths(),
     tailwind(),
@@ -29,7 +45,19 @@ export default defineConfig({
   // "Cannot read properties of null (reading 'useSyncExternalStore')".
   resolve: {
     dedupe: ["react", "react-dom", "three"],
+    alias: isNodeTarget
+      ? [
+          {
+            find: /^~\/repositories\/main-repository\/prisma\/generated\/prisma-client\//,
+            replacement: NODE_PRISMA_CLIENT,
+          },
+        ]
+      : [],
   },
+  // The Node server's entry: the app's handler and hourly jobs (see server/app.ts).
+  ...(isNodeTarget && {
+    environments: { ssr: { build: { rollupOptions: { input: "./server/app.ts" } } } },
+  }),
   optimizeDeps: {
     // Pre-bundle everything the (lazily-loaded) editor and its route pull in.
     // Otherwise Vite discovers them on first editor load, re-optimizes, and

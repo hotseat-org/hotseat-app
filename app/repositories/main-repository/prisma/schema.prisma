@@ -7,6 +7,14 @@ generator client {
   runtime  = "workerd"
 }
 
+// The same client for a plain Node server (self-hosting: HOTSEAT_TARGET=node
+// builds use it in place of the one above — see vite.config.ts).
+generator nodeClient {
+  provider = "prisma-client"
+  output   = "./generated/prisma-client-node"
+  runtime  = "nodejs"
+}
+
 datasource db {
   provider = "postgresql"
 }

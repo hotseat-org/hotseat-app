@@ -1,6 +1,5 @@
 import { createHash } from "crypto"
 import { LoaderFunctionArgs, redirect } from "react-router"
-import { ImageResponse } from "workers-og"
 import { GifReader } from "omggif"
 import { PNG } from "pngjs"
 import { getCore } from "~/core/get-core"
@@ -54,6 +53,14 @@ export const loader = async ({ request, params: { slug } }: LoaderFunctionArgs) 
       // silently fall back to initial letter
     }
   }
+
+  // Drawn with workers-og, which needs Cloudflare's runtime (its WebAssembly):
+  // loaded here, not up top, so a plain Node server (self-hosting) still
+  // starts — and shows the product picture instead.
+  const ImageResponse = await import("workers-og")
+    .then((module) => module.ImageResponse)
+    .catch(() => null)
+  if (!ImageResponse) return redirect("/images/product/share.jpg")
 
   const response = new ImageResponse(
     <div
