@@ -1,9 +1,9 @@
 import clsx from "clsx"
-import { Layers, SlidersHorizontal, Star, UserRound, UserX } from "lucide-react"
+import { CircleOff, Layers, SlidersHorizontal, Star, UserRound, UserX } from "lucide-react"
 import { useMemo, type CSSProperties } from "react"
 import { personByEmail, usePeople } from "../desks/people"
 import { getZones } from "../zones/zones"
-import type { SeatRule } from "./matching"
+import { isAwayRule, type SeatRule } from "./matching"
 import { PersonFace } from "~/components/people/PeopleSearch"
 import { useAllPieces } from "~/editor"
 
@@ -24,10 +24,18 @@ export const TONES: Record<RuleTone, string> = {
   away: "bg-danger/15 text-danger",
 }
 
-export const getRuleTone = (rule: Pick<SeatRule, "kind" | "strength">): RuleTone => {
-  if (rule.strength === "avoid") return "away"
+export const getRuleTone = (rule: SeatRule): RuleTone => {
+  if (isAwayRule(rule)) return "away"
   if (rule.kind === "favorite") return "warning"
   if (rule.kind === "feature") return "accent"
+
+  return "neutral"
+}
+
+/** A kind's own tone, before anything's chosen. */
+const getKindTone = (kind: SeatRule["kind"]): RuleTone => {
+  if (kind === "favorite") return "warning"
+  if (kind === "feature") return "accent"
 
   return "neutral"
 }
@@ -71,15 +79,18 @@ export const KindTile = ({
   isAway = false,
 }: {
   kind: SeatRule["kind"]
-  /** Away from someone (its own icon and colour). */
+  /** Away from a colleague or a zone (its own icon and colour). */
   isAway?: boolean
 }) => {
-  const Icon = isAway ? UserX : KIND_ICONS[kind]
+  const getIcon = () => {
+    if (!isAway) return KIND_ICONS[kind]
+
+    return kind === "zone" ? CircleOff : UserX
+  }
+  const Icon = getIcon()
 
   return (
-    <span
-      className={clsx(TILE, TONES[getRuleTone({ kind, strength: isAway ? "avoid" : "prefer" })])}
-    >
+    <span className={clsx(TILE, isAway ? TONES.away : TONES[getKindTone(kind)])}>
       <Icon className={clsx("size-[18px]", kind === "favorite" && "fill-current")} />
     </span>
   )
@@ -95,7 +106,7 @@ export const RuleTile = ({ rule }: { rule: SeatRule }) => {
         email={rule.email}
         className={clsx(
           "size-10 text-[15px]",
-          rule.strength === "avoid" && "ring-2 ring-danger ring-offset-2 ring-offset-overlay"
+          isAwayRule(rule) && "ring-2 ring-danger ring-offset-2 ring-offset-overlay"
         )}
       />
     )
@@ -103,8 +114,14 @@ export const RuleTile = ({ rule }: { rule: SeatRule }) => {
   if (rule.kind === "zone") {
     const color = zoneColors.get(rule.zone)
 
+    // Away from it: red, its colour kept in the dot.
+    const isAway = isAwayRule(rule)
+
     return (
-      <span className={clsx(TILE, TONES.neutral)} style={getZoneTint(color)}>
+      <span
+        className={clsx(TILE, isAway ? TONES.away : TONES.neutral)}
+        style={isAway ? undefined : getZoneTint(color)}
+      >
         <span className="size-3.5 rounded-full" style={{ background: color }} />
       </span>
     )

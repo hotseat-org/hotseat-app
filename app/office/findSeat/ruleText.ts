@@ -1,6 +1,6 @@
 import { DESK_FEATURES } from "../desks/deskFeatures"
 import { personByEmail, usePeople } from "../desks/people"
-import type { SeatRule } from "./matching"
+import { isAwayRule, type SeatRule } from "./matching"
 import { useI18n } from "~/i18n/I18nProvider"
 
 /** Rules' words: what each asks for, and how it went for a desk. */
@@ -16,19 +16,28 @@ export const useRuleText = () => {
 
   /** What it asks for, as a list row says it: "Engineering zone", "Near Anna Nováková". */
   const describe = (rule: SeatRule) => {
-    if (rule.kind === "zone") return t("{zone} zone", { zone: rule.zone })
+    if (rule.kind === "zone")
+      return isAwayRule(rule)
+        ? t("Away from {zone}", { zone: rule.zone })
+        : t("{zone} zone", { zone: rule.zone })
     if (rule.kind === "favorite") return t("My preferred seat")
     if (rule.kind === "feature") return featureOf(rule.feature)
 
-    return rule.strength === "avoid"
+    return isAwayRule(rule)
       ? t("Away from {name}", { name: nameOf(rule.email) })
       : t("Near {name}", { name: nameOf(rule.email) })
   }
 
   /** How it went for a desk, as its checklist says it. */
   const describeOutcome = (rule: SeatRule, isMet: boolean) => {
-    if (rule.kind === "zone")
-      return isMet ? t("In {zone}", { zone: rule.zone }) : t("Not in {zone}", { zone: rule.zone })
+    if (rule.kind === "zone") {
+      // Away from it, met means outside it.
+      const isInside = isAwayRule(rule) ? !isMet : isMet
+
+      return isInside
+        ? t("In {zone}", { zone: rule.zone })
+        : t("Not in {zone}", { zone: rule.zone })
+    }
     if (rule.kind === "favorite")
       return isMet ? t("Your preferred seat") : t("Not your preferred seat")
     if (rule.kind === "feature")
@@ -37,7 +46,7 @@ export const useRuleText = () => {
         : t("Without: {feature}", { feature: featureOf(rule.feature) })
 
     const name = nameOf(rule.email)
-    if (rule.strength === "avoid")
+    if (isAwayRule(rule))
       return isMet ? t("Away from {name}", { name }) : t("Near {name}", { name })
 
     return isMet ? t("Near {name}", { name }) : t("Not near {name}", { name })

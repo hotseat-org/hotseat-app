@@ -4,7 +4,7 @@ import { Fragment, type CSSProperties, type ReactNode } from "react"
 import { DESK_FEATURES } from "../desks/deskFeatures"
 import { personByEmail, usePeople } from "../desks/people"
 import { useOfficeStore } from "../store"
-import type { SeatRule } from "./matching"
+import { isAwayRule, type SeatRule } from "./matching"
 import { Face, TONES, getZoneTint, useZoneColors, type RuleTone } from "./ruleLook"
 import { useI18n } from "~/i18n/I18nProvider"
 import type { Day } from "~/utils/booking"
@@ -106,17 +106,19 @@ export const SeatSentence = ({
   const phraseOf = (rule: SeatRule) => {
     if (rule.kind === "zone") {
       const color = zoneColors.get(rule.zone)
+      // Away from a zone: red, its colour kept in the dot.
+      const isAway = isAwayRule(rule)
 
       return withPill(
-        t("in {zone}", { zone: PILL }),
+        isAway ? t("not in {zone}", { zone: PILL }) : t("in {zone}", { zone: PILL }),
         <Pill
-          tone="neutral"
+          tone={isAway ? "away" : "neutral"}
           icon={
             <span className="grid size-5 shrink-0 place-items-center">
               <span className="size-2.5 rounded-full" style={{ background: color }} />
             </span>
           }
-          style={getZoneTint(color)}
+          style={isAway ? undefined : getZoneTint(color)}
         >
           {rule.zone}
         </Pill>
@@ -153,7 +155,7 @@ export const SeatSentence = ({
         </Pill>
       )
 
-    if (rule.strength === "avoid")
+    if (isAwayRule(rule))
       return withPill(t("not near {name}", { name: PILL }), personPill(rule.email, "away"))
 
     return withPill(t("near {name}", { name: PILL }), personPill(rule.email, "neutral"))

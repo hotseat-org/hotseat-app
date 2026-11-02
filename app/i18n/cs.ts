@@ -1179,7 +1179,6 @@ export const cs: Messages = {
   "Add a preference": "Přidat preferenci",
   Must: "Musí",
   Prefer: "Raději",
-  Avoid: "Vyhnout se",
   "How much it matters": "Jak moc na tom záleží",
   "A zone": "Zóna",
   "Where your team sits": "Kde sedí váš tým",
@@ -1457,4 +1456,8 @@ export const cs: Messages = {
     "Vidíte to jen vy. Hledání místa vás posadí jinam.",
   "Away from a colleague": "Daleko od někoho z kolegů",
   "Only you see this": "Vidíte to jen vy",
+  "Away from a zone": "Mimo zónu",
+  "A part of the office to avoid": "Část kanceláře, které se chcete vyhnout",
+  "not in {zone}": "mimo zónu {zone}",
+  "Away from {zone}": "Mimo zónu {zone}",
 }

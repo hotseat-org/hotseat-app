@@ -12,7 +12,7 @@ import { PeopleSearch } from "~/components/people/PeopleSearch"
 import { useAllPieces } from "~/editor"
 import { useI18n } from "~/i18n/I18nProvider"
 
-/** How much a preference matters (sitting away from someone is its own preference). */
+/** How much a preference matters. */
 const OFFERED_STRENGTHS: RuleStrength[] = ["must", "prefer"]
 
 /** People listed at most while choosing a colleague: the search narrows them. */
@@ -76,13 +76,10 @@ export const Preferences = ({
             <span className="min-w-0 flex-1 truncate text-[15px] font-extrabold">
               {describe(rule)}
             </span>
-            {/* Away from someone: no strength to choose. */}
-            {rule.strength !== "avoid" && (
-              <StrengthSwitch
-                value={rule.strength}
-                onChange={(strength) => setStrength(index, strength)}
-              />
-            )}
+            <StrengthSwitch
+              value={rule.strength}
+              onChange={(strength) => setStrength(index, strength)}
+            />
             <button
               type="button"
               aria-label={t("Remove {preference}", { preference: describe(rule) })}
@@ -119,7 +116,6 @@ const StrengthSwitch = ({
   const labels: Record<RuleStrength, string> = {
     must: t("Must"),
     prefer: t("Prefer"),
-    avoid: t("Avoid"),
   }
 
   return (
@@ -159,12 +155,13 @@ const AddRule = ({
   onBack: () => void
 }) => {
   const { t } = useI18n()
-  const [kind, setKind] = useState<RuleKind | "away" | null>(null)
+  const [kind, setKind] = useState<RuleKind | "away" | "away-zone" | null>(null)
   const favorites = useOfficeStore((state) => state.booking.preferences.favorites)
   // Your preferred seats: the desks you starred — none starred, nothing to prefer.
   const canPreferSeat = favorites.length > 0 && !rules.some((rule) => rule.kind === "favorite")
-  const kinds: { kind: RuleKind | "away"; title: string; detail: string }[] = [
+  const kinds: { kind: RuleKind | "away" | "away-zone"; title: string; detail: string }[] = [
     { kind: "zone", title: t("A zone"), detail: t("Where your team sits") },
+    { kind: "away-zone", title: t("Away from a zone"), detail: t("A part of the office to avoid") },
     { kind: "colleague", title: t("Near a colleague"), detail: t("Wherever they sit that day") },
     {
       kind: "away",
@@ -186,6 +183,7 @@ const AddRule = ({
   const back = <BackButton label={t("Back")} onPress={kind ? () => setKind(null) : onBack} />
 
   if (kind === "zone") return <ZoneChoice back={back} onPick={onAdd} />
+  if (kind === "away-zone") return <ZoneChoice back={back} onPick={onAdd} isAway />
   if (kind === "colleague") return <ColleagueChoice back={back} onPick={onAdd} />
   if (kind === "away") return <ColleagueChoice back={back} onPick={onAdd} isAway />
   if (kind === "feature") return <FeatureChoice back={back} onPick={onAdd} />
@@ -205,11 +203,7 @@ const AddRule = ({
               }
               className="flex min-h-14 w-full items-center gap-3 rounded-xl py-1.5 text-left outline-none hover:bg-surface-secondary focus-visible:ring-2 focus-visible:ring-focus"
             >
-              {entry.kind === "away" ? (
-                <KindTile kind="colleague" isAway />
-              ) : (
-                <KindTile kind={entry.kind} />
-              )}
+              <EntryTile kind={entry.kind} />
               <span className="min-w-0">
                 <span className="block text-[15px] font-extrabold">{entry.title}</span>
                 <span className="block text-xs text-muted">{entry.detail}</span>
@@ -238,12 +232,23 @@ const BackButton = ({ label, onPress }: { label: string; onPress: () => void }) 
 const CHOICE =
   "flex min-h-11 items-center gap-2 rounded-full px-4 text-sm font-bold outline-none transition-[filter] hover:brightness-95 focus-visible:ring-2 focus-visible:ring-focus"
 
+/** A kind to add, by its tile: the away ones in red. */
+const EntryTile = ({ kind }: { kind: RuleKind | "away" | "away-zone" }) => {
+  if (kind === "away") return <KindTile kind="colleague" isAway />
+  if (kind === "away-zone") return <KindTile kind="zone" isAway />
+
+  return <KindTile kind={kind} />
+}
+
 const ZoneChoice = ({
   back,
   onPick,
+  isAway = false,
 }: {
   back: React.ReactNode
   onPick: (rule: SeatRule) => void
+  /** A zone to keep away from, not to sit in. */
+  isAway?: boolean
 }) => {
   const { t } = useI18n()
   const pieces = useAllPieces()
@@ -260,7 +265,7 @@ const ZoneChoice = ({
             <button
               key={zone.name}
               type="button"
-              onClick={() => onPick({ kind: "zone", zone: zone.name, strength: "prefer" })}
+              onClick={() => onPick({ kind: "zone", zone: zone.name, strength: "prefer", isAway })}
               className={clsx(CHOICE, TONES.neutral)}
               style={getZoneTint(zone.color)}
             >
@@ -329,7 +334,7 @@ const ColleagueChoice = ({
         maxRows={MAX_PEOPLE}
         isAutoFocused
         onPick={(member) =>
-          onPick({ kind: "colleague", email: member.email, strength: isAway ? "avoid" : "prefer" })
+          onPick({ kind: "colleague", email: member.email, strength: "prefer", isAway })
         }
       />
     </div>

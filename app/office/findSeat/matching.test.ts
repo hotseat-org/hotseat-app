@@ -74,7 +74,7 @@ describe("finding a seat", () => {
   test("away from someone ranks desks near them last", () => {
     const context = createContext({
       bookings: { [MONDAY]: { "D-1": "petr@example.com" } },
-      rules: [{ kind: "colleague", email: "petr@example.com", strength: "avoid" }],
+      rules: [{ kind: "colleague", email: "petr@example.com", strength: "prefer", isAway: true }],
     })
 
     expect(labelsOf(context)).toEqual(["D-3", "D-4", "D-2"])
@@ -84,6 +84,31 @@ describe("finding a seat", () => {
     const context = createContext({ bookings: { [MONDAY]: { "D-2": "me@example.com" } } })
 
     expect(matchDay(context, MONDAY)).toMatchObject({ matches: [], current: { id: "D-2" } })
+  })
+
+  test("away from a zone ranks desks outside it first", () => {
+    const context = createContext({
+      rules: [{ kind: "zone", zone: "Engineering", strength: "prefer", isAway: true }],
+    })
+    const result = matchDay(context, MONDAY)
+
+    expect(result.matches[0]?.desk.id).toBe("D-4")
+  })
+
+  test("away from a zone as a must leaves out every desk in it", () => {
+    const context = createContext({
+      rules: [{ kind: "zone", zone: "Engineering", strength: "must", isAway: true }],
+    })
+
+    expect(matchDay(context, MONDAY).matches.map((match) => match.desk.id)).toEqual(["D-4"])
+  })
+
+  test("away from a zone as a must leaves out every desk in it", () => {
+    const context = createContext({
+      rules: [{ kind: "zone", zone: "Engineering", strength: "must", isAway: true }],
+    })
+
+    expect(matchDay(context, MONDAY).matches.map((match) => match.desk.id)).toEqual(["D-4"])
   })
 
   test("any day: days the office is closed aren't offered", () => {

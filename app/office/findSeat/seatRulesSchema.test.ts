@@ -9,10 +9,24 @@ describe("seat rules as kept", () => {
       { kind: "zone", zone: "Marketing", strength: "must" },
       { kind: "colleague", email: "anna@example.com", strength: "prefer" },
       { kind: "favorite", strength: "prefer" },
-      { kind: "feature", feature: "standing", strength: "avoid" },
+      { kind: "feature", feature: "standing", strength: "must" },
+      { kind: "zone", zone: "Finance", strength: "must", isAway: true },
     ]
 
     expect(parseSeatRules(rules)).toEqual(rules)
+  })
+
+  test("an old avoid rule is read as an away preference (a feature can't be away)", () => {
+    const rules = [
+      { kind: "colleague", email: "petr@example.com", strength: "avoid" },
+      { kind: "zone", zone: "Finance", strength: "avoid" },
+      { kind: "feature", feature: "standing", strength: "avoid" },
+    ]
+
+    expect(parseSeatRules(rules)).toEqual([
+      { kind: "colleague", email: "petr@example.com", strength: "prefer", isAway: true },
+      { kind: "zone", zone: "Finance", strength: "prefer", isAway: true },
+    ])
   })
 
   test("anything else is left out: unknown kinds, strengths, missing values", () => {

@@ -16,15 +16,22 @@ import {
  * booking it for you as desks free up).
  */
 
-/** How much a rule matters: must be met, ranks higher when met, or ranks lower. */
-export type RuleStrength = "must" | "prefer" | "avoid"
+/** How much a rule matters: must be met, or ranks higher when met. */
+export type RuleStrength = "must" | "prefer"
 
-/** What a rule asks for. New kinds slot in here, in `isMet`, and in the rule picker. */
+/**
+ * What a rule asks for. New kinds slot in here, in `isMet`, and in the rule
+ * picker. A zone or a colleague can be asked for the other way round
+ * (`isAway`): outside the zone, away from them — a must or a preference too.
+ */
 export type SeatRule =
-  | { kind: "zone"; zone: string; strength: RuleStrength }
+  | { kind: "zone"; zone: string; strength: RuleStrength; isAway?: boolean }
   | { kind: "favorite"; strength: RuleStrength }
-  | { kind: "colleague"; email: string; strength: RuleStrength }
+  | { kind: "colleague"; email: string; strength: RuleStrength; isAway?: boolean }
   | { kind: "feature"; feature: string; strength: RuleStrength }
+
+/** Whether a rule keeps you away (from a zone, from someone). */
+export const isAwayRule = (rule: SeatRule) => "isAway" in rule && rule.isAway === true
 
 /** A desk as matching needs it (a SceneObject's fields). */
 export interface MatchDesk {
@@ -106,13 +113,13 @@ const isWhatRuleAsks = (rule: SeatRule, desk: MatchDesk, { context, deskOf }: Da
 const isMet = (rule: SeatRule, desk: MatchDesk, scope: DayScope) => {
   const isAsked = isWhatRuleAsks(rule, desk, scope)
 
-  return rule.strength === "avoid" ? !isAsked : isAsked
+  return isAwayRule(rule) ? !isAsked : isAsked
 }
 
 /** How far a desk is from the colleagues it should be near (m, summed): closer ranks higher. */
 const getColleagueDistance = (desk: MatchDesk, rules: SeatRule[], deskOf: Map<string, MatchDesk>) =>
   rules.reduce((sum, rule) => {
-    if (rule.kind !== "colleague" || rule.strength === "avoid") return sum
+    if (rule.kind !== "colleague" || isAwayRule(rule)) return sum
 
     const colleagueDesk = deskOf.get(rule.email)
 
