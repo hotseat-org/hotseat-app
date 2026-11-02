@@ -16,6 +16,7 @@ import {
 } from "~/components/CreateModal"
 import { isDemoVisitor } from "~/core/demo"
 import { getCore } from "~/core/get-core"
+import { requireSaas } from "~/edition/edition.server"
 import { useI18n } from "~/i18n/I18nProvider"
 import { requireUser } from "~/services/session.server"
 
@@ -25,6 +26,9 @@ enum Intent {
 }
 
 export const action = async ({ request }: ActionFunctionArgs) => {
+  // One company's own installation has one organization.
+  requireSaas()
+
   const user = await requireUser(request)
 
   const formData = await request.formData()

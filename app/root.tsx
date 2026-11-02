@@ -29,6 +29,7 @@ import { BarColorContext, usePageColor } from "~/utils/pageColor"
 import { BOOKING_ACTIONS, NOTIFICATION_ACTIONS, revalidateOn } from "~/utils/revalidation"
 import { LocaleProvider } from "~/i18n/useLocale"
 import { getLocale } from "~/i18n/locale.server"
+import { EDITION } from "~/edition/edition.server"
 import { useI18n } from "~/i18n/I18nProvider"
 import { createTranslator } from "~/i18n/translate"
 
@@ -66,7 +67,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const scheme = isSchemeId(savedScheme) ? savedScheme : DEFAULT_SCHEME
   const locale = await getLocale(request)
 
-  return { user, theme, scheme, locale }
+  return { user, theme, scheme, locale, edition: EDITION }
 }
 
 export default function AppWithProvider() {

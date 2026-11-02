@@ -3,6 +3,7 @@ import { Toast } from "@heroui/react"
 import { lazy, Suspense } from "react"
 import { Route } from "./+types/app"
 import NewOrganization from "./api.new-organization"
+import { useIsSelfHosted } from "~/edition/edition"
 import { useSettings } from "~/components/settings/useSettings"
 import { requireUser } from "~/services/session.server"
 import { loadUserSettings } from "~/utils/loader-helpers/settings.server"
@@ -29,13 +30,14 @@ export default function Index() {
   const [searchParams] = useSearchParams()
   const modal = searchParams.get("modal")
   const { scope } = useSettings()
+  const isSelfHosted = useIsSelfHosted()
 
   return (
     <main className="flex h-full bg-background">
       {/* Top: the bottom holds the day toolbar (desktop) and the dock + tabs (phone). */}
       <Toast.Provider placement="top" />
       <Outlet />
-      {modal === "new-organization" && <NewOrganization />}
+      {modal === "new-organization" && !isSelfHosted && <NewOrganization />}
       {(scope === "user" || scope === "org") && (
         <Suspense fallback={null}>
           <SettingsOverlay />

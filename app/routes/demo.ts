@@ -1,6 +1,7 @@
 import { redirect, type ActionFunctionArgs } from "react-router"
 import { isDemoVisitor } from "~/core/demo"
 import { getCore } from "~/core/get-core"
+import { requireSaas } from "~/edition/edition.server"
 import { isAuthenticated, sessionStorage } from "~/services/session.server"
 
 // Only a button's POST starts a demo: link previews and crawlers (GET) never do.
@@ -12,6 +13,8 @@ export const loader = () => redirect("/")
  * demo visitor goes back to their copy while it lasts).
  */
 export const action = async ({ request }: ActionFunctionArgs) => {
+  requireSaas()
+
   const core = getCore()
   const user = await isAuthenticated(request)
 

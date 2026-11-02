@@ -9,6 +9,7 @@ import { useSettings } from "~/components/settings/useSettings"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { useOrganizationContext } from "~/utils/hooks/useProfileData"
 import { useProfile } from "~/utils/remix"
+import { useIsSelfHosted } from "~/edition/edition"
 import { useI18n } from "~/i18n/I18nProvider"
 import type { Translator } from "~/i18n/translate"
 
@@ -209,12 +210,16 @@ const OrgMenu = ({
         ))}
       </>
     )}
-    <Divider />
-    <CreateLink
-      to="?modal=new-organization"
-      label={d.i18n.t("New organization")}
-      onClick={onClose}
-    />
+    {d.canCreateOrganization && (
+      <>
+        <Divider />
+        <CreateLink
+          to="?modal=new-organization"
+          label={d.i18n.t("New organization")}
+          onClick={onClose}
+        />
+      </>
+    )}
   </>
 )
 
@@ -354,8 +359,11 @@ const useSwitcher = (offices: ShellOffice[]) => {
   const navigate = useNavigate()
   const { slug, officeSlug } = useParams()
   const i18n = useI18n()
+  // One company's own installation: no other organizations to make.
+  const canCreateOrganization = !useIsSelfHosted()
   return {
     i18n,
+    canCreateOrganization,
     organization,
     organizations,
     currentOrg: organizations.find((o) => o.slug === organization.slug),

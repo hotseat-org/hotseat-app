@@ -2,6 +2,7 @@ import type { LoaderFunctionArgs, MetaFunction } from "react-router"
 import { redirect } from "react-router"
 import { ProductPage } from "~/components/product/ProductPage"
 import { getCore } from "~/core/get-core"
+import { isSelfHosted } from "~/edition/edition.server"
 import { metaTranslator } from "~/i18n/translate"
 import { isAuthenticated } from "~/services/session.server"
 
@@ -28,6 +29,8 @@ export const meta: MetaFunction<typeof loader> = ({ loaderData, matches }) => {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await isAuthenticated(request)
+  // One company's own installation has no product page: straight to signing in.
+  if (!user && isSelfHosted) return redirect("/login")
   if (!user) return { origin: new URL(request.url).origin }
 
   // Straight to their office — one redirect, not a chain through every layout.
