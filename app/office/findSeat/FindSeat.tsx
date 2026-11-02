@@ -3,12 +3,14 @@ import { Check, Minus, Pencil, Pin, Star } from "lucide-react"
 import { useMemo, useState, type ReactNode } from "react"
 import { deskName, useDeskFloor } from "../booking/useBooking"
 import { useOfficeStore } from "../store"
+import { useTeamDays } from "../teams"
 import { isPerfect, type MatchDesk, type SeatMatch, type SeatRule } from "./matching"
 import { Preferences } from "./Preferences"
 import { useRuleText } from "./ruleText"
 import { SeatSentence } from "./SeatSentence"
 import { useSavedRules, useSeatMatches } from "./useFindSeat"
 import { BookingRow, deskText } from "~/components/office/BookingRow"
+import { TeamDot } from "~/components/teams/teamLook"
 import { useI18n } from "~/i18n/I18nProvider"
 import type { Day } from "~/utils/booking"
 
@@ -110,6 +112,7 @@ const Finder = ({
   const favorites = useOfficeStore((state) => state.booking.preferences.favorites)
   const seats = useSeatMatches(rules)
   const getDeskFloor = useDeskFloor()
+  const getTeamsIn = useTeamDays()
 
   // The day shown on the map, if it's one to pick; else the first that is.
   const [when, setWhen] = useState<When>(() =>
@@ -175,6 +178,11 @@ const Finder = ({
               : "border-border bg-surface text-foreground hover:border-muted"
           )}
         >
+          {/* Your team's days: its dot. */}
+          {choice !== ANY_DAY &&
+            getTeamsIn(choice).map((team) => (
+              <TeamDot key={team.id} color={team.color} className="mr-1.5 size-2 align-middle" />
+            ))}
           {choice === ANY_DAY ? t("Any day") : dayLabel(choice)}
         </button>
       ))}

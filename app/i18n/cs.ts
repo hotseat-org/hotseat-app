@@ -1523,4 +1523,16 @@ export const cs: Messages = {
   "Make one": "Vytvořit tým",
   TEAMS: "TÝMY",
   "Teams…": "Týmy…",
+  "Nobody from it has booked yet.": "Zatím si nikdo z nich nezarezervoval místo.",
+  "{names} will be in.": "Přijdou: {names}.",
+  "Team day": "Týmový den",
+  "{weekday} is a {team} day": "Den týmu {team}: {weekday}",
+  "Sit with them": "Sednout si k nim",
+  "{names} and {n} more will be in.": {
+    one: "Přijdou: {names} a {n} další.",
+    few: "Přijdou: {names} a {n} další.",
+    many: "Přijdou: {names} a {n} dalšího.",
+    other: "Přijdou: {names} a {n} dalších.",
+  },
+  "{team}'s days": "Dny týmu {team}",
 }

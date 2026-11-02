@@ -4,9 +4,11 @@ import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react"
 import { useMemo, useState } from "react"
 import { isSeatable } from "../catalog"
 import { useOfficeStore } from "../store"
+import { useMyTeams, useTeamDays } from "../teams"
 import { isOpenDay, addDays, weekStart, type Day } from "~/utils/booking"
 import { useI18n } from "~/i18n/I18nProvider"
 import { useAllPieces } from "~/editor"
+import { getTeamHex } from "~/utils/teams"
 
 /**
  * The day being shown in the office: ‹ Wed 23 Sep › in the bottom bar, with a
@@ -121,6 +123,9 @@ export const MonthCalendar = ({
   const me = useOfficeStore((state) => state.booking.me)
   const { t, format } = useI18n()
   const [month, setMonth] = useState(() => monthOf(day))
+  const getTeamsIn = useTeamDays()
+  const myTeams = useMyTeams()
+  const teamsWithDays = myTeams.filter((team) => team.weekdays.length > 0)
 
   // How full each day is: permanent residents every day + bookings on the rest.
   const { seats, residents, myResident, bookable } = useMemo(() => {
@@ -186,6 +191,8 @@ export const MonthCalendar = ({
           // Closed (a holiday, a weekend it doesn't open): shown, struck through.
           const isClosed = enabled && !isOpenDay(cellDay, opening)
           const closedReason = opening.closedDays[cellDay]
+          // A day your team comes in together: its colour in the corner.
+          const team = enabled && !isClosed ? getTeamsIn(cellDay)[0] : undefined
 
           return (
             <button
@@ -201,13 +208,20 @@ export const MonthCalendar = ({
               title={isClosed ? closedReason || t("Closed") : undefined}
               aria-pressed={selected}
               className={clsx(
-                "flex h-10 flex-col items-center justify-center gap-1 rounded-lg text-[0.8rem] font-extrabold tabular-nums outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus",
+                "relative flex h-10 flex-col items-center justify-center gap-1 rounded-lg text-[0.8rem] font-extrabold tabular-nums outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus",
                 !inMonth && "invisible",
                 getDayTone(selected, enabled),
                 !selected && cellDay === today && "text-accent",
                 isClosed && !selected && "text-muted line-through decoration-2"
               )}
             >
+              {team && (
+                <span
+                  aria-hidden
+                  className="absolute right-1 top-1 size-1.5 rounded-full"
+                  style={{ background: getTeamHex(team.color) }}
+                />
+              )}
               {Number(cellDay.slice(8))}
               <span
                 className={clsx(
@@ -239,6 +253,20 @@ export const MonthCalendar = ({
       <p className="mt-1.5 text-[0.7rem] text-muted">
         {t("Bar: how full · blue: you have a desk")}
       </p>
+      {teamsWithDays.length > 0 && (
+        <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.7rem] text-muted">
+          {teamsWithDays.map((team) => (
+            <span key={team.id} className="flex items-center gap-1">
+              <span
+                aria-hidden
+                className="size-1.5 rounded-full"
+                style={{ background: getTeamHex(team.color) }}
+              />
+              {t("{team}'s days", { team: team.name })}
+            </span>
+          ))}
+        </p>
+      )}
     </div>
   )
 }

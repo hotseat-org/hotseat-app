@@ -10,6 +10,7 @@ import { NotificationsBell } from "./Notifications"
 import { PersonProfile } from "./PersonProfile"
 import { WhosInList } from "./WhosIn"
 import { MOBILE_CHROME } from "./mobile"
+import { TeamDayCard } from "./TeamDayCard"
 import { BottomSheet } from "~/components/ui/BottomSheet"
 import { MapLayerSwitches, SidePanelBadge, useMapLayerRows, useSidePanels } from "~/editor"
 import { useOfficeStore } from "~/office/store"
@@ -21,7 +22,9 @@ import {
   useGivenUpDesk,
   useWaitlist,
 } from "~/office/booking/useBooking"
-import { daysBetween, isWeekend, type Day } from "~/utils/booking"
+import { daysBetween, isOpenDay, isWeekend, type Day } from "~/utils/booking"
+import { getTeamHex } from "~/utils/teams"
+import { useTeamDays } from "~/office/teams"
 import { FindSeat } from "~/office/findSeat/FindSeat"
 import { useShowSeatOnMap } from "~/office/findSeat/useFindSeat"
 import { useOfficePanel } from "~/office/useOfficePanel"
@@ -69,6 +72,20 @@ export const MobileShell = ({ offices, me, members, empty = false }: Props) => {
       <TopBar offices={offices} />
       <MapButtons />
       <DayDock me={me} onFindSeat={() => officePanel.open("find")} />
+      {/* Over the plan, just above the dock: closed, it gives the plan back. */}
+      {!sheet && (
+        <div
+          className="pointer-events-none absolute inset-x-3"
+          style={{ bottom: MOBILE_CHROME.bottom + 8 }}
+        >
+          <TeamDayCard
+            me={me}
+            members={members}
+            onFindSeat={() => officePanel.open("find")}
+            className=""
+          />
+        </div>
+      )}
       {sheet === "bookings" && (
         <BottomSheet
           title={t("My bookings")}
@@ -343,8 +360,10 @@ const DayStrip = () => {
   const from = useOfficeStore((s) => s.booking.from)
   const lastDay = useOfficeStore((s) => s.booking.lastDay)
   const setDay = useOfficeStore((s) => s.setBookingDay)
+  const opening = useOfficeStore((s) => s.booking.opening)
   const days = useMemo(() => (from && lastDay ? daysBetween(from, lastDay) : []), [from, lastDay])
   const { t, format } = useI18n()
+  const getTeamsIn = useTeamDays()
 
   // Keep the shown day in view (centred) as it changes.
   const selected = useRef<HTMLButtonElement>(null)
@@ -361,25 +380,43 @@ const DayStrip = () => {
     >
       {days.map((d: Day) => {
         const isSelected = d === day
+        const isClosed = !isOpenDay(d, opening)
+        // A day your team comes in together: its colour in the corner.
+        const team = isClosed ? undefined : getTeamsIn(d)[0]
+        const getLabel = () => {
+          const label = format.long(d) + (d === today ? `, ${t("today")}` : "")
+          if (isClosed) return `${label} · ${opening.closedDays[d] || t("Closed")}`
+
+          return team ? `${label} · ${t("{team}'s days", { team: team.name })}` : label
+        }
+
         return (
           <button
             key={d}
             ref={isSelected ? selected : undefined}
             type="button"
             aria-pressed={isSelected}
-            aria-label={format.long(d) + (d === today ? `, ${t("today")}` : "")}
+            aria-label={getLabel()}
             onClick={() => setDay(d)}
             className={clsx(
-              "flex h-12 w-11 shrink-0 snap-center flex-col items-center justify-center gap-0.5 rounded-xl transition-colors",
+              "relative flex h-12 w-11 shrink-0 snap-center flex-col items-center justify-center gap-0.5 rounded-xl transition-colors",
               isSelected
                 ? "bg-accent text-accent-foreground"
                 : clsx(
                     "bg-foreground/[0.05]",
                     d === today && "ring-1 ring-inset ring-accent/60",
-                    d < today || isWeekend(d) ? "text-muted" : "text-foreground"
-                  )
+                    d < today || isWeekend(d) || isClosed ? "text-muted" : "text-foreground"
+                  ),
+              isClosed && "line-through decoration-2"
             )}
           >
+            {team && (
+              <span
+                aria-hidden
+                className="absolute right-1 top-1 size-1.5 rounded-full"
+                style={{ background: getTeamHex(team.color) }}
+              />
+            )}
             <span className="text-[0.62rem] font-bold uppercase tracking-wide">
               {d === today ? t("Today") : format.dow(d)}
             </span>

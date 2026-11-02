@@ -6,6 +6,7 @@ import { PANEL, PANEL_HOVER, type ShellMember, type ShellOffice } from "./shell-
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher"
 import { PersonProfile } from "./PersonProfile"
 import { WhosInModal } from "./WhosIn"
+import { TeamDayCard } from "./TeamDayCard"
 import { RailModal } from "./RailModal"
 import { useDayStatus } from "./dayStatus"
 import { ShellSearch } from "./ShellSearch"
@@ -226,6 +227,16 @@ export const SpatialShell = ({
 
       {/* The editor's camera controls guide, bottom right. */}
       {guide && <div className="pointer-events-none absolute bottom-4 right-5">{guide}</div>}
+
+      {/* Above the dock, on a day your team comes in together. */}
+      {isBooking && (
+        <TeamDayCard
+          me={me}
+          members={members}
+          onFindSeat={() => officePanel.open("find")}
+          className="absolute bottom-24 left-1/2 w-[min(380px,90vw)] -translate-x-1/2"
+        />
+      )}
 
       {/* Bottom dock: real-time sync + time-of-day + edit */}
       <TimeOfDay isViewing>

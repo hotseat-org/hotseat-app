@@ -1,5 +1,6 @@
-import { useMemo } from "react"
+import { useCallback, useMemo } from "react"
 import { useOfficeStore } from "./store"
+import { isoWeekday, type Day } from "~/utils/booking"
 import { getTeamHex, getTeamsOf, type OfficeTeam } from "~/utils/teams"
 
 /** The organization's teams, each with its zone in this office. */
@@ -11,6 +12,16 @@ export const useMyTeams = () => {
   const me = useOfficeStore((state) => state.booking.me)
 
   return useMemo(() => (me ? getTeamsOf(teams, me) : []), [teams, me])
+}
+
+/** Which of your teams come in together on a day (their team days). */
+export const useTeamDays = () => {
+  const myTeams = useMyTeams()
+
+  return useCallback(
+    (day: Day) => myTeams.filter((team) => team.weekdays.includes(isoWeekday(day))),
+    [myTeams]
+  )
 }
 
 /** Your teammates' colours, by their email: each in the first team you share. */
