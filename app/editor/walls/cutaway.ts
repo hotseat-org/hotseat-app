@@ -186,20 +186,24 @@ const getCutDepth = (band: number, isMerged: boolean) => {
 
 /**
  * The cutaway's nodes for a surface it slices: which pixels stay (`mask`), and
- * how its cut-open inside is lit (`isCutInside`: see surfaceShader.ts).
+ * how its cut-open inside is lit (`isCutInside`: see surfaceShader.ts). A
+ * see-through surface (`isSeeThrough`: glass) isn't sliced but fades (`fade`,
+ * its opacity's share) as deep as it's cut: sliced, its curved cut edge read
+ * as a veil hanging in the air, and its back faces showed through its front.
  */
-const createCutaway = (band: number, isMerged = false) => {
+const createCutaway = (band: number, { isMerged = false, isSeeThrough = false } = {}) => {
   const depth = getCutDepth(band, isMerged)
+  if (isSeeThrough)
+    return { mask: frontFacing, isCutInside: frontFacing.not(), fade: float(1).sub(depth) }
+
   // Above the shown floor: a floor arriving a storey up isn't sliced at the
   // ground floor's wall height (floors below never are).
   const height = positionWorld.y.sub(shownFloorUniform)
   const isBelowCut = height.lessThanEqual(mix(CUT_TOP, CUT_HEIGHT, depth))
+  // Inner faces only show where it's cut open.
+  const isShownFace = frontFacing.or(depth.greaterThanEqual(0.001))
 
-  return {
-    // Inner faces only show where it's cut open.
-    mask: isBelowCut.and(frontFacing.or(depth.greaterThanEqual(0.001))),
-    isCutInside: frontFacing.not(),
-  }
+  return { mask: isBelowCut.and(isShownFace), isCutInside: frontFacing.not(), fade: null }
 }
 
 /** The cut-open top's light: a share of the ambient (no sun, so no shadows). */
@@ -213,12 +217,34 @@ export const CUT_INSIDE_LIGHT = CAP_LIGHT
 export const CUTAWAYS = {
   wall: createCutaway(CUT_BAND.wall),
   item: createCutaway(CUT_BAND.item),
-  mergedWall: createCutaway(CUT_BAND.wall, true),
-  mergedItem: createCutaway(CUT_BAND.item, true),
+  mergedWall: createCutaway(CUT_BAND.wall, { isMerged: true }),
+  mergedItem: createCutaway(CUT_BAND.item, { isMerged: true }),
+  wallGlass: createCutaway(CUT_BAND.wall, { isSeeThrough: true }),
+  itemGlass: createCutaway(CUT_BAND.item, { isSeeThrough: true }),
+  mergedWallGlass: createCutaway(CUT_BAND.wall, { isMerged: true, isSeeThrough: true }),
+  mergedItemGlass: createCutaway(CUT_BAND.item, { isMerged: true, isSeeThrough: true }),
 }
 export type CutawayKind = keyof typeof CUTAWAYS
+
+/** The see-through variant of each kind (glass in a wall, a door, a window). */
+export const GLASS_KIND: Record<CutawayKind, CutawayKind> = {
+  wall: "wallGlass",
+  item: "itemGlass",
+  mergedWall: "mergedWallGlass",
+  mergedItem: "mergedItemGlass",
+  wallGlass: "wallGlass",
+  itemGlass: "itemGlass",
+  mergedWallGlass: "mergedWallGlass",
+  mergedItemGlass: "mergedItemGlass",
+}
+
 /** The merged variant of a single-piece kind. */
-export const MERGED_KIND = { wall: "mergedWall", item: "mergedItem" } as const
+export const MERGED_KIND = {
+  wall: "mergedWall",
+  item: "mergedItem",
+  wallGlass: "mergedWallGlass",
+  itemGlass: "mergedItemGlass",
+} as const
 
 /** Inside one: the Surfaces below are sliced by the cutaway (of this kind). */
 export const CutawayContext = createContext<CutawayKind | null>(null)

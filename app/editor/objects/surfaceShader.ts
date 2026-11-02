@@ -3,6 +3,7 @@ import {
   abs,
   float,
   materialColor,
+  materialOpacity,
   mix,
   normalWorld,
   positionWorld,
@@ -72,6 +73,8 @@ export const getSurfaceShader = (cutaway: CutawayKind | null, place = SHOWN_FLOO
       ? {
           colorNode: materialColor.mul(shade).mul(select(cut.isCutInside, CUT_INSIDE_LIGHT, 1)),
           maskNode: cut.mask,
+          // Glass fades where it's cut, rather than being sliced.
+          ...(cut.fade && { opacityNode: materialOpacity.mul(cut.fade) }),
           // Typed without its argument, but three hands it the shadow.
           receivedShadowNode: Fn(([shadow]: [Node<"float">]) =>
             select(cut.isCutInside, float(0), shadow)

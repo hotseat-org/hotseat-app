@@ -1,6 +1,6 @@
 import { createContext, useContext } from "react"
 import { DoubleSide } from "three"
-import { useCutaway } from "../walls/cutaway"
+import { GLASS_KIND, useCutaway } from "../walls/cutaway"
 import { STOREY } from "./dimensions"
 import { useFloorPlace } from "./floorHeight"
 import { getSurfaceShader } from "./surfaceShader"
@@ -78,7 +78,7 @@ export const Surface = ({
   recess = 0,
 }: SurfaceProps) => {
   const ghost = useContext(GhostContext)
-  const cutaway = useCutaway()
+  const sliced = useCutaway()
   const floorPlace = useFloorPlace()
 
   if (ghost && typeof ghost === "object") {
@@ -95,6 +95,8 @@ export const Surface = ({
 
   const translucent = ghost === "translucent" || baseOpacity < 1
   const opacity = (ghost === "translucent" ? 0.55 : 1) * baseOpacity
+  // Glass is sliced without showing an inside (see cutaway.ts).
+  const cutaway = sliced && baseOpacity < 1 ? GLASS_KIND[sliced] : sliced
 
   return (
     <meshStandardNodeMaterial
