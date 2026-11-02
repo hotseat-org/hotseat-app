@@ -1,0 +1,15 @@
+# Built inside the image; never copied in from the host.
+node_modules
+build
+.react-router
+.wrangler
+app/repositories/main-repository/prisma/generated
+
+# Not part of the app.
+.git
+.claude
+.env
+.env.*
+.dev.vars
+*.png
+!public/**/*.png

@@ -26,3 +26,8 @@ use) and runs `prisma migrate deploy` with it.
 
 Locally, `bun run dev` runs the app in workerd too; Hyperdrive falls back to the
 `localConnectionString` (the docker Postgres) and secrets come from `.env`.
+
+# Self-hosting
+
+One company's own installation, on a plain Node server with Docker: see
+[SELF_HOSTING.md](SELF_HOSTING.md).
