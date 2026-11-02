@@ -3,6 +3,7 @@ import { useFrame, useThree } from "@react-three/fiber"
 import {
   DepthStencilFormat,
   Layers,
+  MaterialBlending,
   UnsignedByteType,
   UnsignedInt248Type,
   type Camera,
@@ -35,6 +36,7 @@ import {
   vec4,
 } from "three/tsl"
 import {
+  BlendMode,
   PassNode,
   RenderPipeline,
   type Node,
@@ -179,8 +181,14 @@ export const PostFx = ({ highQuality = false }: { highQuality?: boolean }) => {
     const getOccluded = () => {
       // The scene's normals, drawn in the same pass: what the occlusion leans
       // on. Packed into 8-bit colour (half the memory and bandwidth of the
-      // default half floats), unpacked where they're read.
-      scenePass.setMRT(mrt({ output, normal: packNormalToRGB(normalView) }))
+      // default half floats), unpacked where they're read. Blended like each
+      // material, with no alpha: solid surfaces don't blend, so nothing
+      // changes for them, but see-through ones (glass) leave the normals of
+      // what's behind them — else the occlusion shades the pane as if it were
+      // a wall, and smears that over everything seen through it.
+      const outputs = mrt({ output, normal: vec4(packNormalToRGB(normalView), 0) })
+      outputs.setBlendMode("normal", new BlendMode(MaterialBlending))
+      scenePass.setMRT(outputs)
       scenePass.getTexture("normal").type = UnsignedByteType
       const packedNormals = scenePass.getTextureNode("normal")
       const normals = sample((at: Node<"vec2">) => unpackRGBToNormal(packedNormals.sample(at)))
