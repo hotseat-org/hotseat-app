@@ -4,9 +4,7 @@ import { Check, Search } from "lucide-react"
 import { useState, type ReactNode } from "react"
 import { colorForEmail } from "~/components/office/shell-ui"
 import { useI18n } from "~/i18n/I18nProvider"
-
-/** Rows shown at most at first: a big organization is narrowed down by the search. */
-const DEFAULT_MAX_ROWS = 100
+import { useProgressiveList } from "~/utils/hooks/useProgressiveList"
 
 /** What the search shows and searches of anyone: their email (their id), name and photo. */
 export interface SearchedPerson {
@@ -30,7 +28,7 @@ export const toSearchable = (text: string) =>
     .toLowerCase()
 
 /** Whether a person is found by `query` (already searchable): by name or email. */
-const isFound = (person: SearchedPerson, query: string) =>
+export const isFound = (person: SearchedPerson, query: string) =>
   !query || toSearchable(person.name).includes(query) || toSearchable(person.email).includes(query)
 
 const initialsOf = (name: string) => {
@@ -82,7 +80,7 @@ export const PeopleSearch = <Item,>({
   renderFace,
   isSelected,
   onPick,
-  maxRows = DEFAULT_MAX_ROWS,
+  maxRows,
   isAutoFocused = false,
   className,
 }: {
@@ -106,6 +104,7 @@ export const PeopleSearch = <Item,>({
   isSelected?: (item: Item) => boolean
   /** A row picked (none: rows aren't buttons). */
   onPick?: (item: Item) => void
+  /** At most this many, the rest found by searching (none: all of them, a page at a time). */
   maxRows?: number
   isAutoFocused?: boolean
   className?: string
@@ -120,7 +119,9 @@ export const PeopleSearch = <Item,>({
     (item) => (!filter || filter.isIn(item)) && isFound(getPerson(item), searchable)
   )
   if (sort) listed.sort(sort)
-  const shown = listed.slice(0, maxRows)
+  // A short pick (maxRows) shows that many; a whole list, a page at a time.
+  const pages = useProgressiveList(listed, `${query}|${filterId}`)
+  const shown = maxRows === undefined ? pages.shown : listed.slice(0, maxRows)
 
   return (
     <div className={clsx("flex min-h-0 flex-col", className)}>
@@ -210,7 +211,11 @@ export const PeopleSearch = <Item,>({
             {searchable ? t("Nobody matches “{query}”", { query: query.trim() }) : t("Nobody here")}
           </li>
         )}
-        {listed.length > shown.length && (
+        {/* More coming: drawn as this nears the end of the scroll. */}
+        {maxRows === undefined && pages.hasMore && (
+          <li ref={pages.endRef} aria-hidden className="h-12 shrink-0" />
+        )}
+        {maxRows !== undefined && listed.length > shown.length && (
           <li className="px-2 pt-3 text-center text-xs text-muted">
             {t("Showing {shown} of {total} — search to narrow it down", {
               shown: shown.length,

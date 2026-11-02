@@ -1,5 +1,6 @@
 import { Chip, Dropdown, Spinner, Table } from "@heroui/react"
-import { ChevronUp, ChevronsUp, CornerUpLeft, FileUp, UserMinus } from "lucide-react"
+import { ChevronUp, ChevronsUp, CornerUpLeft, FileUp, Search, UserMinus } from "lucide-react"
+import { useState } from "react"
 import { useFetcher, useParams } from "react-router"
 import { useSettings } from "../useSettings"
 import { useOrgSettingsData } from "../data"
@@ -10,6 +11,8 @@ import { useOrganizationContext } from "~/utils/hooks/useProfileData"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { roleLabel } from "~/components/office/shell-ui"
 import { Button } from "~/components/Button"
+import { isFound, toSearchable } from "~/components/people/PeopleSearch"
+import { useProgressiveList } from "~/utils/hooks/useProgressiveList"
 import { Rich, useI18n } from "~/i18n/I18nProvider"
 
 const MANAGE =
@@ -21,6 +24,13 @@ export function OrgMembers() {
 
   // Loaded on the server with the page; refreshed after a role change.
   const members = useOrgSettingsData("members")?.members
+  // Hundreds of people: found by name or email, drawn a page at a time.
+  const [query, setQuery] = useState("")
+  const searched = toSearchable(query.trim())
+  const found = (members?.data ?? []).filter((member) =>
+    isFound({ email: member.userEmail, name: member.displayName ?? "" }, searched)
+  )
+  const pages = useProgressiveList(found, query)
   const removing = dialog?.startsWith("remove:")
     ? members?.data.find((m) => m.userEmail === dialog.slice("remove:".length))
     : undefined
@@ -60,12 +70,22 @@ export function OrgMembers() {
           <p className="text-sm text-muted">{t("Only admins can see and manage members.")}</p>
         ) : (
           <>
+            <label className="flex h-11 items-center gap-2 rounded-xl border border-border bg-surface px-3 focus-within:ring-2 focus-within:ring-focus">
+              <Search className="size-4 shrink-0 text-muted" />
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.currentTarget.value)}
+                placeholder={t("Search by name or email")}
+                aria-label={t("Search by name or email")}
+                className="min-w-0 flex-1 bg-transparent text-[15px] outline-none"
+              />
+            </label>
             {/* Phones: one card per person — a four-column table doesn't fit. */}
             <ul
               aria-label={t("Members")}
               className="flex flex-col divide-y divide-separator rounded-2xl border border-border bg-surface sm:hidden"
             >
-              {members.data.map((member) => (
+              {pages.shown.map((member) => (
                 <li key={member.userEmail} className="flex items-center gap-3 px-4 py-3">
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-foreground">
@@ -88,7 +108,7 @@ export function OrgMembers() {
                     <Table.Column>{t("ACTIONS")}</Table.Column>
                   </Table.Header>
                   <Table.Body>
-                    {members.data.map((member) => (
+                    {pages.shown.map((member) => (
                       <Table.Row key={member.userEmail}>
                         <Table.Cell>{member.userEmail}</Table.Cell>
                         <Table.Cell>{member.displayName}</Table.Cell>
@@ -104,6 +124,13 @@ export function OrgMembers() {
                 </Table.Content>
               </Table.ScrollContainer>
             </Table>
+            {/* More coming: drawn as this nears the end of the scroll. */}
+            {pages.hasMore && <div ref={pages.endRef} aria-hidden className="h-12" />}
+            {found.length === 0 && (
+              <p className="py-6 text-center text-sm text-muted">
+                {t("Nobody matches “{query}”", { query: query.trim() })}
+              </p>
+            )}
           </>
         )}
       </div>
