@@ -139,10 +139,14 @@ export const HeatTag = ({
 )
 
 /** A zone's name, on its floor. */
+/** Lettering smaller than this (px) can't be read: far out, a name pill instead. */
+const MIN_LETTERS_PX = 7
+
 /**
  * A zone's name lettered on its floor, like a district on a map: spaced
  * capitals in its colour, faint, where placeZoneLetters found it room — the
- * same size as the 3D's. Too small to read (far out), left out.
+ * same size as the 3D's. Too small to read (far out, the whole office on a
+ * phone), a small pill with its name there instead.
  */
 export const ZoneLetters = ({
   zone,
@@ -157,7 +161,17 @@ export const ZoneLetters = ({
 }) => {
   // The letters' height on the floor is their line's (see ZoneLettering): the font a share of it.
   const size = (letters.height / 1.3) * zoom
-  if (size < 7) return null
+  if (size < MIN_LETTERS_PX)
+    return (
+      <div
+        aria-hidden
+        className="pointer-events-none absolute flex -translate-x-1/2 -translate-y-1/2 items-center gap-1 whitespace-nowrap rounded-full border border-foreground/10 bg-overlay/85 px-1.5 text-[10px] font-extrabold leading-4 text-foreground shadow-overlay"
+        style={style}
+      >
+        <span className="size-1.5 rounded-full" style={{ background: zone.color }} />
+        {zone.name}
+      </div>
+    )
 
   return (
     <div

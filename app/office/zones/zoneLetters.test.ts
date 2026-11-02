@@ -86,6 +86,21 @@ describe("zones' names on their floors", () => {
     expect([kept.x, kept.z, kept.isAlongX]).toEqual([elsewhere.x, elsewhere.z, elsewhere.isAlongX])
   })
 
+  test("go under the furniture where there's no clear floor by their zone", () => {
+    // Desks walled in all round, tight: no floor clear of them anywhere.
+    const desks = row("Engineering", 0, 4)
+    const along = (z: number) =>
+      Array.from({ length: 20 }, (_, index) => place("wall", { x: -1.25 + index * 0.5, z }))
+    const across = (x: number) =>
+      Array.from({ length: 4 }, (_, index) =>
+        place("wall", { x, z: -0.75 + index * 0.5, rotation: Math.PI / 2 })
+      )
+    const objects = [...desks, ...along(-1), ...along(1), ...across(-1.5), ...across(8.5)]
+    const name = placeZoneLetters(composeZoneAreas(objects), objects).get("Engineering")
+
+    expect(name?.isUnderFurniture).toBe(true)
+  })
+
   test("aren't lettered where they can't fit whole by their zone", () => {
     const name = "A name far, far longer than its one desk's zone could ever hold"
     const objects = [place("workstation", { x: 0, z: 0, zone: name })]

@@ -13,6 +13,9 @@ import { footprintCells, getEdge, GRID, type SceneObject } from "~/editor/core"
 
 /** Letters' heights to try (m), largest first. */
 export const LETTER_HEIGHTS = [0.5, 0.42, 0.36]
+/** A zone's own, smaller, where its name fits no office height (it doesn't shrink the others'). */
+const SMALL_HEIGHTS = [0.3, 0.25]
+const ALL_HEIGHTS = [...LETTER_HEIGHTS, ...SMALL_HEIGHTS]
 /** Room kept between a name and its zone's edge (m): clear of the outline drawn inside it. */
 const EDGE_MARGIN = 0.15
 
@@ -33,6 +36,8 @@ export interface ZoneLetters {
   height: number
   width: number
   cells: [number, number][]
+  /** No clear floor anywhere by its zone: lettered under its furniture, showing through. */
+  isUnderFurniture?: boolean
 }
 
 /**
@@ -323,14 +328,15 @@ const pickPlace = (area: ZoneArea, places: Place[]): Place => {
 }
 
 /** A place as the lettering needs it. */
-const toLetters = ({ x, z, isAlongX, height, width, cells }: Place): ZoneLetters => ({
+const toLetters = ({
   x,
   z,
   isAlongX,
   height,
   width,
   cells,
-})
+  isUnderFurniture,
+}: Place): ZoneLetters => ({ x, z, isAlongX, height, width, cells, isUnderFurniture })
 
 /** Where each zone's name is lettered (by its name); a zone with no room for it, none. */
 export const placeZoneLetters = (
@@ -348,25 +354,31 @@ export const placeZoneLetters = (
   const floor = createFloorGrid(
     objects.filter((piece) => !NOT_IN_THE_WAY.has(piece.type)).map(boxOf)
   )
+  // Only the walls in the way: for a name with no clear floor, under the
+  // furniture (made only when one needs it).
+  let walls: ReturnType<typeof createFloorGrid> | undefined
+  const getWalls = () =>
+    (walls ??= createFloorGrid(objects.filter((piece) => getEdge(piece.type)?.encloses).map(boxOf)))
   const closedSides = getClosedSides(objects)
   const walledCells = getWalledCells(closedSides)
   const zoneOf = new Map<number, string>(
     areas.flatMap((area) => area.cells.map(([i, j]) => [getKey(i, j), area.zone.name] as const))
   )
   const stepsOf = new Map(areas.map((area) => [area, getSteps(area)]))
-  const placesAt = (area: ZoneArea, height: number) =>
+  const placesAt = (area: ZoneArea, height: number, isUnderFurniture = false) =>
     findPlaces({
       area,
       steps: stepsOf.get(area) ?? [],
       aspect: getAspect(area.zone.name),
       height,
-      floor,
+      floor: isUnderFurniture ? getWalls() : floor,
       closedSides,
       walledCells,
       zoneOf,
     })
 
-  // Each zone's largest height that fits; the office's, the largest all of them fit.
+  // Each zone's largest height that fits; the office's, the largest all of
+  // them fit (but for those that fit only smaller).
   const placesOf = new Map<ZoneArea, Map<number, Place[]>>()
   const getPlaces = (area: ZoneArea, height: number) => {
     const known = placesOf.get(area) ?? new Map<number, Place[]>()
@@ -377,22 +389,19 @@ export const placeZoneLetters = (
     return places
   }
   const fitting = new Map(
-    areas.map((area) => [area, LETTER_HEIGHTS.find((height) => getPlaces(area, height).length)])
+    areas.map((area) => [area, ALL_HEIGHTS.find((height) => getPlaces(area, height).length)])
   )
   const officeHeight = Math.min(
-    ...[...fitting.values()].filter((fit) => fit !== undefined),
+    ...LETTER_HEIGHTS.filter((height) => [...fitting.values()].includes(height)),
     LETTER_HEIGHTS[0]
   )
-  const heightOf = (area: ZoneArea) => Math.min(fitting.get(area) ?? 0, officeHeight)
+  const heightOf = (area: ZoneArea) => Math.min(fitting.get(area) ?? officeHeight, officeHeight)
 
   // Tightest first — the zones with the fewest places — so a roomier zone's
   // tab doesn't take the only aisle a tight one had.
-  const placing = areas
-    .filter((area) => fitting.get(area) !== undefined)
-    .sort(
-      (first, second) =>
-        getPlaces(first, heightOf(first)).length - getPlaces(second, heightOf(second)).length
-    )
+  const countPlaces = (area: ZoneArea) =>
+    fitting.get(area) === undefined ? 0 : getPlaces(area, heightOf(area)).length
+  const placing = [...areas].sort((first, second) => countPlaces(first) - countPlaces(second))
 
   // That height — smaller only where a name before it took the floor it
   // needed — in the open where it can be; where it was, if it still fits
@@ -403,9 +412,16 @@ export const placeZoneLetters = (
   for (const area of placing) {
     // Before any tab's taken, the places looked for already hold.
     const find: (area: ZoneArea, height: number) => Place[] = isFloorTaken ? placesAt : getPlaces
-    const places = LETTER_HEIGHTS.filter((height) => height <= heightOf(area))
-      .map((height) => find(area, height))
-      .find((found) => found.length)
+    const heights = ALL_HEIGHTS.filter((height) => height <= heightOf(area))
+    const clear = heights.map((height) => find(area, height)).find((found) => found.length)
+    // No clear floor by it: under its furniture, rather than no name at all.
+    const places =
+      clear ??
+      heights
+        .map((height) =>
+          placesAt(area, height, true).map((place) => ({ ...place, isUnderFurniture: true }))
+        )
+        .find((found) => found.length)
     if (!places) continue
 
     const roomy = places.filter((place) => place.room >= MIN_ROOM)

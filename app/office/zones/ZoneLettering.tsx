@@ -15,6 +15,8 @@ const OPACITY = { light: 0.62, dark: 0.5 }
  * through it this faintly (a share of its strength): never cut off.
  */
 const THROUGH = 0.38
+/** A name lettered under its zone's furniture (no clear floor by it) shows through it this much. */
+const UNDER_FURNITURE = 0.8
 /** The texture's letters (px): sharp from afar and close. */
 const FONT_SIZE = 96
 const FONT = `900 ${FONT_SIZE}px Nunito, ui-rounded, system-ui, sans-serif`
@@ -125,6 +127,7 @@ export const ZoneLettering = ({
   const look = useMemo(() => {
     const map = drawName(zone.name)
     const opacity = uniform(OPACITY.light)
+    const throughShare = uniform(THROUGH)
     const material = new MeshBasicNodeMaterial({
       transparent: true,
       depthWrite: false,
@@ -142,20 +145,21 @@ export const ZoneLettering = ({
       toneMapped: false,
     })
     through.colorNode = material.colorNode
-    through.opacityNode = texture(map).a.mul(opacity).mul(THROUGH)
+    through.opacityNode = texture(map).a.mul(opacity).mul(throughShare)
     through.maskNode = material.maskNode
 
-    return { map, material, through, opacity, color }
+    return { map, material, through, opacity, throughShare, color }
     // Redrawn in the page's font once it's loaded.
   }, [zone.name, zone.color, isFontReady])
   useEffect(() => {
     look.opacity.value = OPACITY[isDark ? "dark" : "light"]
+    look.throughShare.value = letters.isUnderFurniture ? UNDER_FURNITURE : THROUGH
     // A step off the zone's own colour (lighter at night, darker by day): it
     // stands out from the zone's tint under it.
     look.color.value
       .set(zone.color)
       .lerp(new Color(isDark ? "#ffffff" : "#000000"), isDark ? 0.4 : 0.25)
-  }, [look, isDark, zone.color])
+  }, [look, isDark, zone.color, letters.isUnderFurniture])
   useEffect(
     () => () => {
       look.map.dispose()
