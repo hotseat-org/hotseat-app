@@ -1,8 +1,9 @@
 import { Modal } from "@heroui/react"
 import clsx from "clsx"
-import { Armchair, ArrowLeftRight, Check, X } from "lucide-react"
+import { Armchair, ArrowLeftRight, Check } from "lucide-react"
 import { deskName } from "../useBooking"
 import { PICK_ALL, PICK_ALL_OFF, PICK_ALL_ON, getDayLook, type Cell, type Week } from "./days"
+import { DialogCloseButton } from "~/components/ui/DialogCloseButton"
 import { type SceneObject } from "~/editor/core"
 import { type Day } from "~/utils/booking"
 import type { Translator } from "~/i18n/translate"
@@ -61,14 +62,7 @@ export const PhoneLayout = ({
             {t("Bookable until {day}", { day: { day: lastDay } })}
           </p>
         </div>
-        <button
-          type="button"
-          aria-label={t("Close")}
-          onClick={onClose}
-          className="grid size-11 shrink-0 place-items-center rounded-full text-muted outline-none focus-visible:ring-2 focus-visible:ring-focus"
-        >
-          <X className="size-[18px]" strokeWidth={2.4} />
-        </button>
+        <DialogCloseButton onClose={onClose} className="size-11" />
       </div>
 
       <div className="flex shrink-0 items-center gap-1.5 overflow-x-auto border-b border-border px-4 pb-3">

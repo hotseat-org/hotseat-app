@@ -1,7 +1,7 @@
 import { Modal } from "@heroui/react"
-import { X } from "lucide-react"
 import { FindSeat } from "./FindSeat"
 import { useShowSeatOnMap } from "./useFindSeat"
+import { DialogCloseButton } from "~/components/ui/DialogCloseButton"
 import { useI18n } from "~/i18n/I18nProvider"
 import type { Day } from "~/utils/booking"
 
@@ -25,14 +25,7 @@ export const FindSeatDialog = ({ onClose }: { onClose: () => void }) => {
             <Modal.Heading className="text-lg font-black text-foreground">
               {t("Find a seat")}
             </Modal.Heading>
-            <button
-              type="button"
-              aria-label={t("Close")}
-              onClick={onClose}
-              className="grid size-10 shrink-0 place-items-center rounded-full text-muted outline-none transition-colors hover:bg-surface-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
-            >
-              <X className="size-[18px]" strokeWidth={2.4} />
-            </button>
+            <DialogCloseButton onClose={onClose} />
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6">
             <FindSeat onShowOnMap={showOnMap} layout="columns" />

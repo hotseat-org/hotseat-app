@@ -1,6 +1,6 @@
 import { Modal } from "@heroui/react"
 import clsx from "clsx"
-import { Armchair, ArrowDown, ArrowRight, Check, X } from "lucide-react"
+import { Armchair, ArrowDown, ArrowRight, Check } from "lucide-react"
 import { useMemo, useState } from "react"
 import { personByEmail, usePeople } from "../../desks/people"
 import { isSeatable } from "../../catalog"
@@ -20,6 +20,7 @@ import {
 import { Legend } from "./Legend"
 import { findNearestFreeDesk } from "./nearestFreeDesk"
 import { PhoneLayout } from "./PhoneLayout"
+import { DialogCloseButton } from "~/components/ui/DialogCloseButton"
 import { type SceneObject } from "~/editor/core"
 import { useI18n } from "~/i18n/I18nProvider"
 import { useAllPieces } from "~/editor"
@@ -222,14 +223,7 @@ const CustomBookingBody = ({
             {t("Bookable until {day}", { day: { day: lastDay } })}
           </p>
         </div>
-        <button
-          type="button"
-          aria-label={t("Close")}
-          onClick={onClose}
-          className="grid size-10 shrink-0 place-items-center rounded-full text-muted outline-none transition-colors hover:bg-foreground/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
-        >
-          <X className="size-[18px]" strokeWidth={2.4} />
-        </button>
+        <DialogCloseButton onClose={onClose} />
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-6 py-[18px]">

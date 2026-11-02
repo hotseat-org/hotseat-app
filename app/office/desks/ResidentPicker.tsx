@@ -1,11 +1,12 @@
 import { Modal } from "@heroui/react"
 import clsx from "clsx"
-import { AlertTriangle, Armchair, Check, X } from "lucide-react"
+import { AlertTriangle, Armchair, Check } from "lucide-react"
 import { useMemo, useState } from "react"
 import { isSeatable } from "../catalog"
 import { deskName, useDeskFloor } from "../booking/useBooking"
 import { useOfficeStore } from "../store"
 import { usePeople, type Person } from "./people"
+import { DialogCloseButton } from "~/components/ui/DialogCloseButton"
 import { PeopleSearch } from "~/components/people/PeopleSearch"
 import { useAllPieces } from "~/editor"
 import { type SceneObject } from "~/editor/core"
@@ -152,14 +153,7 @@ const ResidentPickerBody = ({
           </Modal.Heading>
           <p className="truncate text-[13px] text-muted">{describeDesk(desk)}</p>
         </div>
-        <button
-          type="button"
-          aria-label={t("Close")}
-          onClick={onClose}
-          className="grid size-10 shrink-0 place-items-center rounded-full text-muted outline-none transition-colors hover:bg-foreground/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
-        >
-          <X className="size-[18px]" strokeWidth={2.4} />
-        </button>
+        <DialogCloseButton onClose={onClose} />
       </div>
 
       {pendingEmail ? (

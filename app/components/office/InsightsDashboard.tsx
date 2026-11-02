@@ -1,10 +1,11 @@
-import { Button, CloseButton, Spinner } from "@heroui/react"
+import { Button, Spinner } from "@heroui/react"
 import clsx from "clsx"
 import { Download, Map as MapIcon } from "lucide-react"
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react"
 import { createPortal } from "react-dom"
 import { useFetcher, useParams } from "react-router"
 import { useTheme } from "remix-themes"
+import { DialogCloseButton } from "~/components/ui/DialogCloseButton"
 import { heatColor, heatGradient, PERIOD_LABEL } from "~/office/heatmap/heatmap"
 import { personByEmail, usePeople } from "~/office/desks/people"
 import { useOfficeStore } from "~/office/store"
@@ -372,7 +373,7 @@ export const InsightsDashboard = () => {
           >
             <Download className="size-4" /> CSV
           </Button>
-          <CloseButton aria-label={t("Close")} onPress={close} />
+          <DialogCloseButton onClose={close} />
         </header>
 
         {insights.data && "error" in insights.data && (

@@ -1,4 +1,3 @@
-import { CloseButton } from "@heroui/react"
 import clsx from "clsx"
 import {
   useEffect,
@@ -10,6 +9,7 @@ import {
 } from "react"
 import { createPortal } from "react-dom"
 import { useSwipeToClose } from "./useSwipeToClose"
+import { DialogCloseButton } from "~/components/ui/DialogCloseButton"
 import { useI18n } from "~/i18n/I18nProvider"
 
 /** A sheet's slide-out (the `sheet-down` animation in tailwind.css), ms. */
@@ -184,7 +184,7 @@ export const BottomSheet = ({
               <span aria-hidden className="mx-auto h-1.5 w-10 rounded-full bg-border" />
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-extrabold text-foreground">{title}</h2>
-                <CloseButton aria-label={t("Close")} onPress={close} className="size-10" />
+                <DialogCloseButton onClose={close} className="size-10" />
               </div>
             </div>
           ) : (

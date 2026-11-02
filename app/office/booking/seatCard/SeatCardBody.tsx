@@ -1,4 +1,3 @@
-import { CloseButton } from "@heroui/react"
 import clsx from "clsx"
 import {
   CalendarDays,
@@ -16,6 +15,7 @@ import { useLayoutEffect, useRef, useState } from "react"
 import { type Person } from "../../desks/people"
 import { UsualStep } from "./UsualStep"
 import type { Option } from "./useSeatCard"
+import { DialogCloseButton } from "~/components/ui/DialogCloseButton"
 import { MemberAvatar } from "~/components/office/shell-ui"
 import { useSwipeToClose } from "~/components/ui/useSwipeToClose"
 import { type Day } from "~/utils/booking"
@@ -434,9 +434,8 @@ export const SeatCardBody = ({
                 {features.length > 0 && ` · ${features.join(", ")}`}
               </p>
             </div>
-            <CloseButton
-              aria-label={t("Close")}
-              onPress={onClose}
+            <DialogCloseButton
+              onClose={onClose}
               className={clsx("shrink-0", isSheet && "size-10")}
             />
           </div>

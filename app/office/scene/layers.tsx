@@ -10,7 +10,7 @@ import { SeatPopup } from "../desks/SeatPopup"
 import { SeatTags } from "../desks/SeatTags"
 import { ZoneFloor } from "../zones/ZoneFloor"
 import { useOfficeStore, useOfficeStoreApi } from "../store"
-import { type SceneLayer, type SceneLayerProps, type ViewClicks } from "~/editor"
+import { useAllPieces, type SceneLayer, type SceneLayerProps, type ViewClicks } from "~/editor"
 
 /** Who sits where, while the Desk tags layer is on. */
 const SeatTagsLayer = () => {
@@ -52,6 +52,39 @@ const RouteFraming = () => {
   return null
 }
 
+/** How much round a desk shown is framed (m, each way): it and its neighbours. */
+const SPOTLIGHT_REACH = 3.5
+
+/**
+ * "Show" a desk (finding a seat, Who's in, your bookings): the view glides
+ * onto it, keeping its angle, and its card opens over it — who has it that
+ * day, and what you can do there. (The simple view's plan glides and
+ * ripples on it instead, see useSpotlight.)
+ */
+const SpotlightFraming = () => {
+  const store = useOfficeStoreApi()
+  const spotlight = useOfficeStore((state) => state.spotlight)
+  const pieces = useAllPieces()
+  useEffect(() => {
+    if (!spotlight) return
+
+    const { resetSpotlight, requestFrame, openSeatCard } = store.getState()
+    resetSpotlight()
+    const desk = pieces.find((piece) => piece.id === spotlight.id)
+    if (!desk) return
+
+    requestFrame({
+      minX: desk.x - SPOTLIGHT_REACH,
+      maxX: desk.x + SPOTLIGHT_REACH,
+      minZ: desk.z - SPOTLIGHT_REACH,
+      maxZ: desk.z + SPOTLIGHT_REACH,
+    })
+    openSeatCard(desk.id)
+  }, [spotlight, pieces, store])
+
+  return null
+}
+
 /** What the office draws in the 3D scene. */
 export const OFFICE_SCENE_LAYERS: SceneLayer[] = [
   { Component: SeatCardReset, when: "always" },
@@ -60,6 +93,7 @@ export const OFFICE_SCENE_LAYERS: SceneLayer[] = [
   { Component: SeatPopup, when: "viewing" },
   { Component: RouteLine, when: "viewing" },
   { Component: RouteFraming, when: "viewing" },
+  { Component: SpotlightFraming, when: "viewing" },
   { Component: HeatPads, when: "viewing" },
   { Component: HeatBars, when: "viewing" },
   { Component: ZoneFloorLayer, when: "always" },
