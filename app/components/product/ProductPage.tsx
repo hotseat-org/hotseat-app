@@ -144,6 +144,7 @@ export const ProductPage = () => {
             picture={
               <Picture
                 src={PICTURES.findSeat}
+                isPanel
                 alt={t(
                   "Find a seat: “A seat today, ideally in Design, near Theo Park, with a standing desk”, and the best match, desk D6"
                 )}
@@ -159,6 +160,7 @@ export const ProductPage = () => {
             picture={
               <Picture
                 src={PICTURES.whosIn}
+                isPanel
                 alt={t("Who's in today, each person with their desk and their week")}
                 className="mx-auto max-w-sm"
               />
@@ -188,6 +190,7 @@ export const ProductPage = () => {
             picture={
               <Picture
                 src={PICTURES.insights}
+                isPanel
                 alt={t(
                   "Insights: 67% full, Wednesday the busiest day, desks in use per week and a heatmap of every working day"
                 )}
@@ -347,16 +350,20 @@ const Picture = ({
   alt,
   className,
   isEager = false,
+  isPanel = false,
 }: {
   src: string
   alt: string
   className?: string
   /** The first picture on the page: loaded at once, not when scrolled to. */
   isEager?: boolean
+  /** One of the app's panels, cut at its own edge: its corners, not the page's. */
+  isPanel?: boolean
 }) => (
   <div
     className={clsx(
-      "w-full overflow-hidden rounded-[calc(var(--radius)*4)] bg-[#1f2330] shadow-overlay ring-1 ring-foreground/10",
+      "w-full overflow-hidden shadow-overlay",
+      isPanel ? "rounded-2xl" : "rounded-[calc(var(--radius)*4)]",
       className
     )}
   >
