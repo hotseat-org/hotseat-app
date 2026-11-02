@@ -1,7 +1,6 @@
 import { furnitureCollides } from "../layout"
 import { useCollidables, useEditorStore, useHeldPiece } from "../store"
-import { isObjectType, isWallMounted, type Cell, type ObjectType, type SceneObject } from "../types"
-import { AlignmentGuides } from "../carrying/AlignmentGuides"
+import { isObjectType, type Cell, type ObjectType, type SceneObject } from "../types"
 import { MeasureHints } from "../carrying/MeasureHints"
 import { GhostObject } from "./GhostObject"
 import { PlacementHighlight } from "./PlacementHighlight"
@@ -11,8 +10,8 @@ const BLOCKED = "#ef4444"
 /**
  * Editing: where pieces would go, before they're put down — a Row / Pod drag's
  * copies, the armed piece under the cursor, the piece being carried, and a
- * piece turned in place into others. Red where blocked; with alignment guides
- * and (when on) measuring hints.
+ * piece turned in place into others. Red where blocked; with measuring hints
+ * (when on).
  */
 export const PlacementPreviews = ({
   isFurniture,
@@ -83,13 +82,6 @@ export const PlacementPreviews = ({
             rotation={rotation}
             valid={!isHoverBlocked}
           />
-          <AlignmentGuides
-            objects={objects}
-            type={type}
-            x={shown.x}
-            z={shown.z}
-            rotation={rotation}
-          />
           {measureHints && (
             <MeasureHints
               objects={objects}
@@ -110,17 +102,6 @@ export const PlacementPreviews = ({
         </>
       )}
 
-      {/* Lines where the carried piece lines up with others. */}
-      {carried && !isWallMounted(carried.type) && (
-        <AlignmentGuides
-          objects={objects}
-          type={carried.type}
-          x={carried.x}
-          z={carried.z}
-          rotation={carried.rotation}
-          ignoreId={carried.id}
-        />
-      )}
       {/* Target-square highlight for the object being carried */}
       {carried && measureHints && (
         <MeasureHints
