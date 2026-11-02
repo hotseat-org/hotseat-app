@@ -5,6 +5,7 @@ import {
   Fn,
   If,
   abs,
+  atan,
   float,
   floor,
   fract,
@@ -12,12 +13,15 @@ import {
   length,
   min,
   positionWorld,
+  round,
   select,
+  sign,
   smoothstep,
   step,
   texture,
   uniform,
   vec2,
+  vec4,
 } from "three/tsl"
 import { MeshBasicNodeMaterial, type Node } from "three/webgpu"
 import { useOfficeStore } from "../store"
@@ -48,8 +52,8 @@ const INSET = 0.14
 const LINE_WIDTH = 0.07
 /**
  * The line is dashed: a dash and a gap every this far (m), this share of it
- * the dash. Measured along x + z, which grows along straight sides and
- * rounded corners alike, so the dashes don't jump anywhere.
+ * the dash. Measured along x + z on straight sides, and round a rounded
+ * corner by its arc, meeting the sides either end — so dashes don't jump.
  */
 const DASH_PERIOD = 0.32
 const DASH_SHARE = 0.6
@@ -89,8 +93,10 @@ const createZoneMaterial = ({
     return select(isOff, float(0), step(0.5, texture(mask, cell.add(0.5).div(maskSize)).r))
   }
 
-  // Signed distance to the edge, in squares: positive inside the zone.
-  const getEdgeDistance = Fn(() => {
+  // Signed distance to the edge, in squares: positive inside the zone. And,
+  // where the edge is a corner's curve, that curve's middle (in squares):
+  // (distance, isCurve, middle x, middle z).
+  const getEdge = Fn(() => {
     const radius = ZONE_RADIUS
     const spot = positionWorld.xz.sub(vec2(origin.x, origin.y)).div(ZONE_CELL)
     const cell = floor(spot)
@@ -111,6 +117,9 @@ const createZoneMaterial = ({
     const isAcross = isFilled(cell.add(facing)).greaterThan(0.5)
     const isNearCorner = toSide.x.lessThan(radius).and(toSide.y.lessThan(radius))
     const distance = float(OUTSIDE).toVar()
+    // A curve's middle, as distances to this quarter's sides (as toSide).
+    const isCurve = float(0).toVar()
+    const middle = vec2(radius).toVar()
 
     If(isSelf.and(isSide.not()).and(isAhead.not()), () => {
       // An outer corner: rounded off.
@@ -121,36 +130,73 @@ const createZoneMaterial = ({
           min(toSide.x, toSide.y)
         )
       )
+      isCurve.assign(select(isNearCorner, float(1), float(0)))
     })
       .ElseIf(isSelf.and(isSide.not()), () => {
         // An edge — but where it runs into an inner corner (the square across
         // is the zone's too), the curve in the empty square takes over from it.
+        const isOnCurve = isAcross.and(toSide.y.lessThan(radius))
         const curve = length(vec2(toSide.x.add(radius), toSide.y.sub(radius))).sub(radius)
-        distance.assign(select(isAcross.and(toSide.y.lessThan(radius)), curve, toSide.x))
+        distance.assign(select(isOnCurve, curve, toSide.x))
+        isCurve.assign(select(isOnCurve, float(1), float(0)))
+        middle.assign(vec2(-radius, radius))
       })
       .ElseIf(isSelf.and(isAhead.not()), () => {
+        const isOnCurve = isAcross.and(toSide.x.lessThan(radius))
         const curve = length(vec2(toSide.x.sub(radius), toSide.y.add(radius))).sub(radius)
-        distance.assign(select(isAcross.and(toSide.x.lessThan(radius)), curve, toSide.y))
+        distance.assign(select(isOnCurve, curve, toSide.y))
+        isCurve.assign(select(isOnCurve, float(1), float(0)))
+        middle.assign(vec2(radius, -radius))
       })
       .ElseIf(isSelf, () => {
         // Inside — near an inner corner's curve when the square across is empty.
         distance.assign(select(isAcross, float(1e3), length(toSide.add(radius)).sub(radius)))
+        isCurve.assign(select(isAcross, float(0), float(1)))
+        middle.assign(vec2(-radius))
       })
       .ElseIf(isSide.and(isAhead).and(isNearCorner), () => {
         // An inner corner's curve.
         distance.assign(length(vec2(radius).sub(toSide)).sub(radius))
+        isCurve.assign(1)
       })
 
-    return distance
+    // The middle back in squares: a side `toSide` away, the facing way.
+    const middleSpot = cell.add(0.5).add(facing.mul(vec2(0.5).sub(middle)))
+
+    return vec4(distance, isCurve, middleSpot.x, middleSpot.y)
   })
 
-  const edge = getEdgeDistance().sub(INSET)
+  const edgeLook = getEdge()
+  const edge = edgeLook.x.sub(INSET)
   const smoothing = fwidth(edge)
   const inside = smoothstep(smoothing.negate(), smoothing, edge)
+  // How far along the line (m): x + z on a straight side. Round a corner's
+  // curve, from the side at one end to the other's, by the angle — plus,
+  // where both ends' x + z are alike, whole dashes as long as the curve.
+  const curveMiddle = vec2(origin.x, origin.y).add(edgeLook.zw.mul(ZONE_CELL))
+  const fromMiddle = positionWorld.xz.sub(curveMiddle)
+  const curveRadius = length(fromMiddle)
+  const startSign = sign(fromMiddle.x)
+  const endSign = sign(fromMiddle.y)
+  const turned = atan(abs(fromMiddle.y), abs(fromMiddle.x)).div(Math.PI / 2)
+  const wholeDashes = select(
+    startSign.equal(endSign),
+    round(curveRadius.mul(Math.PI / 2 / DASH_PERIOD)).mul(DASH_PERIOD),
+    float(0)
+  )
+  const curveAlong = curveMiddle.x
+    .add(curveMiddle.y)
+    .add(curveRadius.mul(startSign))
+    .add(turned.mul(curveRadius.mul(endSign.sub(startSign)).add(wholeDashes)))
+  const along = select(
+    edgeLook.y.greaterThan(0.5),
+    curveAlong,
+    positionWorld.x.add(positionWorld.z)
+  ).div(DASH_PERIOD)
   // How far from a dash's middle (0–0.5 of a period): within half a dash, on it.
-  const along = positionWorld.x.add(positionWorld.z).div(DASH_PERIOD)
   const fromDash = abs(fract(along).sub(0.5))
-  const dashSmoothing = fwidth(along)
+  // A pixel's size in dashes (not along's own: it jumps by whole dashes at a curve's end).
+  const dashSmoothing = length(fwidth(positionWorld.xz)).div(DASH_PERIOD)
   const isOnDash = float(1).sub(
     smoothstep(
       dashSmoothing.negate().add(DASH_SHARE / 2),

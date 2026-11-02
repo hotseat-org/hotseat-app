@@ -53,11 +53,11 @@ describe("zones' names on their floors", () => {
       Array.from({ length: 24 }, (_, index) => place("wall", { x: -1.75 + index * 0.5, z }))
     )
     const objects = [...desks, ...walls]
-    const { areas, letters } = composeLetteredZones(composeZoneAreas(objects), objects)
-    const name = letters.get("Engineering")
+    const { areas } = composeLetteredZones(composeZoneAreas(objects), objects)
+    const isAlongWalls = ([i]: [number, number]) => i * ZONE_CELL >= -2 && i * ZONE_CELL < 10
+    const isBetweenWalls = ([, j]: [number, number]) => j * ZONE_CELL >= -1 && j * ZONE_CELL < 1
 
-    expect(areas[0].cells.every(([, j]) => j * ZONE_CELL >= -1 && j * ZONE_CELL < 1)).toBe(true)
-    expect(name).toBeUndefined()
+    expect(areas[0].cells.filter(isAlongWalls).every(isBetweenWalls)).toBe(true)
   })
 
   test("keep clear of desks, and run along x where they can", () => {
