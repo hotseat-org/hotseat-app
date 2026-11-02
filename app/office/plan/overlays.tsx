@@ -5,7 +5,7 @@ import { getDeskTagTone } from "../desks/deskTagTone"
 import { heatColor } from "../heatmap/heatmap"
 import type { Person } from "../desks/people"
 import { SeatAvatar } from "../desks/SeatAvatar"
-import type { Zone } from "../zones/zones"
+import { ZONE_LETTER_HEIGHT, type Zone } from "../zones/zones"
 import { useI18n } from "~/i18n/I18nProvider"
 
 /**
@@ -138,6 +138,43 @@ export const HeatTag = ({
 )
 
 /** A zone's name, on its floor. */
+/**
+ * A zone's name lettered on its floor, like a district on a map: spaced
+ * capitals in its colour, faint, along its longer side — too small to read
+ * (far out), left out.
+ */
+export const ZoneLetters = ({
+  zone,
+  isAlongX,
+  zoom,
+  style,
+}: {
+  zone: Zone
+  isAlongX: boolean
+  zoom: number
+  style: CSSProperties
+}) => {
+  const size = ZONE_LETTER_HEIGHT * zoom * 0.75
+  if (size < 7) return null
+
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute whitespace-nowrap font-black uppercase leading-none"
+      style={{
+        ...style,
+        fontSize: size,
+        letterSpacing: "0.14em",
+        color: zone.color,
+        opacity: 0.75,
+        transform: `translate(-50%, -50%) rotate(${isAlongX ? 0 : -90}deg)`,
+      }}
+    >
+      {zone.name}
+    </div>
+  )
+}
+
 export const ZoneName = ({ zone, style }: { zone: Zone; style: CSSProperties }) => (
   <div className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2" style={style}>
     <span className="flex items-center gap-1.5 whitespace-nowrap rounded-full bg-overlay px-2 py-0.5 text-[11px] font-bold text-foreground shadow-sm">

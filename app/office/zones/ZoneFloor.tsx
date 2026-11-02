@@ -20,7 +20,9 @@ import {
 } from "three/tsl"
 import { MeshBasicNodeMaterial, type Node } from "three/webgpu"
 import { useOfficeStore } from "../store"
-import { ZONE_CELL, ZONE_RADIUS, composeZoneAreas } from "./zones"
+import { ZoneLettering } from "./ZoneLettering"
+import { getZoneLabelStyle } from "./zoneLabelStyle"
+import { ZONE_CELL, ZONE_RADIUS, composeZoneAreas, type ZoneArea } from "./zones"
 
 /** Just above the interior floor's tint (0.006), below rugs and highlights. */
 const HEIGHT = 0.009
@@ -154,6 +156,21 @@ const createZoneMaterial = ({
   return { material, fill, shade, line }
 }
 
+/** A zone's name as a pill, over the scene. */
+const ZonePill = ({ area, at }: { area: ZoneArea; at: readonly [number, number] }) => (
+  <Html
+    position={[at[0], HEIGHT, at[1]]}
+    center
+    zIndexRange={[5, 0]}
+    style={{ pointerEvents: "none" }}
+  >
+    <span className="flex items-center gap-1.5 whitespace-nowrap rounded-full bg-overlay px-2 py-0.5 text-[11px] font-bold text-foreground shadow-sm">
+      <span className="size-2 rounded-full" style={{ background: area.zone.color }} />
+      {area.zone.name}
+    </span>
+  </Html>
+)
+
 /**
  * Each zone's part of the floor — under and round its desks — faintly tinted
  * in its colour with a fine line and rounded corners, its name in the middle.
@@ -162,9 +179,11 @@ export const ZoneFloor = ({ isEditing, isDark }: { isEditing: boolean; isDark: b
   const objects = useOfficeStore((state) => state.objects)
   // Viewing close up, the desks' own tags say enough: the names make way.
   const isNameShown = useOfficeStore((state) => isEditing || state.tagDetail !== "close")
+  const labelStyle = useMemo(getZoneLabelStyle, [])
   const areas = useMemo(
     () =>
-      composeZoneAreas(objects).map(({ zone, cells, label }) => {
+      composeZoneAreas(objects).map((area) => {
+        const { zone, cells, label } = area
         // One square of room all round, for the inner corners' curves.
         const minI = Math.min(...cells.map(([i]) => i)) - 1
         const minJ = Math.min(...cells.map(([, j]) => j)) - 1
@@ -191,6 +210,7 @@ export const ZoneFloor = ({ isEditing, isDark }: { isEditing: boolean; isDark: b
           centre: [(minI + columns / 2) * ZONE_CELL, (minJ + rows / 2) * ZONE_CELL] as const,
           size: [columns * ZONE_CELL, rows * ZONE_CELL] as const,
           label: [label.x, label.z] as const,
+          area,
         }
       }),
     [objects]
@@ -217,7 +237,7 @@ export const ZoneFloor = ({ isEditing, isDark }: { isEditing: boolean; isDark: b
 
   return (
     <>
-      {areas.map(({ zone, look, centre, size, label }) => (
+      {areas.map(({ zone, look, centre, size, label, area }) => (
         <group key={zone.name}>
           <mesh
             position={[centre[0], HEIGHT, centre[1]]}
@@ -227,19 +247,11 @@ export const ZoneFloor = ({ isEditing, isDark }: { isEditing: boolean; isDark: b
           >
             <planeGeometry args={[size[0], size[1]]} />
           </mesh>
-          {isNameShown && (
-            <Html
-              position={[label[0], HEIGHT, label[1]]}
-              center
-              zIndexRange={[5, 0]}
-              style={{ pointerEvents: "none" }}
-            >
-              <span className="flex items-center gap-1.5 whitespace-nowrap rounded-full bg-overlay px-2 py-0.5 text-[11px] font-bold text-foreground shadow-sm">
-                <span className="size-2 rounded-full" style={{ background: zone.color }} />
-                {zone.name}
-              </span>
-            </Html>
+          {labelStyle === "floor" && <ZoneLettering area={area} isDark={isDark} />}
+          {labelStyle === "edge" && (
+            <ZonePill area={area} at={[area.edgeLabel.x, area.edgeLabel.z]} />
           )}
+          {labelStyle === "pill" && isNameShown && <ZonePill area={area} at={label} />}
         </group>
       ))}
     </>

@@ -10,8 +10,17 @@ import { useOfficeStore } from "../store"
 import { useHoveredPieceActions } from "../desks/useHoveredPiece"
 import { useKeptFor, useTeammateColors } from "../teams"
 import { getTagDetail, type TagDetail } from "../desks/tagDetail"
+import { getZoneLabelStyle } from "../zones/zoneLabelStyle"
 import { useRouteFraming, useSpotlight } from "./useFraming"
-import { DeskTag, HeatTag, Occupant, RouteEnd, SpotlightRing, ZoneName } from "./overlays"
+import {
+  DeskTag,
+  HeatTag,
+  Occupant,
+  RouteEnd,
+  SpotlightRing,
+  ZoneLetters,
+  ZoneName,
+} from "./overlays"
 import { composeOccupants, usePlanDesks, usePlanZoneAreas } from "./drawings"
 import { clamp } from "~/editor/core"
 import { turnPoint } from "~/editor/kit"
@@ -109,6 +118,7 @@ export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
   const detailRef = useRef<TagDetail>("middle")
   detailRef.current = getTagDetail(view.zoom, detailRef.current)
   const tagDetail = detailRef.current
+  const zoneLabelStyle = useMemo(getZoneLabelStyle, [])
   /** Whether a desk is one to show in full: yours, a teammate's, looked for or pointed at. */
   const isFocused = (deskId: string, email?: string) =>
     deskId === highlightId ||
@@ -132,10 +142,24 @@ export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
       )}
 
       {/* Zones' names, under the faces (close up, the desks' own tags say enough). */}
-      {tagDetail !== "close" &&
-        zoneAreas.map(({ zone, label }) => (
+      {zoneAreas.map(({ zone, label, floorLabel, edgeLabel }) => {
+        if (zoneLabelStyle === "floor")
+          return (
+            <ZoneLetters
+              key={zone.name}
+              zone={zone}
+              isAlongX={floorLabel.isAlongX}
+              zoom={view.zoom}
+              style={screen(floorLabel.x, floorLabel.z)}
+            />
+          )
+        if (zoneLabelStyle === "edge")
+          return <ZoneName key={zone.name} zone={zone} style={screen(edgeLabel.x, edgeLabel.z)} />
+
+        return tagDetail === "close" ? null : (
           <ZoneName key={zone.name} zone={zone} style={screen(label.x, label.z)} />
-        ))}
+        )
+      })}
 
       {/* Who sits where — HTML, at least MIN_AVATAR_PX at any zoom. */}
       {!heatmap &&
