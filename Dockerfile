@@ -14,7 +14,9 @@ COPY patches ./patches
 # No install scripts yet: they generate the Prisma client, whose schema isn't copied in yet.
 RUN bun install --frozen-lockfile --ignore-scripts
 COPY . .
-ENV HOTSEAT_TARGET=node BASE_PATH=/
+# Where it's served: the root, or under a path ("/hotseat/") — BASE_URL then includes it.
+ARG BASE_PATH=/
+ENV HOTSEAT_TARGET=node BASE_PATH=${BASE_PATH}
 RUN bun run prisma:generate \
     && npx react-router build \
     && node scripts/runtime-packages.mjs runtime/package.json

@@ -112,7 +112,8 @@ HOTSEAT_EDITION=self-hosted DATABASE_URL=postgres://… IMAGES_DIR=/var/lib/hots
 
 Bring the database up to date before starting a new version:
 `DATABASE_URL=postgres://… node server/migrate.mjs app/repositories/main-repository/prisma/migrations`. `BASE_PATH` serves Hotseat under a path
-instead (e.g. `/hotseat/`), and `BASE_URL` then includes it.
+instead (e.g. `/hotseat/`), and `BASE_URL` then includes it. With Docker,
+set `BASE_PATH` in `.env` and rebuild (`docker compose up -d --build`).
 
 ## Not included in a self-hosted installation
 

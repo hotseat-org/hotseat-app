@@ -3,7 +3,11 @@
 #   docker compose up -d
 services:
   hotseat:
-    build: ..
+    build:
+      context: ..
+      # Served under a path instead of the root? e.g. BASE_PATH=/hotseat/ in .env.
+      args:
+        BASE_PATH: ${BASE_PATH:-/}
     image: hotseat
     restart: unless-stopped
     env_file: .env
