@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo } from "react"
+import { useLayoutEffect, useMemo, useRef } from "react"
 import { Html } from "@react-three/drei"
 import { DataTexture, NearestFilter, RepeatWrapping, RGBAFormat } from "three"
 import { edgeLength, footprintCells, isDiagonalEdge, runsAlongX } from "../layout"
@@ -319,7 +319,9 @@ export const MeasureHints = ({ objects, type, x, z, rotation, ignoreId }: Props)
     return { gaps: measure(objects, rect, ignoreId), lines: guides(objects, rect, ignoreId) }
   }, [objects, type, x, z, rotation, ignoreId])
 
-  // Every line stays mounted (hidden when unused) — see Ribbon.
+  // Every line and label stays mounted (hidden when unused) — see Ribbon. A
+  // label mounting is a React root of its own, and drei updates every matrix
+  // in the scene for it: gaps come and go all through a carry.
   return (
     <group>
       {lines.map((guide, i) => (
@@ -328,20 +330,34 @@ export const MeasureHints = ({ objects, type, x, z, rotation, ignoreId }: Props)
       {gaps.map((gap, i) => (
         <group key={`m${i}`}>
           <Ribbon segment={gap} color={MEASURE} dashed />
-          {gap && (
-            <Html
-              position={[(gap.from[0] + gap.to[0]) / 2, HEIGHT, (gap.from[2] + gap.to[2]) / 2]}
-              center
-              zIndexRange={[20, 10]}
-              style={{ pointerEvents: "none" }}
-            >
-              <span className="whitespace-nowrap rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-bold text-accent-foreground shadow-sm">
-                {formatDistance(gap.distance)}
-              </span>
-            </Html>
-          )}
+          <GapLabel gap={gap} />
         </group>
       ))}
     </group>
+  )
+}
+
+const HIDDEN_LABEL = { pointerEvents: "none", visibility: "hidden" } as const
+const SHOWN_LABEL = { pointerEvents: "none" } as const
+
+/** A gap's width, over its middle — kept where it was last, hidden, while there's no gap. */
+const GapLabel = ({ gap }: { gap: Measure | null }) => {
+  const last = useRef(gap)
+  if (gap) last.current = gap
+
+  const shown = last.current
+  if (!shown) return null
+
+  return (
+    <Html
+      position={[(shown.from[0] + shown.to[0]) / 2, HEIGHT, (shown.from[2] + shown.to[2]) / 2]}
+      center
+      zIndexRange={[20, 10]}
+      style={gap ? SHOWN_LABEL : HIDDEN_LABEL}
+    >
+      <span className="whitespace-nowrap rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-bold text-accent-foreground shadow-sm">
+        {formatDistance(shown.distance)}
+      </span>
+    </Html>
   )
 }
