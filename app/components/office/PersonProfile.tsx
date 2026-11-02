@@ -2,6 +2,7 @@ import { EyeOff, MapPin, Settings2 } from "lucide-react"
 import { useEffect, useMemo } from "react"
 import { createPortal } from "react-dom"
 import { MemberAvatar, nameOf, roleLabel, type ShellMember } from "./shell-ui"
+import { ScrollArea } from "~/components/ui/ScrollArea"
 import { useSettings } from "~/components/settings/useSettings"
 import { DialogCloseButton } from "~/components/ui/DialogCloseButton"
 import { InlineModal } from "~/components/ui/InlineModal"
@@ -122,7 +123,7 @@ const ProfileDialog = ({
         <DialogCloseButton onClose={onClose} />
       </header>
 
-      <div className="mt-5 flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto">
+      <ScrollArea frameClassName="mt-5 flex-1" className="flex flex-col gap-5">
         {permanentDesk && (
           <section>
             <h3 className="text-xs font-extrabold uppercase tracking-[0.08em] text-muted">
@@ -160,7 +161,7 @@ const ProfileDialog = ({
             </ul>
           )}
         </section>
-      </div>
+      </ScrollArea>
 
       {!isMe && <AvoidToggle email={member.userEmail} name={name} />}
 

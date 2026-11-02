@@ -2,6 +2,7 @@ import { AlertDialog } from "@heroui/react"
 import { useEffect, useState } from "react"
 import { useFetcher, useParams } from "react-router"
 import { useSettings } from "../useSettings"
+import { ScrollArea } from "~/components/ui/ScrollArea"
 import { Button } from "~/components/Button"
 import { TeamDot } from "~/components/teams/teamLook"
 import { useI18n } from "~/i18n/I18nProvider"
@@ -72,24 +73,26 @@ export function MemberTeamsDialog({
                   </button>
                 </p>
               ) : (
-                <ul className="flex max-h-80 flex-col overflow-y-auto">
-                  {teams.map((team) => (
-                    <li key={team.id}>
-                      <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-2 hover:bg-surface-secondary">
-                        <input
-                          type="checkbox"
-                          checked={chosen.has(team.id)}
-                          onChange={() => toggle(team.id)}
-                          className="size-5 shrink-0 accent-[var(--accent)]"
-                        />
-                        <TeamDot color={team.color} />
-                        <span className="min-w-0 flex-1 truncate text-sm font-bold">
-                          {team.name}
-                        </span>
-                      </label>
-                    </li>
-                  ))}
-                </ul>
+                <ScrollArea className="max-h-80">
+                  <ul className="flex flex-col">
+                    {teams.map((team) => (
+                      <li key={team.id}>
+                        <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-2 hover:bg-surface-secondary">
+                          <input
+                            type="checkbox"
+                            checked={chosen.has(team.id)}
+                            onChange={() => toggle(team.id)}
+                            className="size-5 shrink-0 accent-[var(--accent)]"
+                          />
+                          <TeamDot color={team.color} />
+                          <span className="min-w-0 flex-1 truncate text-sm font-bold">
+                            {team.name}
+                          </span>
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                </ScrollArea>
               )}
             </AlertDialog.Body>
             <AlertDialog.Footer>

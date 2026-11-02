@@ -3,6 +3,7 @@ import { CalendarDays, MapPin, Pin, Repeat, Star } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useFetcher, useNavigate, useParams } from "react-router"
 import { BookingRow, deskText } from "./BookingRow"
+import { ScrollArea } from "~/components/ui/ScrollArea"
 import { useOfficeStore } from "~/office/store"
 import { floorText, useDeskFloor } from "~/office/booking/useBooking"
 import { useAllPieces } from "~/editor"
@@ -111,7 +112,7 @@ export const MyBookings = ({
         </div>
       </header>
 
-      <div className="-mx-1 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-1">
+      <ScrollArea frameClassName="-mx-1 flex-1" className="flex flex-col gap-4 px-1">
         <HereSection onShow={onShow} />
         {data?.permanent.map((p) => (
           <button
@@ -181,7 +182,7 @@ export const MyBookings = ({
             ))}
           </div>
         ))}
-      </div>
+      </ScrollArea>
     </section>
   )
 }

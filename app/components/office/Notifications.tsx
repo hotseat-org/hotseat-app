@@ -3,6 +3,7 @@ import clsx from "clsx"
 import { Bell } from "lucide-react"
 import { useState } from "react"
 import { Link, useFetcher } from "react-router"
+import { ScrollArea } from "~/components/ui/ScrollArea"
 import { useOrganizationContext } from "~/utils/hooks/useProfileData"
 import { useI18n } from "~/i18n/I18nProvider"
 import { readNotification } from "~/i18n/notifications"
@@ -52,32 +53,34 @@ export const NotificationsBell = ({ triggerClassName }: { triggerClassName: stri
               </p>
             </div>
           ) : (
-            <ul className="flex max-h-96 flex-col gap-0.5 overflow-y-auto">
-              {notifications.items.map((n) => {
-                const body = (
-                  <>
-                    <p className="text-sm text-foreground">{readNotification(i18n, n.message)}</p>
-                    <p className="mt-0.5 text-xs text-muted">{format.ago(n.createdAt)}</p>
-                  </>
-                )
-                const className = clsx(
-                  "block rounded-lg px-3 py-2.5",
-                  wasUnread.has(n.id) && "bg-accent/10",
-                  n.link && "hover:bg-foreground/5"
-                )
-                return (
-                  <li key={n.id}>
-                    {n.link ? (
-                      <Link to={n.link} prefetch="intent" className={className}>
-                        {body}
-                      </Link>
-                    ) : (
-                      <div className={className}>{body}</div>
-                    )}
-                  </li>
-                )
-              })}
-            </ul>
+            <ScrollArea className="max-h-96">
+              <ul className="flex flex-col gap-0.5">
+                {notifications.items.map((n) => {
+                  const body = (
+                    <>
+                      <p className="text-sm text-foreground">{readNotification(i18n, n.message)}</p>
+                      <p className="mt-0.5 text-xs text-muted">{format.ago(n.createdAt)}</p>
+                    </>
+                  )
+                  const className = clsx(
+                    "block rounded-lg px-3 py-2.5",
+                    wasUnread.has(n.id) && "bg-accent/10",
+                    n.link && "hover:bg-foreground/5"
+                  )
+                  return (
+                    <li key={n.id}>
+                      {n.link ? (
+                        <Link to={n.link} prefetch="intent" className={className}>
+                          {body}
+                        </Link>
+                      ) : (
+                        <div className={className}>{body}</div>
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
+            </ScrollArea>
           )}
         </Popover.Dialog>
       </Popover.Content>

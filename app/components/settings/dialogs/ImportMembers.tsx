@@ -4,6 +4,7 @@ import { FileUp } from "lucide-react"
 import { useMemo, useState, type ChangeEvent } from "react"
 import { useFetcher, useParams } from "react-router"
 import { useSettings } from "../useSettings"
+import { ScrollArea } from "~/components/ui/ScrollArea"
 import { Button } from "~/components/Button"
 import { DialogCloseButton } from "~/components/ui/DialogCloseButton"
 import { useI18n } from "~/i18n/I18nProvider"
@@ -195,20 +196,22 @@ export function ImportMembersDialog({ memberEmails }: { memberEmails: Set<string
                             .join(" · ")
                         : t("Who'd be added shows here.")}
                     </p>
-                    <ul className="flex-1 divide-y divide-separator overflow-y-auto">
-                      {chosen.slice(0, MAX_SHOWN).map((person) => (
-                        <PersonRow
-                          key={person.email}
-                          person={person}
-                          isMember={memberEmails.has(person.email)}
-                        />
-                      ))}
-                      {chosen.length > MAX_SHOWN && (
-                        <li className="px-3 py-2 text-xs text-muted">
-                          {tn(chosen.length - MAX_SHOWN, "…and {n} more", "…and {n} more")}
-                        </li>
-                      )}
-                    </ul>
+                    <ScrollArea frameClassName="flex-1">
+                      <ul className="divide-y divide-separator">
+                        {chosen.slice(0, MAX_SHOWN).map((person) => (
+                          <PersonRow
+                            key={person.email}
+                            person={person}
+                            isMember={memberEmails.has(person.email)}
+                          />
+                        ))}
+                        {chosen.length > MAX_SHOWN && (
+                          <li className="px-3 py-2 text-xs text-muted">
+                            {tn(chosen.length - MAX_SHOWN, "…and {n} more", "…and {n} more")}
+                          </li>
+                        )}
+                      </ul>
+                    </ScrollArea>
                   </div>
                 </div>
               )}

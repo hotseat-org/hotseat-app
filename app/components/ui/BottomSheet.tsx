@@ -9,6 +9,7 @@ import {
 } from "react"
 import { createPortal } from "react-dom"
 import { useSwipeToClose } from "./useSwipeToClose"
+import { ScrollArea } from "~/components/ui/ScrollArea"
 import { DialogCloseButton } from "~/components/ui/DialogCloseButton"
 import { useI18n } from "~/i18n/I18nProvider"
 
@@ -192,9 +193,9 @@ export const BottomSheet = ({
               <span aria-hidden className="h-1.5 w-10 rounded-full bg-white/70 shadow-sm" />
             </div>
           )}
-          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden">
+          <ScrollArea frameClassName="flex-1" className="flex flex-col overflow-x-hidden">
             {children(close)}
-          </div>
+          </ScrollArea>
           {/* Safari tints its toolbar from a fixed element (over 10px) at the
               screen's bottom edge: the sheet's colour, over its bottom padding.
               Above a tab bar, the bar is it. */}

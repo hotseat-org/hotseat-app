@@ -2,7 +2,9 @@ import clsx from "clsx"
 import type { LucideIcon } from "lucide-react"
 import { ChevronLeft, ChevronRight, X } from "lucide-react"
 import { useRef, useState, type ReactNode } from "react"
+import { SettingsFooterProvider } from "./SettingsFooter"
 import { UnsavedChangesProvider, type UnsavedChanges } from "./unsavedChanges"
+import { ScrollArea } from "~/components/ui/ScrollArea"
 import { useTouchSwipe } from "~/components/ui/useTouchSwipe"
 import { Button } from "~/components/Button"
 import { InlineModal } from "~/components/ui/InlineModal"
@@ -73,6 +75,7 @@ export function SettingsShell({
 
   // The open panel's unsaved changes (its SaveBar reports them): leaving asks first.
   const unsavedChanges = useRef<UnsavedChanges | null>(null)
+  const [footerSlot, setFooterSlot] = useState<HTMLDivElement | null>(null)
   const [pendingLeave, setPendingLeave] = useState<(() => void) | null>(null)
   const leave = (action: () => void) =>
     unsavedChanges.current?.isDirty ? setPendingLeave(() => action) : action()
@@ -226,15 +229,17 @@ export function SettingsShell({
             transition: swipeBack.offset > 0 ? "none" : "transform 200ms ease-out",
           }}
         >
-          <div
+          <ScrollArea
             key={activeSection ?? "first"}
-            className={clsx(
-              "flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-6 md:px-9 md:pb-8",
-              motion.current === "push" && "settings-push"
-            )}
+            frameClassName={clsx("flex-1", motion.current === "push" && "settings-push")}
+            className="flex flex-col gap-4 px-4 pb-6 md:px-9 md:pb-8"
           >
-            <UnsavedChangesProvider value={unsavedChanges}>{children}</UnsavedChangesProvider>
-          </div>
+            <UnsavedChangesProvider value={unsavedChanges}>
+              <SettingsFooterProvider value={footerSlot}>{children}</SettingsFooterProvider>
+            </UnsavedChangesProvider>
+          </ScrollArea>
+          {/* The panel's actions (see SettingsFooter): under the content, always in view. */}
+          <div ref={setFooterSlot} className="shrink-0 empty:hidden" />
         </div>
         {pendingLeave && (
           <DiscardChanges

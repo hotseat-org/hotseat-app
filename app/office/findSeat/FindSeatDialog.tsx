@@ -1,6 +1,7 @@
 import { Modal } from "@heroui/react"
 import { FindSeat } from "./FindSeat"
 import { useShowSeatOnMap } from "./useFindSeat"
+import { ScrollArea } from "~/components/ui/ScrollArea"
 import { DialogCloseButton } from "~/components/ui/DialogCloseButton"
 import { useI18n } from "~/i18n/I18nProvider"
 import type { Day } from "~/utils/booking"
@@ -27,9 +28,9 @@ export const FindSeatDialog = ({ onClose }: { onClose: () => void }) => {
             </Modal.Heading>
             <DialogCloseButton onClose={onClose} />
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6">
+          <ScrollArea frameClassName="flex-1" className="px-6 pb-6">
             <FindSeat onShowOnMap={showOnMap} layout="columns" />
-          </div>
+          </ScrollArea>
         </Modal.Dialog>
       </Modal.Container>
     </Modal.Backdrop>

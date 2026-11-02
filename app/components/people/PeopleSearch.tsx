@@ -2,6 +2,7 @@ import { Avatar } from "@heroui/react"
 import clsx from "clsx"
 import { Check, Search } from "lucide-react"
 import { useState, type ReactNode } from "react"
+import { ScrollArea } from "~/components/ui/ScrollArea"
 import { colorForEmail } from "~/components/office/shell-ui"
 import { useI18n } from "~/i18n/I18nProvider"
 import { useProgressiveList } from "~/utils/hooks/useProgressiveList"
@@ -173,68 +174,74 @@ export const PeopleSearch = <Item,>({
         )}
       </div>
 
-      <ul className="-mx-1 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-1">
-        {!searchable && leading}
-        {shown.map((item) => {
-          const person = getPerson(item)
-          const isPicked = isSelected?.(item) ?? false
-          const content = (
-            <>
-              {renderFace?.(item) ?? <PersonFace person={person} className="size-10 text-[15px]" />}
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-bold text-foreground">
-                  {person.name}
+      <ScrollArea frameClassName="-mx-1 flex-1">
+        <ul className="flex flex-col gap-0.5 px-1">
+          {!searchable && leading}
+          {shown.map((item) => {
+            const person = getPerson(item)
+            const isPicked = isSelected?.(item) ?? false
+            const content = (
+              <>
+                {renderFace?.(item) ?? (
+                  <PersonFace person={person} className="size-10 text-[15px]" />
+                )}
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-bold text-foreground">
+                    {person.name}
+                  </span>
+                  <span className="block truncate text-xs text-muted">
+                    {renderDetail?.(item) ?? person.email}
+                  </span>
+                  {renderNote?.(item)}
                 </span>
-                <span className="block truncate text-xs text-muted">
-                  {renderDetail?.(item) ?? person.email}
-                </span>
-                {renderNote?.(item)}
-              </span>
-              {isPicked && <Check className="size-4 shrink-0 text-accent" strokeWidth={2.6} />}
-            </>
-          )
+                {isPicked && <Check className="size-4 shrink-0 text-accent" strokeWidth={2.6} />}
+              </>
+            )
 
-          return (
-            <li key={person.email} className="flex items-center gap-2">
-              {onPick ? (
-                <button
-                  type="button"
-                  aria-pressed={isPicked}
-                  onClick={() => onPick(item)}
-                  className={clsx(
-                    "flex min-h-12 min-w-0 flex-1 items-center gap-3 rounded-xl px-2 py-1.5 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus",
-                    isPicked ? "bg-accent/10" : "hover:bg-surface-secondary"
-                  )}
-                >
-                  {content}
-                </button>
-              ) : (
-                <div className="flex min-h-12 min-w-0 flex-1 items-center gap-3 px-1 py-1.5">
-                  {content}
-                </div>
-              )}
-              {renderAside?.(item)}
+            return (
+              <li key={person.email} className="flex items-center gap-2">
+                {onPick ? (
+                  <button
+                    type="button"
+                    aria-pressed={isPicked}
+                    onClick={() => onPick(item)}
+                    className={clsx(
+                      "flex min-h-12 min-w-0 flex-1 items-center gap-3 rounded-xl px-2 py-1.5 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus",
+                      isPicked ? "bg-accent/10" : "hover:bg-surface-secondary"
+                    )}
+                  >
+                    {content}
+                  </button>
+                ) : (
+                  <div className="flex min-h-12 min-w-0 flex-1 items-center gap-3 px-1 py-1.5">
+                    {content}
+                  </div>
+                )}
+                {renderAside?.(item)}
+              </li>
+            )
+          })}
+          {listed.length === 0 && (
+            <li className="px-2 py-10 text-center text-sm text-muted">
+              {searchable
+                ? t("Nobody matches “{query}”", { query: query.trim() })
+                : t("Nobody here")}
             </li>
-          )
-        })}
-        {listed.length === 0 && (
-          <li className="px-2 py-10 text-center text-sm text-muted">
-            {searchable ? t("Nobody matches “{query}”", { query: query.trim() }) : t("Nobody here")}
-          </li>
-        )}
-        {/* More coming: drawn as this nears the end of the scroll. */}
-        {maxRows === undefined && pages.hasMore && (
-          <li ref={pages.endRef} aria-hidden className="h-12 shrink-0" />
-        )}
-        {maxRows !== undefined && listed.length > shown.length && (
-          <li className="px-2 pt-3 text-center text-xs text-muted">
-            {t("Showing {shown} of {total} — search to narrow it down", {
-              shown: shown.length,
-              total: listed.length,
-            })}
-          </li>
-        )}
-      </ul>
+          )}
+          {/* More coming: drawn as this nears the end of the scroll. */}
+          {maxRows === undefined && pages.hasMore && (
+            <li ref={pages.endRef} aria-hidden className="h-12 shrink-0" />
+          )}
+          {maxRows !== undefined && listed.length > shown.length && (
+            <li className="px-2 pt-3 text-center text-xs text-muted">
+              {t("Showing {shown} of {total} — search to narrow it down", {
+                shown: shown.length,
+                total: listed.length,
+              })}
+            </li>
+          )}
+        </ul>
+      </ScrollArea>
     </div>
   )
 }

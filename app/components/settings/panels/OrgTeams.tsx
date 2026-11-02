@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useFetcher, useParams } from "react-router"
 import { useOrgSettingsData } from "../data"
 import { CardTitle, SettingsCard } from "../ui"
+import { SettingsFooter } from "../SettingsFooter"
 import { useSettings } from "../useSettings"
 import { ZonePickerDialog } from "../dialogs/ZonePicker"
 import { Button } from "~/components/Button"
@@ -429,35 +430,41 @@ const TeamEditor = ({
         </SettingsCard>
       </div>
 
-      {/* Reserved: the footer doesn't jump when an error shows. */}
-      <p role="alert" className="min-h-5 text-sm font-semibold text-danger">
-        {result?.ok === false ? result.error : ""}
-      </p>
-      <footer className="flex flex-wrap items-center gap-3 border-t border-separator pt-4">
-        {team &&
-          (isDeleting ? (
-            <span className="flex items-center gap-2">
-              <span className="text-sm font-bold">{t("Delete {name}?", { name: team.name })}</span>
-              <Button variant="danger" size="sm" onPress={remove} isPending={isPending}>
-                {t("Delete")}
+      {/* Pinned under the panel: in view however long the team. */}
+      <SettingsFooter>
+        <footer className="flex flex-wrap items-center gap-3 border-t border-separator bg-surface-secondary px-4 py-3 md:px-9 md:py-4">
+          {team &&
+            (isDeleting ? (
+              <span className="flex items-center gap-2">
+                <span className="text-sm font-bold">
+                  {t("Delete {name}?", { name: team.name })}
+                </span>
+                <Button variant="danger" size="sm" onPress={remove} isPending={isPending}>
+                  {t("Delete")}
+                </Button>
+                <Button variant="ghost" size="sm" onPress={() => setIsDeleting(false)}>
+                  {t("Keep")}
+                </Button>
+              </span>
+            ) : (
+              <Button variant="ghost" className="text-danger" onPress={() => setIsDeleting(true)}>
+                <Trash2 className="size-4" /> {t("Delete team")}
               </Button>
-              <Button variant="ghost" size="sm" onPress={() => setIsDeleting(false)}>
-                {t("Keep")}
-              </Button>
-            </span>
-          ) : (
-            <Button variant="ghost" className="text-danger" onPress={() => setIsDeleting(true)}>
-              <Trash2 className="size-4" /> {t("Delete team")}
-            </Button>
-          ))}
-        <span className="flex-1" />
-        <Button variant="ghost" onPress={onDone} isDisabled={isPending}>
-          {t("Cancel")}
-        </Button>
-        <Button variant="primary" onPress={save} isPending={isPending} isDisabled={!name.trim()}>
-          {t("Save")}
-        </Button>
-      </footer>
+            ))}
+          <p
+            role="alert"
+            className="min-w-0 flex-1 truncate text-right text-sm font-semibold text-danger"
+          >
+            {result?.ok === false ? result.error : ""}
+          </p>
+          <Button variant="ghost" onPress={onDone} isDisabled={isPending}>
+            {t("Cancel")}
+          </Button>
+          <Button variant="primary" onPress={save} isPending={isPending} isDisabled={!name.trim()}>
+            {t("Save")}
+          </Button>
+        </footer>
+      </SettingsFooter>
     </div>
   )
 }

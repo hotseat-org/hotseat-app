@@ -4,6 +4,7 @@ import { AlertTriangle, Check, Link2, X } from "lucide-react"
 import type { ReactNode } from "react"
 import { useLocation } from "react-router"
 import type { useRename } from "./useRename"
+import { SettingsFooter } from "./SettingsFooter"
 import { useReportUnsavedChanges } from "./unsavedChanges"
 import { Button } from "~/components/Button"
 import { useI18n } from "~/i18n/I18nProvider"
@@ -32,8 +33,8 @@ export const CardTitle = ({ children }: { children: ReactNode }) => (
 )
 
 /**
- * "You have unsaved changes · Discard · Save changes" — sticks to the bottom of
- * the settings panel, shown only while a form is dirty. Submits the form with
+ * "You have unsaved changes · Discard · Save changes" — pinned under the
+ * settings panel (see SettingsFooter), shown only while a form is dirty. Submits the form with
  * id `form` (the button sits outside it). Leaving the panel while it's dirty
  * asks first (see SettingsShell).
  */
@@ -55,25 +56,27 @@ export const SaveBar = ({
   useReportUnsavedChanges({ isDirty: dirty, discard: onDiscard })
 
   return dirty ? (
-    <div className="sticky bottom-0 z-10 -mx-4 -mb-6 mt-auto flex items-center gap-3 border-t border-separator bg-surface-secondary px-4 py-3 md:-mx-9 md:-mb-8 md:px-9 md:py-4">
-      <span className="size-2 shrink-0 rounded-full bg-warning" aria-hidden />
-      <span className="min-w-0 flex-1 text-sm font-bold text-foreground">
-        <span className="hidden sm:inline">{t("You have unsaved changes")}</span>
-        <span className="sm:hidden">{t("Unsaved changes")}</span>
-      </span>
-      <Button type="button" variant="ghost" onPress={onDiscard} isDisabled={isPending}>
-        {t("Discard")}
-      </Button>
-      <Button
-        type="submit"
-        form={form}
-        variant="primary"
-        isPending={isPending}
-        isDisabled={isDisabled}
-      >
-        {t("Save changes")}
-      </Button>
-    </div>
+    <SettingsFooter>
+      <div className="flex items-center gap-3 border-t border-separator bg-surface-secondary px-4 py-3 md:px-9 md:py-4">
+        <span className="size-2 shrink-0 rounded-full bg-warning" aria-hidden />
+        <span className="min-w-0 flex-1 text-sm font-bold text-foreground">
+          <span className="hidden sm:inline">{t("You have unsaved changes")}</span>
+          <span className="sm:hidden">{t("Unsaved changes")}</span>
+        </span>
+        <Button type="button" variant="ghost" onPress={onDiscard} isDisabled={isPending}>
+          {t("Discard")}
+        </Button>
+        <Button
+          type="submit"
+          form={form}
+          variant="primary"
+          isPending={isPending}
+          isDisabled={isDisabled}
+        >
+          {t("Save changes")}
+        </Button>
+      </div>
+    </SettingsFooter>
   ) : null
 }
 

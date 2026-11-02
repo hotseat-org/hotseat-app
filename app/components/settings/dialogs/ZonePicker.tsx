@@ -2,6 +2,7 @@ import { Modal } from "@heroui/react"
 import clsx from "clsx"
 import { Check, Search } from "lucide-react"
 import { useState } from "react"
+import { ScrollArea } from "~/components/ui/ScrollArea"
 import { toSearchable } from "~/components/people/PeopleSearch"
 import { DialogCloseButton } from "~/components/ui/DialogCloseButton"
 import { useI18n } from "~/i18n/I18nProvider"
@@ -81,9 +82,9 @@ export const ZonePickerDialog = ({
               )}
 
               {/* With a search, a fixed height: searching doesn't make the dialog jump. */}
-              <div
+              <ScrollArea
                 className={clsx(
-                  "flex flex-col gap-5 overflow-y-auto pr-1",
+                  "flex flex-col gap-5 pr-1",
                   offices.length >= SEARCH_FROM ? "h-[min(420px,60vh)]" : "max-h-[60vh]"
                 )}
               >
@@ -148,7 +149,7 @@ export const ZonePickerDialog = ({
                     </ul>
                   </section>
                 ))}
-              </div>
+              </ScrollArea>
             </Modal.Body>
           </Modal.Dialog>
         </Modal.Container>
