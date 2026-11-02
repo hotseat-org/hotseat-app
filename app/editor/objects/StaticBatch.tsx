@@ -12,6 +12,7 @@ import { useThree } from "@react-three/fiber"
 import {
   BufferAttribute,
   Matrix4,
+  Sphere,
   Vector3,
   type BufferGeometry,
   type Color,
@@ -161,6 +162,22 @@ const setMerged = (mesh: Mesh, isMerged: boolean) => {
 }
 
 /**
+ * Where merged meshes stand, from their own bounds (measured as they were
+ * baked): three measured a cell's thousands of vertices at its first frame.
+ */
+const getBoundingSphere = (sources: Source[]) => {
+  const bounds = new Sphere()
+
+  for (const { mesh, toBatch } of sources) {
+    const geometry = mesh.geometry
+    if (!geometry.boundingSphere) geometry.computeBoundingSphere()
+    if (geometry.boundingSphere) bounds.union(geometry.boundingSphere.clone().applyMatrix4(toBatch))
+  }
+
+  return bounds
+}
+
+/**
  * One cell's meshes merged: one mesh per kind of surface, their colours per
  * vertex. The merged meshes are hidden; one that can't merge keeps drawing itself.
  */
@@ -180,6 +197,8 @@ const mergeCell = (
     const firstMesh = kindSources[0].mesh
     const merged = mergeGeometries(kindSources.map(getPrepared), false)
     if (!merged) continue // couldn't merge: those keep drawing themselves
+
+    merged.boundingSphere = getBoundingSphere(kindSources)
 
     for (const { mesh } of kindSources) setMerged(mesh, true)
     parts.push({
