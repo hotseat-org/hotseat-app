@@ -11,6 +11,7 @@ export interface UpdateOrganizationArgs {
     description?: string
     thumbnail?: string | null
     invitationHash?: string
+    allowedDomains?: string[]
   }
 }
 

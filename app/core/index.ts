@@ -1,4 +1,5 @@
 import { clearStaleDemos, startDemo } from "./demo"
+import { getInstallation, joinInstallationByDomain, setUpInstallation } from "./installation"
 import { createOffice } from "./office/create"
 import { getOffice } from "./office/get"
 import { saveOfficeLayout } from "./office/saveLayout"
@@ -125,6 +126,11 @@ export const createCore = (context: CoreContext) => ({
     release: releaseDesk(context),
     reclaim: reclaimDesk(context),
     releases: listDeskReleases(context),
+  },
+  installation: {
+    get: getInstallation(context),
+    setUp: setUpInstallation(context),
+    joinByDomain: joinInstallationByDomain(context),
   },
   demo: {
     start: startDemo(context),

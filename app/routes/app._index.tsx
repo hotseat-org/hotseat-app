@@ -1,9 +1,11 @@
+import clsx from "clsx"
 import { useState, type FormEvent } from "react"
 import { Form, Link, redirect, useLoaderData, useNavigate } from "react-router"
 import { ArrowUpRight, Building2 } from "lucide-react"
 import { Route } from "./+types/app._index"
 import { requireUser } from "~/services/session.server"
 import { getCore } from "~/core/get-core"
+import { isSelfHosted } from "~/edition/edition.server"
 import { HotseatLockup } from "~/components/HotseatMark"
 import { CenteredScreen } from "~/components/ui/CenteredScreen"
 import { ThumbAvatar } from "~/components/office/shell-ui"
@@ -17,6 +19,13 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const landing = await core.user.landing(user.email)
   if (landing !== "/app") return redirect(landing)
 
+  // Self-hosted: the company set up first; then in by their email's domain if
+  // it's allowed — else waiting for an invite.
+  const installation = isSelfHosted ? await core.installation.get() : null
+  if (isSelfHosted && !installation) return redirect("/app/setup")
+  if (isSelfHosted && (await core.installation.joinByDomain(user.email)))
+    return redirect(await core.user.landing(user.email))
+
   // The user record, not the session: it follows a rename in Profile.
   const [current, invites] = await Promise.all([
     core.user.get(user.email),
@@ -26,6 +35,8 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   return {
     firstName: name?.split(" ")[0] || user.email.split("@")[0],
     email: user.email as string,
+    /** Self-hosted: the one company (they can only wait for its invite). */
+    installationName: installation?.name ?? null,
     invitations: invites.map((invite) => ({
       slug: invite.organizationSlug,
       name: invite.organization.name,
@@ -35,7 +46,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 }
 
 const AppIndex = () => {
-  const { firstName, email, invitations } = useLoaderData<typeof loader>()
+  const { firstName, email, installationName, invitations } = useLoaderData<typeof loader>()
   const navigate = useNavigate()
   const { t } = useI18n()
   const [code, setCode] = useState("")
@@ -63,7 +74,13 @@ const AppIndex = () => {
         <h1 className="mt-5 text-3xl font-extrabold tracking-tight">
           {t("Welcome, {name}", { name: firstName })}
         </h1>
-        <p className="mt-1 text-muted">{t("Let's find you a workspace. Where do you belong?")}</p>
+        <p className="mt-1 text-muted">
+          {installationName
+            ? t("You're not in {name} yet. Ask an admin there for an invite.", {
+                name: installationName,
+              })
+            : t("Let's find you a workspace. Where do you belong?")}
+        </p>
 
         {/* Invitations waiting for this email: the quickest way in. */}
         {invitations.length > 0 && (
@@ -94,23 +111,25 @@ const AppIndex = () => {
           </ul>
         )}
 
-        <div className="mt-7 grid gap-3.5 text-left sm:grid-cols-2">
-          {/* Create */}
-          <div className="flex flex-col rounded-2xl border border-border bg-surface p-5 shadow-surface">
-            <div className="grid size-10 place-items-center rounded-xl bg-accent/15 text-accent">
-              <Building2 className="size-5" />
+        <div className={clsx("mt-7 grid gap-3.5 text-left", !installationName && "sm:grid-cols-2")}>
+          {/* Create (not self-hosted: one company there) */}
+          {!installationName && (
+            <div className="flex flex-col rounded-2xl border border-border bg-surface p-5 shadow-surface">
+              <div className="grid size-10 place-items-center rounded-xl bg-accent/15 text-accent">
+                <Building2 className="size-5" />
+              </div>
+              <h2 className="mt-3 text-base font-extrabold">{t("Create an organization")}</h2>
+              <p className="mt-0.5 text-sm text-muted">
+                {t("Start fresh, design your office, and invite your team.")}
+              </p>
+              <Link
+                to="?modal=new-organization"
+                className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-accent-foreground transition hover:brightness-105"
+              >
+                {t("Create organization")}
+              </Link>
             </div>
-            <h2 className="mt-3 text-base font-extrabold">{t("Create an organization")}</h2>
-            <p className="mt-0.5 text-sm text-muted">
-              {t("Start fresh, design your office, and invite your team.")}
-            </p>
-            <Link
-              to="?modal=new-organization"
-              className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-accent-foreground transition hover:brightness-105"
-            >
-              {t("Create organization")}
-            </Link>
-          </div>
+          )}
 
           {/* Join */}
           <div className="flex flex-col rounded-2xl border border-border bg-surface p-5 shadow-surface">

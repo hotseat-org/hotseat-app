@@ -1,5 +1,6 @@
 import type { MainRepository } from "../../types"
 import prisma from "~/services/prisma.server"
+import type { Organization as OrganizationRow } from "~/repositories/main-repository/prisma/generated/prisma-client/client"
 
 type FindOrganizationFn = MainRepository["organization"]["find"]
 
@@ -13,13 +14,21 @@ export const findOrganization: FindOrganizationFn = async ({ slug, invitationHas
     where: { slug, invitationHash },
   })
 
-  if (!result) return null
-
-  return {
-    name: result.name,
-    slug: result.slug,
-    description: result.description ?? undefined,
-    thumbnail: result.thumbnail ?? undefined,
-    invitationHash: result.invitationHash ?? undefined,
-  }
+  return result && toOrganization(result)
 }
+
+/** The oldest organization (a self-hosted installation's only one), if any. */
+export const findFirstOrganization: MainRepository["organization"]["findFirst"] = async () => {
+  const result = await prisma.organization.findFirst({ orderBy: { createdAt: "asc" } })
+
+  return result && toOrganization(result)
+}
+
+const toOrganization = (result: OrganizationRow) => ({
+  name: result.name,
+  slug: result.slug,
+  description: result.description ?? undefined,
+  thumbnail: result.thumbnail ?? undefined,
+  invitationHash: result.invitationHash ?? undefined,
+  allowedDomains: result.allowedDomains,
+})

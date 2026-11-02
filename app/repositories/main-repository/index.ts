@@ -43,7 +43,7 @@ import { findOrganizationInvite } from "./methods/organization-invite/find"
 import { findManyOrganizationInvites } from "./methods/organization-invite/findMany"
 import { createOrganization } from "./methods/organization/create"
 import { deleteOrganization } from "./methods/organization/delete"
-import { findOrganization } from "./methods/organization/find"
+import { findFirstOrganization, findOrganization } from "./methods/organization/find"
 import { findManyOrganizations, findOrganizationSummaries } from "./methods/organization/findMany"
 import { updateOrganization } from "./methods/organization/update"
 import { createProfile } from "./methods/profile/create"
@@ -68,6 +68,7 @@ export const createMainMysqlRepository = (): MainRepository => {
     },
     organization: {
       find: findOrganization,
+      findFirst: findFirstOrganization,
       findMany: findManyOrganizations,
       findSummaries: findOrganizationSummaries,
       create: createOrganization,

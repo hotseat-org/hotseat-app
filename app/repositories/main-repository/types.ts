@@ -61,6 +61,8 @@ export interface Organization {
   description?: string
   thumbnail?: string
   invitationHash?: string
+  /** Self-hosted: email domains whose people join without an invite ("acme.com"). */
+  allowedDomains?: string[]
 }
 
 export interface OrganizationWithMembers extends Organization {
@@ -165,6 +167,8 @@ export interface MainRepository {
       userEmail: string
     }) => Promise<(Organization & { role: Role; memberCount: number })[]>
     find: (args: FindOrganizationArgs) => Promise<Organization | null>
+    /** The oldest organization (a self-hosted installation's only one), if any. */
+    findFirst: () => Promise<Organization | null>
     create: (args: CreateOrganizationArgs) => Promise<Organization>
     update: (args: UpdateOrganizationArgs) => Promise<Organization>
     delete: (args: DeleteOrganizationArgs) => Promise<Organization>

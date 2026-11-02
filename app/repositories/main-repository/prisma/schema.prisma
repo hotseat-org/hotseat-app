@@ -66,6 +66,10 @@ model Organization {
 
   invitationHash String? @unique
 
+  // Self-hosted: anyone signing in with an email at one of these domains
+  // ("acme.com") joins as a member, no invite needed.
+  allowedDomains String[] @default([])
+
   renamedFrom OrganizationSlugRedirect[]
   roomKits    RoomKit[]
 

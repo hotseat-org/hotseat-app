@@ -1329,4 +1329,21 @@ export const cs: Messages = {
   "Setting up…": "Připravujeme…",
   "Sure. Look around the demo office without an account — book a desk, find a seat, move the furniture. Or set up your own and invite a few people first.":
     "Jasně. Prohlédněte si ukázkovou kancelář bez účtu — zarezervujte stůl, najděte místo, přestěhujte nábytek. Nebo si nastavte vlastní a pozvěte zatím pár lidí.",
+  "You're not in {name} yet. Ask an admin there for an invite.":
+    "Do {name} zatím nepatříte. Požádejte tamní správu o pozvánku.",
+  "Set up Hotseat": "Nastavení Hotseatu",
+  "Two things, and you can change both later in the settings.":
+    "Dvě věci a obě můžete později změnit v nastavení.",
+  "Company name": "Název firmy",
+  Acme: "Acme",
+  "Who can join": "Kdo se může připojit",
+  "Anyone signing in with an email at these domains joins straight away. Leave it empty to invite people yourself.":
+    "Kdo se přihlásí s e-mailem na těchto doménách, připojí se rovnou. Nechte prázdné, pokud chcete lidi zvát sami.",
+  "Set up": "Nastavit",
+  "Hotseat isn't set up yet": "Hotseat ještě není nastavený",
+  "{admins} sets it up on their first sign-in. Come back after that.":
+    "Nastavení proběhne při prvním přihlášení: {admins}. Pak se vraťte.",
+  "Give the company a name.": "Pojmenujte firmu.",
+  "It's been set up already, or that name won't do. Reload and try again.":
+    "Už je nastavený, nebo tenhle název nejde použít. Obnovte stránku a zkuste to znovu.",
 }
