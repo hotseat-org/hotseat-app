@@ -54,7 +54,10 @@ export const FindSeat = ({
 
   if (view.kind === "preferences")
     return (
-      <Preferences rules={rules} onChange={setRules} onDone={() => setView({ kind: "find" })} />
+      // A screen of its own; in a wide dialog, as narrow as on a phone.
+      <div className={clsx(layout === "columns" && "mx-auto w-full max-w-md")}>
+        <Preferences rules={rules} onChange={setRules} onDone={() => setView({ kind: "find" })} />
+      </div>
     )
 
   const booked =
@@ -74,7 +77,6 @@ export const FindSeat = ({
       layout={layout}
       rules={rules}
       booked={booked}
-      onRules={setRules}
       onEditPreferences={() => setView({ kind: "preferences" })}
       onBooked={(desk, day) => setView({ kind: "booked", desk, day })}
       onShowOnMap={onShowOnMap}
@@ -86,7 +88,6 @@ const Finder = ({
   layout,
   rules,
   booked,
-  onRules,
   onEditPreferences,
   onBooked,
   onShowOnMap,
@@ -95,7 +96,6 @@ const Finder = ({
   rules: SeatRule[]
   /** Booked just now: shown in place of the result (beside the search). */
   booked: ReactNode
-  onRules: (rules: SeatRule[]) => void
   onEditPreferences: () => void
   onBooked: (desk: MatchDesk, day: Day) => void
   onShowOnMap: (deskId: string, day: Day) => void
@@ -268,13 +268,26 @@ const Finder = ({
     </>
   )
 
+  // The search said as a sentence: tapped, your preferences open (their own screen).
+  const sentenceButton = (
+    <button
+      type="button"
+      onClick={onEditPreferences}
+      className="flex min-h-12 items-center gap-3 rounded-2xl bg-surface-secondary px-4 py-3 text-left outline-none hover:bg-surface-tertiary focus-visible:ring-2 focus-visible:ring-focus"
+    >
+      <span className="min-w-0 flex-1 text-[15px] font-extrabold leading-relaxed">{sentence}</span>
+      <span className="shrink-0 self-start pt-1 text-sm font-extrabold text-accent">
+        {t("Change")}
+      </span>
+    </button>
+  )
+
   if (layout === "columns")
     return (
       <div className="grid min-h-full grid-cols-1 gap-6 md:grid-cols-2">
         <div className="flex min-w-0 flex-col gap-4">
-          <p className="text-xl font-extrabold leading-relaxed">{sentence}</p>
           {dayChips}
-          <Preferences rules={rules} onChange={onRules} />
+          {sentenceButton}
         </div>
         <div className="flex min-w-0 flex-col gap-4">{booked ?? result}</div>
       </div>
@@ -283,20 +296,7 @@ const Finder = ({
   return (
     <div className="flex flex-col gap-4">
       {dayChips}
-
-      <button
-        type="button"
-        onClick={onEditPreferences}
-        className="flex min-h-12 items-center gap-3 rounded-2xl bg-surface-secondary px-4 py-3 text-left outline-none hover:bg-surface-tertiary focus-visible:ring-2 focus-visible:ring-focus"
-      >
-        <span className="min-w-0 flex-1 text-[15px] font-extrabold leading-relaxed">
-          {sentence}
-        </span>
-        <span className="shrink-0 self-start pt-1 text-sm font-extrabold text-accent">
-          {t("Change")}
-        </span>
-      </button>
-
+      {sentenceButton}
       {result}
     </div>
   )
