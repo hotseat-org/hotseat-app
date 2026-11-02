@@ -19,6 +19,7 @@ export function InlineModal({
   children,
   className,
   isFullScreenOnPhone = false,
+  layer = "dialog",
 }: {
   /** Accessible name of the dialog. */
   label: string
@@ -28,6 +29,11 @@ export function InlineModal({
   className?: string
   /** No margin round the dialog on a phone (it fills the screen there). */
   isFullScreenOnPhone?: boolean
+  /**
+   * "panel": an office panel (Who's in, My bookings…), a layer under dialogs
+   * and settings — which open from inside one and must come out on top.
+   */
+  layer?: "dialog" | "panel"
 }) {
   usePreventScroll()
   const ref = useRef<HTMLDivElement>(null)
@@ -38,7 +44,8 @@ export function InlineModal({
       className={clsx(
         // Its own pointer events: inside a layer that lets clicks through to
         // what's under it (the office's shell), it must still catch them.
-        "modal-in-backdrop pointer-events-auto fixed inset-0 z-50 grid place-items-center bg-black/50",
+        "modal-in-backdrop pointer-events-auto fixed inset-0 grid place-items-center bg-black/50",
+        layer === "panel" ? "z-[45]" : "z-50",
         isFullScreenOnPhone ? "p-0 md:p-4" : "p-4"
       )}
       // Only a press that starts and ends on the backdrop itself closes it (a

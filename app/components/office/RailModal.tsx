@@ -25,6 +25,7 @@ export const RailModal = ({
 }) =>
   createPortal(
     <InlineModal
+      layer="panel"
       label={title}
       onClose={onClose}
       className="flex h-[min(680px,86vh)] w-[min(460px,94vw)] flex-col rounded-[calc(var(--radius)*3)] border border-border bg-overlay p-5 text-foreground shadow-overlay"
