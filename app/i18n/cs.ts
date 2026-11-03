@@ -1501,7 +1501,7 @@ export const cs: Messages = {
   "With {team}": "S týmem {team}",
   "Not near {team}": "Mimo tým {team}",
   "In {team}'s zone": "V zóně týmu {team}",
-  "Next to {names}": "Vedle: {names}",
+  "With {team}, next to {names}": "S týmem {team}, vedle: {names}",
   "{name}'s teams": "Týmy: {name}",
   "No teams yet.": "Zatím žádné týmy.",
   "Make one": "Vytvořit tým",

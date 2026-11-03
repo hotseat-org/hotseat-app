@@ -57,7 +57,11 @@ export const useRuleText = () => {
       if (!isMet) return t("Not near {team}", { team: teamNameOf(rule.teamId) })
       if (near.length === 0) return t("In {team}'s zone", { team: teamNameOf(rule.teamId) })
 
-      return t("Next to {names}", { names: near.map(nameOf).join(", ") })
+      // The team first: it's what was asked for; who of it is near, after.
+      return t("With {team}, next to {names}", {
+        team: teamNameOf(rule.teamId),
+        names: near.map(nameOf).join(", "),
+      })
     }
 
     const name = nameOf(rule.email)
