@@ -1,6 +1,6 @@
 {
   "include": ["env.d.ts", "**/*.ts", "**/*.tsx", ".react-router/types/**/*"],
-  "exclude": ["node_modules"],
+  "exclude": ["node_modules", "e2e/results"],
   "compilerOptions": {
     "types": ["@react-router/node", "vite/client", "@types/node"],
     "lib": ["DOM", "DOM.Iterable", "es2020"],

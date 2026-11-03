@@ -2,6 +2,8 @@ node_modules
 
 /.cache
 /build
+/e2e/results
+/playwright-report
 /public/build
 .env
 .react-router/

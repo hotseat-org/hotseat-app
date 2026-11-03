@@ -9,6 +9,20 @@ bun run prisma:migrate
 bun run dev
 ```
 
+## Tests
+
+```sh
+bun run test   # unit tests
+bun run e2e    # end-to-end, in Chrome: builds and serves the production app
+```
+
+The end-to-end tests (`e2e/`) drive the production build, as it's released,
+on a desktop and a phone, signed out and signed in: each test worker starts its
+own copy of the demo company and deletes it afterwards. They need the local
+database (`bun run db:start`) and Chrome installed. Run them before a release;
+a failure leaves a screenshot and a trace in `e2e/results/`
+(`npx playwright show-trace <trace.zip>`).
+
 # Deployment
 
 Runs as a Cloudflare Worker at https://alpha.vidlak.net/hotseat (route + config in
