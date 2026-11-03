@@ -230,6 +230,16 @@ export const ThumbnailStudio = () => {
       .then(() => {
         if (shownKey.current !== key) return // another item took its place meanwhile
 
+        // Its camera's shape from the canvas itself: R3F sets it as it
+        // measures, but this canvas draws on demand, and a still taken
+        // before that came out blank (an aspect of 0: nothing in view).
+        const { width, height } = renderer.domElement
+        const perspective = camera as PerspectiveCameraImpl
+        if (height > 0 && perspective.aspect !== width / height) {
+          perspective.aspect = width / height
+          perspective.updateProjectionMatrix()
+        }
+
         renderer.render(scene, camera)
         renderer.domElement.toBlob((blob) => {
           if (!blob) return

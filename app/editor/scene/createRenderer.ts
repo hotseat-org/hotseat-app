@@ -15,19 +15,37 @@ type DefaultProps = Parameters<Extract<GLProps, (props: never) => Promise<unknow
  */
 export const createRenderer =
   ({ alpha = false, stencil = false }: { alpha?: boolean; stencil?: boolean } = {}) =>
-  async ({ canvas }: DefaultProps) => {
+  ({ canvas }: DefaultProps) => {
+    const element = canvas as HTMLCanvasElement
+    const pending = creating.get(element)
+    if (pending) return pending
+
     const renderer = new WebGPURenderer({
-      canvas: canvas as HTMLCanvasElement,
+      canvas: element,
       antialias: true,
       alpha,
       stencil,
       powerPreference: "high-performance",
       forceWebGL: new URLSearchParams(window.location.search).has("webgl"),
     })
-    await renderer.init()
+    const ready = renderer.init().then(() => renderer)
+    creating.set(element, ready)
+    const forget = () => creating.delete(element)
+    ready.then(forget, forget)
 
-    return renderer
+    return ready
   }
+
+/**
+ * The renderers still starting, by canvas. R3F sets a canvas up again when
+ * its size or props change, and makes a renderer while it has none — but
+ * starting one takes a while, and a second set-up meanwhile would make a
+ * second renderer on the same canvas. The one that finishes last is kept,
+ * never sized: its buffers stay the canvas's default 300×150 and its frames
+ * fail (WebGPU errors as the catalogue's stills are taken, or as a page opens
+ * slowly). A second set-up gets the renderer already starting.
+ */
+const creating = new WeakMap<HTMLCanvasElement, Promise<WebGPURenderer>>()
 
 /** The backend a WebGPU renderer runs on: WebGPU's device, or WebGL 2's context. */
 interface Backend {
