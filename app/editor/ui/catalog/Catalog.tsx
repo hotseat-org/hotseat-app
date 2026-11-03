@@ -17,6 +17,8 @@ import { FLOOR_SWATCHES, SWATCHES } from "../../palette"
 import type { PlacementPattern } from "../../layout"
 import { getItem } from "../../catalog"
 import { SidePanelButton, SidePanelFlyout, useSidePanels } from "../sidePanels"
+import { ScrollHint } from "../ScrollHint"
+import { useScrollHints } from "../useScrollHints"
 import {
   getCatalogCategories,
   getToolMeta,
@@ -117,6 +119,7 @@ export const Catalog = () => {
   // The panel is as tall as the tray — but at least PANEL_MIN_HEIGHT (the
   // two-column tray is short), within the screen; tiles scroll inside it.
   const railRef = useRef<HTMLDivElement>(null)
+  const scroll = useScrollHints<HTMLDivElement>()
   const [railHeight, setRailHeight] = useState(0)
   useEffect(() => {
     const element = railRef.current
@@ -128,7 +131,7 @@ export const Catalog = () => {
     return () => observer.disconnect()
   }, [])
   const panelStyle = railHeight
-    ? { height: Math.max(railHeight, PANEL_MIN_HEIGHT), maxHeight: "calc(100dvh - 10rem)" }
+    ? { height: Math.max(railHeight, PANEL_MIN_HEIGHT), maxHeight: "calc(100dvh - 15rem)" }
     : undefined
 
   const pickMode = (mode: "select" | "delete" | "paint") => {
@@ -143,11 +146,12 @@ export const Catalog = () => {
     <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2">
       {preview && <preview.ThumbnailStudio />}
       {/* Category tray: the tools in a row on top, then the categories as a
-          two-column grid of illustrated, named tiles. */}
+          two-column grid of illustrated, named tiles — scrolling under the
+          tools when they don't fit, a fade and an arrow at the hidden end. */}
       <div
         ref={railRef}
         data-tour="catalog"
-        className="pointer-events-auto flex max-h-[calc(100dvh-10rem)] w-42 flex-col gap-1.5 overflow-y-auto rounded-2xl border border-border bg-overlay p-2 shadow-overlay [scrollbar-width:none]"
+        className="pointer-events-auto flex max-h-[calc(100dvh-15rem)] w-42 flex-col gap-1.5 rounded-2xl border border-border bg-overlay p-2 shadow-overlay"
       >
         <div className="grid grid-cols-3 gap-1">
           <RailButton
@@ -178,27 +182,44 @@ export const Catalog = () => {
 
         <div className="h-px shrink-0 bg-separator" />
 
-        <div className="grid grid-cols-2 gap-1.5">
-          {getCatalogCategories().map((entry) => (
-            <CategoryButton
-              key={entry.id}
-              category={entry}
-              label={t(entry.label)}
-              active={openId === entry.id}
-              onClick={() => toggleCategory(entry.id)}
-            />
-          ))}
-        </div>
-
-        <div className="h-px shrink-0 bg-separator" />
-        {sidePanels.entries.map((entry) => (
-          <SidePanelButton
-            key={entry.panel.id}
-            entry={entry}
-            isOpen={sidePanels.openPanel?.id === entry.panel.id}
-            onPress={() => toggleSidePanel(entry.panel.id)}
+        <div className="relative flex min-h-0 flex-1 flex-col">
+          <ScrollHint
+            direction={-1}
+            isShown={scroll.canScrollUp}
+            onPress={() => scroll.scrollBy(-1)}
           />
-        ))}
+          <div
+            ref={scroll.box}
+            className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto overscroll-contain [scrollbar-width:none]"
+          >
+            <div className="grid grid-cols-2 gap-1.5">
+              {getCatalogCategories().map((entry) => (
+                <CategoryButton
+                  key={entry.id}
+                  category={entry}
+                  label={t(entry.label)}
+                  active={openId === entry.id}
+                  onClick={() => toggleCategory(entry.id)}
+                />
+              ))}
+            </div>
+
+            <div className="h-px shrink-0 bg-separator" />
+            {sidePanels.entries.map((entry) => (
+              <SidePanelButton
+                key={entry.panel.id}
+                entry={entry}
+                isOpen={sidePanels.openPanel?.id === entry.panel.id}
+                onPress={() => toggleSidePanel(entry.panel.id)}
+              />
+            ))}
+          </div>
+          <ScrollHint
+            direction={1}
+            isShown={scroll.canScrollDown}
+            onPress={() => scroll.scrollBy(1)}
+          />
+        </div>
       </div>
 
       {sidePanels.openPanel && (

@@ -220,6 +220,8 @@ export const FURNITURE = composeItemsWithLooks(FURNITURE_ITEMS, {
   },
   receptionDesk: {
     Mesh: ReceptionDesk,
+    // Its screen, facing whoever sits behind it.
+    glows: [{ kind: "screen", position: [-0.5, 1.04, 0.22] }],
     drawSymbol: FURNITURE_SYMBOLS.receptionDesk,
     tile: { label: msg("Reception desk"), icon: ConciergeBellIcon, category: "tables" },
   },
