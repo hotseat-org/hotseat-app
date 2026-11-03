@@ -42,7 +42,7 @@ Read the [release notes](https://github.com/hotseat-org/hotseat-app/releases) of
 take a backup. Then set the new version in `.env` and:
 
 ```sh
-# HOTSEAT_VERSION=0.6.0-alpha
+# HOTSEAT_VERSION=0.6.1-alpha
 docker compose pull
 docker compose up -d
 ```
@@ -90,7 +90,7 @@ What you'll see:
 
 - `27 migrations applied.` / `The database is up to date.`: on start.
 - `Hotseat on http://localhost:3000/`: it's serving.
-- `{"status":"ok","version":"0.6.0-alpha"}` at `/healthz`: the version running.
+- `{"status":"ok","version":"0.6.1-alpha"}` at `/healthz`: the version running.
 - `booking jobs { usualBooked: …, waitlisted: … }`: every hour, a minute
   after starting first: usual desks booked as days open up, and freed desks
   handed to people waiting.
@@ -113,7 +113,7 @@ What you'll see:
 
 Hotseat is a Node app (Node 25 or newer, Bun to install dependencies) with
 Postgres 15 or newer. In a copy of the [source](https://github.com/hotseat-org/hotseat-app) at the release you
-want (`git clone --branch v0.6.0-alpha https://github.com/hotseat-org/hotseat-app.git`):
+want (`git clone --branch v0.6.1-alpha https://github.com/hotseat-org/hotseat-app.git`):
 
 ```sh
 bun install

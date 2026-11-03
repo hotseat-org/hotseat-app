@@ -55,7 +55,7 @@ Set the new version in `package.json`, in `HOTSEAT_VERSION` in
 and push:
 
 ```sh
-git tag v0.6.0-alpha && git push origin v0.6.0-alpha
+git tag v0.6.1-alpha && git push origin v0.6.1-alpha
 ```
 
 `.github/workflows/release.yml` runs the checks, publishes

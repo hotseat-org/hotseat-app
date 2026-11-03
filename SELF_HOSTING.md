@@ -14,10 +14,10 @@ web: https://alpha.vidlak.net/hotseat/docs/self-hosting):
 
 ```sh
 mkdir hotseat && cd hotseat
-curl -fsSLO https://raw.githubusercontent.com/hotseat-org/hotseat-app/v0.6.0-alpha/self-hosting/compose.yml
-curl -fsSL https://raw.githubusercontent.com/hotseat-org/hotseat-app/v0.6.0-alpha/self-hosting/.env.example -o .env
+curl -fsSLO https://raw.githubusercontent.com/hotseat-org/hotseat-app/v0.6.1-alpha/self-hosting/compose.yml
+curl -fsSL https://raw.githubusercontent.com/hotseat-org/hotseat-app/v0.6.1-alpha/self-hosting/.env.example -o .env
 # Fill in .env: BASE_URL, COOKIES_SECRET, POSTGRES_PASSWORD, a way to sign in.
-docker compose up -d    # pulls ghcr.io/hotseat-org/hotseat:0.6.0-alpha
+docker compose up -d    # pulls ghcr.io/hotseat-org/hotseat:0.6.1-alpha
 ```
 
 Hotseat 0.5 is an alpha: pin the exact version, and read the release notes
