@@ -23,8 +23,9 @@ const Basket = () => (
         <Surface color="#a8815e" roughness={0.95} />
       </mesh>
     ))}
-    <mesh position={[0, BASKET_HEIGHT - 0.01, 0]}>
-      <cylinderGeometry args={[0.22, 0.22, 0.02, 20]} />
+    {/* Soil: a hair over the rim — level with the basket's top, the two would flicker */}
+    <mesh position={[0, BASKET_HEIGHT, 0]}>
+      <cylinderGeometry args={[0.215, 0.215, 0.02, 20]} />
       <Surface color="#5b463a" roughness={1} />
     </mesh>
   </group>

@@ -98,7 +98,7 @@ export const FURNITURE_ITEMS = {
   // Its colour is one of the tubes' (the sign's own section offers them), not the swatches'.
   neonSign: defineItem({
     mount: "wall",
-    footprint: [4, 1],
+    footprint: [6, 1],
     defaultColor: DEFAULT_NEON_COLOR,
     isRecolorable: false,
   }),

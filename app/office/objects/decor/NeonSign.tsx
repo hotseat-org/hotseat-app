@@ -13,13 +13,13 @@ interface Props {
   color?: string
 }
 
-const HANG_HEIGHT = 0.8
+const HANG_HEIGHT = 0.72
 /**
  * The most the sign takes on the wall (m), glow included: its footprint's
  * width, and up to the wall's top. A long text gets smaller letters.
  */
-const MAX_WIDTH = 2
-const MAX_HEIGHT = 0.95
+const MAX_WIDTH = 3
+const MAX_HEIGHT = 1.25
 /** The texture's letters (px), and the room round them the glow spreads into. */
 const FONT_SIZE = 140
 const GLOW = 40

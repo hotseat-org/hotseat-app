@@ -668,8 +668,7 @@ export const FURNITURE_SYMBOLS: Partial<Record<ObjectType, DrawSymbol | null>> =
     return sketch.done(1.1)
   },
   neonSign: ({ sketch, color }) => {
-    sketch.rect(-0.78, -0.21, 0.78, -0.17, "#dfe8ec", 0.01)
-    sketch.line(-0.7, -0.15, 0.7, -0.15, color, 0.025)
+    sketch.line(-1.3, -0.17, 1.3, -0.17, color, 0.035)
 
     return sketch.done(1.2)
   },
