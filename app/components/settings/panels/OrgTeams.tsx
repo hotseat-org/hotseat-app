@@ -102,13 +102,14 @@ const TeamList = ({ data, onOpen }: { data: TeamsData; onOpen: (id: string) => v
   if (data.teams.length === 0)
     return (
       <EmptyState
+        className="mx-auto py-10"
         icon={UsersRound}
         title={t("No teams yet")}
         description={t(
           "Group people who like to sit together. They can find a seat near each other, and see who's in."
         )}
       >
-        <Button variant="primary" className="mt-5" onPress={() => onOpen("new")}>
+        <Button variant="primary" onPress={() => onOpen("new")}>
           <Plus className="size-4" /> {t("New team")}
         </Button>
       </EmptyState>
