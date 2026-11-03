@@ -223,7 +223,7 @@ const Finder = ({
 
       {favorite && when !== ANY_DAY && (
         <div className="flex items-center gap-3 rounded-2xl border border-border px-4 py-3">
-          <Star className="size-4 shrink-0 text-warning" />
+          <Star className="size-4 shrink-0 fill-current text-star" />
           <span className="min-w-0 flex-1 truncate text-sm font-bold">
             {t("Your preferred seat {desk} is free", { desk: deskName(i18n, favorite.desk) })}
           </span>

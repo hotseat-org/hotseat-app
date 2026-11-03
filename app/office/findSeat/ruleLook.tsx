@@ -30,7 +30,7 @@ export type RuleTone = "accent" | "neutral" | "warning" | "away"
 export const TONES: Record<RuleTone, string> = {
   accent: "bg-accent/15 text-accent",
   neutral: "bg-foreground/[0.09] text-foreground",
-  warning: "bg-warning/30 text-warning-foreground",
+  warning: "bg-star-surface text-star",
   away: "bg-danger/15 text-danger",
 }
 

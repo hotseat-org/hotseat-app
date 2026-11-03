@@ -129,6 +129,9 @@
   --success-foreground: #23271b;
   --warning: #e8c07a; /* editor door handle amber */
   --warning-foreground: #3a2e10;
+  /* A preferred seat's star and its pill: amber that reads on the page. */
+  --star: #85560a;
+  --star-surface: color-mix(in srgb, var(--warning) 38%, transparent);
   --danger: #b8443d; /* editor vending-machine red */
   --danger-foreground: #fbf6ee;
 
@@ -200,6 +203,8 @@
   --success-foreground: #16200f;
   --warning: #e8c07a;
   --warning-foreground: #3a2e10;
+  --star: #f2c56e;
+  --star-surface: color-mix(in srgb, var(--warning) 18%, transparent);
   --danger: #f09088; /* 4.7:1 as text on a secondary button (#e8776e was 3.8) */
   --danger-foreground: #151820;
 
@@ -419,6 +424,8 @@
 
 /* Expose the phone chrome to Tailwind utilities (bg-chrome / border-chrome-border). */
 @theme inline {
+  --color-star: var(--star);
+  --color-star-surface: var(--star-surface);
   --color-chrome: var(--chrome);
   --color-chrome-border: var(--chrome-border);
   --color-scrim: var(--scrim);
