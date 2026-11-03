@@ -118,7 +118,8 @@ const TeamList = ({ data, onOpen }: { data: TeamsData; onOpen: (id: string) => v
     <div className="flex flex-col gap-4">
       <div className="flex items-start gap-4">
         <p className="min-w-0 flex-1 text-sm text-muted">
-          {t("People who like to sit together. Someone can be in more than one.")}
+          {/* The header says what a team is: this, what it doesn't. */}
+          {t("Someone can be in more than one team.")}
         </p>
         <Button variant="primary" size="sm" onPress={() => onOpen("new")}>
           <Plus className="size-4" /> {t("New team")}

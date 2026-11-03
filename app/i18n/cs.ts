@@ -1465,8 +1465,7 @@ export const cs: Messages = {
   "Group people who like to sit together. They can find a seat near each other, and see who's in.":
     "Seskupte lidi, kteří chtějí sedět spolu. Najdou si místo blízko sebe a uvidí, kdo z nich je v kanceláři.",
   "New team": "Nový tým",
-  "People who like to sit together. Someone can be in more than one.":
-    "Lidé, kteří chtějí sedět spolu. Kdokoli může být ve více týmech.",
+  "Someone can be in more than one team.": "Kdokoli může být ve více týmech.",
   "e.g. Design": "např. Design",
   "Where they sit": "Kde sedí",
   "Team days": "Týmové dny",

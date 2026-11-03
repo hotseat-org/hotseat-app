@@ -180,6 +180,13 @@ const Contents = ({
 /** Previews draw on a transparent canvas (the tile shows through). */
 const createPreviewRenderer = createRenderer({ alpha: true })
 
+/**
+ * Previews take no pointer events: nothing in them is clicked. (R3F would
+ * attach them to the canvas's box once its renderer has started — and a
+ * tile's live preview, gone as the pointer left it, has no box by then.)
+ */
+const noEvents = () => ({ enabled: false, priority: 0 })
+
 /** Runs `callback` in idle time — or after `timeout` (ms) if there's none. */
 const whenIdle = (callback: () => void, timeout = 50) => {
   if (typeof window.requestIdleCallback === "function")
@@ -270,6 +277,7 @@ export const ThumbnailStudio = () => {
         gl={createPreviewRenderer}
         camera={CAMERA}
         frameloop="never"
+        events={noEvents}
         style={{ width: "100%", height: "100%" }}
       >
         {request && (
@@ -336,6 +344,7 @@ export const PreviewTile = ({ type, color, active = false }: TileProps) => {
           // Camera exists from the first render, so FitCamera frames the right one.
           camera={CAMERA}
           frameloop="demand"
+          events={noEvents}
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
         >
           <Contents type={type} color={color} spinning onFirstFrame={() => setIsLiveDrawn(true)} />
