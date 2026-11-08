@@ -62,7 +62,7 @@ export const PhoneLayout = ({
             {t("Bookable until {day}", { day: { day: lastDay } })}
           </p>
         </div>
-        <DialogCloseButton onClose={onClose} className="size-11" />
+        <DialogCloseButton onClose={onClose} />
       </div>
 
       <div className="flex shrink-0 items-center gap-1.5 overflow-x-auto border-b border-border px-4 pb-3">

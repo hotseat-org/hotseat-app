@@ -38,10 +38,10 @@ const Tooltip = ({ tip }: { tip: Tip }) =>
       className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-xl bg-foreground px-2.5 py-1.5 text-xs font-bold whitespace-nowrap text-background"
       style={{ left: tip.x, top: tip.y - 8 }}
     >
-      <p className="font-bold text-foreground">{tip.title}</p>
-      {tip.lines.map((l) => (
-        <p key={l} className="text-muted">
-          {l}
+      <p className="font-black">{tip.title}</p>
+      {tip.lines.map((line) => (
+        <p key={line} className="opacity-80">
+          {line}
         </p>
       ))}
     </div>
@@ -63,7 +63,7 @@ const Card = ({
     className={clsx("relative m-0 border-t border-separator pt-4", className)}
   >
     <figcaption className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-      <span className="text-xl font-black tracking-[-0.01em] text-foreground">{title}</span>
+      <span className="text-2xl font-black tracking-[-0.02em] text-foreground">{title}</span>
       {aside}
     </figcaption>
     {children}
@@ -73,11 +73,11 @@ const Card = ({
 const Stat = ({ label, value, detail }: { label: string; value: ReactNode; detail: ReactNode }) => (
   // The number is the headline; its label and detail sit around it.
   <div className="border-t-2 border-foreground pt-3">
-    <p className="text-sm font-black text-muted">{label}</p>
-    <p className="mt-1 text-[44px] leading-none font-black tracking-[-0.03em] text-foreground">
+    <p className="text-base font-black text-muted">{label}</p>
+    <p className="mt-1 text-[52px] leading-none font-black tracking-[-0.035em] text-foreground">
       {value}
     </p>
-    <p className="mt-2 text-sm text-muted">{detail}</p>
+    <p className="mt-2 text-base font-bold text-muted">{detail}</p>
   </div>
 )
 
@@ -111,10 +111,15 @@ const WeeksChart = ({ data, isDark }: { data: OfficeInsights; isDark: boolean })
           strokeDasharray="5 5"
         />
         <line x1="30" x2={W} y1={base} y2={base} className="stroke-separator" />
-        <text x="24" y={base + 4} textAnchor="end" className="fill-muted text-[10px]">
+        <text x="24" y={base + 4} textAnchor="end" className="fill-muted text-[12px] font-bold">
           0
         </text>
-        <text x="24" y={y(data.deskCount) + 4} textAnchor="end" className="fill-muted text-[10px]">
+        <text
+          x="24"
+          y={y(data.deskCount) + 4}
+          textAnchor="end"
+          className="fill-muted text-[12px] font-bold"
+        >
           {data.deskCount}
         </text>
         {data.byWeek.map((w, i) => {
@@ -162,7 +167,7 @@ const WeeksChart = ({ data, isDark }: { data: OfficeInsights; isDark: boolean })
                   x={x + bar / 2}
                   y={H - 4}
                   textAnchor="middle"
-                  className="fill-muted text-[10px]"
+                  className="fill-muted text-[12px] font-bold"
                 >
                   {format.short(w.start)}
                 </text>
@@ -185,7 +190,7 @@ const DaysChart = ({ data, isDark }: { data: OfficeInsights; isDark: boolean }) 
   return (
     <div data-chart className="relative" onMouseLeave={() => setTip(null)}>
       <div
-        className="grid items-center gap-[3px] text-[10px] text-muted"
+        className="grid items-center gap-[3px] text-xs font-bold text-muted"
         style={{ gridTemplateColumns: `34px repeat(${weeks.length}, minmax(0, 1fr))` }}
       >
         {[0, 1, 2, 3, 4].map((row) => (
@@ -232,7 +237,7 @@ const DaysChart = ({ data, isDark }: { data: OfficeInsights; isDark: boolean }) 
           </Fragment>
         ))}
       </div>
-      <p className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-muted">
+      <p className="mt-3 flex flex-wrap items-center gap-2 text-sm font-bold text-muted">
         <span>{t("Quiet")}</span>
         <span
           aria-hidden
@@ -290,7 +295,7 @@ const TeamsCard = ({ teams }: { teams: TeamInsights[] }) => {
       <div className="overflow-x-auto">
         <table className="w-full min-w-[640px] border-collapse text-[13px]">
           <thead>
-            <tr className="text-left text-[11px] text-muted">
+            <tr className="text-left text-sm font-bold text-muted">
               <th className="py-1 font-extrabold">{t("Team")}</th>
               <th className="font-extrabold">{t("In, an average day")}</th>
               <th className="font-extrabold">{t("Together")}</th>
@@ -415,61 +420,68 @@ export const InsightsDashboard = () => {
         aria-label={t("Insights")}
         className="modal-in relative flex h-fit w-full max-w-[1220px] flex-col gap-5 on-ground p-5 md:p-7"
       >
-        <header className="flex flex-wrap items-center gap-3">
-          <div className="min-w-60 flex-1">
-            {/* The news as the headline (board H7): how full the office is. */}
-            <h2 className="text-[clamp(56px,6vw,96px)] leading-[0.9] font-black tracking-[-0.04em]">
-              {data
-                ? t("{percent} full.", { percent: format.percent(data.occupancy) })
-                : t("Insights")}
-            </h2>
-            <p className="mt-3 text-lg font-bold text-muted">
-              {data
-                ? t("An average working day, {from} to {to}, of {desks}.", {
-                    from: format.long(data.days[0]?.date ?? data.from),
-                    to: format.long(data.days[data.days.length - 1]?.date ?? data.to),
-                    desks: tn(data.deskCount, "{n} desk", "{n} desks"),
-                  })
-                : t("Loading…")}
-            </p>
+        <header className="flex flex-col gap-5">
+          {/* The headline and its close ring, as every page; the controls on a line under it. */}
+          <div className="flex items-start gap-4">
+            <div className="min-w-60 flex-1">
+              {/* The news as the headline (board H7): how full the office is. */}
+              <h2 className="text-[clamp(56px,6vw,96px)] leading-[0.9] font-black tracking-[-0.04em]">
+                {data
+                  ? t("{percent} full.", { percent: format.percent(data.occupancy) })
+                  : t("Insights")}
+              </h2>
+              <p className="mt-3 text-xl font-extrabold text-muted">
+                {data
+                  ? t("An average working day, {from} to {to}, of {desks}.", {
+                      from: format.long(data.days[0]?.date ?? data.from),
+                      to: format.long(data.days[data.days.length - 1]?.date ?? data.to),
+                      desks: tn(data.deskCount, "{n} desk", "{n} desks"),
+                    })
+                  : t("Loading…")}
+              </p>
+            </div>
+            <DialogCloseButton onClose={close} />
           </div>
-          <div role="tablist" aria-label={t("Period")} className="flex flex-wrap gap-x-4">
-            {(["4w", "12w", "next"] as const).map((p) => (
-              <button
-                key={p}
-                type="button"
-                role="tab"
-                aria-selected={period === p}
-                onClick={() => setPeriod(p)}
-                className={getWordChoiceClass(period === p)}
-              >
-                {t(PERIOD_LABEL[p])}
-              </button>
-            ))}
+          <div className="flex flex-wrap items-center gap-x-7 gap-y-3">
+            <div role="tablist" aria-label={t("Period")} className="flex flex-wrap gap-x-4">
+              {(["4w", "12w", "next"] as const).map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  role="tab"
+                  aria-selected={period === p}
+                  onClick={() => setPeriod(p)}
+                  className={getWordChoiceClass(period === p)}
+                >
+                  {t(PERIOD_LABEL[p])}
+                </button>
+              ))}
+            </div>
+            <span className="flex-1" />
+            <Button
+              variant="primary"
+              size="lg"
+              isDisabled={!data || !isCurrent}
+              onPress={() => {
+                if (!data) return
+                setHeatmap({
+                  period,
+                  ratios: Object.fromEntries(data.desks.map((d) => [d.deskId, d.ratio])),
+                })
+                close()
+              }}
+            >
+              <MapIcon className="size-4" /> {t("Show on the office")}
+            </Button>
+            <button
+              type="button"
+              disabled={!data}
+              onClick={() => data && downloadCsv(i18n, data, officeSlug ?? "office")}
+              className="flex min-h-11 items-center gap-1.5 text-[17px] font-extrabold text-foreground underline decoration-2 underline-offset-[5px] outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50"
+            >
+              <Download className="size-4" aria-hidden /> CSV
+            </button>
           </div>
-          <Button
-            variant="primary"
-            isDisabled={!data || !isCurrent}
-            onPress={() => {
-              if (!data) return
-              setHeatmap({
-                period,
-                ratios: Object.fromEntries(data.desks.map((d) => [d.deskId, d.ratio])),
-              })
-              close()
-            }}
-          >
-            <MapIcon className="size-4" /> {t("Show on the office")}
-          </Button>
-          <button
-            type="button"
-            disabled={!data}
-            onClick={() => data && downloadCsv(i18n, data, officeSlug ?? "office")}
-            className="flex min-h-11 items-center gap-1.5 text-[17px] font-extrabold text-foreground underline decoration-2 underline-offset-[5px] outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50"
-          >
-            <Download className="size-4" aria-hidden /> CSV
-          </button>
-          <DialogCloseButton onClose={close} />
         </header>
 
         {insights.data && "error" in insights.data && (
@@ -541,7 +553,7 @@ export const InsightsDashboard = () => {
               <Card
                 title={t("Desks in use, an average day per week")}
                 aside={
-                  <span className="flex gap-3.5 text-xs text-muted">
+                  <span className="flex gap-3.5 text-sm font-bold text-muted">
                     <span className="inline-flex items-center gap-1.5">
                       <span
                         className="size-2.5 rounded-[3px]"
@@ -607,7 +619,7 @@ export const InsightsDashboard = () => {
                 <div className="max-h-64 overflow-y-auto">
                   <table className="w-full border-collapse text-[13px]">
                     <thead>
-                      <tr className="text-left text-[11px] text-muted">
+                      <tr className="text-left text-sm font-bold text-muted">
                         <th className="py-1 font-extrabold">{t("Desk")}</th>
                         <th className="font-extrabold">{t("In use")}</th>
                         <th className="text-right font-extrabold">{t("Last used")}</th>
@@ -660,7 +672,7 @@ export const InsightsDashboard = () => {
                 {data.permanent.length ? (
                   <table className="w-full border-collapse text-[13px]">
                     <thead>
-                      <tr className="text-left text-[11px] text-muted">
+                      <tr className="text-left text-sm font-bold text-muted">
                         <th className="py-1 font-extrabold">{t("Desk")}</th>
                         <th className="font-extrabold">{t("Resident")}</th>
                         <th className="text-right font-extrabold">{t("Given up")}</th>

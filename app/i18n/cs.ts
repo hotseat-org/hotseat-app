@@ -1640,4 +1640,7 @@ export const cs: Messages = {
   New: "Nové",
   "Find a person or seat": "Najít člověka nebo místo",
   "Who or where?": "Kdo nebo kde?",
+  "New organization.": "Nová organizace.",
+  "Its name": "Název",
+  "New office.": "Nová kancelář.",
 }

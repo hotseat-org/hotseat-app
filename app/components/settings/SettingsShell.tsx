@@ -201,9 +201,10 @@ export function SettingsShell({
             onClick={close}
             aria-label={t("Close settings")}
             title={t("Close (Esc)")}
-            className="grid size-10 shrink-0 place-items-center rounded-full border border-border text-muted transition-colors hover:bg-surface-secondary hover:text-foreground"
+            // A ring of ink, as every close (DialogCloseButton).
+            className="grid size-11 shrink-0 place-items-center rounded-full border-2 border-foreground text-foreground transition-colors hover:bg-foreground hover:text-background"
           >
-            <X className="size-[18px]" />
+            <X className="size-5" strokeWidth={2.4} />
           </button>
         </header>
         {isListShown && (

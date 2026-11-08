@@ -1,7 +1,8 @@
-import { EyeOff, MapPin, Settings2 } from "lucide-react"
+import { EyeOff } from "lucide-react"
 import { useEffect, useMemo } from "react"
 import { createPortal } from "react-dom"
 import { MemberAvatar, nameOf, roleLabel, type ShellMember } from "./shell-ui"
+import { ROW_LINK } from "./BookingRow"
 import { ScrollArea } from "~/components/ui/ScrollArea"
 import { useSettings } from "~/components/settings/useSettings"
 import { DialogCloseButton } from "~/components/ui/DialogCloseButton"
@@ -95,16 +96,17 @@ const ProfileDialog = ({
     <InlineModal
       label={name}
       onClose={onClose}
-      className="flex max-h-[min(640px,86vh)] w-[min(420px,94vw)] flex-col on-ground p-6"
+      className="flex max-h-[min(720px,90vh)] w-[min(560px,94vw)] flex-col on-ground p-8"
     >
       <header className="flex items-start gap-4">
-        <MemberAvatar m={member} className="size-16 shrink-0 rounded-2xl text-xl" />
+        <MemberAvatar m={member} className="size-16 shrink-0 rounded-full text-xl" />
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-3xl leading-tight font-black tracking-[-0.02em]">
+          <h2 className="truncate text-[48px] leading-[0.95] font-black tracking-[-0.035em]">
             {isMe ? t("You") : name}
           </h2>
-          <p className="truncate text-sm text-muted">{member.userEmail}</p>
-          <p className="mt-1 text-xs font-bold text-muted">{roleLabel(i18n, member.role)}</p>
+          <p className="mt-2 truncate text-lg font-extrabold text-muted">
+            {member.userEmail} · {roleLabel(i18n, member.role)}
+          </p>
           {teams.length > 0 && (
             <ul aria-label={t("Teams")} className="mt-2 flex flex-wrap gap-1.5">
               {teams.map((team) => (
@@ -128,7 +130,7 @@ const ProfileDialog = ({
       <ScrollArea frameClassName="mt-5 flex-1" className="flex flex-col gap-5">
         {permanentDesk && (
           <section>
-            <h3 className="text-base font-black text-foreground">{t("Permanent desk")}</h3>
+            <h3 className="pb-1 text-xl font-black text-foreground">{t("Permanent desk")}</h3>
             <DeskRow
               label={deskName(i18n, permanentDesk)}
               onShow={() => showDesk(permanentDesk.id, booking.day || booking.today)}
@@ -137,13 +139,13 @@ const ProfileDialog = ({
         )}
 
         <section>
-          <h3 className="text-base font-black text-foreground">{t("In the office")}</h3>
+          <h3 className="pb-1 text-xl font-black text-foreground">{t("In the office")}</h3>
           {days.length === 0 ? (
-            <p className="mt-2 text-sm text-muted">
+            <p className="text-lg font-bold text-muted">
               {permanentDesk ? t("At their own desk.") : t("No days booked ahead.")}
             </p>
           ) : (
-            <ul className="mt-1 flex flex-col">
+            <ul className="flex flex-col border-t border-separator">
               {days.map(({ day, deskId }) => {
                 const desk = pieces.find((piece) => piece.id === deskId)
 
@@ -169,9 +171,9 @@ const ProfileDialog = ({
             type="button"
             // Over the profile: closing the settings comes back to it.
             onClick={() => openSettings("org", "members")}
-            className="flex min-h-10 items-center gap-2 rounded-xl px-3 text-sm font-bold text-accent hover:bg-accent/10"
+            className="min-h-11 text-lg font-extrabold text-foreground underline decoration-2 underline-offset-[5px] outline-none focus-visible:ring-2 focus-visible:ring-focus"
           >
-            <Settings2 className="size-4" /> {t("Manage in members")}
+            {t("Manage in members")}
           </button>
         </footer>
       )}
@@ -230,14 +232,11 @@ const DeskRow = ({ label, onShow }: { label: string; onShow: () => void }) => {
   const { t } = useI18n()
 
   return (
-    <div className="flex min-h-11 items-center gap-3">
-      <span className="min-w-0 flex-1 truncate text-sm font-semibold">{label}</span>
-      <button
-        type="button"
-        onClick={onShow}
-        className="flex min-h-9 shrink-0 items-center gap-1.5 rounded-xl bg-default px-3 text-sm font-bold"
-      >
-        <MapPin className="size-4" /> {t("Show")}
+    // A ruled line of large type, as the headline's lists; Show a word.
+    <div className="flex h-[60px] items-center gap-3 border-b border-separator">
+      <span className="min-w-0 flex-1 truncate text-lg font-black tracking-[-0.01em]">{label}</span>
+      <button type="button" onClick={onShow} className={`${ROW_LINK} text-foreground`}>
+        {t("Show")}
       </button>
     </div>
   )

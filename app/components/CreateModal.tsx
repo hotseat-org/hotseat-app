@@ -7,6 +7,7 @@ import { useFetcher } from "react-router"
 import { uploadImage } from "~/components/Inputs/ImageUpload"
 import { BottomSheet } from "~/components/ui/BottomSheet"
 import { useIsMobile } from "~/utils/hooks/useIsMobile"
+import { DialogCloseButton } from "~/components/ui/DialogCloseButton"
 import { useI18n } from "~/i18n/I18nProvider"
 
 /**
@@ -67,65 +68,6 @@ export const useImageUpload = () => {
 export const IMAGE_TYPES = ".svg,.png,.gif,.jpg,.jpeg,.webp"
 
 /**
- * The modal's header: soft contour lines — the landscape the offices sit in —
- * or, once one is picked, the cover photo. `tone` "accent" tints it blue.
- */
-export const ContourBanner = ({
-  image,
-  tone = "warm",
-  className,
-  children,
-}: {
-  image?: string
-  tone?: "warm" | "accent"
-  className?: string
-  children?: ReactNode
-}) => (
-  <div
-    className={clsx(
-      "relative flex items-center justify-center overflow-hidden",
-      tone === "warm" ? "bg-surface-tertiary text-border" : "bg-accent/10 text-accent/25",
-      className
-    )}
-  >
-    {image ? (
-      <img src={image} alt="" className="absolute inset-0 size-full object-cover" />
-    ) : (
-      <svg
-        aria-hidden
-        viewBox="0 0 460 190"
-        preserveAspectRatio="xMidYMid slice"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1.3}
-        className="absolute inset-0 size-full"
-      >
-        {tone === "warm" ? (
-          <>
-            <path
-              d="M230 60C290 58 320 80 318 98S280 136 228 134 140 122 142 98 175 62 230 60Z"
-              className="fill-surface-secondary"
-            />
-            <path d="M230 40C310 36 350 70 348 100S300 156 226 154 112 136 114 98 160 44 230 40Z" />
-            <path d="M232 20C330 14 382 62 380 102S318 178 222 176 82 150 84 98 146 26 232 20Z" />
-            <path d="M-10 30C40 10 70 60 40 90S-10 140-10 140" />
-            <path d="M470 160C420 150 400 110 430 80S470 40 470 40" />
-          </>
-        ) : (
-          <>
-            <path d="M-10 40C80 10 160 80 250 50S400 0 470 40" />
-            <path d="M-10 75C80 45 170 115 260 85S400 35 470 75" />
-            <path d="M-10 110C90 80 180 150 270 120S400 70 470 110" />
-            <path d="M-10 145C100 115 190 185 280 155S400 105 470 145" />
-          </>
-        )}
-      </svg>
-    )}
-    {children}
-  </div>
-)
-
-/**
  * A create dialog (a new organization, a new office): centred on larger
  * screens, a sheet up from the bottom on a phone. Its content gets `close`,
  * which slides a sheet away before it goes.
@@ -151,25 +93,12 @@ export const CreateDialog = ({
     <Modal isOpen onOpenChange={(isOpen) => !isOpen && onClose()}>
       <Modal.Backdrop>
         <Modal.Container>
-          <Modal.Dialog className="overflow-hidden p-0">{children(onClose)}</Modal.Dialog>
+          <Modal.Dialog className="w-[min(600px,94vw)] max-w-none overflow-hidden p-0">
+            {children(onClose)}
+          </Modal.Dialog>
         </Modal.Container>
       </Modal.Backdrop>
     </Modal>
-  )
-}
-
-/** Round "×" over the banner. */
-export const BannerClose = ({ onPress }: { onPress: () => void }) => {
-  const { t } = useI18n()
-  return (
-    <button
-      type="button"
-      aria-label={t("Close")}
-      onClick={onPress}
-      className="absolute top-3.5 right-3.5 z-10 flex size-9 cursor-pointer items-center justify-center rounded-full bg-overlay/85 text-foreground transition-colors hover:bg-overlay"
-    >
-      <X size={16} strokeWidth={2.4} />
-    </button>
   )
 }
 
@@ -200,11 +129,7 @@ export const TitleNameField = ({
   const { t } = useI18n()
   return (
     <div className={clsx("flex w-full flex-col gap-1.5", isCentered && "items-center")}>
-      {/* The dialog's title (in the headline's type), naming the field. */}
-      <label
-        htmlFor="create-name"
-        className="text-3xl leading-none font-black tracking-[-0.03em] text-foreground"
-      >
+      <label htmlFor="create-name" className="text-base font-extrabold text-muted">
         {label}
       </label>
       <input
@@ -217,14 +142,14 @@ export const TitleNameField = ({
         autoFocus
         required
         className={clsx(
-          "w-full border-0 border-b-2 border-border bg-transparent pt-1 pb-2 text-[28px] font-black text-foreground outline-none transition-colors",
+          "w-full border-0 border-b-[3px] border-foreground bg-transparent pt-1 pb-2 text-[40px] leading-tight font-black tracking-[-0.03em] text-foreground outline-none transition-colors",
           "placeholder:text-muted/50",
           availability === "taken" ? "border-danger" : "focus:border-accent",
           isCentered && "text-center"
         )}
       />
       {/* Fixed height: the line changes, the modal doesn't move. */}
-      <p className="flex h-5 items-center gap-1.5 text-[13px] text-muted">
+      <p className="flex h-6 items-center gap-1.5 text-base font-bold text-muted">
         {availability === "checking" && <Spinner size="sm" className="size-3.5 shrink-0" />}
         {availability === "available" && (
           <Check size={14} strokeWidth={3} className="shrink-0 animate-icon-pop text-success" />
@@ -242,3 +167,55 @@ export const TitleNameField = ({
     </div>
   )
 }
+
+/**
+ * A create dialog's top: its title as a headline ("New office."), a sentence
+ * on what comes next, and the ring to close it.
+ */
+export const CreateHeader = ({
+  title,
+  summary,
+  onClose,
+}: {
+  title: string
+  summary: string
+  onClose: () => void
+}) => (
+  <div className="flex items-start gap-4">
+    <div className="min-w-0 flex-1">
+      <h2 className="text-[56px] leading-[0.95] font-black tracking-[-0.035em] text-foreground">
+        {title}
+      </h2>
+      <p className="mt-3 text-xl leading-snug font-extrabold text-muted">{summary}</p>
+    </div>
+    <DialogCloseButton onClose={onClose} />
+  </div>
+)
+
+/**
+ * Picking a picture (a cover, a logo) as a word beside the actions: "Add a
+ * cover photo", or once picked, its thumbnail and "Change".
+ */
+export const PictureWord = ({
+  upload,
+  addLabel,
+  changeLabel,
+}: {
+  upload: ReturnType<typeof useImageUpload>
+  addLabel: string
+  changeLabel: string
+}) => (
+  <label className="flex min-h-11 cursor-pointer items-center gap-2.5 text-lg font-extrabold text-foreground underline decoration-2 underline-offset-[5px] focus-within:ring-2 focus-within:ring-focus">
+    <input
+      type="file"
+      accept={IMAGE_TYPES}
+      className="sr-only"
+      onChange={(event) => upload.pick(event.target.files?.[0])}
+    />
+    {upload.isUploading && <Spinner size="sm" />}
+    {upload.preview && !upload.isUploading && (
+      <img src={upload.preview} alt="" className="size-9 rounded-lg object-cover" />
+    )}
+    {upload.preview ? changeLabel : addLabel}
+  </label>
+)

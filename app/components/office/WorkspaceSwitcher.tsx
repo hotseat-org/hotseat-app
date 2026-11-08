@@ -1,5 +1,5 @@
 import { Popover, Tooltip } from "@heroui/react"
-import { Building2, ChevronDown, Plus, Settings, Star } from "lucide-react"
+import { ChevronDown, Plus, Settings, Star } from "lucide-react"
 import { useEffect, useState, type ReactNode } from "react"
 import { createPortal } from "react-dom"
 import { Link, PrefetchPageLinks, useFetcher, useNavigate, useParams } from "react-router"
@@ -64,7 +64,7 @@ export const WorkspaceSwitcher = ({
         <OrgLogo
           src={d.organization.thumbnailUrl}
           name={d.organization.name}
-          className="size-8 rounded-lg"
+          className="size-8 rounded-full"
         />
       )}
       {!isCompact && (
@@ -78,19 +78,9 @@ export const WorkspaceSwitcher = ({
   const officeTrigger = (
     <>
       {/* Its cover, sized like the org's logo: both halves the same height. */}
-      {!isCompact ? null : d.currentOffice ? (
-        <ThumbAvatar
-          src={d.currentOffice.thumbnail}
-          fallback={d.currentOffice.name.slice(0, 1).toUpperCase()}
-          className="size-8 shrink-0 rounded-lg"
-        />
-      ) : (
-        <span className="grid size-8 shrink-0 place-items-center">
-          <Building2 className="size-4 text-accent" />
-        </span>
-      )}
+      {/* The office as its name alone (its cover is in the menu). */}
       <span
-        className={`min-w-0 truncate font-semibold text-foreground ${isCompact ? "text-sm" : "max-w-44 text-base"}`}
+        className={`min-w-0 truncate font-semibold text-foreground ${isCompact ? "text-base" : "max-w-44 text-base"}`}
       >
         {d.currentOffice?.name ?? (offices.length ? t("Select office") : t("No offices"))}
       </span>

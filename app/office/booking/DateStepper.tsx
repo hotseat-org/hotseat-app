@@ -158,13 +158,14 @@ const shiftMonth = (month: Day, offset: number) => {
 }
 
 const getDayTone = (isSelected: boolean, isEnabled: boolean) => {
-  if (isSelected) return "bg-accent text-accent-foreground"
+  // The day you pick: ink, as the dark pill.
+  if (isSelected) return "bg-foreground text-background"
 
   return isEnabled ? "text-foreground hover:bg-surface-secondary" : "text-muted opacity-40"
 }
 
 const getFillTone = (isSelected: boolean, isMine: boolean) => {
-  if (isSelected) return "bg-accent-foreground"
+  if (isSelected) return "bg-background"
 
   return isMine ? "bg-accent" : "bg-muted"
 }

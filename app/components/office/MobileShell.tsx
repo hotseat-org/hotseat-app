@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import clsx from "clsx"
-import { Armchair, Building2, CalendarDays, Hourglass, Layers, MapPin, Users } from "lucide-react"
+import { Armchair, Building2, CalendarDays, Hourglass, Layers, Users } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { type ShellMember, type ShellOffice } from "./shell-ui"
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher"
@@ -149,7 +149,8 @@ export const MobileShell = ({ offices, me, members, empty = false }: Props) => {
 // office layer behind them.
 export const TopBar = ({ offices }: { offices: ShellOffice[] }) => (
   <header
-    className="pointer-events-auto fixed inset-x-0 top-0 grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-1 border-b border-chrome-border bg-chrome px-3 shadow-[0_2px_10px_var(--chrome-shadow)]"
+    // The page's own colour, no line or shadow: the plan's paper runs on into it.
+    className="pointer-events-auto fixed inset-x-0 top-0 grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-1 bg-chrome px-3"
     style={{ height: TOP_BAR_HEIGHT }}
   >
     {/* The switcher takes what the account leaves, and truncates in it. */}
@@ -164,10 +165,15 @@ export const TopBar = ({ offices }: { offices: ShellOffice[] }) => (
 )
 
 /** The dock's main action (finding a seat, the waitlist), and a quieter one (showing your desk). */
+/** A map button on the phone: a ring of ink, filled when its filter or layers are on. */
+export const MAP_RING =
+  "relative grid size-11 shrink-0 place-items-center rounded-full border-2 border-foreground transition-colors"
+
 const DOCK_BUTTON =
   "flex min-h-11 shrink-0 items-center gap-1.5 rounded-full bg-foreground px-4 text-sm font-black text-background"
 const DOCK_BUTTON_QUIET =
-  "flex min-h-11 shrink-0 items-center gap-1.5 rounded-full bg-foreground/[0.07] px-4 text-sm font-extrabold text-foreground"
+  // A word beside the title, underlined (the headline's links).
+  "flex min-h-11 shrink-0 items-center px-1 text-base font-extrabold text-foreground underline decoration-2 underline-offset-[5px]"
 
 /**
  * Day switching, where a thumb reaches: the shown day in a sentence (your
@@ -199,7 +205,7 @@ const DayDock = ({
   return (
     <section
       aria-label={t("Day")}
-      className="pointer-events-auto absolute inset-x-0 flex flex-col gap-2 border-t border-chrome-border bg-chrome px-3 py-2 shadow-[0_-2px_10px_var(--chrome-shadow)]"
+      className="pointer-events-auto absolute inset-x-0 flex flex-col gap-2 bg-chrome px-3 py-2"
       style={{ bottom: TAB_BAR_HEIGHT, height: DAY_DOCK_HEIGHT }}
     >
       {/* The day as a headline (board H9): its title large, its main action beside it. */}
@@ -233,7 +239,7 @@ const DayDock = ({
             onClick={() => spotlightSeat(mine.desk.id)}
             className={DOCK_BUTTON_QUIET}
           >
-            <MapPin className="size-4" /> {t("Show")}
+            {t("Show")}
           </button>
         )}
       </div>
@@ -254,7 +260,7 @@ const DayDock = ({
           aria-label={t("Pick a day from the calendar")}
           aria-expanded={isCalendarOpen}
           onClick={() => setIsCalendarOpen(true)}
-          className="grid h-12 w-11 shrink-0 place-items-center rounded-xl bg-foreground/[0.07] text-foreground"
+          className="grid size-11 shrink-0 place-items-center rounded-full border-2 border-foreground text-foreground"
         >
           <CalendarDays className="size-5" />
         </button>
@@ -299,7 +305,8 @@ const MapButtons = () => {
 
   return (
     <div
-      className="pointer-events-auto absolute left-4 flex gap-1 rounded-xl bg-background p-1"
+      // Rings of ink, as every icon button, filled with the page so they read over the plan.
+      className="pointer-events-auto absolute left-4 flex gap-2"
       // Level with turn and fit (PhoneControls), just above the dock.
       style={{ bottom: MOBILE_CHROME.bottom + 12 }}
     >
@@ -314,8 +321,8 @@ const MapButtons = () => {
             aria-expanded={openPanel?.id === panel.id}
             onClick={() => toggle(panel.id)}
             className={clsx(
-              "relative grid size-10 shrink-0 place-items-center rounded-lg transition-colors",
-              badgeCount > 0 ? "bg-accent/15 text-accent" : "text-foreground hover:bg-foreground/10"
+              MAP_RING,
+              badgeCount > 0 ? "bg-foreground text-background" : "bg-background text-foreground"
             )}
           >
             <Icon className="size-4" />
@@ -333,8 +340,8 @@ const MapButtons = () => {
         aria-expanded={isMapOpen}
         onClick={() => setIsMapOpen(true)}
         className={clsx(
-          "relative grid size-10 shrink-0 place-items-center rounded-lg transition-colors",
-          changedCount > 0 ? "bg-accent/15 text-accent" : "text-foreground hover:bg-foreground/10"
+          MAP_RING,
+          changedCount > 0 ? "bg-foreground text-background" : "bg-background text-foreground"
         )}
       >
         <Layers className="size-4" />
@@ -404,12 +411,13 @@ const DayStrip = () => {
             aria-label={getLabel()}
             onClick={() => setDay(d)}
             className={clsx(
+              // A day as type, no tile; the shown one in ink (the dark pill's),
+              // today ringed.
               "relative flex h-12 w-11 shrink-0 snap-center flex-col items-center justify-center gap-0.5 rounded-xl transition-colors",
               isSelected
-                ? "bg-accent text-accent-foreground"
+                ? "bg-foreground text-background"
                 : clsx(
-                    "bg-foreground/[0.05]",
-                    d === today && "ring-1 ring-inset ring-accent/60",
+                    d === today && "ring-2 ring-inset ring-foreground",
                     d < today || isWeekend(d) || isClosed ? "text-muted" : "text-foreground"
                   ),
               isClosed && "line-through decoration-2"
@@ -422,10 +430,10 @@ const DayStrip = () => {
                 style={{ background: getTeamHex(team.color) }}
               />
             )}
-            <span className="text-[0.62rem] font-bold uppercase tracking-wide">
+            <span className="text-[0.7rem] font-bold">
               {d === today ? t("Today") : format.dow(d)}
             </span>
-            <span className="text-base font-extrabold leading-none">{Number(d.slice(8, 10))}</span>
+            <span className="text-lg font-black leading-none">{Number(d.slice(8, 10))}</span>
           </button>
         )
       })}
@@ -458,7 +466,7 @@ const TabBar = ({ tab, onChange }: { tab: Tab; onChange: (tab: Tab) => void }) =
     <nav
       ref={bar}
       aria-label={t("Main")}
-      className="pointer-events-auto fixed inset-x-0 bottom-0 grid grid-cols-3 border-t border-foreground/[0.08] bg-chrome px-2 pb-3 pt-1.5"
+      className="pointer-events-auto fixed inset-x-0 bottom-0 grid grid-cols-3 bg-chrome px-2 pb-3 pt-1.5"
       style={{ height: TAB_BAR_HEIGHT }}
     >
       {TABS.map(([id, label, Icon]) => (
@@ -467,12 +475,15 @@ const TabBar = ({ tab, onChange }: { tab: Tab; onChange: (tab: Tab) => void }) =
           type="button"
           aria-current={tab === id ? "page" : undefined}
           onClick={() => onChange(id)}
+          // The section you're in: ink, its name underlined (as the top bar's on a computer).
           className={clsx(
-            "flex min-h-12 flex-col items-center justify-center gap-0.5 text-[0.7rem]",
-            tab === id ? "font-extrabold text-accent" : "font-bold text-muted"
+            "flex min-h-12 flex-col items-center justify-center gap-0.5 text-[0.8rem]",
+            tab === id
+              ? "font-black text-foreground underline decoration-2 underline-offset-4"
+              : "font-bold text-muted"
           )}
         >
-          <Icon className="size-6" strokeWidth={tab === id ? 2.2 : 1.8} />
+          <Icon className="size-6" strokeWidth={tab === id ? 2.4 : 1.8} />
           {t(label)}
         </button>
       ))}

@@ -172,11 +172,13 @@ export const BottomSheet = ({
           {...swipe.handlers}
           className={clsx(
             // No bounce in its lists: pulled down at the top, the sheet moves.
-            "relative flex [&_*]:overscroll-y-none min-h-0 flex-1 flex-col overflow-hidden rounded-t-3xl border-t border-border bg-overlay",
+            "relative flex [&_*]:overscroll-y-none min-h-0 flex-1 flex-col overflow-hidden rounded-t-[32px] bg-background",
             // Above a tab bar, a shadow upwards only: the wrapper's clipping
             // didn't hold in Safari, which cast it over the bar.
             bottomInset > 0 ? "shadow-[0_-12px_24px_-12px_var(--chrome-shadow)]" : "shadow-overlay",
-            !isFlush && "gap-3 px-5 pb-7 pt-2.5",
+            // Named for the headline's controls (see "One set of controls").
+            "bottom-sheet",
+            !isFlush && clsx("gap-3 px-5 pb-7", title ? "pt-2.5" : "pt-9"),
             isClosing ? "sheet-down" : "sheet-up"
           )}
         >
@@ -184,15 +186,21 @@ export const BottomSheet = ({
             <div className="flex shrink-0 touch-none flex-col gap-3">
               <span aria-hidden className="mx-auto h-1.5 w-10 rounded-full bg-border" />
               <div className="flex items-center justify-between">
-                <h2 className="text-[28px] leading-tight font-black tracking-[-0.02em] text-foreground">
+                <h2 className="text-[32px] leading-none font-black tracking-[-0.03em] text-foreground">
                   {title}
                 </h2>
-                <DialogCloseButton onClose={close} className="size-10" />
+                <DialogCloseButton onClose={close} />
               </div>
             </div>
           ) : (
             <div className="pointer-events-none absolute left-1/2 top-0 z-10 flex h-8 w-28 -translate-x-1/2 justify-center pt-2.5">
-              <span aria-hidden className="h-1.5 w-10 rounded-full bg-white/70 shadow-sm" />
+              <span
+                aria-hidden
+                className={clsx(
+                  "h-1.5 w-10 rounded-full",
+                  isFlush ? "bg-white/70 shadow-sm" : "bg-border"
+                )}
+              />
             </div>
           )}
           <ScrollArea frameClassName="flex-1" className="flex flex-col overflow-x-hidden">
@@ -204,7 +212,7 @@ export const BottomSheet = ({
           {bottomInset === 0 && (
             <div
               aria-hidden
-              className="pointer-events-none fixed inset-x-0 bottom-0 h-3 bg-overlay"
+              className="pointer-events-none fixed inset-x-0 bottom-0 h-3 bg-background"
             />
           )}
         </section>

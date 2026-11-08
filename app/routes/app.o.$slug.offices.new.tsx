@@ -1,4 +1,3 @@
-import { Spinner } from "@heroui/react"
 import {
   useFetcher,
   useNavigate,
@@ -8,19 +7,17 @@ import {
   redirect,
   useParams,
 } from "react-router"
-import { ImagePlus } from "lucide-react"
 import { useEffect, useState } from "react"
 import { z } from "zod"
 import { getBrowserTimeZone, isTimeZone } from "~/utils/timeZone"
 import { Button } from "~/components/Button"
 import {
   CreateDialog,
-  BannerClose,
-  ContourBanner,
-  IMAGE_TYPES,
   TitleNameField,
   useImageUpload,
   useNameCheck,
+  CreateHeader,
+  PictureWord,
 } from "~/components/CreateModal"
 import { officeSlugForName } from "~/core/office/slug"
 import { useI18n } from "~/i18n/I18nProvider"
@@ -104,25 +101,15 @@ export const NewOffice = () => {
         <create.Form method="POST" action={action}>
           <input type="hidden" name="thumbnail" value={cover.id ?? ""} />
           <input type="hidden" name="timezone" value={timeZone} />
-          <ContourBanner image={cover.preview} className="h-[190px]">
-            <BannerClose onPress={closeDialog} />
-            {/* The whole banner picks the photo; the pill says so. */}
-            <label className="absolute inset-0 flex cursor-pointer items-center justify-center">
-              <input
-                type="file"
-                accept={IMAGE_TYPES}
-                className="sr-only"
-                onChange={(e) => cover.pick(e.target.files?.[0])}
-              />
-              <span className="inline-flex h-[38px] items-center gap-2 rounded-full border border-border bg-overlay/90 px-4 text-[13px] font-extrabold text-foreground shadow-sm">
-                {cover.isUploading ? <Spinner size="sm" /> : <ImagePlus size={16} />}
-                {cover.preview ? t("Change cover photo") : t("Add a cover photo")}
-              </span>
-            </label>
-          </ContourBanner>
-          <div className="flex flex-col gap-5 px-[30px] pt-[26px] pb-7">
+          {/* The headline's dialog (P5): the title, the name on a line, then the actions. */}
+          <div className="flex flex-col gap-7 p-10">
+            <CreateHeader
+              title={t("New office.")}
+              summary={t("Next you'll lay out its floor, from a template or a blank plan.")}
+              onClose={closeDialog}
+            />
             <TitleNameField
-              label={t("New office")}
+              label={t("Its name")}
               placeholder={t("Name your office")}
               name={name}
               onChange={setName}
@@ -130,13 +117,7 @@ export const NewOffice = () => {
               slug={officeSlugForName(name)}
               availability={availability}
             />
-            <p className="text-[13px] leading-normal text-muted">
-              {t("Next you'll lay out its floor, from a template or a blank plan.")}
-            </p>
-            <div className="flex justify-end gap-2.5">
-              <Button variant="ghost" type="button" onPress={closeDialog}>
-                {t("Cancel")}
-              </Button>
+            <div className="flex flex-wrap items-center gap-x-7 gap-y-3">
               <Button
                 type="submit"
                 name="intent"
@@ -144,8 +125,18 @@ export const NewOffice = () => {
                 isDisabled={availability !== "available" || cover.isUploading}
                 isPending={isCreating}
                 variant="primary"
+                size="lg"
               >
                 {t("Create office")}
+              </Button>
+              <PictureWord
+                upload={cover}
+                addLabel={t("Add a cover photo")}
+                changeLabel={t("Change cover photo")}
+              />
+              <span className="flex-1" />
+              <Button variant="ghost" type="button" onPress={closeDialog}>
+                {t("Cancel")}
               </Button>
             </div>
           </div>

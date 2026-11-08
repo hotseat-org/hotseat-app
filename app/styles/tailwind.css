@@ -1242,15 +1242,90 @@ input:-webkit-autofill:focus {
 
 /* A scrolling list on the ground: its words fade out at an edge with more
    beyond it (no shadow band, which reads as a box's edge). */
-.on-ground .scroll-shadow {
+:where(.on-ground, .bottom-sheet) .scroll-shadow {
   display: none;
 }
-.on-ground [data-more-below] {
+:where(.on-ground, .bottom-sheet) [data-more-below] {
   mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
 }
-.on-ground [data-more-above] {
+:where(.on-ground, .bottom-sheet) [data-more-above] {
   mask-image: linear-gradient(to top, #000 calc(100% - 24px), transparent);
 }
-.on-ground [data-more-above][data-more-below] {
-  mask-image: linear-gradient(to bottom, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+:where(.on-ground, .bottom-sheet) [data-more-above][data-more-below] {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    #000 24px,
+    #000 calc(100% - 24px),
+    transparent
+  );
+}
+
+/* ── One set of controls ───────────────────────────────────────────────────
+   Wherever the headline's words are — pages, dialogs, confirmations — the UI
+   kit's buttons take the same few forms: the main action an ink pill (see
+   .button--primary), a dangerous one a red pill, every other action an
+   underlined word, an icon button a ring of ink. The editor's own tool chrome
+   keeps its look. Unlayered, so these win over the kit's (in its layer). */
+:where(.on-ground, .settings-page, .bottom-sheet, .modal__dialog, .alert-dialog__dialog)
+  .button:not(.button--primary, .button--danger, .button--icon-only) {
+  --button-bg: transparent;
+  --button-bg-hover: transparent;
+  --button-bg-pressed: transparent;
+  --button-fg: var(--foreground);
+  height: auto;
+  min-height: 2.75rem;
+  padding-inline: 0.125rem;
+  border: 0;
+  box-shadow: none;
+  font-size: 1.0625rem;
+  font-weight: 800;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 5px;
+}
+:where(.on-ground, .settings-page, .bottom-sheet, .modal__dialog, .alert-dialog__dialog)
+  .button--danger-soft {
+  --button-fg: var(--danger);
+}
+:where(.on-ground, .settings-page, .bottom-sheet, .modal__dialog, .alert-dialog__dialog)
+  .button--icon-only:not(.button--primary, .button--danger),
+:where(.on-ground, .settings-page, .bottom-sheet, .modal__dialog, .alert-dialog__dialog)
+  .close-button {
+  --button-bg: transparent;
+  --button-bg-hover: var(--foreground);
+  --button-fg: var(--foreground);
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 2px solid var(--foreground);
+  border-radius: 9999px;
+  color: var(--foreground);
+  background: transparent;
+}
+:where(.on-ground, .settings-page, .bottom-sheet, .modal__dialog, .alert-dialog__dialog)
+  .button--icon-only:not(.button--primary, .button--danger):hover,
+:where(.on-ground, .settings-page, .bottom-sheet, .modal__dialog, .alert-dialog__dialog)
+  .close-button:hover {
+  background: var(--foreground);
+  color: var(--background);
+}
+
+/* A confirmation: the question, a sentence, then the answer as a pill and the
+   way out as a word after it (P4). No alarm icon: the red answer says it. */
+.alert-dialog__dialog {
+  padding: 2.5rem;
+  max-width: 34rem;
+}
+.alert-dialog__icon {
+  display: none;
+}
+.alert-dialog__footer {
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  gap: 1.75rem;
+  margin-top: 1rem;
+}
+.alert-dialog__close-trigger {
+  top: 1.5rem;
+  right: 1.5rem;
 }
