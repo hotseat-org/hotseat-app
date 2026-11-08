@@ -1,5 +1,7 @@
 import { Html } from "@react-three/drei"
+import { useMemo } from "react"
 import { SeatCardBody, useSeatCard } from "../booking/seatCard"
+import { getColumnSlot } from "./columnSlot"
 
 /**
  * View mode (3D): the booking card for a clicked desk, in the office's left
@@ -19,6 +21,11 @@ import { SeatCardBody, useSeatCard } from "../booking/seatCard"
 
 export const SeatPopup = () => {
   const card = useSeatCard()
+  const columnSlot = useMemo(() => {
+    const slot = getColumnSlot()
+
+    return slot ? { current: slot } : undefined
+  }, [])
   if (!card) return null
 
   return (
@@ -28,6 +35,8 @@ export const SeatPopup = () => {
       position={[card.seat.x, 1.3, card.seat.z]}
       calculatePosition={getColumnPosition}
       zIndexRange={[60, 40]}
+      // Drawn in the shell's column slot, over the sheet behind the column.
+      portal={columnSlot}
       // drei's wrapper must not catch clicks either (only the buttons do).
       style={{ pointerEvents: "none" }}
     >

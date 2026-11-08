@@ -291,7 +291,8 @@ const EditorInner = ({
         {/* Bottom-left: the map's controls (floors, fit, view, Map menu). The
             phone shell has its own. */}
         {!isEmpty && !(shellMode && isMobile) && (
-          <div className="pointer-events-none absolute bottom-4 left-4">
+          // Over the app's column sheet (z-43), so it stays in reach.
+          <div className="pointer-events-none absolute bottom-4 left-4 z-[45]">
             <MapControls isEditing={!readOnly} />
           </div>
         )}

@@ -13,6 +13,7 @@ import { MobileShell } from "./MobileShell"
 import { NotificationsButton, NotificationsPage } from "./Notifications"
 import { InsightsDashboard } from "./InsightsDashboard"
 import { HeadlineColumn } from "./HeadlineColumn"
+import { COLUMN_SLOT_ID } from "~/office/desks/columnSlot"
 import { SidePanelBadge, TimeOfDay, hasWebGL, useEditorStore, useSidePanels } from "~/editor"
 import { useOfficeStore } from "~/office/store"
 import { useOfficePanel, type OfficePanel } from "~/office/useOfficePanel"
@@ -253,7 +254,18 @@ export const SpatialShell = ({
     <>
       {/* The top bar: where you are, the office's sections, search, what's new, you.
           Below 1280px the sections take a row of their own under it. */}
-      <div className="on-ground pointer-events-none absolute inset-x-5 top-5 flex flex-wrap items-center gap-x-2.5 gap-y-3">
+      {/* The sheet behind the column, while something's in it and the office
+          reaches under it (see .column-sheet): under the top bar and the
+          map's controls, above the office. */}
+      <div
+        aria-hidden
+        data-active={isPageOpen || isDeskOpen || undefined}
+        className="column-sheet pointer-events-none absolute inset-y-0 left-0 z-[43] w-[min(604px,100vw)]"
+      />
+      {/* Where a desk's card is drawn (SeatPopup, the plan's): over the sheet,
+          in the column — the scene's own layer is under the sheet. */}
+      <div id={COLUMN_SLOT_ID} className="pointer-events-none absolute inset-0 z-[44]" />
+      <div className="on-ground pointer-events-none absolute inset-x-5 top-5 z-[45] flex flex-wrap items-center gap-x-2.5 gap-y-3">
         <WorkspaceSwitcher
           offices={offices}
           className="relative"

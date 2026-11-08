@@ -1,8 +1,9 @@
 import clsx from "clsx"
-import { useCallback, useMemo, useRef } from "react"
+import { useCallback, useMemo, useRef, type ReactNode } from "react"
 import { createPortal } from "react-dom"
 import { personByEmail, usePeople } from "../desks/people"
 import { SeatCardBody, useSeatCard } from "../booking/seatCard"
+import { getColumnSlot } from "../desks/columnSlot"
 import { deskName, useDeskFilter } from "../booking/useBooking"
 import { useRoute } from "../wayfinding/wayfinding"
 import { RoutePath } from "../wayfinding/RoutePath"
@@ -246,34 +247,41 @@ export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
         })}
 
       {card &&
-        (phoneChrome ? (
-          // A bottom sheet over the shell; tapping the dimmed plan closes it.
-          // Portalled: the plan sits in its own (isolated) layer under the
-          // shell, and the sheet must cover the shell's dock and tabs.
-          createPortal(
-            <div className="fixed inset-0 z-50 flex flex-col justify-end">
-              <button
-                type="button"
-                aria-label={t("Close desk")}
-                className="absolute inset-0 bg-scrim"
-                onPointerDown={(event) => event.stopPropagation()}
-                onClick={(event) => {
-                  event.stopPropagation()
-                  card.body.onClose()
-                }}
-              />
-              <div className="relative">
-                <SeatCardBody key={card.key} layout="sheet" {...card.body} />
+        (phoneChrome
+          ? // A bottom sheet over the shell; tapping the dimmed plan closes it.
+            // Portalled: the plan sits in its own (isolated) layer under the
+            // shell, and the sheet must cover the shell's dock and tabs.
+            createPortal(
+              <div className="fixed inset-0 z-50 flex flex-col justify-end">
+                <button
+                  type="button"
+                  aria-label={t("Close desk")}
+                  className="absolute inset-0 bg-scrim"
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    card.body.onClose()
+                  }}
+                />
+                <div className="relative">
+                  <SeatCardBody key={card.key} layout="sheet" {...card.body} />
+                </div>
+              </div>,
+              document.body
+            )
+          : // In the office's left column, as in 3D (see SeatPopup).
+            renderInColumn(
+              <div className="pointer-events-auto absolute left-6 top-24 max-[1279px]:top-[148px]">
+                <SeatCardBody key={card.key} layout="column" {...card.body} />
               </div>
-            </div>,
-            document.body
-          )
-        ) : (
-          // In the office's left column, as in 3D (see SeatPopup).
-          <div className="absolute left-6 top-24 max-[1279px]:top-[148px]">
-            <SeatCardBody key={card.key} layout="column" {...card.body} />
-          </div>
-        ))}
+            ))}
     </>
   )
+}
+
+/** Into the shell's column slot (over the sheet behind the column), or in place without one. */
+const renderInColumn = (card: ReactNode) => {
+  const slot = getColumnSlot()
+
+  return slot ? createPortal(card, slot) : card
 }

@@ -50,7 +50,7 @@ export const ColumnPage = ({
           }
         }}
         className={clsx(
-          "motion-page-in pointer-events-auto absolute top-[84px] bottom-[148px] left-0 z-[44] ground-surface flex flex-col on-ground outline-none max-[1279px]:top-[144px]",
+          "motion-page-in pointer-events-auto absolute top-[84px] bottom-[148px] left-0 z-[44] flex flex-col on-ground outline-none max-[1279px]:top-[144px]",
           isWide ? "w-[min(900px,100vw)]" : "w-[min(580px,100vw)]"
         )}
       >

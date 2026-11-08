@@ -61,7 +61,7 @@ export const useGroundTone = ({ isDark, isLit }: { isDark: boolean; isLit: boole
   }, [store, isDark, isLit])
 
   // The office under the text column (panned or zoomed there): the column's
-  // pages get their surface (`data-office-under`, see .ground-surface).
+  // pages get the sheet behind them (`data-office-under`, see .column-sheet).
   useEffect(() => {
     const root = document.documentElement
     keepNow("office-under")

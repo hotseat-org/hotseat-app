@@ -1314,29 +1314,24 @@ input:-webkit-autofill:focus {
   right: 1.5rem;
 }
 
-/* A page or a desk in the column: a surface of the ground behind its words —
-   the ground's own colour at this hour (useGroundTone), so over open land it's
-   invisible and over the model it hides what's underneath. Its edges feather
-   out (no box, no line). Behind the content, so the words aren't faded. */
-.ground-surface {
-  isolation: isolate;
-}
-.ground-surface::before {
-  content: "";
-  position: absolute;
-  inset: -12px -48px -24px -24px;
-  z-index: -1;
-  pointer-events: none;
+/* Behind the column while the office reaches under it (CameraFit): a sheet
+   of the ground, the ground's own colour at this hour, the screen's full
+   height from its left edge, with a clean right edge (a hairline, a soft
+   shadow). It slides in and out (transform only); zoomed out, the office sits
+   beside the column and there's no sheet at all. */
+.column-sheet {
+  transform: translateX(-100%);
   background: var(--ground);
-  mask-image:
-    linear-gradient(to right, transparent, #000 32px, #000 calc(100% - 48px), transparent),
-    linear-gradient(to bottom, transparent, #000 24px, #000 calc(100% - 32px), transparent);
-  mask-composite: intersect;
-  /* Only while the office is under the column (CameraFit): zoomed out, the
-     office sits beside it and the words need nothing behind them. */
-  opacity: 0;
-  transition: opacity 200ms var(--ease-out-soft);
+  box-shadow:
+    1px 0 0 color-mix(in oklab, var(--foreground) 12%, transparent),
+    16px 0 40px -24px rgb(0 0 0 / 0.35);
+  transition: transform var(--motion-page) var(--ease-out-soft);
 }
-:root[data-office-under] .ground-surface::before {
-  opacity: 1;
+:root[data-office-under] .column-sheet[data-active] {
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .column-sheet {
+    transition: none;
+  }
 }
