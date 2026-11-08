@@ -5,13 +5,16 @@ import { DialogCloseButton } from "~/components/ui/DialogCloseButton"
 
 /**
  * A page of the office in the left column — Who's in, My bookings, Find a
- * seat, Insights — where the headline is otherwise: a big title, a sentence
- * that sums it up, then the page. Not modal: the office stays in view and in
- * use beside it (the picture's centre is moved right for the column), and it
- * stops above the dock and the camera's tools. Focus
- * moves in when it opens and back when it closes; Escape closes it.
+ * seat — where the headline is otherwise, in its way: the page's news as a
+ * headline ("6 people in."), a sentence that sums it up, then the page as
+ * type, on the office's own paper (a tab from the left edge, no card, no
+ * shadow). Not modal: the office stays in view and in use beside it (the
+ * picture's centre is moved right for the column), and it stops above the
+ * dock. Focus moves in when it opens and back when it closes; Escape closes
+ * it.
  */
 export const ColumnPage = ({
+  label,
   title,
   summary,
   actions,
@@ -19,10 +22,13 @@ export const ColumnPage = ({
   onClose,
   children,
 }: {
-  title: string
-  /** One sentence under the title: the page in short. */
+  /** The page's name ("Who's in"): its accessible name; the headline can be news. */
+  label: string
+  /** The headline: the page's news ("6 people in."), or its name. */
+  title: ReactNode
+  /** One sentence under the headline: the page in short. */
   summary?: ReactNode
-  /** Beside the title, before close (an admin's way to manage people). */
+  /** Beside the headline, before close (an admin's way to manage people). */
   actions?: ReactNode
   /** Room for a dashboard (Insights): wider than a list. */
   isWide?: boolean
@@ -30,7 +36,7 @@ export const ColumnPage = ({
   children: ReactNode
 }) => {
   const ref = useRef<HTMLElement>(null)
-  const { dialogProps, titleProps } = useDialog({}, ref)
+  const { dialogProps } = useDialog({ "aria-label": label }, ref)
 
   return (
     <FocusScope restoreFocus>
@@ -46,21 +52,22 @@ export const ColumnPage = ({
         // Named for the move between pages and the headline (see "Motion" in tailwind.css).
         style={{ viewTransitionName: "column" }}
         className={clsx(
-          "pointer-events-auto absolute top-[84px] bottom-[148px] left-5 max-[1279px]:top-[144px] z-[44] flex flex-col rounded-[calc(var(--radius)*4)] border border-border bg-overlay text-foreground shadow-overlay outline-none",
-          isWide ? "w-[min(860px,calc(100vw-40px))]" : "w-[min(500px,calc(100vw-40px))]"
+          "pointer-events-auto absolute top-[84px] bottom-[148px] left-0 z-[44] flex flex-col rounded-r-[36px] bg-background text-foreground outline-none max-[1279px]:top-[144px]",
+          isWide ? "w-[min(900px,100vw)]" : "w-[min(580px,100vw)]"
         )}
       >
-        <header className="flex shrink-0 items-start gap-2 px-7 pt-6 pb-4">
+        <header className="flex shrink-0 items-start gap-2 pt-5 pr-6 pb-5 pl-6">
           <div className="min-w-0 flex-1">
             <h2
-              {...titleProps}
               style={{ viewTransitionName: "column-title" }}
-              className="text-[44px] leading-[0.95] font-black tracking-[-0.03em]"
+              className="text-[clamp(44px,4.6vw,64px)] leading-[0.95] font-black tracking-[-0.035em]"
             >
               {title}
             </h2>
             {summary && (
-              <p className="mt-2.5 text-lg leading-snug font-bold text-muted">{summary}</p>
+              <p className="mt-3 text-[clamp(18px,1.6vw,22px)] leading-snug font-extrabold text-muted">
+                {summary}
+              </p>
             )}
           </div>
           <div className="flex items-center gap-1">
@@ -68,7 +75,7 @@ export const ColumnPage = ({
             <DialogCloseButton onClose={onClose} />
           </div>
         </header>
-        <div className="flex min-h-0 flex-1 flex-col px-7 pb-6">{children}</div>
+        <div className="flex min-h-0 flex-1 flex-col pr-6 pb-6 pl-6">{children}</div>
       </section>
     </FocusScope>
   )

@@ -212,14 +212,25 @@ export const SpatialShell = ({
       )}
       <PersonProfile me={me} members={members} />
       {officePanel.panel === "bookings" && (
-        <ColumnPage title={t("My bookings")} onClose={officePanel.close}>
-          <MyBookings onShow={officePanel.close} onFindSeat={() => officePanel.open("find")} />
-        </ColumnPage>
+        <MyBookings
+          onShow={officePanel.close}
+          onFindSeat={() => officePanel.open("find")}
+          frame={({ title, summary, body }) => (
+            <ColumnPage
+              label={t("My bookings")}
+              title={title}
+              summary={summary}
+              onClose={officePanel.close}
+            >
+              {body}
+            </ColumnPage>
+          )}
+        />
       )}
       {officePanel.panel === "find" && isBooking && <FindSeatDialog onClose={officePanel.close} />}
       {officePanel.panel === "insights" && me.role === Role.ADMIN && <InsightsDashboard />}
       {sidePanel && (
-        <ColumnPage title={t(sidePanel.label)} onClose={closeSidePanel}>
+        <ColumnPage label={t(sidePanel.label)} title={t(sidePanel.label)} onClose={closeSidePanel}>
           <sidePanel.Component isEditing={false} close={closeSidePanel} />
         </ColumnPage>
       )}

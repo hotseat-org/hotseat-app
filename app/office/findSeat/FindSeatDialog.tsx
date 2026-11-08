@@ -19,8 +19,8 @@ export const FindSeatDialog = ({ onClose }: { onClose: () => void }) => {
   }
 
   return (
-    <ColumnPage title={t("Find a seat")} onClose={onClose}>
-      <ScrollArea frameClassName="flex-1 -mx-7" className="px-7">
+    <ColumnPage label={t("Find a seat")} title={t("Find a seat")} onClose={onClose}>
+      <ScrollArea frameClassName="flex-1 -mx-6" className="px-6">
         <FindSeat onShowOnMap={showOnMap} layout="stacked" />
       </ScrollArea>
     </ColumnPage>

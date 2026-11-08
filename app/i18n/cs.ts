@@ -543,17 +543,8 @@ export const cs: Messages = {
 
   // —— My bookings ——
   "A desk": "Stůl",
-  "{n} upcoming day": {
-    one: "{n} nadcházející den",
-    few: "{n} nadcházející dny",
-    many: "{n} nadcházejícího dne",
-    other: "{n} nadcházejících dní",
-  },
-  "Nothing booked yet": "Zatím nic rezervovaného",
   "Loading…": "Načítám…",
   "Permanent: {desk}": "Stálý: {desk}",
-  "every day": "každý den",
-  "No upcoming bookings": "Žádné nadcházející rezervace",
   "Cancel {day}?": "Zrušit {day}?",
   Keep: "Ponechat",
   "Cancel it": "Zrušit",
@@ -1572,6 +1563,23 @@ export const cs: Messages = {
   "Next to {names}.": "Vedle: {names}.",
   "Nobody sits next to it, so it's quiet.": "Vedle nikdo nesedí, je tu klid.",
   "The office in 3D": "Kancelář ve 3D",
+  "{n} person in.": {
+    one: "Je tu {n} člověk.",
+    few: "Jsou tu {n} lidé.",
+    many: "Je tu {n} lidí.",
+    other: "Je tu {n} lidí.",
+  },
+  "Nobody's in.": "Nikdo tu není.",
+  "{When}, out of {total} people.": "{When}, z {total} lidí.",
+  "{n} day ahead.": {
+    one: "Rezervovaný {n} den.",
+    few: "Rezervované {n} dny.",
+    many: "Rezervovaných {n} dne.",
+    other: "Rezervovaných {n} dní.",
+  },
+  "Nothing booked.": "Zatím nic rezervovaného.",
+  "Next: {when}, {desk}.": "Příště {when}, {desk}.",
+  "{office}, every day": "{office}, každý den",
   "It's a {team} day.": "Je to den týmu {team}.",
   "{n} new.": {
     one: "{n} nová.",

@@ -1,6 +1,6 @@
 import { toast } from "@heroui/react"
 import { Armchair, MapPin, Pin, Repeat, Star } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, type ReactNode } from "react"
 import { useFetcher, useNavigate, useParams } from "react-router"
 import { BookingRow, deskText } from "./BookingRow"
 import { ScrollArea } from "~/components/ui/ScrollArea"
@@ -11,7 +11,7 @@ import { useAllPieces } from "~/editor"
 import type { MyBooking } from "~/core/reservation/mine"
 import type { MyBookingsData } from "~/routes/api.my-bookings.$slug"
 import type { ReservationActionData } from "~/routes/api.reservations.$slug.$officeSlug"
-import type { Day } from "~/utils/booking"
+import { addDays, type Day } from "~/utils/booking"
 import { useI18n } from "~/i18n/I18nProvider"
 
 /**
@@ -21,10 +21,21 @@ import { useI18n } from "~/i18n/I18nProvider"
  * Content only: the desktop's modal or the phone's sheet brings its title
  * and closing, at a fixed height — the list scrolls inside.
  */
+/** My bookings' parts, for the page or sheet that shows them. */
+export interface MyBookingsParts {
+  /** The news: "3 days ahead." */
+  title: ReactNode
+  /** In short: "Next: tomorrow, Desk D1." */
+  summary: ReactNode
+  /** The list. */
+  body: ReactNode
+}
+
 export const MyBookings = ({
   onShow,
   onFindSeat,
   isPhone = false,
+  frame,
 }: {
   /** After Show moved the map to a booking (its modal or sheet closes, so the map shows). */
   onShow?: () => void
@@ -32,6 +43,8 @@ export const MyBookings = ({
   onFindSeat: () => void
   /** In the phone's sheet: its words are for touch. */
   isPhone?: boolean
+  /** Shows the parts in a page of its own (the desktop's column); none: in place. */
+  frame?: (parts: MyBookingsParts) => ReactNode
 }) => {
   const { slug, officeSlug } = useParams()
   const i18n = useI18n()
@@ -101,6 +114,8 @@ export const MyBookings = ({
   }
 
   const count = days.reduce((n, [, bs]) => n + bs.length, 0)
+  // Each booking's place in the whole list: when its row arrives in the cascade.
+  const bookingIndex = new Map(days.flatMap(([, bs]) => bs).map((b, index) => [keyOf(b), index]))
   const getTeamsIn = useTeamDays()
   const myTeams = useMyTeams()
   const weekdayNames = format.weekShort()
@@ -114,108 +129,111 @@ export const MyBookings = ({
       })
     )
 
-  return (
-    <section aria-label={t("My bookings")} className="flex min-h-0 flex-1 flex-col">
-      <header className="mb-3 flex items-start justify-between">
-        <div>
-          <p className="text-lg leading-snug font-bold text-muted">
-            {data
-              ? count
-                ? tn(count, "{n} upcoming day", "{n} upcoming days")
-                : t("Nothing booked yet")
-              : t("Loading…")}
-          </p>
+  // The headline: how many days you're in, then the next one.
+  const next = days[0]?.[1][0]
+  const getWhen = (date: Day, today: Day) =>
+    date === today ? t("today") : date === addDays(today, 1) ? t("tomorrow") : format.onDay(date)
+  const title = !data
+    ? t("My bookings")
+    : count
+      ? tn(count, "{n} day ahead.", "{n} days ahead.")
+      : t("Nothing booked.")
+  const summary = next
+    ? t("Next: {when}, {desk}.", {
+        when: getWhen(next.date, next.today),
+        desk: deskText(i18n, next.deskLabel, next.deskFloor && floorText(i18n, next.deskFloor)),
+      })
+    : data && teamDays[0]
+
+  const body = (
+    <ScrollArea frameClassName="-mx-1 flex-1" className="flex flex-col gap-5 px-1">
+      <HereSection onShow={onShow} />
+      {data?.permanent.map((p) => (
+        <button
+          key={p.deskId}
+          type="button"
+          onClick={() => show(p)}
+          className="flex items-center gap-3 border-b border-separator py-3 text-left"
+        >
+          <Pin className="size-5 shrink-0 text-accent" />
+          <span className="min-w-0">
+            <span className="block text-xl leading-tight font-black tracking-[-0.01em] text-accent">
+              {t("Permanent: {desk}", {
+                desk: deskText(i18n, p.deskLabel, p.deskFloor && floorText(i18n, p.deskFloor)),
+              })}
+            </span>
+            <span className="block truncate text-sm font-semibold text-muted">
+              {t("{office}, every day", { office: p.officeName })}
+            </span>
+          </span>
+        </button>
+      ))}
+
+      {!data && !error && (
+        <div className="flex flex-col gap-2" aria-hidden>
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="h-[68px] animate-pulse border-b border-separator bg-surface-secondary/60"
+            />
+          ))}
         </div>
-      </header>
+      )}
+      {error && <p className="rounded-xl bg-danger/10 p-3 text-sm text-danger">{error}</p>}
 
-      <ScrollArea frameClassName="-mx-1 flex-1" className="flex flex-col gap-4 px-1">
-        <HereSection onShow={onShow} />
-        {data?.permanent.map((p) => (
+      {data && count === 0 && (
+        <div className="flex flex-col items-start gap-4 pt-2">
+          <p className="text-lg font-semibold text-muted">
+            {isPhone
+              ? t("Find a seat that suits you, or tap a free desk on the plan.")
+              : t("Find a seat that suits you, or click a free desk on the map.")}
+          </p>
           <button
-            key={p.deskId}
             type="button"
-            onClick={() => show(p)}
-            className="flex items-center gap-3 rounded-xl bg-accent/12 p-3 text-left transition-colors hover:bg-accent/20"
+            onClick={onFindSeat}
+            className="flex min-h-12 items-center gap-2 rounded-full bg-foreground px-6 text-base font-black text-background outline-none focus-visible:ring-2 focus-visible:ring-focus"
           >
-            <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent text-accent-foreground">
-              <Pin className="size-4" />
-            </span>
-            <span className="min-w-0">
-              <span className="block text-sm font-bold text-foreground">
-                {t("Permanent: {desk}", {
-                  desk: deskText(i18n, p.deskLabel, p.deskFloor && floorText(i18n, p.deskFloor)),
-                })}
-              </span>
-              <span className="block truncate text-xs text-muted">
-                {p.officeName} · {t("every day")}
-              </span>
-            </span>
+            <Armchair className="size-5" /> {t("Find a seat")}
           </button>
-        ))}
+        </div>
+      )}
 
-        {!data && !error && (
-          <div className="flex flex-col gap-2" aria-hidden>
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="h-16 animate-pulse rounded-xl bg-surface-secondary" />
-            ))}
-          </div>
-        )}
-        {error && <p className="rounded-xl bg-danger/10 p-3 text-sm text-danger">{error}</p>}
-
-        {data && count === 0 && (
-          <div className="flex flex-1 flex-col items-center justify-center gap-3 py-8 text-center">
-            <div className="grid size-11 place-items-center rounded-2xl bg-accent/12 text-accent">
-              <Armchair className="size-5" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-foreground">{t("No upcoming bookings")}</p>
-              <p className="mt-0.5 text-xs text-muted">
-                {isPhone
-                  ? t("Find a seat that suits you, or tap a free desk on the plan.")
-                  : t("Find a seat that suits you, or click a free desk on the map.")}
-              </p>
-              {teamDays.map((line) => (
-                <p key={line} className="mt-0.5 text-xs text-muted">
-                  {line}
-                </p>
-              ))}
-            </div>
-            <button
-              type="button"
-              onClick={onFindSeat}
-              className="flex min-h-11 items-center gap-1.5 rounded-xl bg-accent px-4 text-sm font-extrabold text-accent-foreground outline-none focus-visible:ring-2 focus-visible:ring-focus"
-            >
-              <Armchair className="size-4" /> {t("Find a seat")}
-            </button>
-          </div>
-        )}
-
-        {days.map(([date, bookings]) => (
-          <div key={date} className="flex flex-col">
-            {/* The day as a heading, in sentence case (no small capitals). */}
-            <p className="pt-2 pb-0.5 text-base font-black text-foreground">
-              {format.long(date)}
-              {date === bookings[0].today && (
-                <span className="ml-1.5 text-accent">{t("Today")}</span>
-              )}
-            </p>
-            {bookings.map((b, index) => (
+      {/* One line a booking, its day first (board H4). */}
+      {days.length > 0 && (
+        <div className="flex flex-col">
+          {days.flatMap(([date, bookings]) =>
+            bookings.map((b) => (
               <BookingRow
-                index={index}
+                index={bookingIndex.get(keyOf(b)) ?? 0}
                 key={keyOf(b)}
+                dayLabel={date === b.today ? t("Today") : format.short(date)}
                 desk={deskText(i18n, b.deskLabel, b.deskFloor && floorText(i18n, b.deskFloor))}
                 detail={[
                   b.officeName,
                   ...getTeamsIn(b.date).map((team) => t("{team}'s day", { team: team.name })),
-                ].join(" · ")}
+                ].join(", ")}
                 day={b.date}
                 onShow={() => show(b)}
                 onCancel={() => doCancel(b)}
               />
-            ))}
-          </div>
-        ))}
-      </ScrollArea>
+            ))
+          )}
+        </div>
+      )}
+    </ScrollArea>
+  )
+
+  if (frame) return frame({ title, summary, body })
+
+  return (
+    <section aria-label={t("My bookings")} className="flex min-h-0 flex-1 flex-col">
+      <header className="mb-4">
+        <p className="text-2xl leading-tight font-black tracking-[-0.02em] text-foreground">
+          {title}
+        </p>
+        {summary && <p className="mt-1 text-base font-bold text-muted">{summary}</p>}
+      </header>
+      {body}
     </section>
   )
 }

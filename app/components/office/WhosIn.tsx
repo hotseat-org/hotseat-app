@@ -21,10 +21,13 @@ export const WhosInList = ({
   me,
   members,
   onFind,
+  hasSummary = true,
 }: {
   me: ShellMember
   members: ShellMember[]
   onFind: () => void
+  /** Its own sentence on top (the phone's sheet); a page's headline says it instead. */
+  hasSummary?: boolean
 }) => {
   const day = useOfficeStore((s) => s.booking.day)
   const today = useOfficeStore((s) => s.booking.today)
@@ -95,7 +98,7 @@ export const WhosInList = ({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <header className="mb-3">
+      <header className={hasSummary ? "mb-3" : "sr-only"}>
         {/* The page in a sentence (the headline's way), not "Today · 2 of 20". */}
         <p className="text-lg leading-snug font-bold text-muted">
           {t("{in} of {total} in the office {when}.", {
@@ -252,12 +255,23 @@ export const WhosInModal = ({
   members: ShellMember[]
   onClose: () => void
 }) => {
-  const { t } = useI18n()
+  const i18n = useI18n()
+  const { t, tn } = i18n
   const { open: openSettings } = useSettings()
+  const day = useOfficeStore((s) => s.booking.day)
+  const today = useOfficeStore((s) => s.booking.today)
+  const { byPerson } = useDesksOnDay()
+  const inCount = members.filter((member) => byPerson.has(member.userEmail)).length
 
   return (
     <ColumnPage
-      title={t("Who's in")}
+      label={t("Who's in")}
+      // The news, as a headline: "6 people in."
+      title={inCount ? tn(inCount, "{n} person in.", "{n} people in.") : t("Nobody's in.")}
+      summary={t("{When}, out of {total} people.", {
+        when: dayPhrase(i18n, day, today),
+        total: members.length,
+      })}
       onClose={onClose}
       actions={
         me.role === Role.ADMIN && (
@@ -272,7 +286,7 @@ export const WhosInModal = ({
       }
     >
       {/* Find closes it: the desk is on the map behind. */}
-      <WhosInList me={me} members={members} onFind={onClose} />
+      <WhosInList me={me} members={members} onFind={onClose} hasSummary={false} />
     </ColumnPage>
   )
 }
