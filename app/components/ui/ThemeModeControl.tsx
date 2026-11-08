@@ -12,22 +12,31 @@ const MODES: { id: Mode; label: string; icon: LucideIcon }[] = [
   { id: "device", label: msg("Same as device"), icon: MonitorSmartphone },
 ]
 
-/** A row of choices as one pill (a radio group): each a name, or (compact) an icon. */
+/**
+ * A row of choices as one pill (a radio group): each a name, or (compact) an
+ * icon. As words (`isWords`): the names alone, the chosen one underlined (the
+ * headline's menus).
+ */
 export const SegmentedControl = <T extends string>({
   label,
   options,
   value,
   onChange,
+  isWords = false,
 }: {
   label: string
   options: { id: T; label: string; lang?: string; icon?: LucideIcon }[]
   value: T
   onChange: (id: T) => void
+  isWords?: boolean
 }) => (
   <div
     role="radiogroup"
     aria-label={label}
-    className="flex gap-1 rounded-full border border-border bg-segment p-1"
+    className={clsx(
+      "flex",
+      isWords ? "flex-wrap gap-x-4" : "gap-1 rounded-full border border-border bg-segment p-1"
+    )}
   >
     {options.map((option) => {
       const isOn = option.id === value
@@ -44,11 +53,8 @@ export const SegmentedControl = <T extends string>({
           title={Icon ? option.label : undefined}
           onClick={() => onChange(option.id)}
           className={clsx(
-            "grid min-h-9 place-items-center rounded-full text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus",
-            Icon ? "min-w-10 px-2.5" : "px-4",
-            isOn
-              ? "bg-accent font-extrabold text-accent-foreground"
-              : "font-bold text-muted hover:text-foreground"
+            "grid place-items-center rounded-full outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus",
+            getOptionLook({ isWords, isOn, hasIcon: !!Icon })
           )}
         >
           {Icon ? <Icon className="size-4" /> : option.label}
@@ -58,11 +64,45 @@ export const SegmentedControl = <T extends string>({
   </div>
 )
 
+/** One choice's look: a word (underlined when chosen), or a segment of the pill. */
+const getOptionLook = ({
+  isWords,
+  isOn,
+  hasIcon,
+}: {
+  isWords: boolean
+  isOn: boolean
+  hasIcon: boolean
+}) => {
+  if (isWords)
+    return clsx(
+      "min-h-11 px-0.5 text-[17px] font-extrabold",
+      isOn
+        ? "text-foreground underline decoration-[3px] underline-offset-[7px]"
+        : "text-muted hover:text-foreground"
+    )
+
+  return clsx(
+    "min-h-9 text-sm",
+    hasIcon ? "min-w-10 px-2.5" : "px-4",
+    isOn
+      ? "bg-accent font-extrabold text-accent-foreground"
+      : "font-bold text-muted hover:text-foreground"
+  )
+}
+
 /**
  * Light, dark, or following the device — the same three as Settings ›
  * Appearance. Compact: icons, named for screen readers and on hover.
  */
-export const ThemeModeControl = ({ isCompact = false }: { isCompact?: boolean }) => {
+export const ThemeModeControl = ({
+  isCompact = false,
+  isWords = false,
+}: {
+  isCompact?: boolean
+  /** Its names as words, the chosen one underlined (the account menu). */
+  isWords?: boolean
+}) => {
   const [theme, setTheme, themeMetadata] = useTheme()
   const { t } = useI18n()
   const mode: Mode =
@@ -78,6 +118,7 @@ export const ThemeModeControl = ({ isCompact = false }: { isCompact?: boolean })
         label: t(option.label),
         icon: isCompact ? option.icon : undefined,
       }))}
+      isWords={isWords}
       value={mode}
       onChange={pickMode}
     />

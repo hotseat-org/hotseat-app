@@ -407,12 +407,12 @@ export const InsightsDashboard = () => {
       <button
         type="button"
         aria-label={t("Close insights")}
-        className="fixed inset-0 bg-scrim"
+        className="veil-scrim fixed inset-0"
         onClick={close}
       />
       <section
         aria-label={t("Insights")}
-        className="modal-in relative flex h-fit w-full max-w-[1220px] flex-col gap-5 rounded-[calc(var(--radius)*3)] bg-overlay p-5 text-foreground shadow-overlay md:p-7"
+        className="modal-in relative flex h-fit w-full max-w-[1220px] flex-col gap-5 veil-surface rounded-[36px] p-5 md:p-7"
       >
         <header className="flex flex-wrap items-center gap-3">
           <div className="min-w-60 flex-1">

@@ -1,7 +1,6 @@
 import { useState } from "react"
 import { Popover } from "@heroui/react"
 import clsx from "clsx"
-import { Building2, ChevronRight, LogOut, Settings, type LucideIcon } from "lucide-react"
 import { useNavigate } from "react-router"
 import { MemberAvatar, PANEL, nameOf, type ShellMember } from "./shell-ui"
 import type { DayStatus } from "./dayStatus"
@@ -74,8 +73,8 @@ export const AccountMenu = ({ isFlat = false, day }: { isFlat?: boolean; day?: D
       <Popover.Trigger aria-label={triggerLabel} className={triggerClassName}>
         {triggerContent}
       </Popover.Trigger>
-      <Popover.Content placement="bottom end" className="rounded-2xl">
-        <Popover.Dialog className="w-72 p-2 outline-none">
+      <Popover.Content placement="bottom end" offset={10} className="rounded-[32px]">
+        <Popover.Dialog className="w-[360px] px-5 pt-6 pb-3 outline-none">
           <AccountContent
             me={me}
             day={day}
@@ -109,96 +108,65 @@ const AccountContent = ({
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-3 px-2 pb-1 pt-2">
-        <MemberAvatar m={me} className="size-11 shrink-0 rounded-xl" />
-        <div className="min-w-0">
-          <p className="truncate text-2xl leading-tight font-black tracking-[-0.02em] text-foreground">
-            {nameOf(me)}
-          </p>
-          <p className="truncate text-sm text-muted">{me.userEmail}</p>
-        </div>
+    // The headline's menu: your name in large type, then ruled words.
+    <div className="flex flex-col">
+      <div className="px-1 pb-4">
+        <p className="truncate text-[32px] leading-none font-black tracking-[-0.03em] text-foreground">
+          {nameOf(me)}
+        </p>
+        <p className="mt-1.5 truncate text-[15px] font-bold text-muted">{me.userEmail}</p>
       </div>
 
       {day && (
         // Any of its actions closes the menu: the map (or a panel) has it.
-        <div className="flex flex-col gap-1 rounded-xl bg-accent/10 px-3 py-2.5" onClick={onDone}>
-          <p className="flex items-center gap-1.5 text-sm font-extrabold text-foreground">
-            <day.icon className="size-4 shrink-0 text-accent" />
-            {day.text}
+        <div className="border-t border-separator px-1 py-3" onClick={onDone}>
+          <p className="text-[17px] font-extrabold text-foreground">{day.text}</p>
+          <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[15px]">
+            {day.actions}
           </p>
-          <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">{day.actions}</p>
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-3 rounded-xl bg-surface px-3 py-2.5">
-        <span className="text-sm font-bold text-foreground">{t("Theme")}</span>
-        <ThemeModeControl isCompact />
-      </div>
-
-      <ul className="overflow-hidden rounded-xl bg-surface">
-        <AccountRow
-          icon={Settings}
-          label={t("Your settings")}
-          onPress={act(() => openSettings("user"))}
-        />
+      <ul>
+        <AccountRow label={t("Your settings")} onPress={act(() => openSettings("user"))} />
         {/* Organization settings are an admin's. */}
         {isAdmin && (
-          <AccountRow
-            icon={Building2}
-            label={t("Organization settings")}
-            onPress={act(() => openSettings("org"))}
-          />
+          <AccountRow label={t("Organization settings")} onPress={act(() => openSettings("org"))} />
         )}
       </ul>
 
-      <ul className="overflow-hidden rounded-xl bg-surface">
-        <AccountRow
-          icon={LogOut}
-          label={t("Log out")}
-          isDanger
-          onPress={act(() => navigate("/logout"))}
-        />
+      <div className="flex min-h-14 flex-wrap items-center gap-x-4 border-t border-separator px-1">
+        <span className="flex-1 text-[15px] font-bold text-muted">{t("Theme")}</span>
+        <ThemeModeControl isWords />
+      </div>
+
+      <ul>
+        <AccountRow label={t("Log out")} isDanger onPress={act(() => navigate("/logout"))} />
       </ul>
     </div>
   )
 }
 
-/** A row of the menu: its icon, what it does, and (opening a page) a chevron. */
+/** A line of the menu: what it does, as a word in large type. */
 const AccountRow = ({
-  icon: Icon,
   label,
   isDanger = false,
   onPress,
 }: {
-  icon: LucideIcon
   label: string
   isDanger?: boolean
   onPress: () => void
 }) => (
-  <li className="border-b border-separator last:border-b-0">
+  <li className="border-t border-separator">
     <button
       type="button"
       onClick={onPress}
-      className="flex min-h-12 w-full items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-foreground/5 active:bg-foreground/5"
+      className={clsx(
+        "flex min-h-13 w-full items-center px-1 text-left text-lg font-extrabold outline-none transition-colors hover:bg-foreground/5 focus-visible:ring-2 focus-visible:ring-focus",
+        isDanger ? "text-danger" : "text-foreground"
+      )}
     >
-      <span
-        className={clsx(
-          "grid size-8 shrink-0 place-items-center rounded-lg",
-          isDanger ? "bg-danger/10 text-danger" : "bg-accent/12 text-accent"
-        )}
-      >
-        <Icon className="size-4" />
-      </span>
-      <span
-        className={clsx(
-          "min-w-0 flex-1 truncate text-sm font-bold",
-          isDanger ? "text-danger" : "text-foreground"
-        )}
-      >
-        {label}
-      </span>
-      {!isDanger && <ChevronRight className="size-4 shrink-0 text-muted" />}
+      {label}
     </button>
   </li>
 )

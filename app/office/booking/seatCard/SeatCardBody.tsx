@@ -442,7 +442,7 @@ export const SeatCardBody = ({
               )
             : clsx(
                 // The office's paper (no border), lifted just enough off the model.
-                "w-80 gap-1 rounded-[28px] bg-background p-4 shadow-overlay",
+                "veil-surface w-80 gap-1 rounded-[28px] p-4",
                 below ? "origin-top" : "origin-bottom",
                 closing ? "seat-pop-out" : "seat-pop"
               )
@@ -566,7 +566,7 @@ export const SeatCardBody = ({
         {!isSheet && (
           <span
             className={clsx(
-              "absolute left-1/2 size-3 -translate-x-1/2 bg-background",
+              "absolute left-1/2 size-3 -translate-x-1/2 bg-(--ground)",
               below ? "-top-1.5 rotate-[225deg]" : "-bottom-1.5 rotate-45"
             )}
           />

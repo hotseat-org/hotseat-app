@@ -220,22 +220,27 @@ export const MonthCalendar = ({
 
   return (
     <div className={className}>
-      <div className="mb-2 flex items-center justify-between">
+      {/* The month as a headline, between the day's ink rings. */}
+      <div className="mb-3 flex items-center justify-between">
         <Button
           isIconOnly
           size="sm"
           variant="ghost"
+          className={ARROW}
           aria-label={t("Previous month")}
           isDisabled={!canPrev}
           onPress={() => setMonth(shiftMonth(month, -1))}
         >
           <ChevronLeft className="size-4" />
         </Button>
-        <p className="text-sm font-black text-foreground">{format.month(month)}</p>
+        <p className="text-2xl leading-none font-black tracking-[-0.02em] text-foreground">
+          {format.month(month)}
+        </p>
         <Button
           isIconOnly
           size="sm"
           variant="ghost"
+          className={ARROW}
           aria-label={t("Next month")}
           isDisabled={!canNext}
           onPress={() => setMonth(shiftMonth(month, 1))}

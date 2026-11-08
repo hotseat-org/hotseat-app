@@ -95,7 +95,7 @@ const ProfileDialog = ({
     <InlineModal
       label={name}
       onClose={onClose}
-      className="flex max-h-[min(640px,86vh)] w-[min(420px,94vw)] flex-col rounded-[calc(var(--radius)*3)] border border-border bg-overlay p-5 text-foreground shadow-overlay"
+      className="flex max-h-[min(640px,86vh)] w-[min(420px,94vw)] flex-col veil-surface rounded-[36px] p-6"
     >
       <header className="flex items-start gap-4">
         <MemberAvatar m={member} className="size-16 shrink-0 rounded-2xl text-xl" />

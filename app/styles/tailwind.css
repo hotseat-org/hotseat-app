@@ -104,6 +104,20 @@
      ×1.5: 9px; buttons stay pills): in line with the app's 16px panels. */
   --radius: 0.375rem;
 
+  /* The office's ground as the 3D scene draws it by day (its lit floor): what
+     pages, dialogs and popups are made of, so they're the land, not a card on
+     it (see "Veil"). Its quiet text is darker than --muted: small text on it
+     still reads (4.5:1). */
+  --ground: #d3ccc3;
+  --ground-muted: #575141;
+  /* The accent, danger and success (any colour scheme's), deepened to read as
+     small text on it. */
+  --ground-accent: color-mix(in oklab, var(--accent) 72%, #000);
+  --ground-danger: color-mix(in oklab, var(--danger) 76%, #000);
+  --ground-success: color-mix(in oklab, var(--success) 62%, #000);
+  /* What lifts a piece of it off the rest: a soft, wide shade of ink. */
+  --ground-shadow: 0 50px 120px -50px color-mix(in oklab, var(--foreground) 45%, transparent);
+
   --background: #f1e9db;
   --foreground: #33384a; /* editor seatLeg, darkened for text */
 
@@ -176,6 +190,12 @@
    stand off the floor instead of melting into it. */
 .dark,
 [data-theme="dark"] {
+  --ground: #1e202a;
+  --ground-muted: #a4abba;
+  --ground-accent: var(--accent);
+  --ground-danger: var(--danger);
+  --ground-success: var(--success);
+  --ground-shadow: 0 50px 120px -40px rgb(0 0 0 / 0.7);
   --background: #151820;
   --foreground: #f2ede4;
 
@@ -995,10 +1015,22 @@ input:-webkit-autofill:focus {
 /* Confirmation dialogs' questions ("Remove Lena?") in the headline's type. Unlayered, so
    it wins over the UI kit's own (in its layer). */
 .alert-dialog__heading {
-  font-size: 1.5rem;
-  line-height: 1.15;
+  font-size: 2.5rem;
+  line-height: 0.95;
   font-weight: 900;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.035em;
+}
+/* …and what happens, as a sentence under it. */
+.alert-dialog__body {
+  font-size: 1.125rem;
+  line-height: 1.4;
+  font-weight: 700;
+  color: var(--muted);
+}
+/* A dangerous answer is a pill too, in red (the ink pill's shape). */
+.button--danger {
+  border-radius: 9999px;
+  font-weight: 800;
 }
 
 /* Settings' fields (board H8): calm and large — a filled field, no border
@@ -1014,7 +1046,8 @@ input:-webkit-autofill:focus {
   font-size: 1.0625rem;
   font-weight: 700;
   border-color: transparent;
-  background-color: var(--surface-secondary);
+  /* A tint of ink, so it shows on the ground in either theme. */
+  background-color: color-mix(in oklab, var(--foreground) 7%, transparent);
 }
 .settings-page .input:focus,
 .settings-page .textarea:focus,
@@ -1130,4 +1163,73 @@ input:-webkit-autofill:focus {
   .docs-prose blockquote {
     @apply border-l-4 border-accent/40 pl-4 text-muted;
   }
+}
+
+/* ── Veil ──────────────────────────────────────────────────────────────────
+   What sits on top of the office is made of its ground: a page is the ground
+   itself, fading out on its right (no edge, no corner); dialogs and popups are
+   pieces of it, lifted by a soft shadow, over a haze of the ground instead of
+   black. No blur anywhere (it would redraw with every frame of the scene).
+   Unlayered, so it wins over the UI kit's own (in its layer). */
+/* A dialog or popup of the app's own (the desk card, settings, a person): a piece
+   of the ground. A utility, so it takes variants (md:veil-surface). */
+@utility veil-surface {
+  --overlay: var(--ground);
+  --muted: var(--ground-muted);
+  --accent: var(--ground-accent);
+  --danger: var(--ground-danger);
+  --success: var(--ground-success);
+  color: var(--foreground);
+  background: var(--ground);
+  border: 0;
+  box-shadow: var(--ground-shadow);
+}
+
+/* The UI kit's popovers and dialogs: the same piece of ground. */
+.popover,
+.modal__dialog,
+.alert-dialog__dialog {
+  --overlay: var(--ground);
+  --muted: var(--ground-muted);
+  --accent: var(--ground-accent);
+  --danger: var(--ground-danger);
+  --success: var(--ground-success);
+  color: var(--foreground);
+  background: var(--ground);
+  border: 0;
+  box-shadow: var(--ground-shadow);
+}
+
+.modal__dialog,
+.alert-dialog__dialog {
+  border-radius: 36px;
+}
+
+/* A page in the office's column: the ground itself, fading out on its right
+   (the page's width includes the fade's room). */
+.veil-page {
+  --overlay: var(--ground);
+  --muted: var(--ground-muted);
+  --accent: var(--ground-accent);
+  --danger: var(--ground-danger);
+  --success: var(--ground-success);
+  --veil-fade: 120px;
+  padding-right: var(--veil-fade);
+  background: linear-gradient(
+    90deg,
+    var(--ground) 0,
+    var(--ground) calc(100% - var(--veil-fade)),
+    color-mix(in oklab, var(--ground) 0%, transparent) 100%
+  );
+}
+
+/* Under a dialog: a haze of the ground, densest in the middle, not black. */
+.veil-scrim,
+.modal__backdrop,
+.alert-dialog__backdrop {
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in oklab, var(--ground) 94%, transparent) 30%,
+    color-mix(in oklab, var(--ground) 62%, transparent) 100%
+  );
 }

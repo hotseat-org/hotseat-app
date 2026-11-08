@@ -136,11 +136,11 @@ export function SettingsShell({
       label={title}
       onClose={close}
       isFullScreenOnPhone
-      className="flex h-dvh w-screen flex-row gap-0 overflow-hidden bg-overlay p-0 md:h-[82vh] md:max-h-[760px] md:w-[min(1080px,94vw)] md:rounded-[calc(var(--radius)*3)] md:border md:border-border md:shadow-overlay"
+      className="flex h-dvh w-screen flex-row gap-0 overflow-hidden bg-overlay p-0 md:h-[82vh] md:max-h-[760px] md:w-[min(1080px,94vw)] md:rounded-[36px] md:veil-surface"
     >
       <nav
         aria-label={title}
-        className="hidden w-[272px] shrink-0 flex-col gap-5 border-r border-separator bg-surface-secondary px-4 py-7 md:flex"
+        className="hidden w-[272px] shrink-0 flex-col gap-5 border-r border-separator px-4 py-7 md:flex"
       >
         <div className="flex items-center gap-3 px-2">
           {identity.visual}
