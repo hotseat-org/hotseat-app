@@ -576,7 +576,6 @@ export const cs: Messages = {
   "{in} of {total} in today": "dnes {in} z {total}",
 
   // —— Search, notifications, account ——
-  "Desk assigned": "Přidělený stůl",
   "Find a person or seat (⌘K)": "Najít člověka nebo místo (⌘K)",
   "Find a person or seat…": "Najít člověka nebo místo…",
   "Name, team or desk…": "Jméno, tým nebo stůl…",
@@ -1544,7 +1543,6 @@ export const cs: Messages = {
   "{share} of it the team's · {there} of their days there":
     "{share} obsazenosti připadá na tým · {there} jeho dnů v zóně",
   "No zone here": "Zde bez zóny",
-  "{in} of {total} in": "{in} z {total} v kanceláři",
   "Keep the gang together": "Parta pěkně pohromadě",
   "Put people in teams and give each one its corner of the office and its days. Find a seat sits you next to them, and Who's in shows who's around, team by team.":
     "Rozdělte lidi do týmů a dejte každému jeho kout kanceláře a jeho dny. „Najít místo“ vás posadí k nim a v „Kdo tu je“ vidíte, kdo dorazil, tým po týmu.",
@@ -1562,6 +1560,11 @@ export const cs: Messages = {
   "Next to {names}.": "Vedle: {names}.",
   "Nobody sits next to it, so it's quiet.": "Vedle nikdo nesedí, je tu klid.",
   "The office in 3D": "Kancelář ve 3D",
+  "At {desk} {when}.": "{When}: {desk}.",
+  "Not in {when}.": "{When} tu není.",
+  "{name}'s permanent desk.": "Stálý stůl: {name}.",
+  "Free to book.": "Volný k rezervaci.",
+  "{in} of {total} in {when}.": "{When} tu je {in} z {total}.",
   "{percent} full.": "Obsazeno {percent}.",
   "An average working day, {from} to {to}, of {desks}.": "Průměrný pracovní den od {from} do {to} ({desks}).",
   "{n} person in.": {

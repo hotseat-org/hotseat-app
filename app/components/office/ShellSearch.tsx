@@ -7,7 +7,7 @@ import { isSeatable } from "~/office/catalog"
 import { useI18n } from "~/i18n/I18nProvider"
 import { useAllPieces } from "~/editor"
 import type { SceneObject } from "~/editor/core"
-import { useDesksOnDay, useDeskFloor } from "~/office/booking/useBooking"
+import { dayPhrase, useDesksOnDay, useDeskFloor } from "~/office/booking/useBooking"
 import { useTeams } from "~/office/teams"
 import { useOfficePanel } from "~/office/useOfficePanel"
 import { usePersonProfile } from "~/office/usePersonProfile"
@@ -32,7 +32,10 @@ interface Result {
  * team, Who's in at that team; a desk, its card in the scene (as clicking it).
  */
 export const ShellSearch = ({ members }: { members: ShellMember[] }) => {
-  const { t } = useI18n()
+  const i18n = useI18n()
+  const { t } = i18n
+  const day = useOfficeStore((s) => s.booking.day)
+  const today = useOfficeStore((s) => s.booking.today)
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("")
   const objects = useAllPieces()
@@ -58,6 +61,8 @@ export const ShellSearch = ({ members }: { members: ShellMember[] }) => {
     if (!open) setQuery("")
   }, [open])
 
+  // "today", or "on Wed 23 Sep": the day the results are about.
+  const when = dayPhrase(i18n, day, today)
   const results = useMemo<Result[]>(() => {
     const q = query.trim().toLowerCase()
     const desks = objects.filter((o) => isSeatable(o.type))
@@ -74,12 +79,16 @@ export const ShellSearch = ({ members }: { members: ShellMember[] }) => {
       return {
         key: `p:${m.userEmail}`,
         title: nameOf(m),
+        // Where they are, as a sentence: "At Desk D7 today."
         subtitle: desk
-          ? withFloor(
-              desk.label ? t("Desk {label}", { label: desk.label }) : t("Desk assigned"),
-              desk
-            )
-          : t("Not in"),
+          ? t("At {desk} {when}.", {
+              desk: withFloor(
+                desk.label ? t("Desk {label}", { label: desk.label }) : t("a desk"),
+                desk
+              ),
+              when,
+            })
+          : t("Not in {when}.", { when }),
         member: m,
       }
     })
@@ -90,7 +99,7 @@ export const ShellSearch = ({ members }: { members: ShellMember[] }) => {
         return {
           key: `d:${d.id}`,
           title: withFloor(t("Desk {label}", { label: d.label ?? "" }), d),
-          subtitle: who ? nameOf(who) : t("Free"),
+          subtitle: who ? t("{name}'s permanent desk.", { name: nameOf(who) }) : t("Free to book."),
           deskId: d.id,
         }
       })
@@ -99,15 +108,11 @@ export const ShellSearch = ({ members }: { members: ShellMember[] }) => {
       .map((team) => ({
         key: `t:${team.id}`,
         title: team.name,
-        subtitle: [
-          t("{in} of {total} in", {
-            in: team.members.filter((email) => byPerson.has(email)).length,
-            total: team.members.length,
-          }),
-          team.zone,
-        ]
-          .filter(Boolean)
-          .join(" · "),
+        subtitle: t("{in} of {total} in {when}.", {
+          in: team.members.filter((email) => byPerson.has(email)).length,
+          total: team.members.length,
+          when,
+        }),
         team,
       }))
     const all = [...people, ...teamResults, ...seats]
@@ -117,7 +122,7 @@ export const ShellSearch = ({ members }: { members: ShellMember[] }) => {
         `${r.title} ${r.subtitle} ${r.member?.userEmail ?? ""}`.toLowerCase().includes(q)
       )
       .slice(0, 8)
-  }, [query, objects, members, t, getDeskFloor, teams, byPerson])
+  }, [query, objects, members, t, getDeskFloor, teams, byPerson, when])
 
   const pick = (r: Result) => {
     if (r.member) openProfile(r.member.userEmail)

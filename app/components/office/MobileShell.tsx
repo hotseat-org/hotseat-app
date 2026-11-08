@@ -165,9 +165,9 @@ export const TopBar = ({ offices }: { offices: ShellOffice[] }) => (
 
 /** The dock's main action (finding a seat, the waitlist), and a quieter one (showing your desk). */
 const DOCK_BUTTON =
-  "flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl bg-accent px-3 text-sm font-extrabold text-accent-foreground"
+  "flex min-h-11 shrink-0 items-center gap-1.5 rounded-full bg-foreground px-4 text-sm font-black text-background"
 const DOCK_BUTTON_QUIET =
-  "flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl bg-foreground/[0.07] px-3 text-sm font-bold text-foreground"
+  "flex min-h-11 shrink-0 items-center gap-1.5 rounded-full bg-foreground/[0.07] px-4 text-sm font-extrabold text-foreground"
 
 /**
  * Day switching, where a thumb reaches: the shown day in a sentence (your
@@ -199,22 +199,19 @@ const DayDock = ({
   return (
     <section
       aria-label={t("Day")}
-      className="pointer-events-auto absolute inset-x-0 flex flex-col gap-1.5 border-t border-chrome-border bg-chrome px-3 py-2 shadow-[0_-2px_10px_var(--chrome-shadow)]"
+      className="pointer-events-auto absolute inset-x-0 flex flex-col gap-2 border-t border-chrome-border bg-chrome px-3 py-2 shadow-[0_-2px_10px_var(--chrome-shadow)]"
       style={{ bottom: TAB_BAR_HEIGHT, height: DAY_DOCK_HEIGHT }}
     >
+      {/* The day as a headline (board H9): its title large, its main action beside it. */}
       <div className="flex h-11 shrink-0 items-center gap-2.5">
-        {/* The day in a sentence (see useHeadline): two lines at most, so the dock never grows. */}
-        <p
-          aria-live="polite"
-          className="line-clamp-2 min-w-0 flex-1 text-sm leading-tight font-bold text-foreground"
-        >
-          {headline && (
-            <>
-              <b className="font-black">{headline.title}</b> {yours}{" "}
-              <span className="text-muted">{office.join(" ")}</span>
-            </>
-          )}
-        </p>
+        {headline && (
+          <h2
+            key={headline.title}
+            className="motion-rise min-w-0 flex-1 truncate text-[32px] leading-none font-black tracking-[-0.03em] text-foreground"
+          >
+            {headline.title}
+          </h2>
+        )}
         {waitlist.isWaiting && (
           <button type="button" onClick={waitlist.leave} className={DOCK_BUTTON_QUIET}>
             {t("Leave")}
@@ -239,8 +236,18 @@ const DayDock = ({
             <MapPin className="size-4" /> {t("Show")}
           </button>
         )}
-        {/* Back to today: its day in the strip below (no button of its own: the room is the text's). */}
       </div>
+      {/* The sentence: two lines at most, so the dock never grows. */}
+      <p
+        aria-live="polite"
+        className="line-clamp-2 h-10 shrink-0 text-[15px] leading-tight font-bold text-foreground"
+      >
+        {headline && (
+          <span key={headline.sentences.join(" ")} className="motion-rise block">
+            {yours} <span className="text-muted">{office.join(" ")}</span>
+          </span>
+        )}
+      </p>
       <div className="flex min-w-0 items-center gap-1.5">
         <button
           type="button"
