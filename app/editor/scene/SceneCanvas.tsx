@@ -16,6 +16,8 @@ interface Props {
   dark: boolean
   /** Screen space the floating panels cover (px): Fit frames the office beside them. */
   fitInsets?: FitInsets
+  /** Move the picture's centre right (px), for a column of text on the left. */
+  sceneShift?: number
   /** Perf HUD on: render continuously so the FPS reading is comparable. */
   showStats: boolean
   onStats: (stats: FrameStats) => void
@@ -30,7 +32,16 @@ const createSceneRenderer = createRenderer({ stencil: true })
  * R3F and every model stay out of the bundle until the 3D view is shown — the
  * simple (top-down SVG) view never downloads them.
  */
-const SceneCanvas = ({ store, readOnly, dark, fitInsets, showStats, onStats, onReady }: Props) => {
+const SceneCanvas = ({
+  store,
+  readOnly,
+  dark,
+  fitInsets,
+  sceneShift,
+  showStats,
+  onStats,
+  onReady,
+}: Props) => {
   const i18n = useI18n()
   const modules = useModules()
   const viewClicks = useViewClicks()
@@ -56,7 +67,12 @@ const SceneCanvas = ({ store, readOnly, dark, fitInsets, showStats, onStats, onR
         <EditorStoreContextProvider value={store}>
           <ModulesContext.Provider value={modules}>
             <I18nBridge value={i18n}>
-              <Scene readOnly={readOnly} dark={dark} fitInsets={fitInsets} />
+              <Scene
+                readOnly={readOnly}
+                dark={dark}
+                fitInsets={fitInsets}
+                sceneShift={sceneShift}
+              />
             </I18nBridge>
           </ModulesContext.Provider>
         </EditorStoreContextProvider>

@@ -35,7 +35,14 @@ interface Anim {
  * instantly when the office opens, and animated on `requestFit()` (button / F).
  * Showing the way to a desk frames that route instead (see wayfinding.ts).
  */
-export const CameraFit = ({ insets = NO_INSETS }: { insets?: FitInsets }) => {
+export const CameraFit = ({
+  insets = NO_INSETS,
+  shift = 0,
+}: {
+  insets?: FitInsets
+  /** The picture's centre is moved right by this much (ViewShift): fit in what's left. */
+  shift?: number
+}) => {
   const nonce = useEditorStore((state) => state.fitNonce)
   // Also frame the office when it first gets content (e.g. a template picked
   // on an empty office) — on any floor: showing a floor with pieces after an
@@ -49,8 +56,8 @@ export const CameraFit = ({ insets = NO_INSETS }: { insets?: FitInsets }) => {
   const invalidate = useThree((state) => state.invalidate)
   const width = useThree((state) => state.size.width)
   const anim = useRef<Anim | null>(null)
-  const latest = useRef({ insets, width })
-  latest.current = { insets, width }
+  const latest = useRef({ insets, shift, width })
+  latest.current = { insets, shift, width }
   const didInitial = useRef(false)
 
   // F frames the office, in both modes.
@@ -142,9 +149,9 @@ export const CameraFit = ({ insets = NO_INSETS }: { insets?: FitInsets }) => {
           extentY = Math.max(extentY, Math.abs(point.y))
         }
     // Beside the floating panels: the office fits the free width, centred in it.
-    const { insets: pad, width: canvasWidth } = latest.current
-    const free =
-      canvasWidth > 0 ? Math.max(0.3, (canvasWidth - pad.left - pad.right) / canvasWidth) : 1
+    const { insets: pad, shift: centreShift, width: canvasWidth } = latest.current
+    const covered = pad.left + pad.right + centreShift * 2
+    const free = canvasWidth > 0 ? Math.max(0.3, (canvasWidth - covered) / canvasWidth) : 1
     const extent = Math.max(extentX / free, extentY, 1e-6)
     const zoom = MathUtils.clamp(FILL / extent, MIN_ZOOM, MAX_ZOOM)
     // The free area's centre, in NDC — moved there by sliding the camera sideways.

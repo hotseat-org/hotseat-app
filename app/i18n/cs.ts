@@ -1574,4 +1574,49 @@ export const cs: Messages = {
   "Teams and their corners": "Týmy a jejich kouty",
   "Give each team its own patch of floor and the days it comes in together. Finding a seat puts you right next to them.":
     "Dejte každému týmu jeho kus kanceláře a dny, kdy chodí spolu. Při hledání místa vás posadíme rovnou k nim.",
+
+  // The headline (prototype): the shown day in a few sentences. Gender-neutral:
+  // nothing says a person did something in the past tense.
+  "Your day": "Váš den",
+  "Today.": "Dnes.",
+  "Tomorrow.": "Zítra.",
+  "{weekday}.": "{Weekday}.",
+  "{first}, {second} and {n} other": {
+    one: "{first}, {second} a {n} další",
+    few: "{first}, {second} a {n} další",
+    many: "{first}, {second} a {n} dalších",
+    other: "{first}, {second} a {n} dalších",
+  },
+  "Your desk was {desk}.": "Váš stůl byl {desk}.",
+  "You had a desk.": "Ten den se stolem.",
+  "No desk that day.": "Ten den bez stolu.",
+  "You're at {desk}.": "Sedíte u stolu {desk}.",
+  "You have a desk.": "Máte tu stůl.",
+  "You're at your desk, {desk}.": "Sedíte u svého stolu {desk}.",
+  "You're at your desk.": "Sedíte u svého stolu.",
+  "You're away.": "Jste mimo kancelář.",
+  "You're on the waitlist.": "Čekáte na uvolněný stůl.",
+  "You're not in, yet.": "Zatím tu nemáte stůl.",
+  "The office is full.": "Kancelář je plná.",
+  "The office is closed.": "Kancelář je zavřená.",
+  "Nobody else was in.": "Nikdo další tu nebyl.",
+  "Nobody else is in.": "Nikdo další tu není.",
+  "{names} was in.": {
+    one: "V kanceláři: {names}.",
+    few: "V kanceláři: {names}.",
+    many: "V kanceláři: {names}.",
+    other: "V kanceláři: {names}.",
+  },
+  "{names} is in.": {
+    one: "V kanceláři: {names}.",
+    few: "V kanceláři: {names}.",
+    many: "V kanceláři: {names}.",
+    other: "V kanceláři: {names}.",
+  },
+  "{n} desk is free.": {
+    one: "Volný je {n} stůl.",
+    few: "Volné jsou {n} stoly.",
+    many: "Volného je {n} stolu.",
+    other: "Volných je {n} stolů.",
+  },
 }

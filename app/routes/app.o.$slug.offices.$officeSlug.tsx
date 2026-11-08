@@ -9,6 +9,7 @@ import {
   useLoaderData,
   useParams,
   useRevalidator,
+  useSearchParams,
   type ActionFunctionArgs,
   type LoaderFunctionArgs,
 } from "react-router"
@@ -25,6 +26,7 @@ import { EditorBoundary } from "~/editor"
 import { type Kit, type KitLibrary, type Layout } from "~/editor/core"
 import type { PreferenceChange } from "~/office/store"
 import { SpatialShell, type ShellMember } from "~/components/office/SpatialShell"
+import { HEADLINE_SCENE_SHIFT } from "~/components/office/HeadlineColumn"
 import { nameOf } from "~/components/office/shell-ui"
 import type { Profile } from "~/core/profile/types"
 import { OfficeLayoutError } from "~/core/office/saveLayout"
@@ -269,6 +271,9 @@ export default function OfficeRoute() {
     return { me: toPerson(me), members: members.map(toPerson) }
   }, [me, members])
   const { slug, officeSlug } = useParams()
+  // Prototype: the day as a headline beside the office (`?look=headline`).
+  const [searchParams] = useSearchParams()
+  const isHeadline = searchParams.get("look") === "headline"
   const officeUrl = `/app/o/${slug}/offices/${officeSlug}`
   const fetcher = useFetcher<LayoutActionData>()
 
@@ -464,6 +469,7 @@ export default function OfficeRoute() {
                 people={people}
                 initialMode="display"
                 canEdit={canEdit}
+                sceneShift={isHeadline ? HEADLINE_SCENE_SHIFT : undefined}
                 booking={{
                   ...booking,
                   pending: bookingFetcher.state !== "idle",
@@ -482,6 +488,7 @@ export default function OfficeRoute() {
                     canEdit={canEdit}
                     empty={empty}
                     guide={guide}
+                    isHeadline={isHeadline}
                   />
                 )}
               />

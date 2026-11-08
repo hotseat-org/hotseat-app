@@ -42,6 +42,7 @@ import { CameraControls, type FloorPan } from "../camera/CameraControls"
 import { WallXray } from "../walls/WallXray"
 import { WallResize, type WallResizeHandle } from "../building/WallResize"
 import { CameraFit, type FitInsets } from "../camera/CameraFit"
+import { ViewShift } from "../camera/ViewShift"
 import { PaintController } from "../building/PaintController"
 import { NudgeKeys } from "../carrying/NudgeKeys"
 import { OpeningCarry } from "../carrying/OpeningCarry"
@@ -78,6 +79,8 @@ interface Props {
   dark?: boolean
   /** Screen space the floating panels cover (px): Fit frames the office beside them. */
   fitInsets?: FitInsets
+  /** Move the picture's centre right (px), for a column of text on the left. */
+  sceneShift?: number
 }
 
 // Same camera drags in both modes: right-drag orbits, middle-drag (or
@@ -89,7 +92,7 @@ type Buttons = { LEFT: MOUSE; MIDDLE: MOUSE; RIGHT: MOUSE }
 const EDIT_BUTTONS = { LEFT: -1, MIDDLE: MOUSE.PAN, RIGHT: MOUSE.ROTATE } as unknown as Buttons
 const VIEW_BUTTONS: Buttons = { LEFT: MOUSE.PAN, MIDDLE: MOUSE.PAN, RIGHT: MOUSE.ROTATE }
 
-export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
+export const Scene = ({ readOnly = false, dark = false, fitInsets, sceneShift = 0 }: Props) => {
   const objects = useEditorStore((state) => state.objects)
   // Doors and windows wear their wall line's paint (or the Paint tool's, hovered).
   const paintedObjects = useObjectsWithPaintPreview()
@@ -420,7 +423,8 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets }: Props) => {
               isHintShown={!carried && !carriedOpening}
               readOnly={readOnly}
             />
-            <CameraFit insets={fitInsets} />
+            {sceneShift > 0 && <ViewShift shift={sceneShift} />}
+            <CameraFit insets={fitInsets} shift={sceneShift} />
             {!readOnly && <WallResize ref={wallResize} setCursorHint={setCursorHint} />}
 
             {/* See-through, cut-down wall section under the cursor — always in view

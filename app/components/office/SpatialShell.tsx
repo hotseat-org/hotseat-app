@@ -15,6 +15,7 @@ import { MyBookings } from "./MyBookings"
 import { MobileShell } from "./MobileShell"
 import { NotificationsBell } from "./Notifications"
 import { InsightsDashboard } from "./InsightsDashboard"
+import { HeadlineColumn } from "./HeadlineColumn"
 import {
   REVEAL_LABEL,
   SidePanelBadge,
@@ -46,6 +47,8 @@ interface Props {
   empty?: boolean
   /** The editor's camera controls guide, shown bottom right. */
   guide?: ReactNode
+  /** Prototype: the day as a headline in a left column (`?look=headline`). */
+  isHeadline?: boolean
 }
 
 interface RailItem {
@@ -95,6 +98,7 @@ export const SpatialShell = ({
   canEdit,
   empty = false,
   guide,
+  isHeadline = false,
 }: Props) => {
   const { t } = useI18n()
   const hasHeatmap = useOfficeStore((s) => s.heatmap !== null)
@@ -147,6 +151,7 @@ export const SpatialShell = ({
   return (
     <>
       <WorkspaceSwitcher offices={offices} />
+      {isHeadline && <HeadlineColumn me={me} members={members} />}
 
       {/* Left rail */}
       <nav

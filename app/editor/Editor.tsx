@@ -88,6 +88,11 @@ export interface EditorProps {
   children?: ReactNode
   /** On a phone with the app's shell: what the shell covers at the top and bottom (px). */
   phoneChrome?: { top: number; bottom: number }
+  /**
+   * On a computer with the app's shell: move the 3D picture's centre right
+   * (px), for a column of text on the left. Replaces the panels' fit insets.
+   */
+  sceneShift?: number
 }
 
 /** The office shell's floating panels (desktop): the left rail, the right column. */
@@ -152,6 +157,7 @@ const EditorInner = ({
   canEdit = true,
   displayShell,
   phoneChrome,
+  sceneShift,
 }: EditorProps) => {
   const store = useEditorStoreApi()
 
@@ -203,6 +209,10 @@ const EditorInner = ({
 
   // Display mode with an app shell: the shell owns the view toggle + time control.
   const shellMode = readOnly && !!displayShell
+  // The shell's room on a computer: a moved centre (a text column), or the panels' insets.
+  const isShellOnComputer = shellMode && !isMobile
+  const shellShift = isShellOnComputer ? sceneShift : undefined
+  const shellInsets = isShellOnComputer && !sceneShift ? SHELL_INSETS : undefined
   // First-run helper for a brand-new (empty) office.
   const [emptyDismissed, setEmptyDismissed] = useState(false)
   // A brand-new office (no layout, first-run card showing): no scene and no
@@ -257,7 +267,8 @@ const EditorInner = ({
               store={store}
               readOnly={readOnly}
               dark={isDark}
-              fitInsets={shellMode && !isMobile ? SHELL_INSETS : undefined}
+              fitInsets={shellInsets}
+              sceneShift={shellShift}
               showStats={isFrameRateShown}
               onStats={setStats}
               onReady={handleSceneReady}
