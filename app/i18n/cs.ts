@@ -532,13 +532,6 @@ export const cs: Messages = {
   Day: "Den",
   "Away {when}": "{When} nejste v kanceláři",
   "No desk {when}": "{When} nemáte stůl",
-  "Your permanent desk": "Váš stálý stůl",
-  "Yours {when}": "{When} je váš",
-  "You gave {desk} up — others can book it":
-    "Uvolnili jste stůl ({desk}) — ostatní si ho mohou zarezervovat",
-  "Past days can't be booked": "Minulé dny nejde rezervovat",
-  "On the waitlist": "V pořadníku",
-  "Office full": "Kancelář je plná",
   Show: "Ukázat",
   "Pick a day from the calendar": "Vybrat den v kalendáři",
   Days: "Dny",
@@ -1540,7 +1533,6 @@ export const cs: Messages = {
   "Others can book": "Ostatní si mohou rezervovat",
   "Days before": "Dní předem",
   "days before": "dní předem",
-  "Or tap a free + on the plan": "Nebo klepněte na volné + v plánu",
   "{team} comes in on {days}.": "Tým {team} chodí do kanceláře: {days}.",
   "Find a seat that suits you, or tap a free desk on the plan.":
     "Najděte si místo, které vám sedne, nebo klepněte na volný stůl v plánu.",
