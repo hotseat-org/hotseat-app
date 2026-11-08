@@ -213,6 +213,8 @@ const Finder = ({
 
       {best && when !== ANY_DAY && (
         <BestMatch
+          // A new match (another day, another rule) rises into place.
+          key={`${best.desk.id}:${when}`}
           match={best}
           title={describeDesk(best.desk)}
           isPending={isPending}
