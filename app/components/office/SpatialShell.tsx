@@ -215,7 +215,12 @@ export const SpatialShell = ({
       )}
 
       {/* The editor's camera controls guide, bottom right. */}
-      {guide && <div className="pointer-events-none absolute bottom-4 right-5">{guide}</div>}
+      {/* Lifted over the dock where the two would meet (narrower screens). */}
+      {guide && (
+        <div className="pointer-events-none absolute right-5 bottom-4 max-[1279px]:bottom-[92px]">
+          {guide}
+        </div>
+      )}
 
       {/* Above the dock, on a day your team comes in together. */}
       {isBooking && (
