@@ -279,10 +279,13 @@ const Finder = ({
     <button
       type="button"
       onClick={onEditPreferences}
-      className="flex flex-col gap-1 rounded-2xl bg-surface-secondary px-4 pt-3 pb-2 text-left outline-none hover:bg-surface-tertiary focus-visible:ring-2 focus-visible:ring-focus"
+      // The sentence is the page's headline (board H5): large type, no card.
+      className="group flex flex-col gap-1 rounded-2xl text-left outline-none focus-visible:ring-2 focus-visible:ring-focus"
     >
       {/* Tall lines: pills on two lines don't touch. */}
-      <span className="text-[15px] font-extrabold leading-[2.25]">{sentence}</span>
+      <span className="text-[clamp(22px,2.2vw,30px)] leading-[1.75] font-black tracking-[-0.015em]">
+        {sentence}
+      </span>
       <span className="flex min-h-9 items-center gap-1.5 self-end text-sm font-extrabold text-accent">
         <Pencil className="size-3.5" strokeWidth={2.6} />
         {t("Change")}

@@ -30,7 +30,8 @@ const Pill = ({
   <span
     className={clsx(
       // One height for every pill, its icon in the same round slot: they line up, line on line.
-      "inline-flex h-7 max-w-full items-center gap-1.5 whitespace-nowrap rounded-full align-middle leading-none",
+      // Sized by the sentence's own type (em): as large as the words around it.
+      "inline-flex h-[1.4em] max-w-full items-center gap-[0.3em] whitespace-nowrap rounded-full align-middle text-[0.86em] leading-none",
       icon ? "pl-1 pr-2.5" : "px-2.5",
       TONES[tone]
     )}
