@@ -51,13 +51,16 @@ export const WorkspaceSwitcher = ({
   const officeMenu = <OfficeMenu d={d} offices={offices} onClose={close} onGo={go} />
   const orgTrigger = (
     <>
-      <OrgLogo
-        src={d.organization.thumbnailUrl}
-        name={d.organization.name}
-        className="size-8 rounded-lg"
-      />
+      {/* On a wide screen, words only (the headline's); the phone keeps the logo. */}
+      {isCompact && (
+        <OrgLogo
+          src={d.organization.thumbnailUrl}
+          name={d.organization.name}
+          className="size-8 rounded-lg"
+        />
+      )}
       {!isCompact && (
-        <span className="max-w-36 truncate text-sm font-extrabold text-foreground">
+        <span className="max-w-44 truncate text-base font-black text-foreground">
           {d.organization.name}
         </span>
       )}
@@ -67,7 +70,7 @@ export const WorkspaceSwitcher = ({
   const officeTrigger = (
     <>
       {/* Its cover, sized like the org's logo: both halves the same height. */}
-      {d.currentOffice ? (
+      {!isCompact ? null : d.currentOffice ? (
         <ThumbAvatar
           src={d.currentOffice.thumbnail}
           fallback={d.currentOffice.name.slice(0, 1).toUpperCase()}
@@ -79,7 +82,7 @@ export const WorkspaceSwitcher = ({
         </span>
       )}
       <span
-        className={`min-w-0 truncate text-sm font-semibold text-foreground ${isCompact ? "" : "max-w-36"}`}
+        className={`min-w-0 truncate font-semibold text-foreground ${isCompact ? "text-sm" : "max-w-44 text-base"}`}
       >
         {d.currentOffice?.name ?? (offices.length ? t("Select office") : t("No offices"))}
       </span>
@@ -120,7 +123,7 @@ export const WorkspaceSwitcher = ({
     )
 
   return (
-    <div className={`${PANEL} p-1.5 ${className} flex min-w-0 items-center gap-0.5`}>
+    <div className={`${PANEL} ${className} flex min-w-0 items-center gap-0.5`}>
       <Popover isOpen={open === "org"} onOpenChange={(isOpen) => setOpen(isOpen ? "org" : null)}>
         {/* The trigger is the button itself: one tab stop, no button inside a button. */}
         <Popover.Trigger aria-label={t("Switch organization")} className={`${TRIGGER} shrink-0`}>

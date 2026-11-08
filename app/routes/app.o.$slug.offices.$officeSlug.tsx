@@ -475,7 +475,7 @@ export default function OfficeRoute() {
                   onReclaim,
                   onPreference,
                 }}
-                displayShell={({ enterEdit, empty, guide }) => (
+                displayShell={({ enterEdit, empty }) => (
                   <SpatialShell
                     offices={offices}
                     me={me}
@@ -483,7 +483,6 @@ export default function OfficeRoute() {
                     enterEdit={enterEdit}
                     canEdit={canEdit}
                     empty={empty}
-                    guide={guide}
                   />
                 )}
               />

@@ -4,6 +4,7 @@ import type { ShellMember } from "./shell-ui"
 import { useOfficeStore } from "~/office/store"
 import { dayPhrase, useDesksOnDay, useGivenUpDesk, useWaitlist } from "~/office/booking/useBooking"
 import { useI18n } from "~/i18n/I18nProvider"
+import type { Translator } from "~/i18n/translate"
 
 /** A small link-like action under your day. */
 const Action = ({ onPress, children }: { onPress: () => void; children: ReactNode }) => (
@@ -16,11 +17,23 @@ const Action = ({ onPress, children }: { onPress: () => void; children: ReactNod
   </button>
 )
 
+/** One thing to do about your day: its words and what pressing it does. */
+export interface DayAction {
+  label: string
+  onPress: () => void
+}
+
 /** Your day, to show: its icon, a line, and what to do about it. */
 export interface DayStatus {
   icon: LucideIcon
   text: string
   actions: ReactNode
+  /** The one thing to do (the headline's ink pill); none when there's nothing to. */
+  primary?: DayAction
+  /** Your bookings, always beside it (a word). */
+  bookings: DayAction
+  /** Your desk on the day, as the headline shows it large ("D2"). */
+  desk?: { label: string; isPermanent: boolean }
 }
 
 /**
@@ -44,61 +57,64 @@ export const useDayStatus = (
   const waitlist = useWaitlist()
   const when = dayPhrase(i18n, day, today)
 
-  const allBookings = <Action onPress={onOpenBookings}>{t("All my bookings")}</Action>
-  return mine
-    ? {
-        icon: mine.state.kind === "resident" ? Pin : MapPin,
-        text:
-          mine.state.kind === "resident"
-            ? mine.desk.label
-              ? t("Permanent desk {label}", { label: mine.desk.label })
-              : t("Permanent desk")
-            : mine.desk.label
-              ? t("Desk {label} {when}", { label: mine.desk.label, when })
-              : t("You have a desk {when}", { when }),
-        actions: (
-          <>
-            <Action onPress={() => showRoute(mine.desk.id)}>{t("Show the way")}</Action>
-            {allBookings}
-          </>
-        ),
-      }
-    : givenUp
-      ? { icon: Pin, text: t("Away {when}", { when }), actions: allBookings }
-      : waitlist.isWaiting
-        ? {
-            icon: Hourglass,
-            text:
-              t("On the waitlist {when}", { when }) +
-              (waitlist.count > 1
-                ? ` ${tn(waitlist.count, "({n} waiting)", "({n} waiting)")}`
-                : ""),
-            actions: (
-              <>
-                <Action onPress={waitlist.leave}>{t("Leave")}</Action>
-                {allBookings}
-              </>
-            ),
-          }
-        : waitlist.canWait
-          ? {
-              icon: Hourglass,
-              text: t("Office full {when}", { when }),
-              actions: (
-                <>
-                  <Action onPress={waitlist.join}>{t("Join the waitlist")}</Action>
-                  {allBookings}
-                </>
-              ),
-            }
-          : {
-              icon: MapPin,
-              text: t("No desk {when}.", { when }),
-              actions: (
-                <>
-                  {day >= today && <Action onPress={onFindSeat}>{t("Find a seat")}</Action>}
-                  {allBookings}
-                </>
-              ),
-            }
+  const bookings = { label: t("All my bookings"), onPress: onOpenBookings }
+  const allBookings = <Action onPress={onOpenBookings}>{bookings.label}</Action>
+  const withActions = (status: Omit<DayStatus, "actions" | "bookings">): DayStatus => ({
+    ...status,
+    bookings,
+    actions: (
+      <>
+        {status.primary && <Action onPress={status.primary.onPress}>{status.primary.label}</Action>}
+        {allBookings}
+      </>
+    ),
+  })
+
+  if (mine) {
+    const isPermanent = mine.state.kind === "resident"
+    const label = mine.desk.label
+
+    return withActions({
+      icon: isPermanent ? Pin : MapPin,
+      text: getMineText(i18n, { isPermanent, label, when }),
+      primary: { label: t("Show the way"), onPress: () => showRoute(mine.desk.id) },
+      desk: label ? { label, isPermanent } : undefined,
+    })
+  }
+
+  if (givenUp) return withActions({ icon: Pin, text: t("Away {when}", { when }) })
+
+  if (waitlist.isWaiting) {
+    const waiting =
+      waitlist.count > 1 ? ` ${tn(waitlist.count, "({n} waiting)", "({n} waiting)")}` : ""
+
+    return withActions({
+      icon: Hourglass,
+      text: t("On the waitlist {when}", { when }) + waiting,
+      primary: { label: t("Leave"), onPress: waitlist.leave },
+    })
+  }
+
+  if (waitlist.canWait)
+    return withActions({
+      icon: Hourglass,
+      text: t("Office full {when}", { when }),
+      primary: { label: t("Join the waitlist"), onPress: waitlist.join },
+    })
+
+  return withActions({
+    icon: MapPin,
+    text: t("No desk {when}.", { when }),
+    primary: day >= today ? { label: t("Find a seat"), onPress: onFindSeat } : undefined,
+  })
+}
+
+/** Your desk on the day, in a line: "Permanent desk D1", "Desk D2 today". */
+const getMineText = (
+  { t }: Translator,
+  { isPermanent, label, when }: { isPermanent: boolean; label?: string; when: string }
+) => {
+  if (isPermanent) return label ? t("Permanent desk {label}", { label }) : t("Permanent desk")
+
+  return label ? t("Desk {label} {when}", { label, when }) : t("You have a desk {when}", { when })
 }

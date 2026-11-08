@@ -31,8 +31,8 @@ export const MapControls = ({ isEditing = false }: { isEditing?: boolean }) => {
       data-open={isMenuOpen || undefined}
       className={clsx(
         "group/bar pointer-events-auto flex flex-col items-stretch gap-0.5 rounded-2xl p-1 text-foreground",
-        // Viewing, the office's paper (as its other chrome); editing, the tool's card.
-        isEditing ? "border border-border bg-overlay shadow-overlay" : "bg-background"
+        // Viewing, icons straight on the paper (as the office's other chrome); editing, the tool's card.
+        isEditing ? "border border-border bg-overlay shadow-overlay" : ""
       )}
     >
       <ControlButton label={t("Fit")} title={t("Fit to office (F)")} onPress={requestFit}>

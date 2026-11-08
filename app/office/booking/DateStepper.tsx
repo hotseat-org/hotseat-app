@@ -87,6 +87,66 @@ export const DateStepper = () => {
   )
 }
 
+/** The headline's day buttons: rings of ink, a touch target each. */
+const RING =
+  "grid size-11 cursor-pointer place-items-center rounded-full border-2 border-foreground text-foreground outline-none transition-colors hover:bg-foreground hover:text-background focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-default disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-foreground"
+
+/**
+ * The shown day's controls beside the headline's day ("Monday." ‹ › ▦): the
+ * day before, the day after, and a month calendar to pick any day.
+ */
+export const DayRings = () => {
+  const { t } = useI18n()
+  const day = useOfficeStore((state) => state.booking.day)
+  const from = useOfficeStore((state) => state.booking.from)
+  const lastDay = useOfficeStore((state) => state.booking.lastDay)
+  const setDay = useOfficeStore((state) => state.setBookingDay)
+  const [isOpen, setIsOpen] = useState(false)
+
+  const step = (offset: number) => {
+    const next = addDays(day, offset)
+    if (next >= from && next <= lastDay) setDay(next)
+  }
+
+  return (
+    <span className="flex items-center gap-1.5">
+      <button
+        type="button"
+        aria-label={t("Previous day")}
+        disabled={day <= from}
+        onClick={() => step(-1)}
+        className={RING}
+      >
+        <ChevronLeft className="size-5" strokeWidth={2.4} />
+      </button>
+      <button
+        type="button"
+        aria-label={t("Next day")}
+        disabled={day >= lastDay}
+        onClick={() => step(1)}
+        className={RING}
+      >
+        <ChevronRight className="size-5" strokeWidth={2.4} />
+      </button>
+      <Popover isOpen={isOpen} onOpenChange={setIsOpen}>
+        <Popover.Trigger aria-label={t("Pick a day")} className={RING}>
+          <CalendarDays className="size-5" strokeWidth={2.2} />
+        </Popover.Trigger>
+        <Popover.Content placement="bottom start" offset={10} className="rounded-2xl">
+          <Popover.Dialog aria-label={t("Pick a day")} className="p-4 outline-none">
+            <MonthCalendar
+              onPick={(pickedDay) => {
+                setDay(pickedDay)
+                setIsOpen(false)
+              }}
+            />
+          </Popover.Dialog>
+        </Popover.Content>
+      </Popover>
+    </span>
+  )
+}
+
 /** First day of the day's month. */
 const monthOf = (day: Day) => `${day.slice(0, 8)}01`
 const shiftMonth = (month: Day, offset: number) => {

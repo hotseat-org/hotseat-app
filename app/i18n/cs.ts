@@ -577,7 +577,6 @@ export const cs: Messages = {
 
   // —— Search, notifications, account ——
   "Find a person or seat (⌘K)": "Najít člověka nebo místo (⌘K)",
-  "Find a person or seat…": "Najít člověka nebo místo…",
   "Name, team or desk…": "Jméno, tým nebo stůl…",
   "Search people, teams and desks": "Hledat lidi, týmy a stoly",
   "No people, teams or desks match.": "Žádní lidé, týmy ani stoly neodpovídají.",
@@ -1635,4 +1634,6 @@ export const cs: Messages = {
     many: "Volného je {n} stolu.",
     other: "Volných je {n} stolů.",
   },
+  "Your desk, every day.": "Váš stůl, každý den.",
+  "Yours for the day.": "Na celý den váš.",
 }

@@ -20,11 +20,11 @@ export interface ShellOffice {
 }
 
 /**
- * The floating chrome over the office: a piece of the office's own paper, as
- * the headline's pages are — no border, no shadow, no card. Just enough of it
- * under the words to read them over the model.
+ * The floating chrome over the office: words and icons straight on the paper,
+ * as in the headline's mockups — no border, no shadow, no card, no fill (the
+ * office sits right of the column, clear of them).
  */
-export const PANEL = "pointer-events-auto rounded-2xl bg-background"
+export const PANEL = "pointer-events-auto rounded-2xl"
 
 /**
  * Hover for a clickable PANEL. Must be a SOLID colour — a translucent tint (e.g.

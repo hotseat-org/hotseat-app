@@ -1,4 +1,3 @@
-import { type ReactNode } from "react"
 import { PANEL, PANEL_HOVER, type ShellMember, type ShellOffice } from "./shell-ui"
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher"
 import { PersonProfile } from "./PersonProfile"
@@ -35,8 +34,6 @@ interface Props {
   canEdit: boolean
   /** Office has no layout yet: only the switcher + account (like the empty-org screen). */
   empty?: boolean
-  /** The editor's camera controls guide, shown bottom right. */
-  guide?: ReactNode
 }
 
 /** One of the office's sections, as a word in the top bar. */
@@ -56,7 +53,7 @@ const NavLink = ({
     type="button"
     onClick={onClick}
     aria-current={isCurrent ? "page" : undefined}
-    className={`relative flex h-10 items-center gap-1.5 rounded-xl px-3 text-[15px] font-extrabold whitespace-nowrap outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus ${
+    className={`relative flex h-11 items-center gap-1.5 rounded-xl px-2.5 text-base font-extrabold whitespace-nowrap outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus ${
       // One weight either way: the bar keeps its width as you move between pages.
       isCurrent ? "text-foreground" : "text-muted hover:text-foreground"
     }`}
@@ -69,7 +66,7 @@ const NavLink = ({
       <span
         aria-hidden
         style={{ viewTransitionName: "nav-current" }}
-        className="absolute inset-x-3 bottom-1 h-[3px] rounded-full bg-foreground"
+        className="absolute inset-x-2.5 bottom-1 h-[3px] rounded-full bg-foreground"
       />
     )}
   </button>
@@ -82,7 +79,6 @@ export const SpatialShell = ({
   enterEdit,
   canEdit,
   empty = false,
-  guide,
 }: Props) => {
   const { t } = useI18n()
   const hasHeatmap = useOfficeStore((s) => s.heatmap !== null)
@@ -150,7 +146,7 @@ export const SpatialShell = ({
         <WorkspaceSwitcher offices={offices} className="relative" />
         <span className="flex-1" />
         <div className="order-last basis-full min-[1280px]:order-none min-[1280px]:basis-auto">
-          <nav aria-label={t("Primary")} className={`${PANEL} flex w-fit items-center gap-0.5 p-1`}>
+          <nav aria-label={t("Primary")} className={`${PANEL} flex w-fit items-center gap-2`}>
             <NavLink
               label={t("Office")}
               isCurrent={!isPageOpen && !hasHeatmap}
@@ -199,11 +195,11 @@ export const SpatialShell = ({
           <ShellSearch members={members} />
         </div>
         <NotificationsBell
-          triggerClassName={`${PANEL} ${PANEL_HOVER} pointer-events-auto grid size-11 cursor-pointer place-items-center text-foreground outline-none focus-visible:ring-2 focus-visible:ring-focus`}
+          triggerClassName={`${PANEL} ${PANEL_HOVER} pointer-events-auto grid size-11 cursor-pointer place-items-center rounded-full text-foreground outline-none focus-visible:ring-2 focus-visible:ring-focus`}
         />
         <AccountMenu />
       </div>
-      {!isPageOpen && <HeadlineColumn me={me} members={members} actions={day.actions} />}
+      {!isPageOpen && <HeadlineColumn me={me} members={members} day={day} />}
 
       {officePanel.panel === "people" && (
         <WhosInModal me={me} members={members} onClose={officePanel.close} />
@@ -233,13 +229,7 @@ export const SpatialShell = ({
         </ColumnPage>
       )}
 
-      {/* The editor's camera controls guide, bottom right. */}
-      {/* Lifted over the dock where the two would meet (narrower screens). */}
-      {guide && (
-        <div className="pointer-events-none absolute right-5 bottom-4 max-[1279px]:bottom-[92px]">
-          {guide}
-        </div>
-      )}
+      {/* No camera guide here (the editor has one): the bottom right is the time's. */}
 
       {/* Your team's day is in the headline's sentence (the phone keeps its card). */}
 

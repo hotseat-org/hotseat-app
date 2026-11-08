@@ -136,16 +136,10 @@ export const ShellSearch = ({ members }: { members: ShellMember[] }) => {
       {/* The trigger is the button itself: one tab stop, no button inside a button. */}
       <Popover.Trigger
         aria-label={t("Find a person or seat (⌘K)")}
-        className={`${PANEL} ${PANEL_HOVER} flex h-11 cursor-pointer items-center gap-2 px-3.5 text-sm text-muted outline-none focus-visible:ring-2 focus-visible:ring-focus`}
+        className={`${PANEL} ${PANEL_HOVER} grid size-11 cursor-pointer place-items-center rounded-full text-foreground outline-none focus-visible:ring-2 focus-visible:ring-focus`}
       >
-        <Search className="size-4" />
-        {/* Room for its words only on a wide screen; otherwise the icon (and ⌘K). */}
-        <span className="hidden whitespace-nowrap min-[1440px]:inline">
-          {t("Find a person or seat…")}
-        </span>
-        <kbd className="ml-1 hidden rounded border border-border px-1.5 text-[0.65rem] min-[1440px]:inline">
-          ⌘K
-        </kbd>
+        {/* An icon, as the mockups' (its name, with ⌘K, is its label). */}
+        <Search className="size-5" strokeWidth={2.2} />
       </Popover.Trigger>
       <Popover.Content placement="bottom end" className="rounded-xl">
         <Popover.Dialog className="w-[min(440px,calc(100vw-24px))] p-3 outline-none">

@@ -3,7 +3,7 @@ import { Popover } from "@heroui/react"
 import clsx from "clsx"
 import { Building2, ChevronRight, LogOut, Settings, type LucideIcon } from "lucide-react"
 import { useNavigate } from "react-router"
-import { MemberAvatar, PANEL, PANEL_HOVER, nameOf, type ShellMember } from "./shell-ui"
+import { MemberAvatar, PANEL, nameOf, type ShellMember } from "./shell-ui"
 import type { DayStatus } from "./dayStatus"
 import { useProfile } from "~/utils/remix"
 import { useIsMobile } from "~/utils/hooks/useIsMobile"
@@ -33,7 +33,7 @@ export const AccountMenu = ({ isFlat = false, day }: { isFlat?: boolean; day?: D
     role: String(profile.role),
   }
   const triggerLabel = day ? `${t("Account menu")}: ${day.text}` : t("Account menu")
-  const triggerClassName = `${isFlat ? "pointer-events-auto rounded-xl" : `${PANEL} ${PANEL_HOVER} h-11 p-[5px]`} flex cursor-pointer items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-focus`
+  const triggerClassName = `${isFlat ? "pointer-events-auto rounded-xl" : `${PANEL} h-11 rounded-full p-0.5`} flex cursor-pointer items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-focus`
   const triggerContent = (
     <>
       {day && !isMobile && (
@@ -43,7 +43,7 @@ export const AccountMenu = ({ isFlat = false, day }: { isFlat?: boolean; day?: D
         </span>
       )}
       {/* The top bar's height (h-11, as search and the bell); its corners follow the panel's. */}
-      <MemberAvatar m={me} className={isFlat ? "size-9 rounded-xl" : "size-8 rounded-[10px]"} />
+      <MemberAvatar m={me} className={isFlat ? "size-9 rounded-xl" : "size-10 rounded-full"} />
     </>
   )
 

@@ -33,21 +33,26 @@ export const TimeOfDay = ({
   const flat = isViewing && (view === "2d" || !hasWebGL())
 
   return (
-    // Viewing, it's a strip of the office's paper (no card, as the office's
-    // other chrome); editing, the tool's bar.
+    // Viewing, the time and the way to edit in the bottom-right corner,
+    // straight on the paper (the headline's; the day is by its title there);
+    // editing, the tool's bar, centred.
     <div
       className={clsx(
-        "pointer-events-auto absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-2xl p-2 text-foreground",
-        isViewing ? "bg-background" : "border border-border bg-overlay shadow-overlay"
+        "pointer-events-auto absolute flex items-center gap-2 text-foreground",
+        isViewing
+          ? "right-6 bottom-5"
+          : "bottom-4 left-1/2 -translate-x-1/2 rounded-2xl border border-border bg-overlay p-2 shadow-overlay"
       )}
     >
-      {/* The modules' (the office: the day shown). */}
-      {items.map((Item, index) => (
-        <Item key={index} />
-      ))}
+      {/* The modules' (the office: the day shown) — by the headline when viewing. */}
+      {!isViewing && items.map((Item, index) => <Item key={index} />)}
       {!flat && (
         <div className="flex items-center gap-1.5">
-          <SkySlider value={timeOfDay} onChange={setTimeOfDay} className="mx-1 w-56" />
+          <SkySlider
+            value={timeOfDay}
+            onChange={setTimeOfDay}
+            className={clsx("mx-1", isViewing ? "w-44" : "w-56")}
+          />
           {/* Back to the real time — its room kept while following it, so the
               bar never changes width. */}
           <button
@@ -66,7 +71,7 @@ export const TimeOfDay = ({
       )}
       {children && (
         <>
-          <span className="mx-1 h-6 w-px bg-separator" aria-hidden />
+          {!isViewing && <span className="mx-1 h-6 w-px bg-separator" aria-hidden />}
           {/* Edit layout ⇄ Done share a least width (min-w-32), so swapping them
               barely resizes the bar — and a longer translation still fits. */}
           <div className="flex items-center gap-2">{children}</div>

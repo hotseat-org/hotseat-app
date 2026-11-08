@@ -94,6 +94,7 @@ const Row = ({
   hasStep = false,
   isDisabled = false,
   isSheet,
+  isLink = false,
 }: {
   icon: typeof Check
   label: string
@@ -104,42 +105,79 @@ const Row = ({
   hasStep?: boolean
   isDisabled?: boolean
   isSheet: boolean
-}) => (
-  <button
-    type="button"
-    disabled={isDisabled}
-    onClick={onPress}
-    className={clsx(
-      "flex w-full items-center gap-2.5 rounded-xl px-3 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50",
-      getRowSize(isSheet, !!detail),
-      // The one main action: the headline's ink pill; the rest, plain words.
-      isPrimary
-        ? "mb-1.5 rounded-full bg-foreground px-4 font-black text-background hover:opacity-90"
-        : clsx("font-extrabold hover:bg-foreground/5", isDanger ? "text-danger" : "text-foreground")
-    )}
-  >
-    <Icon
-      className={clsx("size-4 shrink-0", !isPrimary && !isDanger && "text-accent")}
-      strokeWidth={isPrimary ? 2.6 : 2}
-    />
-    <span className="min-w-0 flex-1">
-      <span className={clsx("block leading-tight", isSheet ? "text-[1.05rem]" : "text-[0.95rem]")}>
-        {label}
-      </span>
-      {detail && (
-        <span
-          className={clsx(
-            "block truncate text-[0.7rem] font-semibold",
-            isPrimary ? "text-background/75" : "text-muted"
-          )}
-        >
-          {detail}
-        </span>
+  /** An underlined word, not a row (the card's lesser actions beside its desk). */
+  isLink?: boolean
+}) =>
+  isLink ? (
+    // Beside the desk, the other actions are words (the headline's links).
+    <button
+      type="button"
+      disabled={isDisabled}
+      onClick={onPress}
+      className={clsx(
+        "min-h-10 text-left text-[15px] leading-tight font-extrabold underline decoration-2 underline-offset-4 outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50",
+        isDanger ? "text-danger" : "text-foreground"
       )}
-    </span>
-    {hasStep && <ChevronRight className="size-4 shrink-0 text-muted" />}
-  </button>
-)
+    >
+      {label}
+    </button>
+  ) : (
+    <button
+      type="button"
+      disabled={isDisabled}
+      onClick={onPress}
+      className={clsx(
+        "flex w-full items-center gap-2.5 px-3 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50",
+        getRowSize(isSheet, !!detail),
+        // The one main action: the headline's ink pill; the rest, plain words.
+        isPrimary
+          ? "mb-1.5 rounded-full bg-foreground px-4 font-black text-background hover:opacity-90"
+          : clsx(
+              "rounded-xl font-extrabold hover:bg-foreground/5",
+              isDanger ? "text-danger" : "text-foreground"
+            )
+      )}
+    >
+      <Icon
+        className={clsx("size-4 shrink-0", !isPrimary && !isDanger && "text-accent")}
+        strokeWidth={isPrimary ? 2.6 : 2}
+      />
+      <span className="min-w-0 flex-1">
+        <span
+          className={clsx("block leading-tight", isSheet ? "text-[1.05rem]" : "text-[0.95rem]")}
+        >
+          {label}
+        </span>
+        {detail && (
+          <span
+            className={clsx(
+              "block truncate text-[0.7rem] font-semibold",
+              isPrimary ? "text-background/75" : "text-muted"
+            )}
+          >
+            {detail}
+          </span>
+        )}
+      </span>
+      {hasStep && <ChevronRight className="size-4 shrink-0 text-muted" />}
+    </button>
+  )
+
+/** The desk's colour in its title: yours blue, free green, past or taken ink. */
+const getTitleTone = ({
+  isMine,
+  isFree,
+  isPast,
+}: {
+  isMine: boolean
+  isFree: boolean
+  isPast: boolean
+}) => {
+  if (isPast) return "text-muted"
+  if (isMine) return "text-accent"
+
+  return isFree ? "text-success" : "text-foreground"
+}
 
 /** A step's title bar: back to the card's main list. */
 export const StepHeader = ({
@@ -262,63 +300,81 @@ export const SeatCardBody = ({
           onPress={onShowWay}
         />
       )}
-      {more.length > 0 && (
-        <Row
-          isSheet={isSheet}
-          icon={CalendarDays}
-          label={one ? t("Book more days") : t("Book it on other days")}
-          hasStep
-          onPress={() => setStep("days")}
-        />
-      )}
-      {usual && (
-        <Row
-          isSheet={isSheet}
-          icon={Repeat}
-          label={
-            usual.weekdays
-              ? t("Usual desk · {days}", { days: weekdayNames(i18n, usual.weekdays) })
-              : t("Make it my usual desk")
-          }
-          hasStep
-          onPress={() => setStep("usual")}
-        />
-      )}
-      {!showWayFirst && (
-        <Row isSheet={isSheet} icon={Footprints} label={t("Show the way")} onPress={onShowWay} />
-      )}
-      {releaseChoices.map((choice) => (
-        <Row
-          key={choice.label}
-          isSheet={isSheet}
-          icon={CalendarX}
-          label={t("Away? Give it up · {choice}", { choice: choice.label })}
-          isDisabled={pending}
-          onPress={() => onRelease(choice.days)}
-        />
-      ))}
-      {canReclaim && (
-        <Row
-          isSheet={isSheet}
-          icon={Undo2}
-          label={shortDay ? t("Take {day} back", { day: shortDay }) : t("Take it back")}
-          isDisabled={pending}
-          onPress={onReclaim}
-        />
-      )}
-      {canCancel && (
-        <>
-          <div className="mx-3 my-1 h-px bg-separator" />
+      {/* The rest: rows on a phone's sheet, a wrapped line of words beside the desk. */}
+      <div
+        className={clsx(
+          isSheet ? "flex flex-col" : "flex flex-wrap items-center gap-x-5 gap-y-0.5 px-1"
+        )}
+      >
+        {more.length > 0 && (
           <Row
             isSheet={isSheet}
-            isDanger
-            icon={LogOut}
-            label={shortDay ? t("Cancel {day}", { day: shortDay }) : t("Cancel booking")}
-            isDisabled={pending}
-            onPress={onCancel}
+            isLink={!isSheet}
+            icon={CalendarDays}
+            label={one ? t("Book more days") : t("Book it on other days")}
+            hasStep
+            onPress={() => setStep("days")}
           />
-        </>
-      )}
+        )}
+        {usual && (
+          <Row
+            isSheet={isSheet}
+            isLink={!isSheet}
+            icon={Repeat}
+            label={
+              usual.weekdays
+                ? t("Usual desk · {days}", { days: weekdayNames(i18n, usual.weekdays) })
+                : t("Make it my usual desk")
+            }
+            hasStep
+            onPress={() => setStep("usual")}
+          />
+        )}
+        {!showWayFirst && (
+          <Row
+            isSheet={isSheet}
+            isLink={!isSheet}
+            icon={Footprints}
+            label={t("Show the way")}
+            onPress={onShowWay}
+          />
+        )}
+        {releaseChoices.map((choice) => (
+          <Row
+            key={choice.label}
+            isSheet={isSheet}
+            isLink={!isSheet}
+            icon={CalendarX}
+            label={t("Away? Give it up · {choice}", { choice: choice.label })}
+            isDisabled={pending}
+            onPress={() => onRelease(choice.days)}
+          />
+        ))}
+        {canReclaim && (
+          <Row
+            isSheet={isSheet}
+            isLink={!isSheet}
+            icon={Undo2}
+            label={shortDay ? t("Take {day} back", { day: shortDay }) : t("Take it back")}
+            isDisabled={pending}
+            onPress={onReclaim}
+          />
+        )}
+        {canCancel && (
+          <>
+            {isSheet && <div className="mx-3 my-1 h-px bg-separator" />}
+            <Row
+              isSheet={isSheet}
+              isLink={!isSheet}
+              isDanger
+              icon={LogOut}
+              label={shortDay ? t("Cancel {day}", { day: shortDay }) : t("Cancel booking")}
+              isDisabled={pending}
+              onPress={onCancel}
+            />
+          </>
+        )}
+      </div>
     </>
   )
 
@@ -385,7 +441,8 @@ export const SeatCardBody = ({
                 closing ? "sheet-down" : "sheet-up"
               )
             : clsx(
-                "w-72 gap-0.5 rounded-2xl border border-border bg-overlay p-2.5 shadow-overlay",
+                // The office's paper (no border), lifted just enough off the model.
+                "w-80 gap-1 rounded-[28px] bg-background p-4 shadow-overlay",
                 below ? "origin-top" : "origin-bottom",
                 closing ? "seat-pop-out" : "seat-pop"
               )
@@ -434,10 +491,12 @@ export const SeatCardBody = ({
             )}
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1">
+                {/* The desk in large type, coloured by its state (the mockups' "D2"). */}
                 <p
                   className={clsx(
-                    "truncate leading-tight font-black tracking-[-0.02em]",
-                    isSheet ? "text-3xl" : "text-2xl"
+                    "truncate leading-[0.95] font-black tracking-[-0.035em]",
+                    isSheet ? "text-[40px]" : "text-[44px]",
+                    getTitleTone({ isMine: !!mine, isFree: state === "free", isPast: !!past })
                   )}
                 >
                   {title}
@@ -457,16 +516,8 @@ export const SeatCardBody = ({
                   </button>
                 )}
               </div>
-              <p className="truncate text-sm text-muted">
-                <span
-                  className={clsx(
-                    "font-bold",
-                    mine && "text-accent",
-                    !mine && state === "free" && !past && "text-success"
-                  )}
-                >
-                  {status}
-                </span>
+              <p className="mt-1 truncate text-base font-bold text-foreground">
+                <span>{status}</span>
                 {features.length > 0 && ` · ${features.join(", ")}`}
               </p>
             </div>
@@ -478,7 +529,7 @@ export const SeatCardBody = ({
         </div>
 
         {facts.length > 0 && step === "main" && (
-          <ul className="flex flex-col gap-0.5 px-1 pb-2 text-[13px] leading-snug font-semibold">
+          <ul className="flex flex-col gap-0.5 px-1 pb-2 text-[15px] leading-snug font-semibold text-muted">
             {facts.map((fact) => (
               <li key={fact}>{fact}</li>
             ))}
@@ -515,7 +566,7 @@ export const SeatCardBody = ({
         {!isSheet && (
           <span
             className={clsx(
-              "absolute left-1/2 size-3 -translate-x-1/2 border-b border-r border-border bg-overlay",
+              "absolute left-1/2 size-3 -translate-x-1/2 bg-background",
               below ? "-top-1.5 rotate-[225deg]" : "-bottom-1.5 rotate-45"
             )}
           />
