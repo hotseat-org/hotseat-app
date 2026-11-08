@@ -428,7 +428,12 @@ export const SeatCardBody = ({
             )}
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1">
-                <p className={clsx("truncate font-black", isSheet ? "text-lg" : "text-base")}>
+                <p
+                  className={clsx(
+                    "truncate leading-tight font-black tracking-[-0.02em]",
+                    isSheet ? "text-3xl" : "text-2xl"
+                  )}
+                >
                   {title}
                 </p>
                 {canFavorite && (
@@ -446,7 +451,7 @@ export const SeatCardBody = ({
                   </button>
                 )}
               </div>
-              <p className="truncate text-xs text-muted">
+              <p className="truncate text-sm text-muted">
                 <span
                   className={clsx(
                     "font-bold",

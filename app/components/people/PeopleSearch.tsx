@@ -1,7 +1,7 @@
 import { Avatar } from "@heroui/react"
 import clsx from "clsx"
 import { Check, ChevronRight, Search } from "lucide-react"
-import { Fragment, useState, type ReactNode } from "react"
+import { Fragment, useState, type ReactNode, type CSSProperties } from "react"
 import { ScrollArea } from "~/components/ui/ScrollArea"
 import { colorForEmail } from "~/components/office/shell-ui"
 import { useI18n } from "~/i18n/I18nProvider"
@@ -153,15 +153,17 @@ export const PeopleSearch = <Item,>({
   const pages = useProgressiveList(listed, `${query}|${filterId}`)
   const shown = maxRows === undefined ? pages.shown : listed.slice(0, maxRows)
 
-  const renderRow = (item: Item, key?: string) => {
+  const renderRow = (item: Item, key?: string, index = 0) => {
     const person = getPerson(item)
     const isPicked = isSelected?.(item) ?? false
     const content = (
       <>
         {renderFace?.(item) ?? <PersonFace person={person} className="size-10 text-[15px]" />}
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-bold text-foreground">{person.name}</span>
-          <span className="block truncate text-xs text-muted">
+          <span className="block truncate text-base font-extrabold text-foreground">
+            {person.name}
+          </span>
+          <span className="block truncate text-sm text-muted">
             {renderDetail?.(item) ?? person.email}
           </span>
           {renderNote?.(item)}
@@ -171,7 +173,12 @@ export const PeopleSearch = <Item,>({
     )
 
     return (
-      <li key={key ?? person.email} className="flex items-center gap-2">
+      // Rows arrive in a quick cascade (see .motion-stagger in tailwind.css).
+      <li
+        key={key ?? person.email}
+        className="motion-stagger flex items-center gap-2"
+        style={{ "--index": index } as CSSProperties}
+      >
         {onPick ? (
           <button
             type="button"
@@ -282,7 +289,9 @@ export const PeopleSearch = <Item,>({
                     {isOpen &&
                       found
                         .slice(0, limit)
-                        .map((item) => renderRow(item, `${group.id}:${getPerson(item).email}`))}
+                        .map((item, index) =>
+                          renderRow(item, `${group.id}:${getPerson(item).email}`, index)
+                        )}
                     {isOpen && found.length > limit && (
                       <li>
                         <button
@@ -302,7 +311,7 @@ export const PeopleSearch = <Item,>({
                   </Fragment>
                 )
               })
-            : shown.map((item) => renderRow(item))}
+            : shown.map((item, index) => renderRow(item, undefined, index))}
           {listed.length === 0 && (
             <li className="px-2 py-10 text-center text-sm text-muted">
               {searchable

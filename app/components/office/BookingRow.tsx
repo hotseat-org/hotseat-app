@@ -1,7 +1,7 @@
 import { Button } from "@heroui/react"
 import clsx from "clsx"
 import { MapPin } from "lucide-react"
-import { useState } from "react"
+import { useState, type CSSProperties } from "react"
 import { useI18n } from "~/i18n/I18nProvider"
 import type { Translator } from "~/i18n/translate"
 import type { Day } from "~/utils/booking"
@@ -25,6 +25,7 @@ export const BookingRow = ({
   day,
   onShow,
   onCancel,
+  index = 0,
 }: {
   /** The desk, as deskText says it. */
   desk: string
@@ -34,6 +35,8 @@ export const BookingRow = ({
   day: Day
   onShow: () => void
   onCancel: () => void
+  /** Its place in the list: when it arrives in the cascade. */
+  index?: number
 }) => {
   const { t, format } = useI18n()
   const [isAsking, setIsAsking] = useState(false)
@@ -41,9 +44,11 @@ export const BookingRow = ({
   return (
     // Fixed height: asking "Cancel?" swaps the row's content in place.
     <div
+      style={{ "--index": index } as CSSProperties}
       className={clsx(
         // A ruled row, not a card (the headline's lists): the line under it, no box.
-        "flex h-16 items-center gap-3 border-b px-1",
+        // It arrives with the others in a quick cascade (.motion-stagger).
+        "motion-stagger flex h-16 items-center gap-3 border-b px-1",
         isAsking ? "border-danger/40 bg-danger/5" : "border-separator"
       )}
     >

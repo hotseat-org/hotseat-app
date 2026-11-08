@@ -129,7 +129,7 @@ const TeamList = ({ data, onOpen }: { data: TeamsData; onOpen: (id: string) => v
 
       <ul
         aria-label={t("Teams")}
-        className="flex flex-col divide-y divide-separator rounded-2xl border border-border bg-surface"
+        className="flex flex-col divide-y divide-separator border-y border-separator"
       >
         {data.teams.map((team) => {
           const faces = team.members.slice(0, MAX_FACES).flatMap((email) => {
@@ -498,7 +498,7 @@ const ZoneCard = ({
   const isKept = choice.keepDays !== null
 
   return (
-    <li className="overflow-hidden rounded-2xl border border-border bg-surface">
+    <li className="overflow-hidden border-b border-separator">
       <div className="flex items-center gap-3 p-3">
         <span
           aria-hidden

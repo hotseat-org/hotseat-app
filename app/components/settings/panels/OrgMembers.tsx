@@ -106,7 +106,7 @@ export function OrgMembers() {
             {/* Phones: one card per person — a four-column table doesn't fit. */}
             <ul
               aria-label={t("Members")}
-              className="flex flex-col divide-y divide-separator rounded-2xl border border-border bg-surface sm:hidden"
+              className="flex flex-col divide-y divide-separator border-y border-separator sm:hidden"
             >
               {pages.shown.map((member) => (
                 <li key={member.userEmail} className="flex items-center gap-3 px-4 py-3">

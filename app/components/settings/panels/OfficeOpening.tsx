@@ -199,7 +199,7 @@ export function OfficeOpening() {
         {closedDays.length === 0 ? (
           <p className="text-sm text-muted">{t("No closed days ahead.")}</p>
         ) : (
-          <ul className="flex flex-col divide-y divide-separator rounded-2xl border border-border bg-surface">
+          <ul className="flex flex-col divide-y divide-separator border-y border-separator">
             {closedDays.map(([date, closedReason]) => (
               <li key={date} className="flex items-center gap-3 px-4 py-2.5">
                 <span className="min-w-0 flex-1">

@@ -41,7 +41,7 @@ export function OrgOffices() {
       ) : (
         <ul
           aria-label={t("Offices")}
-          className="flex flex-col divide-y divide-separator rounded-2xl border border-border bg-surface"
+          className="flex flex-col divide-y divide-separator border-y border-separator"
         >
           {offices.map((office) => (
             <li key={office.slug} className="flex items-center gap-3 px-4 py-3">

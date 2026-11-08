@@ -199,8 +199,9 @@ export const MyBookings = ({
                 <span className="ml-1.5 text-accent">{t("Today")}</span>
               )}
             </p>
-            {bookings.map((b) => (
+            {bookings.map((b, index) => (
               <BookingRow
+                index={index}
                 key={keyOf(b)}
                 desk={deskText(i18n, b.deskLabel, b.deskFloor && floorText(i18n, b.deskFloor))}
                 detail={[
