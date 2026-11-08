@@ -12,7 +12,7 @@ export const InputAvatar = ({ src, onEdit, onDelete }: Props) => {
   return (
     <div className="relative w-fit">
       <Avatar className="w-52 h-52 z-0">
-        <Avatar.Image src={src} />
+        <Avatar.Image src={src} alt="" />
         <AvatarFallback>
           <Users size={72} />
         </AvatarFallback>

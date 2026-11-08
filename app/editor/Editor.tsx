@@ -251,46 +251,10 @@ const EditorInner = ({
 
   return (
     <div className="relative h-full w-full overflow-hidden">
-      {/* The scene's own layer: its floating labels and desk card stack inside
-          it (isolate), so they never cover the panels and menus above. */}
-      <div className="absolute inset-0 isolate">
-        {!isEmpty && flat && (
-          <FloorPlan
-            dark={isDark}
-            padRight={shellMode ? 340 : 40}
-            phoneChrome={shellMode && isMobile ? phoneChrome : undefined}
-          />
-        )}
-        {!isEmpty && !flat && (
-          <Suspense fallback={null}>
-            <SceneCanvas
-              store={store}
-              readOnly={readOnly}
-              dark={isDark}
-              fitInsets={shellInsets}
-              sceneShift={shellShift}
-              showStats={isFrameRateShown}
-              onStats={setStats}
-              onReady={handleSceneReady}
-            />
-          </Suspense>
-        )}
-      </div>
-      {/* Above the scene layer (its desk labels too), below the panels. */}
-      {!isEmpty && !flat && (
-        <SceneLoading isVisible={isBusy} label={busyLabel} isFirstLoad={isFirstLoad} />
-      )}
-
-      {/* Empty office: cover the bare 3D scene with the same grid+dots backdrop
-          as the empty-org screen (sits below the chrome + template card). */}
-      {isEmpty && (
-        <div className="pointer-events-none absolute inset-0 bg-background">
-          <ContourBackdrop />
-        </div>
-      )}
-
-      {/* DOM overlay — panels re-enable pointer events individually. */}
-      <div className="pointer-events-none absolute inset-0">
+      {/* DOM overlay — panels re-enable pointer events individually. First in the
+          page, so the keyboard reaches the app's controls before the desks' tags;
+          z-10 keeps it painted above the scene layer that follows. */}
+      <div className="pointer-events-none absolute inset-0 z-10">
         <SelectionBox />
         {/* The modules' panels (the office: booking on chosen days, the way to a desk…). */}
         {panels.map(({ Component }, index) => (
@@ -409,6 +373,44 @@ const EditorInner = ({
           />
         )}
       </div>
+
+      {/* The scene's own layer: its floating labels and desk card stack inside
+          it (isolate), so they never cover the panels and menus above. */}
+      <div className="absolute inset-0 isolate">
+        {!isEmpty && flat && (
+          <FloorPlan
+            dark={isDark}
+            padRight={shellMode ? 340 : 40}
+            phoneChrome={shellMode && isMobile ? phoneChrome : undefined}
+          />
+        )}
+        {!isEmpty && !flat && (
+          <Suspense fallback={null}>
+            <SceneCanvas
+              store={store}
+              readOnly={readOnly}
+              dark={isDark}
+              fitInsets={shellInsets}
+              sceneShift={shellShift}
+              showStats={isFrameRateShown}
+              onStats={setStats}
+              onReady={handleSceneReady}
+            />
+          </Suspense>
+        )}
+      </div>
+      {/* Above the scene layer (its desk labels too), below the panels. */}
+      {!isEmpty && !flat && (
+        <SceneLoading isVisible={isBusy} label={busyLabel} isFirstLoad={isFirstLoad} />
+      )}
+
+      {/* Empty office: cover the bare 3D scene with the same grid+dots backdrop
+          as the empty-org screen (sits below the chrome + template card). */}
+      {isEmpty && (
+        <div className="pointer-events-none absolute inset-0 bg-background">
+          <ContourBackdrop />
+        </div>
+      )}
     </div>
   )
 }

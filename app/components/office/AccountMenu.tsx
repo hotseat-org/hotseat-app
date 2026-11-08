@@ -32,13 +32,10 @@ export const AccountMenu = ({ isFlat = false, day }: { isFlat?: boolean; day?: D
     avatarUrl: profile.avatarUrl,
     role: String(profile.role),
   }
-  const trigger = (
-    <div
-      role="button"
-      tabIndex={0}
-      aria-label={day ? `${t("Account menu")}: ${day.text}` : t("Account menu")}
-      className={`${isFlat ? "pointer-events-auto rounded-xl" : `${PANEL} ${PANEL_HOVER} h-11 p-[5px]`} flex cursor-pointer items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-focus`}
-    >
+  const triggerLabel = day ? `${t("Account menu")}: ${day.text}` : t("Account menu")
+  const triggerClassName = `${isFlat ? "pointer-events-auto rounded-xl" : `${PANEL} ${PANEL_HOVER} h-11 p-[5px]`} flex cursor-pointer items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-focus`
+  const triggerContent = (
+    <>
       {day && !isMobile && (
         <span className="flex min-w-0 max-w-56 items-center gap-1.5 pl-2 text-sm font-bold text-foreground">
           <day.icon className="size-4 shrink-0 text-muted" />
@@ -47,18 +44,20 @@ export const AccountMenu = ({ isFlat = false, day }: { isFlat?: boolean; day?: D
       )}
       {/* The top bar's height (h-11, as search and the bell); its corners follow the panel's. */}
       <MemberAvatar m={me} className={isFlat ? "size-9 rounded-xl" : "size-8 rounded-[10px]"} />
-    </div>
+    </>
   )
 
   if (isMobile)
     return (
       <>
-        <div
+        <button
+          type="button"
+          aria-label={triggerLabel}
+          className={triggerClassName}
           onClick={() => setIsOpen(true)}
-          onKeyDown={(event) => (event.key === "Enter" || event.key === " ") && setIsOpen(true)}
         >
-          {trigger}
-        </div>
+          {triggerContent}
+        </button>
         {isOpen && (
           <BottomSheet label={t("Account menu")} onClose={() => setIsOpen(false)}>
             {(close) => (
@@ -71,7 +70,10 @@ export const AccountMenu = ({ isFlat = false, day }: { isFlat?: boolean; day?: D
 
   return (
     <Popover isOpen={isOpen} onOpenChange={setIsOpen}>
-      <Popover.Trigger>{trigger}</Popover.Trigger>
+      {/* The trigger is the button itself: one tab stop, no button inside a button. */}
+      <Popover.Trigger aria-label={triggerLabel} className={triggerClassName}>
+        {triggerContent}
+      </Popover.Trigger>
       <Popover.Content placement="bottom end" className="rounded-2xl">
         <Popover.Dialog className="w-72 p-2 outline-none">
           <AccountContent

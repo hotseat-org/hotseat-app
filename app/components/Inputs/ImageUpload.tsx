@@ -73,7 +73,7 @@ export const ImageUploadInput = ({ onChange, name }: Props) => {
               <div className="relative">
                 <div className={clsx({ "opacity-10": isOptimistic })}>
                   <Avatar className="w-52 h-52 z-0">
-                    <Avatar.Image src={URL.createObjectURL(file)} />
+                    <Avatar.Image src={URL.createObjectURL(file)} alt="" />
                   </Avatar>
                 </div>
                 {isOptimistic && (

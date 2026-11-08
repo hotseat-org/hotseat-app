@@ -164,7 +164,8 @@ export const SeatTags = () => {
               }}
               onPointerLeave={() => clearHoveredPiece(desk.id)}
               // The button itself isn't scaled (the UI kit sets buttons' scale): what's in it is.
-              className="group pointer-events-auto select-none"
+              // At least 24px to hit, even round a small dot (centred: the tag doesn't move).
+              className="group pointer-events-auto grid min-h-6 min-w-6 place-items-center select-none"
               // The scene's own hand, as over its desk.
               style={{ cursor: CURSORS.point }}
             >

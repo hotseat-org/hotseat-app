@@ -70,7 +70,7 @@ export const PersonFace = ({
   className: string
 }) => (
   <Avatar className={clsx("shrink-0 rounded-full", className)}>
-    <Avatar.Image src={person.avatarUrl} />
+    <Avatar.Image src={person.avatarUrl} alt="" />
     <Avatar.Fallback
       className="rounded-full text-[0.6em] font-extrabold text-white"
       style={{ background: colorForEmail(person.email) }}

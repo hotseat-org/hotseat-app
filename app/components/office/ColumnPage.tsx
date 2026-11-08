@@ -44,7 +44,7 @@ export const ColumnPage = ({
           }
         }}
         className={clsx(
-          "page-in pointer-events-auto absolute top-[84px] bottom-[148px] left-5 z-[44] flex flex-col rounded-[calc(var(--radius)*4)] border border-border bg-overlay text-foreground shadow-overlay outline-none",
+          "page-in pointer-events-auto absolute top-[84px] bottom-[148px] left-5 max-[1279px]:top-[144px] z-[44] flex flex-col rounded-[calc(var(--radius)*4)] border border-border bg-overlay text-foreground shadow-overlay outline-none",
           isWide ? "w-[min(860px,calc(100vw-40px))]" : "w-[min(500px,calc(100vw-40px))]"
         )}
       >

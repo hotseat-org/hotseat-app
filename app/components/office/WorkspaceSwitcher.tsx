@@ -122,10 +122,9 @@ export const WorkspaceSwitcher = ({
   return (
     <div className={`${PANEL} p-1.5 ${className} flex min-w-0 items-center gap-0.5`}>
       <Popover isOpen={open === "org"} onOpenChange={(isOpen) => setOpen(isOpen ? "org" : null)}>
-        <Popover.Trigger className="shrink-0">
-          <div role="button" tabIndex={0} aria-label="Switch organization" className={TRIGGER}>
-            {orgTrigger}
-          </div>
+        {/* The trigger is the button itself: one tab stop, no button inside a button. */}
+        <Popover.Trigger aria-label={t("Switch organization")} className={`${TRIGGER} shrink-0`}>
+          {orgTrigger}
         </Popover.Trigger>
         <Popover.Content placement="bottom start" offset={10} className={MENU}>
           <Popover.Dialog className="flex w-80 flex-col gap-0.5 p-2 outline-none">
@@ -141,15 +140,8 @@ export const WorkspaceSwitcher = ({
         onOpenChange={(isOpen) => setOpen(isOpen ? "office" : null)}
       >
         {/* The part that gives way when space is short: its name truncates. */}
-        <Popover.Trigger className="min-w-0">
-          <div
-            role="button"
-            tabIndex={0}
-            aria-label={t("Switch office")}
-            className={`${TRIGGER} min-w-0`}
-          >
-            {officeTrigger}
-          </div>
+        <Popover.Trigger aria-label={t("Switch office")} className={`${TRIGGER} min-w-0`}>
+          {officeTrigger}
         </Popover.Trigger>
         <Popover.Content placement="bottom start" offset={10} className={MENU}>
           <Popover.Dialog className="flex w-80 flex-col gap-0.5 p-2 outline-none">

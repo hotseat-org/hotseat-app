@@ -133,58 +133,60 @@ export const SpatialShell = ({
 
   return (
     <>
-      <WorkspaceSwitcher offices={offices} />
-      {!isPageOpen && <HeadlineColumn me={me} members={members} actions={day.actions} />}
-
-      {/* The office's sections, as words: the page you're on underlined. */}
-      <div className="pointer-events-none absolute right-5 top-5 flex items-center gap-2.5">
-        <nav aria-label={t("Primary")} className={`${PANEL} flex items-center gap-0.5 p-1`}>
-          <NavLink
-            label={t("Office")}
-            isCurrent={!isPageOpen && !hasHeatmap}
-            onClick={() => {
-              sidePanels.close()
-              officePanel.close()
-            }}
-          />
-          <NavLink
-            label={t("Who's in")}
-            count={inCount}
-            isCurrent={officePanel.panel === "people"}
-            onClick={() => togglePage("people")}
-          />
-          <NavLink
-            label={t("My bookings")}
-            isCurrent={officePanel.panel === "bookings"}
-            onClick={() => togglePage("bookings")}
-          />
-          {isBooking && (
+      {/* The top bar: where you are, the office's sections, search, what's new, you.
+          Below 1280px the sections take a row of their own under it. */}
+      <div className="pointer-events-none absolute inset-x-5 top-5 flex flex-wrap items-center gap-x-2.5 gap-y-3">
+        <WorkspaceSwitcher offices={offices} className="relative" />
+        <span className="flex-1" />
+        <div className="order-last basis-full min-[1280px]:order-none min-[1280px]:basis-auto">
+          <nav aria-label={t("Primary")} className={`${PANEL} flex w-fit items-center gap-0.5 p-1`}>
             <NavLink
-              label={t("Find a seat")}
-              isCurrent={officePanel.panel === "find"}
-              onClick={() => togglePage("find")}
-            />
-          )}
-          {me.role === Role.ADMIN && (
-            <NavLink
-              label={t("Insights")}
-              isCurrent={officePanel.panel === "insights" || hasHeatmap}
-              onClick={() => togglePage("insights")}
-            />
-          )}
-          {sidePanels.entries.map(({ panel, badgeCount }) => (
-            <NavLink
-              key={panel.id}
-              label={t(panel.label)}
-              count={badgeCount}
-              isCurrent={sidePanel?.id === panel.id}
+              label={t("Office")}
+              isCurrent={!isPageOpen && !hasHeatmap}
               onClick={() => {
+                sidePanels.close()
                 officePanel.close()
-                sidePanels.toggle(panel.id)
               }}
             />
-          ))}
-        </nav>
+            <NavLink
+              label={t("Who's in")}
+              count={inCount}
+              isCurrent={officePanel.panel === "people"}
+              onClick={() => togglePage("people")}
+            />
+            <NavLink
+              label={t("My bookings")}
+              isCurrent={officePanel.panel === "bookings"}
+              onClick={() => togglePage("bookings")}
+            />
+            {isBooking && (
+              <NavLink
+                label={t("Find a seat")}
+                isCurrent={officePanel.panel === "find"}
+                onClick={() => togglePage("find")}
+              />
+            )}
+            {me.role === Role.ADMIN && (
+              <NavLink
+                label={t("Insights")}
+                isCurrent={officePanel.panel === "insights" || hasHeatmap}
+                onClick={() => togglePage("insights")}
+              />
+            )}
+            {sidePanels.entries.map(({ panel, badgeCount }) => (
+              <NavLink
+                key={panel.id}
+                label={t(panel.label)}
+                count={badgeCount}
+                isCurrent={sidePanel?.id === panel.id}
+                onClick={() => {
+                  officePanel.close()
+                  sidePanels.toggle(panel.id)
+                }}
+              />
+            ))}
+          </nav>
+        </div>
         <div className="pointer-events-auto">
           <ShellSearch members={members} />
         </div>
@@ -193,6 +195,7 @@ export const SpatialShell = ({
         />
         <AccountMenu />
       </div>
+      {!isPageOpen && <HeadlineColumn me={me} members={members} actions={day.actions} />}
 
       {officePanel.panel === "people" && (
         <WhosInModal me={me} members={members} onClose={officePanel.close} />

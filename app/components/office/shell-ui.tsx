@@ -67,7 +67,7 @@ export const colorOf = (m: ShellMember) => colorForEmail(m.userEmail)
 
 export const MemberAvatar = ({ m, className }: { m: ShellMember; className?: string }) => (
   <Avatar className={className ?? "size-9 rounded-xl"}>
-    <Avatar.Image src={m.avatarUrl} />
+    <Avatar.Image src={m.avatarUrl} alt="" />
     <Avatar.Fallback
       className="rounded-[inherit] text-xs font-bold text-white"
       style={{ background: colorOf(m) }}
@@ -87,7 +87,7 @@ export const ThumbAvatar = ({
   className?: string
 }) => (
   <Avatar className={className ?? "size-9 rounded-lg"}>
-    <Avatar.Image src={src} />
+    <Avatar.Image src={src} alt="" />
     <Avatar.Fallback className="rounded-[inherit] bg-accent/15 text-xs font-bold text-accent">
       {fallback}
     </Avatar.Fallback>

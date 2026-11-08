@@ -55,7 +55,7 @@ export const HeadlineColumn = ({
       <section
         aria-label={t("Your day")}
         inert={isFolded}
-        className={`${MOTION} pointer-events-none absolute left-6 top-24 w-[min(560px,40vw)] origin-top-left text-foreground ${
+        className={`${MOTION} pointer-events-none absolute left-6 top-24 w-[min(560px,40vw)] max-[1279px]:top-[148px] origin-top-left text-foreground ${
           isFolded ? "opacity-0 [transform:translateY(-12px)_scale(0.45)]" : "[transform:none]"
         }`}
       >
@@ -92,7 +92,7 @@ export const HeadlineColumn = ({
           {yours} <span className="text-muted">{office.join(" ")}</span>
         </p>
         {actions && (
-          <p className="pointer-events-auto mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 text-lg">
+          <p className="pointer-events-auto mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 text-xl">
             {actions}
           </p>
         )}
@@ -103,7 +103,7 @@ export const HeadlineColumn = ({
         inert={!isFolded}
         aria-label={t("Show your day")}
         onClick={requestFit}
-        className={`${PANEL} ${PANEL_HOVER} ${MOTION} absolute left-5 top-[84px] flex max-w-[min(620px,50vw)] items-center gap-2.5 py-2 pr-2 pl-3.5 text-left text-[15px] leading-snug font-bold text-foreground outline-none focus-visible:ring-2 focus-visible:ring-focus ${
+        className={`${PANEL} ${PANEL_HOVER} ${MOTION} absolute left-5 top-[84px] flex max-w-[min(620px,50vw)] max-[1279px]:top-[144px] items-center gap-2.5 py-2 pr-2 pl-3.5 text-left text-[15px] leading-snug font-bold text-foreground outline-none focus-visible:ring-2 focus-visible:ring-focus ${
           isFolded
             ? "pointer-events-auto [transform:none]"
             : "pointer-events-none opacity-0 [transform:translateY(-8px)]"

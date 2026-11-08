@@ -35,7 +35,7 @@ export const SeatAvatar = ({
       ...(teamColor && !isMine && { outline: `2.5px solid ${teamColor}`, outlineOffset: 2.5 }),
     }}
   >
-    <Avatar.Image src={person?.avatarUrl} />
+    <Avatar.Image src={person?.avatarUrl} alt="" />
     <Avatar.Fallback
       className="rounded-full font-extrabold text-white"
       style={{ background: colorForEmail(email), fontSize: size * 0.38 }}
