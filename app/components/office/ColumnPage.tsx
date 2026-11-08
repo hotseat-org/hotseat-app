@@ -57,7 +57,7 @@ export const ColumnPage = ({
         }}
         className={clsx(
           side === "right" ? "motion-page-in-right right-0" : "motion-page-in left-0",
-          "pointer-events-auto absolute top-[84px] bottom-[148px] z-[44] flex flex-col on-ground outline-none max-[1279px]:top-[144px]",
+          "pointer-events-auto absolute top-[84px] bottom-[88px] z-[44] flex flex-col on-ground outline-none max-[1279px]:top-[144px]",
           isWide ? "w-[min(900px,100vw)]" : "w-[min(580px,100vw)]"
         )}
       >

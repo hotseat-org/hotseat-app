@@ -13,7 +13,17 @@ import { useI18n } from "~/i18n/I18nProvider"
  * (F), 3D ⇄ the simple view (viewing), turn the simple view (Q / E), and the
  * Map menu — what's shown, which desks.
  */
-export const MapControls = ({ isEditing = false }: { isEditing?: boolean }) => {
+export const MapControls = ({
+  isEditing = false,
+  isRow = false,
+}: {
+  isEditing?: boolean
+  /**
+   * A row of icons (the office view's bottom bar), names in their tooltips:
+   * it never changes width, so nothing beside it moves.
+   */
+  isRow?: boolean
+}) => {
   const { t } = useI18n()
   const requestFit = useEditorStore((state) => state.requestFit)
   const view = useEditorStore((state) => state.view)
@@ -30,7 +40,9 @@ export const MapControls = ({ isEditing = false }: { isEditing?: boolean }) => {
     <div
       data-open={isMenuOpen || undefined}
       className={clsx(
-        "group/bar pointer-events-auto flex flex-col items-stretch gap-0.5 rounded-2xl p-1 text-foreground",
+        "pointer-events-auto flex gap-0.5 rounded-2xl p-1 text-foreground",
+        // A column reveals its names on hover (group/bar); a row keeps to icons.
+        isRow ? "flex-row items-center" : "group/bar flex-col items-stretch",
         // Viewing, icons straight on the paper (as the office's other chrome); editing, the tool's card.
         isEditing ? "border border-border bg-overlay shadow-overlay" : "on-ground"
       )}
@@ -65,8 +77,16 @@ export const MapControls = ({ isEditing = false }: { isEditing?: boolean }) => {
           </span>
         </div>
       )}
-      <span className="mx-1.5 my-0.5 h-px bg-separator" aria-hidden />
-      <MapMenu isEditing={isEditing} is3d={is3d} onOpenChange={setIsMenuOpen} />
+      <span
+        className={clsx("bg-separator", isRow ? "mx-0.5 h-6 w-px" : "mx-1.5 my-0.5 h-px")}
+        aria-hidden
+      />
+      <MapMenu
+        isEditing={isEditing}
+        is3d={is3d}
+        placement={isRow ? "top end" : "right bottom"}
+        onOpenChange={setIsMenuOpen}
+      />
     </div>
   )
 }

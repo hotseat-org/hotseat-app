@@ -15,7 +15,14 @@ import { NotificationsButton, NotificationsPage } from "./Notifications"
 import { InsightsDashboard } from "./InsightsDashboard"
 import { HeadlineColumn } from "./HeadlineColumn"
 import { COLUMN_SLOT_ID } from "~/office/desks/columnSlot"
-import { SidePanelBadge, TimeOfDay, hasWebGL, useEditorStore, useSidePanels } from "~/editor"
+import {
+  MapControls,
+  SidePanelBadge,
+  TimeOfDay,
+  hasWebGL,
+  useEditorStore,
+  useSidePanels,
+} from "~/editor"
 import { useOfficeStore } from "~/office/store"
 import { useOfficePanel, type OfficePanel } from "~/office/useOfficePanel"
 import { FindSeatDialog } from "~/office/findSeat/FindSeatDialog"
@@ -407,7 +414,7 @@ export const SpatialShell = ({
       {/* Your team's day is in the headline's sentence (the phone keeps its card). */}
 
       {/* Bottom dock: real-time sync + time-of-day + edit */}
-      <TimeOfDay isViewing>
+      <TimeOfDay isViewing lead={<MapControls isRow />}>
         {/* Editing is 3D-only (no WebGL → view-only). */}
         {canEdit && hasWebGL() && (
           // A word, not a button: the office's one action is booking, not this.

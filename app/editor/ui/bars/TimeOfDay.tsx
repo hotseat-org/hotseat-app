@@ -15,9 +15,12 @@ import { useI18n } from "~/i18n/I18nProvider"
  * office view dock, so switching modes doesn't move or resize the bar.
  */
 export const TimeOfDay = ({
+  lead,
   children,
   isViewing = false,
 }: {
+  /** First in the bar (the office view's map controls). */
+  lead?: ReactNode
   children?: ReactNode
   /** Viewing (not editing): the simple view may be on, with no lighting to set. */
   isViewing?: boolean
@@ -44,6 +47,7 @@ export const TimeOfDay = ({
           : "bottom-4 left-1/2 -translate-x-1/2 rounded-2xl border border-border bg-overlay p-2 shadow-overlay"
       )}
     >
+      {lead}
       {/* The modules' (the office: the day shown) — by the headline when viewing. */}
       {!isViewing && items.map((Item, index) => <Item key={index} />)}
       {!flat && (

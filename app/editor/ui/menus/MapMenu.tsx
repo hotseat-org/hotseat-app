@@ -151,6 +151,8 @@ export const MapLayerSwitches = (options: LayerOptions) => {
 }
 
 interface Props extends LayerOptions {
+  /** Where the menu opens: beside a column of controls, or above a row of them. */
+  placement?: "right bottom" | "top end"
   onOpenChange?: (isOpen: boolean) => void
 }
 
@@ -160,7 +162,7 @@ interface Props extends LayerOptions {
  * lists and tools are side panels. The button counts the layers hidden. (A
  * phone shows the switches in a sheet of its own: MapLayerSwitches.)
  */
-export const MapMenu = ({ onOpenChange, ...options }: Props) => {
+export const MapMenu = ({ onOpenChange, placement = "right bottom", ...options }: Props) => {
   const { t, tn } = useI18n()
   const { changedCount } = useMapLayerRows(options)
   const label = changedCount ? tn(changedCount, "Map ({n} change)", "Map ({n} changes)") : t("Map")
@@ -184,7 +186,7 @@ export const MapMenu = ({ onOpenChange, ...options }: Props) => {
           </span>
         )}
       </Button>
-      <Popover.Content placement="right bottom" className="rounded-2xl">
+      <Popover.Content placement={placement} className="rounded-2xl">
         <Popover.Dialog
           aria-label={t("Map")}
           className="max-h-[min(36rem,80dvh)] w-80 overflow-y-auto p-1.5 outline-none"
