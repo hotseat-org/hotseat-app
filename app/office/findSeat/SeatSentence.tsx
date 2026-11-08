@@ -30,15 +30,20 @@ const Pill = ({
   <span
     className={clsx(
       // A word of the sentence you can change: its colour and a dotted line
-      // under it, no pill (it sits on the ground). Its icon in the same round
-      // slot, so lines of them line up.
-      "inline-flex max-w-full items-center gap-[0.25em] whitespace-nowrap align-baseline underline decoration-dotted decoration-[3px] underline-offset-[0.18em]",
+      // under it, no pill (it sits on the ground). Plain inline text, so it
+      // sits on the sentence's own baseline; its icon (a face, a dot, a
+      // symbol) is centred on the words' middle, in the same round slot.
+      "whitespace-nowrap underline decoration-dotted decoration-[3px] underline-offset-[0.18em]",
       WORD_TONES[tone]
     )}
     style={style}
   >
-    {icon}
-    <span className="truncate">{children}</span>
+    {icon && (
+      <span className="mr-[0.25em] inline-grid size-[0.8em] place-items-center align-[-0.06em] [&>*]:size-full">
+        {icon}
+      </span>
+    )}
+    {children}
   </span>
 )
 
@@ -61,7 +66,7 @@ const withPill = (template: string, pill: ReactNode) => {
 
 /** A round icon at a pill's start, the size of a face. */
 const PillIcon = ({ children }: { children: ReactNode }) => (
-  <span className="grid size-5 shrink-0 place-items-center">{children}</span>
+  <span className="grid size-full place-items-center">{children}</span>
 )
 
 /**
@@ -120,8 +125,8 @@ export const SeatSentence = ({
         <Pill
           tone={isAway ? "away" : "neutral"}
           icon={
-            <span className="grid size-5 shrink-0 place-items-center">
-              <span className="size-2.5 rounded-full" style={{ background: color }} />
+            <span className="grid size-full place-items-center">
+              <span className="size-[55%] rounded-full" style={{ background: color }} />
             </span>
           }
           style={isAway ? undefined : getZoneWord(color)}
@@ -138,7 +143,7 @@ export const SeatSentence = ({
           tone="warning"
           icon={
             <PillIcon>
-              <Star className="size-3 fill-current" />
+              <Star className="size-[85%] fill-current" />
             </PillIcon>
           }
         >
@@ -153,7 +158,7 @@ export const SeatSentence = ({
           tone="accent"
           icon={
             <PillIcon>
-              <SlidersHorizontal className="size-3" />
+              <SlidersHorizontal className="size-[85%]" />
             </PillIcon>
           }
         >
@@ -169,7 +174,7 @@ export const SeatSentence = ({
         <Pill
           tone="neutral"
           icon={
-            <span className="grid size-5 shrink-0 place-items-center">
+            <span className="grid size-full place-items-center">
               <TeamDot color={team?.color ?? "slate"} />
             </span>
           }
@@ -202,7 +207,7 @@ export const SeatSentence = ({
       <Pill
         icon={
           <PillIcon>
-            <CalendarDays className="size-3" />
+            <CalendarDays className="size-[85%]" />
           </PillIcon>
         }
       >

@@ -4,9 +4,9 @@ import { SeatCardBody, useSeatCard } from "../booking/seatCard"
 import { getColumnSlot } from "./columnSlot"
 
 /**
- * View mode (3D): the booking card for a clicked desk, in the office's left
- * column (the headline makes way for it). A drei <Html>, for the scene's
- * contexts, held at a fixed place on the screen.
+ * View mode (3D): the booking card for a clicked desk, floating over it — a
+ * drei <Html> anchored above the desk, so it follows the desk as the camera
+ * orbits and pans.
  *
  * For the shown day it says who has the desk (a permanent resident, a booking,
  * or nobody) and offers quick choices: just this day, the rest of the week, or
@@ -30,20 +30,15 @@ export const SeatPopup = () => {
 
   return (
     <Html
-      // Held in the office's left column (where the headline is), not over the
-      // desk: words with no card read on the ground, never over the model.
+      // Anchored just above the desk; the card sits above this point.
       position={[card.seat.x, 1.3, card.seat.z]}
-      calculatePosition={getColumnPosition}
       zIndexRange={[60, 40]}
-      // Drawn in the shell's column slot, over the sheet behind the column.
+      // Drawn in the shell's overlay slot: above a page's sheet, if one's open.
       portal={columnSlot}
       // drei's wrapper must not catch clicks either (only the buttons do).
       style={{ pointerEvents: "none" }}
     >
-      <SeatCardBody key={card.key} layout="column" {...card.body} />
+      <SeatCardBody key={card.key} {...card.body} />
     </Html>
   )
 }
-
-/** The column's corner on the canvas: the headline's, under the top bar (two rows below 1280px). */
-export const getColumnPosition = () => [24, window.innerWidth < 1280 ? 148 : 96]

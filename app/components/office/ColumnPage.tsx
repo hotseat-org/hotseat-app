@@ -19,6 +19,7 @@ export const ColumnPage = ({
   summary,
   actions,
   isWide = false,
+  side = "left",
   onClose,
   children,
 }: {
@@ -32,6 +33,11 @@ export const ColumnPage = ({
   actions?: ReactNode
   /** Room for a dashboard (Insights): wider than a list. */
   isWide?: boolean
+  /**
+   * Which side it opens on: the left column (the office's pages), or the right
+   * (your account, under your avatar in the top bar's right corner).
+   */
+  side?: "left" | "right"
   onClose: () => void
   children: ReactNode
 }) => {
@@ -50,7 +56,8 @@ export const ColumnPage = ({
           }
         }}
         className={clsx(
-          "motion-page-in pointer-events-auto absolute top-[84px] bottom-[148px] left-0 z-[44] flex flex-col on-ground outline-none max-[1279px]:top-[144px]",
+          side === "right" ? "motion-page-in-right right-0" : "motion-page-in left-0",
+          "pointer-events-auto absolute top-[84px] bottom-[148px] z-[44] flex flex-col on-ground outline-none max-[1279px]:top-[144px]",
           isWide ? "w-[min(900px,100vw)]" : "w-[min(580px,100vw)]"
         )}
       >

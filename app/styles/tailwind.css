@@ -978,8 +978,19 @@ input:-webkit-autofill:focus {
 .motion-page-in {
   animation: motion-page-in var(--motion-page) var(--ease-out-soft) both;
 }
+/* From the right: a page under the top bar's right corner (your account). */
+@keyframes motion-page-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+.motion-page-in-right {
+  animation: motion-page-in-right var(--motion-page) var(--ease-out-soft) both;
+}
 @media (prefers-reduced-motion: reduce) {
-  .motion-page-in {
+  .motion-page-in,
+  .motion-page-in-right {
     animation: none;
   }
 }
@@ -1325,6 +1336,13 @@ input:-webkit-autofill:focus {
     1px 0 0 color-mix(in oklab, var(--foreground) 12%, transparent),
     16px 0 40px -24px rgb(0 0 0 / 0.35);
   transition: transform var(--motion-page) var(--ease-out-soft);
+}
+/* The same on the right edge, for a page on the right (your account). */
+.column-sheet[data-side="right"] {
+  transform: translateX(100%);
+  box-shadow:
+    -1px 0 0 color-mix(in oklab, var(--foreground) 12%, transparent),
+    -16px 0 40px -24px rgb(0 0 0 / 0.35);
 }
 .column-sheet[data-active] {
   transform: none;

@@ -50,8 +50,11 @@ export const createFormat = (locale: Locale) => {
   const percent = new Intl.NumberFormat(tag, { style: "percent", maximumFractionDigits: 0 })
   const relative = new Intl.RelativeTimeFormat(tag, { numeric: "auto", style: "short" })
   // A moment (not a calendar day): in the reader's own time zone.
-  const calendar = new Intl.DateTimeFormat(tag, { day: "numeric", month: "short", year: "numeric" })
-  const calendarShort = new Intl.DateTimeFormat(tag, { day: "numeric", month: "short" })
+  // A moment's date in UTC, as days are: the server and the browser write the
+  // same (in their own zones they'd differ around midnight, and the page
+  // wouldn't match what the server sent).
+  const calendar = date({ day: "numeric", month: "short", year: "numeric" })
+  const calendarShort = date({ day: "numeric", month: "short" })
   const number = new Intl.NumberFormat(tag, { maximumFractionDigits: 1 })
   const dayOfMonth = (day: Day) => Number(day.slice(8, 10))
   const long = (day: Day) =>

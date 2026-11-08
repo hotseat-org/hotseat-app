@@ -95,7 +95,6 @@ const Row = ({
   isDisabled = false,
   isSheet,
   isLink = false,
-  isColumn = false,
 }: {
   icon: typeof Check
   label: string
@@ -108,8 +107,6 @@ const Row = ({
   isSheet: boolean
   /** An underlined word, not a row (the card's lesser actions beside its desk). */
   isLink?: boolean
-  /** In the office's column: the headline's sizes (a large pill, large words). */
-  isColumn?: boolean
 }) =>
   isLink ? (
     // Beside the desk, the other actions are words (the headline's links).
@@ -119,7 +116,7 @@ const Row = ({
       onClick={onPress}
       className={clsx(
         "text-left leading-tight font-extrabold underline decoration-2 underline-offset-4 outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50",
-        isColumn ? "min-h-11 text-lg" : "min-h-10 text-[15px]",
+        "min-h-10 text-[15px]",
         isDanger ? "text-danger" : "text-foreground"
       )}
     >
@@ -132,7 +129,8 @@ const Row = ({
       onClick={onPress}
       className={clsx(
         "flex items-center gap-2.5 px-3 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50",
-        isColumn && isPrimary ? "h-14 w-fit px-7" : clsx("w-full", getRowSize(isSheet, !!detail)),
+        "w-full",
+        getRowSize(isSheet, !!detail),
         // The one main action: the headline's ink pill; the rest, plain words.
         isPrimary
           ? "mb-1.5 rounded-full bg-foreground px-4 font-black text-background hover:opacity-90"
@@ -148,11 +146,7 @@ const Row = ({
       />
       <span className="min-w-0 flex-1">
         <span
-          className={clsx(
-            "block leading-tight",
-            isColumn && "text-lg",
-            !isColumn && (isSheet ? "text-[1.05rem]" : "text-[0.95rem]")
-          )}
+          className={clsx("block leading-tight", isSheet ? "text-[1.05rem]" : "text-[0.95rem]")}
         >
           {label}
         </span>
@@ -170,13 +164,6 @@ const Row = ({
       {hasStep && <ChevronRight className="size-4 shrink-0 text-muted" />}
     </button>
   )
-
-/** The desk's name: as large as the headline's day in the column, smaller beside the desk. */
-const getTitleSize = (layout: "anchored" | "sheet" | "column") => {
-  if (layout === "column") return "text-[clamp(64px,7vw,104px)]"
-
-  return layout === "sheet" ? "text-[40px]" : "text-[44px]"
-}
 
 /** The desk's colour in its title: yours blue, free green, past or taken ink. */
 const getTitleTone = ({
@@ -258,11 +245,8 @@ export const SeatCardBody = ({
   onCancel,
   onRelease,
   onReclaim,
-}: BodyProps & { layout?: "anchored" | "sheet" | "column" }) => {
+}: BodyProps & { layout?: "anchored" | "sheet" }) => {
   const isSheet = layout === "sheet"
-  // In the office's left column, where the headline is (boards H1, H2): words
-  // on the ground, clear of the model, in the headline's sizes.
-  const isColumn = layout === "column"
   const { t } = i18n
   const [step, setStep] = useState<"main" | "days" | "usual">("main")
   // The phone's sheet closes by a swipe down from its top too.
@@ -302,7 +286,6 @@ export const SeatCardBody = ({
       {one && (
         <Row
           isSheet={isSheet}
-          isColumn={isColumn}
           isPrimary
           icon={Check}
           label={shortDay ? t("Reserve {day}", { day: shortDay }) : t("Reserve this day")}
@@ -313,7 +296,6 @@ export const SeatCardBody = ({
       {showWayFirst && (
         <Row
           isSheet={isSheet}
-          isColumn={isColumn}
           isPrimary
           icon={Footprints}
           label={t("Show the way")}
@@ -323,13 +305,12 @@ export const SeatCardBody = ({
       {/* The rest: rows on a phone's sheet, a wrapped line of words beside the desk. */}
       <div
         className={clsx(
-          isSheet ? "flex flex-col" : "flex flex-wrap items-center gap-x-5 gap-y-0.5 px-1"
+          isSheet ? "flex flex-col" : "flex flex-wrap items-center gap-x-5 gap-y-0.5"
         )}
       >
         {more.length > 0 && (
           <Row
             isSheet={isSheet}
-            isColumn={isColumn}
             isLink={!isSheet}
             icon={CalendarDays}
             label={one ? t("Book more days") : t("Book it on other days")}
@@ -340,7 +321,6 @@ export const SeatCardBody = ({
         {usual && (
           <Row
             isSheet={isSheet}
-            isColumn={isColumn}
             isLink={!isSheet}
             icon={Repeat}
             label={
@@ -355,7 +335,6 @@ export const SeatCardBody = ({
         {!showWayFirst && (
           <Row
             isSheet={isSheet}
-            isColumn={isColumn}
             isLink={!isSheet}
             icon={Footprints}
             label={t("Show the way")}
@@ -366,7 +345,6 @@ export const SeatCardBody = ({
           <Row
             key={choice.label}
             isSheet={isSheet}
-            isColumn={isColumn}
             isLink={!isSheet}
             icon={CalendarX}
             label={t("Away? Give it up · {choice}", { choice: choice.label })}
@@ -377,7 +355,6 @@ export const SeatCardBody = ({
         {canReclaim && (
           <Row
             isSheet={isSheet}
-            isColumn={isColumn}
             isLink={!isSheet}
             icon={Undo2}
             label={shortDay ? t("Take {day} back", { day: shortDay }) : t("Take it back")}
@@ -390,7 +367,6 @@ export const SeatCardBody = ({
             {isSheet && <div className="mx-3 my-1 h-px bg-separator" />}
             <Row
               isSheet={isSheet}
-              isColumn={isColumn}
               isLink={!isSheet}
               isDanger
               icon={LogOut}
@@ -417,7 +393,6 @@ export const SeatCardBody = ({
           <Row
             key={option.key}
             isSheet={isSheet}
-            isColumn={isColumn}
             icon={CalendarDays}
             label={option.title}
             detail={option.detail}
@@ -427,7 +402,6 @@ export const SeatCardBody = ({
         ))}
         <Row
           isSheet={isSheet}
-          isColumn={isColumn}
           icon={CalendarDays}
           label={t("Pick days on a calendar")}
           hasStep
@@ -446,8 +420,7 @@ export const SeatCardBody = ({
       // The sheet is a sheet: a tap on it isn't a tap on the dimmed plan.
       className={clsx(
         isSheet && "pointer-events-auto w-full",
-        isColumn && "pointer-events-none",
-        layout === "anchored" &&
+        !isSheet &&
           clsx("pointer-events-none -translate-x-1/2", below ? "pt-3" : "-translate-y-full pb-3")
       )}
       style={isSheet ? swipe.style : undefined}
@@ -470,18 +443,11 @@ export const SeatCardBody = ({
                 closing ? "sheet-down" : "sheet-up"
               )
             : clsx(
-                // Words on the ground, no card (see "On the ground").
-                "on-ground",
-                isColumn
-                  ? clsx(
-                      "relative w-[min(560px,calc(100vw-48px))] gap-3",
-                      closing ? "seat-pop-out" : "motion-rise"
-                    )
-                  : clsx(
-                      "w-80 gap-1 p-4",
-                      below ? "origin-top" : "origin-bottom",
-                      closing ? "seat-pop-out" : "seat-pop"
-                    )
+                // Floating over its desk: a piece of the ground (its colour at
+                // this hour) with a clean edge — a hairline and a soft shadow.
+                "w-[360px] gap-1.5 rounded-[24px] bg-(--ground) px-5 pt-4 pb-4 shadow-[0_0_0_1px_color-mix(in_oklab,var(--foreground)_12%,transparent),0_24px_48px_-24px_rgb(0_0_0/0.45)]",
+                below ? "origin-top" : "origin-bottom",
+                closing ? "seat-pop-out" : "seat-pop"
               )
         )}
       >
@@ -495,7 +461,7 @@ export const SeatCardBody = ({
           )}
 
           {/* Who has it, when, what it offers — and your star. */}
-          <div className="mb-1.5 flex items-center gap-2.5 px-1 pt-0.5">
+          <div className="mb-1.5 flex items-start gap-2.5 pt-0.5">
             {person && onShowPerson && (
               // Their face opens their profile.
               <button
@@ -527,56 +493,45 @@ export const SeatCardBody = ({
               />
             )}
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1">
-                {/* The desk in large type, coloured by its state (the mockups' "D2"). */}
-                <p
-                  className={clsx(
-                    "truncate leading-[0.95] font-black tracking-[-0.035em]",
-                    getTitleSize(layout),
-                    getTitleTone({ isMine: !!mine, isFree: state === "free", isPast: !!past })
-                  )}
-                >
-                  {title}
-                </p>
-                {canFavorite && (
-                  <button
-                    type="button"
-                    aria-label={isFavorite ? t("Remove from favourites") : t("Add to favourites")}
-                    aria-pressed={isFavorite}
-                    onClick={onToggleFavorite}
-                    className={clsx(
-                      "grid size-7 shrink-0 place-items-center rounded-full transition-colors hover:bg-warning/15",
-                      isFavorite ? "text-warning" : "text-muted"
-                    )}
-                  >
-                    <Star className="size-4" fill={isFavorite ? "currentColor" : "none"} />
-                  </button>
-                )}
-              </div>
+              {/* The desk in large type, coloured by its state (the mockups'
+                  "D2"); a long name wraps, never cut off. */}
               <p
                 className={clsx(
-                  "mt-1 truncate font-bold text-foreground",
-                  isColumn ? "text-[clamp(20px,1.8vw,24px)] font-extrabold" : "text-base"
+                  "leading-[0.95] font-black tracking-[-0.035em] [overflow-wrap:anywhere]",
+                  isSheet ? "text-[36px]" : "text-[32px]",
+                  getTitleTone({ isMine: !!mine, isFree: state === "free", isPast: !!past })
                 )}
               >
+                {title}
+              </p>
+              <p className="mt-1.5 text-base leading-snug font-bold text-foreground">
                 <span>{status}</span>
                 {features.length > 0 && ` · ${features.join(", ")}`}
               </p>
             </div>
-            <DialogCloseButton
-              onClose={onClose}
-              className={clsx("shrink-0", isSheet && "size-10")}
-            />
+            {/* Your star and the close, both rings of ink (the headline's icon buttons). */}
+            {canFavorite && (
+              <button
+                type="button"
+                aria-label={isFavorite ? t("Remove from favourites") : t("Add to favourites")}
+                aria-pressed={isFavorite}
+                onClick={onToggleFavorite}
+                className={clsx(
+                  "grid size-11 shrink-0 place-items-center rounded-full border-2 border-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus",
+                  isFavorite
+                    ? "bg-foreground text-star"
+                    : "text-foreground hover:bg-foreground hover:text-background"
+                )}
+              >
+                <Star className="size-5" fill={isFavorite ? "currentColor" : "none"} />
+              </button>
+            )}
+            <DialogCloseButton onClose={onClose} />
           </div>
         </div>
 
         {facts.length > 0 && step === "main" && (
-          <ul
-            className={clsx(
-              "flex flex-col gap-0.5 px-1 pb-2 leading-snug font-semibold text-muted",
-              isColumn ? "text-lg" : "text-[15px]"
-            )}
-          >
+          <ul className="flex flex-col gap-0.5 pb-2 text-[15px] leading-snug font-semibold text-muted">
             {facts.map((fact) => (
               <li key={fact}>{fact}</li>
             ))}
@@ -584,7 +539,7 @@ export const SeatCardBody = ({
         )}
 
         {(note || past) && step === "main" && (
-          <p className="px-1 pb-1.5 text-xs leading-snug text-muted">
+          <p className="pb-1.5 text-sm leading-snug text-muted">
             {past ? t("Past days can't be changed.") : note}
           </p>
         )}
@@ -606,6 +561,18 @@ export const SeatCardBody = ({
               onClearUsual()
               setStep("main")
             }}
+          />
+        )}
+        {/* A notch pointing at its desk, the same piece of ground. */}
+        {!isSheet && (
+          <span
+            aria-hidden
+            className={clsx(
+              "absolute left-1/2 size-3.5 -translate-x-1/2 rotate-45 bg-(--ground)",
+              below
+                ? "-top-[7px] shadow-[-1px_-1px_0_color-mix(in_oklab,var(--foreground)_12%,transparent)]"
+                : "-bottom-[7px] shadow-[1px_1px_0_color-mix(in_oklab,var(--foreground)_12%,transparent)]"
+            )}
           />
         )}
       </div>

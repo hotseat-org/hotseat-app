@@ -124,6 +124,7 @@ export const AccountPage = ({ onClose }: { onClose: () => void }) => {
   return (
     <ColumnPage
       label={t("Account menu")}
+      side="right"
       title={nameOf(me)}
       summary={me.userEmail}
       onClose={onClose}

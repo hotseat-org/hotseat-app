@@ -1,9 +1,8 @@
 import clsx from "clsx"
-import { useCallback, useMemo, useRef, type ReactNode } from "react"
+import { useCallback, useMemo, useRef } from "react"
 import { createPortal } from "react-dom"
 import { personByEmail, usePeople } from "../desks/people"
 import { SeatCardBody, useSeatCard } from "../booking/seatCard"
-import { getColumnSlot } from "../desks/columnSlot"
 import { deskName, useDeskFilter } from "../booking/useBooking"
 import { useRoute } from "../wayfinding/wayfinding"
 import { RoutePath } from "../wayfinding/RoutePath"
@@ -116,6 +115,8 @@ export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
     deskId === highlightId ||
     deskId === hoveredId ||
     (!!email && (email === people.me?.email || teammateColors.has(email)))
+  // The card's desk comes from the store, so it's turned here to match.
+  const cardAt = card && turnPoint(card.seat.x, card.seat.z, turn)
   const highlighted = highlightId ? findSpot(highlightId) : undefined
 
   return (
@@ -269,19 +270,12 @@ export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
               </div>,
               document.body
             )
-          : // In the office's left column, as in 3D (see SeatPopup).
-            renderInColumn(
-              <div className="pointer-events-auto absolute left-6 top-24 max-[1279px]:top-[148px]">
-                <SeatCardBody key={card.key} layout="column" {...card.body} />
+          : // Floating over its desk, as in 3D (see SeatPopup).
+            cardAt && (
+              <div className="absolute" style={screen(cardAt[0], cardAt[1])}>
+                <SeatCardBody key={card.key} {...card.body} />
               </div>
             ))}
     </>
   )
-}
-
-/** Into the shell's column slot (over the sheet behind the column), or in place without one. */
-const renderInColumn = (card: ReactNode) => {
-  const slot = getColumnSlot()
-
-  return slot ? createPortal(card, slot) : card
 }

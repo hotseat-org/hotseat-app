@@ -31,6 +31,24 @@ export interface MyBookingsParts {
   body: ReactNode
 }
 
+/** The fetcher that holds your bookings, shared by the page and the shell. */
+const MY_BOOKINGS_KEY = "my-bookings"
+
+/**
+ * Your bookings, loaded ahead while the office is open (and again when the
+ * map's bookings change), so My bookings opens with them already there.
+ * The shell calls it; it keeps the data while the page comes and goes.
+ */
+export const useMyBookingsAhead = () => {
+  const { slug } = useParams()
+  const list = useFetcher<MyBookingsData>({ key: MY_BOOKINGS_KEY })
+  const byDay = useOfficeStore((s) => s.booking.byDay)
+  const load = list.load
+  useEffect(() => {
+    if (slug) load(`/api/my-bookings/${slug}`)
+  }, [load, slug, byDay])
+}
+
 export const MyBookings = ({
   onShow,
   onFindSeat,
@@ -50,7 +68,9 @@ export const MyBookings = ({
   const i18n = useI18n()
   const { t, tn, format } = i18n
   const navigate = useNavigate()
-  const list = useFetcher<MyBookingsData>()
+  // Shared with the shell, which loads it ahead (see useMyBookingsAhead): the
+  // page opens with your days already there, not a loading state first.
+  const list = useFetcher<MyBookingsData>({ key: MY_BOOKINGS_KEY })
   const cancel = useFetcher<ReservationActionData>()
   const setDay = useOfficeStore((s) => s.setBookingDay)
   const applyCancel = useOfficeStore((s) => s.applyCancel)

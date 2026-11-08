@@ -9,7 +9,7 @@ import { ColumnPage } from "./ColumnPage"
 import { useDayStatus } from "./dayStatus"
 import { SearchButton, SearchPage } from "./ShellSearch"
 import { AccountMenu, AccountPage } from "./AccountMenu"
-import { MyBookings } from "./MyBookings"
+import { MyBookings, useMyBookingsAhead } from "./MyBookings"
 import { MobileShell } from "./MobileShell"
 import { NotificationsButton, NotificationsPage } from "./Notifications"
 import { InsightsDashboard } from "./InsightsDashboard"
@@ -158,7 +158,6 @@ export const SpatialShell = ({
   const hasHeatmap = useOfficeStore((s) => s.heatmap !== null)
   const isBooking = useOfficeStore((s) => s.booking.enabled)
   // A desk's card takes the left column (the headline's place) while it's open.
-  const isDeskOpen = useOfficeStore((s) => s.seatCard !== null)
   const closeSeatCard = useOfficeStore((s) => s.closeSeatCard)
   const setHeatmap = useOfficeStore((s) => s.setHeatmap)
   const clearRoute = useOfficeStore((s) => s.clearRoute)
@@ -171,6 +170,9 @@ export const SpatialShell = ({
   // The office's pages — who's in, your bookings, finding a seat, Insights —
   // one at a time, in the URL (see useOfficePanel).
   const officePanel = useOfficePanel()
+  // Your bookings, loaded ahead (the phone's shell too, rendered below): My
+  // bookings opens with them already there.
+  useMyBookingsAhead()
   // The modules' side panels (the desk filter): the map's own tools, as a page.
   const sidePanels = useSidePanels(false)
   // The top bar's own pages — search, what's new, your account — in the same
@@ -228,18 +230,6 @@ export const SpatialShell = ({
     // Only when a page arrives.
   }, [officePanel.panel])
 
-  // A desk opened (on the map, or from search) while a page is open: the page
-  // gives the column to the desk.
-  const hasPage = !!officePanel.panel || !!sidePanels.openPanel || !!barPage
-  useEffect(() => {
-    if (!isDeskOpen || !hasPage) return
-
-    sidePanels.close()
-    officePanel.close()
-    setBarPage(null)
-    // Only when a desk opens: a page opened later closes the desk itself.
-  }, [isDeskOpen])
-
   // Phones get their own shell: tab bar, day strip, bottom sheets.
   const isMobile = useIsMobile()
   if (isMobile) return <MobileShell offices={offices} me={me} members={members} empty={empty} />
@@ -258,7 +248,8 @@ export const SpatialShell = ({
 
   const sidePanel = sidePanels.openPanel
   // A page takes the left column; the headline gives it the room.
-  const isPageOpen = !!officePanel.panel || !!sidePanel || !!barPage
+  // The left column's pages (your account opens on the right, beside the headline).
+  const isPageOpen = !!officePanel.panel || !!sidePanel || (!!barPage && barPage !== "account")
   const closeSidePanel = () => sidePanels.close()
 
   return (
@@ -270,8 +261,15 @@ export const SpatialShell = ({
           map's controls, above the office. */}
       <div
         aria-hidden
-        data-active={isPageOpen || isDeskOpen || undefined}
+        data-active={isPageOpen || undefined}
         className="column-sheet pointer-events-none absolute inset-y-0 left-0 z-[43] w-[min(604px,100vw)]"
+      />
+      {/* …and on the right, under your account. */}
+      <div
+        aria-hidden
+        data-side="right"
+        data-active={barPage === "account" || undefined}
+        className="column-sheet pointer-events-none absolute inset-y-0 right-0 z-[43] w-[min(604px,100vw)]"
       />
       {/* Where a desk's card is drawn (SeatPopup, the plan's): over the sheet,
           in the column — the scene's own layer is under the sheet. */}
@@ -296,7 +294,7 @@ export const SpatialShell = ({
               label={t("Office")}
               isZoomingOut={isZoomedIn}
               zoomOutHint={isZoomedIn ? t("Zoom out to the whole office") : undefined}
-              isCurrent={!isPageOpen && !isDeskOpen && !hasHeatmap}
+              isCurrent={!isPageOpen && !hasHeatmap}
               // Back to the office as it opens: nothing open over it, the
               // heatmap off, the whole office in view (zoomed out).
               onClick={() => {
@@ -346,13 +344,7 @@ export const SpatialShell = ({
             ))}
             <NavUnderline
               navRef={navRef}
-              currentKey={[
-                officePanel.panel,
-                sidePanel?.id,
-                barPage,
-                isDeskOpen,
-                hasHeatmap,
-              ].join()}
+              currentKey={[officePanel.panel, sidePanel?.id, barPage, hasHeatmap].join()}
             />
           </nav>
         </div>
@@ -379,9 +371,8 @@ export const SpatialShell = ({
       {(barPage === "org" || barPage === "office") && !officePanel.panel && (
         <SwitcherPage offices={offices} menu={barPage} onClose={closeBarPage} />
       )}
-      {!isPageOpen && !isDeskOpen && !barPage && (
-        <HeadlineColumn me={me} members={members} day={day} />
-      )}
+      {/* Your account opens on the right: the headline stays. */}
+      {!isPageOpen && <HeadlineColumn me={me} members={members} day={day} />}
 
       {officePanel.panel === "people" && (
         <WhosInModal me={me} members={members} onClose={officePanel.close} />
