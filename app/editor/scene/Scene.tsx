@@ -411,7 +411,7 @@ export const Scene = ({ readOnly = false, dark = false, fitInsets, sceneShift = 
               dampingFactor={0.12}
               minPolarAngle={0.2}
               maxPolarAngle={1.15}
-              minZoom={20}
+              minZoom={12}
               maxZoom={120}
               mouseButtons={readOnly ? VIEW_BUTTONS : EDIT_BUTTONS}
               target={[0, 0, 0]}

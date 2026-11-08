@@ -35,4 +35,24 @@ export const useGroundTone = ({ isDark, isLit }: { isDark: boolean; isLit: boole
       delete root.dataset.ground
     }
   }, [store, isDark, isLit])
+
+  // The office under the text column (panned or zoomed there): the column's
+  // pages get their surface (`data-office-under`, see .ground-surface).
+  useEffect(() => {
+    const root = document.documentElement
+    const apply = (isUnder: boolean) => {
+      if (isUnder) root.dataset.officeUnder = ""
+      else delete root.dataset.officeUnder
+    }
+    apply(store.getState().isOfficeUnderColumn)
+    const unsubscribe = store.subscribe((state, previous) => {
+      if (state.isOfficeUnderColumn !== previous.isOfficeUnderColumn)
+        apply(state.isOfficeUnderColumn)
+    })
+
+    return () => {
+      unsubscribe()
+      delete root.dataset.officeUnder
+    }
+  }, [store])
 }

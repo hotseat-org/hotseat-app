@@ -74,6 +74,9 @@ export interface ViewState {
   /** The camera is zoomed in closer than the whole office's fit (see CameraFit). */
   isZoomedIn: boolean
   setZoomedIn: (isZoomedIn: boolean) => void
+  /** Whether the office reaches under the app's text column on the left (see CameraFit). */
+  isOfficeUnderColumn: boolean
+  setOfficeUnderColumn: (isOfficeUnderColumn: boolean) => void
 }
 
 /** The viewer's local wall-clock time in hours [0,24), minute precision. */
@@ -140,4 +143,6 @@ export const createViewState = (set: SetState, get: GetState, hooks: StoreHooks)
     set((state) => ({ frameRequest: { bounds, nonce: (state.frameRequest?.nonce ?? 0) + 1 } })),
   isZoomedIn: false,
   setZoomedIn: (isZoomedIn) => set({ isZoomedIn }),
+  isOfficeUnderColumn: false,
+  setOfficeUnderColumn: (isOfficeUnderColumn) => set({ isOfficeUnderColumn }),
 })

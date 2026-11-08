@@ -1348,4 +1348,11 @@ input:-webkit-autofill:focus {
     linear-gradient(to right, transparent, #000 32px, #000 calc(100% - 48px), transparent),
     linear-gradient(to bottom, transparent, #000 24px, #000 calc(100% - 32px), transparent);
   mask-composite: intersect;
+  /* Only while the office is under the column (CameraFit): zoomed out, the
+     office sits beside it and the words need nothing behind them. */
+  opacity: 0;
+  transition: opacity 200ms var(--ease-out-soft);
+}
+:root[data-office-under] .ground-surface::before {
+  opacity: 1;
 }

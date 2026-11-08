@@ -12,7 +12,7 @@ import { useI18n } from "~/i18n/I18nProvider"
  * How far the 3D picture's centre moves right (px) for the column: the office
  * sits in the space beside it (see ViewShift).
  */
-export const HEADLINE_SCENE_SHIFT = 300
+export const HEADLINE_SCENE_SHIFT = 320
 
 /** Folding and unfolding: opacity and transform only, off with reduced motion. */
 const MOTION = "transition-[opacity,transform] duration-200 ease-out motion-reduce:transition-none"

@@ -11,7 +11,7 @@ import { isTypingTarget } from "../shell/keyboard"
 /** Share of the viewport the office fills (room for the floating panels). */
 const FILL = 0.78
 /** Must match the OrbitControls zoom limits in Scene. */
-const MIN_ZOOM = 20
+const MIN_ZOOM = 12
 const MAX_ZOOM = 120
 const DURATION = 0.45
 /** Zoomed in: past this share of the whole office's fit. Out again below the second (no flicker). */
@@ -38,6 +38,9 @@ interface Anim {
  * instantly when the office opens, and animated on `requestFit()` (button / F).
  * Showing the way to a desk frames that route instead (see wayfinding.ts).
  */
+/** Room kept between the text column's content and the office (px). */
+const COLUMN_GAP = 24
+
 export const CameraFit = ({
   insets = NO_INSETS,
   shift = 0,
@@ -66,6 +69,9 @@ export const CameraFit = ({
   const framedShift = useRef(shift)
   // The whole office's fit zoom: closer than it is "zoomed in".
   const fitZoom = useRef(0)
+  // The whole office's box, to tell whether it's under the text column.
+  const officeBox = useRef<Box3 | null>(null)
+  const corner = useRef(new Vector3())
 
   // F frames the office, in both modes.
   useEffect(() => {
@@ -118,6 +124,7 @@ export const CameraFit = ({
       box.expandByPoint(new Vector3(object.x - halfX, 0, object.z - halfZ))
       box.expandByPoint(new Vector3(object.x + halfX, WALL.height, object.z + halfZ))
     }
+    officeBox.current = box
     fitZoom.current = frame(box, instant) ?? fitZoom.current
   }, [nonce, controls, hasObjects, shift])
 
@@ -201,6 +208,26 @@ export const CameraFit = ({
     const ratio = camera.zoom / fitZoom.current
     const isNowZoomedIn = isZoomedIn ? ratio >= ZOOMED_OUT_BELOW : ratio > ZOOMED_IN_ABOVE
     if (isNowZoomedIn !== isZoomedIn) setZoomedIn(isNowZoomedIn)
+  })
+
+  // Whether the office reaches under the text column on the left (its left
+  // edge on screen within the column's room, `shift` × 2): a page there then
+  // needs a surface behind its words. Eight corners projected per frame drawn;
+  // written only when it changes.
+  useFrame(() => {
+    const box = officeBox.current
+    if (!box || !shift) return
+
+    let leftmost = Infinity
+    for (const x of [box.min.x, box.max.x])
+      for (const y of [box.min.y, box.max.y])
+        for (const z of [box.min.z, box.max.z]) {
+          const point = corner.current.set(x, y, z).project(camera)
+          leftmost = Math.min(leftmost, ((point.x + 1) / 2) * width)
+        }
+    const { isOfficeUnderColumn, setOfficeUnderColumn } = store.getState()
+    const isNowUnder = leftmost < shift * 2 - COLUMN_GAP
+    if (isNowUnder !== isOfficeUnderColumn) setOfficeUnderColumn(isNowUnder)
   })
 
   useFrame((_, delta) => {
