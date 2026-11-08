@@ -2,7 +2,9 @@ import { useEffect, useState } from "react"
 import { personByEmail, usePeople } from "../../desks/people"
 import { deskName } from "../useBooking"
 import { DESK_FEATURES } from "../../desks/deskFeatures"
+import { isSeatable } from "../../catalog"
 import { useOfficeStore } from "../../store"
+import { composeDeskFacts } from "./deskFacts"
 import type { BodyProps } from "./SeatCardBody"
 import { bookingPresets, deskState, isOpenDay, type BookingPreset, type Day } from "~/utils/booking"
 import { getKeepingTeam, getOpensToEveryoneOn } from "~/utils/teams"
@@ -190,6 +192,24 @@ export const useSeatCard = () => {
     }
   }
 
+  // Who's next to it that day, whose corner it is: for a desk you could sit at.
+  const canSitHere = booking.enabled && !past && (state.kind === "free" || mine)
+  const getFirstName = (email: string) => personByEmail(people, email)?.name.split(" ")[0]
+  const facts = canSitHere
+    ? composeDeskFacts(i18n, {
+        seat,
+        desks: objects
+          .filter((piece) => isSeatable(piece.type))
+          .map((desk) => {
+            const deskOnDay = deskState(desk, day, byDay, released)
+            const isSomeoneElse = deskOnDay.kind !== "free" && deskOnDay.email !== me
+
+            return { desk, name: isSomeoneElse ? getFirstName(deskOnDay.email) : undefined }
+          }),
+        teamName: booking.teams.find((team) => seat.zone && team.zone === seat.zone)?.name,
+      })
+    : []
+
   // Favourite, features, and your usual desk.
   const { favorites, usual } = booking.preferences
   const isFavorite = favorites.includes(seat.id)
@@ -237,6 +257,7 @@ export const useSeatCard = () => {
     onShowPerson: person && showPerson ? () => showPerson(person.email) : undefined,
     mine,
     past,
+    facts,
     note,
     options,
     pending: booking.pending,

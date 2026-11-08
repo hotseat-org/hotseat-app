@@ -45,6 +45,8 @@ export interface BodyProps {
   onShowPerson?: () => void
   mine: boolean
   past: boolean
+  /** What's worth knowing about it, a sentence each (who's next to it, whose corner). */
+  facts: string[]
   note?: string
   options: Option[]
   pending: boolean
@@ -187,6 +189,7 @@ export const SeatCardBody = ({
   onShowPerson,
   mine,
   past,
+  facts,
   note,
   options,
   pending,
@@ -462,6 +465,14 @@ export const SeatCardBody = ({
             />
           </div>
         </div>
+
+        {facts.length > 0 && step === "main" && (
+          <ul className="flex flex-col gap-0.5 px-1 pb-2 text-[13px] leading-snug font-semibold">
+            {facts.map((fact) => (
+              <li key={fact}>{fact}</li>
+            ))}
+          </ul>
+        )}
 
         {(note || past) && step === "main" && (
           <p className="px-1 pb-1.5 text-xs leading-snug text-muted">

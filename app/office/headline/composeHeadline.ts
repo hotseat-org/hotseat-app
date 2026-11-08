@@ -36,7 +36,7 @@ const composeTitle = ({ t, format }: Translator, { day, today }: HeadlineFacts) 
 }
 
 /** "Lena", "Lena and Max", "Lena, Max and 4 others". */
-const composeNames = ({ t, tn }: Translator, names: string[]) => {
+export const composeNames = ({ t, tn }: Translator, names: string[]) => {
   const [first, second] = names
   if (names.length === 1) return first
 
