@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import clsx from "clsx"
-import { Armchair, Building2, CalendarDays, Layers, MapPin, Pin, Users } from "lucide-react"
+import { Armchair, Building2, CalendarDays, Hourglass, Layers, MapPin, Users } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
-import { MemberAvatar, type ShellMember, type ShellOffice } from "./shell-ui"
+import { type ShellMember, type ShellOffice } from "./shell-ui"
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher"
 import { AccountMenu } from "./AccountMenu"
 import { MyBookings } from "./MyBookings"
@@ -15,19 +15,14 @@ import { BottomSheet } from "~/components/ui/BottomSheet"
 import { MapLayerSwitches, SidePanelBadge, useMapLayerRows, useSidePanels } from "~/editor"
 import { useOfficeStore } from "~/office/store"
 import { MonthCalendar } from "~/office/booking/DateStepper"
-import {
-  dayPhrase,
-  deskName,
-  useDesksOnDay,
-  useGivenUpDesk,
-  useWaitlist,
-} from "~/office/booking/useBooking"
+import { useDesksOnDay, useGivenUpDesk, useWaitlist } from "~/office/booking/useBooking"
 import { daysBetween, isOpenDay, isWeekend, type Day } from "~/utils/booking"
 import { getTeamHex } from "~/utils/teams"
 import { useTeamDays } from "~/office/teams"
 import { FindSeat } from "~/office/findSeat/FindSeat"
 import { useShowSeatOnMap } from "~/office/findSeat/useFindSeat"
 import { useOfficePanel } from "~/office/useOfficePanel"
+import { useHeadline } from "~/office/headline/useHeadline"
 import { useI18n } from "~/i18n/I18nProvider"
 import { msg } from "~/i18n/msg"
 import { useBarColor } from "~/utils/pageColor"
@@ -71,7 +66,7 @@ export const MobileShell = ({ offices, me, members, empty = false }: Props) => {
     <>
       <TopBar offices={offices} />
       <MapButtons />
-      <DayDock me={me} onFindSeat={() => officePanel.open("find")} />
+      <DayDock me={me} members={members} onFindSeat={() => officePanel.open("find")} />
       {/* Over the plan, just above the dock: closed, it gives the plan back. */}
       {!sheet && (
         <div
@@ -154,12 +149,26 @@ export const TopBar = ({ offices }: { offices: ShellOffice[] }) => (
   </header>
 )
 
+/** The dock's main action (finding a seat, the waitlist), and a quieter one (showing your desk). */
+const DOCK_BUTTON =
+  "flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl bg-accent px-3 text-sm font-extrabold text-accent-foreground"
+const DOCK_BUTTON_QUIET =
+  "flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl bg-foreground/[0.07] px-3 text-sm font-bold text-foreground"
+
 /**
- * Day switching, where a thumb reaches: your desk for the shown day with Today
- * (always there, dimmed while today is shown — so nothing moves), then the
- * calendar and the strip of days.
+ * Day switching, where a thumb reaches: the shown day in a sentence (your
+ * desk, what's free, who's in) with what to do about it, then the calendar and
+ * the strip of days.
  */
-const DayDock = ({ me, onFindSeat }: { me: ShellMember; onFindSeat: () => void }) => {
+const DayDock = ({
+  me,
+  members,
+  onFindSeat,
+}: {
+  me: ShellMember
+  members: ShellMember[]
+  onFindSeat: () => void
+}) => {
   const i18n = useI18n()
   const { t } = i18n
   const day = useOfficeStore((s) => s.booking.day)
@@ -169,6 +178,8 @@ const DayDock = ({ me, onFindSeat }: { me: ShellMember; onFindSeat: () => void }
   const mine = byPerson.get(me.userEmail)
   const givenUp = useGivenUpDesk(me.userEmail)
   const waitlist = useWaitlist()
+  const headline = useHeadline(me, members)
+  const [yours, ...office] = headline?.sentences ?? []
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
 
   return (
@@ -178,51 +189,30 @@ const DayDock = ({ me, onFindSeat }: { me: ShellMember; onFindSeat: () => void }
       style={{ bottom: TAB_BAR_HEIGHT, height: DAY_DOCK_HEIGHT }}
     >
       <div className="flex h-11 shrink-0 items-center gap-2.5">
-        <MemberAvatar m={me} className="size-8 shrink-0 rounded-lg" />
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-extrabold text-foreground">
-            {mine
-              ? deskName(i18n, mine.desk)
-              : givenUp
-                ? t("Away {when}", { when: dayPhrase(i18n, day, today) })
-                : t("No desk {when}", { when: dayPhrase(i18n, day, today) })}
-          </p>
-          <p className="flex items-center gap-1 truncate text-xs text-muted">
-            {mine?.state.kind === "resident" ? (
-              <>
-                <Pin className="size-3" /> {t("Your permanent desk")}
-              </>
-            ) : mine ? (
-              t("Yours {when}", { when: dayPhrase(i18n, day, today) })
-            ) : givenUp ? (
-              t("You gave {desk} up — others can book it", { desk: deskName(i18n, givenUp) })
-            ) : day < today ? (
-              t("Past days can't be booked")
-            ) : waitlist.isWaiting ? (
-              <>
-                {t("On the waitlist")} ·{" "}
-                <button type="button" onClick={waitlist.leave} className="font-bold text-accent">
-                  {t("Leave")}
-                </button>
-              </>
-            ) : waitlist.canWait ? (
-              <>
-                {t("Office full")} ·{" "}
-                <button type="button" onClick={waitlist.join} className="font-bold text-accent">
-                  {t("Join the waitlist")}
-                </button>
-              </>
-            ) : (
-              t("Or tap a free + on the plan")
-            )}
-          </p>
-        </div>
-        {!mine && !givenUp && day >= today && (
-          <button
-            type="button"
-            onClick={onFindSeat}
-            className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl bg-accent px-3 text-sm font-extrabold text-accent-foreground"
-          >
+        {/* The day in a sentence (see useHeadline): two lines at most, so the dock never grows. */}
+        <p
+          aria-live="polite"
+          className="line-clamp-2 min-w-0 flex-1 text-sm leading-tight font-bold text-foreground"
+        >
+          {headline && (
+            <>
+              <b className="font-black">{headline.title}</b> {yours}{" "}
+              <span className="text-muted">{office.join(" ")}</span>
+            </>
+          )}
+        </p>
+        {waitlist.isWaiting && (
+          <button type="button" onClick={waitlist.leave} className={DOCK_BUTTON_QUIET}>
+            {t("Leave")}
+          </button>
+        )}
+        {waitlist.canWait && (
+          <button type="button" onClick={waitlist.join} className={DOCK_BUTTON}>
+            <Hourglass className="size-4" /> {t("Join the waitlist")}
+          </button>
+        )}
+        {!mine && !givenUp && !waitlist.isWaiting && !waitlist.canWait && day >= today && (
+          <button type="button" onClick={onFindSeat} className={DOCK_BUTTON}>
             <Armchair className="size-4" /> {t("Find a seat")}
           </button>
         )}
@@ -230,7 +220,7 @@ const DayDock = ({ me, onFindSeat }: { me: ShellMember; onFindSeat: () => void }
           <button
             type="button"
             onClick={() => spotlightSeat(mine.desk.id)}
-            className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl bg-foreground/[0.07] px-3 text-sm font-bold text-foreground"
+            className={DOCK_BUTTON_QUIET}
           >
             <MapPin className="size-4" /> {t("Show")}
           </button>
