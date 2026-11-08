@@ -927,6 +927,22 @@ input:-webkit-autofill:focus {
   }
 }
 
+/* ColumnPage (the office's left-column pages): slide in from the left. */
+@keyframes page-in {
+  from {
+    opacity: 0;
+    translate: -16px 0;
+  }
+}
+.page-in {
+  animation: page-in 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-in {
+    animation: none;
+  }
+}
+
 /* The self-hosting guide's text (routes/docs.self-hosting…): Markdown rendered
    on the server, in the product page's type. */
 @layer components {

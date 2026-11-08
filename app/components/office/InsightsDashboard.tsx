@@ -412,7 +412,9 @@ export const InsightsDashboard = () => {
       >
         <header className="flex flex-wrap items-center gap-3">
           <div className="min-w-60 flex-1">
-            <h2 className="text-2xl font-black">{t("Insights")}</h2>
+            <h2 className="text-[44px] leading-[0.95] font-black tracking-[-0.03em]">
+              {t("Insights")}
+            </h2>
             <p className="text-sm text-muted">
               {data
                 ? `${tn(data.deskCount, "{n} desk", "{n} desks")} · ${format.long(data.days[0]?.date ?? data.from)} – ${format.long(data.days[data.days.length - 1]?.date ?? data.to)} · ${t("working days")}`

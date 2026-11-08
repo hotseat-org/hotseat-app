@@ -9,7 +9,6 @@ import {
   useLoaderData,
   useParams,
   useRevalidator,
-  useSearchParams,
   type ActionFunctionArgs,
   type LoaderFunctionArgs,
 } from "react-router"
@@ -271,9 +270,6 @@ export default function OfficeRoute() {
     return { me: toPerson(me), members: members.map(toPerson) }
   }, [me, members])
   const { slug, officeSlug } = useParams()
-  // Prototype: the day as a headline beside the office (`?look=headline`).
-  const [searchParams] = useSearchParams()
-  const isHeadline = searchParams.get("look") === "headline"
   const officeUrl = `/app/o/${slug}/offices/${officeSlug}`
   const fetcher = useFetcher<LayoutActionData>()
 
@@ -469,7 +465,7 @@ export default function OfficeRoute() {
                 people={people}
                 initialMode="display"
                 canEdit={canEdit}
-                sceneShift={isHeadline ? HEADLINE_SCENE_SHIFT : undefined}
+                sceneShift={HEADLINE_SCENE_SHIFT}
                 booking={{
                   ...booking,
                   pending: bookingFetcher.state !== "idle",
@@ -488,7 +484,6 @@ export default function OfficeRoute() {
                     canEdit={canEdit}
                     empty={empty}
                     guide={guide}
-                    isHeadline={isHeadline}
                   />
                 )}
               />

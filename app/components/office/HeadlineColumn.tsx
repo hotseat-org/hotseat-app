@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react"
 import { PANEL, PANEL_HOVER, type ShellMember } from "./shell-ui"
 import { useEditorStore } from "~/editor"
@@ -10,7 +11,7 @@ import { addDays } from "~/utils/booking"
  * How far the 3D picture's centre moves right (px) for the column: the office
  * sits in the space beside it (see ViewShift).
  */
-export const HEADLINE_SCENE_SHIFT = 320
+export const HEADLINE_SCENE_SHIFT = 300
 
 const STEP =
   "pointer-events-auto grid size-11 place-items-center rounded-full border-2 border-foreground text-foreground outline-none transition-colors hover:bg-foreground hover:text-background focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-foreground"
@@ -21,11 +22,20 @@ const MOTION = "transition-[opacity,transform] duration-200 ease-out motion-redu
 /**
  * The prototype's left column: the shown day as a headline ("Monday.") and a
  * few sentences — where you sit, what's free, who's in — with the days either
- * side. Zooming into the office shrinks it into one line under the switcher,
+ * side, and what to do about your day. Zooming into the office shrinks it into one line under the switcher,
  * so it never covers what you look at closely; zooming back out (or tapping
  * the line, which frames the office) brings it back.
  */
-export const HeadlineColumn = ({ me, members }: { me: ShellMember; members: ShellMember[] }) => {
+export const HeadlineColumn = ({
+  me,
+  members,
+  actions,
+}: {
+  me: ShellMember
+  members: ShellMember[]
+  /** What to do about your day (the way to your desk, finding one, the waitlist). */
+  actions?: ReactNode
+}) => {
   const { t } = useI18n()
   const headline = useHeadline(me, members)
   const day = useOfficeStore((state) => state.booking.day)
@@ -45,7 +55,7 @@ export const HeadlineColumn = ({ me, members }: { me: ShellMember; members: Shel
       <section
         aria-label={t("Your day")}
         inert={isFolded}
-        className={`${MOTION} pointer-events-none absolute left-28 top-24 w-[min(560px,40vw)] origin-top-left text-foreground ${
+        className={`${MOTION} pointer-events-none absolute left-6 top-24 w-[min(560px,40vw)] origin-top-left text-foreground ${
           isFolded ? "opacity-0 [transform:translateY(-12px)_scale(0.45)]" : "[transform:none]"
         }`}
       >
@@ -81,6 +91,11 @@ export const HeadlineColumn = ({ me, members }: { me: ShellMember; members: Shel
         >
           {yours} <span className="text-muted">{office.join(" ")}</span>
         </p>
+        {actions && (
+          <p className="pointer-events-auto mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 text-lg">
+            {actions}
+          </p>
+        )}
       </section>
 
       <button

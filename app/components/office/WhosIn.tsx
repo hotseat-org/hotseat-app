@@ -2,7 +2,7 @@ import { MapPin, Settings2 } from "lucide-react"
 import clsx from "clsx"
 import { useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "react-router"
-import { RailModal } from "./RailModal"
+import { ColumnPage } from "./ColumnPage"
 import { MemberAvatar, nameOf, type ShellMember } from "./shell-ui"
 import { WeekDots } from "./WeekDots"
 import { PeopleSearch, type PeopleGroup } from "~/components/people/PeopleSearch"
@@ -252,7 +252,7 @@ export const WhosInModal = ({
   const { open: openSettings } = useSettings()
 
   return (
-    <RailModal
+    <ColumnPage
       title={t("Who's in")}
       onClose={onClose}
       actions={
@@ -269,6 +269,6 @@ export const WhosInModal = ({
     >
       {/* Find closes it: the desk is on the map behind. */}
       <WhosInList me={me} members={members} onFind={onClose} />
-    </RailModal>
+    </ColumnPage>
   )
 }
