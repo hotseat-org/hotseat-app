@@ -416,12 +416,19 @@ export const InsightsDashboard = () => {
       >
         <header className="flex flex-wrap items-center gap-3">
           <div className="min-w-60 flex-1">
-            <h2 className="text-[44px] leading-[0.95] font-black tracking-[-0.03em]">
-              {t("Insights")}
-            </h2>
-            <p className="text-sm text-muted">
+            {/* The news as the headline (board H7): how full the office is. */}
+            <h2 className="text-[clamp(56px,6vw,96px)] leading-[0.9] font-black tracking-[-0.04em]">
               {data
-                ? `${tn(data.deskCount, "{n} desk", "{n} desks")} · ${format.long(data.days[0]?.date ?? data.from)} – ${format.long(data.days[data.days.length - 1]?.date ?? data.to)} · ${t("working days")}`
+                ? t("{percent} full.", { percent: format.percent(data.occupancy) })
+                : t("Insights")}
+            </h2>
+            <p className="mt-3 text-lg font-bold text-muted">
+              {data
+                ? t("An average working day, {from} to {to}, of {desks}.", {
+                    from: format.long(data.days[0]?.date ?? data.from),
+                    to: format.long(data.days[data.days.length - 1]?.date ?? data.to),
+                    desks: tn(data.deskCount, "{n} desk", "{n} desks"),
+                  })
                 : t("Loading…")}
             </p>
           </div>

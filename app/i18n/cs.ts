@@ -619,7 +619,6 @@ export const cs: Messages = {
   yes: "ano",
   no: "ne",
   "Close insights": "Zavřít statistiky",
-  "working days": "pracovní dny",
   Period: "Období",
   "Show on the office": "Ukázat v kanceláři",
   "Booked so far": "Zatím rezervováno",
@@ -1563,6 +1562,8 @@ export const cs: Messages = {
   "Next to {names}.": "Vedle: {names}.",
   "Nobody sits next to it, so it's quiet.": "Vedle nikdo nesedí, je tu klid.",
   "The office in 3D": "Kancelář ve 3D",
+  "{percent} full.": "Obsazeno {percent}.",
+  "An average working day, {from} to {to}, of {desks}.": "Průměrný pracovní den od {from} do {to} ({desks}).",
   "{n} person in.": {
     one: "Je tu {n} člověk.",
     few: "Jsou tu {n} lidé.",
