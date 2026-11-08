@@ -55,7 +55,7 @@ export const PhoneLayout = ({
       <span aria-hidden className="mx-auto mt-2.5 h-1.5 w-10 shrink-0 rounded-full bg-border" />
       <div className="flex shrink-0 items-center gap-2.5 pb-2.5 pl-5 pr-2 pt-1.5">
         <div className="min-w-0 flex-1">
-          <Modal.Heading className="block truncate text-lg font-black text-foreground">
+          <Modal.Heading className="block truncate text-3xl leading-tight font-black tracking-[-0.02em] text-foreground">
             {t("Book {desk}", { desk: deskName(i18n, desk) })}
           </Modal.Heading>
           <p className="truncate text-[13px] text-muted">

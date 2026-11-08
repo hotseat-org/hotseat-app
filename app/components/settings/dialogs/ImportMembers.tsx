@@ -95,7 +95,7 @@ export function ImportMembersDialog({ memberEmails }: { memberEmails: Set<string
             {/* A plain row, not Modal.Header (a column): the close button sits beside the title. */}
             <div className="flex items-start justify-between gap-4 pb-2">
               <div>
-                <Modal.Heading className="text-lg font-black text-foreground">
+                <Modal.Heading className="text-3xl leading-tight font-black tracking-[-0.02em] text-foreground">
                   {t("Import people")}
                 </Modal.Heading>
                 <p className="mt-1 text-sm text-muted">

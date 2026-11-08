@@ -980,6 +980,15 @@ input:-webkit-autofill:focus {
   }
 }
 
+/* Confirmation dialogs' questions ("Remove Lena?") in the headline's type. Unlayered, so
+   it wins over the UI kit's own (in its layer). */
+.alert-dialog__heading {
+  font-size: 1.5rem;
+  line-height: 1.15;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
 /* A sentence or title that changes (a new day): it rises into place. */
 @keyframes motion-rise {
   from {

@@ -148,7 +148,7 @@ const ResidentPickerBody = ({
           <Armchair className="size-[18px]" />
         </span>
         <div className="min-w-0 flex-1">
-          <Modal.Heading className="block truncate text-lg font-black text-foreground">
+          <Modal.Heading className="block truncate text-3xl leading-tight font-black tracking-[-0.02em] text-foreground">
             {t("Permanent resident")}
           </Modal.Heading>
           <p className="truncate text-[13px] text-muted">{describeDesk(desk)}</p>

@@ -56,7 +56,7 @@ export const ZonePickerDialog = ({
           <Modal.Dialog className="w-[560px] max-w-[calc(100vw-2rem)]">
             <div className="flex items-start justify-between gap-4 pb-2">
               <div>
-                <Modal.Heading className="text-lg font-black text-foreground">
+                <Modal.Heading className="text-3xl leading-tight font-black tracking-[-0.02em] text-foreground">
                   {chosen ? t("Change the zone") : t("Add a zone")}
                 </Modal.Heading>
                 <p className="mt-1 text-sm text-muted">
