@@ -8,7 +8,8 @@ export const OfficeNotSetUp = () => {
 
   return (
     <div className="pointer-events-none absolute inset-0 grid place-items-center p-6">
-      <div className="pointer-events-auto w-full max-w-md rounded-2xl border border-border bg-overlay p-6 shadow-overlay">
+      {/* A piece of the office's paper (no card), as its pages. */}
+      <div className="pointer-events-auto w-full max-w-md rounded-[36px] bg-background p-8">
         <EmptyState
           className="max-w-none"
           icon={PencilRuler}

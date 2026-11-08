@@ -1,3 +1,4 @@
+import clsx from "clsx"
 import { Tooltip } from "@heroui/react"
 import { Box, Feather, Focus, RotateCcw, RotateCw } from "lucide-react"
 import { useState, type ReactNode } from "react"
@@ -28,7 +29,11 @@ export const MapControls = ({ isEditing = false }: { isEditing?: boolean }) => {
     // slide as the bar folds up under it.
     <div
       data-open={isMenuOpen || undefined}
-      className="group/bar pointer-events-auto flex flex-col items-stretch gap-0.5 rounded-2xl border border-border bg-overlay p-1 text-foreground shadow-overlay"
+      className={clsx(
+        "group/bar pointer-events-auto flex flex-col items-stretch gap-0.5 rounded-2xl p-1 text-foreground",
+        // Viewing, the office's paper (as its other chrome); editing, the tool's card.
+        isEditing ? "border border-border bg-overlay shadow-overlay" : "bg-background"
+      )}
     >
       <ControlButton label={t("Fit")} title={t("Fit to office (F)")} onPress={requestFit}>
         <Focus className="size-[18px]" />

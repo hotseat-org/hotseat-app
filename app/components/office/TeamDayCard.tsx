@@ -92,7 +92,7 @@ export const TeamDayCard = ({
     <section
       aria-label={t("Team day")}
       className={clsx(
-        "pointer-events-auto flex items-start gap-3 rounded-2xl border border-border bg-overlay p-3 pr-2 text-foreground shadow-overlay",
+        "pointer-events-auto flex items-start gap-3 rounded-2xl bg-background p-3 pr-2 text-foreground",
         className
       )}
     >

@@ -19,15 +19,18 @@ export interface ShellOffice {
   inToday?: number
 }
 
-/** Shared glass-panel styling for floating chrome. */
-export const PANEL =
-  "pointer-events-auto rounded-2xl border border-border bg-overlay shadow-overlay"
+/**
+ * The floating chrome over the office: a piece of the office's own paper, as
+ * the headline's pages are — no border, no shadow, no card. Just enough of it
+ * under the words to read them over the model.
+ */
+export const PANEL = "pointer-events-auto rounded-2xl bg-background"
 
 /**
  * Hover for a clickable PANEL. Must be a SOLID colour — a translucent tint (e.g.
  * bg-foreground/5) replaces PANEL's fill and the scene shows through.
  */
-export const PANEL_HOVER = "transition-colors hover:bg-surface-secondary"
+export const PANEL_HOVER = "transition-colors hover:bg-surface-tertiary"
 
 const AVATAR_COLORS = [
   "#4a6fae",

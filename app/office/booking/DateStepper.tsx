@@ -10,6 +10,9 @@ import { useI18n } from "~/i18n/I18nProvider"
 import { useAllPieces } from "~/editor"
 import { getTeamHex } from "~/utils/teams"
 
+/** The day's arrows: rings of ink, as the headline's (no fill). */
+const ARROW = "rounded-full border-2 border-foreground/70 text-foreground"
+
 /**
  * The day being shown in the office: ‹ Wed 23 Sep › in the bottom bar, with a
  * month calendar (how full each day is, and your days) behind the date. Days
@@ -31,11 +34,13 @@ export const DateStepper = () => {
   }
 
   return (
-    <div className="flex items-center gap-0.5 rounded-xl bg-surface-secondary p-0.5">
+    // The day as type between two round arrows (the headline's day), no tile.
+    <div className="flex items-center gap-1">
       <Button
         isIconOnly
         size="sm"
         variant="ghost"
+        className={ARROW}
         aria-label={t("Previous day")}
         isDisabled={day <= from}
         onPress={() => step(-1)}
@@ -46,11 +51,15 @@ export const DateStepper = () => {
         {/* The trigger is itself the (focusable, pressable) button. */}
         <Popover.Trigger
           aria-label={t("Showing {day}. Pick another day", { day: { day } })}
-          className="flex h-8 w-44 cursor-pointer items-center justify-center gap-2 rounded-[10px] bg-surface text-sm font-extrabold tabular-nums text-foreground shadow-surface outline-none focus-visible:ring-2 focus-visible:ring-focus"
+          className="flex h-9 w-48 cursor-pointer items-center justify-center gap-2 rounded-full text-base font-black tracking-[-0.01em] tabular-nums text-foreground outline-none transition-colors hover:bg-surface-tertiary focus-visible:ring-2 focus-visible:ring-focus"
         >
           <CalendarDays className="size-4 text-accent" />
           {format.long(day)}
-          {day === today && <span className="text-xs font-black text-accent">{t("Today")}</span>}
+          {day === today && (
+            <span className="rounded-full bg-foreground px-2 py-0.5 text-xs font-black text-background">
+              {t("Today")}
+            </span>
+          )}
         </Popover.Trigger>
         <Popover.Content placement="top" offset={14} className="rounded-2xl">
           <Popover.Dialog aria-label={t("Pick a day")} className="p-4 outline-none">
@@ -67,6 +76,7 @@ export const DateStepper = () => {
         isIconOnly
         size="sm"
         variant="ghost"
+        className={ARROW}
         aria-label={t("Next day")}
         isDisabled={day >= lastDay}
         onPress={() => step(1)}

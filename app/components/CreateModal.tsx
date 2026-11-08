@@ -200,7 +200,11 @@ export const TitleNameField = ({
   const { t } = useI18n()
   return (
     <div className={clsx("flex w-full flex-col gap-1.5", isCentered && "items-center")}>
-      <label htmlFor="create-name" className="text-sm font-black text-foreground">
+      {/* The dialog's title (in the headline's type), naming the field. */}
+      <label
+        htmlFor="create-name"
+        className="text-3xl leading-none font-black tracking-[-0.03em] text-foreground"
+      >
         {label}
       </label>
       <input

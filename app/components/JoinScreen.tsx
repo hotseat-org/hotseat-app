@@ -43,32 +43,34 @@ export const JoinCard = ({ organization }: { organization: JoinOrganization }) =
 
   return (
     <CenteredScreen>
-      <div className="relative z-10 w-full max-w-sm rounded-2xl border border-border bg-surface p-8 text-center shadow-overlay">
+      {/* The paper, no card: the invitation as a headline. */}
+      <div className="relative z-10 w-full max-w-md rounded-[36px] bg-background p-8 text-center">
         <OrganizationBadge organization={organization} />
         <p className="mt-4 text-sm text-muted">{t("You've been invited to join")}</p>
-        <h1 className="mt-0.5 text-4xl leading-[1.02] font-black tracking-[-0.03em]">
+        <h1 className="mt-1 text-[clamp(40px,5vw,56px)] leading-[0.95] font-black tracking-[-0.035em]">
           {organization.name}
         </h1>
         {organization.description && (
           <p className="mt-1 text-sm text-muted">{organization.description}</p>
         )}
 
-        <div className="mt-6 flex gap-2.5">
-          <Form method="post" className="flex-1">
+        <div className="mt-8 flex items-center justify-center gap-6">
+          <Form method="post">
             <input type="hidden" name="intent" value="decline" />
+            {/* A word: the way out, not a second button. */}
             <button
               type="submit"
-              className="w-full rounded-xl border border-border px-4 py-2.5 text-sm font-bold text-foreground transition hover:bg-foreground/5"
+              className="min-h-11 px-1 text-base font-extrabold text-foreground underline decoration-2 underline-offset-4 outline-none focus-visible:ring-2 focus-visible:ring-focus"
             >
               {t("Decline")}
             </button>
           </Form>
-          <Form method="post" className="flex-1">
+          <Form method="post">
             <input type="hidden" name="intent" value="accept" />
             <button
               type="submit"
               disabled={isJoining}
-              className="w-full rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-accent-foreground transition hover:brightness-105 disabled:opacity-60"
+              className="h-14 min-w-44 rounded-full bg-foreground px-7 text-lg font-black text-background transition-opacity outline-none hover:opacity-90 focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-60"
             >
               {isJoining ? t("Joining…") : t("Accept invite")}
             </button>
@@ -85,12 +87,14 @@ export const JoinProblem = ({ title, children }: { title: string; children: Reac
   return (
     <CenteredScreen>
       <div className="relative z-10 max-w-sm text-center">
-        <h1 className="text-4xl leading-[1.02] font-black tracking-[-0.03em]">{title}</h1>
-        <p className="mt-2 text-muted">{children}</p>
+        <h1 className="text-[clamp(40px,5vw,56px)] leading-[0.95] font-black tracking-[-0.035em]">
+          {title}
+        </h1>
+        <p className="mt-3 text-xl leading-snug font-extrabold text-muted">{children}</p>
         <Link
           to="/app"
           prefetch="intent"
-          className="mt-6 inline-flex rounded-xl bg-accent/15 px-4 py-2.5 text-sm font-bold text-accent hover:bg-accent/25"
+          className="mt-8 inline-flex h-14 items-center rounded-full bg-foreground px-7 text-lg font-black text-background transition-opacity outline-none hover:opacity-90 focus-visible:ring-2 focus-visible:ring-focus"
         >
           {t("Back to Hotseat")}
         </Link>

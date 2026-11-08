@@ -33,7 +33,14 @@ export const TimeOfDay = ({
   const flat = isViewing && (view === "2d" || !hasWebGL())
 
   return (
-    <div className="pointer-events-auto absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-2xl border border-border bg-overlay p-2 text-foreground shadow-overlay">
+    // Viewing, it's a strip of the office's paper (no card, as the office's
+    // other chrome); editing, the tool's bar.
+    <div
+      className={clsx(
+        "pointer-events-auto absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-2xl p-2 text-foreground",
+        isViewing ? "bg-background" : "border border-border bg-overlay shadow-overlay"
+      )}
+    >
       {/* The modules' (the office: the day shown). */}
       {items.map((Item, index) => (
         <Item key={index} />

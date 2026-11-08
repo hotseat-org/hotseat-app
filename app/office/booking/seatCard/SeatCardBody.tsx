@@ -160,7 +160,7 @@ export const StepHeader = ({
     >
       <ChevronLeft className="size-4" strokeWidth={2.5} />
     </button>
-    <p className="text-sm font-extrabold">{title}</p>
+    <p className="text-lg leading-tight font-black tracking-[-0.01em]">{title}</p>
   </div>
 )
 
@@ -329,24 +329,27 @@ export const SeatCardBody = ({
         title={one ? t("Book more days") : t("Book it on other days")}
         onBack={() => setStep("main")}
       />
-      {more.map((option) => (
+      {/* The choices as ruled lines, as the headline's lists. */}
+      <div className="mt-1 divide-y divide-separator border-y border-separator">
+        {more.map((option) => (
+          <Row
+            key={option.key}
+            isSheet={isSheet}
+            icon={CalendarDays}
+            label={option.title}
+            detail={option.detail}
+            isDisabled={pending || option.free.length === 0}
+            onPress={() => onReserve(option.free)}
+          />
+        ))}
         <Row
-          key={option.key}
           isSheet={isSheet}
           icon={CalendarDays}
-          label={option.title}
-          detail={option.detail}
-          isDisabled={pending || option.free.length === 0}
-          onPress={() => onReserve(option.free)}
+          label={t("Pick days on a calendar")}
+          hasStep
+          onPress={onCustom}
         />
-      ))}
-      <Row
-        isSheet={isSheet}
-        icon={CalendarDays}
-        label={t("Pick days on a calendar")}
-        hasStep
-        onPress={onCustom}
-      />
+      </div>
     </>
   )
 

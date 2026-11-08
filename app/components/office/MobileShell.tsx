@@ -299,7 +299,7 @@ const MapButtons = () => {
 
   return (
     <div
-      className="pointer-events-auto absolute left-4 flex gap-1 rounded-xl border border-chrome-border bg-chrome/95 p-1 shadow-overlay"
+      className="pointer-events-auto absolute left-4 flex gap-1 rounded-xl bg-background p-1"
       // Level with turn and fit (PhoneControls), just above the dock.
       style={{ bottom: MOBILE_CHROME.bottom + 12 }}
     >

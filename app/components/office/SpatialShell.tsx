@@ -1,6 +1,4 @@
 import { type ReactNode } from "react"
-import { Button } from "@heroui/react"
-import { Pencil } from "lucide-react"
 import { PANEL, PANEL_HOVER, type ShellMember, type ShellOffice } from "./shell-ui"
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher"
 import { PersonProfile } from "./PersonProfile"
@@ -249,10 +247,14 @@ export const SpatialShell = ({
       <TimeOfDay isViewing>
         {/* Editing is 3D-only (no WebGL → view-only). */}
         {canEdit && hasWebGL() && (
-          <Button variant="primary" size="sm" className="min-w-32" onPress={enterEdit}>
-            <Pencil className="size-4" />
+          // A word, not a button: the office's one action is booking, not this.
+          <button
+            type="button"
+            onClick={enterEdit}
+            className="h-9 min-w-32 rounded-full px-3 text-[15px] font-extrabold text-foreground underline decoration-2 underline-offset-4 outline-none transition-colors hover:bg-surface-tertiary focus-visible:ring-2 focus-visible:ring-focus"
+          >
             {t("Edit layout")}
-          </Button>
+          </button>
         )}
       </TimeOfDay>
     </>

@@ -37,16 +37,23 @@ export const useDeskFilterOptions = () => {
 
 /**
  * The desk filter's choices — zones, then desk features. On, the desks
- * outside them fade and lose their "Free" marks. The office's Filter desks side panel.
+ * outside them fade and lose their "Free" marks. The office's Filter desks side panel:
+ * a page of large ruled lines in the office, the editor's small panel while editing.
  */
-export const DeskFilterOptions = () => {
+export const DeskFilterOptions = ({ isEditing = false }: { isEditing?: boolean }) => {
   const { t, tn } = useI18n()
   const filter = useOfficeStore((s) => s.deskFilter)
   const toggle = useOfficeStore((s) => s.toggleDeskFilter)
   const { zones, features } = useDeskFilterOptions()
+  const isLarge = !isEditing
 
   return (
-    <ul className="flex flex-col gap-0.5">
+    <ul
+      className={clsx(
+        "flex flex-col",
+        isLarge ? "divide-y divide-separator border-y border-separator" : "gap-0.5"
+      )}
+    >
       {zones.map((zone) => {
         const key = `${ZONE_FILTER_PREFIX}${zone.name}`
         return (
@@ -58,6 +65,7 @@ export const DeskFilterOptions = () => {
             hint={tn(zone.deskCount, "{n} desk here", "{n} desks here")}
             icon={<span className="size-3 rounded-full" style={{ background: zone.color }} />}
             tint={`${zone.color}33`}
+            isLarge={isLarge}
           />
         )
       })}
@@ -71,6 +79,7 @@ export const DeskFilterOptions = () => {
             label={t(feature.labelPlural)}
             hint={tn(feature.count, "{n} desk here", "{n} desks here")}
             icon={<Icon className="size-4" />}
+            isLarge={isLarge}
           />
         )
       })}
@@ -85,6 +94,7 @@ const FilterRow = ({
   hint,
   icon,
   tint,
+  isLarge,
 }: {
   isOn: boolean
   onToggle: () => void
@@ -93,6 +103,8 @@ const FilterRow = ({
   icon: ReactNode
   /** The icon tile's own colour (a zone's); otherwise the accent when on. */
   tint?: string
+  /** A page's line of large type (the office), not the editor's small row. */
+  isLarge: boolean
 }) => (
   <li>
     <button
@@ -100,7 +112,8 @@ const FilterRow = ({
       aria-pressed={isOn}
       onClick={onToggle}
       className={clsx(
-        "flex w-full items-center gap-3 rounded-xl px-2.5 py-2 text-left transition-colors",
+        "flex w-full items-center gap-3 text-left transition-colors outline-none focus-visible:ring-2 focus-visible:ring-focus",
+        isLarge ? "h-[68px] px-1" : "rounded-xl px-2.5 py-2",
         isOn ? "bg-accent/10" : "hover:bg-foreground/5"
       )}
     >
@@ -115,10 +128,32 @@ const FilterRow = ({
         {icon}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-bold text-foreground">{label}</span>
-        <span className="block text-xs text-muted">{hint}</span>
+        <span
+          className={clsx(
+            "block truncate text-foreground",
+            isLarge ? "text-xl leading-tight font-black tracking-[-0.01em]" : "text-sm font-bold"
+          )}
+        >
+          {label}
+        </span>
+        <span className={clsx("block text-muted", isLarge ? "text-sm font-semibold" : "text-xs")}>
+          {hint}
+        </span>
       </span>
-      {isOn && <Check className="size-4 shrink-0 text-accent" strokeWidth={2.5} />}
+      {/* On, a filled ink ring with a tick; off, the empty ring (the large page's checkbox). */}
+      {isLarge ? (
+        <span
+          aria-hidden
+          className={clsx(
+            "grid size-7 shrink-0 place-items-center rounded-full border-2 border-foreground transition-colors",
+            isOn ? "bg-foreground text-background" : "text-transparent"
+          )}
+        >
+          <Check className="size-4" strokeWidth={3} />
+        </span>
+      ) : (
+        isOn && <Check className="size-4 shrink-0 text-accent" strokeWidth={2.5} />
+      )}
     </button>
   </li>
 )

@@ -101,28 +101,28 @@ export function SettingsShell({
     },
   })
 
-  const item = (l: SettingsLink) => {
-    const Icon = l.icon
-    const isActive = l.id === active.id
+  // A section is a word, as the office's top bar: the one you're on in ink,
+  // underlined; the rest quieter (no icons, no tile).
+  const item = (link: SettingsLink) => {
+    const isActive = link.id === active.id
     return (
       <button
-        key={l.id}
+        key={link.id}
         type="button"
-        onClick={() => select(l.id)}
+        onClick={() => select(link.id)}
         aria-current={isActive ? "page" : undefined}
         className={clsx(
-          "flex items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left text-sm transition-colors",
-          isActive
-            ? "bg-surface font-bold text-foreground shadow-surface"
-            : l.danger
-              ? "font-bold text-danger hover:bg-danger/10"
-              : "font-semibold text-muted hover:bg-foreground/5 hover:text-foreground"
+          "flex min-h-11 items-center gap-2.5 rounded-xl px-2.5 text-left text-lg font-extrabold tracking-[-0.01em] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus",
+          isActive && "text-foreground underline decoration-[3px] underline-offset-[7px]",
+          !isActive &&
+            (link.danger ? "text-danger hover:bg-danger/10" : "text-muted hover:text-foreground")
         )}
       >
-        <Icon className={clsx("size-[18px] shrink-0", isActive && !l.danger && "text-accent")} />
-        <span className="min-w-0 flex-1 truncate">{t(l.label)}</span>
-        {l.count !== undefined && (
-          <span className="text-xs font-bold tabular-nums text-muted">{l.count}</span>
+        <span className="min-w-0 flex-1 truncate">{t(link.label)}</span>
+        {link.count !== undefined && (
+          <span className="text-sm font-bold tabular-nums text-muted no-underline">
+            {link.count}
+          </span>
         )}
       </button>
     )
@@ -145,16 +145,18 @@ export function SettingsShell({
         <div className="flex items-center gap-3 px-2">
           {identity.visual}
           <div className="min-w-0">
-            <p className="truncate text-[15px] font-extrabold text-foreground">{identity.name}</p>
-            <p className="truncate text-xs text-muted">{identity.sub}</p>
+            <p className="truncate text-xl leading-tight font-black tracking-[-0.01em] text-foreground">
+              {identity.name}
+            </p>
+            <p className="truncate text-sm font-semibold text-muted">{identity.sub}</p>
           </div>
         </div>
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-0.5">
           <p className="px-2.5 pb-1.5 text-[13px] font-black text-muted">{groupLabel}</p>
           {main.map(item)}
         </div>
         <div className="flex-1" />
-        {danger.length > 0 && <div className="flex flex-col gap-1">{danger.map(item)}</div>}
+        {danger.length > 0 && <div className="flex flex-col gap-0.5">{danger.map(item)}</div>}
       </nav>
 
       <main className="flex min-w-0 flex-1 flex-col bg-overlay">

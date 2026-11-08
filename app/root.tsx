@@ -231,12 +231,15 @@ export function ErrorBoundary() {
       </head>
       <body className="h-full bg-inherit">
         <CenteredScreen>
-          <div className="relative w-full max-w-md rounded-2xl border border-border bg-overlay p-8 text-center text-foreground shadow-overlay">
-            <p className="text-5xl font-extrabold tabular-nums text-accent">
+          {/* The headline's way: the news in large type on the paper, no card. */}
+          <div className="relative w-full max-w-xl text-foreground">
+            <p className="text-[clamp(88px,12vw,148px)] leading-[0.85] font-black tracking-[-0.04em] tabular-nums text-accent">
               {isRouteErrorResponse(error) ? error.status : "Oops"}
             </p>
-            <h1 className="mt-3 text-xl font-extrabold tracking-tight">{title}</h1>
-            <p className="mt-1.5 text-sm text-muted">{message}</p>
+            <h1 className="mt-5 text-[clamp(36px,4vw,52px)] leading-[0.95] font-black tracking-[-0.035em]">
+              {title}
+            </h1>
+            <p className="mt-3 text-xl leading-snug font-extrabold text-muted">{message}</p>
             {detail && (
               <pre className="mt-4 overflow-x-auto rounded-lg bg-foreground/5 p-3 text-left text-xs text-danger">
                 {detail}
@@ -244,7 +247,7 @@ export function ErrorBoundary() {
             )}
             <a
               href={`${import.meta.env.BASE_URL}app`}
-              className="mt-6 inline-flex rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-accent-foreground transition hover:brightness-105"
+              className="mt-8 inline-flex h-14 items-center rounded-full bg-foreground px-7 text-lg font-black text-background transition-opacity outline-none hover:opacity-90 focus-visible:ring-2 focus-visible:ring-focus"
             >
               {t("Back to your offices")}
             </a>

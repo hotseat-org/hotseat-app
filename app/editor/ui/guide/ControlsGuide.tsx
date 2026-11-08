@@ -1,3 +1,4 @@
+import clsx from "clsx"
 import { Button, CloseButton } from "@heroui/react"
 import { Mouse } from "lucide-react"
 import { useState } from "react"
@@ -52,7 +53,7 @@ export const ControlsGuide = ({ view }: { view: GuideView }) => {
       <Button
         size="sm"
         variant="secondary"
-        className="pointer-events-auto shadow-overlay"
+        className={clsx("pointer-events-auto", view === "edit" && "shadow-overlay")}
         onPress={() => setHidden(false)}
       >
         <Mouse className="size-4" /> {t("Controls")}
@@ -61,7 +62,13 @@ export const ControlsGuide = ({ view }: { view: GuideView }) => {
   }
 
   return (
-    <div className="pointer-events-auto relative rounded-2xl border border-border bg-overlay py-2.5 pl-3 pr-9 text-xs text-foreground shadow-overlay">
+    <div
+      className={clsx(
+        "pointer-events-auto relative rounded-2xl py-2.5 pl-3 pr-9 text-xs text-foreground",
+        // Viewing the office, its paper (as its other chrome); editing, the tool's card.
+        view === "edit" ? "border border-border bg-overlay shadow-overlay" : "bg-background"
+      )}
+    >
       <CloseButton
         aria-label={t("Hide controls")}
         className="absolute right-1.5 top-1.5"

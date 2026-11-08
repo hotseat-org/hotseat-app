@@ -32,7 +32,7 @@ export const HeatmapPill = ({ isDark, className }: { isDark: boolean; className?
     <div
       role="status"
       className={clsx(
-        "pointer-events-auto flex items-center gap-3 rounded-full border border-chrome-border bg-chrome/95 py-1.5 pl-2 pr-1.5 shadow-overlay",
+        "pointer-events-auto flex items-center gap-3 rounded-full bg-background py-1.5 pl-2 pr-1.5",
         className
       )}
     >

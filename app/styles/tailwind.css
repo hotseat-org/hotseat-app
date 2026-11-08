@@ -980,6 +980,18 @@ input:-webkit-autofill:focus {
   }
 }
 
+/* The one main action anywhere — Save, Create office, Invite — is the headline's ink
+   pill, as on its pages; the accent stays for links and marks. Unlayered, so it wins
+   over the UI kit's own (in its layer). */
+.button--primary {
+  --button-bg: var(--color-foreground);
+  --button-bg-hover: color-mix(in oklab, var(--color-foreground) 84%, var(--color-background));
+  --button-bg-pressed: color-mix(in oklab, var(--color-foreground) 84%, var(--color-background));
+  --button-fg: var(--color-background);
+  border-radius: 9999px;
+  font-weight: 800;
+}
+
 /* Confirmation dialogs' questions ("Remove Lena?") in the headline's type. Unlayered, so
    it wins over the UI kit's own (in its layer). */
 .alert-dialog__heading {
