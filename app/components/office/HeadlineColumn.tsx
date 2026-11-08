@@ -1,9 +1,10 @@
-import { useState } from "react"
+import { useState, type ReactNode } from "react"
 import { ZoomOut } from "lucide-react"
 import type { ShellMember } from "./shell-ui"
 import type { DayStatus } from "./dayStatus"
 import { DayRings, MonthCalendar } from "~/office/booking/DateStepper"
 import { useOfficeStore } from "~/office/store"
+import type { Day } from "~/utils/booking"
 import { useEditorStore } from "~/editor"
 import { useHeadline } from "~/office/headline/useHeadline"
 import { useI18n } from "~/i18n/I18nProvider"
@@ -39,8 +40,17 @@ export const HeadlineColumn = ({
   const { t } = useI18n()
   const isBooking = useOfficeStore((state) => state.booking.enabled)
   const setDay = useOfficeStore((state) => state.setBookingDay)
-  // The month, open in the headline in place of its sentences (not a popup).
+  // The month, open in the headline (or the masthead), not a popup.
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
+  const calendar: Calendar = {
+    isOpen: isCalendarOpen,
+    toggle: () => setIsCalendarOpen((wasOpen) => !wasOpen),
+    pick: (pickedDay) => {
+      setDay(pickedDay)
+      setIsCalendarOpen(false)
+    },
+    close: () => setIsCalendarOpen(false),
+  }
   const headline = useHeadline(me, members)
   const isFolded = useEditorStore((state) => state.isZoomedIn)
   const requestFit = useEditorStore((state) => state.requestFit)
@@ -57,82 +67,42 @@ export const HeadlineColumn = ({
           isFolded ? "opacity-0 [transform:translateY(-12px)_scale(0.45)]" : "[transform:none]"
         }`}
       >
-        {/* A new day's title and sentence rise into place (keyed by their text). */}
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
-          <h1
-            key={headline.title}
-            className="motion-rise text-[clamp(56px,6.4vw,92px)] leading-[0.95] font-black tracking-[-0.03em]"
-          >
-            {headline.title}
-          </h1>
-          {isBooking && (
-            <span className="pointer-events-auto mt-2">
-              <DayRings
-                isCalendarOpen={isCalendarOpen}
-                onCalendarToggle={() => setIsCalendarOpen((wasOpen) => !wasOpen)}
-              />
-            </span>
-          )}
-        </div>
+        {/* The day's controls first, in a row of their own: they never move as
+            the title's width changes. Then the day as the headline. */}
+        {isBooking && <DayControls calendar={calendar} />}
+        <h1
+          key={headline.title}
+          className="motion-rise mt-4 text-[clamp(56px,6.4vw,92px)] leading-[0.95] font-black tracking-[-0.03em]"
+        >
+          {headline.title}
+        </h1>
 
-        {/* The live region stays (so the new day is read out); its words are new. */}
+        {/* Fixed height (three lines): a longer or shorter sentence never moves
+            what's under it. The live region stays (the new day is read out). */}
         <p
           aria-live="polite"
-          className="mt-5 text-[clamp(22px,2.3vw,34px)] leading-tight font-extrabold tracking-[-0.01em]"
+          className="mt-5 h-[3.75em] text-[clamp(22px,2.3vw,34px)] leading-[1.25] font-extrabold tracking-[-0.01em]"
         >
-          <span key={headline.sentences.join(" ")} className="motion-rise block">
+          <span key={headline.sentences.join(" ")} className="motion-rise line-clamp-3">
             {yours} <span className="text-muted">{office.join(" ")}</span>
           </span>
         </p>
-        {isCalendarOpen ? (
-          // The month in place of your desk and its actions: pick a day, and
-          // the headline is that day's. Escape folds it away.
-          <div
-            className="motion-rise pointer-events-auto mt-8"
-            onKeyDown={(event) => {
-              if (event.key === "Escape") setIsCalendarOpen(false)
-            }}
-          >
-            <MonthCalendar
-              className="w-[min(420px,100%)]"
-              onPick={(pickedDay) => {
-                setDay(pickedDay)
-                setIsCalendarOpen(false)
-              }}
-            />
-          </div>
+        <DayActions day={day} size="large" />
+        {calendar.isOpen ? (
+          <MonthPicker calendar={calendar} className="mt-8" />
         ) : (
-          <>
-            {/* Your desk on the day, the largest thing after the day (the mockups' "D2"). */}
-            {day.desk && (
-              <p className="mt-10 flex items-baseline gap-4">
-                <span className="text-[clamp(72px,8vw,120px)] leading-[0.85] font-black tracking-[-0.04em] text-accent">
-                  {day.desk.label}
-                </span>
-                <span className="text-[clamp(18px,1.6vw,22px)] leading-snug font-bold">
-                  {day.desk.isPermanent ? t("Your desk, every day.") : t("Yours for the day.")}
-                </span>
-              </p>
-            )}
-            <p className="pointer-events-auto mt-7 flex flex-wrap items-center gap-x-7 gap-y-3">
-              {day.primary && (
-                <button
-                  type="button"
-                  onClick={day.primary.onPress}
-                  className="h-14 rounded-full bg-foreground px-7 text-lg font-black text-background transition-opacity outline-none hover:opacity-90 focus-visible:ring-2 focus-visible:ring-focus"
-                >
-                  {day.primary.label}
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={day.bookings.onPress}
-                className="min-h-11 text-lg font-extrabold underline decoration-2 underline-offset-[5px] outline-none focus-visible:ring-2 focus-visible:ring-focus"
-              >
-                {day.bookings.label}
-              </button>
+          // Your desk on the day, the largest thing after the day (the mockups'
+          // "D2"): last, so its coming and going moves nothing above.
+          day.desk && (
+            <p className="mt-10 flex items-baseline gap-4">
+              <span className="text-[clamp(72px,8vw,120px)] leading-[0.85] font-black tracking-[-0.04em] text-accent">
+                {day.desk.label}
+              </span>
+              <span className="text-[clamp(18px,1.6vw,22px)] leading-snug font-bold">
+                {day.desk.isPermanent ? t("Your desk, every day.") : t("Yours for the day.")}
+              </span>
             </p>
-          </>
+          )
         )}
       </section>
 
@@ -148,22 +118,20 @@ export const HeadlineColumn = ({
             : "pointer-events-none opacity-0 [transform:translateY(-8px)]"
         }`}
       >
-        <p className="text-[40px] leading-[0.95] font-black tracking-[-0.035em]">
+        {isBooking && <DayControls calendar={calendar} />}
+        <p
+          key={headline.title}
+          className="motion-rise mt-3 text-[40px] leading-[0.95] font-black tracking-[-0.035em]"
+        >
           {headline.title}
         </p>
-        <p className="mt-2 line-clamp-2 text-lg leading-snug font-extrabold">
-          {yours} <span className="text-muted">{office.join(" ")}</span>
+        {/* Two lines, always: the actions under it stay put. */}
+        <p className="mt-2 h-[2.75em] text-lg leading-[1.375] font-extrabold">
+          <span key={headline.sentences.join(" ")} className="motion-rise line-clamp-2">
+            {yours} <span className="text-muted">{office.join(" ")}</span>
+          </span>
         </p>
-        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2">
-          {day.primary && (
-            <button
-              type="button"
-              onClick={day.primary.onPress}
-              className="h-11 rounded-full bg-foreground px-5 text-base font-black text-background transition-opacity outline-none hover:opacity-90 focus-visible:ring-2 focus-visible:ring-focus"
-            >
-              {day.primary.label}
-            </button>
-          )}
+        <DayActions day={day} size="small">
           <button
             type="button"
             onClick={requestFit}
@@ -173,8 +141,95 @@ export const HeadlineColumn = ({
             <ZoomOut aria-hidden className="size-4" strokeWidth={2.4} />
             {t("Whole office")}
           </button>
-        </div>
+        </DayActions>
+        {calendar.isOpen && <MonthPicker calendar={calendar} className="mt-4" />}
       </section>
     </>
+  )
+}
+
+/** The month calendar's state, shared by the headline and the masthead. */
+interface Calendar {
+  isOpen: boolean
+  toggle: () => void
+  pick: (day: Day) => void
+  close: () => void
+}
+
+/**
+ * The day's controls, a row of their own above its title: ‹ › and the
+ * calendar ring, then the date in words. Nothing in it moves as days change
+ * (the date comes last).
+ */
+const DayControls = ({ calendar }: { calendar: Calendar }) => {
+  const { format } = useI18n()
+  const day = useOfficeStore((state) => state.booking.day)
+
+  return (
+    <div className="pointer-events-auto flex items-center gap-4">
+      <DayRings isCalendarOpen={calendar.isOpen} onCalendarToggle={calendar.toggle} />
+      <span className="text-lg font-extrabold whitespace-nowrap text-muted tabular-nums">
+        {format.long(day)}
+      </span>
+    </div>
+  )
+}
+
+/** The month, to pick a day; Escape folds it away. */
+const MonthPicker = ({ calendar, className }: { calendar: Calendar; className: string }) => (
+  <div
+    className={`motion-rise pointer-events-auto ${className}`}
+    onKeyDown={(event) => {
+      if (event.key === "Escape") calendar.close()
+    }}
+  >
+    <MonthCalendar className="w-[min(420px,100%)]" onPick={calendar.pick} />
+  </div>
+)
+
+/**
+ * What to do about your day: the one main action as the pill, then the
+ * words. The pill's place is kept (a fixed least width, and held empty when
+ * there's nothing to do), so the words beside it never move between days.
+ */
+const DayActions = ({
+  day,
+  size,
+  children,
+}: {
+  day: DayStatus
+  size: "large" | "small"
+  /** More words after (the masthead's way back out). */
+  children?: ReactNode
+}) => {
+  const isLarge = size === "large"
+  const pill = isLarge ? "h-14 min-w-52 px-7 text-lg" : "h-11 min-w-40 px-5 text-base"
+
+  return (
+    <p
+      className={`pointer-events-auto flex flex-wrap items-center ${isLarge ? "mt-7 gap-x-7 gap-y-3" : "mt-3 gap-x-5 gap-y-2"}`}
+    >
+      {day.primary ? (
+        <button
+          type="button"
+          onClick={day.primary.onPress}
+          className={`${pill} rounded-full bg-foreground font-black text-background transition-opacity outline-none hover:opacity-90 focus-visible:ring-2 focus-visible:ring-focus`}
+        >
+          {day.primary.label}
+        </button>
+      ) : (
+        <span aria-hidden className={`${pill} invisible`} />
+      )}
+      {isLarge && (
+        <button
+          type="button"
+          onClick={day.bookings.onPress}
+          className="min-h-11 text-lg font-extrabold underline decoration-2 underline-offset-[5px] outline-none focus-visible:ring-2 focus-visible:ring-focus"
+        >
+          {day.bookings.label}
+        </button>
+      )}
+      {children}
+    </p>
   )
 }
