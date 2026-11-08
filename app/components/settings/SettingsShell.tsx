@@ -177,7 +177,7 @@ export function SettingsShell({
               {/* Phones, on the list: the settings' own title. */}
               <h1
                 className={clsx(
-                  "truncate text-xl font-black tracking-tight text-foreground md:text-2xl",
+                  "truncate text-xl font-black tracking-tight text-foreground md:text-[44px] md:leading-[1.05] md:tracking-[-0.03em]",
                   isListShown && "hidden md:block"
                 )}
               >
@@ -190,7 +190,9 @@ export function SettingsShell({
                 </h1>
               )}
               {active.description && (
-                <p className="mt-1 hidden text-sm text-muted md:block">{t(active.description)}</p>
+                <p className="mt-2 hidden text-base font-semibold text-muted md:block">
+                  {t(active.description)}
+                </p>
               )}
             </div>
           </div>
