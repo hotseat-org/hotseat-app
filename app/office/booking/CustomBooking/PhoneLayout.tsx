@@ -66,9 +66,7 @@ export const PhoneLayout = ({
       </div>
 
       <div className="flex shrink-0 items-center gap-1.5 overflow-x-auto border-b border-border px-4 pb-3">
-        <span className="mr-0.5 shrink-0 text-[11px] font-extrabold uppercase tracking-[0.08em] text-muted">
-          {t("Every")}
-        </span>
+        <span className="mr-0.5 shrink-0 text-[13px] font-black text-muted">{t("Every")}</span>
         {columns.map((column) => {
           const isOn = isAllPicked(column.days)
 

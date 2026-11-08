@@ -1572,6 +1572,12 @@ export const cs: Messages = {
   "Next to {names}.": "Vedle: {names}.",
   "Nobody sits next to it, so it's quiet.": "Vedle nikdo nesedí, je tu klid.",
   "The office in 3D": "Kancelář ve 3D",
+  "{n} new.": {
+    one: "{n} nová.",
+    few: "{n} nové.",
+    many: "{n} nové.",
+    other: "{n} nových.",
+  },
   "{in} of {total} in the office {when}.": "{When} je v kanceláři {in} z {total}.",
   "Your day": "Váš den",
   "Show your day": "Zobrazit váš den",

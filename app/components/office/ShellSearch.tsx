@@ -143,7 +143,7 @@ export const ShellSearch = ({ members }: { members: ShellMember[] }) => {
         </kbd>
       </Popover.Trigger>
       <Popover.Content placement="bottom end" className="rounded-xl">
-        <Popover.Dialog className="w-80 p-2 outline-none">
+        <Popover.Dialog className="w-[min(440px,calc(100vw-24px))] p-3 outline-none">
           <input
             autoFocus
             value={query}
@@ -153,7 +153,8 @@ export const ShellSearch = ({ members }: { members: ShellMember[] }) => {
             }}
             placeholder={t("Name, team or desk…")}
             aria-label={t("Search people, teams and desks")}
-            className="mb-2 h-9 w-full rounded-lg border border-border bg-surface px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-focus"
+            // What you type is the headline: large, on a line of its own.
+            className="mb-2 h-14 w-full border-0 border-b-2 border-foreground bg-transparent px-1 text-2xl font-black tracking-[-0.02em] text-foreground outline-none placeholder:font-bold placeholder:text-muted focus-visible:border-accent"
           />
           {results.length === 0 ? (
             <p className="px-2 py-6 text-center text-sm text-muted">
@@ -166,7 +167,7 @@ export const ShellSearch = ({ members }: { members: ShellMember[] }) => {
                   <button
                     type="button"
                     onClick={() => pick(r)}
-                    className="flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-foreground/5"
+                    className="flex min-h-12 w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-foreground/5"
                   >
                     {r.member ? (
                       <MemberAvatar m={r.member} className="size-8 rounded-full" />
@@ -182,10 +183,10 @@ export const ShellSearch = ({ members }: { members: ShellMember[] }) => {
                       </span>
                     )}
                     <span className="min-w-0">
-                      <span className="block truncate text-sm font-semibold text-foreground">
+                      <span className="block truncate text-base font-extrabold text-foreground">
                         {r.title}
                       </span>
-                      <span className="block truncate text-xs text-muted">{r.subtitle}</span>
+                      <span className="block truncate text-sm text-muted">{r.subtitle}</span>
                     </span>
                   </button>
                 </li>

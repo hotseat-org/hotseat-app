@@ -200,10 +200,7 @@ export const TitleNameField = ({
   const { t } = useI18n()
   return (
     <div className={clsx("flex w-full flex-col gap-1.5", isCentered && "items-center")}>
-      <label
-        htmlFor="create-name"
-        className="text-xs font-extrabold tracking-[0.06em] text-muted uppercase"
-      >
+      <label htmlFor="create-name" className="text-sm font-black text-foreground">
         {label}
       </label>
       <input

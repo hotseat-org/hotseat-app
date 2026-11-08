@@ -33,7 +33,7 @@ type SettingsShellProps = {
   title: string
   /** Who/what these settings are for: shown at the top of the nav. */
   identity: { visual: ReactNode; name: string; sub: string }
-  /** Small uppercase label above the nav items. */
+  /** A small label above the nav items, in sentence case. */
   groupLabel: string
   links: SettingsLink[]
   /** Unset: none picked yet — a phone lists them, a larger screen shows the first. */
@@ -150,9 +150,7 @@ export function SettingsShell({
           </div>
         </div>
         <div className="flex flex-col gap-1">
-          <p className="px-2.5 pb-1.5 text-[11px] font-extrabold uppercase tracking-wider text-muted">
-            {groupLabel}
-          </p>
+          <p className="px-2.5 pb-1.5 text-[13px] font-black text-muted">{groupLabel}</p>
           {main.map(item)}
         </div>
         <div className="flex-1" />
@@ -329,9 +327,7 @@ const SectionList = ({
         </div>
       </div>
       <div>
-        <p className="px-4 pb-1.5 text-[11px] font-extrabold uppercase tracking-wider text-muted">
-          {groupLabel}
-        </p>
+        <p className="px-4 pb-1.5 text-[13px] font-black text-muted">{groupLabel}</p>
         <ul className="divide-y divide-separator overflow-hidden rounded-2xl bg-surface shadow-surface">
           {main.map(row)}
         </ul>

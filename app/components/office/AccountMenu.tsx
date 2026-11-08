@@ -113,8 +113,10 @@ const AccountContent = ({
       <div className="flex items-center gap-3 px-2 pb-1 pt-2">
         <MemberAvatar m={me} className="size-11 shrink-0 rounded-xl" />
         <div className="min-w-0">
-          <p className="truncate text-[15px] font-extrabold text-foreground">{nameOf(me)}</p>
-          <p className="truncate text-xs text-muted">{me.userEmail}</p>
+          <p className="truncate text-2xl leading-tight font-black tracking-[-0.02em] text-foreground">
+            {nameOf(me)}
+          </p>
+          <p className="truncate text-sm text-muted">{me.userEmail}</p>
         </div>
       </div>
 

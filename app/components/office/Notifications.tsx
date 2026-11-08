@@ -16,7 +16,7 @@ import { readNotification } from "~/i18n/notifications"
 export const NotificationsBell = ({ triggerClassName }: { triggerClassName: string }) => {
   const { notifications } = useOrganizationContext()
   const i18n = useI18n()
-  const { t, format } = i18n
+  const { t, tn, format } = i18n
   const markRead = useFetcher()
   // Unread at the moment it opened (the list refreshes as read meanwhile).
   const [wasUnread, setWasUnread] = useState<Set<string>>(new Set())
@@ -45,25 +45,32 @@ export const NotificationsBell = ({ triggerClassName }: { triggerClassName: stri
       </Popover.Trigger>
       <Popover.Content placement="bottom end" className="rounded-xl">
         <Popover.Dialog className="w-80 max-w-[calc(100vw-24px)] p-1.5 outline-none">
+          {/* What's new, as a headline: "2 new." */}
+          <h2 className="px-3 pt-2 pb-1 text-2xl leading-tight font-black tracking-[-0.02em] text-foreground">
+            {wasUnread.size ? tn(wasUnread.size, "{n} new.", "{n} new.") : t("Notifications")}
+          </h2>
           {notifications.items.length === 0 ? (
-            <div className="p-3 text-center">
-              <p className="text-sm font-semibold text-foreground">{t("You're all caught up")}</p>
-              <p className="mt-0.5 text-xs text-muted">
+            <div className="px-3 pt-1 pb-3">
+              <p className="text-base font-bold text-foreground">{t("You're all caught up")}</p>
+              <p className="mt-0.5 text-sm text-muted">
                 {t("Changes to your bookings or desk show up here.")}
               </p>
             </div>
           ) : (
             <ScrollArea className="max-h-96">
-              <ul className="flex flex-col gap-0.5">
+              <ul className="flex flex-col">
                 {notifications.items.map((n) => {
                   const body = (
                     <>
-                      <p className="text-sm text-foreground">{readNotification(i18n, n.message)}</p>
-                      <p className="mt-0.5 text-xs text-muted">{format.ago(n.createdAt)}</p>
+                      <p className="text-[15px] leading-snug font-bold text-foreground">
+                        {readNotification(i18n, n.message)}
+                      </p>
+                      <p className="mt-0.5 text-sm text-muted">{format.ago(n.createdAt)}</p>
                     </>
                   )
                   const className = clsx(
-                    "block rounded-lg px-3 py-2.5",
+                    // Ruled rows, the headline's lists.
+                    "block border-t border-separator px-3 py-3",
                     wasUnread.has(n.id) && "bg-accent/10",
                     n.link && "hover:bg-foreground/5"
                   )

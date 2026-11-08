@@ -50,11 +50,7 @@ export const DateStepper = () => {
         >
           <CalendarDays className="size-4 text-accent" />
           {format.long(day)}
-          {day === today && (
-            <span className="text-[0.64rem] font-black uppercase tracking-wider text-accent">
-              {t("Today")}
-            </span>
-          )}
+          {day === today && <span className="text-xs font-black text-accent">{t("Today")}</span>}
         </Popover.Trigger>
         <Popover.Content placement="top" offset={14} className="rounded-2xl">
           <Popover.Dialog aria-label={t("Pick a day")} className="p-4 outline-none">

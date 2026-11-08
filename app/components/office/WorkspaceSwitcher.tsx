@@ -493,9 +493,7 @@ const OrgLogo = ({ src, name, className }: { src?: string; name: string; classNa
 )
 
 const SectionLabel = ({ children }: { children: ReactNode }) => (
-  <p className="px-2 pb-1 pt-2 text-[0.64rem] font-extrabold uppercase tracking-wider text-muted">
-    {children}
-  </p>
+  <p className="px-2 pb-1 pt-2 text-[13px] font-black text-muted">{children}</p>
 )
 
 /**

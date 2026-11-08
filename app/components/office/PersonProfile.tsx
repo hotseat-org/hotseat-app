@@ -126,9 +126,7 @@ const ProfileDialog = ({
       <ScrollArea frameClassName="mt-5 flex-1" className="flex flex-col gap-5">
         {permanentDesk && (
           <section>
-            <h3 className="text-xs font-extrabold uppercase tracking-[0.08em] text-muted">
-              {t("Permanent desk")}
-            </h3>
+            <h3 className="text-base font-black text-foreground">{t("Permanent desk")}</h3>
             <DeskRow
               label={deskName(i18n, permanentDesk)}
               onShow={() => showDesk(permanentDesk.id, booking.day || booking.today)}
@@ -137,9 +135,7 @@ const ProfileDialog = ({
         )}
 
         <section>
-          <h3 className="text-xs font-extrabold uppercase tracking-[0.08em] text-muted">
-            {t("In the office")}
-          </h3>
+          <h3 className="text-base font-black text-foreground">{t("In the office")}</h3>
           {days.length === 0 ? (
             <p className="mt-2 text-sm text-muted">
               {permanentDesk ? t("At their own desk.") : t("No days booked ahead.")}
