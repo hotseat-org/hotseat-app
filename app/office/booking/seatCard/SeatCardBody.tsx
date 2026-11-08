@@ -133,7 +133,7 @@ const Row = ({
         getRowSize(isSheet, !!detail),
         // The one main action: the headline's ink pill; the rest, plain words.
         isPrimary
-          ? "mb-1.5 rounded-full bg-foreground px-4 font-black text-background hover:opacity-90"
+          ? "mb-1.5 rounded-full bg-pill px-4 font-black text-pill-foreground hover:opacity-90"
           : clsx(
               "rounded-xl font-extrabold hover:bg-foreground/5",
               isDanger ? "text-danger" : "text-foreground"
@@ -445,7 +445,7 @@ export const SeatCardBody = ({
             : clsx(
                 // Floating over its desk: a piece of the ground (its colour at
                 // this hour) with a clean edge — a hairline and a soft shadow.
-                "w-[360px] gap-1.5 rounded-[24px] bg-(--ground) px-5 pt-4 pb-4 shadow-[0_0_0_1px_color-mix(in_oklab,var(--foreground)_12%,transparent),0_24px_48px_-24px_rgb(0_0_0/0.45)]",
+                "w-[360px] gap-1.5 rounded-[24px] bg-(--ground-surface) px-5 pt-4 pb-4 shadow-[0_0_0_1px_color-mix(in_oklab,var(--foreground)_12%,transparent),0_24px_48px_-24px_rgb(0_0_0/0.45)]",
                 below ? "origin-top" : "origin-bottom",
                 closing ? "seat-pop-out" : "seat-pop"
               )
@@ -568,7 +568,7 @@ export const SeatCardBody = ({
           <span
             aria-hidden
             className={clsx(
-              "absolute left-1/2 size-3.5 -translate-x-1/2 rotate-45 bg-(--ground)",
+              "absolute left-1/2 size-3.5 -translate-x-1/2 rotate-45 bg-(--ground-surface)",
               below
                 ? "-top-[7px] shadow-[-1px_-1px_0_color-mix(in_oklab,var(--foreground)_12%,transparent)]"
                 : "-bottom-[7px] shadow-[1px_1px_0_color-mix(in_oklab,var(--foreground)_12%,transparent)]"

@@ -1,7 +1,6 @@
 import clsx from "clsx"
 import type { ReactNode } from "react"
 import { useEditorStore } from "../../store"
-import { hasWebGL } from "../../shell/webgl"
 import { useModules } from "../../modules"
 import { SkySlider } from "./SkySlider"
 import { useI18n } from "~/i18n/I18nProvider"
@@ -31,9 +30,6 @@ export const TimeOfDay = ({
   const syncTime = useEditorStore((state) => state.syncTime)
   const setSyncTime = useEditorStore((state) => state.setSyncTime)
   const items = useModules().flatMap((module) => module.bottomBarItems ?? [])
-  const view = useEditorStore((state) => state.view)
-  // The flat plan has no lighting: no time-of-day there.
-  const flat = isViewing && (view === "2d" || !hasWebGL())
 
   return (
     // Viewing, the time and the way to edit in the bottom-right corner,
@@ -50,29 +46,27 @@ export const TimeOfDay = ({
       {lead}
       {/* The modules' (the office: the day shown) — by the headline when viewing. */}
       {!isViewing && items.map((Item, index) => <Item key={index} />)}
-      {!flat && (
-        <div className="flex items-center gap-1.5">
-          <SkySlider
-            value={timeOfDay}
-            onChange={setTimeOfDay}
-            className={clsx("mx-1", isViewing ? "w-44" : "w-56")}
-          />
-          {/* Back to the real time — its room kept while following it, so the
-              bar never changes width. */}
-          <button
-            type="button"
-            onClick={() => setSyncTime(true)}
-            aria-hidden={syncTime}
-            tabIndex={syncTime ? -1 : undefined}
-            className={clsx(
-              "h-7 rounded-lg px-2 text-xs font-bold text-accent transition-opacity hover:bg-accent/10",
-              syncTime && "pointer-events-none opacity-0"
-            )}
-          >
-            {t("Now")}
-          </button>
-        </div>
-      )}
+      <div className="flex items-center gap-1.5">
+        <SkySlider
+          value={timeOfDay}
+          onChange={setTimeOfDay}
+          className={clsx("mx-1", isViewing ? "w-44" : "w-56")}
+        />
+        {/* Back to the real time — its room kept while following it, so the
+            bar never changes width. */}
+        <button
+          type="button"
+          onClick={() => setSyncTime(true)}
+          aria-hidden={syncTime}
+          tabIndex={syncTime ? -1 : undefined}
+          className={clsx(
+            "h-7 rounded-lg px-2 text-xs font-bold text-accent transition-opacity hover:bg-accent/10",
+            syncTime && "pointer-events-none opacity-0"
+          )}
+        >
+          {t("Now")}
+        </button>
+      </div>
       {children && (
         <>
           {!isViewing && <span className="mx-1 h-6 w-px bg-separator" aria-hidden />}

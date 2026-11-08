@@ -84,6 +84,38 @@ export const getGroundColor = (time: number, isDark: boolean): [number, number, 
   ) as [number, number, number]
 }
 
+/**
+ * How the scene's light colours a surface at a time of day: the ground's
+ * colour then over its colour at noon, per channel (1 = noon's, less is
+ * darker and, at night, bluer). The flat plan is tinted by it, so it dims
+ * and cools as the 3D office does.
+ */
+export const getLightTint = (time: number, isDark: boolean): [number, number, number] => {
+  const ground = getGroundColor(time, isDark)
+  const noon = getGroundColor(12, isDark)
+
+  return [0, 1, 2].map((channel) => Math.min(1, ground[channel] / noon[channel])) as [
+    number,
+    number,
+    number,
+  ]
+}
+
+/** A "#rrggbb" colour as [r, g, b]. */
+const parseHex = (hex: string): [number, number, number] =>
+  [1, 3, 5].map((start) => parseInt(hex.slice(start, start + 2), 16)) as [number, number, number]
+
+/** The flat plan's backdrop under the light of a time of day, as [r, g, b]. */
+export const getPlanGround = (time: number, isDark: boolean, backdrop: string) => {
+  const tint = getLightTint(time, isDark)
+
+  return parseHex(backdrop).map((channel, index) => Math.round(channel * tint[index])) as [
+    number,
+    number,
+    number,
+  ]
+}
+
 const toLinear = (channel: number) => {
   const value = channel / 255
 

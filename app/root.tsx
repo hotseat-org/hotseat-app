@@ -247,7 +247,7 @@ export function ErrorBoundary() {
             )}
             <a
               href={`${import.meta.env.BASE_URL}app`}
-              className="mt-8 inline-flex h-14 items-center rounded-full bg-foreground px-7 text-lg font-black text-background transition-opacity outline-none hover:opacity-90 focus-visible:ring-2 focus-visible:ring-focus"
+              className="mt-8 inline-flex h-14 items-center rounded-full bg-pill px-7 text-lg font-black text-pill-foreground transition-opacity outline-none hover:opacity-90 focus-visible:ring-2 focus-visible:ring-focus"
             >
               {t("Back to your offices")}
             </a>

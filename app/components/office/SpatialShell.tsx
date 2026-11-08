@@ -1,6 +1,6 @@
 import { ZoomOut } from "lucide-react"
 import clsx from "clsx"
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react"
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
 import { PANEL, PANEL_HOVER, type ShellMember, type ShellOffice } from "./shell-ui"
 import { SwitcherPage, WorkspaceSwitcher, type SwitcherMenu } from "./WorkspaceSwitcher"
 import { PersonProfile } from "./PersonProfile"
@@ -98,19 +98,16 @@ const UNDERLINE_WIDTH = 100
  * Measured from the current link, and again whenever the bar resizes. None
  * when no section is current (a page of the top bar's own).
  */
-const NavUnderline = ({
-  navRef,
-  currentKey,
-}: {
-  navRef: RefObject<HTMLElement | null>
-  currentKey: string
-}) => {
+const NavUnderline = ({ currentKey }: { currentKey: string }) => {
+  // The line itself, always there (hidden with no current section): its parent,
+  // the nav, is there to measure from the first render on.
+  const line = useRef<HTMLSpanElement>(null)
   const [place, setPlace] = useState<{ left: number; width: number } | null>(null)
   // No glide into the first place (or back from none): it just appears there.
   const [isGliding, setIsGliding] = useState(false)
 
   useLayoutEffect(() => {
-    const nav = navRef.current
+    const nav = line.current?.parentElement
     if (!nav) return
 
     const measure = () => {
@@ -125,7 +122,7 @@ const NavUnderline = ({
     observer.observe(nav)
 
     return () => observer.disconnect()
-  }, [navRef, currentKey])
+  }, [currentKey])
 
   useEffect(() => {
     if (!place) return setIsGliding(false)
@@ -135,17 +132,19 @@ const NavUnderline = ({
     return () => cancelAnimationFrame(frame)
   }, [place === null])
 
-  if (!place) return null
-
   return (
     <span
+      ref={line}
       aria-hidden
       style={{
         width: UNDERLINE_WIDTH,
-        transform: `translateX(${place.left}px) scaleX(${place.width / UNDERLINE_WIDTH})`,
+        transform: place
+          ? `translateX(${place.left}px) scaleX(${place.width / UNDERLINE_WIDTH})`
+          : undefined,
       }}
       className={clsx(
-        "pointer-events-none absolute bottom-1 left-0 h-[3px] origin-left rounded-full bg-foreground",
+        "pointer-events-none absolute bottom-1 left-0 h-[3px] origin-left rounded-full bg-accent",
+        !place && "invisible",
         isGliding &&
           "transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
       )}
@@ -185,7 +184,6 @@ export const SpatialShell = ({
   // The top bar's own pages — search, what's new, your account — in the same
   // column as the others (one thing in it at a time), not floating popups.
   const [barPage, setBarPage] = useState<BarPage | null>(null)
-  const navRef = useRef<HTMLElement>(null)
   const closeBarPage = useCallback(() => setBarPage(null), [])
   const toggleBarPage = useCallback(
     (page: BarPage) => {
@@ -293,7 +291,6 @@ export const SpatialShell = ({
         <span className="flex-1" />
         <div className="order-last basis-full min-[1280px]:order-none min-[1280px]:basis-auto">
           <nav
-            ref={navRef}
             aria-label={t("Primary")}
             className={`${PANEL} relative flex w-fit items-center gap-2`}
           >
@@ -350,7 +347,6 @@ export const SpatialShell = ({
               />
             ))}
             <NavUnderline
-              navRef={navRef}
               currentKey={[officePanel.panel, sidePanel?.id, barPage, hasHeatmap].join()}
             />
           </nav>

@@ -1,7 +1,7 @@
 import { useEffect } from "react"
 import { useEditorStoreApi } from "../store"
 import { SURFACES } from "../palette"
-import { getGroundColor, isGroundDark } from "./groundColor"
+import { getGroundColor, getPlanGround, isGroundDark } from "./groundColor"
 
 /**
  * Undo a change to the root a frame later, unless it's made again by then:
@@ -31,27 +31,35 @@ const keepNow = (key: string) => {
  * of it, so they melt into the land and only show over the model), and a light
  * theme whose ground has gone dark takes the dark theme's colours
  * (`data-ground="dark"`, see tailwind.css). Written straight to the root, no
- * React render. The flat plan has no lighting: its backdrop's colour, all day.
+ * React render. The flat plan: its backdrop, under the same light (PlanLight).
  */
-export const useGroundTone = ({ isDark, isLit }: { isDark: boolean; isLit: boolean }) => {
+export const useGroundTone = ({
+  isDark,
+  isLit,
+  isOnPaper = true,
+}: {
+  isDark: boolean
+  /** The 3D scene (lit); otherwise the flat plan. */
+  isLit: boolean
+  /**
+   * The app's words sit on the ground (a computer's shell): they take night
+   * colours when it goes dark. A phone's bars are solid: they keep theirs.
+   */
+  isOnPaper?: boolean
+}) => {
   const store = useEditorStoreApi()
 
   useEffect(() => {
     const root = document.documentElement
-    // The flat plan: its own backdrop, the same all day (it has no lighting).
-    if (!isLit) {
-      keepNow("ground")
-      root.style.setProperty("--ground", SURFACES[isDark ? "dark" : "light"].planBackdrop)
-      delete root.dataset.ground
-
-      return () => clearLater("ground", () => root.style.removeProperty("--ground"))
-    }
 
     keepNow("ground")
+    // The flat plan: its backdrop under the hour's light (see PlanLight).
     const apply = (time: number) => {
-      const ground = getGroundColor(time, isDark)
+      const ground = isLit
+        ? getGroundColor(time, isDark)
+        : getPlanGround(time, isDark, SURFACES[isDark ? "dark" : "light"].planBackdrop)
       root.style.setProperty("--ground", `rgb(${ground.join(" ")})`)
-      if (!isDark && isGroundDark(ground)) root.dataset.ground = "dark"
+      if (isOnPaper && !isDark && isGroundDark(ground)) root.dataset.ground = "dark"
       else delete root.dataset.ground
     }
     apply(store.getState().timeOfDay)
@@ -66,5 +74,5 @@ export const useGroundTone = ({ isDark, isLit }: { isDark: boolean; isLit: boole
         delete root.dataset.ground
       })
     }
-  }, [store, isDark, isLit])
+  }, [store, isDark, isLit, isOnPaper])
 }

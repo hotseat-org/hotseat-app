@@ -109,6 +109,13 @@
      the ground"). Its quiet text is darker than --muted: small text on it still
      reads (4.5:1). */
   --ground: #d3ccc3;
+  /* The main action's pill, in the colour scheme's own colour (deepened to
+     carry white words) — the scheme's mark on every screen. */
+  --pill: color-mix(in oklab, var(--accent) 86%, #000);
+  --pill-foreground: #fff;
+  /* What pages, the masthead and the desk card sit on: the ground, touched
+     with the scheme's colour. */
+  --ground-surface: color-mix(in oklab, var(--ground) 91%, var(--accent));
   /* Quiet words are still near-ink here: at dusk the ground goes grey, and a
      lighter grey would sink into it. Weight, not paleness, sets them apart. */
   --ground-muted: #3e4150;
@@ -196,6 +203,8 @@
    the words on it take the dark theme's colours. */
 :root[data-ground="dark"] {
   --ground: #1e202a;
+  --pill: var(--accent);
+  --pill-foreground: var(--background);
   --ground-muted: #a4abba;
   --ground-accent: var(--accent);
   --ground-danger: var(--danger);
@@ -453,6 +462,8 @@
 
 /* Expose the phone chrome to Tailwind utilities (bg-chrome / border-chrome-border). */
 @theme inline {
+  --color-pill: var(--pill);
+  --color-pill-foreground: var(--pill-foreground);
   --color-star: var(--star);
   --color-star-surface: var(--star-surface);
   --color-chrome: var(--chrome);
@@ -1005,14 +1016,14 @@ input:-webkit-autofill:focus {
   }
 }
 
-/* The one main action anywhere — Save, Create office, Invite — is the headline's ink
-   pill, as on its pages; the accent stays for links and marks. Unlayered, so it wins
+/* The one main action anywhere — Save, Create office, Invite — is the headline's
+   pill, in the colour scheme's colour (--pill), as on its pages. Unlayered, so it wins
    over the UI kit's own (in its layer). */
 .button--primary {
-  --button-bg: var(--color-foreground);
-  --button-bg-hover: color-mix(in oklab, var(--color-foreground) 84%, var(--color-background));
-  --button-bg-pressed: color-mix(in oklab, var(--color-foreground) 84%, var(--color-background));
-  --button-fg: var(--color-background);
+  --button-bg: var(--pill);
+  --button-bg-hover: color-mix(in oklab, var(--pill) 86%, var(--pill-foreground));
+  --button-bg-pressed: color-mix(in oklab, var(--pill) 86%, var(--pill-foreground));
+  --button-fg: var(--pill-foreground);
   border-radius: 9999px;
   font-weight: 800;
 }
@@ -1331,7 +1342,7 @@ input:-webkit-autofill:focus {
    out (transform only). The office's own view (the headline) has none. */
 .column-sheet {
   transform: translateX(-100%);
-  background: var(--ground);
+  background: var(--ground-surface);
   box-shadow:
     1px 0 0 color-mix(in oklab, var(--foreground) 12%, transparent),
     16px 0 40px -24px rgb(0 0 0 / 0.35);

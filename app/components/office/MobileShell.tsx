@@ -170,7 +170,7 @@ export const MAP_RING =
   "relative grid size-11 shrink-0 place-items-center rounded-full border-2 border-foreground transition-colors"
 
 const DOCK_BUTTON =
-  "flex min-h-11 shrink-0 items-center gap-1.5 rounded-full bg-foreground px-4 text-sm font-black text-background"
+  "flex min-h-11 shrink-0 items-center gap-1.5 rounded-full bg-pill px-4 text-sm font-black text-pill-foreground"
 const DOCK_BUTTON_QUIET =
   // A word beside the title, underlined (the headline's links).
   "flex min-h-11 shrink-0 items-center px-1 text-base font-extrabold text-foreground underline decoration-2 underline-offset-[5px]"
@@ -415,7 +415,7 @@ const DayStrip = () => {
               // today ringed.
               "relative flex h-12 w-11 shrink-0 snap-center flex-col items-center justify-center gap-0.5 rounded-xl transition-colors",
               isSelected
-                ? "bg-foreground text-background"
+                ? "bg-pill text-pill-foreground"
                 : clsx(
                     d === today && "ring-2 ring-inset ring-foreground",
                     d < today || isWeekend(d) || isClosed ? "text-muted" : "text-foreground"

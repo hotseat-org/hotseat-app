@@ -199,7 +199,7 @@ const EditorInner = ({
   )
   useEditorShortcuts(readOnly)
   // The words over the office follow its light (light text on a night ground).
-  useGroundTone({ isDark, isLit: !flat })
+  useGroundTone({ isDark, isLit: !flat, isOnPaper: !isMobile })
   // Editing and viewing have their own side panels: switching starts with none open.
   useEffect(() => store.getState().closeSidePanel(), [readOnly, store])
   const { guardPanels } = useAutosave({ onSave, saveFailed })

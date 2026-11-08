@@ -211,7 +211,7 @@ export const MyBookings = ({
           <button
             type="button"
             onClick={onFindSeat}
-            className="flex min-h-12 items-center gap-2 rounded-full bg-foreground px-6 text-base font-black text-background outline-none focus-visible:ring-2 focus-visible:ring-focus"
+            className="flex min-h-12 items-center gap-2 rounded-full bg-pill px-6 text-base font-black text-pill-foreground outline-none focus-visible:ring-2 focus-visible:ring-focus"
           >
             <Armchair className="size-5" /> {t("Find a seat")}
           </button>

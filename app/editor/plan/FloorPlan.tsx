@@ -17,6 +17,7 @@ import { buildScene } from "./drawing/buildScene"
 import { fitView, turnObject, type Bounds, type Insets, type View } from "./planView"
 import { useGlide, type Frame } from "./useFraming"
 import { usePlanGestures } from "./usePlanGestures"
+import { PlanLight } from "./PlanLight"
 
 /** Room kept clear of the floating chrome when fitting (px). */
 const FIT_PAD = { top: 96, bottom: 112, left: 112 }
@@ -274,6 +275,7 @@ export const FloorPlan = ({
           </g>
         )}
       </svg>
+      <PlanLight isDark={dark} />
 
       {plan && overlays.map((Overlay, index) => <Overlay key={index} plan={plan} />)}
 
