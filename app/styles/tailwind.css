@@ -105,9 +105,9 @@
   --radius: 0.375rem;
 
   /* The office's ground as the 3D scene draws it by day (its lit floor): what
-     pages, dialogs and popups are made of, so they're the land, not a card on
-     it (see "Veil"). Its quiet text is darker than --muted: small text on it
-     still reads (4.5:1). */
+     pages, dialogs and popups sit on, with no background of their own (see "On
+     the ground"). Its quiet text is darker than --muted: small text on it still
+     reads (4.5:1). */
   --ground: #d3ccc3;
   --ground-muted: #575141;
   /* The accent, danger and success (any colour scheme's), deepened to read as
@@ -115,8 +115,11 @@
   --ground-accent: color-mix(in oklab, var(--accent) 72%, #000);
   --ground-danger: color-mix(in oklab, var(--danger) 76%, #000);
   --ground-success: color-mix(in oklab, var(--success) 62%, #000);
-  /* What lifts a piece of it off the rest: a soft, wide shade of ink. */
-  --ground-shadow: 0 50px 120px -50px color-mix(in oklab, var(--foreground) 45%, transparent);
+  /* Behind each letter on it: a faint glow of the ground, for where words
+     cross the model. */
+  --ground-halo:
+    0 0 2px color-mix(in oklab, var(--ground) 70%, transparent),
+    0 0 14px color-mix(in oklab, var(--ground) 80%, transparent);
 
   --background: #f1e9db;
   --foreground: #33384a; /* editor seatLeg, darkened for text */
@@ -189,13 +192,18 @@
    faint highlight along each panel's top edge and deeper shadows — so panels
    stand off the floor instead of melting into it. */
 .dark,
-[data-theme="dark"] {
+[data-theme="dark"],
+/* The office's ground gone dark (a light theme's night, see useGroundTone):
+   the words on it take the dark theme's colours. */
+:root[data-ground="dark"] {
   --ground: #1e202a;
   --ground-muted: #a4abba;
   --ground-accent: var(--accent);
   --ground-danger: var(--danger);
   --ground-success: var(--success);
-  --ground-shadow: 0 50px 120px -40px rgb(0 0 0 / 0.7);
+  --ground-halo:
+    0 0 2px color-mix(in oklab, var(--ground) 70%, transparent),
+    0 0 14px color-mix(in oklab, var(--ground) 80%, transparent);
   --background: #151820;
   --foreground: #f2ede4;
 
@@ -293,7 +301,8 @@
 }
 
 :root[data-scheme="sage"].dark,
-:root[data-scheme="sage"][data-theme="dark"] {
+:root[data-scheme="sage"][data-theme="dark"],
+:root[data-scheme="sage"][data-ground="dark"] {
   --background: #121612;
   --foreground: #e9efe6;
   --surface: #232b24;
@@ -336,7 +345,8 @@
 }
 
 :root[data-scheme="terracotta"].dark,
-:root[data-scheme="terracotta"][data-theme="dark"] {
+:root[data-scheme="terracotta"][data-theme="dark"],
+:root[data-scheme="terracotta"][data-ground="dark"] {
   --background: #1a1311;
   --foreground: #f6e9e1;
   --surface: #2e221d;
@@ -379,7 +389,8 @@
 }
 
 :root[data-scheme="ocean"].dark,
-:root[data-scheme="ocean"][data-theme="dark"] {
+:root[data-scheme="ocean"][data-theme="dark"],
+:root[data-scheme="ocean"][data-ground="dark"] {
   --background: #0e151d;
   --foreground: #e6eef5;
   --surface: #1b2633;
@@ -422,7 +433,8 @@
 }
 
 :root[data-scheme="plum"].dark,
-:root[data-scheme="plum"][data-theme="dark"] {
+:root[data-scheme="plum"][data-theme="dark"],
+:root[data-scheme="plum"][data-ground="dark"] {
   --background: #161117;
   --foreground: #f2e8f3;
   --surface: #28202a;
@@ -762,7 +774,8 @@ input:-webkit-autofill:focus {
     --page-edge: var(--chrome);
   }
   html.dark,
-  html[data-theme="dark"] {
+  html[data-theme="dark"],
+  html[data-ground="dark"] {
     color-scheme: dark;
   }
 
@@ -1165,71 +1178,67 @@ input:-webkit-autofill:focus {
   }
 }
 
-/* ── Veil ──────────────────────────────────────────────────────────────────
-   What sits on top of the office is made of its ground: a page is the ground
-   itself, fading out on its right (no edge, no corner); dialogs and popups are
-   pieces of it, lifted by a soft shadow, over a haze of the ground instead of
-   black. No blur anywhere (it would redraw with every frame of the scene).
-   Unlayered, so it wins over the UI kit's own (in its layer). */
-/* A dialog or popup of the app's own (the desk card, settings, a person): a piece
-   of the ground. A utility, so it takes variants (md:veil-surface). */
-@utility veil-surface {
-  --overlay: var(--ground);
+/* A light theme's night (useGroundTone): the dark theme's colours, retuned for
+   the scene's night ground — a blue-grey from rgb(65 75 95) to rgb(99 111 140),
+   lighter than the dark theme's own. Near-white words, a dark halo behind
+   every letter (dusk passes through mid-grey, where no colour alone reaches
+   4.5:1), and the haze under a dialog in that blue. */
+:root[data-ground="dark"] {
+  --ground: #505c76;
+  --foreground: #fbf8f2;
+  --muted: #d5d9e3;
+  --ground-muted: #e3e6ee;
+  --ground-accent: #c9dafa;
+  --ground-danger: #ffb4ad;
+  --ground-success: #bfe0a6;
+  --ground-halo: 0 0 2px rgb(16 20 32 / 0.6), 0 0 14px rgb(16 20 32 / 0.5);
+}
+:root[data-ground="dark"] body {
+  text-shadow: var(--ground-halo);
+}
+
+/* ── On the ground ─────────────────────────────────────────────────────────
+   Nothing over the office has a background: pages, popups, dialogs and the
+   desk card are words straight on its ground, as the headline is. Their colours
+   follow the ground's light instead (the theme's, and at night the dark one's:
+   see useGroundTone), with a faint halo of the ground behind each letter for
+   where they cross the model. On the ground, the quiet and coloured text is
+   deeper, to keep 4.5:1. No blur anywhere (it would redraw with every frame of
+   the scene). Unlayered, so it wins over the UI kit's own (in its layer). */
+@utility on-ground {
+  --overlay: transparent;
   --muted: var(--ground-muted);
   --accent: var(--ground-accent);
   --danger: var(--ground-danger);
   --success: var(--ground-success);
   color: var(--foreground);
-  background: var(--ground);
+  background: transparent;
   border: 0;
-  box-shadow: var(--ground-shadow);
+  box-shadow: none;
+  text-shadow: var(--ground-halo);
 }
 
-/* The UI kit's popovers and dialogs: the same piece of ground. */
+/* The UI kit's popovers and dialogs: the same, words on the ground. */
 .popover,
 .modal__dialog,
 .alert-dialog__dialog {
-  --overlay: var(--ground);
+  --overlay: transparent;
   --muted: var(--ground-muted);
   --accent: var(--ground-accent);
   --danger: var(--ground-danger);
   --success: var(--ground-success);
   color: var(--foreground);
-  background: var(--ground);
+  background: transparent;
   border: 0;
-  box-shadow: var(--ground-shadow);
+  box-shadow: none;
+  text-shadow: var(--ground-halo);
 }
 
-.modal__dialog,
-.alert-dialog__dialog {
-  border-radius: 36px;
-}
-
-/* A page in the office's column: the ground itself, fading out on its right
-   (the page's width includes the fade's room). */
-.veil-page {
-  --overlay: var(--ground);
-  --muted: var(--ground-muted);
-  --accent: var(--ground-accent);
-  --danger: var(--ground-danger);
-  --success: var(--ground-success);
-  --veil-fade: 120px;
-  padding-right: var(--veil-fade);
-  background: linear-gradient(
-    90deg,
-    var(--ground) 0,
-    var(--ground) calc(100% - var(--veil-fade)),
-    color-mix(in oklab, var(--ground) 0%, transparent) 100%
-  );
-}
-
-/* Under a dialog: a haze of the ground, densest in the middle, not black. */
-.veil-scrim,
+/* Under a dialog: the ground (its colour at this hour), opaque, so what the
+   dialog says reads on a calm field with no box of its own (nothing ghosting
+   through behind its words), not black. */
+.ground-scrim,
 .modal__backdrop,
 .alert-dialog__backdrop {
-  background: radial-gradient(
-    ellipse at center,
-    color-mix(in oklab, var(--ground) 94%, transparent) 30%,
-    color-mix(in oklab, var(--ground) 62%, transparent) 100%
-  );
+  background: var(--ground);
 }

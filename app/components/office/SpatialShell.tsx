@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import { PANEL, PANEL_HOVER, type ShellMember, type ShellOffice } from "./shell-ui"
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher"
 import { PersonProfile } from "./PersonProfile"
@@ -83,6 +84,9 @@ export const SpatialShell = ({
   const { t } = useI18n()
   const hasHeatmap = useOfficeStore((s) => s.heatmap !== null)
   const isBooking = useOfficeStore((s) => s.booking.enabled)
+  // A desk's card takes the left column (the headline's place) while it's open.
+  const isDeskOpen = useOfficeStore((s) => s.seatCard !== null)
+  const closeSeatCard = useOfficeStore((s) => s.closeSeatCard)
   // Who sits where on the shown day: permanent residents + bookings.
   const { byPerson } = useDesksOnDay()
   // The office's pages — who's in, your bookings, finding a seat, Insights —
@@ -93,6 +97,7 @@ export const SpatialShell = ({
   /** Open one of the pages (closing a side panel), or close it if it's open. */
   const togglePage = (panel: OfficePanel) => {
     sidePanels.close()
+    closeSeatCard()
     if (officePanel.panel === panel) officePanel.close()
     else officePanel.open(panel)
   }
@@ -100,6 +105,7 @@ export const SpatialShell = ({
   const toggleSidePanel = (id: string) =>
     withViewTransition(() => {
       officePanel.close()
+      closeSeatCard()
       sidePanels.toggle(id)
     })
   // Your day: its actions under the headline.
@@ -116,6 +122,17 @@ export const SpatialShell = ({
 
   // How many are in on the shown day: beside Who's in, at a glance.
   const inCount = members.filter((member) => byPerson.has(member.userEmail)).length
+
+  // A desk opened (on the map, or from search) while a page is open: the page
+  // gives the column to the desk.
+  const hasPage = !!officePanel.panel || !!sidePanels.openPanel
+  useEffect(() => {
+    if (!isDeskOpen || !hasPage) return
+
+    sidePanels.close()
+    officePanel.close()
+    // Only when a desk opens: a page opened later closes the desk itself.
+  }, [isDeskOpen])
 
   // Phones get their own shell: tab bar, day strip, bottom sheets.
   const isMobile = useIsMobile()
@@ -199,7 +216,7 @@ export const SpatialShell = ({
         />
         <AccountMenu />
       </div>
-      {!isPageOpen && <HeadlineColumn me={me} members={members} day={day} />}
+      {!isPageOpen && !isDeskOpen && <HeadlineColumn me={me} members={members} day={day} />}
 
       {officePanel.panel === "people" && (
         <WhosInModal me={me} members={members} onClose={officePanel.close} />

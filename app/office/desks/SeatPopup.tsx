@@ -2,9 +2,9 @@ import { Html } from "@react-three/drei"
 import { SeatCardBody, useSeatCard } from "../booking/seatCard"
 
 /**
- * View mode (3D): the booking card for a clicked desk, rendered IN the scene — a
- * drei <Html> anchored above the desk, so it follows the desk as the camera
- * orbits/pans. Pops in with a spring; eases out on close.
+ * View mode (3D): the booking card for a clicked desk, in the office's left
+ * column (the headline makes way for it). A drei <Html>, for the scene's
+ * contexts, held at a fixed place on the screen.
  *
  * For the shown day it says who has the desk (a permanent resident, a booking,
  * or nobody) and offers quick choices: just this day, the rest of the week, or
@@ -23,13 +23,18 @@ export const SeatPopup = () => {
 
   return (
     <Html
-      // Anchored just above the desk; the card sits above this point.
+      // Held in the office's left column (where the headline is), not over the
+      // desk: words with no card read on the ground, never over the model.
       position={[card.seat.x, 1.3, card.seat.z]}
+      calculatePosition={getColumnPosition}
       zIndexRange={[60, 40]}
       // drei's wrapper must not catch clicks either (only the buttons do).
       style={{ pointerEvents: "none" }}
     >
-      <SeatCardBody key={card.key} {...card.body} />
+      <SeatCardBody key={card.key} layout="column" {...card.body} />
     </Html>
   )
 }
+
+/** The column's corner on the canvas: the headline's, under the top bar (two rows below 1280px). */
+export const getColumnPosition = () => [24, window.innerWidth < 1280 ? 148 : 96]

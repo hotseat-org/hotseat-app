@@ -136,7 +136,7 @@ export function SettingsShell({
       label={title}
       onClose={close}
       isFullScreenOnPhone
-      className="flex h-dvh w-screen flex-row gap-0 overflow-hidden bg-overlay p-0 md:h-[82vh] md:max-h-[760px] md:w-[min(1080px,94vw)] md:rounded-[36px] md:veil-surface"
+      className="flex h-dvh w-screen flex-row gap-0 overflow-hidden bg-overlay p-0 md:h-[82vh] md:max-h-[760px] md:w-[min(1080px,94vw)] md:on-ground"
     >
       <nav
         aria-label={title}

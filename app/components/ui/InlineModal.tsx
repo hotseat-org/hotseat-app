@@ -44,8 +44,8 @@ export function InlineModal({
       className={clsx(
         // Its own pointer events: inside a layer that lets clicks through to
         // what's under it (the office's shell), it must still catch them.
-        // Over a haze of the ground (the veil), not black.
-        "modal-in-backdrop veil-scrim pointer-events-auto fixed inset-0 grid place-items-center",
+        // Over a haze of the ground, not black.
+        "modal-in-backdrop ground-scrim pointer-events-auto fixed inset-0 grid place-items-center",
         layer === "panel" ? "z-[45]" : "z-50",
         isFullScreenOnPhone ? "p-0 md:p-4" : "p-4"
       )}

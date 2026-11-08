@@ -7,8 +7,8 @@ import { DialogCloseButton } from "~/components/ui/DialogCloseButton"
  * A page of the office in the left column — Who's in, My bookings, Find a
  * seat — where the headline is otherwise, in its way: the page's news as a
  * headline ("6 people in."), a sentence that sums it up, then the page as
- * type, on the office's own ground (the veil: it fades out on its right, no
- * edge, no card). Not modal: the office stays in view and in use beside it (the
+ * type, straight on the office's ground (no background: its colours follow
+ * the ground's light). Not modal: the office stays in view and in use beside it (the
  * picture's centre is moved right for the column), and it stops above the
  * dock. Focus moves in when it opens and back when it closes; Escape closes
  * it.
@@ -52,9 +52,8 @@ export const ColumnPage = ({
         // Named for the move between pages and the headline (see "Motion" in tailwind.css).
         style={{ viewTransitionName: "column" }}
         className={clsx(
-          "pointer-events-auto absolute top-[84px] bottom-[148px] left-0 z-[44] flex flex-col veil-page text-foreground outline-none max-[1279px]:top-[144px]",
-          // Its width includes the veil's fade (120px) beyond the content.
-          isWide ? "w-[min(1020px,100vw)]" : "w-[min(700px,100vw)]"
+          "pointer-events-auto absolute top-[84px] bottom-[148px] left-0 z-[44] flex flex-col on-ground outline-none max-[1279px]:top-[144px]",
+          isWide ? "w-[min(900px,100vw)]" : "w-[min(580px,100vw)]"
         )}
       >
         <header className="flex shrink-0 items-start gap-2 pt-5 pr-6 pb-5 pl-6">

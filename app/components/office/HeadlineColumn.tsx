@@ -116,8 +116,8 @@ export const HeadlineColumn = ({
         inert={!isFolded}
         aria-label={t("Show your day")}
         onClick={requestFit}
-        // Over the zoomed-in office: on a piece of paper, to stay readable.
-        className={`${PANEL} ${PANEL_HOVER} ${MOTION} bg-background absolute left-5 top-[84px] flex max-w-[min(620px,50vw)] max-[1279px]:top-[144px] items-center gap-2.5 py-2 pr-2 pl-3.5 text-left text-[15px] leading-snug font-bold text-foreground outline-none focus-visible:ring-2 focus-visible:ring-focus ${
+        // Over the zoomed-in office: words on the ground (a halo behind each letter).
+        className={`${PANEL} ${PANEL_HOVER} ${MOTION} on-ground absolute left-5 top-[84px] flex max-w-[min(620px,50vw)] max-[1279px]:top-[144px] items-center gap-2.5 py-2 pr-2 pl-3.5 text-left text-[15px] leading-snug font-bold text-foreground outline-none focus-visible:ring-2 focus-visible:ring-focus ${
           isFolded
             ? "pointer-events-auto [transform:none]"
             : "pointer-events-none opacity-0 [transform:translateY(-8px)]"

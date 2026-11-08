@@ -73,6 +73,14 @@ const sampleSky = (hour: number) => {
   return SKY[0][1]
 }
 
+/** How far into night a time of day (hours) is: 0 by day, 1 at night, between around dusk and dawn. */
+export const getNightness = (time: number) => {
+  const hour = ((time % 24) + 24) % 24
+  const elevation = Math.sin(((hour - 6) / 12) * Math.PI)
+
+  return 1 - clamp((elevation + 0.12) / 0.4, 0, 1)
+}
+
 /**
  * Map a time of day (hours) to a lighting profile. The sun rises ~6:00, peaks at
  * noon and sets ~18:00; `nightness` ramps up around dusk so lamps switch on.

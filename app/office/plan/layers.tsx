@@ -115,8 +115,6 @@ export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
     deskId === highlightId ||
     deskId === hoveredId ||
     (!!email && (email === people.me?.email || teammateColors.has(email)))
-  // The card's desk comes from the store, so it's turned here to match.
-  const cardAt = card && turnPoint(card.seat.x, card.seat.z, turn)
   const highlighted = highlightId ? findSpot(highlightId) : undefined
 
   return (
@@ -248,33 +246,34 @@ export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
         })}
 
       {card &&
-        (phoneChrome
-          ? // A bottom sheet over the shell; tapping the dimmed plan closes it.
-            // Portalled: the plan sits in its own (isolated) layer under the
-            // shell, and the sheet must cover the shell's dock and tabs.
-            createPortal(
-              <div className="fixed inset-0 z-50 flex flex-col justify-end">
-                <button
-                  type="button"
-                  aria-label={t("Close desk")}
-                  className="absolute inset-0 bg-scrim"
-                  onPointerDown={(event) => event.stopPropagation()}
-                  onClick={(event) => {
-                    event.stopPropagation()
-                    card.body.onClose()
-                  }}
-                />
-                <div className="relative">
-                  <SeatCardBody key={card.key} layout="sheet" {...card.body} />
-                </div>
-              </div>,
-              document.body
-            )
-          : cardAt && (
-              <div className="absolute" style={screen(cardAt[0], cardAt[1])}>
-                <SeatCardBody key={card.key} {...card.body} />
+        (phoneChrome ? (
+          // A bottom sheet over the shell; tapping the dimmed plan closes it.
+          // Portalled: the plan sits in its own (isolated) layer under the
+          // shell, and the sheet must cover the shell's dock and tabs.
+          createPortal(
+            <div className="fixed inset-0 z-50 flex flex-col justify-end">
+              <button
+                type="button"
+                aria-label={t("Close desk")}
+                className="absolute inset-0 bg-scrim"
+                onPointerDown={(event) => event.stopPropagation()}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  card.body.onClose()
+                }}
+              />
+              <div className="relative">
+                <SeatCardBody key={card.key} layout="sheet" {...card.body} />
               </div>
-            ))}
+            </div>,
+            document.body
+          )
+        ) : (
+          // In the office's left column, as in 3D (see SeatPopup).
+          <div className="absolute left-6 top-24 max-[1279px]:top-[148px]">
+            <SeatCardBody key={card.key} layout="column" {...card.body} />
+          </div>
+        ))}
     </>
   )
 }
