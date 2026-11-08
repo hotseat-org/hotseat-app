@@ -1,7 +1,8 @@
+import { useState } from "react"
 import { ChevronDown } from "lucide-react"
 import { PANEL, PANEL_HOVER, type ShellMember } from "./shell-ui"
 import type { DayStatus } from "./dayStatus"
-import { DayRings } from "~/office/booking/DateStepper"
+import { DayRings, MonthCalendar } from "~/office/booking/DateStepper"
 import { useOfficeStore } from "~/office/store"
 import { useEditorStore } from "~/editor"
 import { useHeadline } from "~/office/headline/useHeadline"
@@ -37,6 +38,9 @@ export const HeadlineColumn = ({
 }) => {
   const { t } = useI18n()
   const isBooking = useOfficeStore((state) => state.booking.enabled)
+  const setDay = useOfficeStore((state) => state.setBookingDay)
+  // The month, open in the headline in place of its sentences (not a popup).
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false)
   const headline = useHeadline(me, members)
   const isFolded = useEditorStore((state) => state.isZoomedIn)
   const requestFit = useEditorStore((state) => state.requestFit)
@@ -51,7 +55,7 @@ export const HeadlineColumn = ({
         inert={isFolded}
         // The same names as a page's: opening one grows the column into it.
         style={{ viewTransitionName: "column" }}
-        className={`${MOTION} pointer-events-none absolute left-6 top-24 w-[min(560px,40vw)] max-[1279px]:top-[148px] origin-top-left text-foreground ${
+        className={`${MOTION} on-ground pointer-events-none absolute left-6 top-24 w-[min(560px,40vw)] max-[1279px]:top-[148px] origin-top-left text-foreground ${
           isFolded ? "opacity-0 [transform:translateY(-12px)_scale(0.45)]" : "[transform:none]"
         }`}
       >
@@ -66,7 +70,10 @@ export const HeadlineColumn = ({
           </h1>
           {isBooking && (
             <span className="pointer-events-auto mt-2">
-              <DayRings />
+              <DayRings
+                isCalendarOpen={isCalendarOpen}
+                onCalendarToggle={() => setIsCalendarOpen((wasOpen) => !wasOpen)}
+              />
             </span>
           )}
         </div>
@@ -80,35 +87,56 @@ export const HeadlineColumn = ({
             {yours} <span className="text-muted">{office.join(" ")}</span>
           </span>
         </p>
-        {/* Your desk on the day, the largest thing after the day (the mockups' "D2"). */}
-        {day.desk && (
-          <p className="mt-10 flex items-baseline gap-4">
-            <span className="text-[clamp(72px,8vw,120px)] leading-[0.85] font-black tracking-[-0.04em] text-accent">
-              {day.desk.label}
-            </span>
-            <span className="text-[clamp(18px,1.6vw,22px)] leading-snug font-bold">
-              {day.desk.isPermanent ? t("Your desk, every day.") : t("Yours for the day.")}
-            </span>
-          </p>
-        )}
-        <p className="pointer-events-auto mt-7 flex flex-wrap items-center gap-x-7 gap-y-3">
-          {day.primary && (
-            <button
-              type="button"
-              onClick={day.primary.onPress}
-              className="h-14 rounded-full bg-foreground px-7 text-lg font-black text-background transition-opacity outline-none hover:opacity-90 focus-visible:ring-2 focus-visible:ring-focus"
-            >
-              {day.primary.label}
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={day.bookings.onPress}
-            className="min-h-11 text-lg font-extrabold underline decoration-2 underline-offset-[5px] outline-none focus-visible:ring-2 focus-visible:ring-focus"
+        {isCalendarOpen ? (
+          // The month in place of your desk and its actions: pick a day, and
+          // the headline is that day's. Escape folds it away.
+          <div
+            className="motion-rise pointer-events-auto mt-8"
+            onKeyDown={(event) => {
+              if (event.key === "Escape") setIsCalendarOpen(false)
+            }}
           >
-            {day.bookings.label}
-          </button>
-        </p>
+            <MonthCalendar
+              className="w-[min(420px,100%)]"
+              onPick={(pickedDay) => {
+                setDay(pickedDay)
+                setIsCalendarOpen(false)
+              }}
+            />
+          </div>
+        ) : (
+          <>
+            {/* Your desk on the day, the largest thing after the day (the mockups' "D2"). */}
+            {day.desk && (
+              <p className="mt-10 flex items-baseline gap-4">
+                <span className="text-[clamp(72px,8vw,120px)] leading-[0.85] font-black tracking-[-0.04em] text-accent">
+                  {day.desk.label}
+                </span>
+                <span className="text-[clamp(18px,1.6vw,22px)] leading-snug font-bold">
+                  {day.desk.isPermanent ? t("Your desk, every day.") : t("Yours for the day.")}
+                </span>
+              </p>
+            )}
+            <p className="pointer-events-auto mt-7 flex flex-wrap items-center gap-x-7 gap-y-3">
+              {day.primary && (
+                <button
+                  type="button"
+                  onClick={day.primary.onPress}
+                  className="h-14 rounded-full bg-foreground px-7 text-lg font-black text-background transition-opacity outline-none hover:opacity-90 focus-visible:ring-2 focus-visible:ring-focus"
+                >
+                  {day.primary.label}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={day.bookings.onPress}
+                className="min-h-11 text-lg font-extrabold underline decoration-2 underline-offset-[5px] outline-none focus-visible:ring-2 focus-visible:ring-focus"
+              >
+                {day.bookings.label}
+              </button>
+            </p>
+          </>
+        )}
       </section>
 
       <button

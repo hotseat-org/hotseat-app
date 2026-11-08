@@ -1,10 +1,10 @@
 import { MapPin, Settings2 } from "lucide-react"
-import clsx from "clsx"
 import { useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "react-router"
 import { ColumnPage } from "./ColumnPage"
 import { MemberAvatar, nameOf, type ShellMember } from "./shell-ui"
 import { WeekDots } from "./WeekDots"
+import { getWordChoiceClass } from "~/components/ui/wordChoice"
 import { PeopleSearch, type PeopleGroup } from "~/components/people/PeopleSearch"
 import { TeamDot } from "~/components/teams/teamLook"
 import { useOfficeStore } from "~/office/store"
@@ -110,13 +110,13 @@ export const WhosInList = ({
       </header>
       {members.length <= 1 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
-          <p className="text-sm font-bold text-foreground">{t("It's just you so far")}</p>
+          <p className="text-2xl font-black text-foreground">{t("It's just you so far")}</p>
           {/* Inviting is an admin's. */}
           {me.role === Role.ADMIN && (
             <button
               type="button"
               onClick={() => openSettings("org", "invitations")}
-              className="min-h-11 rounded-xl bg-accent/15 px-4 text-sm font-bold text-accent"
+              className="h-14 rounded-full bg-foreground px-7 text-lg font-black text-background"
             >
               {t("Invite teammates")}
             </button>
@@ -131,19 +131,14 @@ export const WhosInList = ({
           groups={view === "everyone" ? undefined : groups}
           toolbar={
             teams.length > 0 && (
-              <div role="group" aria-label={t("Show")} className="flex gap-1.5">
+              <div role="group" aria-label={t("Show")} className="flex flex-wrap gap-x-4">
                 {views.map(([id, label]) => (
                   <button
                     key={id}
                     type="button"
                     aria-pressed={view === id}
                     onClick={() => setView(id)}
-                    className={clsx(
-                      "min-h-9 rounded-full border px-3 text-xs font-bold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus",
-                      view === id
-                        ? "border-foreground bg-foreground text-background"
-                        : "border-border text-muted hover:border-muted hover:text-foreground"
-                    )}
+                    className={getWordChoiceClass(view === id)}
                   >
                     {label}
                   </button>
@@ -156,7 +151,7 @@ export const WhosInList = ({
             name: m.userEmail === me.userEmail ? t("You") : nameOf(m),
             avatarUrl: m.avatarUrl,
           })}
-          renderFace={({ m }) => <MemberAvatar m={m} className="size-10 shrink-0 rounded-xl" />}
+          renderFace={({ m }) => <MemberAvatar m={m} className="size-10 shrink-0 rounded-full" />}
           // A row opens their profile (Find, beside it, their desk).
           onPick={({ m }) => openProfile(m.userEmail)}
           renderDetail={({ m, at }) => (
@@ -276,12 +271,15 @@ export const WhosInModal = ({
       onClose={onClose}
       actions={
         me.role === Role.ADMIN && (
+          // An icon in a ring beside the close one (the headline's icon buttons).
           <button
             type="button"
+            aria-label={t("Manage people")}
+            title={t("Manage people")}
             onClick={() => openSettings("org", "members")}
-            className="flex h-8 items-center gap-1.5 rounded-lg px-2 text-xs font-bold text-muted outline-none hover:bg-foreground/10 hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
+            className="grid size-11 shrink-0 place-items-center rounded-full border-2 border-foreground text-foreground outline-none transition-colors hover:bg-foreground hover:text-background focus-visible:ring-2 focus-visible:ring-focus"
           >
-            <Settings2 className="size-4" /> {t("Manage people")}
+            <Settings2 className="size-5" />
           </button>
         )
       }

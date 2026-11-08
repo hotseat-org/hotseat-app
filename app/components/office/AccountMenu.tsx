@@ -9,6 +9,7 @@ import { useIsMobile } from "~/utils/hooks/useIsMobile"
 import { useSettings } from "~/components/settings/useSettings"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { BottomSheet } from "~/components/ui/BottomSheet"
+import { ColumnPage } from "~/components/office/ColumnPage"
 import { ThemeModeControl } from "~/components/ui/ThemeModeControl"
 import { useI18n } from "~/i18n/I18nProvider"
 
@@ -20,7 +21,16 @@ import { useI18n } from "~/i18n/I18nProvider"
  * office, desktop): your day beside the avatar, and on top of the menu with
  * what to do about it.
  */
-export const AccountMenu = ({ isFlat = false, day }: { isFlat?: boolean; day?: DayStatus }) => {
+export const AccountMenu = ({
+  isFlat = false,
+  day,
+  column,
+}: {
+  isFlat?: boolean
+  day?: DayStatus
+  /** In an office (desktop): the menu is a page in its left column, opened and closed there. */
+  column?: { isOpen: boolean; onToggle: () => void }
+}) => {
   const profile = useProfile()
   const { t } = useI18n()
   const isMobile = useIsMobile()
@@ -45,6 +55,19 @@ export const AccountMenu = ({ isFlat = false, day }: { isFlat?: boolean; day?: D
       <MemberAvatar m={me} className={isFlat ? "size-9 rounded-xl" : "size-10 rounded-full"} />
     </>
   )
+
+  if (column && !isMobile)
+    return (
+      <button
+        type="button"
+        aria-label={triggerLabel}
+        aria-expanded={column.isOpen}
+        className={triggerClassName}
+        onClick={column.onToggle}
+      >
+        {triggerContent}
+      </button>
+    )
 
   if (isMobile)
     return (
@@ -87,16 +110,47 @@ export const AccountMenu = ({ isFlat = false, day }: { isFlat?: boolean; day?: D
   )
 }
 
-/** What the menu holds, in the popover or the sheet. `onDone` closes it before acting. */
+/** The account as a page in the office's left column: your name the headline. */
+export const AccountPage = ({ onClose }: { onClose: () => void }) => {
+  const profile = useProfile()
+  const { t } = useI18n()
+  const me: ShellMember = {
+    userEmail: profile.userEmail,
+    displayName: profile.displayName,
+    avatarUrl: profile.avatarUrl,
+    role: String(profile.role),
+  }
+
+  return (
+    <ColumnPage
+      label={t("Account menu")}
+      title={nameOf(me)}
+      summary={me.userEmail}
+      onClose={onClose}
+    >
+      <AccountContent
+        me={me}
+        isAdmin={profile.role === Role.ADMIN}
+        hasName={false}
+        onDone={onClose}
+      />
+    </ColumnPage>
+  )
+}
+
+/** What the menu holds, in the popover, the sheet or the page. `onDone` closes it before acting. */
 const AccountContent = ({
   me,
   day,
   isAdmin,
+  hasName = true,
   onDone,
 }: {
   me: ShellMember
   day?: DayStatus
   isAdmin: boolean
+  /** Its own name on top (none where the page's headline says it). */
+  hasName?: boolean
   onDone: () => void
 }) => {
   const { t } = useI18n()
@@ -110,12 +164,14 @@ const AccountContent = ({
   return (
     // The headline's menu: your name in large type, then ruled words.
     <div className="flex flex-col">
-      <div className="px-1 pb-4">
-        <p className="truncate text-[32px] leading-none font-black tracking-[-0.03em] text-foreground">
-          {nameOf(me)}
-        </p>
-        <p className="mt-1.5 truncate text-[15px] font-bold text-muted">{me.userEmail}</p>
-      </div>
+      {hasName && (
+        <div className="px-1 pb-4">
+          <p className="truncate text-[32px] leading-none font-black tracking-[-0.03em] text-foreground">
+            {nameOf(me)}
+          </p>
+          <p className="mt-1.5 truncate text-[15px] font-bold text-muted">{me.userEmail}</p>
+        </div>
+      )}
 
       {day && (
         // Any of its actions closes the menu: the map (or a panel) has it.
@@ -162,7 +218,7 @@ const AccountRow = ({
       type="button"
       onClick={onPress}
       className={clsx(
-        "flex min-h-13 w-full items-center px-1 text-left text-lg font-extrabold outline-none transition-colors hover:bg-foreground/5 focus-visible:ring-2 focus-visible:ring-focus",
+        "flex min-h-15 w-full items-center px-1 text-left text-xl font-extrabold outline-none transition-colors hover:bg-foreground/5 focus-visible:ring-2 focus-visible:ring-focus",
         isDanger ? "text-danger" : "text-foreground"
       )}
     >

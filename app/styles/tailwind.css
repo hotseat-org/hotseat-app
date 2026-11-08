@@ -109,17 +109,16 @@
      the ground"). Its quiet text is darker than --muted: small text on it still
      reads (4.5:1). */
   --ground: #d3ccc3;
-  --ground-muted: #575141;
+  /* Quiet words are still near-ink here: at dusk the ground goes grey, and a
+     lighter grey would sink into it. Weight, not paleness, sets them apart. */
+  --ground-muted: #3e4150;
   /* The accent, danger and success (any colour scheme's), deepened to read as
      small text on it. */
   --ground-accent: color-mix(in oklab, var(--accent) 72%, #000);
   --ground-danger: color-mix(in oklab, var(--danger) 76%, #000);
   --ground-success: color-mix(in oklab, var(--success) 62%, #000);
-  /* Behind each letter on it: a faint glow of the ground, for where words
-     cross the model. */
-  --ground-halo:
-    0 0 2px color-mix(in oklab, var(--ground) 70%, transparent),
-    0 0 14px color-mix(in oklab, var(--ground) 80%, transparent);
+  /* By day the words need no halo (it only blurs them); see the night's. */
+  --ground-halo: none;
 
   --background: #f1e9db;
   --foreground: #33384a; /* editor seatLeg, darkened for text */
@@ -201,9 +200,7 @@
   --ground-accent: var(--accent);
   --ground-danger: var(--danger);
   --ground-success: var(--success);
-  --ground-halo:
-    0 0 2px color-mix(in oklab, var(--ground) 70%, transparent),
-    0 0 14px color-mix(in oklab, var(--ground) 80%, transparent);
+  --ground-halo: none;
   --background: #151820;
   --foreground: #f2ede4;
 
@@ -1241,4 +1238,19 @@ input:-webkit-autofill:focus {
 .modal__backdrop,
 .alert-dialog__backdrop {
   background: var(--ground);
+}
+
+/* A scrolling list on the ground: its words fade out at an edge with more
+   beyond it (no shadow band, which reads as a box's edge). */
+.on-ground .scroll-shadow {
+  display: none;
+}
+.on-ground [data-more-below] {
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
+}
+.on-ground [data-more-above] {
+  mask-image: linear-gradient(to top, #000 calc(100% - 24px), transparent);
+}
+.on-ground [data-more-above][data-more-below] {
+  mask-image: linear-gradient(to bottom, transparent, #000 24px, #000 calc(100% - 24px), transparent);
 }

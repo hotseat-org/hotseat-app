@@ -2,6 +2,7 @@ import { Avatar } from "@heroui/react"
 import clsx from "clsx"
 import { Check, ChevronRight, Search } from "lucide-react"
 import { Fragment, useState, type ReactNode, type CSSProperties } from "react"
+import { getWordChoiceClass } from "~/components/ui/wordChoice"
 import { ScrollArea } from "~/components/ui/ScrollArea"
 import { colorForEmail } from "~/components/office/shell-ui"
 import { useI18n } from "~/i18n/I18nProvider"
@@ -204,32 +205,28 @@ export const PeopleSearch = <Item,>({
   return (
     <div className={clsx("flex min-h-0 flex-col", className)}>
       <div className="flex shrink-0 flex-col gap-2.5 pb-2">
-        <label className="flex h-11 items-center gap-2 rounded-xl border border-border bg-surface px-3 focus-within:ring-2 focus-within:ring-focus">
-          <Search className="size-4 shrink-0 text-muted" />
+        {/* A line to write on, not a box (the headline's search). */}
+        <label className="flex h-14 items-center gap-3 border-b-2 border-foreground px-1 focus-within:border-accent">
+          <Search className="size-5 shrink-0 text-foreground" strokeWidth={2.2} />
           <input
             autoFocus={isAutoFocused}
             value={query}
             onChange={(event) => setQuery(event.currentTarget.value)}
             placeholder={t("Search by name or email")}
             aria-label={t("Search by name or email")}
-            className="min-w-0 flex-1 bg-transparent text-[15px] outline-none"
+            className="min-w-0 flex-1 bg-transparent text-xl font-extrabold text-foreground outline-none placeholder:font-bold placeholder:text-muted"
           />
         </label>
         {toolbar}
         {!toolbar && filters && filters.length > 1 && (
-          <div className="flex flex-wrap gap-1.5" role="group" aria-label={t("Show")}>
+          <div className="flex flex-wrap gap-x-4" role="group" aria-label={t("Show")}>
             {filters.map((candidate) => (
               <button
                 key={candidate.id}
                 type="button"
                 aria-pressed={candidate.id === filterId}
                 onClick={() => setFilterId(candidate.id)}
-                className={clsx(
-                  "min-h-9 rounded-full border px-3 text-xs font-bold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus",
-                  candidate.id === filterId
-                    ? "border-accent bg-accent/15 text-accent"
-                    : "border-border text-muted hover:border-muted hover:text-foreground"
-                )}
+                className={getWordChoiceClass(candidate.id === filterId)}
               >
                 {candidate.color && (
                   <span
@@ -239,7 +236,7 @@ export const PeopleSearch = <Item,>({
                   />
                 )}
                 {candidate.label}{" "}
-                <span className="font-semibold opacity-70">
+                <span className="font-bold text-muted">
                   {candidate.count ?? items.filter(candidate.isIn).length}
                 </span>
               </button>

@@ -5,6 +5,7 @@ import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react"
 import { createPortal } from "react-dom"
 import { useFetcher, useParams } from "react-router"
 import { useTheme } from "remix-themes"
+import { getWordChoiceClass } from "~/components/ui/wordChoice"
 import { DialogCloseButton } from "~/components/ui/DialogCloseButton"
 import { heatColor, heatGradient, PERIOD_LABEL } from "~/office/heatmap/heatmap"
 import { personByEmail, usePeople } from "~/office/desks/people"
@@ -34,7 +35,7 @@ const Tooltip = ({ tip }: { tip: Tip }) =>
   tip && (
     <div
       role="tooltip"
-      className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-xl border border-border bg-overlay px-2.5 py-1.5 text-xs whitespace-nowrap shadow-overlay"
+      className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-xl bg-foreground px-2.5 py-1.5 text-xs font-bold whitespace-nowrap text-background"
       style={{ left: tip.x, top: tip.y - 8 }}
     >
       <p className="font-bold text-foreground">{tip.title}</p>
@@ -432,11 +433,7 @@ export const InsightsDashboard = () => {
                 : t("Loading…")}
             </p>
           </div>
-          <div
-            role="tablist"
-            aria-label={t("Period")}
-            className="flex gap-0.5 rounded-full bg-segment p-[3px]"
-          >
+          <div role="tablist" aria-label={t("Period")} className="flex flex-wrap gap-x-4">
             {(["4w", "12w", "next"] as const).map((p) => (
               <button
                 key={p}
@@ -444,12 +441,7 @@ export const InsightsDashboard = () => {
                 role="tab"
                 aria-selected={period === p}
                 onClick={() => setPeriod(p)}
-                className={clsx(
-                  "h-8 rounded-full px-3.5 text-[13px] font-extrabold transition-colors",
-                  period === p
-                    ? "bg-overlay text-foreground shadow-sm"
-                    : "text-muted hover:text-foreground"
-                )}
+                className={getWordChoiceClass(period === p)}
               >
                 {t(PERIOD_LABEL[p])}
               </button>
@@ -457,7 +449,6 @@ export const InsightsDashboard = () => {
           </div>
           <Button
             variant="primary"
-            size="sm"
             isDisabled={!data || !isCurrent}
             onPress={() => {
               if (!data) return
@@ -470,14 +461,14 @@ export const InsightsDashboard = () => {
           >
             <MapIcon className="size-4" /> {t("Show on the office")}
           </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            isDisabled={!data}
-            onPress={() => data && downloadCsv(i18n, data, officeSlug ?? "office")}
+          <button
+            type="button"
+            disabled={!data}
+            onClick={() => data && downloadCsv(i18n, data, officeSlug ?? "office")}
+            className="flex min-h-11 items-center gap-1.5 text-[17px] font-extrabold text-foreground underline decoration-2 underline-offset-[5px] outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50"
           >
-            <Download className="size-4" /> CSV
-          </Button>
+            <Download className="size-4" aria-hidden /> CSV
+          </button>
           <DialogCloseButton onClose={close} />
         </header>
 

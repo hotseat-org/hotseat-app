@@ -93,15 +93,21 @@ const RING =
 
 /**
  * The shown day's controls beside the headline's day ("Monday." ‹ › ▦): the
- * day before, the day after, and a month calendar to pick any day.
+ * day before, the day after, and the month calendar — which opens in the
+ * headline itself, in place of its sentences (`isCalendarOpen`).
  */
-export const DayRings = () => {
+export const DayRings = ({
+  isCalendarOpen,
+  onCalendarToggle,
+}: {
+  isCalendarOpen: boolean
+  onCalendarToggle: () => void
+}) => {
   const { t } = useI18n()
   const day = useOfficeStore((state) => state.booking.day)
   const from = useOfficeStore((state) => state.booking.from)
   const lastDay = useOfficeStore((state) => state.booking.lastDay)
   const setDay = useOfficeStore((state) => state.setBookingDay)
-  const [isOpen, setIsOpen] = useState(false)
 
   const step = (offset: number) => {
     const next = addDays(day, offset)
@@ -128,21 +134,16 @@ export const DayRings = () => {
       >
         <ChevronRight className="size-5" strokeWidth={2.4} />
       </button>
-      <Popover isOpen={isOpen} onOpenChange={setIsOpen}>
-        <Popover.Trigger aria-label={t("Pick a day")} className={RING}>
-          <CalendarDays className="size-5" strokeWidth={2.2} />
-        </Popover.Trigger>
-        <Popover.Content placement="bottom start" offset={10} className="rounded-2xl">
-          <Popover.Dialog aria-label={t("Pick a day")} className="p-4 outline-none">
-            <MonthCalendar
-              onPick={(pickedDay) => {
-                setDay(pickedDay)
-                setIsOpen(false)
-              }}
-            />
-          </Popover.Dialog>
-        </Popover.Content>
-      </Popover>
+      <button
+        type="button"
+        aria-label={t("Pick a day")}
+        aria-expanded={isCalendarOpen}
+        onClick={onCalendarToggle}
+        // Open: filled, the ring pressed in.
+        className={clsx(RING, isCalendarOpen && "bg-foreground text-background")}
+      >
+        <CalendarDays className="size-5" strokeWidth={2.2} />
+      </button>
     </span>
   )
 }

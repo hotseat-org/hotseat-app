@@ -6,7 +6,7 @@ import { personByEmail, usePeople } from "../desks/people"
 import { useOfficeStore } from "../store"
 import { teamById, useTeams } from "../teams"
 import { isAwayRule, type SeatRule } from "./matching"
-import { Face, TONES, getZoneTint, useZoneColors, type RuleTone } from "./ruleLook"
+import { Face, WORD_TONES, useZoneColors, type RuleTone } from "./ruleLook"
 import { TeamDot, getTeamTint } from "~/components/teams/teamLook"
 import { useI18n } from "~/i18n/I18nProvider"
 import type { Day } from "~/utils/booking"
@@ -29,11 +29,11 @@ const Pill = ({
 }) => (
   <span
     className={clsx(
-      // One height for every pill, its icon in the same round slot: they line up, line on line.
-      // Sized by the sentence's own type (em): as large as the words around it.
-      "inline-flex h-[1.4em] max-w-full items-center gap-[0.3em] whitespace-nowrap rounded-full align-middle text-[0.86em] leading-none",
-      icon ? "pl-1 pr-2.5" : "px-2.5",
-      TONES[tone]
+      // A word of the sentence you can change: its colour and a dotted line
+      // under it, no pill (it sits on the ground). Its icon in the same round
+      // slot, so lines of them line up.
+      "inline-flex max-w-full items-center gap-[0.25em] whitespace-nowrap align-baseline underline decoration-dotted decoration-[3px] underline-offset-[0.18em]",
+      WORD_TONES[tone]
     )}
     style={style}
   >
@@ -41,6 +41,10 @@ const Pill = ({
     <span className="truncate">{children}</span>
   </span>
 )
+
+/** A zone's word in the sentence: its colour, deepened toward the ink to read on the ground. */
+const getZoneWord = (color: string | undefined): CSSProperties | undefined =>
+  color ? { color: `color-mix(in oklab, ${color} 62%, var(--foreground))` } : undefined
 
 /** A phrase's words with its value as a pill: "in {zone}" → in [● Marketing]. */
 const withPill = (template: string, pill: ReactNode) => {
@@ -57,9 +61,7 @@ const withPill = (template: string, pill: ReactNode) => {
 
 /** A round icon at a pill's start, the size of a face. */
 const PillIcon = ({ children }: { children: ReactNode }) => (
-  <span className="grid size-5 shrink-0 place-items-center rounded-full bg-background/70">
-    {children}
-  </span>
+  <span className="grid size-5 shrink-0 place-items-center">{children}</span>
 )
 
 /**
@@ -122,7 +124,7 @@ export const SeatSentence = ({
               <span className="size-2.5 rounded-full" style={{ background: color }} />
             </span>
           }
-          style={isAway ? undefined : getZoneTint(color)}
+          style={isAway ? undefined : getZoneWord(color)}
         >
           {rule.zone}
         </Pill>
@@ -171,7 +173,7 @@ export const SeatSentence = ({
               <TeamDot color={team?.color ?? "slate"} />
             </span>
           }
-          style={team ? getTeamTint(team.color) : undefined}
+          style={team ? { color: getTeamTint(team.color).color } : undefined}
         >
           {team?.name ?? t("your team")}
         </Pill>

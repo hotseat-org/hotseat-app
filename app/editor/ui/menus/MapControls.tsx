@@ -32,7 +32,7 @@ export const MapControls = ({ isEditing = false }: { isEditing?: boolean }) => {
       className={clsx(
         "group/bar pointer-events-auto flex flex-col items-stretch gap-0.5 rounded-2xl p-1 text-foreground",
         // Viewing, icons straight on the paper (as the office's other chrome); editing, the tool's card.
-        isEditing ? "border border-border bg-overlay shadow-overlay" : ""
+        isEditing ? "border border-border bg-overlay shadow-overlay" : "on-ground"
       )}
     >
       <ControlButton label={t("Fit")} title={t("Fit to office (F)")} onPress={requestFit}>

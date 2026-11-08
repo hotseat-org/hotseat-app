@@ -1,8 +1,8 @@
 import { toast } from "@heroui/react"
-import { Armchair, MapPin, Pin, Repeat, Star } from "lucide-react"
+import { Armchair, Pin, Star } from "lucide-react"
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 import { useFetcher, useNavigate, useParams } from "react-router"
-import { BookingRow, deskText } from "./BookingRow"
+import { BookingRow, ROW_LINK, deskText } from "./BookingRow"
 import { ScrollArea } from "~/components/ui/ScrollArea"
 import { useOfficeStore } from "~/office/store"
 import { useMyTeams, useTeamDays } from "~/office/teams"
@@ -260,40 +260,57 @@ const HereSection = ({ onShow }: { onShow?: () => void }) => {
     onShow?.()
   }
   return (
-    <div className="flex flex-col gap-2">
-      <p className="text-base font-black text-foreground">{t("In this office")}</p>
+    // Your saved desks, as the days below them: ruled lines of large type —
+    // what it is, the desk in blue, and words to act on it.
+    <div className="flex flex-col">
+      <p className="pb-1 text-xl font-black text-foreground">{t("In this office")}</p>
       {usualDesk && usual && (
-        <div className="flex items-center gap-3 border-b border-separator py-3">
-          <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent text-accent-foreground">
-            <Repeat className="size-4" />
+        <div className="flex h-[68px] items-center gap-4 border-b border-separator">
+          <span className="w-24 shrink-0 text-xl leading-tight font-black tracking-[-0.01em] text-foreground">
+            {t("Usual")}
           </span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xl leading-tight font-black tracking-[-0.01em] text-accent">
+              {deskText(i18n, usualDesk.label, getDeskFloor(usualDesk))}
+            </p>
+            <p className="truncate text-sm font-semibold text-muted">
+              {t("Booked for you every {days}", {
+                days: usual.weekdays.map((weekday) => format.weekShort()[weekday - 1]).join(", "),
+              })}
+            </p>
+          </div>
           <button
             type="button"
             onClick={() => show(usualDesk.id)}
-            className="min-w-0 flex-1 text-left"
+            className={`${ROW_LINK} text-foreground`}
           >
-            <span className="block text-sm font-bold text-foreground">
-              {t("Usual: {desk}", {
-                desk: deskText(i18n, usualDesk.label, getDeskFloor(usualDesk)),
-              })}
-            </span>
-            <span className="block truncate text-xs text-muted">
-              {t("Booked for you every {days}", {
-                days: usual.weekdays.map((w) => format.weekShort()[w - 1]).join(", "),
-              })}
-            </span>
+            {t("Show")}
           </button>
           <button
             type="button"
             onClick={() => setPreference({ intent: "usual-clear" })}
-            className="text-xs font-bold text-muted hover:text-foreground"
+            className={`${ROW_LINK} text-danger`}
           >
             {t("Remove")}
           </button>
         </div>
       )}
       {starred.map((desk) => (
-        <div key={desk.id} className="flex items-center gap-3 border-b border-separator py-2.5">
+        <div key={desk.id} className="flex h-[68px] items-center gap-4 border-b border-separator">
+          <span className="flex w-24 shrink-0 items-center gap-1.5 text-xl leading-tight font-black tracking-[-0.01em] text-foreground">
+            <Star className="size-4 text-warning" fill="currentColor" aria-hidden />
+            {t("Starred")}
+          </span>
+          <p className="min-w-0 flex-1 truncate text-xl leading-tight font-black tracking-[-0.01em] text-accent">
+            {deskText(i18n, desk.label, getDeskFloor(desk))}
+          </p>
+          <button
+            type="button"
+            onClick={() => show(desk.id)}
+            className={`${ROW_LINK} text-foreground`}
+          >
+            {t("Show")}
+          </button>
           <button
             type="button"
             aria-label={t("Remove {desk} from favourites", {
@@ -303,19 +320,9 @@ const HereSection = ({ onShow }: { onShow?: () => void }) => {
               applyFavorite(desk.id, false)
               setPreference({ intent: "favorite", deskId: desk.id, isFavorite: "false" })
             }}
-            className="grid size-8 shrink-0 place-items-center rounded-lg text-warning hover:bg-warning/15"
+            className={`${ROW_LINK} text-danger`}
           >
-            <Star className="size-4" fill="currentColor" />
-          </button>
-          <span className="min-w-0 flex-1 truncate text-sm font-bold text-foreground">
-            {deskText(i18n, desk.label, getDeskFloor(desk))}
-          </span>
-          <button
-            type="button"
-            onClick={() => show(desk.id)}
-            className="flex items-center gap-1 text-xs font-bold text-accent hover:underline"
-          >
-            <MapPin className="size-3.5" /> {t("Show")}
+            {t("Remove")}
           </button>
         </div>
       ))}

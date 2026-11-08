@@ -5,6 +5,8 @@ import { createPortal } from "react-dom"
 import { Link, PrefetchPageLinks, useFetcher, useNavigate, useParams } from "react-router"
 import { MOBILE_CHROME } from "./mobile"
 import { PANEL, ThumbAvatar, type ShellOffice } from "./shell-ui"
+import { ColumnPage } from "./ColumnPage"
+import { ScrollArea } from "~/components/ui/ScrollArea"
 import { useSettings } from "~/components/settings/useSettings"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { useOrganizationContext } from "~/utils/hooks/useProfileData"
@@ -23,7 +25,12 @@ interface Props {
   isCompact?: boolean
   /** Placement; floats top-left by default. */
   className?: string
+  /** In an office (desktop): the menus are pages in its left column, opened and closed there. */
+  column?: { openMenu: SwitcherMenu | null; onToggle: (menu: SwitcherMenu) => void }
 }
+
+/** The switcher's two menus: organizations, and this one's offices. */
+export type SwitcherMenu = "org" | "office"
 
 /**
  * Switch organization and office from anywhere under an org route — as a
@@ -37,6 +44,7 @@ export const WorkspaceSwitcher = ({
   offices,
   isCompact = false,
   className = "absolute left-5 top-5",
+  column,
 }: Props) => {
   const d = useSwitcher(offices)
   const { t } = d.i18n
@@ -122,6 +130,31 @@ export const WorkspaceSwitcher = ({
       </div>
     )
 
+  if (column)
+    return (
+      <div className={`${PANEL} ${className} flex min-w-0 items-center gap-0.5`}>
+        <button
+          type="button"
+          aria-label={t("Switch organization")}
+          aria-expanded={column.openMenu === "org"}
+          onClick={() => column.onToggle("org")}
+          className={`${TRIGGER} shrink-0`}
+        >
+          {orgTrigger}
+        </button>
+        <span className="shrink-0 px-0.5 text-lg font-light text-muted/50">/</span>
+        <button
+          type="button"
+          aria-label={t("Switch office")}
+          aria-expanded={column.openMenu === "office"}
+          onClick={() => column.onToggle("office")}
+          className={`${TRIGGER} min-w-0`}
+        >
+          {officeTrigger}
+        </button>
+      </div>
+    )
+
   return (
     <div className={`${PANEL} ${className} flex min-w-0 items-center gap-0.5`}>
       <Popover isOpen={open === "org"} onOpenChange={(isOpen) => setOpen(isOpen ? "org" : null)}>
@@ -153,6 +186,37 @@ export const WorkspaceSwitcher = ({
         </Popover.Content>
       </Popover>
     </div>
+  )
+}
+
+/** A switcher's menu as a page in the office's left column. */
+export const SwitcherPage = ({
+  offices,
+  menu,
+  onClose,
+}: {
+  offices: ShellOffice[]
+  menu: SwitcherMenu
+  onClose: () => void
+}) => {
+  const d = useSwitcher(offices)
+  const { t } = d.i18n
+  const go = (to: string) => {
+    onClose()
+    d.navigate(to)
+  }
+  const label = menu === "org" ? t("Organizations") : t("Offices")
+
+  return (
+    <ColumnPage label={label} title={`${label}.`} onClose={onClose}>
+      <ScrollArea frameClassName="flex-1 -mx-6" className="flex flex-col gap-0.5 px-6">
+        {menu === "org" ? (
+          <OrgMenu d={d} onClose={onClose} onGo={go} />
+        ) : (
+          <OfficeMenu d={d} offices={offices} onClose={onClose} onGo={go} />
+        )}
+      </ScrollArea>
+    </ColumnPage>
   )
 }
 
@@ -403,11 +467,14 @@ const CurrentHeader = ({
   /** Absent: no gear (the settings aren't yours to change). */
   onSettings?: () => void
 }) => (
-  <div className="flex min-h-[52px] items-center gap-3 rounded-xl bg-accent/10 py-1 pl-2 pr-1">
+  // The one you're in: first, a ruled line of large type (no highlight box).
+  <div className="flex h-[68px] items-center gap-3 border-y border-separator">
     {lead}
     <span className="min-w-0 flex-1">
-      <span className="block truncate text-sm font-extrabold text-foreground">{label}</span>
-      {sub && <span className="block truncate text-xs text-muted">{sub}</span>}
+      <span className="block truncate text-xl leading-tight font-black tracking-[-0.01em] text-foreground">
+        {label}
+      </span>
+      {sub && <span className="block truncate text-sm font-bold text-muted">{sub}</span>}
     </span>
     {action}
     {onSettings && (
@@ -436,7 +503,8 @@ const HeaderButton = ({
       onClick={onClick}
       aria-label={label}
       aria-pressed={isPressed}
-      className="grid size-11 shrink-0 place-items-center rounded-xl text-muted outline-none transition-colors hover:bg-foreground/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-focus"
+      // A ring of ink, as the headline's icon buttons.
+      className="grid size-11 shrink-0 place-items-center rounded-full border-2 border-foreground text-foreground outline-none transition-colors hover:bg-foreground hover:text-background focus-visible:ring-2 focus-visible:ring-focus aria-pressed:bg-foreground aria-pressed:text-background"
     >
       {children}
     </button>
@@ -484,19 +552,19 @@ const FavoriteButton = ({
       isPressed={isFavorite}
       onClick={onToggle}
     >
-      <Star className={`size-[18px] ${isFavorite ? "fill-accent text-accent" : ""}`} />
+      <Star className={`size-[18px] ${isFavorite ? "fill-current" : ""}`} />
     </HeaderButton>
   )
 }
 
-const Divider = () => <div className="mx-1 my-1.5 h-px bg-separator" />
+const Divider = () => <div className="my-1.5" />
 
 const OrgLogo = ({ src, name, className }: { src?: string; name: string; className: string }) => (
   <ThumbAvatar src={src} fallback={name.slice(0, 1).toUpperCase()} className={className} />
 )
 
 const SectionLabel = ({ children }: { children: ReactNode }) => (
-  <p className="px-2 pb-1 pt-2 text-[13px] font-black text-muted">{children}</p>
+  <p className="pt-5 pb-1 text-base font-black text-foreground">{children}</p>
 )
 
 /**
@@ -531,14 +599,17 @@ const Row = ({
       onPointerEnter={intend}
       onFocus={intend}
       onTouchStart={intend}
-      className={`flex w-full items-center gap-3 rounded-xl px-2 py-1.5 text-left transition-colors ${
-        active ? "bg-accent/12 text-accent" : "text-foreground hover:bg-foreground/5"
+      // A ruled line of large type, as the headline's lists.
+      className={`flex h-[68px] w-full items-center gap-3 border-b border-separator text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus ${
+        active ? "text-accent" : "text-foreground hover:bg-foreground/5"
       }`}
     >
       {lead}
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-semibold">{label}</span>
-        {sub && <span className="block truncate text-xs text-muted">{sub}</span>}
+        <span className="block truncate text-xl leading-tight font-black tracking-[-0.01em]">
+          {label}
+        </span>
+        {sub && <span className="block truncate text-sm font-bold text-muted">{sub}</span>}
       </span>
       {trail}
       {prefetchPath && isIntended && <PrefetchPageLinks page={prefetchPath} />}
@@ -559,11 +630,10 @@ const CreateLink = ({ to, label, onClick }: { to: string; label: string; onClick
   <Link
     to={to}
     onClick={onClick}
-    className="flex min-h-11 items-center gap-3 rounded-xl px-2 text-sm font-bold text-accent outline-none transition-colors hover:bg-accent/10 focus-visible:ring-2 focus-visible:ring-focus"
+    // A word at the foot, underlined (the headline's links).
+    className="mt-2 flex min-h-11 w-fit items-center gap-1.5 text-lg font-extrabold text-foreground underline decoration-2 underline-offset-[5px] outline-none focus-visible:ring-2 focus-visible:ring-focus"
   >
-    <span className="grid size-9 place-items-center">
-      <Plus className="size-[18px]" />
-    </span>
+    <Plus className="size-[18px]" aria-hidden />
     {label}
   </Link>
 )

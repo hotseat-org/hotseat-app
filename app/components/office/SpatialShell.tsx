@@ -1,15 +1,15 @@
-import { useEffect } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { PANEL, PANEL_HOVER, type ShellMember, type ShellOffice } from "./shell-ui"
-import { WorkspaceSwitcher } from "./WorkspaceSwitcher"
+import { SwitcherPage, WorkspaceSwitcher, type SwitcherMenu } from "./WorkspaceSwitcher"
 import { PersonProfile } from "./PersonProfile"
 import { WhosInModal } from "./WhosIn"
 import { ColumnPage } from "./ColumnPage"
 import { useDayStatus } from "./dayStatus"
-import { ShellSearch } from "./ShellSearch"
-import { AccountMenu } from "./AccountMenu"
+import { SearchButton, SearchPage } from "./ShellSearch"
+import { AccountMenu, AccountPage } from "./AccountMenu"
 import { MyBookings } from "./MyBookings"
 import { MobileShell } from "./MobileShell"
-import { NotificationsBell } from "./Notifications"
+import { NotificationsButton, NotificationsPage } from "./Notifications"
 import { InsightsDashboard } from "./InsightsDashboard"
 import { HeadlineColumn } from "./HeadlineColumn"
 import { SidePanelBadge, TimeOfDay, hasWebGL, useSidePanels } from "~/editor"
@@ -23,6 +23,9 @@ import { useIsMobile } from "~/utils/hooks/useIsMobile"
 import { withViewTransition } from "~/utils/withViewTransition"
 
 export type { ShellMember } from "./shell-ui"
+
+/** The top bar's pages, opened in the column: search, what's new, your account. */
+type BarPage = "search" | "notifications" | "account" | SwitcherMenu
 
 interface Props {
   /** Offices in the current org (for the office switcher). */
@@ -94,10 +97,29 @@ export const SpatialShell = ({
   const officePanel = useOfficePanel()
   // The modules' side panels (the desk filter): the map's own tools, as a page.
   const sidePanels = useSidePanels(false)
+  // The top bar's own pages — search, what's new, your account — in the same
+  // column as the others (one thing in it at a time), not floating popups.
+  const [barPage, setBarPage] = useState<BarPage | null>(null)
+  const closeBarPage = useCallback(() => withViewTransition(() => setBarPage(null)), [])
+  const toggleBarPage = useCallback(
+    (page: BarPage) =>
+      withViewTransition(() => {
+        closeSeatCard()
+        setBarPage((openPage) => {
+          if (openPage === page) return null
+          sidePanels.close()
+          officePanel.close()
+
+          return page
+        })
+      }),
+    [closeSeatCard, sidePanels, officePanel]
+  )
   /** Open one of the pages (closing a side panel), or close it if it's open. */
   const togglePage = (panel: OfficePanel) => {
     sidePanels.close()
     closeSeatCard()
+    setBarPage(null)
     if (officePanel.panel === panel) officePanel.close()
     else officePanel.open(panel)
   }
@@ -106,16 +128,19 @@ export const SpatialShell = ({
     withViewTransition(() => {
       officePanel.close()
       closeSeatCard()
+      setBarPage(null)
       sidePanels.toggle(id)
     })
   // Your day: its actions under the headline.
   const day = useDayStatus(me, {
     onOpenBookings: () => {
       sidePanels.close()
+      setBarPage(null)
       officePanel.open("bookings")
     },
     onFindSeat: () => {
       sidePanels.close()
+      setBarPage(null)
       officePanel.open("find")
     },
   })
@@ -125,12 +150,13 @@ export const SpatialShell = ({
 
   // A desk opened (on the map, or from search) while a page is open: the page
   // gives the column to the desk.
-  const hasPage = !!officePanel.panel || !!sidePanels.openPanel
+  const hasPage = !!officePanel.panel || !!sidePanels.openPanel || !!barPage
   useEffect(() => {
     if (!isDeskOpen || !hasPage) return
 
     sidePanels.close()
     officePanel.close()
+    setBarPage(null)
     // Only when a desk opens: a page opened later closes the desk itself.
   }, [isDeskOpen])
 
@@ -152,15 +178,22 @@ export const SpatialShell = ({
 
   const sidePanel = sidePanels.openPanel
   // A page takes the left column; the headline gives it the room.
-  const isPageOpen = !!officePanel.panel || !!sidePanel
+  const isPageOpen = !!officePanel.panel || !!sidePanel || !!barPage
   const closeSidePanel = () => withViewTransition(sidePanels.close)
 
   return (
     <>
       {/* The top bar: where you are, the office's sections, search, what's new, you.
           Below 1280px the sections take a row of their own under it. */}
-      <div className="pointer-events-none absolute inset-x-5 top-5 flex flex-wrap items-center gap-x-2.5 gap-y-3">
-        <WorkspaceSwitcher offices={offices} className="relative" />
+      <div className="on-ground pointer-events-none absolute inset-x-5 top-5 flex flex-wrap items-center gap-x-2.5 gap-y-3">
+        <WorkspaceSwitcher
+          offices={offices}
+          className="relative"
+          column={{
+            openMenu: barPage === "org" || barPage === "office" ? barPage : null,
+            onToggle: toggleBarPage,
+          }}
+        />
         <span className="flex-1" />
         <div className="order-last basis-full min-[1280px]:order-none min-[1280px]:basis-auto">
           <nav aria-label={t("Primary")} className={`${PANEL} flex w-fit items-center gap-2`}>
@@ -209,14 +242,26 @@ export const SpatialShell = ({
           </nav>
         </div>
         <div className="pointer-events-auto">
-          <ShellSearch members={members} />
+          <SearchButton isOpen={barPage === "search"} onToggle={() => toggleBarPage("search")} />
         </div>
-        <NotificationsBell
-          triggerClassName={`${PANEL} ${PANEL_HOVER} pointer-events-auto grid size-11 cursor-pointer place-items-center rounded-full text-foreground outline-none focus-visible:ring-2 focus-visible:ring-focus`}
+        <NotificationsButton
+          isOpen={barPage === "notifications"}
+          onToggle={() => toggleBarPage("notifications")}
+          className={`${PANEL} ${PANEL_HOVER} pointer-events-auto grid size-11 cursor-pointer place-items-center rounded-full text-foreground outline-none focus-visible:ring-2 focus-visible:ring-focus`}
         />
-        <AccountMenu />
+        <AccountMenu
+          column={{ isOpen: barPage === "account", onToggle: () => toggleBarPage("account") }}
+        />
       </div>
-      {!isPageOpen && !isDeskOpen && <HeadlineColumn me={me} members={members} day={day} />}
+      {barPage === "search" && <SearchPage members={members} onClose={closeBarPage} />}
+      {barPage === "notifications" && <NotificationsPage onClose={closeBarPage} />}
+      {barPage === "account" && <AccountPage onClose={closeBarPage} />}
+      {(barPage === "org" || barPage === "office") && (
+        <SwitcherPage offices={offices} menu={barPage} onClose={closeBarPage} />
+      )}
+      {!isPageOpen && !isDeskOpen && !barPage && (
+        <HeadlineColumn me={me} members={members} day={day} />
+      )}
 
       {officePanel.panel === "people" && (
         <WhosInModal me={me} members={members} onClose={officePanel.close} />

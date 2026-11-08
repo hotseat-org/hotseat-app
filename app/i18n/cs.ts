@@ -549,7 +549,6 @@ export const cs: Messages = {
   Keep: "Ponechat",
   "Cancel it": "Zrušit",
   "In this office": "V této kanceláři",
-  "Usual: {desk}": "Obvyklý: {desk}",
   "Booked for you every {days}": "Rezervujeme vám ho vždy: {days}",
   Remove: "Odebrat",
   "Remove {desk} from favourites": "Odebrat z oblíbených: {desk}",
@@ -577,12 +576,10 @@ export const cs: Messages = {
 
   // —— Search, notifications, account ——
   "Find a person or seat (⌘K)": "Najít člověka nebo místo (⌘K)",
-  "Name, team or desk…": "Jméno, tým nebo stůl…",
   "Search people, teams and desks": "Hledat lidi, týmy a stoly",
   "No people, teams or desks match.": "Žádní lidé, týmy ani stoly neodpovídají.",
   "Notifications, {n} unread": "Oznámení, nepřečtená: {n}",
   Notifications: "Oznámení",
-  "You're all caught up": "Všechno máte přečtené",
   "Changes to your bookings or desk show up here.":
     "Tady uvidíte změny svých rezervací nebo stolu.",
   "Account menu": "Nabídka účtu",
@@ -1565,7 +1562,8 @@ export const cs: Messages = {
   "Free to book.": "Volný k rezervaci.",
   "{in} of {total} in {when}.": "{When} tu je {in} z {total}.",
   "{percent} full.": "Obsazeno {percent}.",
-  "An average working day, {from} to {to}, of {desks}.": "Průměrný pracovní den od {from} do {to} ({desks}).",
+  "An average working day, {from} to {to}, of {desks}.":
+    "Průměrný pracovní den od {from} do {to} ({desks}).",
   "{n} person in.": {
     one: "Je tu {n} člověk.",
     few: "Jsou tu {n} lidé.",
@@ -1636,4 +1634,10 @@ export const cs: Messages = {
   },
   "Your desk, every day.": "Váš stůl, každý den.",
   "Yours for the day.": "Na celý den váš.",
+  Usual: "Obvyklý",
+  Starred: "S hvězdičkou",
+  "Nothing new.": "Nic nového.",
+  New: "Nové",
+  "Find a person or seat": "Najít člověka nebo místo",
+  "Who or where?": "Kdo nebo kde?",
 }

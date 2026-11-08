@@ -1,6 +1,7 @@
 import clsx from "clsx"
 import { MonitorSmartphone, Moon, Sun, type LucideIcon } from "lucide-react"
 import { Theme, useTheme } from "remix-themes"
+import { getWordChoiceClass } from "./wordChoice"
 import { useI18n } from "~/i18n/I18nProvider"
 import { msg } from "~/i18n/msg"
 
@@ -74,13 +75,7 @@ const getOptionLook = ({
   isOn: boolean
   hasIcon: boolean
 }) => {
-  if (isWords)
-    return clsx(
-      "min-h-11 px-0.5 text-[17px] font-extrabold",
-      isOn
-        ? "text-foreground underline decoration-[3px] underline-offset-[7px]"
-        : "text-muted hover:text-foreground"
-    )
+  if (isWords) return getWordChoiceClass(isOn)
 
   return clsx(
     "min-h-9 text-sm",

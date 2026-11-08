@@ -13,7 +13,7 @@ export const deskText = ({ t }: Translator, label?: string, floor?: string | nul
 }
 
 /** Show and Cancel: words, not buttons (the headline's lists). */
-const LINK =
+export const ROW_LINK =
   "min-h-11 shrink-0 px-1 text-[15px] font-extrabold underline decoration-2 underline-offset-4 outline-none focus-visible:ring-2 focus-visible:ring-focus"
 
 /**
@@ -90,10 +90,14 @@ export const BookingRow = ({
             </p>
             <p className="truncate text-sm font-semibold text-muted">{detail}</p>
           </div>
-          <button type="button" onClick={onShow} className={`${LINK} text-foreground`}>
+          <button type="button" onClick={onShow} className={`${ROW_LINK} text-foreground`}>
             {t("Show")}
           </button>
-          <button type="button" onClick={() => setIsAsking(true)} className={`${LINK} text-danger`}>
+          <button
+            type="button"
+            onClick={() => setIsAsking(true)}
+            className={`${ROW_LINK} text-danger`}
+          >
             {t("Cancel")}
           </button>
         </>

@@ -12,6 +12,7 @@ import { useSavedRules, useSeatMatches } from "./useFindSeat"
 import { BookingRow, deskText } from "~/components/office/BookingRow"
 import { TeamDot } from "~/components/teams/teamLook"
 import { useI18n } from "~/i18n/I18nProvider"
+import { getWordChoiceClass } from "~/components/ui/wordChoice"
 import type { Day } from "~/utils/booking"
 
 /** Other desks that fit, offered under the best one. */
@@ -33,7 +34,8 @@ const PRIMARY =
   // The one main action, the headline's ink pill.
   "min-h-12 rounded-full bg-foreground px-5 text-[15px] font-black text-background outline-none transition-opacity focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50"
 const SECONDARY =
-  "min-h-12 rounded-full border border-border bg-surface px-5 text-[15px] font-extrabold text-foreground outline-none hover:bg-surface-secondary focus-visible:ring-2 focus-visible:ring-focus"
+  // A word beside the pill, underlined (the headline's links): no second button.
+  "min-h-12 px-1 text-[17px] font-extrabold text-foreground underline decoration-2 underline-offset-[5px] outline-none focus-visible:ring-2 focus-visible:ring-focus"
 
 /** Stacked in one column (a phone's sheet), or the search beside its result (a dialog). */
 export type FindSeatLayout = "stacked" | "columns"
@@ -141,7 +143,7 @@ const Finder = ({
 
   if (seats.isResident)
     return (
-      <p className="flex items-center gap-2 rounded-2xl bg-surface-secondary px-4 py-3 text-sm">
+      <p className="flex items-center gap-2 border-y border-separator py-3 text-base font-bold">
         <Pin className="size-4 shrink-0 text-accent" />
         {t("You have a permanent desk here: it's yours every day.")}
       </p>
@@ -165,7 +167,7 @@ const Finder = ({
   )
 
   const dayChips = (
-    <div className="flex flex-wrap gap-2" role="group" aria-label={t("Day")}>
+    <div className="flex flex-wrap gap-x-4" role="group" aria-label={t("Day")}>
       {[...seats.dayChoices, ANY_DAY].map((choice) => (
         <button
           key={choice}
@@ -175,12 +177,8 @@ const Finder = ({
             setWhen(choice)
             setPickedDeskId(null)
           }}
-          className={clsx(
-            CHIP,
-            when === choice
-              ? "border-foreground bg-foreground text-background"
-              : "border-border bg-surface text-foreground hover:border-muted"
-          )}
+          // The days as words, the chosen one underlined (as the top bar's sections).
+          className={getWordChoiceClass(when === choice)}
         >
           {/* Your team's days: its dot. */}
           {choice !== ANY_DAY &&
@@ -204,8 +202,8 @@ const Finder = ({
       )}
 
       {when !== ANY_DAY && !dayResult?.current && !best && (
-        <div className="flex flex-col items-start gap-3 rounded-2xl bg-surface-secondary px-4 py-4">
-          <p className="text-sm font-bold">{t("Nothing fits that day.")}</p>
+        <div className="flex flex-col items-start gap-3">
+          <p className="text-2xl font-black">{t("Nothing fits that day.")}</p>
           <button type="button" onClick={() => setWhen(ANY_DAY)} className={SECONDARY}>
             {t("Try any day")}
           </button>
@@ -249,7 +247,10 @@ const Finder = ({
                 key={match.desk.id}
                 type="button"
                 onClick={() => setPickedDeskId(match.desk.id)}
-                className={clsx(CHIP, "border-border bg-surface hover:border-muted")}
+                className={clsx(
+                  CHIP,
+                  "border-2 border-foreground text-foreground hover:bg-foreground/5"
+                )}
               >
                 {deskName(i18n, match.desk)}
                 {!isPerfect(match) && (
@@ -334,7 +335,7 @@ const BestMatch = ({
     // The match as a headline, not a card: a heavy rule, the desk in large type.
     <div className="motion-rise flex flex-col gap-3 border-t-2 border-foreground pt-4">
       <div>
-        <p className="text-sm font-black text-muted">
+        <p className="text-base font-black text-muted">
           {isPerfect(match) ? t("Best match") : t("Closest match")}
         </p>
         <p className="text-3xl leading-tight font-black tracking-[-0.02em]">{title}</p>
@@ -342,7 +343,7 @@ const BestMatch = ({
       {match.met.length + match.missed.length > 0 && (
         <ul className="flex flex-col gap-1.5">
           {match.met.map((rule, index) => (
-            <li key={`met-${index}`} className="flex items-center gap-2.5 text-sm font-bold">
+            <li key={`met-${index}`} className="flex items-center gap-2.5 text-base font-bold">
               <span className="grid size-5 shrink-0 place-items-center rounded-full bg-success text-success-foreground">
                 <Check className="size-3" strokeWidth={3.4} />
               </span>
@@ -352,7 +353,7 @@ const BestMatch = ({
           {match.missed.map((rule, index) => (
             <li
               key={`missed-${index}`}
-              className="flex items-center gap-2.5 text-sm font-bold text-muted"
+              className="flex items-center gap-2.5 text-base font-bold text-muted"
             >
               <span className="grid size-5 shrink-0 place-items-center rounded-full border-2 border-muted/60">
                 <Minus className="size-3" strokeWidth={3.4} />
@@ -362,7 +363,7 @@ const BestMatch = ({
           ))}
         </ul>
       )}
-      <div className="flex gap-2">
+      <div className="flex flex-row-reverse items-center justify-end gap-6">
         <button type="button" onClick={onShowOnMap} className={SECONDARY}>
           {t("Show on map")}
         </button>
@@ -370,7 +371,7 @@ const BestMatch = ({
           type="button"
           onClick={onBook}
           disabled={isPending}
-          className={clsx(PRIMARY, "flex-1")}
+          className={clsx(PRIMARY, "h-14 px-8 text-lg")}
         >
           {t("Book")}
         </button>
@@ -396,11 +397,7 @@ const AnyDayList = ({
   const { t, format } = useI18n()
 
   if (days.length === 0)
-    return (
-      <p className="rounded-2xl bg-surface-secondary px-4 py-3 text-sm font-bold">
-        {t("No day fits while desks can be booked.")}
-      </p>
-    )
+    return <p className="text-xl font-extrabold">{t("No day fits while desks can be booked.")}</p>
 
   return (
     <ul className="flex flex-col gap-2">

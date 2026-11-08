@@ -29,7 +29,13 @@ export const ScrollArea = forwardRef<
 
   return (
     <div className={clsx("relative flex min-h-0 flex-col", frameClassName)}>
-      <div ref={setRefs} className={clsx("min-h-0 flex-1 overflow-y-auto", className)}>
+      <div
+        ref={setRefs}
+        // Where there's more: on the ground, the words fade at that edge (see tailwind.css).
+        data-more-above={edges.hasMoreAbove || undefined}
+        data-more-below={edges.hasMoreBelow || undefined}
+        className={clsx("min-h-0 flex-1 overflow-y-auto", className)}
+      >
         {children}
       </div>
       <ScrollShadow side="top" isShown={edges.hasMoreAbove} />
@@ -44,7 +50,7 @@ const ScrollShadow = ({ side, isShown }: { side: "top" | "bottom"; isShown: bool
   <span
     aria-hidden
     className={clsx(
-      "pointer-events-none absolute inset-x-0 z-10 h-4 transition-opacity duration-200",
+      "scroll-shadow pointer-events-none absolute inset-x-0 z-10 h-4 transition-opacity duration-200",
       side === "top" ? "top-0" : "bottom-0",
       isShown ? "opacity-100" : "opacity-0"
     )}

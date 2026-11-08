@@ -34,6 +34,14 @@ export const TONES: Record<RuleTone, string> = {
   away: "bg-danger/15 text-danger",
 }
 
+/** The same tones as words in a sentence: coloured, no fill (they sit on the ground). */
+export const WORD_TONES: Record<RuleTone, string> = {
+  accent: "text-accent",
+  neutral: "text-foreground",
+  warning: "text-star",
+  away: "text-danger",
+}
+
 export const getRuleTone = (rule: SeatRule): RuleTone => {
   if (isAwayRule(rule)) return "away"
   if (rule.kind === "favorite") return "warning"
