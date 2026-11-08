@@ -222,7 +222,7 @@ const Finder = ({
       )}
 
       {favorite && when !== ANY_DAY && (
-        <div className="flex items-center gap-3 rounded-2xl border border-border px-4 py-3">
+        <div className="flex items-center gap-3 border-y border-separator px-1 py-3">
           <Star className="size-4 shrink-0 fill-current text-star" />
           <span className="min-w-0 flex-1 truncate text-sm font-bold">
             {t("Your preferred seat {desk} is free", { desk: deskName(i18n, favorite.desk) })}
@@ -325,12 +325,13 @@ const BestMatch = ({
   const { describeOutcome } = useRuleText()
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4 shadow-surface">
+    // The match as a headline, not a card: a heavy rule, the desk in large type.
+    <div className="motion-rise flex flex-col gap-3 border-t-2 border-foreground pt-4">
       <div>
-        <p className="text-xs font-extrabold text-muted">
+        <p className="text-sm font-black text-muted">
           {isPerfect(match) ? t("Best match") : t("Closest match")}
         </p>
-        <p className="text-xl font-black">{title}</p>
+        <p className="text-3xl leading-tight font-black tracking-[-0.02em]">{title}</p>
       </div>
       {match.met.length + match.missed.length > 0 && (
         <ul className="flex flex-col gap-1.5">
@@ -401,10 +402,7 @@ const AnyDayList = ({
         const best = matches[0]
 
         return (
-          <li
-            key={day}
-            className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3"
-          >
+          <li key={day} className="flex items-center gap-3 border-b border-separator px-1 py-3">
             <span className="w-14 shrink-0 text-sm font-black">{format.short(day)}</span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-[15px] font-extrabold">

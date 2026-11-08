@@ -184,7 +184,9 @@ export const BottomSheet = ({
             <div className="flex shrink-0 touch-none flex-col gap-3">
               <span aria-hidden className="mx-auto h-1.5 w-10 rounded-full bg-border" />
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-extrabold text-foreground">{title}</h2>
+                <h2 className="text-[28px] leading-tight font-black tracking-[-0.02em] text-foreground">
+                  {title}
+                </h2>
                 <DialogCloseButton onClose={close} className="size-10" />
               </div>
             </div>

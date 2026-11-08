@@ -46,7 +46,9 @@ export const JoinCard = ({ organization }: { organization: JoinOrganization }) =
       <div className="relative z-10 w-full max-w-sm rounded-2xl border border-border bg-surface p-8 text-center shadow-overlay">
         <OrganizationBadge organization={organization} />
         <p className="mt-4 text-sm text-muted">{t("You've been invited to join")}</p>
-        <h1 className="mt-0.5 text-2xl font-extrabold tracking-tight">{organization.name}</h1>
+        <h1 className="mt-0.5 text-4xl leading-[1.02] font-black tracking-[-0.03em]">
+          {organization.name}
+        </h1>
         {organization.description && (
           <p className="mt-1 text-sm text-muted">{organization.description}</p>
         )}
@@ -83,7 +85,7 @@ export const JoinProblem = ({ title, children }: { title: string; children: Reac
   return (
     <CenteredScreen>
       <div className="relative z-10 max-w-sm text-center">
-        <h1 className="text-2xl font-extrabold tracking-tight">{title}</h1>
+        <h1 className="text-4xl leading-[1.02] font-black tracking-[-0.03em]">{title}</h1>
         <p className="mt-2 text-muted">{children}</p>
         <Link
           to="/app"

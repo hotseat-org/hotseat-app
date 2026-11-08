@@ -1,6 +1,6 @@
 import { useMemo } from "react"
 import { useOfficeStore } from "../store"
-import { useMyTeams } from "../teams"
+import { useMyTeams, useTeamDays } from "../teams"
 import { useDesksOnDay, useGivenUpDesk, useWaitlist, type DeskOnDay } from "../booking/useBooking"
 import { composeHeadline, type Headline, type MyDay } from "./composeHeadline"
 import { useI18n } from "~/i18n/I18nProvider"
@@ -45,6 +45,7 @@ export const useHeadline = (me: HeadlinePerson, members: HeadlinePerson[]): Head
   const givenUp = useGivenUpDesk(me.userEmail)
   const { isWaiting } = useWaitlist()
   const myTeams = useMyTeams()
+  const getTeamDays = useTeamDays()
 
   return useMemo(() => {
     if (!day) return null
@@ -65,6 +66,20 @@ export const useHeadline = (me: HeadlinePerson, members: HeadlinePerson[]): Head
       myDay: getMyDay(byPerson.get(me.userEmail), !!givenUp, isWaiting),
       freeCount: desks.filter((entry) => entry.state.kind === "free").length,
       peopleIn,
+      teamDay: getTeamDays(day)[0]?.name,
     })
-  }, [i18n, day, today, opening, desks, byPerson, givenUp, isWaiting, myTeams, me, members])
+  }, [
+    i18n,
+    day,
+    today,
+    opening,
+    desks,
+    byPerson,
+    givenUp,
+    isWaiting,
+    myTeams,
+    getTeamDays,
+    me,
+    members,
+  ])
 }

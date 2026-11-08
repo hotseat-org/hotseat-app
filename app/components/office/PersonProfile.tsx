@@ -100,7 +100,9 @@ const ProfileDialog = ({
       <header className="flex items-start gap-4">
         <MemberAvatar m={member} className="size-16 shrink-0 rounded-2xl text-xl" />
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-xl font-black">{isMe ? t("You") : name}</h2>
+          <h2 className="truncate text-3xl leading-tight font-black tracking-[-0.02em]">
+            {isMe ? t("You") : name}
+          </h2>
           <p className="truncate text-sm text-muted">{member.userEmail}</p>
           <p className="mt-1 text-xs font-bold text-muted">{roleLabel(i18n, member.role)}</p>
           {teams.length > 0 && (
@@ -194,7 +196,7 @@ const AvoidToggle = ({ email, name }: { email: string; name: string }) => {
   const isFull = !isAvoided && others.length >= MAX_SEAT_RULES
 
   return (
-    <section className="mt-4 rounded-2xl border border-border bg-surface px-4 py-3">
+    <section className="mt-4 border-t border-separator pt-3">
       <label className="flex cursor-pointer items-center gap-3">
         <EyeOff className="size-5 shrink-0 text-muted" />
         <span className="min-w-0 flex-1">

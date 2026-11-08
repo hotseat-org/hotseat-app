@@ -96,6 +96,21 @@ describe("the headline", () => {
     ])
   })
 
+  test("your team's day comes before who's in", () => {
+    const booked = {
+      ...MONDAY,
+      myDay: { kind: "booked", deskLabel: "D2" },
+      teamDay: "Design",
+    } as const
+
+    expect(composeHeadline(english, booked).sentences).toEqual([
+      "You're at D2.",
+      "It's a Design day.",
+      "Lena, Max and 4 others are in.",
+    ])
+    expect(composeHeadline(czech, booked).sentences[1]).toBe("Je to den týmu Design.")
+  })
+
   test("a closed day says only that", () => {
     expect(composeHeadline(english, { ...MONDAY, isOpen: false }).sentences).toEqual([
       "The office is closed.",

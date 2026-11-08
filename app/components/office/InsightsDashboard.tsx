@@ -58,10 +58,11 @@ const Card = ({
   className?: string
 }) => (
   <figure
-    className={clsx("relative m-0 rounded-2xl border border-border bg-surface p-4", className)}
+    // A ruled section, not a box (the headline's way), its title large.
+    className={clsx("relative m-0 border-t border-separator pt-4", className)}
   >
     <figcaption className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-      <span className="text-sm font-extrabold text-foreground">{title}</span>
+      <span className="text-xl font-black tracking-[-0.01em] text-foreground">{title}</span>
       {aside}
     </figcaption>
     {children}
@@ -69,10 +70,13 @@ const Card = ({
 )
 
 const Stat = ({ label, value, detail }: { label: string; value: ReactNode; detail: ReactNode }) => (
-  <div className="rounded-2xl bg-surface-secondary p-4">
-    <p className="text-xs font-extrabold text-muted">{label}</p>
-    <p className="mt-1 text-[30px] font-black leading-none text-foreground">{value}</p>
-    <p className="mt-1.5 text-xs text-muted">{detail}</p>
+  // The number is the headline; its label and detail sit around it.
+  <div className="border-t-2 border-foreground pt-3">
+    <p className="text-sm font-black text-muted">{label}</p>
+    <p className="mt-1 text-[44px] leading-none font-black tracking-[-0.03em] text-foreground">
+      {value}
+    </p>
+    <p className="mt-2 text-sm text-muted">{detail}</p>
   </div>
 )
 

@@ -16,8 +16,10 @@ export const EmptyState = ({ icon: Icon, title, description, children, className
     <div className="mx-auto grid size-16 place-items-center rounded-[18px] border border-border bg-accent/12 text-accent">
       <Icon className="size-7" />
     </div>
-    <h2 className="mt-4 text-2xl font-extrabold tracking-tight text-foreground">{title}</h2>
-    {description && <p className="mt-1.5 text-muted">{description}</p>}
+    <h2 className="mt-4 text-4xl leading-[1.02] font-black tracking-[-0.03em] text-foreground">
+      {title}
+    </h2>
+    {description && <p className="mt-3 text-lg font-semibold text-muted">{description}</p>}
     {children && <div className="mt-6">{children}</div>}
   </div>
 )

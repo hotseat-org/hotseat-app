@@ -43,8 +43,10 @@ export const ColumnPage = ({
             onClose()
           }
         }}
+        // Named for the move between pages and the headline (see "Motion" in tailwind.css).
+        style={{ viewTransitionName: "column" }}
         className={clsx(
-          "page-in pointer-events-auto absolute top-[84px] bottom-[148px] left-5 max-[1279px]:top-[144px] z-[44] flex flex-col rounded-[calc(var(--radius)*4)] border border-border bg-overlay text-foreground shadow-overlay outline-none",
+          "pointer-events-auto absolute top-[84px] bottom-[148px] left-5 max-[1279px]:top-[144px] z-[44] flex flex-col rounded-[calc(var(--radius)*4)] border border-border bg-overlay text-foreground shadow-overlay outline-none",
           isWide ? "w-[min(860px,calc(100vw-40px))]" : "w-[min(500px,calc(100vw-40px))]"
         )}
       >
@@ -52,6 +54,7 @@ export const ColumnPage = ({
           <div className="min-w-0 flex-1">
             <h2
               {...titleProps}
+              style={{ viewTransitionName: "column-title" }}
               className="text-[44px] leading-[0.95] font-black tracking-[-0.03em]"
             >
               {title}

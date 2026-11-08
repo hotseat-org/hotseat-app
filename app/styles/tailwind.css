@@ -927,18 +927,83 @@ input:-webkit-autofill:focus {
   }
 }
 
-/* ColumnPage (the office's left-column pages): slide in from the left. */
-@keyframes page-in {
-  from {
+/*
+ * Motion (the headline redesign). Moving between the office's pages is a view
+ * transition (see useOfficePanel, withViewTransition): only the named parts
+ * move — the left column (headline ⇄ page) grows and fades from one into the
+ * other, its title glides, the nav's underline slides to the new section.
+ * The rest of the page (the office itself) swaps without a crossfade. Only
+ * transform and opacity animate; reduced motion turns it all off.
+ */
+:root {
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-page: 340ms;
+  --motion-small: 220ms;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+::view-transition-group(column),
+::view-transition-group(column-title),
+::view-transition-group(nav-current) {
+  animation-duration: var(--motion-page);
+  animation-timing-function: var(--ease-out-soft);
+}
+/* The column's two states blend; neither is stretched (each keeps its size). */
+::view-transition-old(column),
+::view-transition-new(column) {
+  height: 100%;
+  object-fit: none;
+  object-position: left top;
+}
+::view-transition-old(column) {
+  animation: motion-fade-out calc(var(--motion-page) * 0.55) var(--ease-out-soft) both;
+}
+::view-transition-new(column) {
+  animation: motion-fade-in var(--motion-page) var(--ease-out-soft) both;
+}
+::view-transition-old(column-title) {
+  animation: motion-fade-out calc(var(--motion-page) * 0.5) var(--ease-out-soft) both;
+}
+::view-transition-new(column-title) {
+  animation: motion-fade-in var(--motion-page) var(--ease-out-soft) both;
+}
+@keyframes motion-fade-out {
+  to {
     opacity: 0;
-    translate: -16px 0;
   }
 }
-.page-in {
-  animation: page-in 220ms cubic-bezier(0.22, 1, 0.36, 1);
+@keyframes motion-fade-in {
+  from {
+    opacity: 0;
+  }
 }
+
+/* A sentence or title that changes (a new day): it rises into place. */
+@keyframes motion-rise {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}
+.motion-rise {
+  animation: motion-rise var(--motion-small) var(--ease-out-soft) both;
+}
+/* A list's rows arriving, one after another (`--index` on each, a few at most). */
+.motion-stagger {
+  animation: motion-rise var(--motion-small) var(--ease-out-soft) both;
+  animation-delay: calc(min(var(--index, 0), 8) * 28ms);
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .page-in {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+  .motion-rise,
+  .motion-stagger {
     animation: none;
   }
 }

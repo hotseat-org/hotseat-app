@@ -43,11 +43,16 @@ export const useOfficePanel = () => {
   /** Open a panel; Who's in can open at a team (`{ team: id }`). */
   const open = useCallback(
     (next: OfficePanel, params?: { team?: string }) =>
-      navigate(`${officePath}/${next}${getSearch(params)}`, { preventScrollReset: true }),
+      navigate(`${officePath}/${next}${getSearch(params)}`, {
+        preventScrollReset: true,
+        // The column moves from what was there into the page (see "Motion" in tailwind.css).
+        viewTransition: true,
+      }),
     [navigate, officePath, getSearch]
   )
   const close = useCallback(
-    () => navigate(`${officePath}${getSearch()}`, { preventScrollReset: true }),
+    () =>
+      navigate(`${officePath}${getSearch()}`, { preventScrollReset: true, viewTransition: true }),
     [navigate, officePath, getSearch]
   )
 

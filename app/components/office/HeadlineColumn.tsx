@@ -45,19 +45,29 @@ export const HeadlineColumn = ({
       <section
         aria-label={t("Your day")}
         inert={isFolded}
+        // The same names as a page's: opening one grows the column into it.
+        style={{ viewTransitionName: "column" }}
         className={`${MOTION} pointer-events-none absolute left-6 top-24 w-[min(560px,40vw)] max-[1279px]:top-[148px] origin-top-left text-foreground ${
           isFolded ? "opacity-0 [transform:translateY(-12px)_scale(0.45)]" : "[transform:none]"
         }`}
       >
-        <h1 className="text-[clamp(56px,6.4vw,92px)] leading-[0.95] font-black tracking-[-0.03em]">
+        {/* A new day's title and sentence rise into place (keyed by their text). */}
+        <h1
+          key={headline.title}
+          style={{ viewTransitionName: "column-title" }}
+          className="motion-rise text-[clamp(56px,6.4vw,92px)] leading-[0.95] font-black tracking-[-0.03em]"
+        >
           {headline.title}
         </h1>
 
+        {/* The live region stays (so the new day is read out); its words are new. */}
         <p
           aria-live="polite"
           className="mt-5 text-[clamp(22px,2.3vw,34px)] leading-tight font-extrabold tracking-[-0.01em]"
         >
-          {yours} <span className="text-muted">{office.join(" ")}</span>
+          <span key={headline.sentences.join(" ")} className="motion-rise block">
+            {yours} <span className="text-muted">{office.join(" ")}</span>
+          </span>
         </p>
         {actions && (
           <p className="pointer-events-auto mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 text-xl">

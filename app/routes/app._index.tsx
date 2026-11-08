@@ -71,7 +71,7 @@ const AppIndex = () => {
       <div className="relative z-10 w-full max-w-xl text-center">
         <HotseatLockup size={44} />
 
-        <h1 className="mt-5 text-3xl font-extrabold tracking-tight">
+        <h1 className="mt-5 text-5xl leading-[1.02] font-black tracking-[-0.03em]">
           {t("Welcome, {name}", { name: firstName })}
         </h1>
         <p className="mt-1 text-muted">
@@ -118,7 +118,9 @@ const AppIndex = () => {
               <div className="grid size-10 place-items-center rounded-xl bg-accent/15 text-accent">
                 <Building2 className="size-5" />
               </div>
-              <h2 className="mt-3 text-base font-extrabold">{t("Create an organization")}</h2>
+              <h2 className="mt-3 text-xl font-black tracking-[-0.01em]">
+                {t("Create an organization")}
+              </h2>
               <p className="mt-0.5 text-sm text-muted">
                 {t("Start fresh, design your office, and invite your team.")}
               </p>
@@ -136,7 +138,9 @@ const AppIndex = () => {
             <div className="grid size-10 place-items-center rounded-xl bg-success/15 text-success">
               <ArrowUpRight className="size-5" />
             </div>
-            <h2 className="mt-3 text-base font-extrabold">{t("Join with an invite")}</h2>
+            <h2 className="mt-3 text-xl font-black tracking-[-0.01em]">
+              {t("Join with an invite")}
+            </h2>
             <p className="mt-0.5 text-sm text-muted">
               {t("Paste an invite link or code from a teammate.")}
             </p>

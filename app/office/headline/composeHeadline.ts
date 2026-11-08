@@ -18,6 +18,8 @@ export interface HeadlineFacts {
   freeCount: number
   /** Who else is in, most relevant first (your teams), by the name to show. */
   peopleIn: string[]
+  /** One of your teams comes in together that day: its name. */
+  teamDay?: string
 }
 
 /** The day ("Monday."), then sentences: yours first, then the office's. */
@@ -92,8 +94,8 @@ const composePeople = (translator: Translator, peopleIn: string[], isPast: boole
 
 /**
  * The shown day in a headline and a few short sentences, from facts: your
- * desk first, then (when you have none) how many are free, then who else is
- * in. Each sentence is one translated template, never words glued together,
+ * desk first, then (when you have none) how many are free, your team's day,
+ * then who else is in. Each sentence is one translated template, never words glued together,
  * and none says a person did something (Czech past tense shows gender).
  */
 export const composeHeadline = (translator: Translator, facts: HeadlineFacts): Headline => {
@@ -108,11 +110,14 @@ export const composeHeadline = (translator: Translator, facts: HeadlineFacts): H
       ? [tn(facts.freeCount, "{n} desk is free.", "{n} desks are free.")]
       : []
 
+  const teamDay = facts.teamDay && !isPast ? [t("It's a {team} day.", { team: facts.teamDay })] : []
+
   return {
     title,
     sentences: [
       composeYou(translator, facts, isPast),
       ...free,
+      ...teamDay,
       composePeople(translator, facts.peopleIn, isPast),
     ],
   }

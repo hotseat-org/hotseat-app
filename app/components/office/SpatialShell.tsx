@@ -5,7 +5,6 @@ import { PANEL, PANEL_HOVER, type ShellMember, type ShellOffice } from "./shell-
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher"
 import { PersonProfile } from "./PersonProfile"
 import { WhosInModal } from "./WhosIn"
-import { TeamDayCard } from "./TeamDayCard"
 import { ColumnPage } from "./ColumnPage"
 import { useDayStatus } from "./dayStatus"
 import { ShellSearch } from "./ShellSearch"
@@ -23,6 +22,7 @@ import { useDesksOnDay } from "~/office/booking/useBooking"
 import { useI18n } from "~/i18n/I18nProvider"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { useIsMobile } from "~/utils/hooks/useIsMobile"
+import { withViewTransition } from "~/utils/withViewTransition"
 
 export type { ShellMember } from "./shell-ui"
 
@@ -58,15 +58,22 @@ const NavLink = ({
     type="button"
     onClick={onClick}
     aria-current={isCurrent ? "page" : undefined}
-    className={`flex h-10 items-center gap-1.5 rounded-xl px-3 text-[15px] font-extrabold whitespace-nowrap outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus ${
+    className={`relative flex h-10 items-center gap-1.5 rounded-xl px-3 text-[15px] font-extrabold whitespace-nowrap outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus ${
       // One weight either way: the bar keeps its width as you move between pages.
-      isCurrent
-        ? "text-foreground underline decoration-[3px] underline-offset-[7px]"
-        : "text-muted hover:text-foreground"
+      isCurrent ? "text-foreground" : "text-muted hover:text-foreground"
     }`}
   >
     {label}
     {count > 0 && <SidePanelBadge count={count} />}
+    {/* The section you're in, underlined: one line that slides to the next
+        section as you move (named for the view transition). */}
+    {isCurrent && (
+      <span
+        aria-hidden
+        style={{ viewTransitionName: "nav-current" }}
+        className="absolute inset-x-3 bottom-1 h-[3px] rounded-full bg-foreground"
+      />
+    )}
   </button>
 )
 
@@ -95,6 +102,12 @@ export const SpatialShell = ({
     if (officePanel.panel === panel) officePanel.close()
     else officePanel.open(panel)
   }
+  /** A side panel's page in or out, moving like the others (it's not a route). */
+  const toggleSidePanel = (id: string) =>
+    withViewTransition(() => {
+      officePanel.close()
+      sidePanels.toggle(id)
+    })
   // Your day: its actions under the headline.
   const day = useDayStatus(me, {
     onOpenBookings: () => {
@@ -129,7 +142,7 @@ export const SpatialShell = ({
   const sidePanel = sidePanels.openPanel
   // A page takes the left column; the headline gives it the room.
   const isPageOpen = !!officePanel.panel || !!sidePanel
-  const closeSidePanel = sidePanels.close
+  const closeSidePanel = () => withViewTransition(sidePanels.close)
 
   return (
     <>
@@ -144,7 +157,7 @@ export const SpatialShell = ({
               label={t("Office")}
               isCurrent={!isPageOpen && !hasHeatmap}
               onClick={() => {
-                sidePanels.close()
+                withViewTransition(sidePanels.close)
                 officePanel.close()
               }}
             />
@@ -179,10 +192,7 @@ export const SpatialShell = ({
                 label={t(panel.label)}
                 count={badgeCount}
                 isCurrent={sidePanel?.id === panel.id}
-                onClick={() => {
-                  officePanel.close()
-                  sidePanels.toggle(panel.id)
-                }}
+                onClick={() => toggleSidePanel(panel.id)}
               />
             ))}
           </nav>
@@ -222,15 +232,7 @@ export const SpatialShell = ({
         </div>
       )}
 
-      {/* Above the dock, on a day your team comes in together. */}
-      {isBooking && (
-        <TeamDayCard
-          me={me}
-          members={members}
-          onFindSeat={() => officePanel.open("find")}
-          className="absolute bottom-24 left-1/2 w-[min(380px,90vw)] -translate-x-1/2"
-        />
-      )}
+      {/* Your team's day is in the headline's sentence (the phone keeps its card). */}
 
       {/* Bottom dock: real-time sync + time-of-day + edit */}
       <TimeOfDay isViewing>
