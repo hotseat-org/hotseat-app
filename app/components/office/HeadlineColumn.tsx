@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { ZoomOut } from "lucide-react"
-import { PANEL, PANEL_HOVER, type ShellMember } from "./shell-ui"
+import type { ShellMember } from "./shell-ui"
 import type { DayStatus } from "./dayStatus"
 import { DayRings, MonthCalendar } from "~/office/booking/DateStepper"
 import { useOfficeStore } from "~/office/store"
@@ -136,27 +136,45 @@ export const HeadlineColumn = ({
         )}
       </section>
 
-      <button
-        type="button"
+      {/* Zoomed in: the headline as a masthead in the corner — the day, your
+          sentence, the one thing to do, and the way back out — on a piece of
+          the ground with a clean edge, so it reads over the model. */}
+      <section
+        aria-label={t("Your day")}
         inert={!isFolded}
-        aria-label={t("Show your day, zoomed out to the whole office")}
-        onClick={requestFit}
-        // Over the zoomed-in office: words on the ground (a halo behind each letter).
-        className={`${PANEL} ${PANEL_HOVER} ${MOTION} on-ground absolute left-5 top-[84px] flex max-w-[min(620px,50vw)] max-[1279px]:top-[144px] items-center gap-2.5 py-2 pr-2 pl-3.5 text-left text-[15px] leading-snug font-bold text-foreground outline-none focus-visible:ring-2 focus-visible:ring-focus ${
+        className={`${MOTION} pointer-events-auto absolute left-5 top-[84px] w-[min(440px,calc(100vw-40px))] max-[1279px]:top-[144px] rounded-[24px] bg-(--ground) px-5 pt-4 pb-4 text-foreground shadow-[0_0_0_1px_color-mix(in_oklab,var(--foreground)_12%,transparent),0_18px_40px_-24px_rgb(0_0_0/0.35)] ${
           isFolded
-            ? "pointer-events-auto [transform:none]"
+            ? "[transform:none]"
             : "pointer-events-none opacity-0 [transform:translateY(-8px)]"
         }`}
       >
-        <span>
-          <b className="font-black">{headline.title}</b> {yours}{" "}
-          <span className="text-muted">{office.join(" ")}</span>
-        </span>
-        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-surface-secondary">
-          {/* It zooms out to the whole office: says so. */}
-          <ZoomOut className="size-4" strokeWidth={2.4} />
-        </span>
-      </button>
+        <p className="text-[40px] leading-[0.95] font-black tracking-[-0.035em]">
+          {headline.title}
+        </p>
+        <p className="mt-2 line-clamp-2 text-lg leading-snug font-extrabold">
+          {yours} <span className="text-muted">{office.join(" ")}</span>
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2">
+          {day.primary && (
+            <button
+              type="button"
+              onClick={day.primary.onPress}
+              className="h-11 rounded-full bg-foreground px-5 text-base font-black text-background transition-opacity outline-none hover:opacity-90 focus-visible:ring-2 focus-visible:ring-focus"
+            >
+              {day.primary.label}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={requestFit}
+            aria-label={t("Show your day, zoomed out to the whole office")}
+            className="flex min-h-11 items-center gap-1.5 text-base font-extrabold underline decoration-2 underline-offset-[5px] outline-none focus-visible:ring-2 focus-visible:ring-focus"
+          >
+            <ZoomOut aria-hidden className="size-4" strokeWidth={2.4} />
+            {t("Whole office")}
+          </button>
+        </div>
+      </section>
     </>
   )
 }
