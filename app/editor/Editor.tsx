@@ -361,7 +361,6 @@ const EditorInner = ({
           </div>
         )}
 
-
         {/* Empty-office first run: offer templates or a blank start (admins),
             or explain why there's nothing here yet (everyone else). */}
         {isEmpty && EmptyState && (
