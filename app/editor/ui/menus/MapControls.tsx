@@ -1,6 +1,6 @@
 import clsx from "clsx"
 import { Tooltip } from "@heroui/react"
-import { Box, Feather, Focus, RotateCcw, RotateCw } from "lucide-react"
+import { Box, Feather, RotateCcw, RotateCw, ZoomOut } from "lucide-react"
 import { useState, type ReactNode } from "react"
 import { useEditorStore } from "../../store"
 import { hasWebGL } from "../../shell/webgl"
@@ -35,8 +35,12 @@ export const MapControls = ({ isEditing = false }: { isEditing?: boolean }) => {
         isEditing ? "border border-border bg-overlay shadow-overlay" : "on-ground"
       )}
     >
-      <ControlButton label={t("Fit")} title={t("Fit to office (F)")} onPress={requestFit}>
-        <Focus className="size-[18px]" />
+      <ControlButton
+        label={t("Whole office")}
+        title={t("Zoom out to the whole office (F)")}
+        onPress={requestFit}
+      >
+        <ZoomOut className="size-[18px]" />
       </ControlButton>
       {!isEditing && webgl && (
         <ControlButton

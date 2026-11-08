@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { ChevronDown } from "lucide-react"
+import { ZoomOut } from "lucide-react"
 import { PANEL, PANEL_HOVER, type ShellMember } from "./shell-ui"
 import type { DayStatus } from "./dayStatus"
 import { DayRings, MonthCalendar } from "~/office/booking/DateStepper"
@@ -139,7 +139,7 @@ export const HeadlineColumn = ({
       <button
         type="button"
         inert={!isFolded}
-        aria-label={t("Show your day")}
+        aria-label={t("Show your day, zoomed out to the whole office")}
         onClick={requestFit}
         // Over the zoomed-in office: words on the ground (a halo behind each letter).
         className={`${PANEL} ${PANEL_HOVER} ${MOTION} on-ground absolute left-5 top-[84px] flex max-w-[min(620px,50vw)] max-[1279px]:top-[144px] items-center gap-2.5 py-2 pr-2 pl-3.5 text-left text-[15px] leading-snug font-bold text-foreground outline-none focus-visible:ring-2 focus-visible:ring-focus ${
@@ -153,7 +153,8 @@ export const HeadlineColumn = ({
           <span className="text-muted">{office.join(" ")}</span>
         </span>
         <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-surface-secondary">
-          <ChevronDown className="size-4" />
+          {/* It zooms out to the whole office: says so. */}
+          <ZoomOut className="size-4" strokeWidth={2.4} />
         </span>
       </button>
     </>

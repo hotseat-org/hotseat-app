@@ -1,3 +1,4 @@
+import { ZoomOut } from "lucide-react"
 import clsx from "clsx"
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react"
 import { PANEL, PANEL_HOVER, type ShellMember, type ShellOffice } from "./shell-ui"
@@ -46,10 +47,16 @@ const NavLink = ({
   label,
   isCurrent,
   count = 0,
+  isZoomingOut = false,
+  zoomOutHint,
   onClick,
 }: {
   label: string
   isCurrent: boolean
+  /** Pressing it frames the whole office again (you're zoomed in): it says so. */
+  isZoomingOut?: boolean
+  /** What zooming out does, in words (its tooltip and description). */
+  zoomOutHint?: string
   /** A count beside it: who's in, the desk filters on. */
   count?: number
   onClick: () => void
@@ -58,6 +65,8 @@ const NavLink = ({
     type="button"
     onClick={onClick}
     aria-current={isCurrent ? "page" : undefined}
+    aria-description={zoomOutHint}
+    title={zoomOutHint}
     className={`relative flex h-11 items-center gap-1.5 rounded-xl px-2.5 text-base font-extrabold whitespace-nowrap outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus ${
       // One weight either way: the bar keeps its width as you move between pages.
       isCurrent ? "text-foreground" : "text-muted hover:text-foreground"
@@ -65,6 +74,7 @@ const NavLink = ({
   >
     {label}
     {count > 0 && <SidePanelBadge count={count} />}
+    {isZoomingOut && <ZoomOut aria-hidden className="size-4" strokeWidth={2.4} />}
   </button>
 )
 
@@ -155,6 +165,7 @@ export const SpatialShell = ({
   const resetSpotlight = useOfficeStore((s) => s.resetSpotlight)
   // Frames the whole office again (the camera's default view).
   const requestFit = useEditorStore((state) => state.requestFit)
+  const isZoomedIn = useEditorStore((state) => state.isZoomedIn)
   // Who sits where on the shown day: permanent residents + bookings.
   const { byPerson } = useDesksOnDay()
   // The office's pages — who's in, your bookings, finding a seat, Insights —
@@ -283,6 +294,8 @@ export const SpatialShell = ({
           >
             <NavLink
               label={t("Office")}
+              isZoomingOut={isZoomedIn}
+              zoomOutHint={isZoomedIn ? t("Zoom out to the whole office") : undefined}
               isCurrent={!isPageOpen && !isDeskOpen && !hasHeatmap}
               // Back to the office as it opens: nothing open over it, the
               // heatmap off, the whole office in view (zoomed out).

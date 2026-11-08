@@ -59,25 +59,4 @@ export const useGroundTone = ({ isDark, isLit }: { isDark: boolean; isLit: boole
       })
     }
   }, [store, isDark, isLit])
-
-  // The office under the text column (panned or zoomed there): the column's
-  // pages get the sheet behind them (`data-office-under`, see .column-sheet).
-  useEffect(() => {
-    const root = document.documentElement
-    keepNow("office-under")
-    const apply = (isUnder: boolean) => {
-      if (isUnder) root.dataset.officeUnder = ""
-      else delete root.dataset.officeUnder
-    }
-    apply(store.getState().isOfficeUnderColumn)
-    const unsubscribe = store.subscribe((state, previous) => {
-      if (state.isOfficeUnderColumn !== previous.isOfficeUnderColumn)
-        apply(state.isOfficeUnderColumn)
-    })
-
-    return () => {
-      unsubscribe()
-      clearLater("office-under", () => delete root.dataset.officeUnder)
-    }
-  }, [store])
 }

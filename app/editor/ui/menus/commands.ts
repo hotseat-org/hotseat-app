@@ -181,7 +181,7 @@ export const EDIT_COMMANDS: Command[] = [
 export const VIEW_COMMANDS: Command[] = [
   {
     id: "fit",
-    label: msg("Fit to office"),
+    label: msg("Zoom out to the whole office"),
     group: GROUP.view,
     icon: Maximize,
     shortcut: "F",

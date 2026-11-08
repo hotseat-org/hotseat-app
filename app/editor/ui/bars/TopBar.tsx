@@ -26,7 +26,7 @@ const SHORTCUTS: [string, string][] = [
   ["Del / ⌫", msg("Delete selected")],
   ["Esc", msg("Deselect")],
   ["⌘Z / ⇧⌘Z", msg("Undo / redo")],
-  ["F", msg("Fit to office")],
+  ["F", msg("Zoom out to the whole office")],
   [msg("⇧ Paint"), msg("Paint the inside of the whole room")],
   [msg("⇧ Click / drag box"), msg("Multi-select")],
   ["← ↑ → ↓", msg("Nudge selection")],

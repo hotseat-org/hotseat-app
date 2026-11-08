@@ -307,7 +307,6 @@ export const cs: Messages = {
   "Measuring hints on / off": "Měření zap. / vyp.",
   "Delete selected": "Smazat vybrané",
   "Undo / redo": "Zpět / znovu",
-  "Fit to office": "Zobrazit celou kancelář",
   "⇧ Paint": "⇧ malovat",
   "Paint the inside of the whole room": "Obarvit celou místnost zevnitř",
   "⇧ Click / drag box": "⇧ klik / tažení rámečku",
@@ -450,7 +449,6 @@ export const cs: Messages = {
   "3D view": "3D zobrazení",
   "Simple view — lighter, for slower devices":
     "Jednoduché zobrazení — nenáročné, pro pomalejší zařízení",
-  "Fit to office (F)": "Zobrazit celou kancelář (F)",
   "Time of day": "Denní doba",
   "Last 4 weeks": "Poslední 4 týdny",
   "Last 12 weeks": "Posledních 12 týdnů",
@@ -494,7 +492,6 @@ export const cs: Messages = {
   "Free — tap to book": "Volno — klepnutím zarezervujete",
   "Turn view left": "Otočit pohled doleva",
   "Turn view right": "Otočit pohled doprava",
-  "Fit the office": "Zobrazit celou kancelář",
   "Close desk": "Zavřít stůl",
   "Open {desk}": "Otevřít: {desk}",
 
@@ -1101,7 +1098,6 @@ export const cs: Messages = {
   "Frame rate": "Snímková frekvence",
   "How smoothly the 3D view runs": "Jak plynule běží 3D zobrazení",
   Now: "Teď",
-  Fit: "Celá",
   Simple: "Jednoduché",
   "3D": "3D",
 
@@ -1590,7 +1586,6 @@ export const cs: Messages = {
   },
   "{in} of {total} in the office {when}.": "{When} je v kanceláři {in} z {total}.",
   "Your day": "Váš den",
-  "Show your day": "Zobrazit váš den",
   "Today.": "Dnes.",
   "Tomorrow.": "Zítra.",
   "{weekday}.": "{Weekday}.",
@@ -1643,4 +1638,8 @@ export const cs: Messages = {
   "New organization.": "Nová organizace.",
   "Its name": "Název",
   "New office.": "Nová kancelář.",
+  "Show your day, zoomed out to the whole office": "Ukázat váš den, oddálit na celou kancelář",
+  "Zoom out to the whole office": "Oddálit na celou kancelář",
+  "Whole office": "Celá kancelář",
+  "Zoom out to the whole office (F)": "Oddálit na celou kancelář (F)",
 }

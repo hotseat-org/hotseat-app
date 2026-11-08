@@ -1314,11 +1314,10 @@ input:-webkit-autofill:focus {
   right: 1.5rem;
 }
 
-/* Behind the column while the office reaches under it (CameraFit): a sheet
-   of the ground, the ground's own colour at this hour, the screen's full
-   height from its left edge, with a clean right edge (a hairline, a soft
-   shadow). It slides in and out (transform only); zoomed out, the office sits
-   beside the column and there's no sheet at all. */
+/* Behind the column while a page or a desk is in it: a sheet of the ground,
+   the ground's own colour at this hour, the screen's full height from its left
+   edge, with a clean right edge (a hairline, a soft shadow). It slides in and
+   out (transform only). The office's own view (the headline) has none. */
 .column-sheet {
   transform: translateX(-100%);
   background: var(--ground);
@@ -1327,7 +1326,7 @@ input:-webkit-autofill:focus {
     16px 0 40px -24px rgb(0 0 0 / 0.35);
   transition: transform var(--motion-page) var(--ease-out-soft);
 }
-:root[data-office-under] .column-sheet[data-active] {
+.column-sheet[data-active] {
   transform: none;
 }
 @media (prefers-reduced-motion: reduce) {

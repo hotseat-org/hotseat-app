@@ -1,4 +1,4 @@
-import { RotateCcw, RotateCw, Scan } from "lucide-react"
+import { RotateCcw, RotateCw, ZoomOut } from "lucide-react"
 import { useI18n } from "~/i18n/I18nProvider"
 
 /**
@@ -43,8 +43,13 @@ export const PhoneControls = ({
       >
         <RotateCw className="size-4" />
       </button>
-      <button type="button" className={RING} aria-label={t("Fit the office")} onClick={onFit}>
-        <Scan className="size-4" />
+      <button
+        type="button"
+        className={RING}
+        aria-label={t("Zoom out to the whole office")}
+        onClick={onFit}
+      >
+        <ZoomOut className="size-4" />
       </button>
     </div>
   )
