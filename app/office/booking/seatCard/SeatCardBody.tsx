@@ -112,9 +112,10 @@ const Row = ({
     className={clsx(
       "flex w-full items-center gap-2.5 rounded-xl px-3 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50",
       getRowSize(isSheet, !!detail),
+      // The one main action: the headline's ink pill; the rest, plain words.
       isPrimary
-        ? "mb-1 bg-accent font-extrabold text-accent-foreground hover:brightness-105"
-        : clsx("font-bold hover:bg-foreground/5", isDanger ? "text-danger" : "text-foreground")
+        ? "mb-1.5 rounded-full bg-foreground px-4 font-black text-background hover:opacity-90"
+        : clsx("font-extrabold hover:bg-foreground/5", isDanger ? "text-danger" : "text-foreground")
     )}
   >
     <Icon
@@ -122,14 +123,14 @@ const Row = ({
       strokeWidth={isPrimary ? 2.6 : 2}
     />
     <span className="min-w-0 flex-1">
-      <span className={clsx("block leading-tight", isSheet ? "text-[0.95rem]" : "text-[0.82rem]")}>
+      <span className={clsx("block leading-tight", isSheet ? "text-[1.05rem]" : "text-[0.95rem]")}>
         {label}
       </span>
       {detail && (
         <span
           className={clsx(
             "block truncate text-[0.7rem] font-semibold",
-            isPrimary ? "text-accent-foreground/80" : "text-muted"
+            isPrimary ? "text-background/75" : "text-muted"
           )}
         >
           {detail}
