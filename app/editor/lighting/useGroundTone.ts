@@ -1,5 +1,6 @@
 import { useEffect } from "react"
 import { useEditorStoreApi } from "../store"
+import { SURFACES } from "../palette"
 import { getGroundColor, isGroundDark } from "./groundColor"
 
 /**
@@ -30,15 +31,22 @@ const keepNow = (key: string) => {
  * of it, so they melt into the land and only show over the model), and a light
  * theme whose ground has gone dark takes the dark theme's colours
  * (`data-ground="dark"`, see tailwind.css). Written straight to the root, no
- * React render. The flat plan has no lighting: the theme's own colours.
+ * React render. The flat plan has no lighting: its backdrop's colour, all day.
  */
 export const useGroundTone = ({ isDark, isLit }: { isDark: boolean; isLit: boolean }) => {
   const store = useEditorStoreApi()
 
   useEffect(() => {
-    if (!isLit) return
-
     const root = document.documentElement
+    // The flat plan: its own backdrop, the same all day (it has no lighting).
+    if (!isLit) {
+      keepNow("ground")
+      root.style.setProperty("--ground", SURFACES[isDark ? "dark" : "light"].planBackdrop)
+      delete root.dataset.ground
+
+      return () => clearLater("ground", () => root.style.removeProperty("--ground"))
+    }
+
     keepNow("ground")
     const apply = (time: number) => {
       const ground = getGroundColor(time, isDark)

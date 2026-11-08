@@ -385,7 +385,10 @@ const EditorInner = ({
         {!isEmpty && flat && (
           <FloorPlan
             dark={isDark}
-            padRight={shellMode ? 340 : 40}
+            // Beside the app's text column, as the 3D view (its centre moved
+            // right by `shellShift`: the column's room is twice that).
+            padLeft={shellShift ? shellShift * 2 + 40 : undefined}
+            padRight={shellMode && !shellShift ? 340 : 40}
             phoneChrome={shellMode && isMobile ? phoneChrome : undefined}
           />
         )}

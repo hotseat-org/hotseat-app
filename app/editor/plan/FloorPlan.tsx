@@ -47,10 +47,13 @@ const mergeBounds = (first: Bounds | null, second: Bounds | null): Bounds | null
  */
 export const FloorPlan = ({
   dark,
+  padLeft = FIT_PAD.left,
   padRight = 40,
   phoneChrome,
 }: {
   dark: boolean
+  /** Screen space a column of text on the left covers, kept clear when fitting (px). */
+  padLeft?: number
   /** Screen space the right-hand panels cover, kept clear when fitting (px). */
   padRight?: number
   phoneChrome?: { top: number; bottom: number }
@@ -168,7 +171,7 @@ export const FloorPlan = ({
         left: 16,
         right: 16,
       }
-    : { ...FIT_PAD, right: padRight }
+    : { ...FIT_PAD, left: padLeft, right: padRight }
   // The floor right below, faded: where this one stands — an empty upper floor
   // isn't a blank map — and with it the building framed whole, the same
   // from every floor.
