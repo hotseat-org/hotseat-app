@@ -71,6 +71,9 @@ export interface ViewState {
   /** An area the camera is asked to frame (see CameraFit) — a module's: the way to a desk. */
   frameRequest: { bounds: FloorArea; nonce: number } | null
   requestFrame: (bounds: FloorArea) => void
+  /** The camera is zoomed in closer than the whole office's fit (see CameraFit). */
+  isZoomedIn: boolean
+  setZoomedIn: (isZoomedIn: boolean) => void
 }
 
 /** The viewer's local wall-clock time in hours [0,24), minute precision. */
@@ -135,4 +138,6 @@ export const createViewState = (set: SetState, get: GetState, hooks: StoreHooks)
   frameRequest: null,
   requestFrame: (bounds) =>
     set((state) => ({ frameRequest: { bounds, nonce: (state.frameRequest?.nonce ?? 0) + 1 } })),
+  isZoomedIn: false,
+  setZoomedIn: (isZoomedIn) => set({ isZoomedIn }),
 })

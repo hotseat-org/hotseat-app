@@ -14,6 +14,9 @@ const FILL = 0.78
 const MIN_ZOOM = 20
 const MAX_ZOOM = 120
 const DURATION = 0.45
+/** Zoomed in: past this share of the whole office's fit. Out again below the second (no flicker). */
+const ZOOMED_IN_ABOVE = 1.12
+const ZOOMED_OUT_BELOW = 1.04
 
 /** Screen space (px) covered by floating panels on each side. */
 export interface FitInsets {
@@ -59,6 +62,8 @@ export const CameraFit = ({
   const latest = useRef({ insets, shift, width })
   latest.current = { insets, shift, width }
   const didInitial = useRef(false)
+  // The whole office's fit zoom: closer than it is "zoomed in".
+  const fitZoom = useRef(0)
 
   // F frames the office, in both modes.
   useEffect(() => {
@@ -106,7 +111,7 @@ export const CameraFit = ({
       box.expandByPoint(new Vector3(object.x - halfX, 0, object.z - halfZ))
       box.expandByPoint(new Vector3(object.x + halfX, WALL.height, object.z + halfZ))
     }
-    frame(box, instant)
+    fitZoom.current = frame(box, instant) ?? fitZoom.current
   }, [nonce, controls, hasObjects])
 
   // An area asked for (a module's — the way to a desk, from the entrance to the chair).
@@ -121,7 +126,7 @@ export const CameraFit = ({
     )
   }, [frameRequest?.nonce, controls])
 
-  /** Move the view onto `box` (animated unless `instant`), keeping the angle. */
+  /** Move the view onto `box` (animated unless `instant`), keeping the angle; its zoom. */
   function frame(box: Box3, instant: boolean) {
     if (!controls) return
 
@@ -163,7 +168,7 @@ export const CameraFit = ({
       apply(to, camera, controls)
       invalidate()
 
-      return
+      return zoom
     }
 
     anim.current = {
@@ -176,7 +181,20 @@ export const CameraFit = ({
       to,
     }
     invalidate()
+
+    return zoom
   }
+
+  // Whether the camera is closer than the whole office's fit, for the app
+  // (the office shell's headline folds away). Written only when it changes.
+  useFrame(() => {
+    if (!fitZoom.current) return
+
+    const { isZoomedIn, setZoomedIn } = store.getState()
+    const ratio = camera.zoom / fitZoom.current
+    const isNowZoomedIn = isZoomedIn ? ratio >= ZOOMED_OUT_BELOW : ratio > ZOOMED_IN_ABOVE
+    if (isNowZoomedIn !== isZoomedIn) setZoomedIn(isNowZoomedIn)
+  })
 
   useFrame((_, delta) => {
     const animation = anim.current
