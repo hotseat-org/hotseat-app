@@ -177,7 +177,8 @@ export const WhosInList = ({
                   spotlightSeat(at.desk.id)
                   onFind()
                 }}
-                className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl bg-default px-3 text-sm font-bold text-foreground"
+                // A word, not a button (the headline's lists).
+                className="flex min-h-11 shrink-0 items-center gap-1.5 px-2 text-[15px] font-extrabold text-foreground underline decoration-2 underline-offset-4"
               >
                 <MapPin className="size-4" /> {t("Find")}
               </button>

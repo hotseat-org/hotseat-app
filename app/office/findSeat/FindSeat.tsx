@@ -30,7 +30,8 @@ type View =
 const CHIP =
   "min-h-11 shrink-0 rounded-full border px-4 text-sm font-bold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus"
 const PRIMARY =
-  "min-h-12 rounded-full bg-accent px-5 text-[15px] font-black text-accent-foreground outline-none transition-opacity focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50"
+  // The one main action, the headline's ink pill.
+  "min-h-12 rounded-full bg-foreground px-5 text-[15px] font-black text-background outline-none transition-opacity focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50"
 const SECONDARY =
   "min-h-12 rounded-full border border-border bg-surface px-5 text-[15px] font-extrabold text-foreground outline-none hover:bg-surface-secondary focus-visible:ring-2 focus-visible:ring-focus"
 

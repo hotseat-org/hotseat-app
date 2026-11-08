@@ -82,16 +82,30 @@ export const MobileShell = ({ offices, me, members, empty = false }: Props) => {
         </div>
       )}
       {sheet === "bookings" && (
-        <BottomSheet
-          title={t("My bookings")}
-          isTall
-          bottomInset={TAB_BAR_HEIGHT}
-          onClose={officePanel.close}
-        >
-          {(close) => (
-            <MyBookings isPhone onShow={close} onFindSeat={() => officePanel.open("find")} />
+        // The sheet's title is the news ("5 days ahead."), as on a computer.
+        <MyBookings
+          isPhone
+          onShow={officePanel.close}
+          onFindSeat={() => officePanel.open("find")}
+          frame={({ title, summary, body }) => (
+            <BottomSheet
+              title={String(title)}
+              label={t("My bookings")}
+              isTall
+              bottomInset={TAB_BAR_HEIGHT}
+              onClose={officePanel.close}
+            >
+              {() => (
+                <>
+                  {summary && (
+                    <p className="-mt-1 mb-3 text-base font-bold text-muted">{summary}</p>
+                  )}
+                  {body}
+                </>
+              )}
+            </BottomSheet>
           )}
-        </BottomSheet>
+        />
       )}
       {sheet === "people" && (
         <BottomSheet

@@ -218,7 +218,9 @@ export const SeatCardBody = ({
   const [below, setBelow] = useState(false)
   useLayoutEffect(() => {
     const top = cardRef.current?.getBoundingClientRect().top ?? 0
-    if (!isSheet && top < 8) setBelow(true)
+    // Clear of the top bar too (and its second row on narrower screens).
+    const barBottom = window.innerWidth < 1280 ? 148 : 84
+    if (!isSheet && top < barBottom) setBelow(true)
   }, [isSheet])
 
   // The shown day alone, and the longer choices (for "Book more days").

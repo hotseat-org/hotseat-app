@@ -263,7 +263,7 @@ const HereSection = ({ onShow }: { onShow?: () => void }) => {
     <div className="flex flex-col gap-2">
       <p className="text-base font-black text-foreground">{t("In this office")}</p>
       {usualDesk && usual && (
-        <div className="flex items-center gap-3 rounded-xl bg-accent/12 p-3">
+        <div className="flex items-center gap-3 border-b border-separator py-3">
           <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent text-accent-foreground">
             <Repeat className="size-4" />
           </span>
@@ -293,10 +293,7 @@ const HereSection = ({ onShow }: { onShow?: () => void }) => {
         </div>
       )}
       {starred.map((desk) => (
-        <div
-          key={desk.id}
-          className="flex items-center gap-3 rounded-xl bg-surface-secondary p-2.5"
-        >
+        <div key={desk.id} className="flex items-center gap-3 border-b border-separator py-2.5">
           <button
             type="button"
             aria-label={t("Remove {desk} from favourites", {
