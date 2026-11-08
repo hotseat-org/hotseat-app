@@ -1,7 +1,7 @@
-import { useCallback, useId, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react"
 import type { PlanState } from "../module"
 import { useModules, usePlanDrawings, usePlanPieceStyles, useViewClicks } from "../modules"
-import { useEditorStore } from "../store"
+import { useEditorStore, useEditorStoreApi } from "../store"
 import { useShownFloorLinks } from "../useShownFloorLinks"
 import { useFloorLinkClick } from "../useFloorLinkClick"
 import { isFloorLink } from "../floorLinks"
@@ -11,6 +11,7 @@ import { SURFACES } from "../palette"
 import { ContourLines } from "../landscape/ContourLines"
 import { FLOOR_CHIP_HEIGHT, FloorChip } from "../ui/menus/FloorChip"
 import { isEdgeType, type SceneObject } from "../types"
+import { getIsZoomedIn } from "../camera/zoomedIn"
 import { PhoneControls } from "./PhoneControls"
 import { buildScene } from "./drawing/buildScene"
 import { fitView, turnObject, type Bounds, type Insets, type View } from "./planView"
@@ -196,10 +197,29 @@ export const FloorPlan = ({
   const hasContent = !!bounds
   const measured = size !== null
 
+  // The whole office's fit zoom: closer than it is "zoomed in" (as in 3D).
+  const fitZoom = useRef(0)
   useLayoutEffect(() => {
     const { size: frameSize, bounds, insets: padding } = frame.current
-    if (frameSize && bounds) setView(fitView(bounds, frameSize, padding))
+    if (!frameSize || !bounds) return
+
+    const fitted = fitView(bounds, frameSize, padding)
+    fitZoom.current = fitted.zoom
+    setView(fitted)
   }, [fitNonce, hasContent, measured, turn])
+
+  // Zoomed in or not, for the app (the headline folds), as the 3D camera tells it.
+  const store = useEditorStoreApi()
+  const zoom = view?.zoom
+  useEffect(() => {
+    if (!zoom || !fitZoom.current) return
+
+    const { isZoomedIn, setZoomedIn } = store.getState()
+    const isNowZoomedIn = getIsZoomedIn(zoom / fitZoom.current, isZoomedIn)
+    if (isNowZoomedIn !== isZoomedIn) setZoomedIn(isNowZoomedIn)
+  }, [zoom, store])
+  // Leaving the plan (to 3D, which tells it afresh): not zoomed in.
+  useEffect(() => () => store.getState().setZoomedIn(false), [store])
 
   const viewRef = useRef(view)
   viewRef.current = view

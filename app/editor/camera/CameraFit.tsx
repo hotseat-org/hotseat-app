@@ -7,6 +7,7 @@ import { edgeNodes, footprintCells } from "../layout"
 import { GRID, isEdgeType, isMarker } from "../types"
 import { WALL } from "../objects/dimensions"
 import { isTypingTarget } from "../shell/keyboard"
+import { getIsZoomedIn } from "./zoomedIn"
 
 /**
  * Share of the free room the office fills: nearly all of its width (the text
@@ -19,9 +20,6 @@ const FILL_HEIGHT = 0.8
 const MIN_ZOOM = 12
 const MAX_ZOOM = 120
 const DURATION = 0.45
-/** Zoomed in: past this share of the whole office's fit. Out again below the second (no flicker). */
-const ZOOMED_IN_ABOVE = 1.12
-const ZOOMED_OUT_BELOW = 1.04
 
 /** Screen space (px) covered by floating panels on each side. */
 export interface FitInsets {
@@ -213,7 +211,7 @@ export const CameraFit = ({
 
     const { isZoomedIn, setZoomedIn } = store.getState()
     const ratio = camera.zoom / fitZoom.current
-    const isNowZoomedIn = isZoomedIn ? ratio >= ZOOMED_OUT_BELOW : ratio > ZOOMED_IN_ABOVE
+    const isNowZoomedIn = getIsZoomedIn(ratio, isZoomedIn)
     if (isNowZoomedIn !== isZoomedIn) setZoomedIn(isNowZoomedIn)
   })
 
