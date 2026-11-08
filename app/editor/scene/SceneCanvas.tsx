@@ -48,6 +48,10 @@ const SceneCanvas = ({
 
   return (
     <Canvas
+      // A landmark: the office itself, by name (and how tests find this canvas
+      // among the catalogue's preview ones).
+      role="region"
+      aria-label={i18n.t("The office in 3D")}
       // Soft (PCFSoft): smooth. WebGPU's plain PCF spreads its samples with
       // per-pixel noise — speckled edges. The sun filters wider still (see
       // shadows.ts).

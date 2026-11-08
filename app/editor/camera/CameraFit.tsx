@@ -62,6 +62,8 @@ export const CameraFit = ({
   const latest = useRef({ insets, shift, width })
   latest.current = { insets, shift, width }
   const didInitial = useRef(false)
+  // The centre's move the last frame was made for (see ViewShift).
+  const framedShift = useRef(shift)
   // The whole office's fit zoom: closer than it is "zoomed in".
   const fitZoom = useRef(0)
 
@@ -84,7 +86,12 @@ export const CameraFit = ({
     const objects = store.getState().objects
     if (objects.length === 0) return
 
-    const instant = !didInitial.current
+    // A moved centre (a text column beside the office, or none — switching
+    // modes) frames it afresh, at once: the mode's loading cover hides it, and
+    // nothing drifts once you can work.
+    const isNewRoom = framedShift.current !== shift
+    framedShift.current = shift
+    const instant = !didInitial.current || isNewRoom
     didInitial.current = true
 
     // Bounding box of everything placed (footprints; walls/openings by length).
@@ -112,7 +119,7 @@ export const CameraFit = ({
       box.expandByPoint(new Vector3(object.x + halfX, WALL.height, object.z + halfZ))
     }
     fitZoom.current = frame(box, instant) ?? fitZoom.current
-  }, [nonce, controls, hasObjects])
+  }, [nonce, controls, hasObjects, shift])
 
   // An area asked for (a module's — the way to a desk, from the entrance to the chair).
   const frameRequest = useEditorStore((state) => state.frameRequest)

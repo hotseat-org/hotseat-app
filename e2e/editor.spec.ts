@@ -7,6 +7,9 @@ import { demoTest as test, expect } from "./fixtures"
 const openGames = async (page: Page, officePath: string) => {
   await page.goto(officePath, { waitUntil: "networkidle" })
   await page.getByRole("button", { name: "Edit layout" }).first().click()
+  // Ready to edit: until then, a click on the floor places nothing.
+  // (It fades out, so its text stays; hidden from assistive tech once done.)
+  await expect(page.getByRole("status").filter({ hasText: "Opening the editor…" })).toHaveCount(0)
   await page.getByRole("button", { name: /Games/ }).first().click()
   await expect(page.getByRole("heading", { name: "Games" })).toBeVisible()
 }
@@ -44,14 +47,20 @@ test("a table football placed and saved", async ({ page, demo }) => {
   await openGames(page, demo.officePath)
   await page.getByRole("button", { name: /Table football/ }).click()
   // Somewhere open on the floor: a few spots, one of them places it.
-  const box = (await page.locator("canvas").first().boundingBox())!
+  const box = (await page
+    .getByRole("region", { name: "The office in 3D" })
+    .locator("canvas")
+    .boundingBox())!
   for (const [x, y] of [
     [0.5, 0.5],
     [0.6, 0.6],
     [0.4, 0.65],
     [0.7, 0.4],
-  ])
+  ]) {
+    // Moved there first, as a hand would: the piece follows the pointer before it lands.
+    await page.mouse.move(box.x + box.width * x, box.y + box.height * y, { steps: 5 })
     await page.mouse.click(box.x + box.width * x, box.y + box.height * y)
+  }
   await page.keyboard.press("Escape")
   await page.getByRole("button", { name: "Done" }).click()
 
