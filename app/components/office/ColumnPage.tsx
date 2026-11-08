@@ -49,19 +49,14 @@ export const ColumnPage = ({
             onClose()
           }
         }}
-        // Named for the move between pages and the headline (see "Motion" in tailwind.css).
-        style={{ viewTransitionName: "column" }}
         className={clsx(
-          "pointer-events-auto absolute top-[84px] bottom-[148px] left-0 z-[44] ground-surface flex flex-col on-ground outline-none max-[1279px]:top-[144px]",
+          "motion-page-in pointer-events-auto absolute top-[84px] bottom-[148px] left-0 z-[44] ground-surface flex flex-col on-ground outline-none max-[1279px]:top-[144px]",
           isWide ? "w-[min(900px,100vw)]" : "w-[min(580px,100vw)]"
         )}
       >
         <header className="flex shrink-0 items-start gap-2 pt-5 pr-6 pb-5 pl-6">
           <div className="min-w-0 flex-1">
-            <h2
-              style={{ viewTransitionName: "column-title" }}
-              className="text-[clamp(44px,4.6vw,64px)] leading-[0.95] font-black tracking-[-0.035em]"
-            >
+            <h2 className="text-[clamp(44px,4.6vw,64px)] leading-[0.95] font-black tracking-[-0.035em]">
               {title}
             </h2>
             {summary && (

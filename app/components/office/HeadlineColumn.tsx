@@ -53,8 +53,6 @@ export const HeadlineColumn = ({
       <section
         aria-label={t("Your day")}
         inert={isFolded}
-        // The same names as a page's: opening one grows the column into it.
-        style={{ viewTransitionName: "column" }}
         className={`${MOTION} on-ground pointer-events-none absolute left-6 top-24 w-[min(560px,40vw)] max-[1279px]:top-[148px] origin-top-left text-foreground ${
           isFolded ? "opacity-0 [transform:translateY(-12px)_scale(0.45)]" : "[transform:none]"
         }`}
@@ -63,7 +61,6 @@ export const HeadlineColumn = ({
         <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
           <h1
             key={headline.title}
-            style={{ viewTransitionName: "column-title" }}
             className="motion-rise text-[clamp(56px,6.4vw,92px)] leading-[0.95] font-black tracking-[-0.03em]"
           >
             {headline.title}

@@ -958,46 +958,30 @@ input:-webkit-autofill:focus {
 }
 
 /*
- * Motion (the headline redesign). Moving between the office's pages is a view
- * transition (see useOfficePanel, withViewTransition): only the named parts
- * move — the left column (headline ⇄ page) grows and fades from one into the
- * other, its title glides, the nav's underline slides to the new section.
- * The rest of the page (the office itself) swaps without a crossfade. Only
- * transform and opacity animate; reduced motion turns it all off.
+ * Motion (the headline redesign). Opening a page plays a short entrance on
+ * the left column alone (.motion-page-in): it fades in as it slides a few
+ * pixels from the left. No view transitions: they freeze the whole screen as
+ * a picture, and the live 3D office in it can come out blank for a frame (a
+ * flicker). Only transform and opacity animate; reduced motion turns it off.
  */
 :root {
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
   --motion-page: 340ms;
   --motion-small: 220ms;
 }
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation: none;
+@keyframes motion-page-in {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
 }
-::view-transition-group(column),
-::view-transition-group(column-title),
-::view-transition-group(nav-current) {
-  animation-duration: var(--motion-page);
-  animation-timing-function: var(--ease-out-soft);
+.motion-page-in {
+  animation: motion-page-in var(--motion-page) var(--ease-out-soft) both;
 }
-/* The column's two states blend; neither is stretched (each keeps its size). */
-::view-transition-old(column),
-::view-transition-new(column) {
-  height: 100%;
-  object-fit: none;
-  object-position: left top;
-}
-::view-transition-old(column) {
-  animation: motion-fade-out calc(var(--motion-page) * 0.55) var(--ease-out-soft) both;
-}
-::view-transition-new(column) {
-  animation: motion-fade-in var(--motion-page) var(--ease-out-soft) both;
-}
-::view-transition-old(column-title) {
-  animation: motion-fade-out calc(var(--motion-page) * 0.5) var(--ease-out-soft) both;
-}
-::view-transition-new(column-title) {
-  animation: motion-fade-in var(--motion-page) var(--ease-out-soft) both;
+@media (prefers-reduced-motion: reduce) {
+  .motion-page-in {
+    animation: none;
+  }
 }
 @keyframes motion-fade-out {
   to {

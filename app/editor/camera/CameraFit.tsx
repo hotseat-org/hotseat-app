@@ -8,8 +8,13 @@ import { GRID, isEdgeType, isMarker } from "../types"
 import { WALL } from "../objects/dimensions"
 import { isTypingTarget } from "../shell/keyboard"
 
-/** Share of the viewport the office fills (room for the floating panels). */
-const FILL = 0.78
+/**
+ * Share of the free room the office fills: nearly all of its width (the text
+ * column's gap is already left out), less of the height (the top bar above,
+ * the time and map controls below).
+ */
+const FILL_WIDTH = 0.9
+const FILL_HEIGHT = 0.8
 /** Must match the OrbitControls zoom limits in Scene. */
 const MIN_ZOOM = 12
 const MAX_ZOOM = 120
@@ -156,6 +161,9 @@ export const CameraFit = ({
     probe.position.copy(position)
     probe.lookAt(center)
     probe.zoom = 1
+    // Measured centred: the column's shift (ViewShift) is allowed for below,
+    // and left in, it would count as the office's own width.
+    probe.clearViewOffset()
     probe.updateMatrixWorld()
     probe.updateProjectionMatrix()
     let extentX = 0
@@ -171,8 +179,14 @@ export const CameraFit = ({
     const { insets: pad, shift: centreShift, width: canvasWidth } = latest.current
     const covered = pad.left + pad.right + centreShift * 2
     const free = canvasWidth > 0 ? Math.max(0.3, (canvasWidth - covered) / canvasWidth) : 1
-    const extent = Math.max(extentX / free, extentY, 1e-6)
-    const zoom = MathUtils.clamp(FILL / extent, MIN_ZOOM, MAX_ZOOM)
+    const zoom = MathUtils.clamp(
+      Math.min(
+        (FILL_WIDTH * free) / Math.max(extentX, 1e-6),
+        FILL_HEIGHT / Math.max(extentY, 1e-6)
+      ),
+      MIN_ZOOM,
+      MAX_ZOOM
+    )
     // The free area's centre, in NDC — moved there by sliding the camera sideways.
     const shiftNdc = canvasWidth > 0 ? (pad.left - pad.right) / canvasWidth : 0
     const right = new Vector3().setFromMatrixColumn(probe.matrixWorld, 0)

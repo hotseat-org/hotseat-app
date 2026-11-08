@@ -20,7 +20,6 @@ import { useDesksOnDay } from "~/office/booking/useBooking"
 import { useI18n } from "~/i18n/I18nProvider"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { useIsMobile } from "~/utils/hooks/useIsMobile"
-import { withViewTransition } from "~/utils/withViewTransition"
 
 export type { ShellMember } from "./shell-ui"
 
@@ -64,12 +63,10 @@ const NavLink = ({
   >
     {label}
     {count > 0 && <SidePanelBadge count={count} />}
-    {/* The section you're in, underlined: one line that slides to the next
-        section as you move (named for the view transition). */}
+    {/* The section you're in, underlined. */}
     {isCurrent && (
       <span
         aria-hidden
-        style={{ viewTransitionName: "nav-current" }}
         className="absolute inset-x-2.5 bottom-1 h-[3px] rounded-full bg-foreground"
       />
     )}
@@ -105,19 +102,18 @@ export const SpatialShell = ({
   // The top bar's own pages — search, what's new, your account — in the same
   // column as the others (one thing in it at a time), not floating popups.
   const [barPage, setBarPage] = useState<BarPage | null>(null)
-  const closeBarPage = useCallback(() => withViewTransition(() => setBarPage(null)), [])
+  const closeBarPage = useCallback(() => setBarPage(null), [])
   const toggleBarPage = useCallback(
-    (page: BarPage) =>
-      withViewTransition(() => {
-        closeSeatCard()
-        setBarPage((openPage) => {
-          if (openPage === page) return null
-          sidePanels.close()
-          officePanel.close()
+    (page: BarPage) => {
+      closeSeatCard()
+      setBarPage((openPage) => {
+        if (openPage === page) return null
+        sidePanels.close()
+        officePanel.close()
 
-          return page
-        })
-      }),
+        return page
+      })
+    },
     [closeSeatCard, sidePanels, officePanel]
   )
   /** Open one of the pages (closing a side panel), or close it if it's open. */
@@ -128,14 +124,13 @@ export const SpatialShell = ({
     if (officePanel.panel === panel) officePanel.close()
     else officePanel.open(panel)
   }
-  /** A side panel's page in or out, moving like the others (it's not a route). */
-  const toggleSidePanel = (id: string) =>
-    withViewTransition(() => {
-      officePanel.close()
-      closeSeatCard()
-      setBarPage(null)
-      sidePanels.toggle(id)
-    })
+  /** A side panel's page in or out (it's not a route). */
+  const toggleSidePanel = (id: string) => {
+    officePanel.close()
+    closeSeatCard()
+    setBarPage(null)
+    sidePanels.toggle(id)
+  }
   // Your day: its actions under the headline.
   const day = useDayStatus(me, {
     onOpenBookings: () => {
@@ -184,7 +179,7 @@ export const SpatialShell = ({
   const sidePanel = sidePanels.openPanel
   // A page takes the left column; the headline gives it the room.
   const isPageOpen = !!officePanel.panel || !!sidePanel || !!barPage
-  const closeSidePanel = () => withViewTransition(sidePanels.close)
+  const closeSidePanel = () => sidePanels.close()
 
   return (
     <>
@@ -208,11 +203,9 @@ export const SpatialShell = ({
               // Back to the office as it opens: nothing open over it, the
               // heatmap off, the whole office in view (zoomed out).
               onClick={() => {
-                withViewTransition(() => {
-                  sidePanels.close()
-                  setBarPage(null)
-                  closeSeatCard()
-                })
+                sidePanels.close()
+                setBarPage(null)
+                closeSeatCard()
                 officePanel.close()
                 setHeatmap(null)
                 clearRoute()

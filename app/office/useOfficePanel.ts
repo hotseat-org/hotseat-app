@@ -46,13 +46,11 @@ export const useOfficePanel = () => {
       navigate(`${officePath}/${next}${getSearch(params)}`, {
         preventScrollReset: true,
         // The column moves from what was there into the page (see "Motion" in tailwind.css).
-        viewTransition: true,
       }),
     [navigate, officePath, getSearch]
   )
   const close = useCallback(
-    () =>
-      navigate(`${officePath}${getSearch()}`, { preventScrollReset: true, viewTransition: true }),
+    () => navigate(`${officePath}${getSearch()}`, { preventScrollReset: true }),
     [navigate, officePath, getSearch]
   )
 
