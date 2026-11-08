@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react"
+import clsx from "clsx"
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react"
 import { PANEL, PANEL_HOVER, type ShellMember, type ShellOffice } from "./shell-ui"
 import { SwitcherPage, WorkspaceSwitcher, type SwitcherMenu } from "./WorkspaceSwitcher"
 import { PersonProfile } from "./PersonProfile"
@@ -63,15 +64,76 @@ const NavLink = ({
   >
     {label}
     {count > 0 && <SidePanelBadge count={count} />}
-    {/* The section you're in, underlined. */}
-    {isCurrent && (
-      <span
-        aria-hidden
-        className="absolute inset-x-2.5 bottom-1 h-[3px] rounded-full bg-foreground"
-      />
-    )}
   </button>
 )
+
+/** The current section's link, as the nav marks it. */
+const CURRENT_LINK = "[aria-current=page]"
+
+/** The underline's drawn width (px); scaled to each word's (transform only). */
+const UNDERLINE_WIDTH = 100
+
+/**
+ * The section you're in, underlined: one line under the nav that glides to
+ * the next section as you move — placed and sized by transform alone (a
+ * translate and a horizontal scale), so it never lays the bar out again.
+ * Measured from the current link, and again whenever the bar resizes. None
+ * when no section is current (a page of the top bar's own).
+ */
+const NavUnderline = ({
+  navRef,
+  currentKey,
+}: {
+  navRef: RefObject<HTMLElement | null>
+  currentKey: string
+}) => {
+  const [place, setPlace] = useState<{ left: number; width: number } | null>(null)
+  // No glide into the first place (or back from none): it just appears there.
+  const [isGliding, setIsGliding] = useState(false)
+
+  useLayoutEffect(() => {
+    const nav = navRef.current
+    if (!nav) return
+
+    const measure = () => {
+      const current = nav.querySelector<HTMLElement>(CURRENT_LINK)
+      if (!current) return setPlace(null)
+
+      // The word, inside the link's padding (px-2.5).
+      setPlace({ left: current.offsetLeft + 10, width: current.offsetWidth - 20 })
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(nav)
+
+    return () => observer.disconnect()
+  }, [navRef, currentKey])
+
+  useEffect(() => {
+    if (!place) return setIsGliding(false)
+
+    const frame = requestAnimationFrame(() => setIsGliding(true))
+
+    return () => cancelAnimationFrame(frame)
+  }, [place === null])
+
+  if (!place) return null
+
+  return (
+    <span
+      aria-hidden
+      style={{
+        width: UNDERLINE_WIDTH,
+        transform: `translateX(${place.left}px) scaleX(${place.width / UNDERLINE_WIDTH})`,
+      }}
+      className={clsx(
+        "pointer-events-none absolute bottom-1 left-0 h-[3px] origin-left rounded-full bg-foreground",
+        isGliding &&
+          "transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
+      )}
+    />
+  )
+}
 
 export const SpatialShell = ({
   offices,
@@ -102,6 +164,7 @@ export const SpatialShell = ({
   // The top bar's own pages — search, what's new, your account — in the same
   // column as the others (one thing in it at a time), not floating popups.
   const [barPage, setBarPage] = useState<BarPage | null>(null)
+  const navRef = useRef<HTMLElement>(null)
   const closeBarPage = useCallback(() => setBarPage(null), [])
   const toggleBarPage = useCallback(
     (page: BarPage) => {
@@ -116,11 +179,13 @@ export const SpatialShell = ({
     },
     [closeSeatCard, sidePanels, officePanel]
   )
-  /** Open one of the pages (closing a side panel), or close it if it's open. */
+  /**
+   * Open one of the pages, or close it if it's open. What's in the column now
+   * (a top-bar page, a side panel, a desk) stays until the page has arrived
+   * (its route loads first) — see the hand-over below — so the headline never
+   * shows in between.
+   */
   const togglePage = (panel: OfficePanel) => {
-    sidePanels.close()
-    closeSeatCard()
-    setBarPage(null)
     if (officePanel.panel === panel) officePanel.close()
     else officePanel.open(panel)
   }
@@ -133,20 +198,23 @@ export const SpatialShell = ({
   }
   // Your day: its actions under the headline.
   const day = useDayStatus(me, {
-    onOpenBookings: () => {
-      sidePanels.close()
-      setBarPage(null)
-      officePanel.open("bookings")
-    },
-    onFindSeat: () => {
-      sidePanels.close()
-      setBarPage(null)
-      officePanel.open("find")
-    },
+    onOpenBookings: () => officePanel.open("bookings"),
+    onFindSeat: () => officePanel.open("find"),
   })
 
   // How many are in on the shown day: beside Who's in, at a glance.
   const inCount = members.filter((member) => byPerson.has(member.userEmail)).length
+
+  // The hand-over: a page has arrived in the column — whatever was there before
+  // it goes, before the frame is painted (no gap, no overlap).
+  useLayoutEffect(() => {
+    if (!officePanel.panel) return
+
+    setBarPage(null)
+    sidePanels.close()
+    closeSeatCard()
+    // Only when a page arrives.
+  }, [officePanel.panel])
 
   // A desk opened (on the map, or from search) while a page is open: the page
   // gives the column to the desk.
@@ -196,7 +264,11 @@ export const SpatialShell = ({
         />
         <span className="flex-1" />
         <div className="order-last basis-full min-[1280px]:order-none min-[1280px]:basis-auto">
-          <nav aria-label={t("Primary")} className={`${PANEL} flex w-fit items-center gap-2`}>
+          <nav
+            ref={navRef}
+            aria-label={t("Primary")}
+            className={`${PANEL} relative flex w-fit items-center gap-2`}
+          >
             <NavLink
               label={t("Office")}
               isCurrent={!isPageOpen && !isDeskOpen && !hasHeatmap}
@@ -247,6 +319,16 @@ export const SpatialShell = ({
                 onClick={() => toggleSidePanel(panel.id)}
               />
             ))}
+            <NavUnderline
+              navRef={navRef}
+              currentKey={[
+                officePanel.panel,
+                sidePanel?.id,
+                barPage,
+                isDeskOpen,
+                hasHeatmap,
+              ].join()}
+            />
           </nav>
         </div>
         <div className="pointer-events-auto">
@@ -261,10 +343,15 @@ export const SpatialShell = ({
           column={{ isOpen: barPage === "account", onToggle: () => toggleBarPage("account") }}
         />
       </div>
-      {barPage === "search" && <SearchPage members={members} onClose={closeBarPage} />}
-      {barPage === "notifications" && <NotificationsPage onClose={closeBarPage} />}
-      {barPage === "account" && <AccountPage onClose={closeBarPage} />}
-      {(barPage === "org" || barPage === "office") && (
+      {/* A route page that has arrived wins the column (the hand-over clears the rest). */}
+      {barPage === "search" && !officePanel.panel && (
+        <SearchPage members={members} onClose={closeBarPage} />
+      )}
+      {barPage === "notifications" && !officePanel.panel && (
+        <NotificationsPage onClose={closeBarPage} />
+      )}
+      {barPage === "account" && !officePanel.panel && <AccountPage onClose={closeBarPage} />}
+      {(barPage === "org" || barPage === "office") && !officePanel.panel && (
         <SwitcherPage offices={offices} menu={barPage} onClose={closeBarPage} />
       )}
       {!isPageOpen && !isDeskOpen && !barPage && (
@@ -293,7 +380,7 @@ export const SpatialShell = ({
       )}
       {officePanel.panel === "find" && isBooking && <FindSeatDialog onClose={officePanel.close} />}
       {officePanel.panel === "insights" && me.role === Role.ADMIN && <InsightsDashboard />}
-      {sidePanel && (
+      {sidePanel && !officePanel.panel && (
         <ColumnPage label={t(sidePanel.label)} title={t(sidePanel.label)} onClose={closeSidePanel}>
           <sidePanel.Component isEditing={false} close={closeSidePanel} />
         </ColumnPage>
