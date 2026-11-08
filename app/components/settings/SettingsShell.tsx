@@ -232,7 +232,8 @@ export function SettingsShell({
           <ScrollArea
             key={activeSection ?? "first"}
             frameClassName={clsx("flex-1", motion.current === "push" && "settings-push")}
-            className="flex flex-col gap-4 px-4 pb-6 md:px-9 md:pb-8"
+            // settings-page: its fields in the headline's way (see tailwind.css).
+            className="settings-page flex flex-col gap-4 px-4 pb-6 md:px-9 md:pb-8"
           >
             <UnsavedChangesProvider value={unsavedChanges}>
               <SettingsFooterProvider value={footerSlot}>{children}</SettingsFooterProvider>

@@ -989,6 +989,28 @@ input:-webkit-autofill:focus {
   letter-spacing: -0.02em;
 }
 
+/* Settings' fields (board H8): calm and large — a filled field, no border
+   until it has focus, its words bold; the label bold above it. Still clearly
+   a field (fully boxless fields are harder to spot). Unlayered: over the kit's. */
+.settings-page .label {
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+.settings-page .input,
+.settings-page .textarea {
+  min-height: 3rem;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  border-color: transparent;
+  background-color: var(--surface-secondary);
+}
+.settings-page .input:focus,
+.settings-page .textarea:focus,
+.settings-page .input[data-focused="true"],
+.settings-page .textarea[data-focused="true"] {
+  border-color: var(--accent);
+}
+
 /* A sentence or title that changes (a new day): it rises into place. */
 @keyframes motion-rise {
   from {
