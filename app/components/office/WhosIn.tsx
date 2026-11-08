@@ -8,7 +8,7 @@ import { WeekDots } from "./WeekDots"
 import { PeopleSearch, type PeopleGroup } from "~/components/people/PeopleSearch"
 import { TeamDot } from "~/components/teams/teamLook"
 import { useOfficeStore } from "~/office/store"
-import { deskName, useDesksOnDay, useWeekPresence } from "~/office/booking/useBooking"
+import { dayPhrase, deskName, useDesksOnDay, useWeekPresence } from "~/office/booking/useBooking"
 import { usePersonProfile } from "~/office/usePersonProfile"
 import { useTeams } from "~/office/teams"
 import { getTeamHex, type OfficeTeam } from "~/utils/teams"
@@ -96,9 +96,13 @@ export const WhosInList = ({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <header className="mb-3">
-        <p className="text-xs text-muted">
-          {day === today ? t("Today") : i18n.format.long(day)} ·{" "}
-          {t("{in} of {total} in the office", { in: inCount, total: members.length })}
+        {/* The page in a sentence (the headline's way), not "Today · 2 of 20". */}
+        <p className="text-lg leading-snug font-bold text-muted">
+          {t("{in} of {total} in the office {when}.", {
+            in: inCount,
+            total: members.length,
+            when: dayPhrase(i18n, day, today),
+          })}
         </p>
       </header>
       {members.length <= 1 ? (

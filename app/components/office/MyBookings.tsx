@@ -118,7 +118,7 @@ export const MyBookings = ({
     <section aria-label={t("My bookings")} className="flex min-h-0 flex-1 flex-col">
       <header className="mb-3 flex items-start justify-between">
         <div>
-          <p className="text-xs text-muted">
+          <p className="text-lg leading-snug font-bold text-muted">
             {data
               ? count
                 ? tn(count, "{n} upcoming day", "{n} upcoming days")
@@ -191,8 +191,9 @@ export const MyBookings = ({
         )}
 
         {days.map(([date, bookings]) => (
-          <div key={date} className="flex flex-col gap-1.5">
-            <p className="text-[0.64rem] font-extrabold uppercase tracking-wider text-muted">
+          <div key={date} className="flex flex-col">
+            {/* The day as a heading, in sentence case (no small capitals). */}
+            <p className="pt-2 pb-0.5 text-base font-black text-foreground">
               {format.long(date)}
               {date === bookings[0].today && (
                 <span className="ml-1.5 text-accent">{t("Today")}</span>
@@ -241,9 +242,7 @@ const HereSection = ({ onShow }: { onShow?: () => void }) => {
   }
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-[0.64rem] font-black uppercase tracking-wider text-muted">
-        {t("In this office")}
-      </p>
+      <p className="text-base font-black text-foreground">{t("In this office")}</p>
       {usualDesk && usual && (
         <div className="flex items-center gap-3 rounded-xl bg-accent/12 p-3">
           <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent text-accent-foreground">

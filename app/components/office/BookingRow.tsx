@@ -42,8 +42,9 @@ export const BookingRow = ({
     // Fixed height: asking "Cancel?" swaps the row's content in place.
     <div
       className={clsx(
-        "flex h-16 items-center gap-3 rounded-xl border px-3",
-        isAsking ? "border-danger/40 bg-danger/5" : "border-border bg-surface"
+        // A ruled row, not a card (the headline's lists): the line under it, no box.
+        "flex h-16 items-center gap-3 border-b px-1",
+        isAsking ? "border-danger/40 bg-danger/5" : "border-separator"
       )}
     >
       {isAsking ? (
@@ -68,8 +69,8 @@ export const BookingRow = ({
       ) : (
         <>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-bold text-foreground">{desk}</p>
-            <p className="truncate text-xs text-muted">{detail}</p>
+            <p className="truncate text-base font-extrabold text-foreground">{desk}</p>
+            <p className="truncate text-sm text-muted">{detail}</p>
           </div>
           <Button size="sm" variant="ghost" onPress={onShow}>
             <MapPin className="size-4" /> {t("Show")}

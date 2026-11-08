@@ -10,8 +10,9 @@ import { Button } from "~/components/Button"
 import { useI18n } from "~/i18n/I18nProvider"
 
 /**
- * A settings section: one rounded, bordered card, set a step into the dialog
- * (recessed) — so what sits on it (inputs, tiles, choice cards) stands up.
+ * A settings section, in the headline's way: no box, a rule above it (none
+ * above the first), its title large — the page reads top to bottom like a
+ * document, not a stack of cards.
  */
 export const SettingsCard = ({
   children,
@@ -21,15 +22,20 @@ export const SettingsCard = ({
   className?: string
 }) => (
   <section
-    className={clsx("rounded-2xl border border-border bg-surface-secondary p-4 md:p-6", className)}
+    className={clsx(
+      "border-t border-separator pt-6 first:border-t-0 first:pt-0 md:pt-8",
+      className
+    )}
   >
     {children}
   </section>
 )
 
-/** A small bold heading inside a card. */
+/** A section's heading: large and tight, like the headline's. */
 export const CardTitle = ({ children }: { children: ReactNode }) => (
-  <h2 className="text-base font-black text-foreground">{children}</h2>
+  <h2 className="text-xl leading-tight font-black tracking-[-0.02em] text-foreground md:text-2xl">
+    {children}
+  </h2>
 )
 
 /**
