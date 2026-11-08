@@ -255,6 +255,9 @@ const EditorInner = ({
           page, so the keyboard reaches the app's controls before the desks' tags;
           z-10 keeps it painted above the scene layer that follows. */}
       <div className="pointer-events-none absolute inset-0 z-10">
+        {/* App chrome (floating panels) for the spatial display experience —
+            first, so Tab starts with where you are and the app's sections. */}
+        {shellMode && displayShell?.({ enterEdit, empty: isEmpty, guide })}
         <SelectionBox />
         {/* The modules' panels (the office: booking on chosen days, the way to a desk…). */}
         {panels.map(({ Component }, index) => (
@@ -358,8 +361,6 @@ const EditorInner = ({
           </div>
         )}
 
-        {/* App chrome (floating panels) for the spatial display experience. */}
-        {shellMode && displayShell?.({ enterEdit, empty: isEmpty, guide })}
 
         {/* Empty-office first run: offer templates or a blank start (admins),
             or explain why there's nothing here yet (everyone else). */}
