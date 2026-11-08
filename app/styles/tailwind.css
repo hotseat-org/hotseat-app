@@ -1329,3 +1329,23 @@ input:-webkit-autofill:focus {
   top: 1.5rem;
   right: 1.5rem;
 }
+
+/* A page or a desk in the column: a surface of the ground behind its words —
+   the ground's own colour at this hour (useGroundTone), so over open land it's
+   invisible and over the model it hides what's underneath. Its edges feather
+   out (no box, no line). Behind the content, so the words aren't faded. */
+.ground-surface {
+  isolation: isolate;
+}
+.ground-surface::before {
+  content: "";
+  position: absolute;
+  inset: -12px -48px -24px -24px;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--ground);
+  mask-image:
+    linear-gradient(to right, transparent, #000 32px, #000 calc(100% - 48px), transparent),
+    linear-gradient(to bottom, transparent, #000 24px, #000 calc(100% - 32px), transparent);
+  mask-composite: intersect;
+}

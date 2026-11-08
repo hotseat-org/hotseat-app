@@ -474,7 +474,7 @@ export const SeatCardBody = ({
                 "on-ground",
                 isColumn
                   ? clsx(
-                      "w-[min(560px,calc(100vw-48px))] gap-3",
+                      "ground-surface relative w-[min(560px,calc(100vw-48px))] gap-3",
                       closing ? "seat-pop-out" : "motion-rise"
                     )
                   : clsx(

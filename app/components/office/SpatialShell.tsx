@@ -12,7 +12,7 @@ import { MobileShell } from "./MobileShell"
 import { NotificationsButton, NotificationsPage } from "./Notifications"
 import { InsightsDashboard } from "./InsightsDashboard"
 import { HeadlineColumn } from "./HeadlineColumn"
-import { SidePanelBadge, TimeOfDay, hasWebGL, useSidePanels } from "~/editor"
+import { SidePanelBadge, TimeOfDay, hasWebGL, useEditorStore, useSidePanels } from "~/editor"
 import { useOfficeStore } from "~/office/store"
 import { useOfficePanel, type OfficePanel } from "~/office/useOfficePanel"
 import { FindSeatDialog } from "~/office/findSeat/FindSeatDialog"
@@ -90,6 +90,11 @@ export const SpatialShell = ({
   // A desk's card takes the left column (the headline's place) while it's open.
   const isDeskOpen = useOfficeStore((s) => s.seatCard !== null)
   const closeSeatCard = useOfficeStore((s) => s.closeSeatCard)
+  const setHeatmap = useOfficeStore((s) => s.setHeatmap)
+  const clearRoute = useOfficeStore((s) => s.clearRoute)
+  const resetSpotlight = useOfficeStore((s) => s.resetSpotlight)
+  // Frames the whole office again (the camera's default view).
+  const requestFit = useEditorStore((state) => state.requestFit)
   // Who sits where on the shown day: permanent residents + bookings.
   const { byPerson } = useDesksOnDay()
   // The office's pages — who's in, your bookings, finding a seat, Insights —
@@ -199,10 +204,20 @@ export const SpatialShell = ({
           <nav aria-label={t("Primary")} className={`${PANEL} flex w-fit items-center gap-2`}>
             <NavLink
               label={t("Office")}
-              isCurrent={!isPageOpen && !hasHeatmap}
+              isCurrent={!isPageOpen && !isDeskOpen && !hasHeatmap}
+              // Back to the office as it opens: nothing open over it, the
+              // heatmap off, the whole office in view (zoomed out).
               onClick={() => {
-                withViewTransition(sidePanels.close)
+                withViewTransition(() => {
+                  sidePanels.close()
+                  setBarPage(null)
+                  closeSeatCard()
+                })
                 officePanel.close()
+                setHeatmap(null)
+                clearRoute()
+                resetSpotlight()
+                requestFit()
               }}
             />
             <NavLink

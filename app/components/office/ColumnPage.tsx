@@ -52,7 +52,7 @@ export const ColumnPage = ({
         // Named for the move between pages and the headline (see "Motion" in tailwind.css).
         style={{ viewTransitionName: "column" }}
         className={clsx(
-          "pointer-events-auto absolute top-[84px] bottom-[148px] left-0 z-[44] flex flex-col on-ground outline-none max-[1279px]:top-[144px]",
+          "pointer-events-auto absolute top-[84px] bottom-[148px] left-0 z-[44] ground-surface flex flex-col on-ground outline-none max-[1279px]:top-[144px]",
           isWide ? "w-[min(900px,100vw)]" : "w-[min(580px,100vw)]"
         )}
       >
