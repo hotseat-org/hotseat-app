@@ -1578,6 +1578,7 @@ export const cs: Messages = {
   // The headline (prototype): the shown day in a few sentences. Gender-neutral:
   // nothing says a person did something in the past tense.
   "Your day": "Váš den",
+  "Show your day": "Zobrazit váš den",
   "Today.": "Dnes.",
   "Tomorrow.": "Zítra.",
   "{weekday}.": "{Weekday}.",
