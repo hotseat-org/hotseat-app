@@ -435,7 +435,7 @@ const TeamEditor = ({
 
       {/* Pinned under the panel: in view however long the team. */}
       <SettingsFooter>
-        <footer className="flex flex-wrap items-center gap-3 border-t border-separator bg-surface-secondary px-4 py-3 md:px-9 md:py-4">
+        <footer className="flex flex-wrap items-center gap-3 border-t border-separator px-4 py-3 md:px-9 md:py-4 [.on-ground_&]:px-6 [.on-ground_&]:py-5">
           {team &&
             (isDeleting ? (
               <span className="flex items-center gap-2">

@@ -212,16 +212,18 @@ export function SettingsShell({
                   {title}
                 </h1>
               )}
-              {active.description && (
+              {/* One line, kept even with none (a danger zone): the tabs under
+                  it never move between sections. */}
+              {(active.description || isBesideOffice) && (
                 <p
                   className={clsx(
                     "hidden text-muted md:block",
                     isBesideOffice
-                      ? "mt-2 text-lg leading-snug font-bold"
+                      ? "mt-2 h-7 truncate text-lg leading-7 font-bold"
                       : "mt-2 text-base font-semibold"
                   )}
                 >
-                  {t(active.description)}
+                  {active.description && t(active.description)}
                 </p>
               )}
             </div>
