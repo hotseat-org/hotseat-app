@@ -30,6 +30,7 @@ import { useDesksOnDay } from "~/office/booking/useBooking"
 import { useI18n } from "~/i18n/I18nProvider"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { useIsMobile } from "~/utils/hooks/useIsMobile"
+import { useSettings } from "~/components/settings/useSettings"
 
 export type { ShellMember } from "./shell-ui"
 
@@ -176,6 +177,11 @@ export const SpatialShell = ({
   // The office's pages — who's in, your bookings, finding a seat, Insights —
   // one at a time, in the URL (see useOfficePanel).
   const officePanel = useOfficePanel()
+  // A wide page — settings, Insights — reaching the screen's middle: its sheet
+  // is as wide (the office stays as it is, as with any page).
+  const settings = useSettings()
+  const isWideOpen = !!settings.scope || officePanel.panel === "insights"
+
   // Your bookings, loaded ahead (the phone's shell too, rendered below): My
   // bookings opens with them already there.
   useMyBookingsAhead()
@@ -266,7 +272,8 @@ export const SpatialShell = ({
           map's controls, above the office. */}
       <div
         aria-hidden
-        data-active={isPageOpen || undefined}
+        data-active={isPageOpen || isWideOpen || undefined}
+        data-wide={isWideOpen || undefined}
         className="column-sheet pointer-events-none absolute inset-y-0 left-0 z-[43] w-[min(604px,100vw)]"
       />
       {/* …and on the right, under your account. */}
@@ -364,46 +371,58 @@ export const SpatialShell = ({
         />
       </div>
       {/* A route page that has arrived wins the column (the hand-over clears the rest). */}
-      {barPage === "search" && !officePanel.panel && (
-        <SearchPage members={members} onClose={closeBarPage} />
-      )}
-      {barPage === "notifications" && !officePanel.panel && (
-        <NotificationsPage onClose={closeBarPage} />
-      )}
-      {barPage === "account" && !officePanel.panel && <AccountPage onClose={closeBarPage} />}
-      {(barPage === "org" || barPage === "office") && !officePanel.panel && (
-        <SwitcherPage offices={offices} menu={barPage} onClose={closeBarPage} />
-      )}
-      {/* Your account opens on the right: the headline stays. */}
-      {!isPageOpen && <HeadlineColumn me={me} members={members} day={day} />}
+      {/* Settings open beside the office (SidePage, over the column): the
+          column's own pages and the headline make way until it closes. */}
+      {!settings.scope && (
+        <>
+          {barPage === "search" && !officePanel.panel && (
+            <SearchPage members={members} onClose={closeBarPage} />
+          )}
+          {barPage === "notifications" && !officePanel.panel && (
+            <NotificationsPage onClose={closeBarPage} />
+          )}
+          {barPage === "account" && !officePanel.panel && <AccountPage onClose={closeBarPage} />}
+          {(barPage === "org" || barPage === "office") && !officePanel.panel && (
+            <SwitcherPage offices={offices} menu={barPage} onClose={closeBarPage} />
+          )}
+          {/* Your account opens on the right: the headline stays. */}
+          {!isPageOpen && <HeadlineColumn me={me} members={members} day={day} />}
 
-      {officePanel.panel === "people" && (
-        <WhosInModal me={me} members={members} onClose={officePanel.close} />
-      )}
-      <PersonProfile me={me} members={members} />
-      {officePanel.panel === "bookings" && (
-        <MyBookings
-          onShow={officePanel.close}
-          onFindSeat={() => officePanel.open("find")}
-          frame={({ title, summary, body }) => (
+          {officePanel.panel === "people" && (
+            <WhosInModal me={me} members={members} onClose={officePanel.close} />
+          )}
+          {officePanel.panel === "bookings" && (
+            <MyBookings
+              onShow={officePanel.close}
+              onFindSeat={() => officePanel.open("find")}
+              frame={({ title, summary, body }) => (
+                <ColumnPage
+                  label={t("My bookings")}
+                  title={title}
+                  summary={summary}
+                  onClose={officePanel.close}
+                >
+                  {body}
+                </ColumnPage>
+              )}
+            />
+          )}
+          {officePanel.panel === "find" && isBooking && (
+            <FindSeatDialog onClose={officePanel.close} />
+          )}
+          {officePanel.panel === "insights" && me.role === Role.ADMIN && <InsightsDashboard />}
+          {sidePanel && !officePanel.panel && (
             <ColumnPage
-              label={t("My bookings")}
-              title={title}
-              summary={summary}
-              onClose={officePanel.close}
+              label={t(sidePanel.label)}
+              title={t(sidePanel.label)}
+              onClose={closeSidePanel}
             >
-              {body}
+              <sidePanel.Component isEditing={false} close={closeSidePanel} />
             </ColumnPage>
           )}
-        />
+        </>
       )}
-      {officePanel.panel === "find" && isBooking && <FindSeatDialog onClose={officePanel.close} />}
-      {officePanel.panel === "insights" && me.role === Role.ADMIN && <InsightsDashboard />}
-      {sidePanel && !officePanel.panel && (
-        <ColumnPage label={t(sidePanel.label)} title={t(sidePanel.label)} onClose={closeSidePanel}>
-          <sidePanel.Component isEditing={false} close={closeSidePanel} />
-        </ColumnPage>
-      )}
+      <PersonProfile me={me} members={members} />
 
       {/* No camera guide here (the editor has one): the bottom right is the time's. */}
 

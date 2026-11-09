@@ -2,11 +2,11 @@ import { Button, Spinner } from "@heroui/react"
 import clsx from "clsx"
 import { Download, Map as MapIcon } from "lucide-react"
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react"
-import { createPortal } from "react-dom"
 import { useFetcher, useParams } from "react-router"
 import { useTheme } from "remix-themes"
+import { ColumnPage } from "./ColumnPage"
+import { ScrollArea } from "~/components/ui/ScrollArea"
 import { getWordChoiceClass } from "~/components/ui/wordChoice"
-import { DialogCloseButton } from "~/components/ui/DialogCloseButton"
 import { heatColor, heatGradient, PERIOD_LABEL } from "~/office/heatmap/heatmap"
 import { personByEmail, usePeople } from "~/office/desks/people"
 import { useOfficeStore } from "~/office/store"
@@ -390,11 +390,6 @@ export const InsightsDashboard = () => {
   useEffect(() => {
     load(`/api/insights/${slug}/${officeSlug}?period=${period}`)
   }, [load, slug, officeSlug, period])
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close()
-    window.addEventListener("keydown", onKey)
-    return () => window.removeEventListener("keydown", onKey)
-  }, [close])
 
   const data = insights.data && !("error" in insights.data) ? insights.data : null
   const isCurrent = data?.period === period
@@ -408,82 +403,66 @@ export const InsightsDashboard = () => {
       ? Math.round((data.occupancy - data.previousOccupancy) * 100)
       : null
 
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex justify-center overflow-y-auto p-4 md:p-8">
-      <button
-        type="button"
-        aria-label={t("Close insights")}
-        className="ground-scrim fixed inset-0"
-        onClick={close}
-      />
-      <section
-        aria-label={t("Insights")}
-        className="modal-in relative flex h-fit w-full max-w-[1220px] flex-col gap-5 on-ground p-5 md:p-7"
-      >
-        <header className="flex flex-col gap-5">
-          {/* The headline and its close ring, as every page; the controls on a line under it. */}
-          <div className="flex items-start gap-4">
-            <div className="min-w-60 flex-1">
-              {/* The news as the headline (board H7): how full the office is. */}
-              <h2 className="text-[clamp(56px,6vw,96px)] leading-[0.9] font-black tracking-[-0.04em]">
-                {data
-                  ? t("{percent} full.", { percent: format.percent(data.occupancy) })
-                  : t("Insights")}
-              </h2>
-              <p className="mt-3 text-xl font-extrabold text-muted">
-                {data
-                  ? t("An average working day, {from} to {to}, of {desks}.", {
-                      from: format.long(data.days[0]?.date ?? data.from),
-                      to: format.long(data.days[data.days.length - 1]?.date ?? data.to),
-                      desks: tn(data.deskCount, "{n} desk", "{n} desks"),
-                    })
-                  : t("Loading…")}
-              </p>
-            </div>
-            <DialogCloseButton onClose={close} />
-          </div>
-          <div className="flex flex-wrap items-center gap-x-7 gap-y-3">
-            <div role="tablist" aria-label={t("Period")} className="flex flex-wrap gap-x-4">
-              {(["4w", "12w", "next"] as const).map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  role="tab"
-                  aria-selected={period === p}
-                  onClick={() => setPeriod(p)}
-                  className={getWordChoiceClass(period === p)}
-                >
-                  {t(PERIOD_LABEL[p])}
-                </button>
-              ))}
-            </div>
-            <span className="flex-1" />
-            <Button
-              variant="primary"
-              size="lg"
-              isDisabled={!data || !isCurrent}
-              onPress={() => {
-                if (!data) return
-                setHeatmap({
-                  period,
-                  ratios: Object.fromEntries(data.desks.map((d) => [d.deskId, d.ratio])),
-                })
-                close()
-              }}
-            >
-              <MapIcon className="size-4" /> {t("Show on the office")}
-            </Button>
+  // A wide page beside the office (to the screen's middle): the news as its
+  // headline (board H7), the period and actions under it, then the figures.
+  return (
+    <ColumnPage
+      label={t("Insights")}
+      isWide
+      title={
+        data ? t("{percent} full.", { percent: format.percent(data.occupancy) }) : t("Insights")
+      }
+      summary={
+        data
+          ? t("An average working day, {from} to {to}, of {desks}.", {
+              from: format.long(data.days[0]?.date ?? data.from),
+              to: format.long(data.days[data.days.length - 1]?.date ?? data.to),
+              desks: tn(data.deskCount, "{n} desk", "{n} desks"),
+            })
+          : t("Loading…")
+      }
+      onClose={close}
+    >
+      <div className="flex shrink-0 flex-wrap items-center gap-x-7 gap-y-3 pb-4">
+        <div role="tablist" aria-label={t("Period")} className="flex flex-wrap gap-x-4">
+          {(["4w", "12w", "next"] as const).map((p) => (
             <button
+              key={p}
               type="button"
-              disabled={!data}
-              onClick={() => data && downloadCsv(i18n, data, officeSlug ?? "office")}
-              className="flex min-h-11 items-center gap-1.5 text-[17px] font-extrabold text-foreground underline decoration-2 underline-offset-[5px] outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50"
+              role="tab"
+              aria-selected={period === p}
+              onClick={() => setPeriod(p)}
+              className={getWordChoiceClass(period === p)}
             >
-              <Download className="size-4" aria-hidden /> CSV
+              {t(PERIOD_LABEL[p])}
             </button>
-          </div>
-        </header>
-
+          ))}
+        </div>
+        <span className="flex-1" />
+        <Button
+          variant="primary"
+          isDisabled={!data || !isCurrent}
+          onPress={() => {
+            if (!data) return
+            setHeatmap({
+              period,
+              ratios: Object.fromEntries(data.desks.map((d) => [d.deskId, d.ratio])),
+            })
+            close()
+          }}
+        >
+          <MapIcon className="size-4" /> {t("Show on the office")}
+        </Button>
+        <button
+          type="button"
+          disabled={!data}
+          onClick={() => data && downloadCsv(i18n, data, officeSlug ?? "office")}
+          className="flex min-h-11 items-center gap-1.5 text-[17px] font-extrabold text-foreground underline decoration-2 underline-offset-[5px] outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50"
+        >
+          <Download className="size-4" aria-hidden /> CSV
+        </button>
+      </div>
+      <ScrollArea frameClassName="-mx-6 flex-1" className="flex flex-col gap-5 px-6 pb-6">
         {insights.data && "error" in insights.data && (
           <p className="rounded-xl bg-danger/10 p-3 text-sm text-danger">{insights.data.error}</p>
         )}
@@ -496,7 +475,7 @@ export const InsightsDashboard = () => {
           <div
             className={clsx("flex flex-col gap-4 transition-opacity", !isCurrent && "opacity-50")}
           >
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 2xl:grid-cols-4">
               <Stat
                 label={period === "next" ? t("Booked so far") : t("Occupancy")}
                 value={format.percent(data.occupancy)}
@@ -549,7 +528,7 @@ export const InsightsDashboard = () => {
               />
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-[3fr_2fr]">
+            <div className="grid gap-4">
               <Card
                 title={t("Desks in use, an average day per week")}
                 aside={
@@ -697,8 +676,7 @@ export const InsightsDashboard = () => {
             </div>
           </div>
         )}
-      </section>
-    </div>,
-    document.body
+      </ScrollArea>
+    </ColumnPage>
   )
 }

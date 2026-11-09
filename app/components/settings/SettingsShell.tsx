@@ -2,12 +2,15 @@ import clsx from "clsx"
 import type { LucideIcon } from "lucide-react"
 import { ChevronLeft, ChevronRight, X } from "lucide-react"
 import { useRef, useState, type ReactNode } from "react"
+import { useParams } from "react-router"
 import { SettingsFooterProvider } from "./SettingsFooter"
 import { UnsavedChangesProvider, type UnsavedChanges } from "./unsavedChanges"
 import { ScrollArea } from "~/components/ui/ScrollArea"
 import { useTouchSwipe } from "~/components/ui/useTouchSwipe"
 import { Button } from "~/components/Button"
 import { InlineModal } from "~/components/ui/InlineModal"
+import { SidePage } from "~/components/ui/SidePage"
+import { useIsMobile } from "~/utils/hooks/useIsMobile"
 import { useI18n } from "~/i18n/I18nProvider"
 
 export type SettingsLink = {
@@ -101,6 +104,9 @@ export function SettingsShell({
     },
   })
 
+  const { officeSlug } = useParams()
+  const isMobile = useIsMobile()
+
   // A section is a word, as the office's top bar: the one you're on in ink,
   // underlined; the rest quieter (no icons, no tile).
   const item = (link: SettingsLink) => {
@@ -128,19 +134,18 @@ export function SettingsShell({
     )
   }
 
-  return (
-    // Rendered in place (not portalled) so a settings URL comes out of the
-    // server with the modal already open.
-    // On a phone: the whole screen, the list of sections or one section's page.
-    <InlineModal
-      label={title}
-      onClose={close}
-      isFullScreenOnPhone
-      className="flex h-dvh w-screen flex-row gap-0 overflow-hidden bg-overlay p-0 md:h-[82vh] md:max-h-[760px] md:w-[min(1080px,94vw)] md:on-ground"
-    >
+  // Over an office on a computer, settings open beside it (see below).
+  const isBesideOffice = !!officeSlug && !isMobile
+
+  const content = (
+    <>
       <nav
         aria-label={title}
-        className="hidden w-[272px] shrink-0 flex-col gap-5 border-r border-separator px-4 py-7 md:flex"
+        className={clsx(
+          "hidden shrink-0 flex-col gap-5 border-r border-separator py-7 md:flex",
+          // Beside the office, the page is half the screen: a slimmer menu.
+          isBesideOffice ? "w-[208px] px-2" : "w-[272px] px-4"
+        )}
       >
         <div className="flex items-center gap-3 px-2">
           {identity.visual}
@@ -159,7 +164,7 @@ export function SettingsShell({
         {danger.length > 0 && <div className="flex flex-col gap-0.5">{danger.map(item)}</div>}
       </nav>
 
-      <main className="flex min-w-0 flex-1 flex-col bg-overlay">
+      <main className={clsx("flex min-w-0 flex-1 flex-col", !isBesideOffice && "bg-overlay")}>
         <header className="flex items-start justify-between gap-4 px-4 pb-3 pt-4 md:px-9 md:pb-5 md:pt-8">
           <div className="flex min-w-0 items-center gap-1">
             <div className="min-w-0">
@@ -256,6 +261,29 @@ export function SettingsShell({
           />
         )}
       </main>
+    </>
+  )
+
+  // Over an office on a computer: a page beside it, to the screen's middle (the
+  // office moves over); elsewhere — a phone, a page without an office — a dialog.
+  if (isBesideOffice)
+    return (
+      <SidePage label={title} onClose={close} className="flex flex-row">
+        {content}
+      </SidePage>
+    )
+
+  return (
+    // Rendered in place (not portalled) so a settings URL comes out of the
+    // server with the modal already open.
+    // On a phone: the whole screen, the list of sections or one section's page.
+    <InlineModal
+      label={title}
+      onClose={close}
+      isFullScreenOnPhone
+      className="flex h-dvh w-screen flex-row gap-0 overflow-hidden bg-overlay p-0 md:h-[82vh] md:max-h-[760px] md:w-[min(1080px,94vw)] md:on-ground"
+    >
+      {content}
     </InlineModal>
   )
 }

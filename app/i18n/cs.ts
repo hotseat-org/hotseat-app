@@ -610,7 +610,6 @@ export const cs: Messages = {
   waiting: "čeká",
   yes: "ano",
   no: "ne",
-  "Close insights": "Zavřít statistiky",
   Period: "Období",
   "Show on the office": "Ukázat v kanceláři",
   "Booked so far": "Zatím rezervováno",

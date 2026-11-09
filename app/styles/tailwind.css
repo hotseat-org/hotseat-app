@@ -109,6 +109,9 @@
      the ground"). Its quiet text is darker than --muted: small text on it still
      reads (4.5:1). */
   --ground: #d3ccc3;
+  /* A wide page (settings, Insights): from the left edge to the screen's
+     middle, at least 720px (see SidePage, ColumnPage isWide). */
+  --wide-page: min(100vw, max(720px, 50vw));
   /* The main action's pill, in the colour scheme's own colour (deepened to
      carry white words) — the scheme's mark on every screen. */
   --pill: color-mix(in oklab, var(--accent) 86%, #000);
@@ -1347,6 +1350,10 @@ input:-webkit-autofill:focus {
     1px 0 0 color-mix(in oklab, var(--foreground) 12%, transparent),
     16px 0 40px -24px rgb(0 0 0 / 0.35);
   transition: transform var(--motion-page) var(--ease-out-soft);
+}
+/* Behind a wide page (settings, Insights): to the screen's middle. */
+.column-sheet[data-wide] {
+  width: calc(var(--wide-page) + 24px);
 }
 /* The same on the right edge, for a page on the right (your account). */
 .column-sheet[data-side="right"] {
