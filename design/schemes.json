@@ -1,0 +1,58 @@
+{
+  "note": "The colour schemes: which base colours each scheme's roles point at (light / dark), from the Hotseat Headline design system. The first is the default (in tokens.json's roles).",
+  "roles": {
+    "text-accent": [
+      "700",
+      "200"
+    ],
+    "mark-accent": [
+      "500",
+      "300"
+    ],
+    "action-primary": [
+      "600",
+      "300"
+    ],
+    "focus-ring": [
+      "500",
+      "200"
+    ]
+  },
+  "schemes": {
+    "warm": {
+      "base": "denim",
+      "surface-raised": [
+        "#dddddc",
+        "#414858"
+      ]
+    },
+    "sage": {
+      "base": "sage",
+      "surface-raised": [
+        "#ddded5",
+        "#404950"
+      ]
+    },
+    "terracotta": {
+      "base": "clay",
+      "surface-raised": [
+        "#e6dbd2",
+        "#49444c"
+      ]
+    },
+    "ocean": {
+      "base": "harbour",
+      "surface-raised": [
+        "#dadddb",
+        "#3e4857"
+      ]
+    },
+    "plum": {
+      "base": "plum",
+      "surface-raised": [
+        "#e1dad9",
+        "#464556"
+      ]
+    }
+  }
+}

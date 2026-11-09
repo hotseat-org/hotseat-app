@@ -32,7 +32,7 @@ const CHIP =
   "min-h-11 shrink-0 rounded-full border px-4 text-sm font-bold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus"
 const PRIMARY =
   // The one main action, the headline's ink pill.
-  "min-h-12 rounded-full bg-pill px-5 text-[15px] font-black text-pill-foreground outline-none transition-opacity focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50"
+  "min-h-12 rounded-full bg-action-primary px-5 text-[15px] font-black text-action-primary-text outline-none transition-opacity focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50"
 const SECONDARY =
   // A word beside the pill, underlined (the headline's links): no second button.
   "min-h-12 px-1 text-[17px] font-extrabold text-foreground underline decoration-2 underline-offset-[5px] outline-none focus-visible:ring-2 focus-visible:ring-focus"

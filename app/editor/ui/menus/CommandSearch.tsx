@@ -77,7 +77,7 @@ const CommandSearchDialog = ({ commands }: Props) => {
 
   return (
     <div
-      className="pointer-events-auto absolute inset-0 z-50 flex justify-center bg-black/20 px-4 pt-[12vh]"
+      className="pointer-events-auto absolute inset-0 z-(--layer-dialog) flex justify-center bg-black/20 px-4 pt-[12vh]"
       onPointerDown={(event) => {
         if (event.target === event.currentTarget) close()
       }}

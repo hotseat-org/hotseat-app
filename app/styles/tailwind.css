@@ -61,6 +61,8 @@
 @import "@heroui/styles/themes/default" layer(theme);
 @import "@heroui/styles/utilities";
 @import "@heroui/styles/variants";
+/* The design system's tokens (design/tokens.json → bun run tokens). */
+@import "./tokens.generated.css";
 
 /* ============================================================
    Nunito — self-hosted rounded typeface (no external CDN).
@@ -104,31 +106,11 @@
      ×1.5: 9px; buttons stay pills): in line with the app's 16px panels. */
   --radius: 0.375rem;
 
-  /* The office's ground as the 3D scene draws it by day: what the headline's
-     words sit on, and what sheets, cards and dialogs are made of. Fixed per
-     theme (the scene keeps its time of day; the UI doesn't follow it). Its
-     quiet text is darker than --muted, so small text on it reads (4.5:1). */
-  --ground: #ebe8e1;
   /* A wide page (settings, Insights): from the left edge to the screen's
      middle, at least 720px (see SidePage, ColumnPage isWide). */
   --wide-page: min(100vw, max(720px, 50vw));
   /* The sheet behind a narrow page (the office's other pages). */
   --column-sheet: min(604px, 100vw);
-  /* The main action's pill, in the colour scheme's own colour (deepened to
-     carry white words) — the scheme's mark on every screen. */
-  --pill: color-mix(in oklab, var(--accent) 86%, #000);
-  --pill-foreground: #fff;
-  /* What pages, the masthead and the desk card sit on: the ground, touched
-     with the scheme's colour. */
-  --ground-surface: color-mix(in oklab, var(--ground) 91%, var(--accent));
-  /* Quiet words are still near-ink here: at dusk the ground goes grey, and a
-     lighter grey would sink into it. Weight, not paleness, sets them apart. */
-  --ground-muted: #3e4150;
-  /* The accent, danger and success (any colour scheme's), deepened to read as
-     small text on it. */
-  --ground-accent: color-mix(in oklab, var(--accent) 72%, #000);
-  --ground-danger: color-mix(in oklab, var(--danger) 76%, #000);
-  --ground-success: color-mix(in oklab, var(--success) 62%, #000);
 
   --background: #f1e9db;
   --foreground: #33384a; /* editor seatLeg, darkened for text */
@@ -202,13 +184,6 @@
    stand off the floor instead of melting into it. */
 .dark,
 [data-theme="dark"] {
-  --ground: #393d49;
-  --pill: var(--accent);
-  --pill-foreground: var(--background);
-  --ground-muted: #a4abba;
-  --ground-accent: var(--accent);
-  --ground-danger: var(--danger);
-  --ground-success: var(--success);
   --background: #151820;
   --foreground: #f2ede4;
 
@@ -457,8 +432,6 @@
 
 /* Expose the phone chrome to Tailwind utilities (bg-chrome / border-chrome-border). */
 @theme inline {
-  --color-pill: var(--pill);
-  --color-pill-foreground: var(--pill-foreground);
   --color-star: var(--star);
   --color-star-surface: var(--star-surface);
   --color-chrome: var(--chrome);
@@ -1021,13 +994,13 @@ input:-webkit-autofill:focus {
 }
 
 /* The one main action anywhere — Save, Create office, Invite — is the headline's
-   pill, in the colour scheme's colour (--pill), as on its pages. Unlayered, so it wins
+   pill, in the colour scheme's colour (--action-primary), as on its pages. Unlayered, so it wins
    over the UI kit's own (in its layer). */
 .button--primary {
-  --button-bg: var(--pill);
-  --button-bg-hover: color-mix(in oklab, var(--pill) 86%, var(--pill-foreground));
-  --button-bg-pressed: color-mix(in oklab, var(--pill) 86%, var(--pill-foreground));
-  --button-fg: var(--pill-foreground);
+  --button-bg: var(--action-primary);
+  --button-bg-hover: color-mix(in oklab, var(--action-primary) 86%, var(--action-primary-text));
+  --button-bg-pressed: color-mix(in oklab, var(--action-primary) 86%, var(--action-primary-text));
+  --button-fg: var(--action-primary-text);
   border-radius: 9999px;
   font-weight: 800;
 }
@@ -1192,10 +1165,10 @@ input:-webkit-autofill:focus {
    redraw with every frame of the scene). Unlayered, so it wins over the UI kit's own (in its layer). */
 @utility on-ground {
   --overlay: transparent;
-  --muted: var(--ground-muted);
-  --accent: var(--ground-accent);
-  --danger: var(--ground-danger);
-  --success: var(--ground-success);
+  --muted: var(--text-muted);
+  --accent: var(--text-accent);
+  --danger: var(--text-danger);
+  --success: var(--text-success);
   color: var(--foreground);
   background: transparent;
   border: 0;
@@ -1207,10 +1180,10 @@ input:-webkit-autofill:focus {
 .modal__dialog,
 .alert-dialog__dialog {
   --overlay: transparent;
-  --muted: var(--ground-muted);
-  --accent: var(--ground-accent);
-  --danger: var(--ground-danger);
-  --success: var(--ground-success);
+  --muted: var(--text-muted);
+  --accent: var(--text-accent);
+  --danger: var(--text-danger);
+  --success: var(--text-success);
   color: var(--foreground);
   background: transparent;
   border: 0;
@@ -1223,7 +1196,7 @@ input:-webkit-autofill:focus {
 .ground-scrim,
 .modal__backdrop,
 .alert-dialog__backdrop {
-  background: var(--ground);
+  background: var(--surface-ground);
 }
 
 /* A scrolling list on the ground: its words fade out at an edge with more
@@ -1322,7 +1295,7 @@ input:-webkit-autofill:focus {
    out (transform only). The office's own view (the headline) has none. */
 .column-sheet {
   transform: translateX(-100%);
-  background: var(--ground-surface);
+  background: var(--surface-raised);
   box-shadow:
     1px 0 0 color-mix(in oklab, var(--foreground) 12%, transparent),
     16px 0 40px -24px rgb(0 0 0 / 0.35);
@@ -1357,10 +1330,11 @@ input:-webkit-autofill:focus {
   --foreground: #fbf8f2;
   --background: #1e2433;
   --muted: #e3e6ee;
-  --ground-muted: #e3e6ee;
-  --ground-accent: #c9dafa;
-  --ground-danger: #ffb4ad;
-  --ground-success: #bfe0a6;
+  --text: #fbf8f2;
+  --text-muted: #e3e6ee;
+  --text-accent: #c9dafa;
+  --text-danger: #ffb4ad;
+  --text-success: #bfe0a6;
   --accent: #8fb3f0;
   --surface-tertiary: rgb(255 255 255 / 0.12);
   color: var(--foreground);

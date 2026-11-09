@@ -253,7 +253,7 @@ export const OfficePlanOverlays = ({ plan }: PlanLayerProps) => {
             // Portalled: the plan sits in its own (isolated) layer under the
             // shell, and the sheet must cover the shell's dock and tabs.
             createPortal(
-              <div className="fixed inset-0 z-50 flex flex-col justify-end">
+              <div className="fixed inset-0 z-(--layer-dialog) flex flex-col justify-end">
                 <button
                   type="button"
                   aria-label={t("Close desk")}

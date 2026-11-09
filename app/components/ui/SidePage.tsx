@@ -44,7 +44,7 @@ export const SidePage = ({
           // Over the top menu, from the screen's top; in place of another page,
           // only its content fades in (the panel stays).
           isSwitch ? "motion-content-in" : "motion-page-in",
-          "on-ground pointer-events-auto fixed inset-y-0 left-0 z-50 w-[calc(var(--wide-page)+24px)] pt-3 outline-none",
+          "on-ground pointer-events-auto fixed inset-y-0 left-0 z-(--layer-dialog) w-[calc(var(--wide-page)+24px)] pt-3 outline-none",
           className
         )}
       >

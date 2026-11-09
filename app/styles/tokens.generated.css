@@ -1,0 +1,285 @@
+/* Generated from design/tokens.json by scripts/generate-tokens.mjs — don't edit. */
+
+:root {
+  --surface-ground: var(--ground-day);
+  --surface-raised: #dddddc;
+  --surface-page: var(--page-cream);
+  --text: var(--ink-900);
+  --text-muted: var(--ink-800);
+  --text-accent: var(--denim-700);
+  --text-danger: var(--red-700);
+  --text-success: var(--green-800);
+  --text-star: var(--amber-700);
+  --mark-accent: var(--denim-500);
+  --action-primary: var(--denim-600);
+  --action-primary-text: var(--white);
+  --action-danger: var(--red-500);
+  --line-rule: rgba(51,56,74,0.14);
+  --fill-subtle: rgba(51,56,74,0.07);
+  --state-hover: rgba(51,56,74,0.06);
+  --state-pressed: rgba(51,56,74,0.12);
+  --state-selected: rgba(74,111,174,0.12);
+  --focus-ring: var(--denim-500);
+  --chart-booked: #4a6fae;
+  --chart-permanent: #c08436;
+  --heat-1: #fde7c2;
+  --heat-2: #fcc97f;
+  --heat-3: #f9a64a;
+  --heat-4: #f08328;
+  --heat-5: #d9611a;
+  --heat-6: #b04512;
+  --denim-200: #abc6f4;
+  --denim-300: #8fb3f0;
+  --denim-500: #4a6fae;
+  --denim-600: #405f96;
+  --denim-700: #2c4368;
+  --sage-200: #a9d1b3;
+  --sage-300: #8cc29a;
+  --sage-500: #4f7a5a;
+  --sage-600: #44694d;
+  --sage-700: #2f4936;
+  --clay-200: #eeaa91;
+  --clay-300: #e88d6c;
+  --clay-500: #b5583a;
+  --clay-600: #9c4c32;
+  --clay-700: #6d3523;
+  --harbour-200: #93c5ec;
+  --harbour-300: #6fb2e6;
+  --harbour-500: #2f6f9f;
+  --harbour-600: #285f89;
+  --harbour-700: #1c435f;
+  --plum-200: #d3b1e0;
+  --plum-300: #c497d6;
+  --plum-500: #7a4f8a;
+  --plum-600: #694477;
+  --plum-700: #492f53;
+  --ink-900: #33384a;
+  --ink-800: #3e4150;
+  --paper-50: #f2ede4;
+  --slate-300: #c3c8d3;
+  --ground-day: #ebe8e1;
+  --ground-dusk: #393d49;
+  --page-cream: #f1e9db;
+  --page-night: #151820;
+  --red-700: #7e2c27;
+  --red-500: #b8443d;
+  --red-400: #f09088;
+  --red-300: #f5a39c;
+  --green-800: #374e2a;
+  --green-300: #a4cc87;
+  --amber-700: #85560a;
+  --amber-300: #f2c56e;
+  --white: #ffffff;
+  --shadow-lift: 0 0 0 1px rgba(51,56,74,0.12), 0 24px 48px -24px rgba(0,0,0,0.45);
+  --shadow-sheet: 1px 0 0 rgba(51,56,74,0.12), 16px 0 40px -24px rgba(0,0,0,0.35);
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --radius-field: 14px;
+  --radius-card: 24px;
+  --radius-dialog: 36px;
+  --radius-pill: 9999px;
+  --size-control: 44px;
+  --size-pill-lg: 56px;
+  --size-row: 68px;
+  --size-column: 580px;
+  --size-wide-page: 720px;
+  --opacity-disabled: 0.4;
+  --layer-scene: 0;
+  --layer-label: 40;
+  --layer-chrome: 45;
+  --layer-sheet: 46;
+  --layer-page: 47;
+  --layer-card: 48;
+  --layer-dialog: 50;
+  --layer-toast: 60;
+  --duration-small: 220ms;
+  --duration-glide: 300ms;
+  --duration-page: 340ms;
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --bp-tablet: 768px;
+  --bp-laptop: 1024px;
+  --bp-desktop: 1280px;
+  --bp-wide: 1440px;
+  --fluid-day: clamp(56px, 6.4vw, 92px);
+  --fluid-page: clamp(44px, 4.6vw, 64px);
+  --fluid-sentence: clamp(22px, 2.3vw, 34px);
+  --fluid-summary: clamp(18px, 1.6vw, 22px);
+}
+
+.dark,
+[data-theme="dark"] {
+  --surface-ground: var(--ground-dusk);
+  --surface-raised: #414858;
+  --surface-page: var(--page-night);
+  --text: var(--paper-50);
+  --text-muted: var(--slate-300);
+  --text-accent: var(--denim-200);
+  --text-danger: var(--red-300);
+  --text-success: var(--green-300);
+  --text-star: var(--amber-300);
+  --mark-accent: var(--denim-300);
+  --action-primary: var(--denim-300);
+  --action-primary-text: var(--page-night);
+  --action-danger: var(--red-400);
+  --line-rule: rgba(242,237,228,0.14);
+  --fill-subtle: rgba(242,237,228,0.09);
+  --state-hover: rgba(242,237,228,0.08);
+  --state-pressed: rgba(242,237,228,0.14);
+  --state-selected: rgba(143,179,240,0.16);
+  --focus-ring: var(--denim-200);
+  --chart-booked: #6b8fd6;
+  --chart-permanent: #b97d35;
+  --heat-1: #5a3418;
+  --heat-2: #8a4415;
+  --heat-3: #c25a14;
+  --heat-4: #ea7420;
+  --heat-5: #ff8f2e;
+  --heat-6: #ffab4a;
+  --denim-200: #abc6f4;
+  --denim-300: #8fb3f0;
+  --denim-500: #4a6fae;
+  --denim-600: #405f96;
+  --denim-700: #2c4368;
+  --sage-200: #a9d1b3;
+  --sage-300: #8cc29a;
+  --sage-500: #4f7a5a;
+  --sage-600: #44694d;
+  --sage-700: #2f4936;
+  --clay-200: #eeaa91;
+  --clay-300: #e88d6c;
+  --clay-500: #b5583a;
+  --clay-600: #9c4c32;
+  --clay-700: #6d3523;
+  --harbour-200: #93c5ec;
+  --harbour-300: #6fb2e6;
+  --harbour-500: #2f6f9f;
+  --harbour-600: #285f89;
+  --harbour-700: #1c435f;
+  --plum-200: #d3b1e0;
+  --plum-300: #c497d6;
+  --plum-500: #7a4f8a;
+  --plum-600: #694477;
+  --plum-700: #492f53;
+  --ink-900: #33384a;
+  --ink-800: #3e4150;
+  --paper-50: #f2ede4;
+  --slate-300: #c3c8d3;
+  --ground-day: #ebe8e1;
+  --ground-dusk: #393d49;
+  --page-cream: #f1e9db;
+  --page-night: #151820;
+  --red-700: #7e2c27;
+  --red-500: #b8443d;
+  --red-400: #f09088;
+  --red-300: #f5a39c;
+  --green-800: #374e2a;
+  --green-300: #a4cc87;
+  --amber-700: #85560a;
+  --amber-300: #f2c56e;
+  --white: #ffffff;
+  --shadow-lift: 0 0 0 1px rgba(242,237,228,0.1), 0 24px 48px -24px rgba(0,0,0,0.7);
+  --shadow-sheet: 1px 0 0 rgba(242,237,228,0.1), 16px 0 40px -24px rgba(0,0,0,0.6);
+}
+
+:root[data-scheme="sage"] {
+  --text-accent: var(--sage-700);
+  --mark-accent: var(--sage-500);
+  --action-primary: var(--sage-600);
+  --focus-ring: var(--sage-500);
+  --surface-raised: #ddded5;
+}
+:root[data-scheme="sage"].dark,
+:root[data-scheme="sage"][data-theme="dark"] {
+  --text-accent: var(--sage-200);
+  --mark-accent: var(--sage-300);
+  --action-primary: var(--sage-300);
+  --focus-ring: var(--sage-200);
+  --surface-raised: #404950;
+}
+
+:root[data-scheme="terracotta"] {
+  --text-accent: var(--clay-700);
+  --mark-accent: var(--clay-500);
+  --action-primary: var(--clay-600);
+  --focus-ring: var(--clay-500);
+  --surface-raised: #e6dbd2;
+}
+:root[data-scheme="terracotta"].dark,
+:root[data-scheme="terracotta"][data-theme="dark"] {
+  --text-accent: var(--clay-200);
+  --mark-accent: var(--clay-300);
+  --action-primary: var(--clay-300);
+  --focus-ring: var(--clay-200);
+  --surface-raised: #49444c;
+}
+
+:root[data-scheme="ocean"] {
+  --text-accent: var(--harbour-700);
+  --mark-accent: var(--harbour-500);
+  --action-primary: var(--harbour-600);
+  --focus-ring: var(--harbour-500);
+  --surface-raised: #dadddb;
+}
+:root[data-scheme="ocean"].dark,
+:root[data-scheme="ocean"][data-theme="dark"] {
+  --text-accent: var(--harbour-200);
+  --mark-accent: var(--harbour-300);
+  --action-primary: var(--harbour-300);
+  --focus-ring: var(--harbour-200);
+  --surface-raised: #3e4857;
+}
+
+:root[data-scheme="plum"] {
+  --text-accent: var(--plum-700);
+  --mark-accent: var(--plum-500);
+  --action-primary: var(--plum-600);
+  --focus-ring: var(--plum-500);
+  --surface-raised: #e1dad9;
+}
+:root[data-scheme="plum"].dark,
+:root[data-scheme="plum"][data-theme="dark"] {
+  --text-accent: var(--plum-200);
+  --mark-accent: var(--plum-300);
+  --action-primary: var(--plum-300);
+  --focus-ring: var(--plum-200);
+  --surface-raised: #464556;
+}
+
+/* The roles as Tailwind colours: bg-surface-raised, text-text-muted, bg-action-primary… */
+@theme inline {
+  --color-surface-ground: var(--surface-ground);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-page: var(--surface-page);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-text-accent: var(--text-accent);
+  --color-text-danger: var(--text-danger);
+  --color-text-success: var(--text-success);
+  --color-text-star: var(--text-star);
+  --color-mark-accent: var(--mark-accent);
+  --color-action-primary: var(--action-primary);
+  --color-action-primary-text: var(--action-primary-text);
+  --color-action-danger: var(--action-danger);
+  --color-line-rule: var(--line-rule);
+  --color-fill-subtle: var(--fill-subtle);
+  --color-state-hover: var(--state-hover);
+  --color-state-pressed: var(--state-pressed);
+  --color-state-selected: var(--state-selected);
+  --color-focus-ring: var(--focus-ring);
+  --color-chart-booked: var(--chart-booked);
+  --color-chart-permanent: var(--chart-permanent);
+  --color-heat-1: var(--heat-1);
+  --color-heat-2: var(--heat-2);
+  --color-heat-3: var(--heat-3);
+  --color-heat-4: var(--heat-4);
+  --color-heat-5: var(--heat-5);
+  --color-heat-6: var(--heat-6);
+}

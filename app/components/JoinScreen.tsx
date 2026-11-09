@@ -70,7 +70,7 @@ export const JoinCard = ({ organization }: { organization: JoinOrganization }) =
             <button
               type="submit"
               disabled={isJoining}
-              className="h-14 min-w-44 rounded-full bg-pill px-7 text-lg font-black text-pill-foreground transition-opacity outline-none hover:opacity-90 focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-60"
+              className="h-14 min-w-44 rounded-full bg-action-primary px-7 text-lg font-black text-action-primary-text transition-opacity outline-none hover:opacity-90 focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-60"
             >
               {isJoining ? t("Joining…") : t("Accept invite")}
             </button>
@@ -94,7 +94,7 @@ export const JoinProblem = ({ title, children }: { title: string; children: Reac
         <Link
           to="/app"
           prefetch="intent"
-          className="mt-8 inline-flex h-14 items-center rounded-full bg-pill px-7 text-lg font-black text-pill-foreground transition-opacity outline-none hover:opacity-90 focus-visible:ring-2 focus-visible:ring-focus"
+          className="mt-8 inline-flex h-14 items-center rounded-full bg-action-primary px-7 text-lg font-black text-action-primary-text transition-opacity outline-none hover:opacity-90 focus-visible:ring-2 focus-visible:ring-focus"
         >
           {t("Back to Hotseat")}
         </Link>

@@ -26,7 +26,9 @@
     "e2e": "playwright test",
     "deploy": "bun run build && wrangler deploy",
     "typegen:worker": "wrangler types --include-runtime=false",
-    "i18n:check": "node scripts/i18n-check.mjs"
+    "i18n:check": "node scripts/i18n-check.mjs",
+    "tokens": "node scripts/generate-tokens.mjs",
+    "tokens:check": "node scripts/generate-tokens.mjs --check"
   },
   "dependencies": {
     "@coji/remix-auth-google": "^4.2.0",

@@ -46,7 +46,7 @@ export function InlineModal({
         // what's under it (the office's shell), it must still catch them.
         // Over a haze of the ground, not black.
         "modal-in-backdrop ground-scrim pointer-events-auto fixed inset-0 grid place-items-center",
-        layer === "panel" ? "z-[45]" : "z-50",
+        layer === "panel" ? "z-(--layer-chrome)" : "z-(--layer-dialog)",
         isFullScreenOnPhone ? "p-0 md:p-4" : "p-4"
       )}
       // Only a press that starts and ends on the backdrop itself closes it (a

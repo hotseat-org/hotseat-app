@@ -112,7 +112,7 @@ export const HeadlineColumn = ({
       <section
         aria-label={t("Your day")}
         inert={!isFolded}
-        className={`${MOTION} pointer-events-auto absolute left-5 top-[84px] w-[min(440px,calc(100vw-40px))] max-[1279px]:top-[144px] rounded-[24px] bg-(--ground-surface) px-5 pt-4 pb-4 text-foreground shadow-[0_0_0_1px_color-mix(in_oklab,var(--foreground)_12%,transparent),0_18px_40px_-24px_rgb(0_0_0/0.35)] ${
+        className={`${MOTION} pointer-events-auto absolute left-5 top-[84px] w-[min(440px,calc(100vw-40px))] max-[1279px]:top-[144px] rounded-[24px] bg-surface-raised px-5 pt-4 pb-4 text-foreground shadow-[0_0_0_1px_color-mix(in_oklab,var(--foreground)_12%,transparent),0_18px_40px_-24px_rgb(0_0_0/0.35)] ${
           isFolded
             ? "[transform:none]"
             : "pointer-events-none opacity-0 [transform:translateY(-8px)]"
@@ -213,7 +213,7 @@ const DayActions = ({
         <button
           type="button"
           onClick={day.primary.onPress}
-          className={`${pill} rounded-full bg-pill font-black text-pill-foreground transition-opacity outline-none hover:opacity-90 focus-visible:ring-2 focus-visible:ring-focus`}
+          className={`${pill} rounded-full bg-action-primary font-black text-action-primary-text transition-opacity outline-none hover:opacity-90 focus-visible:ring-2 focus-visible:ring-focus`}
         >
           {day.primary.label}
         </button>

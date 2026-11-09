@@ -292,8 +292,8 @@ const EditorInner = ({
             while editing, and outside the app's shell. The shell keeps them in
             its bottom bar (the phone in its own). */}
         {!isEmpty && !shellMode && (
-          // Over the app's column sheet (z-43), so it stays in reach.
-          <div className="pointer-events-none absolute bottom-4 left-4 z-[45]">
+          // Over the app's column sheet (--layer-sheet), so it stays in reach.
+          <div className="pointer-events-none absolute bottom-4 left-4 z-(--layer-chrome)">
             <MapControls isEditing={!readOnly} />
           </div>
         )}

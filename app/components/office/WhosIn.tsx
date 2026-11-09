@@ -116,7 +116,7 @@ export const WhosInList = ({
             <button
               type="button"
               onClick={() => openSettings("org", "invitations")}
-              className="h-14 rounded-full bg-pill px-7 text-lg font-black text-pill-foreground"
+              className="h-14 rounded-full bg-action-primary px-7 text-lg font-black text-action-primary-text"
             >
               {t("Invite teammates")}
             </button>

@@ -279,20 +279,20 @@ export const SpatialShell = ({
         aria-hidden
         data-active={isPageOpen || isWideOpen || undefined}
         data-wide={isWideOpen || undefined}
-        className="column-sheet pointer-events-none absolute inset-y-0 left-0 z-[46] w-[calc(var(--wide-page)+24px)]"
+        className="column-sheet pointer-events-none absolute inset-y-0 left-0 z-(--layer-sheet) w-[calc(var(--wide-page)+24px)]"
       />
       {/* …and on the right, under your account. */}
       <div
         aria-hidden
         data-side="right"
         data-active={barPage === "account" || undefined}
-        className="column-sheet pointer-events-none absolute inset-y-0 right-0 z-[46] w-[min(604px,100vw)]"
+        className="column-sheet pointer-events-none absolute inset-y-0 right-0 z-(--layer-sheet) w-[min(604px,100vw)]"
       />
       {/* Where a desk's card is drawn (SeatPopup, the plan's): over the sheet,
           in the column — the scene's own layer is under the sheet. */}
-      <div id={COLUMN_SLOT_ID} className="pointer-events-none absolute inset-0 z-[48]" />
+      <div id={COLUMN_SLOT_ID} className="pointer-events-none absolute inset-0 z-(--layer-card)" />
       {/* The top bar stays put; an open page goes over it (see ColumnPage). */}
-      <div className="on-ground on-scene pointer-events-none absolute inset-x-5 top-5 z-[45] flex flex-wrap items-center gap-x-2.5 gap-y-3">
+      <div className="on-ground on-scene pointer-events-none absolute inset-x-5 top-5 z-(--layer-chrome) flex flex-wrap items-center gap-x-2.5 gap-y-3">
         <WorkspaceSwitcher
           offices={offices}
           className="relative"

@@ -56,7 +56,7 @@ export const DateStepper = () => {
           <CalendarDays className="size-4 text-accent" />
           {format.long(day)}
           {day === today && (
-            <span className="rounded-full bg-pill px-2 py-0.5 text-xs font-black text-pill-foreground">
+            <span className="rounded-full bg-action-primary px-2 py-0.5 text-xs font-black text-action-primary-text">
               {t("Today")}
             </span>
           )}
@@ -159,13 +159,13 @@ const shiftMonth = (month: Day, offset: number) => {
 
 const getDayTone = (isSelected: boolean, isEnabled: boolean) => {
   // The day you pick: the main pill's colour.
-  if (isSelected) return "bg-pill text-pill-foreground"
+  if (isSelected) return "bg-action-primary text-action-primary-text"
 
   return isEnabled ? "text-foreground hover:bg-surface-secondary" : "text-muted opacity-40"
 }
 
 const getFillTone = (isSelected: boolean, isMine: boolean) => {
-  if (isSelected) return "bg-pill-foreground"
+  if (isSelected) return "bg-action-primary-text"
 
   return isMine ? "bg-accent" : "bg-muted"
 }
