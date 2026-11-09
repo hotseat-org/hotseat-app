@@ -10,6 +10,7 @@ import { useTouchSwipe } from "~/components/ui/useTouchSwipe"
 import { Button } from "~/components/Button"
 import { InlineModal } from "~/components/ui/InlineModal"
 import { SidePage } from "~/components/ui/SidePage"
+import { focusNextChoice } from "~/components/ui/rovingFocus"
 import { useIsMobile } from "~/utils/hooks/useIsMobile"
 import { useI18n } from "~/i18n/I18nProvider"
 
@@ -243,45 +244,12 @@ export function SettingsShell({
             one marked by a bar of the scheme's colour on it; the others answer
             the pointer. It scrolls sideways if they don't fit. */}
         {isBesideOffice && (
-          <nav
-            aria-label={title}
-            className="mx-6 mb-5 flex shrink-0 gap-1 overflow-x-auto border-b-2 border-separator [scrollbar-width:none]"
-          >
-            {[...main, ...danger].map((link) => {
-              const isCurrent = link.id === active.id
-
-              return (
-                <button
-                  key={link.id}
-                  type="button"
-                  onClick={() => select(link.id)}
-                  aria-current={isCurrent ? "page" : undefined}
-                  className={clsx(
-                    "relative flex h-12 shrink-0 cursor-pointer items-center gap-2 rounded-t-xl px-3 text-[17px] font-extrabold whitespace-nowrap outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus",
-                    getTabTone({ isCurrent, isDanger: !!link.danger })
-                  )}
-                >
-                  {t(link.label)}
-                  {link.count !== undefined && (
-                    <span
-                      className={clsx(
-                        "grid h-6 min-w-6 place-items-center rounded-full px-1.5 text-xs font-black tabular-nums",
-                        isCurrent ? "bg-accent text-accent-foreground" : "bg-foreground/10"
-                      )}
-                    >
-                      {link.count}
-                    </span>
-                  )}
-                  {isCurrent && (
-                    <span
-                      aria-hidden
-                      className="absolute inset-x-2 -bottom-0.5 h-1 rounded-full bg-accent"
-                    />
-                  )}
-                </button>
-              )
-            })}
-          </nav>
+          <SectionTabs
+            label={title}
+            links={[...main, ...danger]}
+            currentId={active.id}
+            onSelect={select}
+          />
         )}
         {isListShown && (
           <SectionList
@@ -310,6 +278,11 @@ export function SettingsShell({
         >
           <ScrollArea
             key={activeSection ?? "first"}
+            {...(isBesideOffice && {
+              id: SECTION_PANEL_ID,
+              role: "tabpanel",
+              "aria-labelledby": getTabId(active.id),
+            })}
             frameClassName={clsx("flex-1", motion.current === "push" && "settings-push")}
             // settings-page: its fields in the headline's way (see tailwind.css).
             className={clsx(
@@ -473,11 +446,85 @@ const DiscardChanges = ({ onKeep, onDiscard }: { onKeep: () => void; onDiscard: 
   )
 }
 
+/** The open section's panel, named by its tab (beside the office). */
+const SECTION_PANEL_ID = "settings-section"
+
+const getTabId = (sectionId: string) => `settings-tab-${sectionId}`
+
+/**
+ * Beside the office: the sections as tabs — a row on a rule, the open one
+ * marked by a bar of the scheme's colour on it; the others answer the pointer.
+ * It scrolls sideways if they don't fit. A tab list: Tab enters at the open
+ * one, the arrows (Home, End) move between them, Enter or Space opens one —
+ * not the arrows alone, as leaving a section may first ask about its changes.
+ */
+const SectionTabs = ({
+  label,
+  links,
+  currentId,
+  onSelect,
+}: {
+  label: string
+  links: SettingsLink[]
+  currentId: string
+  onSelect: (section: string) => void
+}) => {
+  const { t } = useI18n()
+
+  return (
+    <div
+      role="tablist"
+      aria-label={label}
+      onKeyDown={(event) => focusNextChoice(event, "tab")}
+      className="mx-6 mb-5 flex shrink-0 gap-1 overflow-x-auto border-b-2 border-line-rule [scrollbar-width:none]"
+    >
+      {links.map((link) => {
+        const isCurrent = link.id === currentId
+
+        return (
+          <button
+            key={link.id}
+            id={getTabId(link.id)}
+            type="button"
+            role="tab"
+            aria-selected={isCurrent}
+            aria-controls={isCurrent ? SECTION_PANEL_ID : undefined}
+            tabIndex={isCurrent ? 0 : -1}
+            onClick={() => onSelect(link.id)}
+            className={clsx(
+              "relative flex h-12 shrink-0 cursor-pointer items-center gap-2 rounded-t-xl px-3 text-base font-extrabold whitespace-nowrap outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus-ring",
+              getTabTone({ isCurrent, isDanger: !!link.danger })
+            )}
+          >
+            {t(link.label)}
+            {link.count !== undefined && (
+              <span
+                className={clsx(
+                  "grid h-6 min-w-6 place-items-center rounded-full px-1.5 text-xs font-black tabular-nums",
+                  isCurrent ? "bg-action-primary text-action-primary-text" : "bg-fill-subtle"
+                )}
+              >
+                {link.count}
+              </span>
+            )}
+            {isCurrent && (
+              <span
+                aria-hidden
+                className="absolute inset-x-2 -bottom-0.5 h-1 rounded-full bg-mark-accent"
+              />
+            )}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 /** A section tab's colours: the open one in ink; the rest quieter, lit on hover. */
 const getTabTone = ({ isCurrent, isDanger }: { isCurrent: boolean; isDanger: boolean }) => {
-  if (isCurrent) return isDanger ? "text-danger" : "text-foreground"
+  if (isCurrent) return isDanger ? "text-text-danger" : "text-text"
 
   return isDanger
-    ? "text-danger/80 hover:bg-danger/10 hover:text-danger"
-    : "text-muted hover:bg-foreground/[0.06] hover:text-foreground"
+    ? "text-text-danger/80 hover:bg-state-hover hover:text-text-danger"
+    : "text-text-muted hover:bg-state-hover hover:text-text"
 }

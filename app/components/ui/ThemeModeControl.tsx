@@ -2,6 +2,7 @@ import clsx from "clsx"
 import { MonitorSmartphone, Moon, Sun, type LucideIcon } from "lucide-react"
 import { Theme, useTheme } from "remix-themes"
 import { getWordChoiceClass } from "./wordChoice"
+import { getRadioProps, handleRadioGroupKeyDown } from "./rovingFocus"
 import { useI18n } from "~/i18n/I18nProvider"
 import { msg } from "~/i18n/msg"
 
@@ -34,6 +35,7 @@ export const SegmentedControl = <T extends string>({
   <div
     role="radiogroup"
     aria-label={label}
+    onKeyDown={handleRadioGroupKeyDown}
     className={clsx(
       "flex",
       isWords ? "flex-wrap gap-x-4" : "gap-1 rounded-full border border-border bg-segment p-1"
@@ -47,9 +49,8 @@ export const SegmentedControl = <T extends string>({
         <button
           key={option.id}
           type="button"
-          role="radio"
+          {...getRadioProps(isOn)}
           lang={option.lang}
-          aria-checked={isOn}
           aria-label={Icon ? option.label : undefined}
           title={Icon ? option.label : undefined}
           onClick={() => onChange(option.id)}

@@ -3,6 +3,7 @@ import clsx from "clsx"
 import { Check, ChevronRight, Search } from "lucide-react"
 import { Fragment, useState, type ReactNode, type CSSProperties } from "react"
 import { getWordChoiceClass } from "~/components/ui/wordChoice"
+import { getRadioProps, handleRadioGroupKeyDown } from "~/components/ui/rovingFocus"
 import { ScrollArea } from "~/components/ui/ScrollArea"
 import { colorForEmail } from "~/components/office/shell-ui"
 import { useI18n } from "~/i18n/I18nProvider"
@@ -219,12 +220,17 @@ export const PeopleSearch = <Item,>({
         </label>
         {toolbar}
         {!toolbar && filters && filters.length > 1 && (
-          <div className="flex flex-wrap gap-x-4" role="group" aria-label={t("Show")}>
+          <div
+            role="radiogroup"
+            aria-label={t("Show")}
+            onKeyDown={handleRadioGroupKeyDown}
+            className="flex flex-wrap gap-x-4"
+          >
             {filters.map((candidate) => (
               <button
                 key={candidate.id}
                 type="button"
-                aria-pressed={candidate.id === filterId}
+                {...getRadioProps(candidate.id === filterId)}
                 onClick={() => setFilterId(candidate.id)}
                 className={getWordChoiceClass(candidate.id === filterId)}
               >

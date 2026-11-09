@@ -7,6 +7,7 @@ import { useTheme } from "remix-themes"
 import { ColumnPage } from "./ColumnPage"
 import { ScrollArea } from "~/components/ui/ScrollArea"
 import { getWordChoiceClass } from "~/components/ui/wordChoice"
+import { getRadioProps, handleRadioGroupKeyDown } from "~/components/ui/rovingFocus"
 import { heatColor, heatGradient, PERIOD_LABEL } from "~/office/heatmap/heatmap"
 import { personByEmail, usePeople } from "~/office/desks/people"
 import { useOfficeStore } from "~/office/store"
@@ -424,13 +425,17 @@ export const InsightsDashboard = () => {
       onClose={close}
     >
       <div className="flex shrink-0 flex-wrap items-center gap-x-7 gap-y-3 pb-4">
-        <div role="tablist" aria-label={t("Period")} className="flex flex-wrap gap-x-4">
+        <div
+          role="radiogroup"
+          aria-label={t("Period")}
+          onKeyDown={handleRadioGroupKeyDown}
+          className="flex flex-wrap gap-x-4"
+        >
           {(["4w", "12w", "next"] as const).map((p) => (
             <button
               key={p}
               type="button"
-              role="tab"
-              aria-selected={period === p}
+              {...getRadioProps(period === p)}
               onClick={() => setPeriod(p)}
               className={getWordChoiceClass(period === p)}
             >
@@ -457,7 +462,7 @@ export const InsightsDashboard = () => {
           type="button"
           disabled={!data}
           onClick={() => data && downloadCsv(i18n, data, officeSlug ?? "office")}
-          className="flex min-h-11 items-center gap-1.5 text-[17px] font-extrabold text-foreground underline decoration-2 underline-offset-[5px] outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50"
+          className="flex min-h-11 items-center gap-1.5 text-base font-extrabold text-foreground underline decoration-2 underline-offset-[5px] outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50"
         >
           <Download className="size-4" aria-hidden /> CSV
         </button>

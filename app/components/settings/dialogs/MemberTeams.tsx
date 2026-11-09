@@ -7,6 +7,7 @@ import { Button } from "~/components/Button"
 import { TeamDot } from "~/components/teams/teamLook"
 import { useI18n } from "~/i18n/I18nProvider"
 import type { TeamActionData } from "~/routes/api.settings.org.$slug.teams"
+import { LINK_CLASS } from "~/components/ui/link"
 
 export interface MemberTeam {
   id: string
@@ -67,7 +68,7 @@ export function MemberTeamsDialog({
                   <button
                     type="button"
                     onClick={() => selectSection("teams")}
-                    className="font-bold text-accent hover:underline"
+                    className={LINK_CLASS}
                   >
                     {t("Make one")}
                   </button>

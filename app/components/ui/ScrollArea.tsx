@@ -1,5 +1,13 @@
 import clsx from "clsx"
-import { forwardRef, useCallback, useEffect, useRef, useState, type ReactNode } from "react"
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type HTMLAttributes,
+  type ReactNode,
+} from "react"
 
 /**
  * A scrolling area that shows there's more: a soft shadow at its top or
@@ -8,14 +16,15 @@ import { forwardRef, useCallback, useEffect, useRef, useState, type ReactNode } 
  */
 export const ScrollArea = forwardRef<
   HTMLDivElement,
-  {
+  // Any other attribute goes on the scrolling element (e.g. a tab panel's role).
+  HTMLAttributes<HTMLDivElement> & {
     children: ReactNode
     /** The scrolling element's (its padding, gap, layout). */
     className?: string
     /** The frame's, around it (its size in the layout). */
     frameClassName?: string
   }
->(({ children, className, frameClassName }, forwardedRef) => {
+>(({ children, className, frameClassName, ...attributes }, forwardedRef) => {
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const edges = useScrollEdges(scrollRef)
   const setRefs = useCallback(
@@ -30,6 +39,7 @@ export const ScrollArea = forwardRef<
   return (
     <div className={clsx("relative flex min-h-0 flex-col", frameClassName)}>
       <div
+        {...attributes}
         ref={setRefs}
         // Where there's more: on the ground, the words fade at that edge (see tailwind.css).
         data-more-above={edges.hasMoreAbove || undefined}

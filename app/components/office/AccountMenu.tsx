@@ -177,7 +177,7 @@ const AccountContent = ({
       {day && (
         // Any of its actions closes the menu: the map (or a panel) has it.
         <div className="border-t border-separator px-1 py-3" onClick={onDone}>
-          <p className="text-[17px] font-extrabold text-foreground">{day.text}</p>
+          <p className="text-base font-extrabold text-foreground">{day.text}</p>
           <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[15px]">
             {day.actions}
           </p>

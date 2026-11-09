@@ -1,3 +1,4 @@
+import clsx from "clsx"
 import { EyeOff } from "lucide-react"
 import { useEffect, useMemo } from "react"
 import { createPortal } from "react-dom"
@@ -20,6 +21,7 @@ import { TeamChip } from "~/components/teams/teamLook"
 import { getTeamsOf } from "~/utils/teams"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { addDays, type Day } from "~/utils/booking"
+import { LINK_CLASS } from "~/components/ui/link"
 
 /**
  * A colleague's profile (`?person=<email>`): who they are, their permanent
@@ -171,7 +173,7 @@ const ProfileDialog = ({
             type="button"
             // Over the profile: closing the settings comes back to it.
             onClick={() => openSettings("org", "members")}
-            className="min-h-11 text-lg font-extrabold text-foreground underline decoration-2 underline-offset-[5px] outline-none focus-visible:ring-2 focus-visible:ring-focus"
+            className={clsx("min-h-11 text-base", LINK_CLASS)}
           >
             {t("Manage in members")}
           </button>

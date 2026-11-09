@@ -13,6 +13,7 @@ import { BookingRow, deskText } from "~/components/office/BookingRow"
 import { TeamDot } from "~/components/teams/teamLook"
 import { useI18n } from "~/i18n/I18nProvider"
 import { getWordChoiceClass } from "~/components/ui/wordChoice"
+import { getRadioProps, handleRadioGroupKeyDown } from "~/components/ui/rovingFocus"
 import type { Day } from "~/utils/booking"
 
 /** Other desks that fit, offered under the best one. */
@@ -35,7 +36,7 @@ const PRIMARY =
   "min-h-12 rounded-full bg-action-primary px-5 text-[15px] font-black text-action-primary-text outline-none transition-opacity focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-50"
 const SECONDARY =
   // A word beside the pill, underlined (the headline's links): no second button.
-  "min-h-12 px-1 text-[17px] font-extrabold text-foreground underline decoration-2 underline-offset-[5px] outline-none focus-visible:ring-2 focus-visible:ring-focus"
+  "min-h-12 px-1 text-base font-extrabold text-foreground underline decoration-2 underline-offset-[5px] outline-none focus-visible:ring-2 focus-visible:ring-focus"
 
 /** Stacked in one column (a phone's sheet), or the search beside its result (a dialog). */
 export type FindSeatLayout = "stacked" | "columns"
@@ -167,12 +168,17 @@ const Finder = ({
   )
 
   const dayChips = (
-    <div className="flex flex-wrap gap-x-4" role="group" aria-label={t("Day")}>
+    <div
+      role="radiogroup"
+      aria-label={t("Day")}
+      onKeyDown={handleRadioGroupKeyDown}
+      className="flex flex-wrap gap-x-4"
+    >
       {[...seats.dayChoices, ANY_DAY].map((choice) => (
         <button
           key={choice}
           type="button"
-          aria-pressed={when === choice}
+          {...getRadioProps(when === choice)}
           onClick={() => {
             setWhen(choice)
             setPickedDeskId(null)

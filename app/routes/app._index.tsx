@@ -11,6 +11,7 @@ import { CenteredScreen } from "~/components/ui/CenteredScreen"
 import { ThumbAvatar } from "~/components/office/shell-ui"
 import { revalidateOn } from "~/utils/revalidation"
 import { useI18n } from "~/i18n/I18nProvider"
+import { LINK_CLASS } from "~/components/ui/link"
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const user = await requireUser(request)
@@ -163,7 +164,7 @@ const AppIndex = () => {
 
         <div className="mt-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-muted">
           <span>{t("Signed in as {email}", { email })}</span>
-          <Link to="?settings=user/profile" className="font-bold text-accent hover:underline">
+          <Link to="?settings=user/profile" className={LINK_CLASS}>
             {t("Account settings")}
           </Link>
           <Form method="post" action="/logout">

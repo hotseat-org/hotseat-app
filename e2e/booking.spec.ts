@@ -22,7 +22,7 @@ test("find a seat on a coming day, book it, then cancel it", async ({ page, demo
   const findSeat = page.getByRole("dialog", { name: "Find a seat" })
   // The first coming day: tomorrow, or after a weekend the next open one.
   await findSeat
-    .getByRole("button", { name: /^(Tomorrow|[A-Z][a-z]{2} \d{1,2})$/ })
+    .getByRole("radio", { name: /^(Tomorrow|[A-Z][a-z]{2} \d{1,2})$/ })
     .first()
     .click()
   // Best, or closest when not every preference can be met.

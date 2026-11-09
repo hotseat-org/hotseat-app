@@ -5,6 +5,7 @@ import { ColumnPage } from "./ColumnPage"
 import { MemberAvatar, nameOf, type ShellMember } from "./shell-ui"
 import { WeekDots } from "./WeekDots"
 import { getWordChoiceClass } from "~/components/ui/wordChoice"
+import { getRadioProps, handleRadioGroupKeyDown } from "~/components/ui/rovingFocus"
 import { PeopleSearch, type PeopleGroup } from "~/components/people/PeopleSearch"
 import { TeamDot } from "~/components/teams/teamLook"
 import { useOfficeStore } from "~/office/store"
@@ -131,12 +132,17 @@ export const WhosInList = ({
           groups={view === "everyone" ? undefined : groups}
           toolbar={
             teams.length > 0 && (
-              <div role="group" aria-label={t("Show")} className="flex flex-wrap gap-x-4">
+              <div
+                role="radiogroup"
+                aria-label={t("Show")}
+                onKeyDown={handleRadioGroupKeyDown}
+                className="flex flex-wrap gap-x-4"
+              >
                 {views.map(([id, label]) => (
                   <button
                     key={id}
                     type="button"
-                    aria-pressed={view === id}
+                    {...getRadioProps(view === id)}
                     onClick={() => setView(id)}
                     className={getWordChoiceClass(view === id)}
                   >

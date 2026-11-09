@@ -24,6 +24,7 @@ import { isFound, toSearchable } from "~/components/people/PeopleSearch"
 import { useProgressiveList } from "~/utils/hooks/useProgressiveList"
 import { Rich, useI18n } from "~/i18n/I18nProvider"
 import { TeamChip } from "~/components/teams/teamLook"
+import { LINK_CLASS } from "~/components/ui/link"
 
 /** Manage, as a word (the headline's links). */
 const MANAGE =
@@ -71,7 +72,7 @@ export function OrgMembers() {
                   <button
                     type="button"
                     onClick={() => selectSection("invitations")}
-                    className="inline font-bold text-accent hover:underline"
+                    className={LINK_CLASS}
                   >
                     {t("invite")} <CornerUpLeft strokeWidth={4} className="inline" size={14} />
                   </button>
