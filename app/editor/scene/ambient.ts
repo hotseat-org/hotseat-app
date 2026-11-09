@@ -17,30 +17,44 @@ const IDLE_AFTER = 20_000
 const canvases = new Map<() => void, number>()
 let timer: ReturnType<typeof setInterval> | null = null
 let lastInput = 0
+let isListening = false
 
 const handleInput = () => {
   lastInput = performance.now()
 }
 const INPUTS = ["pointermove", "pointerdown", "keydown", "wheel", "focus"] as const
 
-export const isAmbientAwake = () =>
-  !document.hidden && document.hasFocus() && performance.now() - lastInput < IDLE_AFTER
+/**
+ * Input is watched from the first ambient touch on, and for good: only input
+ * wakes the motion. (It used to start over with each subscription — a desk
+ * pet's wiggle every few seconds counted as input, so it never slept.)
+ */
+const listenForInput = () => {
+  if (isListening) return
+
+  isListening = true
+  lastInput = performance.now()
+  for (const eventName of INPUTS) window.addEventListener(eventName, handleInput, { passive: true })
+}
+
+export const isAmbientAwake = () => {
+  listenForInput()
+
+  return !document.hidden && document.hasFocus() && performance.now() - lastInput < IDLE_AFTER
+}
 
 export const prefersReducedMotion = () =>
   window.matchMedia("(prefers-reduced-motion: reduce)").matches
 
 /** Ask for ambient frames on this canvas (by its `invalidate`) until the returned stop. */
 export const subscribeAmbient = (invalidate: () => void) => {
-  if (!timer) {
-    lastInput = performance.now()
-    for (const eventName of INPUTS)
-      window.addEventListener(eventName, handleInput, { passive: true })
+  listenForInput()
+  if (!timer)
     timer = setInterval(() => {
       if (!isAmbientAwake()) return
 
       for (const invalidateCanvas of canvases.keys()) invalidateCanvas()
     }, 1000 / FPS)
-  }
 
   canvases.set(invalidate, (canvases.get(invalidate) ?? 0) + 1)
 
@@ -51,7 +65,6 @@ export const subscribeAmbient = (invalidate: () => void) => {
     if (!canvases.size && timer) {
       clearInterval(timer)
       timer = null
-      for (const eventName of INPUTS) window.removeEventListener(eventName, handleInput)
     }
   }
 }
