@@ -179,6 +179,9 @@ export const WorkspaceSwitcher = ({
   )
 }
 
+/** Nothing to do: a page whose next step replaces it closes with that. */
+const keepOpen = () => {}
+
 /** A switcher's menu as a page in the office's left column. */
 export const SwitcherPage = ({
   offices,
@@ -200,10 +203,12 @@ export const SwitcherPage = ({
   return (
     <ColumnPage label={label} title={`${label}.`} onClose={onClose}>
       <ScrollArea frameClassName="flex-1 -mx-6" className="flex flex-col gap-0.5 px-6">
+        {/* Its settings open in place of it (the shell hands the column over),
+            so the menus don't close it first. */}
         {menu === "org" ? (
-          <OrgMenu d={d} onClose={onClose} onGo={go} />
+          <OrgMenu d={d} onClose={keepOpen} onGo={go} />
         ) : (
-          <OfficeMenu d={d} offices={offices} onClose={onClose} onGo={go} />
+          <OfficeMenu d={d} offices={offices} onClose={keepOpen} onGo={go} />
         )}
       </ScrollArea>
     </ColumnPage>

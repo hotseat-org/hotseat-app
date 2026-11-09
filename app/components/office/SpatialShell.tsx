@@ -190,6 +190,11 @@ export const SpatialShell = ({
   // The top bar's own pages — search, what's new, your account — in the same
   // column as the others (one thing in it at a time), not floating popups.
   const [barPage, setBarPage] = useState<BarPage | null>(null)
+  // Settings opened (from the switcher, your account…): they take the column
+  // over from the top bar's page, in the same moment — the sheet just widens.
+  useLayoutEffect(() => {
+    if (settings.scope) setBarPage(null)
+  }, [settings.scope])
   const closeBarPage = useCallback(() => setBarPage(null), [])
   const toggleBarPage = useCallback(
     (page: BarPage) => {

@@ -63,7 +63,7 @@ export const SaveBar = ({
 
   return dirty ? (
     <SettingsFooter>
-      <div className="flex items-center gap-3 border-t border-separator bg-surface-secondary px-4 py-3 md:px-9 md:py-4">
+      <div className="flex items-center gap-3 border-t border-separator px-4 py-3 md:px-9 md:py-4 [.on-ground_&]:px-6 [.on-ground_&]:py-5">
         <span className="size-2 shrink-0 rounded-full bg-warning" aria-hidden />
         <span className="min-w-0 flex-1 text-sm font-bold text-foreground">
           <span className="hidden sm:inline">{t("You have unsaved changes")}</span>
