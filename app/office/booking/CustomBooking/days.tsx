@@ -1,11 +1,10 @@
-import { Tooltip } from "@heroui/react"
 import clsx from "clsx"
 import { Armchair, ArrowLeftRight, Check } from "lucide-react"
-import { type ReactNode } from "react"
 import { deskName } from "../useBooking"
 import { type SceneObject } from "~/editor/core"
 import { type Day } from "~/utils/booking"
 import type { Translator } from "~/i18n/translate"
+import { Hint, type HintTarget } from "~/components/ui/Hint"
 
 /** What one calendar day means for the desk being booked. */
 export type Cell =
@@ -37,14 +36,11 @@ export const FOOTER_BUTTON =
 /** Week number + Mon–Sun, square 68px days. */
 export const GRID = "grid grid-cols-[40px_repeat(7,68px)] gap-1.5"
 
-export const WithTooltip = ({ tip: tooltip, children }: { tip?: string; children: ReactNode }) =>
+export const WithTooltip = ({ tip: tooltip, children }: { tip?: string; children: HintTarget }) =>
   tooltip ? (
-    <Tooltip delay={300}>
+    <Hint text={tooltip} delay={300}>
       {children}
-      <Tooltip.Content className="max-w-56 rounded-lg bg-foreground px-2.5 py-1.5 text-xs font-semibold text-background shadow-overlay">
-        {tooltip}
-      </Tooltip.Content>
-    </Tooltip>
+    </Hint>
   ) : (
     children
   )

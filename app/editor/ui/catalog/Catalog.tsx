@@ -445,10 +445,7 @@ const RailButton = ({ label, shortcut, active, danger, onClick, children }: Rail
       </span>
     </ToggleButton>
     {/* The name is on the button; the tooltip adds its key. */}
-    <Tooltip.Content
-      placement="right"
-      className="rounded-md border border-border bg-overlay px-2 py-1 text-xs text-foreground shadow-overlay"
-    >
+    <Tooltip.Content placement="right">
       {label}
       {shortcut ? <span className="ml-1 text-muted">{shortcut}</span> : null}
     </Tooltip.Content>

@@ -1199,6 +1199,111 @@ input:-webkit-autofill:focus {
   background: var(--surface-ground);
 }
 
+/* ── The UI kit, in the design system's recipes ─────────────────────────────
+   Unlayered, so they win over the kit's own (in its layer). */
+
+/* Menus and lists dropped from a word or a field (Menu, Select): a raised
+   piece of the ground, its rows words that light on hover. */
+.dropdown__popover,
+.select__popover,
+.combo-box__popover {
+  --overlay: var(--surface-raised);
+  padding: var(--space-2);
+  border-radius: var(--radius-card);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-lift);
+  color: var(--text);
+}
+
+.menu-item,
+.list-box-item {
+  min-height: var(--size-control);
+  padding-inline: var(--space-3);
+  border-radius: var(--radius-field);
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 800;
+
+  &[data-focus-visible="true"] {
+    background: var(--state-hover);
+  }
+
+  &[data-pressed="true"] {
+    background: var(--state-pressed);
+  }
+
+  &[aria-checked="true"],
+  &[aria-selected="true"] {
+    background: var(--state-selected);
+  }
+}
+
+@media (hover: hover) {
+  :is(.menu-item, .list-box-item):is(:hover, [data-hovered="true"]) {
+    background: var(--state-hover);
+  }
+}
+
+.menu-item--danger,
+.list-box-item--danger {
+  color: var(--text-danger);
+}
+
+/* A tooltip: a short name in the ground's colour on ink. */
+.tooltip {
+  --overlay: var(--text);
+  --muted: color-mix(in oklab, var(--surface-ground) 72%, transparent);
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: var(--text);
+  box-shadow: none;
+  color: var(--surface-ground);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* A toast: ink with the ground's words (a danger one in red), raised. */
+.toast {
+  --muted: color-mix(in oklab, var(--surface-ground) 78%, transparent);
+  padding: 12px 12px 12px 20px;
+  border-radius: var(--radius-card);
+  background: var(--text);
+  box-shadow: var(--shadow-lift);
+  color: var(--surface-ground);
+}
+
+.toast__title {
+  color: inherit;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.toast__indicator,
+.toast:is(.toast--success, .toast--warning, .toast--accent) :is(.toast__title, .toast__indicator) {
+  color: inherit;
+}
+
+.toast--danger {
+  --muted: color-mix(in oklab, var(--action-primary-text) 82%, transparent);
+  background: var(--action-danger);
+  color: var(--action-primary-text);
+
+  & :is(.toast__title, .toast__indicator) {
+    color: inherit;
+  }
+}
+
+.toast__close-button {
+  background: transparent;
+  color: inherit;
+}
+
+/* A spinner turns in the words' colour: the kit's default (accent), which no
+   spinner here changes. */
+.spinner--accent {
+  color: currentColor;
+}
+
 /* A scrolling list on the ground: its words fade out at an edge with more
    beyond it (no shadow band, which reads as a box's edge). */
 :where(.on-ground, .bottom-sheet) .scroll-shadow {

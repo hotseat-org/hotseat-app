@@ -1,4 +1,4 @@
-import { Popover, Tooltip } from "@heroui/react"
+import { Popover } from "@heroui/react"
 import { ChevronDown, Plus, Settings, Star } from "lucide-react"
 import { useEffect, useState, type ReactNode } from "react"
 import { createPortal } from "react-dom"
@@ -7,6 +7,7 @@ import { MOBILE_CHROME } from "./mobile"
 import { PANEL, ThumbAvatar, type ShellOffice } from "./shell-ui"
 import { ColumnPage } from "./ColumnPage"
 import { ScrollArea } from "~/components/ui/ScrollArea"
+import { Hint } from "~/components/ui/Hint"
 import { useSettings } from "~/components/settings/useSettings"
 import { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/enums"
 import { useOrganizationContext } from "~/utils/hooks/useProfileData"
@@ -492,7 +493,7 @@ const HeaderButton = ({
   onClick: () => void
   children: ReactNode
 }) => (
-  <Tooltip delay={350}>
+  <Hint text={label} placement="right">
     <button
       type="button"
       onClick={onClick}
@@ -503,13 +504,7 @@ const HeaderButton = ({
     >
       {children}
     </button>
-    <Tooltip.Content
-      placement="right"
-      className="rounded-md border border-border bg-overlay px-2 py-1 text-xs text-foreground shadow-overlay"
-    >
-      {label}
-    </Tooltip.Content>
-  </Tooltip>
+  </Hint>
 )
 
 /**

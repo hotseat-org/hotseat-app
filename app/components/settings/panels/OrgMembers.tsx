@@ -27,6 +27,9 @@ import { TeamChip } from "~/components/teams/teamLook"
 import { LINK_CLASS } from "~/components/ui/link"
 
 /** Manage, as a word (the headline's links). */
+/** A menu item's icon, before its word (the design system's Menu). */
+const MENU_ICON = "size-[18px] shrink-0"
+
 const MANAGE =
   "inline-flex min-h-11 cursor-pointer items-center px-1 text-base font-extrabold text-foreground underline decoration-2 underline-offset-[5px]"
 
@@ -222,35 +225,24 @@ const ManageMenu = ({ member }: { member: Member }) => {
         >
           {member.role === Role.USER ? (
             <Dropdown.Item id={Role.ADMIN} textValue={t("Admin")}>
-              <div className="flex gap-2 items-center">
-                <ChevronsUp size={28} className="p-1 bg-warning/10 text-warning rounded-small" />
-                {t("Admin")}
-              </div>
+              <ChevronsUp className={MENU_ICON} />
+              {t("Admin")}
             </Dropdown.Item>
           ) : (
             <Dropdown.Item id={Role.USER} textValue={t("User")}>
-              <div className="flex gap-2 items-center">
-                <ChevronUp
-                  size={28}
-                  className="p-1 bg-slate-400/10 text-foreground-600 rounded-small"
-                />
-                {t("User")}
-              </div>
+              <ChevronUp className={MENU_ICON} />
+              {t("User")}
             </Dropdown.Item>
           )}
           <Dropdown.Item id="teams" textValue={t("Teams…")}>
-            <div className="flex gap-2 items-center">
-              <UsersRound size={28} className="p-1 bg-accent/10 text-accent rounded-small" />
-              {t("Teams…")}
-            </div>
+            <UsersRound className={MENU_ICON} />
+            {t("Teams…")}
           </Dropdown.Item>
           {/* Not yourself: you leave from your own settings. */}
           {member.userEmail !== profile.userEmail ? (
             <Dropdown.Item id="remove" textValue={t("Remove")} variant="danger">
-              <div className="flex gap-2 items-center text-danger">
-                <UserMinus size={28} className="p-1 bg-danger/10 rounded-small" />
-                {t("Remove from organization")}
-              </div>
+              <UserMinus className={MENU_ICON} />
+              {t("Remove from organization")}
             </Dropdown.Item>
           ) : null}
         </Dropdown.Menu>

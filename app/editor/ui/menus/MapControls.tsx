@@ -1,5 +1,4 @@
 import clsx from "clsx"
-import { Tooltip } from "@heroui/react"
 import { Box, Feather, RotateCcw, RotateCw, ZoomOut } from "lucide-react"
 import { useState, type ReactNode } from "react"
 import { useEditorStore } from "../../store"
@@ -7,6 +6,7 @@ import { hasWebGL } from "../../shell/webgl"
 import { REVEAL_LABEL } from "../bars/revealLabel"
 import { MapMenu } from "./MapMenu"
 import { useI18n } from "~/i18n/I18nProvider"
+import { Hint, type HintPlacement } from "~/components/ui/Hint"
 
 /**
  * The map's own controls, stacked bottom-left as in map apps: fit the office
@@ -33,6 +33,8 @@ export const MapControls = ({
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   // Editing is always 3D; without WebGL, viewing is the simple view.
   const is3d = isEditing || (webgl && view === "3d")
+  // Names above a row (beside it they'd cover the time), beside a column.
+  const hintPlacement = isRow ? "top" : "right"
 
   return (
     // Stays open while its Map menu is: the menu hangs off it, and mustn't
@@ -50,6 +52,7 @@ export const MapControls = ({
       <ControlButton
         label={t("Whole office")}
         title={t("Zoom out to the whole office (F)")}
+        hintPlacement={hintPlacement}
         onPress={requestFit}
       >
         <ZoomOut className="size-[18px]" />
@@ -58,6 +61,7 @@ export const MapControls = ({
         <ControlButton
           label={is3d ? t("Simple") : t("3D")}
           title={is3d ? t("Simple view — lighter, for slower devices") : t("3D view")}
+          hintPlacement={hintPlacement}
           onPress={() => setView(is3d ? "2d" : "3d")}
         >
           {is3d ? <Feather className="size-[18px]" /> : <Box className="size-[18px]" />}
@@ -66,10 +70,18 @@ export const MapControls = ({
       {!is3d && (
         // Turn left / right, one row (two arrows), named "Turn".
         <div className="flex h-9 items-center px-0.5 text-sm font-semibold text-muted">
-          <TurnButton label={t("Turn view left")} onPress={() => turnPlan(1)}>
+          <TurnButton
+            label={t("Turn view left")}
+            hintPlacement={hintPlacement}
+            onPress={() => turnPlan(1)}
+          >
             <RotateCcw className="size-4" />
           </TurnButton>
-          <TurnButton label={t("Turn view right")} onPress={() => turnPlan(-1)}>
+          <TurnButton
+            label={t("Turn view right")}
+            hintPlacement={hintPlacement}
+            onPress={() => turnPlan(-1)}
+          >
             <RotateCw className="size-4" />
           </TurnButton>
           <span className={REVEAL_LABEL} aria-hidden>
@@ -95,15 +107,17 @@ export const MapControls = ({
 const ControlButton = ({
   label,
   title,
+  hintPlacement,
   onPress,
   children,
 }: {
   label: string
   title: string
+  hintPlacement: HintPlacement
   onPress: () => void
   children: ReactNode
 }) => (
-  <Tooltip delay={350}>
+  <Hint text={title} placement={hintPlacement}>
     <button
       type="button"
       aria-label={title}
@@ -113,20 +127,21 @@ const ControlButton = ({
       <span className="shrink-0">{children}</span>
       <span className={REVEAL_LABEL}>{label}</span>
     </button>
-    <Tooltip.Content placement="right">{title}</Tooltip.Content>
-  </Tooltip>
+  </Hint>
 )
 
 const TurnButton = ({
   label,
+  hintPlacement,
   onPress,
   children,
 }: {
   label: string
+  hintPlacement: HintPlacement
   onPress: () => void
   children: ReactNode
 }) => (
-  <Tooltip delay={350}>
+  <Hint text={label} placement={hintPlacement}>
     <button
       type="button"
       aria-label={label}
@@ -135,6 +150,5 @@ const TurnButton = ({
     >
       {children}
     </button>
-    <Tooltip.Content placement="right">{label}</Tooltip.Content>
-  </Tooltip>
+  </Hint>
 )
