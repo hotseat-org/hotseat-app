@@ -10,6 +10,7 @@ import { useTouchSwipe } from "~/components/ui/useTouchSwipe"
 import { Button } from "~/components/Button"
 import { InlineModal } from "~/components/ui/InlineModal"
 import { SidePage } from "~/components/ui/SidePage"
+import { getWordChoiceClass } from "~/components/ui/wordChoice"
 import { useIsMobile } from "~/utils/hooks/useIsMobile"
 import { useI18n } from "~/i18n/I18nProvider"
 
@@ -139,33 +140,42 @@ export function SettingsShell({
 
   const content = (
     <>
-      <nav
-        aria-label={title}
-        className={clsx(
-          "hidden shrink-0 flex-col gap-5 border-r border-separator py-7 md:flex",
-          // Beside the office, the page is half the screen: a slimmer menu.
-          isBesideOffice ? "w-[208px] px-2" : "w-[272px] px-4"
-        )}
-      >
-        <div className="flex items-center gap-3 px-2">
-          {identity.visual}
-          <div className="min-w-0">
-            <p className="truncate text-xl leading-tight font-black tracking-[-0.01em] text-foreground">
-              {identity.name}
-            </p>
-            <p className="truncate text-sm font-semibold text-muted">{identity.sub}</p>
+      {/* The menu as a column (the dialog); beside the office, it's a row of
+          words under the title instead (below), the page's width for the page. */}
+      {!isBesideOffice && (
+        <nav
+          aria-label={title}
+          className={clsx(
+            "hidden shrink-0 flex-col gap-5 border-r border-separator py-7 md:flex",
+            // Beside the office, the page is half the screen: a slimmer menu.
+            isBesideOffice ? "w-[208px] px-2" : "w-[272px] px-4"
+          )}
+        >
+          <div className="flex items-center gap-3 px-2">
+            {identity.visual}
+            <div className="min-w-0">
+              <p className="truncate text-xl leading-tight font-black tracking-[-0.01em] text-foreground">
+                {identity.name}
+              </p>
+              <p className="truncate text-sm font-semibold text-muted">{identity.sub}</p>
+            </div>
           </div>
-        </div>
-        <div className="flex flex-col gap-0.5">
-          <p className="px-2.5 pb-1.5 text-[13px] font-black text-muted">{groupLabel}</p>
-          {main.map(item)}
-        </div>
-        <div className="flex-1" />
-        {danger.length > 0 && <div className="flex flex-col gap-0.5">{danger.map(item)}</div>}
-      </nav>
+          <div className="flex flex-col gap-0.5">
+            <p className="px-2.5 pb-1.5 text-[13px] font-black text-muted">{groupLabel}</p>
+            {main.map(item)}
+          </div>
+          <div className="flex-1" />
+          {danger.length > 0 && <div className="flex flex-col gap-0.5">{danger.map(item)}</div>}
+        </nav>
+      )}
 
       <main className={clsx("flex min-w-0 flex-1 flex-col", !isBesideOffice && "bg-overlay")}>
-        <header className="flex items-start justify-between gap-4 px-4 pb-3 pt-4 md:px-9 md:pb-5 md:pt-8">
+        <header
+          className={clsx(
+            "flex items-start justify-between gap-4",
+            isBesideOffice ? "px-6 pt-5 pb-4" : "px-4 pb-3 pt-4 md:px-9 md:pb-5 md:pt-8"
+          )}
+        >
           <div className="flex min-w-0 items-center gap-1">
             <div className="min-w-0">
               {/* Phones, on a section's page: back to the list, named for it. */}
@@ -179,10 +189,19 @@ export function SettingsShell({
                   {t("Settings")}
                 </button>
               )}
+              {/* Beside the office: whose settings, small, over the title. */}
+              {isBesideOffice && (
+                <p className="mb-2 flex items-center gap-2 text-base font-extrabold text-muted">
+                  {identity.name} · {identity.sub}
+                </p>
+              )}
               {/* Phones, on the list: the settings' own title. */}
               <h1
                 className={clsx(
-                  "truncate text-xl font-black tracking-tight text-foreground md:text-[44px] md:leading-[1.05] md:tracking-[-0.03em]",
+                  "truncate font-black text-foreground",
+                  isBesideOffice
+                    ? "text-[clamp(44px,4.6vw,64px)] leading-[0.95] tracking-[-0.035em]"
+                    : "text-xl tracking-tight md:text-[44px] md:leading-[1.05] md:tracking-[-0.03em]",
                   isListShown && "hidden md:block"
                 )}
               >
@@ -195,9 +214,38 @@ export function SettingsShell({
                 </h1>
               )}
               {active.description && (
-                <p className="mt-2 hidden text-base font-semibold text-muted md:block">
+                <p
+                  className={clsx(
+                    "hidden text-muted md:block",
+                    isBesideOffice
+                      ? "mt-3 text-[clamp(18px,1.6vw,22px)] leading-snug font-extrabold"
+                      : "mt-2 text-base font-semibold"
+                  )}
+                >
                   {t(active.description)}
                 </p>
+              )}
+              {/* Beside the office: the sections as words (the chosen one underlined). */}
+              {isBesideOffice && (
+                <nav aria-label={title} className="mt-4 flex flex-wrap gap-x-5">
+                  {[...main, ...danger].map((link) => (
+                    <button
+                      key={link.id}
+                      type="button"
+                      onClick={() => select(link.id)}
+                      aria-current={link.id === active.id ? "page" : undefined}
+                      className={clsx(
+                        getWordChoiceClass(link.id === active.id),
+                        link.danger && link.id !== active.id && "text-danger hover:text-danger"
+                      )}
+                    >
+                      {t(link.label)}
+                      {link.count !== undefined && (
+                        <span className="ml-1.5 font-bold text-muted">{link.count}</span>
+                      )}
+                    </button>
+                  ))}
+                </nav>
               )}
             </div>
           </div>
@@ -241,7 +289,10 @@ export function SettingsShell({
             key={activeSection ?? "first"}
             frameClassName={clsx("flex-1", motion.current === "push" && "settings-push")}
             // settings-page: its fields in the headline's way (see tailwind.css).
-            className="settings-page flex flex-col gap-4 px-4 pb-6 md:px-9 md:pb-8"
+            className={clsx(
+              "settings-page flex flex-col gap-4",
+              isBesideOffice ? "px-6 pb-6" : "px-4 pb-6 md:px-9 md:pb-8"
+            )}
           >
             <UnsavedChangesProvider value={unsavedChanges}>
               <SettingsFooterProvider value={footerSlot}>{children}</SettingsFooterProvider>

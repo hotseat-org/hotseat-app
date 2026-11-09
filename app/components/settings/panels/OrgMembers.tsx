@@ -1,4 +1,4 @@
-import { Chip, Dropdown, Spinner, Table } from "@heroui/react"
+import { Dropdown, Spinner } from "@heroui/react"
 import {
   ChevronUp,
   ChevronsUp,
@@ -25,8 +25,9 @@ import { useProgressiveList } from "~/utils/hooks/useProgressiveList"
 import { Rich, useI18n } from "~/i18n/I18nProvider"
 import { TeamChip } from "~/components/teams/teamLook"
 
+/** Manage, as a word (the headline's links). */
 const MANAGE =
-  "inline-flex h-8 cursor-pointer items-center rounded-lg px-3 text-sm font-medium text-foreground transition-colors hover:bg-foreground/10"
+  "inline-flex min-h-11 cursor-pointer items-center px-1 text-base font-extrabold text-foreground underline decoration-2 underline-offset-[5px]"
 
 export function OrgMembers() {
   const { selectSection, dialog, openDialog } = useSettings()
@@ -62,7 +63,7 @@ export function OrgMembers() {
     <div className="flex flex-col gap-10">
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-muted">
+          <p className="text-base font-bold text-muted">
             <Rich
               text={t("To add new members, {invite} them.")}
               values={{
@@ -93,65 +94,37 @@ export function OrgMembers() {
           <p className="text-sm text-muted">{t("Only admins can see and manage members.")}</p>
         ) : (
           <>
-            <label className="flex h-11 items-center gap-2 rounded-xl border border-border bg-surface px-3 focus-within:ring-2 focus-within:ring-focus">
-              <Search className="size-4 shrink-0 text-muted" />
+            {/* A line to write on, not a box (the headline's search). */}
+            <label className="flex h-14 items-center gap-3 border-b-2 border-foreground px-1 focus-within:border-accent">
+              <Search className="size-5 shrink-0 text-foreground" strokeWidth={2.2} />
               <input
                 value={query}
                 onChange={(event) => setQuery(event.currentTarget.value)}
                 placeholder={t("Search by name or email")}
                 aria-label={t("Search by name or email")}
-                className="min-w-0 flex-1 bg-transparent text-[15px] outline-none"
+                className="min-w-0 flex-1 bg-transparent text-xl font-extrabold text-foreground outline-none placeholder:font-bold placeholder:text-muted"
               />
             </label>
-            {/* Phones: one card per person — a four-column table doesn't fit. */}
+            {/* One ruled line a person (the headline's lists): who, their email and
+                teams under the name, their role, and Manage. */}
             <ul
               aria-label={t("Members")}
-              className="flex flex-col divide-y divide-separator border-y border-separator sm:hidden"
+              className="flex flex-col divide-y divide-separator border-y border-separator"
             >
               {pages.shown.map((member) => (
-                <li key={member.userEmail} className="flex items-center gap-3 px-4 py-3">
+                <li key={member.userEmail} className="flex items-center gap-4 py-4">
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-foreground">
-                      {member.displayName ?? member.userEmail}
+                    <p className="truncate text-xl leading-tight font-black tracking-[-0.01em] text-foreground">
+                      {member.displayName ?? member.userEmail.split("@")[0]}
                     </p>
-                    <p className="truncate text-xs text-muted">{member.userEmail}</p>
+                    <p className="truncate text-sm font-semibold text-muted">{member.userEmail}</p>
                     <MemberTeamChips teams={teamsByEmail.get(member.userEmail)} />
                   </div>
-                  <RoleChip role={member.role} />
+                  <RoleWord role={member.role} />
                   <ManageMenu member={member} />
                 </li>
               ))}
             </ul>
-            <Table className="hidden sm:block">
-              <Table.ScrollContainer>
-                <Table.Content aria-label={t("Members table")} className="min-w-[560px]">
-                  <Table.Header>
-                    <Table.Column isRowHeader>{t("EMAIL")}</Table.Column>
-                    <Table.Column>{t("NAME")}</Table.Column>
-                    <Table.Column>{t("TEAMS")}</Table.Column>
-                    <Table.Column>{t("ROLE")}</Table.Column>
-                    <Table.Column>{t("ACTIONS")}</Table.Column>
-                  </Table.Header>
-                  <Table.Body>
-                    {pages.shown.map((member) => (
-                      <Table.Row key={member.userEmail}>
-                        <Table.Cell>{member.userEmail}</Table.Cell>
-                        <Table.Cell>{member.displayName}</Table.Cell>
-                        <Table.Cell>
-                          <MemberTeamChips teams={teamsByEmail.get(member.userEmail)} />
-                        </Table.Cell>
-                        <Table.Cell>
-                          <RoleChip role={member.role} />
-                        </Table.Cell>
-                        <Table.Cell>
-                          <ManageMenu member={member} />
-                        </Table.Cell>
-                      </Table.Row>
-                    ))}
-                  </Table.Body>
-                </Table.Content>
-              </Table.ScrollContainer>
-            </Table>
             {/* More coming: drawn as this nears the end of the scroll. */}
             {pages.hasMore && <div ref={pages.endRef} aria-hidden className="h-12" />}
             {found.length === 0 && (
@@ -201,15 +174,17 @@ const MemberTeamChips = ({ teams }: { teams?: MemberTeam[] }) =>
     </span>
   ) : null
 
-const RoleChip = ({ role }: { role: Role }) => {
+/** Their role as a word: an admin's in the scheme's colour. */
+const RoleWord = ({ role }: { role: Role }) => {
   const i18n = useI18n()
+  const isAdmin = role === Role.ADMIN
+
   return (
-    <Chip color={role === Role.ADMIN ? "warning" : "default"}>
-      <div className="flex gap-1 items-center">
-        {role === Role.ADMIN ? <ChevronsUp size={16} /> : <ChevronUp size={16} />}
-        {roleLabel(i18n, role)}
-      </div>
-    </Chip>
+    <span
+      className={`shrink-0 text-base font-extrabold capitalize ${isAdmin ? "text-accent" : "text-muted"}`}
+    >
+      {roleLabel(i18n, role)}
+    </span>
   )
 }
 
