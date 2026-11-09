@@ -20,6 +20,26 @@ Anyone else signing in before that is told Hotseat isn't set up yet.
 
 Then draw the first office, or start from a template and adjust it later.
 
+## Moving from the hosted Hotseat
+
+Already using Hotseat online? Bring everything with you:
+
+1. On the hosted Hotseat, an admin opens **Settings → General → Take a
+   copy** and downloads the file (`hotseat-acme-2026-11-09.json.gz`). It
+   holds the whole organization: offices and their layouts, people and
+   their roles, teams, invitations, closed days, every booking with its
+   history, usual and favourite desks, and the logo, office covers and
+   people's photos.
+2. On your own Hotseat's setup screen, choose **Start from a copy**, pick
+   the file and say who can join.
+
+Everyone then signs in with the same email as before and finds their
+desks, teams and bookings where they left them. Whoever imports the copy
+is an admin. A copy only goes into a Hotseat that isn't set up yet, so it
+never overwrites anything.
+
+The copy is also a backup: take one whenever you like.
+
 ## Who can join
 
 People get into the company in two ways:

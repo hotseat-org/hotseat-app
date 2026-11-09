@@ -43,6 +43,7 @@ import type {
 import type { SaveTeamArgs } from "./methods/team"
 import type { FindUserArgs } from "./methods/user/find"
 import { UpdateUserArgs } from "./methods/user/update"
+import type { JsonRows, OrganizationRows } from "./methods/transfer"
 import type { DemoCompany } from "~/core/demo/company"
 import type { Team } from "~/utils/teams"
 import type { Role } from "~/repositories/main-repository/prisma/generated/prisma-client/client"
@@ -254,6 +255,11 @@ export interface MainRepository {
     create: (args: CreateNotificationsArgs) => Promise<void>
     findMany: (args: FindNotificationsArgs) => Promise<{ items: Notification[]; unread: number }>
     markRead: (args: { userEmail: string }) => Promise<void>
+  }
+  /** An organization, whole: out of one installation and into another. */
+  transfer: {
+    find: (slug: string) => Promise<OrganizationRows | null>
+    insert: (rows: JsonRows<OrganizationRows>) => Promise<void>
   }
   demo: {
     create: (company: DemoCompany) => Promise<void>

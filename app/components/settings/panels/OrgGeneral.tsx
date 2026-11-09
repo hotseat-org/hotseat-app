@@ -1,4 +1,5 @@
 import { Description, Input, Label, TextField } from "@heroui/react"
+import { Download } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useFetcher, useParams } from "react-router"
 import { DeleteLogoDialog } from "../dialogs/DeleteLogo"
@@ -92,6 +93,25 @@ export function OrgGeneral() {
             <p className="text-sm font-bold text-danger">{fetcher.data.error}</p>
           )}
         </fetcher.Form>
+      </SettingsCard>
+
+      {/* The whole organization in a file: what its own Hotseat starts from
+          (the setup screen takes it), or a copy to keep. */}
+      <SettingsCard className="flex flex-col items-start gap-2">
+        <CardTitle>{t("Take a copy")}</CardTitle>
+        <p className="text-sm text-muted">
+          {t(
+            "Everything in this organization, in one file: offices, people, teams, bookings and their history. Start your own Hotseat from it, or keep it as a backup."
+          )}
+        </p>
+        <Button
+          size="sm"
+          variant="secondary"
+          className="mt-2"
+          onPress={() => window.location.assign(`${import.meta.env.BASE_URL}api/export/${slug}`)}
+        >
+          <Download className="size-4" /> {t("Download a copy")}
+        </Button>
       </SettingsCard>
 
       <SaveBar

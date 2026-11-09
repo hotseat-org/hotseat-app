@@ -1,5 +1,6 @@
 import { clearStaleDemos, startDemo } from "./demo"
 import { getInstallation, joinInstallationByDomain, setUpInstallation } from "./installation"
+import { exportOrganization, importOrganization } from "./transfer"
 import { createOffice } from "./office/create"
 import {
   closeOfficeDays,
@@ -159,6 +160,10 @@ export const createCore = (context: CoreContext) => ({
     get: getInstallation(context),
     setUp: setUpInstallation(context),
     joinByDomain: joinInstallationByDomain(context),
+    importOrganization: importOrganization(context),
+  },
+  transfer: {
+    export: exportOrganization(context),
   },
   demo: {
     start: startDemo(context),

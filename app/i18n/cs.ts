@@ -1303,6 +1303,25 @@ export const cs: Messages = {
   "Give the company a name.": "Pojmenujte firmu.",
   "It's been set up already, or that name won't do. Reload and try again.":
     "Už je nastavený, nebo tenhle název nejde použít. Obnovte stránku a zkuste to znovu.",
+  "Moving from the hosted Hotseat?": "Přecházíte z hostovaného Hotseatu?",
+  "Start from a copy": "Začít z kopie",
+  "The file from Settings → General → Take a copy. Everyone signs in with the same email as before and finds their desks, teams and bookings.":
+    "Soubor z Nastavení → Obecné → Vzít si kopii. Každý se přihlásí stejným e-mailem jako dosud a najde své stoly, týmy i rezervace.",
+  File: "Soubor",
+  Import: "Importovat",
+  "Importing…": "Importujeme…",
+  "Set up from scratch instead": "Raději nastavit od začátku",
+  "Choose the file you downloaded.": "Vyberte stažený soubor.",
+  "That copy is from a newer Hotseat. Update this one first, then import it.":
+    "Tahle kopie je z novějšího Hotseatu. Nejdřív tenhle aktualizujte, pak ji importujte.",
+  "That isn't a Hotseat copy. Download one in Settings → General → Take a copy.":
+    "Tohle není kopie Hotseatu. Stáhněte si ji v Nastavení → Obecné → Vzít si kopii.",
+  "It's been set up already, or that copy won't go in. Nothing was changed.":
+    "Už je nastavený, nebo tuhle kopii nejde nahrát. Nic se nezměnilo.",
+  "Take a copy": "Vzít si kopii",
+  "Everything in this organization, in one file: offices, people, teams, bookings and their history. Start your own Hotseat from it, or keep it as a backup.":
+    "Všechno z této organizace v jednom souboru: kanceláře, lidé, týmy, rezervace i jejich historie. Můžete z něj spustit vlastní Hotseat, nebo si ho nechat jako zálohu.",
+  "Download a copy": "Stáhnout kopii",
   "No way to sign in is set up on this server yet.":
     "Na tomto serveru zatím není nastavený žádný způsob přihlášení.",
   "Continue with {name}": "Pokračovat přes {name}",

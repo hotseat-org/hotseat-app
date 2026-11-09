@@ -15,6 +15,7 @@ import {
 import { createClosedDays, deleteClosedDays, findClosedDays } from "./methods/closed-day"
 import { addToTeams, deleteTeam, findTeams, saveTeam, setMemberTeams } from "./methods/team"
 import { createDemoCompany, deleteStaleDemoCompanies } from "./methods/demo"
+import { findOrganizationRows, insertOrganizationRows } from "./methods/transfer"
 import {
   createDeskReleases,
   deleteDeskReleases,
@@ -128,6 +129,7 @@ export const createMainMysqlRepository = (): MainRepository => {
       markRead: markNotificationsRead,
     },
     demo: { create: createDemoCompany, deleteStale: deleteStaleDemoCompanies },
+    transfer: { find: findOrganizationRows, insert: insertOrganizationRows },
     team: {
       findMany: findTeams,
       save: saveTeam,

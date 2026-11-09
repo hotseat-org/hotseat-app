@@ -1,7 +1,7 @@
 import crypto from "node:crypto"
 import { mkdir, readFile, writeFile } from "node:fs/promises"
 import { join } from "node:path"
-import type { ImageService } from "./types"
+import type { ImageService, StoredImage } from "./types"
 
 /**
  * Images on the server's own disk (self-hosting: IMAGES_DIR, a volume): logos,
@@ -97,7 +97,20 @@ const importFromUrl = async (url: string) => {
   return id
 }
 
-export const localImageService: ImageService = { getUploadUrl, getSignedUrl, importFromUrl }
+const save = async ({ bytes }: StoredImage) => {
+  const id = crypto.randomUUID()
+  await saveImage(id, bytes)
+
+  return id
+}
+
+export const localImageService: ImageService = {
+  getUploadUrl,
+  getSignedUrl,
+  importFromUrl,
+  read: readImage,
+  save,
+}
 
 /** Whether this server keeps images on its own disk (IMAGES_DIR set). */
 export const isLocalImageStorage = IMAGES_DIR !== ""

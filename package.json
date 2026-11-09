@@ -21,7 +21,7 @@
     "db:start": "docker compose up -d postgres",
     "db:stop": "docker compose stop postgres",
     "typecheck": "bun run typegen:worker && react-router typegen && tsc --project ./tsconfig.json",
-    "test": "bun test app/editor app/office app/examples app/utils",
+    "test": "bun test app/core app/editor app/office app/examples app/utils",
     "lint": "eslint app server workers scripts e2e playwright.config.ts",
     "e2e": "playwright test",
     "deploy": "bun run build && wrangler deploy",

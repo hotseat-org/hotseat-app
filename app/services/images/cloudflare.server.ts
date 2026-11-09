@@ -1,6 +1,6 @@
 import crypto from "node:crypto"
 import dayjs from "dayjs"
-import type { ImageService } from "./types"
+import type { ImageService, StoredImage } from "./types"
 
 const KEY = process.env.CLOUDFLARE_IMAGE_KEY
 const ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID
@@ -89,8 +89,41 @@ const importFromUrl = async (url: string) => {
   return uploaded.result.id as string
 }
 
+const IMAGES_API = `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/images/v1`
+
+/** The original, as uploaded (not a resized variant). */
+const read = async (id: string) => {
+  if (isUrl(id)) return null
+
+  const response = await fetch(`${IMAGES_API}/${id}/blob`, {
+    headers: { Authorization: `Bearer ${API_KEY}` },
+  })
+  if (!response.ok) return null
+
+  return {
+    bytes: new Uint8Array(await response.arrayBuffer()),
+    type: response.headers.get("content-type") ?? "image/jpeg",
+  }
+}
+
+const save = async ({ bytes, type }: StoredImage) => {
+  const body = new FormData()
+  body.append("file", new Blob([new Uint8Array(bytes)], { type }))
+  body.append("requireSignedURLs", "true")
+  const uploaded = await fetch(IMAGES_API, {
+    method: "POST",
+    body,
+    headers: { Authorization: `Bearer ${API_KEY}` },
+  }).then((response) => response.json())
+  if (!uploaded.success) throw new Error("Cloudflare Images refused the image")
+
+  return uploaded.result.id as string
+}
+
 export const cloudflareImageService: ImageService = {
   getSignedUrl,
   getUploadUrl,
   importFromUrl,
+  read,
+  save,
 }
