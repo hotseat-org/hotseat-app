@@ -126,10 +126,12 @@ const createLinesMaterial = ({
   const coverage = clamp(float(LINE_WIDTH * 0.5 + 0.5).sub(edge.abs()), 0, 1)
   const alpha = coverage.mul(shown)
 
+  // No fog, as the ground under them: far off, they'd fade into a ground that doesn't.
   const material = new MeshBasicNodeMaterial({
     transparent: true,
     depthWrite: false,
     side: THREE.DoubleSide,
+    fog: false,
   })
   material.vertexNode = vec4(clip.xy.add(offset.div(halfSize).mul(clip.w)), clip.zw)
   material.colorNode = select(isMajor, majorColor, minorColor)
@@ -163,7 +165,7 @@ const createStarsMaterial = (
   const glow = pow(max(float(0), float(1).sub(fromCentre)), 2.2)
   const alpha = glow.mul(brightness).mul(amount).mul(shown)
 
-  const material = new PointsNodeMaterial({ transparent: true, depthWrite: false })
+  const material = new PointsNodeMaterial({ transparent: true, depthWrite: false, fog: false })
   material.positionNode = instancedBufferAttribute<"vec3">(stars.positions, "vec3")
   material.sizeNode = brightness.mul(3.5).add(2)
   material.colorNode = vec3(STAR_COLOR.r, STAR_COLOR.g, STAR_COLOR.b)

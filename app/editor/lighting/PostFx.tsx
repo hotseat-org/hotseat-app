@@ -50,6 +50,12 @@ import { DEPTH_BIAS } from "../objects/PieceOutline"
 
 /** Ambient occlusion: its reach (m) and strength (×), at half the screen's resolution. */
 const OCCLUSION = { radius: 0.6, scale: 1.1, resolution: 0.5 }
+/**
+ * Occlusion this close to none counts as none. On open ground GTAO still finds
+ * a shade of about 1%, growing with distance — kept in 8 bits, it showed as
+ * faint stripes across the ground when zoomed out.
+ */
+const UNOCCLUDED = 0.96
 /** How much nearer or farther a neighbour may be (× the distance) to be smoothed with. */
 const SMOOTHING_DEPTH_TOLERANCE = 0.05
 /** The grade over tone mapping (ACES greys light colours a little): a touch more colour and snap. */
@@ -199,7 +205,7 @@ export const PostFx = ({ highQuality = false }: { highQuality?: boolean }) => {
       occlusion.resolutionScale = OCCLUSION.resolution
       const smoothed = smoothOcclusion(occlusion.getTextureNode(), sceneDepth, camera)
 
-      return sceneColor.rgb.mul(smoothed.r)
+      return sceneColor.rgb.mul(smoothed.r.div(UNOCCLUDED).min(1))
     }
     const lit = highQuality ? getOccluded() : sceneColor.rgb
 
