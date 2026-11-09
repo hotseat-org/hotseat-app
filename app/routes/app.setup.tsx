@@ -1,3 +1,4 @@
+import clsx from "clsx"
 import { Form, redirect, useActionData, useLoaderData, useNavigation } from "react-router"
 import { z } from "zod"
 import { Route } from "./+types/app.setup"
@@ -9,6 +10,7 @@ import { getSetupAdmins, maySetUp, requireSelfHosted } from "~/edition/edition.s
 import { useI18n } from "~/i18n/I18nProvider"
 import { msg } from "~/i18n/msg"
 import { requireUser } from "~/services/session.server"
+import { ACTION_WORD_CLASS } from "~/components/ui/link"
 
 /** Mail services anyone can sign up to: never suggested as "who can join". */
 const PUBLIC_DOMAINS = new Set([
@@ -158,7 +160,7 @@ const Setup = () => {
               })}
             </p>
             <Form method="post" action="/logout" className="mt-5">
-              <button type="submit" className="text-sm font-bold text-accent hover:underline">
+              <button type="submit" className={clsx("text-sm", ACTION_WORD_CLASS)}>
                 {t("Sign out")}
               </button>
             </Form>

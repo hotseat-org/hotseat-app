@@ -60,7 +60,7 @@ export const TimeOfDay = ({
           aria-hidden={syncTime}
           tabIndex={syncTime ? -1 : undefined}
           className={clsx(
-            "h-7 rounded-lg px-2 text-xs font-bold text-accent transition-opacity hover:bg-accent/10",
+            "h-7 rounded-lg px-2 text-xs font-extrabold text-text transition-opacity hover:bg-state-hover",
             syncTime && "pointer-events-none opacity-0"
           )}
         >

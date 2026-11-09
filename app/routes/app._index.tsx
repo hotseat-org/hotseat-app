@@ -11,7 +11,7 @@ import { CenteredScreen } from "~/components/ui/CenteredScreen"
 import { ThumbAvatar } from "~/components/office/shell-ui"
 import { revalidateOn } from "~/utils/revalidation"
 import { useI18n } from "~/i18n/I18nProvider"
-import { LINK_CLASS } from "~/components/ui/link"
+import { LINK_CLASS, ACTION_WORD_CLASS } from "~/components/ui/link"
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const user = await requireUser(request)
@@ -168,7 +168,7 @@ const AppIndex = () => {
             {t("Account settings")}
           </Link>
           <Form method="post" action="/logout">
-            <button type="submit" className="font-bold text-accent hover:underline">
+            <button type="submit" className={ACTION_WORD_CLASS}>
               {t("Sign out")}
             </button>
           </Form>

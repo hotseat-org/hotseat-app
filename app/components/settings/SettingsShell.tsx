@@ -183,7 +183,7 @@ export function SettingsShell({
                 <button
                   type="button"
                   onClick={() => select(null)}
-                  className="-ml-1.5 mb-1 flex items-center gap-0.5 text-[15px] font-semibold text-accent md:hidden"
+                  className="-ml-1.5 mb-1 flex items-center gap-0.5 text-base font-extrabold text-text hover:underline md:hidden"
                 >
                   <ChevronLeft className="size-5" />
                   {t("Settings")}
@@ -355,38 +355,34 @@ const SectionList = ({
   className?: string
 }) => {
   const { t } = useI18n()
+  // A section is a ruled row on the ground (the design system's Row): its
+  // name, a line on what's in it, and where it leads. No cards, no icon tiles.
   const row = (link: SettingsLink) => (
     <li key={link.id}>
       <button
         type="button"
         onClick={() => onSelect(link.id)}
-        className="flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left transition-colors active:bg-foreground/5"
+        className="flex min-h-[68px] w-full items-center gap-3 py-3 text-left outline-none transition-colors active:bg-state-pressed focus-visible:ring-2 focus-visible:ring-focus-ring"
       >
-        <span
-          className={clsx(
-            "grid size-9 shrink-0 place-items-center rounded-xl",
-            link.danger ? "bg-danger/10 text-danger" : "bg-accent/12 text-accent"
-          )}
-        >
-          <link.icon className="size-[18px]" />
-        </span>
         <span className="min-w-0 flex-1">
           <span
             className={clsx(
-              "block truncate text-[15px] font-bold",
-              link.danger ? "text-danger" : "text-foreground"
+              "block truncate text-lg font-extrabold",
+              link.danger ? "text-text-danger" : "text-text"
             )}
           >
             {t(link.label)}
           </span>
           {link.description && (
-            <span className="block truncate text-xs text-muted">{t(link.description)}</span>
+            <span className="block truncate text-sm font-semibold text-text-muted">
+              {t(link.description)}
+            </span>
           )}
         </span>
         {link.count !== undefined && (
-          <span className="text-xs font-bold tabular-nums text-muted">{link.count}</span>
+          <span className="text-sm font-extrabold tabular-nums text-text-muted">{link.count}</span>
         )}
-        <ChevronRight className="size-[18px] shrink-0 text-muted" />
+        <ChevronRight className="size-5 shrink-0 text-text-muted" />
       </button>
     </li>
   )
@@ -394,27 +390,23 @@ const SectionList = ({
   return (
     <nav
       className={clsx(
-        "flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-6 md:hidden",
+        "flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-4 pb-6 md:hidden",
         className
       )}
     >
-      <div className="flex items-center gap-3 px-1">
+      <div className="flex items-center gap-3">
         {identity.visual}
         <div className="min-w-0">
-          <p className="truncate text-[15px] font-extrabold text-foreground">{identity.name}</p>
-          <p className="truncate text-xs text-muted">{identity.sub}</p>
+          <p className="truncate text-base font-extrabold text-text">{identity.name}</p>
+          <p className="truncate text-sm font-semibold text-text-muted">{identity.sub}</p>
         </div>
       </div>
       <div>
-        <p className="px-4 pb-1.5 text-[13px] font-black text-muted">{groupLabel}</p>
-        <ul className="divide-y divide-separator overflow-hidden rounded-2xl bg-surface shadow-surface">
-          {main.map(row)}
-        </ul>
+        <p className="pb-1 text-sm font-extrabold text-text-muted">{groupLabel}</p>
+        <ul className="divide-y divide-line-rule border-y border-line-rule">{main.map(row)}</ul>
       </div>
       {danger.length > 0 && (
-        <ul className="divide-y divide-separator overflow-hidden rounded-2xl bg-surface shadow-surface">
-          {danger.map(row)}
-        </ul>
+        <ul className="divide-y divide-line-rule border-y border-line-rule">{danger.map(row)}</ul>
       )}
     </nav>
   )

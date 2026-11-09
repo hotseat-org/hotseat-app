@@ -294,9 +294,9 @@ const Finder = ({
       <span className="text-[clamp(22px,2.2vw,30px)] leading-[1.75] font-black tracking-[-0.015em]">
         {sentence}
       </span>
-      <span className="flex min-h-9 items-center gap-1.5 self-end text-sm font-extrabold text-accent">
+      <span className="flex min-h-9 items-center gap-1.5 self-end text-sm font-extrabold text-text">
         <Pencil className="size-3.5" strokeWidth={2.6} />
-        {t("Change")}
+        <span className="underline decoration-2 underline-offset-[5px]">{t("Change")}</span>
       </span>
     </button>
   )

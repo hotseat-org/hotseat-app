@@ -6,6 +6,7 @@ import { useOfficeStore } from "../store"
 import { useRoute, walkTime, type RouteLeg } from "./wayfinding"
 import { getFloorId, getFloorNumber, getFloorTitle } from "~/editor/core"
 import { useI18n } from "~/i18n/I18nProvider"
+import { ACTION_WORD_CLASS } from "~/components/ui/link"
 
 /** How long the map stays on each floor of a way through the building (ms). */
 const LEG_PAUSE = 2600
@@ -103,7 +104,7 @@ export const RoutePill = ({ className }: { className?: string }) => {
                   ? t("Start at the entrance instead")
                   : t("Start at your desk instead")
               }
-              className="inline-flex shrink-0 items-center gap-1 rounded-full font-semibold text-accent hover:underline"
+              className={clsx("inline-flex shrink-0 items-center gap-1", ACTION_WORD_CLASS)}
             >
               {getStartLabel()}
               <ArrowLeftRight className="size-3" />
@@ -126,7 +127,7 @@ export const RoutePill = ({ className }: { className?: string }) => {
         type="button"
         onClick={copyLink}
         aria-label={isCopied ? t("Link copied") : t("Copy link to this way")}
-        className="flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-xs font-bold text-accent transition-colors hover:bg-accent/10"
+        className="flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-xs font-extrabold text-text transition-colors hover:bg-state-hover"
       >
         {isCopied ? <Check className="size-4" /> : <Link2 className="size-4" />}
         <span className="hidden sm:inline">{isCopied ? t("Copied") : t("Copy link")}</span>

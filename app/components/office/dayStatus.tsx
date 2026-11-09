@@ -5,14 +5,11 @@ import { useOfficeStore } from "~/office/store"
 import { dayPhrase, useDesksOnDay, useGivenUpDesk, useWaitlist } from "~/office/booking/useBooking"
 import { useI18n } from "~/i18n/I18nProvider"
 import type { Translator } from "~/i18n/translate"
+import { ACTION_WORD_CLASS } from "~/components/ui/link"
 
 /** A small link-like action under your day. */
 const Action = ({ onPress, children }: { onPress: () => void; children: ReactNode }) => (
-  <button
-    type="button"
-    onClick={onPress}
-    className="font-bold text-accent outline-none hover:underline focus-visible:underline"
-  >
+  <button type="button" onClick={onPress} className={ACTION_WORD_CLASS}>
     {children}
   </button>
 )

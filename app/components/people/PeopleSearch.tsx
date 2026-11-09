@@ -8,6 +8,7 @@ import { ScrollArea } from "~/components/ui/ScrollArea"
 import { colorForEmail } from "~/components/office/shell-ui"
 import { useI18n } from "~/i18n/I18nProvider"
 import { useProgressiveList } from "~/utils/hooks/useProgressiveList"
+import { ACTION_WORD_CLASS } from "~/components/ui/link"
 
 /** What the search shows and searches of anyone: their email (their id), name and photo. */
 export interface SearchedPerson {
@@ -305,7 +306,7 @@ export const PeopleSearch = <Item,>({
                               [group.id]: limit + GROUP_PAGE * 4,
                             }))
                           }
-                          className="min-h-10 w-full rounded-xl text-sm font-bold text-accent hover:bg-surface-secondary"
+                          className={clsx("min-h-11 w-full text-base", ACTION_WORD_CLASS)}
                         >
                           {t("Show {n} more", { n: found.length - limit })}
                         </button>

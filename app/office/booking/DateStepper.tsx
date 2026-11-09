@@ -9,6 +9,7 @@ import { isOpenDay, addDays, weekStart, type Day } from "~/utils/booking"
 import { useI18n } from "~/i18n/I18nProvider"
 import { useAllPieces } from "~/editor"
 import { getTeamHex } from "~/utils/teams"
+import { ACTION_WORD_CLASS } from "~/components/ui/link"
 
 /** The day's arrows: rings of ink, as the headline's (no fill). */
 const ARROW = "rounded-full border-2 border-foreground/70 text-foreground"
@@ -318,7 +319,7 @@ export const MonthCalendar = ({
           type="button"
           onClick={() => onPick(today)}
           // A bigger hit area than the word, without moving it.
-          className="-m-2 p-2 font-bold text-accent hover:underline"
+          className={clsx("-m-2 p-2", ACTION_WORD_CLASS)}
         >
           {t("Today")}
         </button>

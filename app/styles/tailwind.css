@@ -1293,9 +1293,31 @@ input:-webkit-autofill:focus {
   }
 }
 
+/* Its close: a round button at the row's end, always there (not the kit's
+   badge on the corner, shown on hover). */
+.toast {
+  align-items: center;
+}
+
 .toast__close-button {
+  position: static;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 9999px;
   background: transparent;
   color: inherit;
+  opacity: 1;
+  pointer-events: auto;
+
+  &:is(:hover, [data-hovered="true"]) {
+    background: color-mix(in oklab, currentColor 14%, transparent);
+  }
+
+  & [data-slot="close-button-icon"] {
+    width: 18px;
+    height: 18px;
+  }
 }
 
 /* A spinner turns in the words' colour: the kit's default (accent), which no
