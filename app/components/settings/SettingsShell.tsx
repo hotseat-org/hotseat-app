@@ -10,7 +10,6 @@ import { useTouchSwipe } from "~/components/ui/useTouchSwipe"
 import { Button } from "~/components/Button"
 import { InlineModal } from "~/components/ui/InlineModal"
 import { SidePage } from "~/components/ui/SidePage"
-import { getWordChoiceClass } from "~/components/ui/wordChoice"
 import { useIsMobile } from "~/utils/hooks/useIsMobile"
 import { useI18n } from "~/i18n/I18nProvider"
 
@@ -173,7 +172,7 @@ export function SettingsShell({
         <header
           className={clsx(
             "flex items-start justify-between gap-4",
-            isBesideOffice ? "px-6 pt-5 pb-4" : "px-4 pb-3 pt-4 md:px-9 md:pb-5 md:pt-8"
+            isBesideOffice ? "px-6 pt-5 pb-3" : "px-4 pb-3 pt-4 md:px-9 md:pb-5 md:pt-8"
           )}
         >
           <div className="flex min-w-0 items-center gap-1">
@@ -191,8 +190,8 @@ export function SettingsShell({
               )}
               {/* Beside the office: whose settings, small, over the title. */}
               {isBesideOffice && (
-                <p className="mb-2 flex items-center gap-2 text-base font-extrabold text-muted">
-                  {identity.name} · {identity.sub}
+                <p className="mb-1.5 text-lg font-extrabold text-muted">
+                  {identity.name} · {title}
                 </p>
               )}
               {/* Phones, on the list: the settings' own title. */}
@@ -218,34 +217,12 @@ export function SettingsShell({
                   className={clsx(
                     "hidden text-muted md:block",
                     isBesideOffice
-                      ? "mt-3 text-[clamp(18px,1.6vw,22px)] leading-snug font-extrabold"
+                      ? "mt-2 text-lg leading-snug font-bold"
                       : "mt-2 text-base font-semibold"
                   )}
                 >
                   {t(active.description)}
                 </p>
-              )}
-              {/* Beside the office: the sections as words (the chosen one underlined). */}
-              {isBesideOffice && (
-                <nav aria-label={title} className="mt-4 flex flex-wrap gap-x-5">
-                  {[...main, ...danger].map((link) => (
-                    <button
-                      key={link.id}
-                      type="button"
-                      onClick={() => select(link.id)}
-                      aria-current={link.id === active.id ? "page" : undefined}
-                      className={clsx(
-                        getWordChoiceClass(link.id === active.id),
-                        link.danger && link.id !== active.id && "text-danger hover:text-danger"
-                      )}
-                    >
-                      {t(link.label)}
-                      {link.count !== undefined && (
-                        <span className="ml-1.5 font-bold text-muted">{link.count}</span>
-                      )}
-                    </button>
-                  ))}
-                </nav>
               )}
             </div>
           </div>
@@ -260,6 +237,50 @@ export function SettingsShell({
             <X className="size-5" strokeWidth={2.4} />
           </button>
         </header>
+        {/* Beside the office: the sections as tabs — a row on a rule, the open
+            one marked by a bar of the scheme's colour on it; the others answer
+            the pointer. It scrolls sideways if they don't fit. */}
+        {isBesideOffice && (
+          <nav
+            aria-label={title}
+            className="mx-6 mb-5 flex shrink-0 gap-1 overflow-x-auto border-b-2 border-separator [scrollbar-width:none]"
+          >
+            {[...main, ...danger].map((link) => {
+              const isCurrent = link.id === active.id
+
+              return (
+                <button
+                  key={link.id}
+                  type="button"
+                  onClick={() => select(link.id)}
+                  aria-current={isCurrent ? "page" : undefined}
+                  className={clsx(
+                    "relative flex h-12 shrink-0 cursor-pointer items-center gap-2 rounded-t-xl px-3 text-[17px] font-extrabold whitespace-nowrap outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus",
+                    getTabTone({ isCurrent, isDanger: !!link.danger })
+                  )}
+                >
+                  {t(link.label)}
+                  {link.count !== undefined && (
+                    <span
+                      className={clsx(
+                        "grid h-6 min-w-6 place-items-center rounded-full px-1.5 text-xs font-black tabular-nums",
+                        isCurrent ? "bg-accent text-accent-foreground" : "bg-foreground/10"
+                      )}
+                    >
+                      {link.count}
+                    </span>
+                  )}
+                  {isCurrent && (
+                    <span
+                      aria-hidden
+                      className="absolute inset-x-2 -bottom-0.5 h-1 rounded-full bg-accent"
+                    />
+                  )}
+                </button>
+              )
+            })}
+          </nav>
+        )}
         {isListShown && (
           <SectionList
             key="list"
@@ -448,4 +469,13 @@ const DiscardChanges = ({ onKeep, onDiscard }: { onKeep: () => void; onDiscard: 
       </div>
     </div>
   )
+}
+
+/** A section tab's colours: the open one in ink; the rest quieter, lit on hover. */
+const getTabTone = ({ isCurrent, isDanger }: { isCurrent: boolean; isDanger: boolean }) => {
+  if (isCurrent) return isDanger ? "text-danger" : "text-foreground"
+
+  return isDanger
+    ? "text-danger/80 hover:bg-danger/10 hover:text-danger"
+    : "text-muted hover:bg-foreground/[0.06] hover:text-foreground"
 }

@@ -112,6 +112,8 @@
   /* A wide page (settings, Insights): from the left edge to the screen's
      middle, at least 720px (see SidePage, ColumnPage isWide). */
   --wide-page: min(100vw, max(720px, 50vw));
+  /* The sheet behind a narrow page (the office's other pages). */
+  --column-sheet: min(604px, 100vw);
   /* The main action's pill, in the colour scheme's own colour (deepened to
      carry white words) — the scheme's mark on every screen. */
   --pill: color-mix(in oklab, var(--accent) 86%, #000);
@@ -992,6 +994,15 @@ input:-webkit-autofill:focus {
 .motion-page-in {
   animation: motion-page-in var(--motion-page) var(--ease-out-soft) both;
 }
+/* A page in place of another: the panel stays, only what's in it fades in. */
+@keyframes motion-content-in {
+  from {
+    opacity: 0;
+  }
+}
+.motion-content-in {
+  animation: motion-content-in var(--motion-small) var(--ease-out-soft) both;
+}
 /* From the right: a page under the top bar's right corner (your account). */
 @keyframes motion-page-in-right {
   from {
@@ -1004,7 +1015,8 @@ input:-webkit-autofill:focus {
 }
 @media (prefers-reduced-motion: reduce) {
   .motion-page-in,
-  .motion-page-in-right {
+  .motion-page-in-right,
+  .motion-content-in {
     animation: none;
   }
 }
@@ -1351,10 +1363,6 @@ input:-webkit-autofill:focus {
     16px 0 40px -24px rgb(0 0 0 / 0.35);
   transition: transform var(--motion-page) var(--ease-out-soft);
 }
-/* Behind a wide page (settings, Insights): to the screen's middle. */
-.column-sheet[data-wide] {
-  width: calc(var(--wide-page) + 24px);
-}
 /* The same on the right edge, for a page on the right (your account). */
 .column-sheet[data-side="right"] {
   transform: translateX(100%);
@@ -1362,7 +1370,13 @@ input:-webkit-autofill:focus {
     -1px 0 0 color-mix(in oklab, var(--foreground) 12%, transparent),
     -16px 0 40px -24px rgb(0 0 0 / 0.35);
 }
+/* Open: behind a page (604px, the rest slid out of view), or a wide page
+   (settings, Insights: all of it) — narrow to wide, it just grows wider. */
 .column-sheet[data-active] {
+  transform: translateX(calc(var(--column-sheet) - 100%));
+}
+.column-sheet[data-active][data-wide],
+.column-sheet[data-active][data-side="right"] {
   transform: none;
 }
 @media (prefers-reduced-motion: reduce) {

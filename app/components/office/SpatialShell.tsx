@@ -261,6 +261,8 @@ export const SpatialShell = ({
   // A page takes the left column; the headline gives it the room.
   // The left column's pages (your account opens on the right, beside the headline).
   const isPageOpen = !!officePanel.panel || !!sidePanel || (!!barPage && barPage !== "account")
+  // A page in the left column (or a wide one): it goes over the top menu.
+  const isLeftPageOpen = isPageOpen || isWideOpen
   const closeSidePanel = () => sidePanels.close()
 
   return (
@@ -274,7 +276,7 @@ export const SpatialShell = ({
         aria-hidden
         data-active={isPageOpen || isWideOpen || undefined}
         data-wide={isWideOpen || undefined}
-        className="column-sheet pointer-events-none absolute inset-y-0 left-0 z-[43] w-[min(604px,100vw)]"
+        className="column-sheet pointer-events-none absolute inset-y-0 left-0 z-[46] w-[calc(var(--wide-page)+24px)]"
       />
       {/* …and on the right, under your account. */}
       <div
@@ -285,18 +287,41 @@ export const SpatialShell = ({
       />
       {/* Where a desk's card is drawn (SeatPopup, the plan's): over the sheet,
           in the column — the scene's own layer is under the sheet. */}
-      <div id={COLUMN_SLOT_ID} className="pointer-events-none absolute inset-0 z-[44]" />
-      <div className="on-ground pointer-events-none absolute inset-x-5 top-5 z-[45] flex flex-wrap items-center gap-x-2.5 gap-y-3">
-        <WorkspaceSwitcher
-          offices={offices}
-          className="relative"
-          column={{
-            openMenu: barPage === "org" || barPage === "office" ? barPage : null,
-            onToggle: toggleBarPage,
-          }}
-        />
+      <div id={COLUMN_SLOT_ID} className="pointer-events-none absolute inset-0 z-[48]" />
+      {/* With a page open on the left, the top bar keeps to the right of it
+          (the page goes over the top menu): the switcher makes way, the
+          sections take a row of their own under search and you. */}
+      <div
+        style={
+          isLeftPageOpen
+            ? {
+                left: `calc(${isWideOpen ? "var(--wide-page) + 24px" : "var(--column-sheet)"} + 20px)`,
+              }
+            : undefined
+        }
+        className={clsx(
+          "on-ground pointer-events-none absolute inset-x-5 top-5 z-[45] flex flex-wrap items-center gap-x-2.5 gap-y-3",
+          isLeftPageOpen && "justify-end"
+        )}
+      >
+        {!isLeftPageOpen && (
+          <WorkspaceSwitcher
+            offices={offices}
+            className="relative"
+            column={{
+              // Its menus open over it (the switcher makes way): none open here.
+              openMenu: null,
+              onToggle: toggleBarPage,
+            }}
+          />
+        )}
         <span className="flex-1" />
-        <div className="order-last basis-full min-[1280px]:order-none min-[1280px]:basis-auto">
+        <div
+          className={clsx(
+            "order-last basis-full",
+            isLeftPageOpen ? "flex justify-end" : "min-[1280px]:order-none min-[1280px]:basis-auto"
+          )}
+        >
           <nav
             aria-label={t("Primary")}
             className={`${PANEL} relative flex w-fit items-center gap-2`}

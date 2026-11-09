@@ -1,6 +1,7 @@
 import clsx from "clsx"
 import { useRef, type ReactNode } from "react"
 import { FocusScope, useDialog } from "react-aria"
+import { useIsPageSwitch } from "./pageSwitch"
 
 /**
  * A page from the screen's left edge to its middle, as the office's other
@@ -23,6 +24,7 @@ export const SidePage = ({
   children: ReactNode
 }) => {
   const ref = useRef<HTMLElement>(null)
+  const isSwitch = useIsPageSwitch()
   const { dialogProps } = useDialog({ "aria-label": label }, ref)
 
   return (
@@ -39,7 +41,10 @@ export const SidePage = ({
           }
         }}
         className={clsx(
-          "motion-page-in on-ground pointer-events-auto fixed top-[84px] bottom-[88px] left-0 z-50 w-(--wide-page) outline-none max-[1279px]:top-[144px]",
+          // Over the top menu, from the screen's top; in place of another page,
+          // only its content fades in (the panel stays).
+          isSwitch ? "motion-content-in" : "motion-page-in",
+          "on-ground pointer-events-auto fixed top-0 bottom-[88px] left-0 z-50 w-(--wide-page) pt-3 outline-none",
           className
         )}
       >
