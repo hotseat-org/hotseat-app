@@ -52,7 +52,7 @@ stop showing until uploaded again.
 
 | Setting | Example | What it's for |
 | --- | --- | --- |
-| `HOTSEAT_VERSION` | `0.6.1-alpha` | The release to run ([releases](https://github.com/hotseat-org/hotseat-app/releases)). Pin the exact one: while Hotseat is in alpha, any release may change things. `alpha` follows the newest alpha. |
+| `HOTSEAT_VERSION` | `0.7.0-alpha` | The release to run ([releases](https://github.com/hotseat-org/hotseat-app/releases)). Pin the exact one: while Hotseat is in alpha, any release may change things. `alpha` follows the newest alpha. |
 
 ## Setting up
 

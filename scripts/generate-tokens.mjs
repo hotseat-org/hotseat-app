@@ -13,15 +13,22 @@ const [light, dark] = tokens.color.themes.map((theme) => theme.id)
 
 /** A value as CSS: an alias "{name}" is that token's variable. */
 const toCss = (value) => String(value).replace(/^\{(.+)\}$/, "var(--$1)")
-const valueIn = (token, theme) => (typeof token.value === "string" ? token.value : (token.value[theme] ?? token.value[light]))
-const declare = (list, theme) => list.map((token) => `  --${token.name}: ${toCss(valueIn(token, theme))};`).join("\n")
+const valueIn = (token, theme) =>
+  typeof token.value === "string" ? token.value : (token.value[theme] ?? token.value[light])
+const declare = (list, theme) =>
+  list.map((token) => `  --${token.name}: ${toCss(valueIn(token, theme))};`).join("\n")
 
 // Roles are the colour tokens components use: everything but the base steps.
-const isBase = (name) => /-(\d{2,3})$/.test(name) || ["ground-day", "ground-dusk", "page-cream", "page-night", "white"].includes(name)
+const isBase = (name) =>
+  /-(\d{2,3})$/.test(name) ||
+  ["ground-day", "ground-dusk", "page-cream", "page-night", "white"].includes(name)
 const colours = tokens.color.tokens
 const roles = colours.filter((token) => !isBase(token.name))
 const scales = Object.entries(tokens)
-  .filter(([family, value]) => value && Array.isArray(value.tokens) && !["color", "shadow"].includes(family))
+  .filter(
+    ([family, value]) =>
+      value && Array.isArray(value.tokens) && !["color", "shadow"].includes(family)
+  )
   .flatMap(([, value]) => value.tokens)
 
 const schemeBlocks = Object.entries(schemes.schemes)
@@ -68,5 +75,7 @@ if (process.argv.includes("--check")) {
   console.log(`${OUT} is up to date`)
 } else {
   writeFileSync(OUT, css)
-  console.log(`wrote ${OUT}: ${colours.length} colours, ${scales.length} other tokens, ${Object.keys(schemes.schemes).length} schemes`)
+  console.log(
+    `wrote ${OUT}: ${colours.length} colours, ${scales.length} other tokens, ${Object.keys(schemes.schemes).length} schemes`
+  )
 }

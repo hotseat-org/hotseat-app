@@ -3,7 +3,7 @@
 Hotseat ships as a Docker image (`ghcr.io/hotseat-org/hotseat`, for amd64
 and arm64), with a Compose file that runs it next to its own Postgres.
 
-> **Alpha.** Hotseat 0.5 is an alpha: it works, but any release may still
+> **Alpha.** Hotseat 0.7 is an alpha: it works, but any release may still
 > change settings or behaviour. Pin the exact version (`HOTSEAT_VERSION`),
 > read the release notes before updating, and keep backups.
 
@@ -14,11 +14,11 @@ settings to fill in (saved as `.env`). In a folder of their own:
 
 ```sh
 mkdir hotseat && cd hotseat
-curl -fsSLO https://raw.githubusercontent.com/hotseat-org/hotseat-app/v0.6.1-alpha/self-hosting/compose.yml
-curl -fsSL https://raw.githubusercontent.com/hotseat-org/hotseat-app/v0.6.1-alpha/self-hosting/.env.example -o .env
+curl -fsSLO https://raw.githubusercontent.com/hotseat-org/hotseat-app/v0.7.0-alpha/self-hosting/compose.yml
+curl -fsSL https://raw.githubusercontent.com/hotseat-org/hotseat-app/v0.7.0-alpha/self-hosting/.env.example -o .env
 ```
 
-That's 0.6.1-alpha. The newest release is on the
+That's 0.7.0-alpha. The newest release is on the
 [releases page](https://github.com/hotseat-org/hotseat-app/releases): use its version in both lines.
 
 ## 2. Fill in the settings
@@ -146,7 +146,7 @@ downloading it. Get the release's code (or `main`, for the newest) and put
 your `.env` next to its Compose files:
 
 ```sh
-git clone --branch v0.6.1-alpha https://github.com/hotseat-org/hotseat-app.git hotseat-source
+git clone --branch v0.7.0-alpha https://github.com/hotseat-org/hotseat-app.git hotseat-source
 cp .env hotseat-source/self-hosting/
 cd hotseat-source/self-hosting
 docker compose -f compose.yml -f compose.build.yml up -d --build

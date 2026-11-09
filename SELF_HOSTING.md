@@ -7,21 +7,22 @@ web: https://alpha.vidlak.net/hotseat/docs/self-hosting):
 - [Installation](docs/self-hosting/installation.md): Docker Compose, HTTPS with a reverse proxy
 - [Configuration](docs/self-hosting/configuration.md): every setting
 - [Sign-in](docs/self-hosting/sign-in.md): Microsoft Entra, Google Workspace, Okta, Keycloak, Authentik, Google, GitHub
-- [Administration](docs/self-hosting/administration.md): first run, who can join, invites, members, offices
+- [Administration](docs/self-hosting/administration.md): first run, moving from the hosted Hotseat, who can join, invites, members, offices
 - [Operations](docs/self-hosting/operations.md): backups, updates, logs, troubleshooting
 
 ## Quick start
 
 ```sh
 mkdir hotseat && cd hotseat
-curl -fsSLO https://raw.githubusercontent.com/hotseat-org/hotseat-app/v0.6.1-alpha/self-hosting/compose.yml
-curl -fsSL https://raw.githubusercontent.com/hotseat-org/hotseat-app/v0.6.1-alpha/self-hosting/.env.example -o .env
+curl -fsSLO https://raw.githubusercontent.com/hotseat-org/hotseat-app/v0.7.0-alpha/self-hosting/compose.yml
+curl -fsSL https://raw.githubusercontent.com/hotseat-org/hotseat-app/v0.7.0-alpha/self-hosting/.env.example -o .env
 # Fill in .env: BASE_URL, COOKIES_SECRET, POSTGRES_PASSWORD, a way to sign in.
-docker compose up -d    # pulls ghcr.io/hotseat-org/hotseat:0.6.1-alpha
+docker compose up -d    # pulls ghcr.io/hotseat-org/hotseat:0.7.0-alpha
 ```
 
-Hotseat 0.5 is an alpha: pin the exact version, and read the release notes
+Hotseat 0.7 is an alpha: pin the exact version, and read the release notes
 before updating.
 
 Put HTTPS in front of port 3000, open your `BASE_URL`, and sign in as
-`HOTSEAT_ADMIN_EMAIL` to set it up.
+`HOTSEAT_ADMIN_EMAIL` to set it up. Already on the hosted Hotseat? Start from a copy of your organization:
+see [Moving from the hosted Hotseat](docs/self-hosting/administration.md#moving-from-the-hosted-hotseat).

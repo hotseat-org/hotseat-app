@@ -11,7 +11,7 @@ This guide is for whoever installs and looks after it.
 | [Installation](installation.md) | Docker Compose, HTTPS with a reverse proxy, first start |
 | [Configuration](configuration.md) | Every setting, in one table |
 | [Sign-in](sign-in.md) | Microsoft Entra, Google Workspace, Okta, Keycloak, Authentik, Google, GitHub |
-| [Administration](administration.md) | First run, who can join, invites, members, offices |
+| [Administration](administration.md) | First run, moving from the hosted Hotseat, who can join, invites, members, offices |
 | [Operations](operations.md) | Backups, updates, logs, troubleshooting, running without Docker |
 
 ## What you get
@@ -23,6 +23,10 @@ the office editor, insights, phones, English and Czech.
 A self-hosted installation is **one company**. Whoever sets it up names it
 and decides who can join, usually everyone with a company email address.
 There's no "New organization" and no product page or demo.
+
+Already using the hosted Hotseat? Your organization comes along whole:
+offices, people, teams and every booking. See
+[Moving from the hosted Hotseat](administration.md#moving-from-the-hosted-hotseat).
 
 ## License
 
