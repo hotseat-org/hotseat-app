@@ -64,9 +64,9 @@ export const ColumnPage = ({
             : side === "right"
               ? "motion-page-in-right"
               : "motion-page-in",
-          // The left column goes over the top menu (from the screen's top); your
-          // account, on the right, hangs under the avatar.
-          side === "right" ? "right-0 top-[84px] max-[1279px]:top-[144px]" : "left-0 top-0 pt-3",
+          // Over the top menu, from the screen's top, on either side.
+          side === "right" ? "right-0" : "left-0",
+          "top-0 pt-3",
           "pointer-events-auto absolute bottom-[88px] z-[47] flex flex-col on-ground outline-none",
           isWide ? "w-(--wide-page)" : "w-[min(580px,100vw)]"
         )}
