@@ -104,11 +104,11 @@
      ×1.5: 9px; buttons stay pills): in line with the app's 16px panels. */
   --radius: 0.375rem;
 
-  /* The office's ground as the 3D scene draws it by day (its lit floor): what
-     pages, dialogs and popups sit on, with no background of their own (see "On
-     the ground"). Its quiet text is darker than --muted: small text on it still
-     reads (4.5:1). */
-  --ground: #d3ccc3;
+  /* The office's ground as the 3D scene draws it by day: what the headline's
+     words sit on, and what sheets, cards and dialogs are made of. Fixed per
+     theme (the scene keeps its time of day; the UI doesn't follow it). Its
+     quiet text is darker than --muted, so small text on it reads (4.5:1). */
+  --ground: #ebe8e1;
   /* A wide page (settings, Insights): from the left edge to the screen's
      middle, at least 720px (see SidePage, ColumnPage isWide). */
   --wide-page: min(100vw, max(720px, 50vw));
@@ -129,8 +129,6 @@
   --ground-accent: color-mix(in oklab, var(--accent) 72%, #000);
   --ground-danger: color-mix(in oklab, var(--danger) 76%, #000);
   --ground-success: color-mix(in oklab, var(--success) 62%, #000);
-  /* By day the words need no halo (it only blurs them); see the night's. */
-  --ground-halo: none;
 
   --background: #f1e9db;
   --foreground: #33384a; /* editor seatLeg, darkened for text */
@@ -203,18 +201,14 @@
    faint highlight along each panel's top edge and deeper shadows — so panels
    stand off the floor instead of melting into it. */
 .dark,
-[data-theme="dark"],
-/* The office's ground gone dark (a light theme's night, see useGroundTone):
-   the words on it take the dark theme's colours. */
-:root[data-ground="dark"] {
-  --ground: #1e202a;
+[data-theme="dark"] {
+  --ground: #393d49;
   --pill: var(--accent);
   --pill-foreground: var(--background);
   --ground-muted: #a4abba;
   --ground-accent: var(--accent);
   --ground-danger: var(--danger);
   --ground-success: var(--success);
-  --ground-halo: none;
   --background: #151820;
   --foreground: #f2ede4;
 
@@ -312,8 +306,7 @@
 }
 
 :root[data-scheme="sage"].dark,
-:root[data-scheme="sage"][data-theme="dark"],
-:root[data-scheme="sage"][data-ground="dark"] {
+:root[data-scheme="sage"][data-theme="dark"] {
   --background: #121612;
   --foreground: #e9efe6;
   --surface: #232b24;
@@ -356,8 +349,7 @@
 }
 
 :root[data-scheme="terracotta"].dark,
-:root[data-scheme="terracotta"][data-theme="dark"],
-:root[data-scheme="terracotta"][data-ground="dark"] {
+:root[data-scheme="terracotta"][data-theme="dark"] {
   --background: #1a1311;
   --foreground: #f6e9e1;
   --surface: #2e221d;
@@ -400,8 +392,7 @@
 }
 
 :root[data-scheme="ocean"].dark,
-:root[data-scheme="ocean"][data-theme="dark"],
-:root[data-scheme="ocean"][data-ground="dark"] {
+:root[data-scheme="ocean"][data-theme="dark"] {
   --background: #0e151d;
   --foreground: #e6eef5;
   --surface: #1b2633;
@@ -444,8 +435,7 @@
 }
 
 :root[data-scheme="plum"].dark,
-:root[data-scheme="plum"][data-theme="dark"],
-:root[data-scheme="plum"][data-ground="dark"] {
+:root[data-scheme="plum"][data-theme="dark"] {
   --background: #161117;
   --foreground: #f2e8f3;
   --surface: #28202a;
@@ -787,8 +777,7 @@ input:-webkit-autofill:focus {
     --page-edge: var(--chrome);
   }
   html.dark,
-  html[data-theme="dark"],
-  html[data-ground="dark"] {
+  html[data-theme="dark"] {
     color-scheme: dark;
   }
 
@@ -1196,33 +1185,11 @@ input:-webkit-autofill:focus {
   }
 }
 
-/* A light theme's night (useGroundTone): the dark theme's colours, retuned for
-   the scene's night ground — a blue-grey from rgb(65 75 95) to rgb(99 111 140),
-   lighter than the dark theme's own. Near-white words, a dark halo behind
-   every letter (dusk passes through mid-grey, where no colour alone reaches
-   4.5:1), and the haze under a dialog in that blue. */
-:root[data-ground="dark"] {
-  --ground: #505c76;
-  --foreground: #fbf8f2;
-  --muted: #d5d9e3;
-  --ground-muted: #e3e6ee;
-  --ground-accent: #c9dafa;
-  --ground-danger: #ffb4ad;
-  --ground-success: #bfe0a6;
-  --ground-halo: 0 0 2px rgb(16 20 32 / 0.6), 0 0 14px rgb(16 20 32 / 0.5);
-}
-:root[data-ground="dark"] body {
-  text-shadow: var(--ground-halo);
-}
-
 /* ── On the ground ─────────────────────────────────────────────────────────
-   Nothing over the office has a background: pages, popups, dialogs and the
-   desk card are words straight on its ground, as the headline is. Their colours
-   follow the ground's light instead (the theme's, and at night the dark one's:
-   see useGroundTone), with a faint halo of the ground behind each letter for
-   where they cross the model. On the ground, the quiet and coloured text is
-   deeper, to keep 4.5:1. No blur anywhere (it would redraw with every frame of
-   the scene). Unlayered, so it wins over the UI kit's own (in its layer). */
+   Pages, popups and dialogs set no colours of their own: their words use the
+   ground's (the quiet and coloured ones deeper, to keep 4.5:1), and their
+   surfaces are the sheet and pieces of the ground. No blur anywhere (it would
+   redraw with every frame of the scene). Unlayered, so it wins over the UI kit's own (in its layer). */
 @utility on-ground {
   --overlay: transparent;
   --muted: var(--ground-muted);
@@ -1233,7 +1200,6 @@ input:-webkit-autofill:focus {
   background: transparent;
   border: 0;
   box-shadow: none;
-  text-shadow: var(--ground-halo);
 }
 
 /* The UI kit's popovers and dialogs: the same, words on the ground. */
@@ -1249,7 +1215,6 @@ input:-webkit-autofill:focus {
   background: transparent;
   border: 0;
   box-shadow: none;
-  text-shadow: var(--ground-halo);
 }
 
 /* Under a dialog: the ground (its colour at this hour), opaque, so what the
