@@ -100,3 +100,27 @@ export const getLightTint = (time: number, isDark: boolean): [number, number, nu
     number,
   ]
 }
+
+const toLinear = (channel: number) => {
+  const value = channel / 255
+
+  return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4
+}
+
+/** Relative luminance (WCAG) of an sRGB colour. */
+const getLuminance = ([red, green, blue]: [number, number, number]) =>
+  0.2126 * toLinear(red) + 0.7152 * toLinear(green) + 0.0722 * toLinear(blue)
+
+/** The light theme's ink, and the light words used on a dark scene (see tailwind.css). */
+const INK_LUMINANCE = getLuminance([51, 56, 74])
+const LIGHT_WORDS_LUMINANCE = getLuminance([251, 248, 242])
+
+/** Whether light words read better than ink on the scene at this hour (the higher contrast wins). */
+export const isSceneDark = (time: number, isDark: boolean) => {
+  const luminance = getLuminance(getGroundColor(time, isDark))
+
+  return (
+    (LIGHT_WORDS_LUMINANCE + 0.05) / (luminance + 0.05) >
+    (luminance + 0.05) / (INK_LUMINANCE + 0.05)
+  )
+}

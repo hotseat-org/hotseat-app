@@ -63,7 +63,7 @@ export const HeadlineColumn = ({
       <section
         aria-label={t("Your day")}
         inert={isFolded}
-        className={`${MOTION} on-ground pointer-events-none absolute left-6 top-24 w-[min(560px,40vw)] max-[1279px]:top-[148px] origin-top-left text-foreground ${
+        className={`${MOTION} on-ground on-scene pointer-events-none absolute left-6 top-24 w-[min(560px,40vw)] max-[1279px]:top-[148px] origin-top-left text-foreground ${
           isFolded ? "opacity-0 [transform:translateY(-12px)_scale(0.45)]" : "[transform:none]"
         }`}
       >

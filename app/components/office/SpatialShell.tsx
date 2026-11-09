@@ -292,7 +292,7 @@ export const SpatialShell = ({
           in the column — the scene's own layer is under the sheet. */}
       <div id={COLUMN_SLOT_ID} className="pointer-events-none absolute inset-0 z-[48]" />
       {/* The top bar stays put; an open page goes over it (see ColumnPage). */}
-      <div className="on-ground pointer-events-none absolute inset-x-5 top-5 z-[45] flex flex-wrap items-center gap-x-2.5 gap-y-3">
+      <div className="on-ground on-scene pointer-events-none absolute inset-x-5 top-5 z-[45] flex flex-wrap items-center gap-x-2.5 gap-y-3">
         <WorkspaceSwitcher
           offices={offices}
           className="relative"

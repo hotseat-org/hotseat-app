@@ -1349,3 +1349,24 @@ input:-webkit-autofill:focus {
     transition: none;
   }
 }
+
+/* Words straight on the scene (the headline, the top bar, the bottom-right
+   controls) when a light theme's scene goes dark at night (useSceneTone): light
+   words, as on the dark theme's ground. What's on a surface keeps its colours. */
+:root[data-scene="dark"] .on-scene {
+  --foreground: #fbf8f2;
+  --background: #1e2433;
+  --muted: #e3e6ee;
+  --ground-muted: #e3e6ee;
+  --ground-accent: #c9dafa;
+  --ground-danger: #ffb4ad;
+  --ground-success: #bfe0a6;
+  --accent: #8fb3f0;
+  --surface-tertiary: rgb(255 255 255 / 0.12);
+  color: var(--foreground);
+}
+/* The time slider's chip is a surface of its own: it keeps the theme's words. */
+:root[data-scene="dark"] .on-scene .sky-slider {
+  --foreground: #33384a;
+  --background: #f1e9db;
+}

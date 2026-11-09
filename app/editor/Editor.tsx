@@ -34,6 +34,7 @@ import { useEditorMode, type Mode } from "./shell/useEditorMode"
 import { useEditorShortcuts } from "./shell/useEditorShortcuts"
 import type { EditorModule, SaveOptions } from "./module"
 import { ModulesContext, useModules } from "./modules"
+import { useSceneTone } from "./lighting/useSceneTone"
 import { ContourBackdrop } from "~/components/ui/ContourBackdrop"
 
 // three.js and the whole scene: their own chunk, loaded apart from the editor.
@@ -197,6 +198,8 @@ const EditorInner = ({
     [modules, switchMode]
   )
   useEditorShortcuts(readOnly)
+  // The words straight on the scene (the shell's headline and bars) follow its light.
+  useSceneTone({ isDark, isEnabled: readOnly && !isMobile })
   // Editing and viewing have their own side panels: switching starts with none open.
   useEffect(() => store.getState().closeSidePanel(), [readOnly, store])
   const { guardPanels } = useAutosave({ onSave, saveFailed })

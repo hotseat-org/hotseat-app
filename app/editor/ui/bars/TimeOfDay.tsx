@@ -39,7 +39,7 @@ export const TimeOfDay = ({
       className={clsx(
         "pointer-events-auto absolute flex items-center gap-2 text-foreground",
         isViewing
-          ? "on-ground right-6 bottom-5"
+          ? "on-ground on-scene right-6 bottom-5"
           : "bottom-4 left-1/2 -translate-x-1/2 rounded-2xl border border-border bg-overlay p-2 shadow-overlay"
       )}
     >
